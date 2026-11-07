@@ -1,0 +1,46 @@
+# See https://docs.sqlc.dev/en/latest/reference/config.html for documentation on the fields
+version: "2"
+overrides:
+  go:
+    rename:
+      oauth_grant: OAuthGrant
+      oauth_grant_id: OAuthGrantID
+      oauth_authorization_code: OAuthAuthorizationCode
+    # Queries send their parameters as text for the database to type (see
+    # store.New), which sends []byte as bytea, so JSON needs its own type.
+    overrides:
+      - db_type: "jsonb"
+        go_type:
+          import: "encoding/json"
+          type: "RawMessage"
+      # Overrides only apply to columns of the same nullability, and some JSON
+      # columns, like strava_activities.detail_json, are nullable.
+      - db_type: "jsonb"
+        nullable: true
+        go_type:
+          import: "encoding/json"
+          type: "RawMessage"
+sql:
+  - name: "users"
+    queries: "./internal/users/queries"
+    schema: "./internal/store/migrations"
+    engine: "postgresql"
+    gen:
+      go:
+        package: "gen"
+        out: "./internal/users/internal/gen"
+        sql_package: "pgx/v5"
+        sql_driver: "github.com/jackc/pgx/v5"
+        emit_interface: false
+        emit_params_struct_pointers: true
+        emit_result_struct_pointers: true
+        emit_enum_valid_method: true
+        initialisms:
+          - id
+          - json
+          - usb
+          - nfc
+          - ble
+          - api
+          - sha256
+          - uri
