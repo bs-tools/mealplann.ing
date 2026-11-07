@@ -8,6 +8,7 @@ import {
   ShoppingCartIcon,
   SparklesIcon,
   Squares2X2Icon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import type { User } from "gen/users/v1/users_pb";
 import React from "react";
@@ -20,6 +21,20 @@ const READY: {
   description: string;
   to: string;
 }[] = [
+  {
+    description:
+      "The week's shared meals, split into the right portions for everyone, with leftovers and warnings.",
+    icon: CalendarDaysIcon,
+    title: "Plan",
+    to: "/plan",
+  },
+  {
+    description:
+      "When everyone eats, and the rules and targets from their care team.",
+    icon: UserGroupIcon,
+    title: "People",
+    to: "/people",
+  },
   {
     description:
       "Your recipes, with nutrition per serving, entered here or by your AI agent.",
@@ -44,12 +59,6 @@ const COMING: {
 }[] = [
   {
     description:
-      "Everyone's eating times and targets, and a week of shared meals split into the right portions.",
-    icon: CalendarDaysIcon,
-    title: "People and plans",
-  },
-  {
-    description:
       "What's in the cupboard, and a shopping list for one shop a week, by store and aisle.",
     icon: ShoppingCartIcon,
     title: "Pantry and shopping",
@@ -67,8 +76,7 @@ interface HomePageProps {
 }
 
 /**
- * HomePage welcomes the signed in user. It becomes the week at a glance once
- * there are plans to show.
+ * HomePage welcomes the signed in user, with the parts of the app to go to.
  */
 const HomePage: React.FC<HomePageProps> = ({ user }) => (
   <div className="flex flex-col gap-4">
@@ -77,7 +85,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => (
       subtitle="Vegan meal planning for the whole household."
     />
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Card title="Cook">
+      <Card title="Plan and cook">
         <ul className="-my-2 divide-y divide-gray-100">
           {READY.map(({ icon: Icon, title, description, to }) => (
             <li key={to}>
@@ -124,6 +132,17 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => (
             Name your household and invite the people you plan meals for in{" "}
             <Link to="/settings" className={linkClass}>
               settings
+            </Link>
+            .
+          </li>
+          <li>
+            Add the people you cook for, with when they eat, on the{" "}
+            <Link to="/people" className={linkClass}>
+              People
+            </Link>{" "}
+            page, then plan the week on the{" "}
+            <Link to="/plan" className={linkClass}>
+              Plan
             </Link>
             .
           </li>
