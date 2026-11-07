@@ -50,8 +50,8 @@ func TestRecipes(t *testing.T) {
 	soyMilk := createFood(t, e.foods, foodsv1.CreateFoodRequest_builder{FdcId: 2257046, Food: foodsv1.Food_builder{Name: "Soy milk"}.Build()}.Build())
 	lentils := createFood(t, e.foods, foodsv1.CreateFoodRequest_builder{FdcId: 172420, Food: foodsv1.Food_builder{Name: "Red lentils"}.Build()}.Build())
 	garlic := createFood(t, e.foods, foodsv1.CreateFoodRequest_builder{Food: foodsv1.Food_builder{
-		Name:                  "Garlic",
-		NutrientsPer_100Grams: foodsv1.Nutrients_builder{EnergyKcal: new(149.0), ProteinGrams: new(6.4)}.Build(),
+		Name:      "Garlic",
+		Nutrients: foodsv1.Nutrients_builder{EnergyKcal: new(149.0), ProteinGrams: new(6.4)}.Build(),
 	}.Build()}.Build())
 
 	// Create a recipe.
@@ -113,7 +113,7 @@ func TestRecipes(t *testing.T) {
 	if got := n.GetPerServing().GetEnergyKcal(); !near(got, energy/4) {
 		t.Errorf("got %v kcal per serving, want %v", got, energy/4)
 	}
-	if got := n.GetPer_100Grams().GetEnergyKcal(); !near(got, energy/totalGrams*100) {
+	if got := n.GetPerHundredGrams().GetEnergyKcal(); !near(got, energy/totalGrams*100) {
 		t.Errorf("got %v kcal per 100 g, want %v", got, energy/totalGrams*100)
 	}
 	// Protein comes from all three foods weighed.

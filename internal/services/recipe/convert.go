@@ -115,7 +115,7 @@ func nutritionToProto(r *recipes.Recipe) *recipesv1.RecipeNutrition {
 		TotalGrams:          round(n.TotalGrams),
 		GramsPerServing:     round(n.GramsPerServing),
 		PerServing:          food.NutrientsToProto(&n.PerServing, nutritionDigits),
-		Per_100Grams:        food.NutrientsToProto(&n.Per100Grams, nutritionDigits),
+		PerHundredGrams:     food.NutrientsToProto(&n.Per100Grams, nutritionDigits),
 		IncompleteNutrients: incomplete,
 		Issues:              issues,
 	}.Build()

@@ -104,3 +104,27 @@ export const parseEdited = (
 // HoursMinutesInput formats seconds as "h:mm" for an input.
 export const hoursMinutesInput = (seconds: number): string =>
   durationInput(seconds, false);
+
+/**
+ * ParseOptionalNumber parses a decimal number that may be unknown: empty
+ * input is undefined, which is different from 0. It returns null for
+ * invalid input. A comma is taken as the decimal point, as many phones type
+ * it.
+ */
+export const parseOptionalNumber = (
+  text: string
+): number | undefined | null => {
+  const trimmed = text.trim().replace(",", ".");
+  if (trimmed === "") {
+    return undefined;
+  }
+  const value = Number(trimmed);
+  if (!Number.isFinite(value) || value < 0) {
+    return null;
+  }
+  return value;
+};
+
+// OptionalNumberInput formats a number that may be unknown for an input.
+export const optionalNumberInput = (value: number | undefined): string =>
+  value === undefined ? "" : String(value);

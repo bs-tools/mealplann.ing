@@ -258,6 +258,10 @@ func (s *Service) toConnectError(ctx context.Context, err error, msg string) err
 		if len(inUse.Recipes) == 0 {
 			return connect.NewError(connect.CodeFailedPrecondition, "the food is used by recipes; remove it from them first")
 		}
+		if len(inUse.Recipes) == 1 {
+			return connect.Errorf(connect.CodeFailedPrecondition,
+				"the food is used by the recipe %s; remove it from the recipe first, or keep it", quoteList(inUse.Recipes))
+		}
 		return connect.Errorf(connect.CodeFailedPrecondition,
 			"the food is used by the recipes %s; remove it from them first, or keep it", quoteList(inUse.Recipes))
 	}

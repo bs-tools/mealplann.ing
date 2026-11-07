@@ -911,24 +911,24 @@ func (b0 Nutrients_builder) Build() *Nutrients {
 
 // A food: an ingredient, such as chickpeas, a brand of tofu or soy milk.
 type Food struct {
-	state                            protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id                    string                 `protobuf:"bytes,1,opt,name=id,proto3"`
-	xxx_hidden_Name                  string                 `protobuf:"bytes,2,opt,name=name,proto3"`
-	xxx_hidden_Source                FoodSource             `protobuf:"varint,3,opt,name=source,proto3,enum=foods.v1.FoodSource"`
-	xxx_hidden_FdcId                 int32                  `protobuf:"varint,4,opt,name=fdc_id,json=fdcId,proto3"`
-	xxx_hidden_NutrientsPer_100Grams *Nutrients             `protobuf:"bytes,5,opt,name=nutrients_per_100_grams,json=nutrientsPer100Grams,proto3"`
-	xxx_hidden_GramsPerPiece         float64                `protobuf:"fixed64,6,opt,name=grams_per_piece,json=gramsPerPiece,proto3"`
-	xxx_hidden_GramsPerMilliliter    float64                `protobuf:"fixed64,7,opt,name=grams_per_milliliter,json=gramsPerMilliliter,proto3"`
-	xxx_hidden_FastCarb              bool                   `protobuf:"varint,8,opt,name=fast_carb,json=fastCarb,proto3"`
-	xxx_hidden_StoreSection          StoreSection           `protobuf:"varint,9,opt,name=store_section,json=storeSection,proto3,enum=foods.v1.StoreSection"`
-	xxx_hidden_PackageGrams          float64                `protobuf:"fixed64,10,opt,name=package_grams,json=packageGrams,proto3"`
-	xxx_hidden_ShelfLifeDays         int32                  `protobuf:"varint,11,opt,name=shelf_life_days,json=shelfLifeDays,proto3"`
-	xxx_hidden_OpenedShelfLifeDays   int32                  `protobuf:"varint,12,opt,name=opened_shelf_life_days,json=openedShelfLifeDays,proto3"`
-	xxx_hidden_Notes                 string                 `protobuf:"bytes,13,opt,name=notes,proto3"`
-	xxx_hidden_CreateTime            *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=create_time,json=createTime,proto3"`
-	xxx_hidden_UpdateTime            *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=update_time,json=updateTime,proto3"`
-	unknownFields                    protoimpl.UnknownFields
-	sizeCache                        protoimpl.SizeCache
+	state                          protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_Name                string                 `protobuf:"bytes,2,opt,name=name,proto3"`
+	xxx_hidden_Source              FoodSource             `protobuf:"varint,3,opt,name=source,proto3,enum=foods.v1.FoodSource"`
+	xxx_hidden_FdcId               int32                  `protobuf:"varint,4,opt,name=fdc_id,json=fdcId,proto3"`
+	xxx_hidden_Nutrients           *Nutrients             `protobuf:"bytes,5,opt,name=nutrients,proto3"`
+	xxx_hidden_GramsPerPiece       float64                `protobuf:"fixed64,6,opt,name=grams_per_piece,json=gramsPerPiece,proto3"`
+	xxx_hidden_GramsPerMilliliter  float64                `protobuf:"fixed64,7,opt,name=grams_per_milliliter,json=gramsPerMilliliter,proto3"`
+	xxx_hidden_FastCarb            bool                   `protobuf:"varint,8,opt,name=fast_carb,json=fastCarb,proto3"`
+	xxx_hidden_StoreSection        StoreSection           `protobuf:"varint,9,opt,name=store_section,json=storeSection,proto3,enum=foods.v1.StoreSection"`
+	xxx_hidden_PackageGrams        float64                `protobuf:"fixed64,10,opt,name=package_grams,json=packageGrams,proto3"`
+	xxx_hidden_ShelfLifeDays       int32                  `protobuf:"varint,11,opt,name=shelf_life_days,json=shelfLifeDays,proto3"`
+	xxx_hidden_OpenedShelfLifeDays int32                  `protobuf:"varint,12,opt,name=opened_shelf_life_days,json=openedShelfLifeDays,proto3"`
+	xxx_hidden_Notes               string                 `protobuf:"bytes,13,opt,name=notes,proto3"`
+	xxx_hidden_CreateTime          *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=create_time,json=createTime,proto3"`
+	xxx_hidden_UpdateTime          *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=update_time,json=updateTime,proto3"`
+	unknownFields                  protoimpl.UnknownFields
+	sizeCache                      protoimpl.SizeCache
 }
 
 func (x *Food) Reset() {
@@ -984,9 +984,9 @@ func (x *Food) GetFdcId() int32 {
 	return 0
 }
 
-func (x *Food) GetNutrientsPer_100Grams() *Nutrients {
+func (x *Food) GetNutrients() *Nutrients {
 	if x != nil {
-		return x.xxx_hidden_NutrientsPer_100Grams
+		return x.xxx_hidden_Nutrients
 	}
 	return nil
 }
@@ -1077,8 +1077,8 @@ func (x *Food) SetFdcId(v int32) {
 	x.xxx_hidden_FdcId = v
 }
 
-func (x *Food) SetNutrientsPer_100Grams(v *Nutrients) {
-	x.xxx_hidden_NutrientsPer_100Grams = v
+func (x *Food) SetNutrients(v *Nutrients) {
+	x.xxx_hidden_Nutrients = v
 }
 
 func (x *Food) SetGramsPerPiece(v float64) {
@@ -1121,11 +1121,11 @@ func (x *Food) SetUpdateTime(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdateTime = v
 }
 
-func (x *Food) HasNutrientsPer_100Grams() bool {
+func (x *Food) HasNutrients() bool {
 	if x == nil {
 		return false
 	}
-	return x.xxx_hidden_NutrientsPer_100Grams != nil
+	return x.xxx_hidden_Nutrients != nil
 }
 
 func (x *Food) HasCreateTime() bool {
@@ -1142,8 +1142,8 @@ func (x *Food) HasUpdateTime() bool {
 	return x.xxx_hidden_UpdateTime != nil
 }
 
-func (x *Food) ClearNutrientsPer_100Grams() {
-	x.xxx_hidden_NutrientsPer_100Grams = nil
+func (x *Food) ClearNutrients() {
+	x.xxx_hidden_Nutrients = nil
 }
 
 func (x *Food) ClearCreateTime() {
@@ -1172,7 +1172,7 @@ type Food_builder struct {
 	// The nutrients in 100 g of the food. Unset nutrients are unknown. For
 	// custom foods, enter the values from the label's "per 100 g" column;
 	// convert values given per serving or per 100 ml to per 100 g first.
-	NutrientsPer_100Grams *Nutrients
+	Nutrients *Nutrients
 	// The typical weight of one piece in grams, e.g. 150 for an onion or 5 for
 	// a clove of garlic, so amounts in pieces can be weighed. 0 if unknown or
 	// the food doesn't come in pieces.
@@ -1215,7 +1215,7 @@ func (b0 Food_builder) Build() *Food {
 	x.xxx_hidden_Name = b.Name
 	x.xxx_hidden_Source = b.Source
 	x.xxx_hidden_FdcId = b.FdcId
-	x.xxx_hidden_NutrientsPer_100Grams = b.NutrientsPer_100Grams
+	x.xxx_hidden_Nutrients = b.Nutrients
 	x.xxx_hidden_GramsPerPiece = b.GramsPerPiece
 	x.xxx_hidden_GramsPerMilliliter = b.GramsPerMilliliter
 	x.xxx_hidden_FastCarb = b.FastCarb
@@ -1231,16 +1231,16 @@ func (b0 Food_builder) Build() *Food {
 
 // A food of USDA FoodData Central.
 type FoodData struct {
-	state                            protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_FdcId                 int32                  `protobuf:"varint,1,opt,name=fdc_id,json=fdcId,proto3"`
-	xxx_hidden_Description           string                 `protobuf:"bytes,2,opt,name=description,proto3"`
-	xxx_hidden_Category              string                 `protobuf:"bytes,3,opt,name=category,proto3"`
-	xxx_hidden_DataType              string                 `protobuf:"bytes,4,opt,name=data_type,json=dataType,proto3"`
-	xxx_hidden_NutrientsPer_100Grams *Nutrients             `protobuf:"bytes,5,opt,name=nutrients_per_100_grams,json=nutrientsPer100Grams,proto3"`
-	xxx_hidden_Portions              *[]*FoodDataPortion    `protobuf:"bytes,6,rep,name=portions,proto3"`
-	xxx_hidden_FoodId                string                 `protobuf:"bytes,7,opt,name=food_id,json=foodId,proto3"`
-	unknownFields                    protoimpl.UnknownFields
-	sizeCache                        protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FdcId       int32                  `protobuf:"varint,1,opt,name=fdc_id,json=fdcId,proto3"`
+	xxx_hidden_Description string                 `protobuf:"bytes,2,opt,name=description,proto3"`
+	xxx_hidden_Category    string                 `protobuf:"bytes,3,opt,name=category,proto3"`
+	xxx_hidden_DataType    string                 `protobuf:"bytes,4,opt,name=data_type,json=dataType,proto3"`
+	xxx_hidden_Nutrients   *Nutrients             `protobuf:"bytes,5,opt,name=nutrients,proto3"`
+	xxx_hidden_Portions    *[]*FoodDataPortion    `protobuf:"bytes,6,rep,name=portions,proto3"`
+	xxx_hidden_FoodId      string                 `protobuf:"bytes,7,opt,name=food_id,json=foodId,proto3"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *FoodData) Reset() {
@@ -1296,9 +1296,9 @@ func (x *FoodData) GetDataType() string {
 	return ""
 }
 
-func (x *FoodData) GetNutrientsPer_100Grams() *Nutrients {
+func (x *FoodData) GetNutrients() *Nutrients {
 	if x != nil {
-		return x.xxx_hidden_NutrientsPer_100Grams
+		return x.xxx_hidden_Nutrients
 	}
 	return nil
 }
@@ -1335,8 +1335,8 @@ func (x *FoodData) SetDataType(v string) {
 	x.xxx_hidden_DataType = v
 }
 
-func (x *FoodData) SetNutrientsPer_100Grams(v *Nutrients) {
-	x.xxx_hidden_NutrientsPer_100Grams = v
+func (x *FoodData) SetNutrients(v *Nutrients) {
+	x.xxx_hidden_Nutrients = v
 }
 
 func (x *FoodData) SetPortions(v []*FoodDataPortion) {
@@ -1347,15 +1347,15 @@ func (x *FoodData) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
 
-func (x *FoodData) HasNutrientsPer_100Grams() bool {
+func (x *FoodData) HasNutrients() bool {
 	if x == nil {
 		return false
 	}
-	return x.xxx_hidden_NutrientsPer_100Grams != nil
+	return x.xxx_hidden_Nutrients != nil
 }
 
-func (x *FoodData) ClearNutrientsPer_100Grams() {
-	x.xxx_hidden_NutrientsPer_100Grams = nil
+func (x *FoodData) ClearNutrients() {
+	x.xxx_hidden_Nutrients = nil
 }
 
 type FoodData_builder struct {
@@ -1373,7 +1373,7 @@ type FoodData_builder struct {
 	// foods and nutrients.
 	DataType string
 	// The nutrients in 100 g of the food. Unset nutrients are unknown.
-	NutrientsPer_100Grams *Nutrients
+	Nutrients *Nutrients
 	// Common portions of the food with their weight, e.g. "1 cup" or "1
 	// medium".
 	Portions []*FoodDataPortion
@@ -1390,7 +1390,7 @@ func (b0 FoodData_builder) Build() *FoodData {
 	x.xxx_hidden_Description = b.Description
 	x.xxx_hidden_Category = b.Category
 	x.xxx_hidden_DataType = b.DataType
-	x.xxx_hidden_NutrientsPer_100Grams = b.NutrientsPer_100Grams
+	x.xxx_hidden_Nutrients = b.Nutrients
 	x.xxx_hidden_Portions = &b.Portions
 	x.xxx_hidden_FoodId = b.FoodId
 	return m0
@@ -1675,7 +1675,7 @@ type CreateFoodRequest_builder struct {
 
 	// The FoodData Central food to create the food from, found with
 	// SearchFoodData. Its nutrients are copied, so leave
-	// food.nutrients_per_100_grams unset. Its description is the name unless
+	// food.nutrients unset. Its description is the name unless
 	// food.name is set, and its portions suggest grams_per_piece and
 	// grams_per_milliliter unless they're set. 0 for a custom food.
 	FdcId int32
@@ -2139,7 +2139,7 @@ type UpdateFoodRequest_builder struct {
 	Food *Food
 	// The fields to update, e.g. "name,grams_per_piece". If empty, all fields
 	// are replaced. Nutrients can be updated one at a time, e.g.
-	// "nutrients_per_100_grams.iodine_micrograms"; leaving a nutrient unset in
+	// "nutrients.iodine_micrograms"; leaving a nutrient unset in
 	// food then clears it to unknown.
 	UpdateMask *fieldmaskpb.FieldMask
 }
@@ -2375,13 +2375,13 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x12_copper_milligramsB\x17\n" +
 	"\x15_magnesium_milligramsB\x14\n" +
 	"\x12_sodium_milligramsB\x17\n" +
-	"\x15_potassium_milligrams\"\xa1\x05\n" +
+	"\x15_potassium_milligrams\"\x88\x05\n" +
 	"\x04Food\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x124\n" +
 	"\x06source\x18\x03 \x01(\x0e2\x14.foods.v1.FoodSourceB\x06\xaa\x9f\x19\x02\b\x01R\x06source\x12\x1d\n" +
-	"\x06fdc_id\x18\x04 \x01(\x05B\x06\xaa\x9f\x19\x02\b\x01R\x05fdcId\x12J\n" +
-	"\x17nutrients_per_100_grams\x18\x05 \x01(\v2\x13.foods.v1.NutrientsR\x14nutrientsPer100Grams\x12&\n" +
+	"\x06fdc_id\x18\x04 \x01(\x05B\x06\xaa\x9f\x19\x02\b\x01R\x05fdcId\x121\n" +
+	"\tnutrients\x18\x05 \x01(\v2\x13.foods.v1.NutrientsR\tnutrients\x12&\n" +
 	"\x0fgrams_per_piece\x18\x06 \x01(\x01R\rgramsPerPiece\x120\n" +
 	"\x14grams_per_milliliter\x18\a \x01(\x01R\x12gramsPerMilliliter\x12\x1b\n" +
 	"\tfast_carb\x18\b \x01(\bR\bfastCarb\x12;\n" +
@@ -2394,13 +2394,13 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\vcreate_time\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"createTime\x12C\n" +
 	"\vupdate_time\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
-	"updateTime\"\x98\x02\n" +
+	"updateTime\"\xff\x01\n" +
 	"\bFoodData\x12\x15\n" +
 	"\x06fdc_id\x18\x01 \x01(\x05R\x05fdcId\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1a\n" +
 	"\bcategory\x18\x03 \x01(\tR\bcategory\x12\x1b\n" +
-	"\tdata_type\x18\x04 \x01(\tR\bdataType\x12J\n" +
-	"\x17nutrients_per_100_grams\x18\x05 \x01(\v2\x13.foods.v1.NutrientsR\x14nutrientsPer100Grams\x125\n" +
+	"\tdata_type\x18\x04 \x01(\tR\bdataType\x121\n" +
+	"\tnutrients\x18\x05 \x01(\v2\x13.foods.v1.NutrientsR\tnutrients\x125\n" +
 	"\bportions\x18\x06 \x03(\v2\x19.foods.v1.FoodDataPortionR\bportions\x12\x17\n" +
 	"\afood_id\x18\a \x01(\tR\x06foodId\"I\n" +
 	"\x0fFoodDataPortion\x12 \n" +
@@ -2501,11 +2501,11 @@ var file_foods_v1_foods_proto_goTypes = []any{
 }
 var file_foods_v1_foods_proto_depIdxs = []int32{
 	0,  // 0: foods.v1.Food.source:type_name -> foods.v1.FoodSource
-	3,  // 1: foods.v1.Food.nutrients_per_100_grams:type_name -> foods.v1.Nutrients
+	3,  // 1: foods.v1.Food.nutrients:type_name -> foods.v1.Nutrients
 	1,  // 2: foods.v1.Food.store_section:type_name -> foods.v1.StoreSection
 	19, // 3: foods.v1.Food.create_time:type_name -> google.protobuf.Timestamp
 	19, // 4: foods.v1.Food.update_time:type_name -> google.protobuf.Timestamp
-	3,  // 5: foods.v1.FoodData.nutrients_per_100_grams:type_name -> foods.v1.Nutrients
+	3,  // 5: foods.v1.FoodData.nutrients:type_name -> foods.v1.Nutrients
 	6,  // 6: foods.v1.FoodData.portions:type_name -> foods.v1.FoodDataPortion
 	5,  // 7: foods.v1.SearchFoodDataResponse.foods:type_name -> foods.v1.FoodData
 	4,  // 8: foods.v1.CreateFoodRequest.food:type_name -> foods.v1.Food

@@ -172,7 +172,7 @@ message Food {
   // The nutrients in 100 g of the food. Unset nutrients are unknown. For
   // custom foods, enter the values from the label's "per 100 g" column;
   // convert values given per serving or per 100 ml to per 100 g first.
-  Nutrients nutrients_per_100_grams = 5;
+  Nutrients nutrients = 5;
   // The typical weight of one piece in grams, e.g. 150 for an onion or 5 for
   // a clove of garlic, so amounts in pieces can be weighed. 0 if unknown or
   // the food doesn't come in pieces.
@@ -221,7 +221,7 @@ message FoodData {
   // foods and nutrients.
   string data_type = 4;
   // The nutrients in 100 g of the food. Unset nutrients are unknown.
-  Nutrients nutrients_per_100_grams = 5;
+  Nutrients nutrients = 5;
   // Common portions of the food with their weight, e.g. "1 cup" or "1
   // medium".
   repeated FoodDataPortion portions = 6;
@@ -254,7 +254,7 @@ message SearchFoodDataResponse {
 message CreateFoodRequest {
   // The FoodData Central food to create the food from, found with
   // SearchFoodData. Its nutrients are copied, so leave
-  // food.nutrients_per_100_grams unset. Its description is the name unless
+  // food.nutrients unset. Its description is the name unless
   // food.name is set, and its portions suggest grams_per_piece and
   // grams_per_milliliter unless they're set. 0 for a custom food.
   int32 fdc_id = 1;
@@ -302,7 +302,7 @@ message UpdateFoodRequest {
   Food food = 1;
   // The fields to update, e.g. "name,grams_per_piece". If empty, all fields
   // are replaced. Nutrients can be updated one at a time, e.g.
-  // "nutrients_per_100_grams.iodine_micrograms"; leaving a nutrient unset in
+  // "nutrients.iodine_micrograms"; leaving a nutrient unset in
   // food then clears it to unknown.
   google.protobuf.FieldMask update_mask = 2;
 }

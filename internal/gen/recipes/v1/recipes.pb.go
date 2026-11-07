@@ -531,7 +531,7 @@ type RecipeNutrition struct {
 	xxx_hidden_TotalGrams          float64                `protobuf:"fixed64,1,opt,name=total_grams,json=totalGrams,proto3"`
 	xxx_hidden_GramsPerServing     float64                `protobuf:"fixed64,2,opt,name=grams_per_serving,json=gramsPerServing,proto3"`
 	xxx_hidden_PerServing          *v1.Nutrients          `protobuf:"bytes,3,opt,name=per_serving,json=perServing,proto3"`
-	xxx_hidden_Per_100Grams        *v1.Nutrients          `protobuf:"bytes,4,opt,name=per_100_grams,json=per100Grams,proto3"`
+	xxx_hidden_PerHundredGrams     *v1.Nutrients          `protobuf:"bytes,4,opt,name=per_hundred_grams,json=perHundredGrams,proto3"`
 	xxx_hidden_IncompleteNutrients []string               `protobuf:"bytes,5,rep,name=incomplete_nutrients,json=incompleteNutrients,proto3"`
 	xxx_hidden_Issues              *[]*IngredientIssue    `protobuf:"bytes,6,rep,name=issues,proto3"`
 	unknownFields                  protoimpl.UnknownFields
@@ -584,9 +584,9 @@ func (x *RecipeNutrition) GetPerServing() *v1.Nutrients {
 	return nil
 }
 
-func (x *RecipeNutrition) GetPer_100Grams() *v1.Nutrients {
+func (x *RecipeNutrition) GetPerHundredGrams() *v1.Nutrients {
 	if x != nil {
-		return x.xxx_hidden_Per_100Grams
+		return x.xxx_hidden_PerHundredGrams
 	}
 	return nil
 }
@@ -619,8 +619,8 @@ func (x *RecipeNutrition) SetPerServing(v *v1.Nutrients) {
 	x.xxx_hidden_PerServing = v
 }
 
-func (x *RecipeNutrition) SetPer_100Grams(v *v1.Nutrients) {
-	x.xxx_hidden_Per_100Grams = v
+func (x *RecipeNutrition) SetPerHundredGrams(v *v1.Nutrients) {
+	x.xxx_hidden_PerHundredGrams = v
 }
 
 func (x *RecipeNutrition) SetIncompleteNutrients(v []string) {
@@ -638,19 +638,19 @@ func (x *RecipeNutrition) HasPerServing() bool {
 	return x.xxx_hidden_PerServing != nil
 }
 
-func (x *RecipeNutrition) HasPer_100Grams() bool {
+func (x *RecipeNutrition) HasPerHundredGrams() bool {
 	if x == nil {
 		return false
 	}
-	return x.xxx_hidden_Per_100Grams != nil
+	return x.xxx_hidden_PerHundredGrams != nil
 }
 
 func (x *RecipeNutrition) ClearPerServing() {
 	x.xxx_hidden_PerServing = nil
 }
 
-func (x *RecipeNutrition) ClearPer_100Grams() {
-	x.xxx_hidden_Per_100Grams = nil
+func (x *RecipeNutrition) ClearPerHundredGrams() {
+	x.xxx_hidden_PerHundredGrams = nil
 }
 
 type RecipeNutrition_builder struct {
@@ -665,7 +665,7 @@ type RecipeNutrition_builder struct {
 	// has it, and a lower bound if it's in incomplete_nutrients.
 	PerServing *v1.Nutrients
 	// The nutrients in 100 g of the recipe.
-	Per_100Grams *v1.Nutrients
+	PerHundredGrams *v1.Nutrients
 	// The nutrients some ingredients lack, by their field name in Nutrients,
 	// e.g. "iodine_micrograms", whose values are lower bounds. Empty if every
 	// nutrient is complete.
@@ -682,7 +682,7 @@ func (b0 RecipeNutrition_builder) Build() *RecipeNutrition {
 	x.xxx_hidden_TotalGrams = b.TotalGrams
 	x.xxx_hidden_GramsPerServing = b.GramsPerServing
 	x.xxx_hidden_PerServing = b.PerServing
-	x.xxx_hidden_Per_100Grams = b.Per_100Grams
+	x.xxx_hidden_PerHundredGrams = b.PerHundredGrams
 	x.xxx_hidden_IncompleteNutrients = b.IncompleteNutrients
 	x.xxx_hidden_Issues = &b.Issues
 	return m0
@@ -1831,14 +1831,14 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x04unit\x18\x04 \x01(\x0e2\x14.foods.v1.AmountUnitR\x04unit\x12\x12\n" +
 	"\x04note\x18\x05 \x01(\tR\x04note\x12#\n" +
 	"\roriginal_text\x18\x06 \x01(\tR\foriginalText\x12\x1a\n" +
-	"\boptional\x18\a \x01(\bR\boptional\"\xb5\x02\n" +
+	"\boptional\x18\a \x01(\bR\boptional\"\xbd\x02\n" +
 	"\x0fRecipeNutrition\x12\x1f\n" +
 	"\vtotal_grams\x18\x01 \x01(\x01R\n" +
 	"totalGrams\x12*\n" +
 	"\x11grams_per_serving\x18\x02 \x01(\x01R\x0fgramsPerServing\x124\n" +
 	"\vper_serving\x18\x03 \x01(\v2\x13.foods.v1.NutrientsR\n" +
-	"perServing\x127\n" +
-	"\rper_100_grams\x18\x04 \x01(\v2\x13.foods.v1.NutrientsR\vper100Grams\x121\n" +
+	"perServing\x12?\n" +
+	"\x11per_hundred_grams\x18\x04 \x01(\v2\x13.foods.v1.NutrientsR\x0fperHundredGrams\x121\n" +
 	"\x14incomplete_nutrients\x18\x05 \x03(\tR\x13incompleteNutrients\x123\n" +
 	"\x06issues\x18\x06 \x03(\v2\x1b.recipes.v1.IngredientIssueR\x06issues\"\xc6\x01\n" +
 	"\x0fIngredientIssue\x12)\n" +
@@ -1929,7 +1929,7 @@ var file_recipes_v1_recipes_proto_depIdxs = []int32{
 	15, // 3: recipes.v1.Recipe.update_time:type_name -> google.protobuf.Timestamp
 	16, // 4: recipes.v1.Ingredient.unit:type_name -> foods.v1.AmountUnit
 	17, // 5: recipes.v1.RecipeNutrition.per_serving:type_name -> foods.v1.Nutrients
-	17, // 6: recipes.v1.RecipeNutrition.per_100_grams:type_name -> foods.v1.Nutrients
+	17, // 6: recipes.v1.RecipeNutrition.per_hundred_grams:type_name -> foods.v1.Nutrients
 	3,  // 7: recipes.v1.RecipeNutrition.issues:type_name -> recipes.v1.IngredientIssue
 	15, // 8: recipes.v1.RecipeSummary.update_time:type_name -> google.protobuf.Timestamp
 	0,  // 9: recipes.v1.CreateRecipeRequest.recipe:type_name -> recipes.v1.Recipe

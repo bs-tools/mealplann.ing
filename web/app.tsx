@@ -4,10 +4,15 @@ import { useQuery } from "@connectrpc/connect-query";
 import { getCurrentUser } from "gen/users/v1/users-UserService_connectquery";
 import type { User } from "gen/users/v1/users_pb";
 import { hideSplash } from "helpers/splash";
+import FoodPage from "pages/food";
+import FoodsPage from "pages/foods";
 import HomePage from "pages/home";
 import InvitePage from "pages/invite";
 import OAuthConsentPage from "pages/oauth-consent";
 import PrivacyPage from "pages/privacy";
+import RecipePage from "pages/recipe";
+import RecipeEditPage from "pages/recipe-edit";
+import RecipesPage from "pages/recipes";
 import SettingsPage from "pages/settings";
 import SignInPage from "pages/sign-in";
 import React from "react";
@@ -98,6 +103,12 @@ const App: React.FC = () => {
         {user !== null && (
           <>
             <Route path="/" element={<HomePage user={user} />} />
+            <Route path="/recipes" element={<RecipesPage />} />
+            <Route path="/recipes/new" element={<RecipeEditPage />} />
+            <Route path="/recipes/:id" element={<RecipePage />} />
+            <Route path="/recipes/:id/edit" element={<RecipeEditPage />} />
+            <Route path="/foods" element={<FoodsPage />} />
+            <Route path="/foods/:id" element={<FoodPage />} />
             <Route path="/settings" element={<SettingsPage user={user} />} />
             <Route path="/oauth/authorize" element={<OAuthConsentPage />} />
             <Route path="*" element={<NotFound />} />

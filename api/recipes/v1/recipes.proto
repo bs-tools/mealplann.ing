@@ -111,7 +111,7 @@ message RecipeNutrition {
   // has it, and a lower bound if it's in incomplete_nutrients.
   foods.v1.Nutrients per_serving = 3;
   // The nutrients in 100 g of the recipe.
-  foods.v1.Nutrients per_100_grams = 4;
+  foods.v1.Nutrients per_hundred_grams = 4;
   // The nutrients some ingredients lack, by their field name in Nutrients,
   // e.g. "iodine_micrograms", whose values are lower bounds. Empty if every
   // nutrient is complete.

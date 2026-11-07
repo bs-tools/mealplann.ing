@@ -51,7 +51,7 @@ func TestFoods(t *testing.T) {
 	onionData := search.GetFoods()[0]
 	if onionData.GetFdcId() != 170000 || onionData.GetDescription() != "Onions, raw" ||
 		onionData.GetCategory() != "Vegetables and Vegetable Products" || onionData.GetDataType() != "sr_legacy_food" ||
-		onionData.GetNutrientsPer_100Grams().GetEnergyKcal() != 40 || onionData.GetNutrientsPer_100Grams().HasIodineMicrograms() ||
+		onionData.GetNutrients().GetEnergyKcal() != 40 || onionData.GetNutrients().HasIodineMicrograms() ||
 		len(onionData.GetPortions()) != 4 || onionData.GetPortions()[1].GetGrams() != 150 || onionData.GetFoodId() != "" {
 		t.Errorf("got %v, want the SR Legacy onions", onionData)
 	}
@@ -63,8 +63,8 @@ func TestFoods(t *testing.T) {
 		Food:  foodsv1.Food_builder{Name: " Onions "}.Build(),
 	}.Build())
 	if onion.GetName() != "Onions" || onion.GetSource() != foodsv1.FoodSource_FOOD_SOURCE_FDC || onion.GetFdcId() != 170000 ||
-		onion.GetNutrientsPer_100Grams().GetEnergyKcal() != 40 || onion.GetNutrientsPer_100Grams().GetSugarsGrams() != 4.24 ||
-		onion.GetNutrientsPer_100Grams().HasIodineMicrograms() || onion.GetGramsPerPiece() != 110 ||
+		onion.GetNutrients().GetEnergyKcal() != 40 || onion.GetNutrients().GetSugarsGrams() != 4.24 ||
+		onion.GetNutrients().HasIodineMicrograms() || onion.GetGramsPerPiece() != 110 ||
 		onion.GetGramsPerMilliliter() != 0.676 || onion.GetStoreSection() != foodsv1.StoreSection_STORE_SECTION_PRODUCE ||
 		onion.GetFastCarb() || onion.GetId() == "" || !onion.GetCreateTime().IsValid() {
 		t.Errorf("got %v, want onions from FDC", onion)
@@ -82,7 +82,7 @@ func TestFoods(t *testing.T) {
 	}.Build())
 	if soyMilk.GetName() != "Soy milk, unsweetened, plain, shelf stable" || soyMilk.GetGramsPerMilliliter() != 1.03 ||
 		soyMilk.GetStoreSection() != foodsv1.StoreSection_STORE_SECTION_DRINKS || soyMilk.GetPackageGrams() != 1000 ||
-		soyMilk.GetOpenedShelfLifeDays() != 4 || soyMilk.GetNutrientsPer_100Grams().GetEnergyKcal() != 32.3 {
+		soyMilk.GetOpenedShelfLifeDays() != 4 || soyMilk.GetNutrients().GetEnergyKcal() != 32.3 {
 		t.Errorf("got %v, want soy milk with the given fields", soyMilk)
 	}
 	// The search now points to the household's food.
@@ -102,7 +102,7 @@ func TestFoods(t *testing.T) {
 	// FDC foods bring their own nutrients, and must exist.
 	_, err = e.foods.CreateFood(ctx, foodsv1.CreateFoodRequest_builder{
 		FdcId: 172420,
-		Food:  foodsv1.Food_builder{NutrientsPer_100Grams: foodsv1.Nutrients_builder{ProteinGrams: new(25.0)}.Build()}.Build(),
+		Food:  foodsv1.Food_builder{Nutrients: foodsv1.Nutrients_builder{ProteinGrams: new(25.0)}.Build()}.Build(),
 	}.Build())
 	wantCode(t, err, connect.CodeInvalidArgument)
 	_, err = e.foods.CreateFood(ctx, foodsv1.CreateFoodRequest_builder{FdcId: 999}.Build())
@@ -112,7 +112,7 @@ func TestFoods(t *testing.T) {
 	yogurt := createFood(t, e.foods, foodsv1.CreateFoodRequest_builder{
 		Food: foodsv1.Food_builder{
 			Name: "Soy yogurt, plain",
-			NutrientsPer_100Grams: foodsv1.Nutrients_builder{
+			Nutrients: foodsv1.Nutrients_builder{
 				EnergyKcal:           new(50.0),
 				ProteinGrams:         new(4.0),
 				CarbohydrateGrams:    new(2.1),
@@ -128,8 +128,8 @@ func TestFoods(t *testing.T) {
 		}.Build(),
 	}.Build())
 	if yogurt.GetSource() != foodsv1.FoodSource_FOOD_SOURCE_CUSTOM || yogurt.GetFdcId() != 0 ||
-		!yogurt.GetNutrientsPer_100Grams().HasSugarsGrams() || yogurt.GetNutrientsPer_100Grams().GetSugarsGrams() != 0 ||
-		yogurt.GetNutrientsPer_100Grams().HasIronMilligrams() || yogurt.GetShelfLifeDays() != 21 || yogurt.GetNotes() != "The one in the blue tub" {
+		!yogurt.GetNutrients().HasSugarsGrams() || yogurt.GetNutrients().GetSugarsGrams() != 0 ||
+		yogurt.GetNutrients().HasIronMilligrams() || yogurt.GetShelfLifeDays() != 21 || yogurt.GetNotes() != "The one in the blue tub" {
 		t.Errorf("got %v, want the custom yogurt, with zero sugars and unknown iron", yogurt)
 	}
 
@@ -137,9 +137,9 @@ func TestFoods(t *testing.T) {
 	for name, f := range map[string]*foodsv1.Food{
 		"no name":           foodsv1.Food_builder{Name: "  "}.Build(),
 		"long name":         foodsv1.Food_builder{Name: strings.Repeat("a", 201)}.Build(),
-		"negative nutrient": foodsv1.Food_builder{Name: "x", NutrientsPer_100Grams: foodsv1.Nutrients_builder{ProteinGrams: new(-1.0)}.Build()}.Build(),
-		"too much protein":  foodsv1.Food_builder{Name: "x", NutrientsPer_100Grams: foodsv1.Nutrients_builder{ProteinGrams: new(101.0)}.Build()}.Build(),
-		"too much energy":   foodsv1.Food_builder{Name: "x", NutrientsPer_100Grams: foodsv1.Nutrients_builder{EnergyKcal: new(1000.0)}.Build()}.Build(),
+		"negative nutrient": foodsv1.Food_builder{Name: "x", Nutrients: foodsv1.Nutrients_builder{ProteinGrams: new(-1.0)}.Build()}.Build(),
+		"too much protein":  foodsv1.Food_builder{Name: "x", Nutrients: foodsv1.Nutrients_builder{ProteinGrams: new(101.0)}.Build()}.Build(),
+		"too much energy":   foodsv1.Food_builder{Name: "x", Nutrients: foodsv1.Nutrients_builder{EnergyKcal: new(1000.0)}.Build()}.Build(),
 		"too dense":         foodsv1.Food_builder{Name: "x", GramsPerMilliliter: 10}.Build(),
 		"negative piece":    foodsv1.Food_builder{Name: "x", GramsPerPiece: -5}.Build(),
 		"long shelf life":   foodsv1.Food_builder{Name: "x", ShelfLifeDays: 5000}.Build(),
@@ -156,7 +156,7 @@ func TestFoods(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetFood: %v", err)
 	}
-	if got.GetFood().GetName() != "Soy yogurt, plain" || got.GetFood().GetNutrientsPer_100Grams().GetVitaminB12Micrograms() != 0.38 {
+	if got.GetFood().GetName() != "Soy yogurt, plain" || got.GetFood().GetNutrients().GetVitaminB12Micrograms() != 0.38 {
 		t.Errorf("got %v, want the yogurt", got.GetFood())
 	}
 	_, err = e.foods.GetFood(ctx, foodsv1.GetFoodRequest_builder{Id: "nope"}.Build())
@@ -216,26 +216,26 @@ func TestFoods(t *testing.T) {
 		t.Fatalf("UpdateFood: %v", err)
 	}
 	if f := updated.GetFood(); f.GetName() != "Soy yogurt, plain" || f.GetGramsPerPiece() != 125 || !f.GetFastCarb() ||
-		f.GetNutrientsPer_100Grams().GetCalciumMilligrams() != 120 || !f.GetUpdateTime().AsTime().After(yogurt.GetUpdateTime().AsTime()) ||
+		f.GetNutrients().GetCalciumMilligrams() != 120 || !f.GetUpdateTime().AsTime().After(yogurt.GetUpdateTime().AsTime()) ||
 		!f.GetCreateTime().AsTime().Equal(yogurt.GetCreateTime().AsTime()) {
 		t.Errorf("got %v, want the weight and fast carb changed, and a later update time", f)
 	}
 	// One nutrient at a time.
 	updated, err = e.foods.UpdateFood(ctx, foodsv1.UpdateFoodRequest_builder{
 		Food: foodsv1.Food_builder{
-			Id:                    yogurt.GetId(),
-			NutrientsPer_100Grams: foodsv1.Nutrients_builder{IodineMicrograms: new(22.5)}.Build(),
+			Id:        yogurt.GetId(),
+			Nutrients: foodsv1.Nutrients_builder{IodineMicrograms: new(22.5)}.Build(),
 		}.Build(),
-		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"nutrients_per_100_grams.iodine_micrograms", "nutrients_per_100_grams.calcium_milligrams"}},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"nutrients.iodine_micrograms", "nutrients.calcium_milligrams"}},
 	}.Build())
 	if err != nil {
 		t.Fatalf("UpdateFood: %v", err)
 	}
-	if n := updated.GetFood().GetNutrientsPer_100Grams(); n.GetIodineMicrograms() != 22.5 || n.HasCalciumMilligrams() || n.GetProteinGrams() != 4 {
+	if n := updated.GetFood().GetNutrients(); n.GetIodineMicrograms() != 22.5 || n.HasCalciumMilligrams() || n.GetProteinGrams() != 4 {
 		t.Errorf("got %v, want iodine set, calcium cleared and protein kept", n)
 	}
 	// Server fields and unknown paths can't be updated.
-	for _, path := range []string{"id", "fdc_id", "source", "create_time", "nutrients_per_100_grams.vitamin_c_milligrams", "name.first"} {
+	for _, path := range []string{"id", "fdc_id", "source", "create_time", "nutrients.vitamin_c_milligrams", "name.first"} {
 		_, err = e.foods.UpdateFood(ctx, foodsv1.UpdateFoodRequest_builder{
 			Food:       foodsv1.Food_builder{Id: yogurt.GetId()}.Build(),
 			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{path}},
@@ -262,7 +262,7 @@ func TestFoods(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpdateFood: %v", err)
 	}
-	if f := updated.GetFood(); f.GetName() != "Yellow onions" || f.GetGramsPerPiece() != 150 || f.HasNutrientsPer_100Grams() && f.GetNutrientsPer_100Grams().HasEnergyKcal() ||
+	if f := updated.GetFood(); f.GetName() != "Yellow onions" || f.GetGramsPerPiece() != 150 || f.HasNutrients() && f.GetNutrients().HasEnergyKcal() ||
 		f.GetStoreSection() != foodsv1.StoreSection_STORE_SECTION_UNSPECIFIED || f.GetFdcId() != 170000 {
 		t.Errorf("got %v, want the onions replaced, from the same FDC food", f)
 	}

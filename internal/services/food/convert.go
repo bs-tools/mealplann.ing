@@ -133,21 +133,21 @@ func foodToProto(f *foods.Food) *foodsv1.Food {
 		source = foodsv1.FoodSource_FOOD_SOURCE_FDC
 	}
 	return foodsv1.Food_builder{
-		Id:                    store.UUIDToString(f.ID),
-		Name:                  f.Name,
-		Source:                source,
-		FdcId:                 f.FDCID,
-		NutrientsPer_100Grams: NutrientsToProto(&f.Per100Grams, -1),
-		GramsPerPiece:         f.GramsPerPiece,
-		GramsPerMilliliter:    f.GramsPerMilliliter,
-		FastCarb:              f.FastCarb,
-		StoreSection:          storeSectionsToProto[f.StoreSection],
-		PackageGrams:          f.PackageGrams,
-		ShelfLifeDays:         f.ShelfLifeDays,
-		OpenedShelfLifeDays:   f.OpenedShelfLifeDays,
-		Notes:                 f.Notes,
-		CreateTime:            timestamppb.New(f.CreateTime),
-		UpdateTime:            timestamppb.New(f.UpdateTime),
+		Id:                  store.UUIDToString(f.ID),
+		Name:                f.Name,
+		Source:              source,
+		FdcId:               f.FDCID,
+		Nutrients:           NutrientsToProto(&f.Per100Grams, -1),
+		GramsPerPiece:       f.GramsPerPiece,
+		GramsPerMilliliter:  f.GramsPerMilliliter,
+		FastCarb:            f.FastCarb,
+		StoreSection:        storeSectionsToProto[f.StoreSection],
+		PackageGrams:        f.PackageGrams,
+		ShelfLifeDays:       f.ShelfLifeDays,
+		OpenedShelfLifeDays: f.OpenedShelfLifeDays,
+		Notes:               f.Notes,
+		CreateTime:          timestamppb.New(f.CreateTime),
+		UpdateTime:          timestamppb.New(f.UpdateTime),
 	}.Build()
 }
 
@@ -165,7 +165,7 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 	if utf8.RuneCountInString(notes) > maxNotesLength {
 		return nil, connect.Errorf(connect.CodeInvalidArgument, "notes must be at most %d characters", maxNotesLength)
 	}
-	per100, err := nutrientsFromProto(p.GetNutrientsPer_100Grams(), "nutrients_per_100_grams")
+	per100, err := nutrientsFromProto(p.GetNutrients(), "nutrients")
 	if err != nil {
 		return nil, err
 	}
@@ -205,9 +205,9 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 // foodFromFDC returns a food created from an FDC food, with the fields set
 // in the request's food overriding what's taken from FDC.
 func foodFromFDC(fdcFood *foods.FDCFood, in *foodsv1.Food) (*foods.Food, error) {
-	if in.HasNutrientsPer_100Grams() {
+	if in.HasNutrients() {
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
-			"the nutrients are copied from FoodData Central food %d, so leave nutrients_per_100_grams unset; change them with UpdateFood afterwards if needed",
+			"the nutrients are copied from FoodData Central food %d, so leave nutrients unset; change them with UpdateFood afterwards if needed",
 			fdcFood.FDCID)
 	}
 	base := foodsv1.Food_builder{
@@ -289,12 +289,12 @@ func foodDataToProto(m *foods.FDCMatch) *foodsv1.FoodData {
 		}.Build())
 	}
 	return foodsv1.FoodData_builder{
-		FdcId:                 m.FDCID,
-		Description:           m.Description,
-		Category:              m.Category,
-		DataType:              m.DataType,
-		NutrientsPer_100Grams: NutrientsToProto(&m.Per100Grams, -1),
-		Portions:              portions,
-		FoodId:                store.UUIDToString(m.FoodID),
+		FdcId:       m.FDCID,
+		Description: m.Description,
+		Category:    m.Category,
+		DataType:    m.DataType,
+		Nutrients:   NutrientsToProto(&m.Per100Grams, -1),
+		Portions:    portions,
+		FoodId:      store.UUIDToString(m.FoodID),
 	}.Build()
 }
