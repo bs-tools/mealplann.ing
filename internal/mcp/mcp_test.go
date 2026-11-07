@@ -18,13 +18,18 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/errreport"
 	authv1 "github.com/bs-tools/foodplann.ing/internal/gen/auth/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/auth/v1/authv1connect"
+	foodsv1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
+	"github.com/bs-tools/foodplann.ing/internal/gen/foods/v1/foodsv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/oauth/v1/oauthv1connect"
+	recipesv1 "github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1"
+	"github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1/recipesv1connect"
 	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/users/v1/usersv1connect"
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -33,13 +38,15 @@ func discardLogger() *slog.Logger {
 }
 
 // allServices returns every API service, with unimplemented handlers. The
-// server only serves the user service over MCP, but the others have more
-// kinds of methods to test.
+// server doesn't serve the auth and OAuth services over MCP, but they have
+// more kinds of methods to test.
 func allServices() []Service {
 	return []Service{
 		{Name: authv1connect.AuthServiceName, Handler: authv1connect.UnimplementedAuthServiceHandler{}},
 		{Name: oauthv1connect.OAuthServiceName, Handler: oauthv1connect.UnimplementedOAuthServiceHandler{}},
 		{Name: usersv1connect.UserServiceName, Handler: usersv1connect.UnimplementedUserServiceHandler{}},
+		{Name: foodsv1connect.FoodServiceName, Handler: foodsv1connect.UnimplementedFoodServiceHandler{}},
+		{Name: recipesv1connect.RecipeServiceName, Handler: recipesv1connect.UnimplementedRecipeServiceHandler{}},
 	}
 }
 
@@ -62,6 +69,7 @@ func TestNewServer(t *testing.T) {
 	}
 	for _, name := range []string{
 		"GetCurrentUser", "GetHousehold", "CreateInvitation", "ListInvitations", "ApproveAuthorization",
+		"SearchFoodData", "CreateFood", "UpdateFood", "DeleteFood", "CreateRecipe", "ListRecipes", "UpdateRecipe",
 	} {
 		if _, ok := tools[name]; !ok {
 			t.Errorf("method %s is not a tool", name)
@@ -108,6 +116,23 @@ func TestNewServer(t *testing.T) {
 			name:       "SignOutOtherSessions",
 			title:      "Sign Out Other Sessions",
 			idempotent: true,
+		},
+		{
+			name:       "SearchFoodData",
+			title:      "Search Food Data",
+			readOnly:   true,
+			idempotent: true,
+		},
+		{
+			name:        "DeleteFood",
+			title:       "Delete Food",
+			destructive: true,
+			idempotent:  true,
+			description: "Delete one of the household's foods. Fails with FAILED_PRECONDITION, naming the recipes, if recipes use it: remove it from them first.",
+		},
+		{
+			name:  "CreateRecipe",
+			title: "Create Recipe",
 		},
 	}
 	for _, tt := range tests {
@@ -281,6 +306,11 @@ func TestInstructions(t *testing.T) {
 		"## users.v1.UserService\n\nUserService provides information about the signed in user",
 		"## auth.v1.AuthService\n\nAuthService signs users in with passkeys.",
 		"## oauth.v1.OAuthService\n\nOAuthService lets users connect OAuth clients",
+		"## foods.v1.FoodService\n\nFoodService manages the household's foods",
+		"## recipes.v1.RecipeService\n\nRecipeService manages the household's recipes.",
+		// Numbered lists keep an item per line, so they stay lists in
+		// Markdown.
+		"To add an ingredient:\n\n1. Look for it among the household's foods with ListFoods, and reuse it if it's there.\n2. Otherwise,",
 	} {
 		if !strings.Contains(initRes.Instructions, want) {
 			t.Errorf("instructions do not contain %q:\n%s", want, initRes.Instructions)
@@ -511,11 +541,96 @@ func TestCallTool(t *testing.T) {
 			}
 		})
 	}
+}
 
-	// TODO(milestone 2): restore "output only fields are cleared" as a tool
-	// call with the foods/recipes protos, whose update requests take
-	// messages with output only fields. TestClearOutputOnly covers the
-	// clearing meanwhile.
+// fakeRecipes is a recipe service recording the recipes it's asked to
+// update, and returning them as they are.
+type fakeRecipes struct {
+	recipesv1connect.UnimplementedRecipeServiceHandler
+
+	mu      sync.Mutex
+	updates []*recipesv1.UpdateRecipeRequest
+}
+
+func (f *fakeRecipes) UpdateRecipe(_ context.Context, req *recipesv1.UpdateRecipeRequest) (*recipesv1.UpdateRecipeResponse, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.updates = append(f.updates, req)
+	return recipesv1.UpdateRecipeResponse_builder{Recipe: req.GetRecipe()}.Build(), nil
+}
+
+func TestCallToolClearsOutputOnly(t *testing.T) {
+	recipes := &fakeRecipes{}
+	srv, err := NewServer(discardLogger(), errreport.NewLocal(discardLogger()),
+		Service{Name: recipesv1connect.RecipeServiceName, Handler: recipes},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	session := connectClient(t, srv.Handler())
+
+	// An agent sends back a recipe as it got it, with the fields the server
+	// computes, which the input schema doesn't have.
+	res, err := session.CallTool(t.Context(), &mcp.CallToolParams{
+		Name: "UpdateRecipe",
+		Arguments: map[string]any{
+			"recipe": map[string]any{
+				"id":         "r1",
+				"name":       "Lentil soup",
+				"servings":   4,
+				"createTime": "2026-05-01T07:30:00Z",
+				"nutrition":  map[string]any{"totalGrams": 900},
+				"ingredients": []any{
+					map[string]any{"foodId": "f1", "foodName": "Lentils", "amount": 200, "unit": "AMOUNT_UNIT_GRAMS"},
+				},
+			},
+			"updateMask": "name,servings",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.IsError {
+		t.Fatalf("tool error: %v", res.Content)
+	}
+	if len(recipes.updates) != 1 {
+		t.Fatalf("got %d updates, want 1", len(recipes.updates))
+	}
+	got := recipes.updates[0]
+	want := recipesv1.UpdateRecipeRequest_builder{
+		Recipe: recipesv1.Recipe_builder{
+			Id:       "r1",
+			Name:     "Lentil soup",
+			Servings: 4,
+			Ingredients: []*recipesv1.Ingredient{
+				recipesv1.Ingredient_builder{FoodId: "f1", Amount: 200, Unit: foodsv1.AmountUnit_AMOUNT_UNIT_GRAMS}.Build(),
+			},
+		}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"name", "servings"}},
+	}.Build()
+	if !proto.Equal(got, want) {
+		t.Errorf("got request %v, want the output only fields cleared, even in the ingredients: %v", got, want)
+	}
+
+	// The input schema leaves them out, but keeps the ID to update.
+	var tool *mcp.Tool
+	for _, tl := range srv.Tools() {
+		if tl.Name == "UpdateRecipe" {
+			tool = tl
+		}
+	}
+	recipe := tool.InputSchema.(*jsonschema.Schema).Properties["recipe"]
+	if recipe == nil {
+		t.Fatal("no recipe in the input schema")
+	}
+	for _, name := range []string{"nutrition", "createTime", "updateTime"} {
+		if _, ok := recipe.Properties[name]; ok {
+			t.Errorf("the input schema has the output only field %s", name)
+		}
+	}
+	if _, ok := recipe.Properties["id"]; !ok {
+		t.Error("the input schema has no id")
+	}
 }
 
 func TestClearOutputOnly(t *testing.T) {
@@ -537,6 +652,7 @@ func TestClearOutputOnly(t *testing.T) {
 	}
 }
 
-// TODO(milestone 2): restore TestCallToolImage, which checks that
-// mcp.v1.Image fields of results become image content, once a food or
-// recipe method returns a photo.
+// TODO(milestone 3): restore TestCallToolImage, which checks that
+// mcp.v1.Image fields of results become image content, once a method
+// returns an image, like a photo of a recipe or a cooked meal. No method of
+// foods and recipes does yet.

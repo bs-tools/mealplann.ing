@@ -12,9 +12,10 @@ built on the same stack as [trail-tools](https://github.com/johanbrandhorst/trai
 
 ## Status
 
-Milestone 1, the skeleton: invite-only sign in with passkeys, households, the
-settings page, and the MCP server with OAuth and API tokens. Foods, recipes,
-plans, the pantry and the shopping list come next.
+Milestones 1 and 2: invite-only sign in with passkeys, households, the
+settings page, and the MCP server with OAuth and API tokens; foods from USDA
+FoodData Central or entered by hand, and recipes with their nutrition per
+serving. People, plans, the pantry and the shopping list come next.
 
 ## Prerequisites
 
@@ -44,6 +45,25 @@ share its recipes, plans, pantry and shopping list.
 `make run` and `make watch` also let browsers and agents on your machine sign
 in without a passkey, as the local administrator, at
 http://localhost:8080/local-sign-in.
+
+### Foods from USDA FoodData Central
+
+Households create their foods from USDA FoodData Central (FDC), so their
+nutrients are filled in, or enter them by hand. To make FDC's foods
+available, download the **Foundation Foods** and **SR Legacy** datasets as
+CSV from https://fdc.nal.usda.gov/download-datasets, and import them into
+the local database, as the zip files or extracted:
+
+```sh
+$ make import-fdc FDC="FoodData_Central_foundation_food_csv_2025-04-24.zip FoodData_Central_sr_legacy_food_csv_2018-04.zip"
+```
+
+That runs `foodplanning import-fdc -database-url <url> <dataset>...`, which
+also imports into other databases. It skips the categories of meat, fish,
+dairy and eggs (see `excludedCategories` in `internal/fdc`), and importing
+again, e.g. a newer release, updates the foods. The Branded dataset is too
+big for the free tier: enter branded products as custom foods, from their
+labels.
 
 ### AI agents (MCP)
 
