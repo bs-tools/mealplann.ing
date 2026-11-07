@@ -199,5 +199,137 @@ $ FOODPLANNING_OTLP_ENDPOINT= make run
 
 ## Deploying
 
-Not yet: it will run on Cloud Run in a new Google Cloud project, with Neon
-Postgres, deployed with Terraform like trail-tools.
+foodplann.ing runs on [Cloud Run](https://cloud.google.com/run) with a
+[Neon](https://neon.com) serverless Postgres database, sized to stay within
+the free tiers for personal use: Cloud Run scales to zero, runs at most one
+instance and only uses CPU during requests, and Neon suspends the database
+when it's idle. Both are in `us-west1`, as every database round trip
+crosses between them.
+
+The Google Cloud configuration is managed with Terraform in
+[`infra/`](infra), with its state in a Cloud Storage bucket. Pushes to `main`
+are deployed by the `deploy` job in [CI](.github/workflows/ci.yml) once all
+checks pass: it builds the image with [ko](https://ko.build) and runs
+`terraform apply` with it. Pull requests that change `infra/` get a comment
+with the Terraform plan, from the [Terraform plan](.github/workflows/terraform.yml)
+workflow.
+
+GitHub Actions authenticates to Google Cloud with Workload Identity
+Federation, so there are no stored credentials: pushes to `main` as the
+`github-terraform` service account, which can apply changes, and pull
+requests as the read-only `github-terraform-plan` service account. Both
+workflows read the project from the repository variables `GCP_PROJECT_ID`
+and `GCP_PROJECT_NUMBER`, and are skipped until they're set.
+
+To plan or apply changes locally, with your gcloud credentials:
+
+```sh
+$ make infra-plan
+$ make infra-apply
+```
+
+Both use the Terraform version CI applies with, the `terraform` stage in
+[`images/Dockerfile`](images/Dockerfile), downloaded into `.bin` the first
+time: Terraform refuses to read state written by a newer version.
+
+### Bootstrapping the project
+
+Once, in order:
+
+1. Create the Google Cloud project and link it to a billing account.
+2. Replace the placeholders: the project ID and billing account in
+   [`infra/terraform.tfvars`](infra/terraform.tfvars), and the project ID in
+   the state bucket's name in [`infra/versions.tf`](infra/versions.tf).
+3. Create the state bucket:
+
+   ```sh
+   $ gcloud storage buckets create gs://<project>-tfstate --location us-west1 --uniform-bucket-level-access --public-access-prevention
+   $ gcloud storage buckets update gs://<project>-tfstate --versioning
+   ```
+
+4. Apply without the service, which needs the secrets' values first:
+
+   ```sh
+   $ make infra-apply ARGS="-var service_enabled=false"
+   ```
+
+5. Let the Terraform service accounts manage and read the budget:
+
+   ```sh
+   $ gcloud billing accounts add-iam-policy-binding <billing account> --member serviceAccount:github-terraform@<project>.iam.gserviceaccount.com --role roles/billing.costsManager
+   $ gcloud billing accounts add-iam-policy-binding <billing account> --member serviceAccount:github-terraform-plan@<project>.iam.gserviceaccount.com --role roles/billing.viewer
+   ```
+
+6. Add the secrets' values, see [Secrets](#secrets).
+7. Set the repository variables `GCP_PROJECT_ID` and `GCP_PROJECT_NUMBER`
+   under Settings → Secrets and variables → Actions → Variables. They aren't
+   secret: the workflows only use them to name the project and its service
+   accounts.
+8. Merge to `main`, or rerun CI on it: the deploy job builds the image and
+   creates the service.
+9. Set up the [custom domain](#custom-domain), then create the first
+   administrator on it.
+10. [Import FoodData Central](#importing-fooddata-central).
+
+### Secrets
+
+Secrets are created by Terraform, but their values are added by hand so they
+aren't stored in the Terraform state:
+
+- `database-url`: the direct (not pooled) Neon connection string, as
+  migrations need session advisory locks.
+
+  ```sh
+  $ pbpaste | gcloud secrets versions add database-url --data-file=- --project <project>
+  ```
+
+- `admin-bootstrap-token`: works as an invitation to create the first
+  administrator at `/invite#<token>`, until there is one.
+
+  ```sh
+  $ openssl rand -hex 24 | gcloud secrets versions add admin-bootstrap-token --data-file=- --project <project>
+  $ gcloud secrets versions access latest --secret admin-bootstrap-token --project <project>
+  ```
+
+  Passkeys are bound to the domain, so create the administrator on the
+  domain you'll use.
+
+### Custom domain
+
+The app is served on `foodplann.ing`, set as `domain` in
+[`infra/terraform.tfvars`](infra/terraform.tfvars). To set it up:
+
+1. Verify the domain with `gcloud domains verify foodplann.ing`.
+2. Set `domain_enabled = true` in [`infra/terraform.tfvars`](infra/terraform.tfvars)
+   and apply it locally with `make infra-apply`. Only a verified owner of the
+   domain can map it, and the GitHub service account is not one, so the first
+   apply runs with your own credentials. Later applies from CI leave the
+   existing mapping alone.
+3. Create the DNS records from `make infra-output NAME=domain_records` at the
+   domain's registrar. Cloud Run provisions and renews the TLS certificate,
+   which takes up to about 15 minutes after the records resolve.
+
+### Importing FoodData Central
+
+The FoodData Central import is a few thousand foods, run once and again when
+USDA publishes new data, so it runs from your machine against the database
+rather than as a job in the cloud:
+
+```sh
+$ go run . import-fdc -database-url '<the database-url secret>' FoodData_Central_foundation_food_csv_*.zip FoodData_Central_sr_legacy_food_csv_*.zip
+```
+
+### Avatars
+
+Avatars are stored in the `<project>-avatars` Cloud Storage bucket, as the
+file system of a Cloud Run instance doesn't outlive it. It's private, in
+`us-west1` within the free tier, and only the service account can read and
+write it. Terraform passes it to the service as
+`FOODPLANNING_AVATAR_BUCKET`.
+
+### Traces and errors
+
+On Cloud Run, the server sends traces with OTLP to Google Cloud's Telemetry
+API, to view in [Cloud Trace](https://console.cloud.google.com/traces), and
+reports errors to [Error Reporting](https://console.cloud.google.com/errors),
+which can email about new ones. Both are free at the app's traffic.

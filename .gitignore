@@ -4,5 +4,8 @@ localhost.pem
 # Binaries built with go build
 /foodplanning
 
+# Tools the Makefile installs, like Terraform
+/.bin/
+
 # Avatars stored locally, see -avatar-dir
 /avatars/

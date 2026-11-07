@@ -38,7 +38,20 @@ updates:
       go:
         patterns: ["*"]
 
-  # The images in images/Dockerfile, which the Makefile and CI read. Not new
+  # The Google provider, in infra/.terraform.lock.hcl. Its pull request has
+  # a plan comment, but is applied once merged like any other update.
+  - package-ecosystem: "terraform"
+    directory: "/infra"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    groups:
+      terraform:
+        patterns: ["*"]
+
+  # The images and Terraform version in images/Dockerfile, which the
+  # Makefile and CI read. Not new
   # major versions of Postgres, which follows Neon's, where a project's major
   # version never changes.
   - package-ecosystem: "docker"
