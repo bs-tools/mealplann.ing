@@ -1,0 +1,320 @@
+syntax = "proto3";
+
+package foods.v1;
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "mcp/v1/options.proto";
+
+// FoodService manages the household's foods: the ingredients its recipes are
+// made of, such as chickpeas, a brand of tofu or soy milk, with their
+// nutrients per 100 g. Recipes (see RecipeService) and, later, meal plans,
+// the pantry and the shopping list refer to these foods, and all nutrition
+// is computed from them, so keep one food per ingredient and reuse it.
+//
+// To add an ingredient:
+//
+// 1. Look for it among the household's foods with ListFoods, and reuse it if
+//    it's there.
+// 2. Otherwise, search USDA FoodData Central with SearchFoodData, and create
+//    the food from the best match with CreateFood and its fdc_id. Its
+//    nutrients are copied from FDC. Prefer generic FDC foods for
+//    ingredients like vegetables, legumes and grains.
+// 3. Only for branded products FDC doesn't have, like a particular tofu or
+//    plant milk, create a custom food with the nutrients from its label,
+//    converted to per 100 g.
+//
+// Then check that the food can be weighed: recipes measured in pieces need
+// grams_per_piece, and recipes measured in milliliters need
+// grams_per_milliliter.
+service FoodService {
+  // Search the foods of USDA FoodData Central (the Foundation Foods and SR
+  // Legacy datasets, without meat, fish, dairy and eggs) by their
+  // description, e.g. "chickpeas cooked" or "spinach raw". Returns the best
+  // matches first, with their nutrients per 100 g and common portions. Use it
+  // to pick the fdc_id to create a food with CreateFood.
+  rpc SearchFoodData(SearchFoodDataRequest) returns (SearchFoodDataResponse);
+  // Create a food in the household, either from a FoodData Central food,
+  // copying its nutrients, or as a custom food with the given nutrients.
+  // Fails with ALREADY_EXISTS if the household has a food with the same
+  // name, which should then be reused instead.
+  rpc CreateFood(CreateFoodRequest) returns (CreateFoodResponse);
+  // Get one of the household's foods.
+  rpc GetFood(GetFoodRequest) returns (GetFoodResponse);
+  // List the household's foods, optionally only those whose name contains a
+  // text, ordered by name.
+  rpc ListFoods(ListFoodsRequest) returns (ListFoodsResponse);
+  // Update one of the household's foods. Recipes using it see the change
+  // right away, as their nutrition is computed from their foods.
+  rpc UpdateFood(UpdateFoodRequest) returns (UpdateFoodResponse);
+  // Delete one of the household's foods. Fails with FAILED_PRECONDITION,
+  // naming the recipes, if recipes use it: remove it from them first.
+  rpc DeleteFood(DeleteFoodRequest) returns (DeleteFoodResponse);
+}
+
+// Nutrients are the amounts of the nutrients the app tracks in an amount of
+// food, e.g. per 100 g of a food or per serving of a recipe. Every field is
+// optional: unset means unknown, which is different from 0. FoodData Central
+// often lacks iodine, vitamin B12 and vitamin D, for example. Only set the
+// values you know, from FDC or a food's label, and never guess them.
+message Nutrients {
+  // Energy, in kilocalories (kcal).
+  optional double energy_kcal = 1;
+  // Protein, in grams.
+  optional double protein_grams = 2;
+  // Total carbohydrate, in grams, including sugars and fiber, as FoodData
+  // Central and US labels give it. European labels give carbohydrate
+  // without fiber: add the label's fiber to it.
+  optional double carbohydrate_grams = 3;
+  // Total sugars, in grams. Part of carbohydrate_grams.
+  optional double sugars_grams = 4;
+  // Total fat, in grams.
+  optional double fat_grams = 5;
+  // Dietary fiber, in grams.
+  optional double fiber_grams = 6;
+  // Vitamin B12 (cobalamin), in micrograms.
+  optional double vitamin_b12_micrograms = 7;
+  // Iron, in milligrams.
+  optional double iron_milligrams = 8;
+  // Calcium, in milligrams.
+  optional double calcium_milligrams = 9;
+  // Vitamin D (D2 and D3), in micrograms. 1 µg is 40 IU.
+  optional double vitamin_d_micrograms = 10;
+  // Iodine, in micrograms.
+  optional double iodine_micrograms = 11;
+  // Zinc, in milligrams.
+  optional double zinc_milligrams = 12;
+  // Alpha-linolenic acid (ALA), the plant omega-3 fatty acid, in grams.
+  optional double omega3_ala_grams = 13;
+  // Folate, in micrograms of dietary folate equivalents (DFE).
+  optional double folate_micrograms = 14;
+  // Vitamin A, in micrograms of retinol activity equivalents (RAE).
+  optional double vitamin_a_micrograms = 15;
+  // Vitamin E (alpha-tocopherol), in milligrams.
+  optional double vitamin_e_milligrams = 16;
+  // Vitamin K (phylloquinone, K1), in micrograms.
+  optional double vitamin_k_micrograms = 17;
+  // Copper, in milligrams.
+  optional double copper_milligrams = 18;
+  // Magnesium, in milligrams.
+  optional double magnesium_milligrams = 19;
+  // Sodium, in milligrams. Labels often give salt instead: sodium is salt
+  // divided by 2.5.
+  optional double sodium_milligrams = 20;
+  // Potassium, in milligrams.
+  optional double potassium_milligrams = 21;
+}
+
+// FoodSource is where a food's nutrients come from.
+enum FoodSource {
+  FOOD_SOURCE_UNSPECIFIED = 0;
+  // USDA FoodData Central, see fdc_id.
+  FOOD_SOURCE_FDC = 1;
+  // Entered by hand or by an agent, e.g. from a product's label.
+  FOOD_SOURCE_CUSTOM = 2;
+}
+
+// StoreSection is the part of a store a food is found in, which groups the
+// shopping list.
+enum StoreSection {
+  // Not set.
+  STORE_SECTION_UNSPECIFIED = 0;
+  // Fresh fruit, vegetables and herbs.
+  STORE_SECTION_PRODUCE = 1;
+  // Bread and baked goods.
+  STORE_SECTION_BAKERY = 2;
+  // Refrigerated foods, like tofu, tempeh and plant yogurts.
+  STORE_SECTION_CHILLED = 3;
+  // Frozen foods.
+  STORE_SECTION_FROZEN = 4;
+  // Dry goods, like pasta, rice, flour, dried legumes, nuts and seeds.
+  STORE_SECTION_DRY_GOODS = 5;
+  // Canned and jarred foods.
+  STORE_SECTION_CANNED = 6;
+  // Spices, dried herbs and seasonings.
+  STORE_SECTION_SPICES = 7;
+  // Drinks, including plant milks sold unrefrigerated.
+  STORE_SECTION_DRINKS = 8;
+  // Household goods that aren't food.
+  STORE_SECTION_HOUSEHOLD = 9;
+  // Anything else.
+  STORE_SECTION_OTHER = 10;
+}
+
+// AmountUnit is the unit of an amount of a food, e.g. of a recipe's
+// ingredient. Amounts are converted to grams with the food's
+// grams_per_piece and grams_per_milliliter.
+enum AmountUnit {
+  AMOUNT_UNIT_UNSPECIFIED = 0;
+  // Grams. Prefer grams where the recipe gives them.
+  AMOUNT_UNIT_GRAMS = 1;
+  // Milliliters, for liquids, e.g. 250 ml of soy milk. 1 tablespoon is 15
+  // ml, 1 teaspoon 5 ml and 1 US cup 240 ml.
+  AMOUNT_UNIT_MILLILITERS = 2;
+  // Pieces, e.g. 2 onions or 3 cloves of garlic.
+  AMOUNT_UNIT_PIECES = 3;
+}
+
+// A food: an ingredient, such as chickpeas, a brand of tofu or soy milk.
+message Food {
+  // The ID of the food. Required to update it, and ignored when creating
+  // it.
+  string id = 1;
+  // The name of the food, as the household calls it, e.g. "Chickpeas,
+  // canned" or "Tofu, firm". From 1 to 200 characters, and unique in the
+  // household, ignoring case.
+  string name = 2;
+  // Where the food's nutrients come from.
+  FoodSource source = 3 [(mcp.v1.field).output_only = true];
+  // The ID of the FoodData Central food it was created from, 0 for custom
+  // foods.
+  int32 fdc_id = 4 [(mcp.v1.field).output_only = true];
+  // The nutrients in 100 g of the food. Unset nutrients are unknown. For
+  // custom foods, enter the values from the label's "per 100 g" column;
+  // convert values given per serving or per 100 ml to per 100 g first.
+  Nutrients nutrients_per_100_grams = 5;
+  // The typical weight of one piece in grams, e.g. 150 for an onion or 5 for
+  // a clove of garlic, so amounts in pieces can be weighed. 0 if unknown or
+  // the food doesn't come in pieces.
+  double grams_per_piece = 6;
+  // The density in grams per milliliter, e.g. 1.03 for soy milk or 0.92 for
+  // oil, so amounts in milliliters can be weighed. 0 if unknown.
+  double grams_per_milliliter = 7;
+  // Whether the food's carbohydrate is quickly absorbed, like white bread,
+  // white rice, fruit juice, sugar, syrups and dried fruit, which matters for
+  // reactive hypoglycemia. Only set it for foods that are; FDC has no
+  // glycemic index, so it's never set automatically. False by default.
+  bool fast_carb = 8;
+  // The part of the store the food is found in, for the shopping list.
+  // STORE_SECTION_UNSPECIFIED if not set.
+  StoreSection store_section = 9;
+  // The typical size of a pack as sold, in grams, e.g. 400 for a can of
+  // chickpeas, to round shopping quantities up to whole packs. 0 if unknown
+  // or sold loose.
+  double package_grams = 10;
+  // How many days the food keeps once bought, unopened, e.g. 5 for fresh
+  // spinach or 365 for dried lentils. 0 if unknown.
+  int32 shelf_life_days = 11;
+  // How many days the food keeps once opened, e.g. 4 for an opened carton of
+  // soy milk. 0 if unknown or the same as shelf_life_days.
+  int32 opened_shelf_life_days = 12;
+  // Notes about the food, e.g. the brand or where to buy it. At most 2000
+  // characters.
+  string notes = 13;
+  // When the food was created.
+  google.protobuf.Timestamp create_time = 14 [(mcp.v1.field).output_only = true];
+  // When the food was last changed.
+  google.protobuf.Timestamp update_time = 15 [(mcp.v1.field).output_only = true];
+}
+
+// A food of USDA FoodData Central.
+message FoodData {
+  // The FDC ID of the food, to create a food from with CreateFood.
+  int32 fdc_id = 1;
+  // The FDC description, e.g. "Chickpeas (garbanzo beans, bengal gram),
+  // mature seeds, cooked, boiled, without salt".
+  string description = 2;
+  // The FDC food category, e.g. "Legumes and Legume Products".
+  string category = 3;
+  // The FDC dataset: "foundation_food" for Foundation Foods, which are
+  // analyzed recently, or "sr_legacy_food" for SR Legacy, which has more
+  // foods and nutrients.
+  string data_type = 4;
+  // The nutrients in 100 g of the food. Unset nutrients are unknown.
+  Nutrients nutrients_per_100_grams = 5;
+  // Common portions of the food with their weight, e.g. "1 cup" or "1
+  // medium".
+  repeated FoodDataPortion portions = 6;
+  // The ID of the household's food created from this FDC food, empty if
+  // none. Reuse that food rather than creating another.
+  string food_id = 7;
+}
+
+// A common portion of a FoodData Central food.
+message FoodDataPortion {
+  // The portion, e.g. "1 cup, chopped" or "1 medium (2-1/2\" dia)".
+  string description = 1;
+  // The weight of the portion, in grams.
+  double grams = 2;
+}
+
+message SearchFoodDataRequest {
+  // The words to search for in FDC descriptions, e.g. "lentils red raw".
+  // Required.
+  string query = 1;
+  // The most foods to return, from 1 to 50. 10 if 0.
+  int32 page_size = 2;
+}
+
+message SearchFoodDataResponse {
+  // The matching foods, the best match first.
+  repeated FoodData foods = 1;
+}
+
+message CreateFoodRequest {
+  // The FoodData Central food to create the food from, found with
+  // SearchFoodData. Its nutrients are copied, so leave
+  // food.nutrients_per_100_grams unset. Its description is the name unless
+  // food.name is set, and its portions suggest grams_per_piece and
+  // grams_per_milliliter unless they're set. 0 for a custom food.
+  int32 fdc_id = 1;
+  // The food. For a custom food, name is required. With fdc_id, all fields
+  // are optional, and override what's taken from FDC: prefer a short name,
+  // like "Chickpeas, cooked", to the long FDC description.
+  Food food = 2;
+}
+
+message CreateFoodResponse {
+  // The created food.
+  Food food = 1;
+}
+
+message GetFoodRequest {
+  // The ID of the food.
+  string id = 1;
+}
+
+message GetFoodResponse {
+  // The food.
+  Food food = 1;
+}
+
+message ListFoodsRequest {
+  // Only list foods whose name contains this text, ignoring case. Empty to
+  // list all.
+  string query = 1;
+  // The most foods to return, from 1 to 200. 50 if 0.
+  int32 page_size = 2;
+  // The next_page_token of the previous page, to get the next one. Empty for
+  // the first page.
+  string page_token = 3;
+}
+
+message ListFoodsResponse {
+  // The foods, ordered by name.
+  repeated Food foods = 1;
+  // The token to get the next page with, empty if this is the last page.
+  string next_page_token = 2;
+}
+
+message UpdateFoodRequest {
+  // The food, with its ID and the new values of the fields in update_mask.
+  Food food = 1;
+  // The fields to update, e.g. "name,grams_per_piece". If empty, all fields
+  // are replaced. Nutrients can be updated one at a time, e.g.
+  // "nutrients_per_100_grams.iodine_micrograms"; leaving a nutrient unset in
+  // food then clears it to unknown.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateFoodResponse {
+  // The updated food.
+  Food food = 1;
+}
+
+message DeleteFoodRequest {
+  // The ID of the food.
+  string id = 1;
+}
+
+message DeleteFoodResponse {}

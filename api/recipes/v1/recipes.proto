@@ -1,0 +1,228 @@
+syntax = "proto3";
+
+package recipes.v1;
+
+import "foods/v1/foods.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "mcp/v1/options.proto";
+
+// RecipeService manages the household's recipes. A recipe's ingredients are
+// the household's foods (see FoodService) with an amount in grams,
+// milliliters or pieces, so create or find the foods first. Each recipe's
+// nutrition per serving and per 100 g is computed from its ingredients'
+// foods, and lists the ingredients whose data is missing, to fix on the
+// foods with UpdateFood. Recipes are planned into meals, split into
+// portions for each person, so give the number of servings the recipe
+// really makes.
+service RecipeService {
+  // Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
+  // isn't one of the household's foods.
+  rpc CreateRecipe(CreateRecipeRequest) returns (CreateRecipeResponse);
+  // Get a recipe, with its ingredients, steps and nutrition.
+  rpc GetRecipe(GetRecipeRequest) returns (GetRecipeResponse);
+  // List the household's recipes, ordered by name, optionally only those
+  // matching a text or tags. Returns summaries with the main nutrients per
+  // serving; get a recipe with GetRecipe for the rest.
+  rpc ListRecipes(ListRecipesRequest) returns (ListRecipesResponse);
+  // Update a recipe.
+  rpc UpdateRecipe(UpdateRecipeRequest) returns (UpdateRecipeResponse);
+  // Delete a recipe.
+  rpc DeleteRecipe(DeleteRecipeRequest) returns (DeleteRecipeResponse);
+}
+
+// A recipe.
+message Recipe {
+  // The ID of the recipe. Required to update it, and ignored when creating
+  // it.
+  string id = 1;
+  // The name of the recipe, e.g. "Chana masala". From 1 to 200 characters.
+  string name = 2;
+  // A short description of the dish. At most 2000 characters.
+  string description = 3;
+  // How many servings the recipe makes, from 1 to 100. Required. Nutrition
+  // per serving divides the whole recipe by it.
+  int32 servings = 4;
+  // The hands-on preparation time, in seconds. 0 if unknown.
+  int32 prep_seconds = 5;
+  // The cooking time, in seconds, e.g. in the oven or simmering. 0 if
+  // unknown.
+  int32 cook_seconds = 6;
+  // The ingredients, in the recipe's order. At most 100.
+  repeated Ingredient ingredients = 7;
+  // The steps, in order, each a paragraph of plain text without its number.
+  // At most 100, of at most 2000 characters each.
+  repeated string steps = 8;
+  // Tags to find the recipe by, lowercase, e.g. "breakfast",
+  // "batch-friendly" or "quick". Reuse the tags of other recipes (see
+  // ListRecipesResponse.tags) rather than inventing synonyms. At most 20, of
+  // at most 40 characters each.
+  repeated string tags = 9;
+  // The URL the recipe comes from, if any.
+  string source_url = 10;
+  // How many days leftovers keep in the fridge, e.g. 3. Unset if unknown, 0
+  // if they don't keep. At most 14.
+  optional int32 fridge_days = 11;
+  // Whether leftovers can be frozen.
+  bool freezable = 12;
+  // Notes, e.g. variations or what to serve it with. At most 5000
+  // characters.
+  string notes = 13;
+  // The nutrition of the recipe, computed from its ingredients.
+  RecipeNutrition nutrition = 14 [(mcp.v1.field).output_only = true];
+  // When the recipe was created.
+  google.protobuf.Timestamp create_time = 15 [(mcp.v1.field).output_only = true];
+  // When the recipe was last changed.
+  google.protobuf.Timestamp update_time = 16 [(mcp.v1.field).output_only = true];
+}
+
+// An ingredient of a recipe: an amount of a food.
+message Ingredient {
+  // The ID of the household's food. Required.
+  string food_id = 1;
+  // The name of the food.
+  string food_name = 2 [(mcp.v1.field).output_only = true];
+  // The amount, in unit. More than 0.
+  double amount = 3;
+  // The unit of the amount. Required. Amounts in milliliters or pieces are
+  // weighed with the food's grams_per_milliliter or grams_per_piece.
+  foods.v1.AmountUnit unit = 4;
+  // How the food is prepared, e.g. "finely chopped" or "drained". At most
+  // 200 characters.
+  string note = 5;
+  // The ingredient as the source recipe wrote it, e.g. "1 can (400 g)
+  // chickpeas, drained", to check the conversion against. At most 500
+  // characters.
+  string original_text = 6;
+  // Whether the ingredient is optional, like a garnish. Optional
+  // ingredients aren't counted in the nutrition.
+  bool optional = 7;
+}
+
+// The nutrition of a recipe, computed from its ingredients' foods, as
+// weighed raw: water lost or absorbed in cooking isn't accounted for.
+message RecipeNutrition {
+  // The weight of the ingredients, in grams. It leaves out ingredients that
+  // can't be weighed (see IngredientIssue.unknown_weight).
+  double total_grams = 1;
+  // The weight of a serving, in grams: total_grams divided by the servings.
+  double grams_per_serving = 2;
+  // The nutrients in a serving. A nutrient is unset if no ingredient's food
+  // has it, and a lower bound if it's in incomplete_nutrients.
+  foods.v1.Nutrients per_serving = 3;
+  // The nutrients in 100 g of the recipe.
+  foods.v1.Nutrients per_100_grams = 4;
+  // The nutrients some ingredients lack, by their field name in Nutrients,
+  // e.g. "iodine_micrograms", whose values are lower bounds. Empty if every
+  // nutrient is complete.
+  repeated string incomplete_nutrients = 5;
+  // The ingredients whose data is missing, in the recipe's order. Fix them
+  // on their foods with UpdateFood.
+  repeated IngredientIssue issues = 6;
+}
+
+// An ingredient whose food lacks data the recipe's nutrition needs.
+message IngredientIssue {
+  // The index of the ingredient in the recipe, from 0.
+  int32 ingredient_index = 1;
+  // The ID of the ingredient's food.
+  string food_id = 2;
+  // The name of the ingredient's food.
+  string food_name = 3;
+  // Whether the amount can't be weighed, as the food has no
+  // grams_per_piece (for pieces) or grams_per_milliliter (for
+  // milliliters). The ingredient is then left out of the nutrition
+  // entirely.
+  bool unknown_weight = 4;
+  // The nutrients the food lacks, by their field name in Nutrients, e.g.
+  // "vitamin_b12_micrograms". Empty if unknown_weight.
+  repeated string unknown_nutrients = 5;
+}
+
+// A summary of a recipe, for lists.
+message RecipeSummary {
+  // The ID of the recipe.
+  string id = 1;
+  // The name of the recipe.
+  string name = 2;
+  // The description of the recipe.
+  string description = 3;
+  // How many servings the recipe makes.
+  int32 servings = 4;
+  // The preparation time, in seconds. 0 if unknown.
+  int32 prep_seconds = 5;
+  // The cooking time, in seconds. 0 if unknown.
+  int32 cook_seconds = 6;
+  // The tags of the recipe.
+  repeated string tags = 7;
+  // The energy in a serving, in kilocalories. Unset if unknown.
+  optional double energy_kcal_per_serving = 8;
+  // The protein in a serving, in grams. Unset if unknown.
+  optional double protein_grams_per_serving = 9;
+  // The carbohydrate in a serving, in grams. Unset if unknown.
+  optional double carbohydrate_grams_per_serving = 10;
+  // The weight of a serving, in grams.
+  double grams_per_serving = 11;
+  // Whether some ingredients lack data, so the nutrition is incomplete. Get
+  // the recipe to see which.
+  bool has_issues = 12;
+  // When the recipe was last changed.
+  google.protobuf.Timestamp update_time = 13;
+}
+
+message CreateRecipeRequest {
+  // The recipe.
+  Recipe recipe = 1;
+}
+
+message CreateRecipeResponse {
+  // The created recipe.
+  Recipe recipe = 1;
+}
+
+message GetRecipeRequest {
+  // The ID of the recipe.
+  string id = 1;
+}
+
+message GetRecipeResponse {
+  // The recipe.
+  Recipe recipe = 1;
+}
+
+message ListRecipesRequest {
+  // Only list recipes whose name or description contains this text,
+  // ignoring case. Empty to list all.
+  string query = 1;
+  // Only list recipes with all of these tags. Empty to list all.
+  repeated string tags = 2;
+}
+
+message ListRecipesResponse {
+  // The recipes, ordered by name.
+  repeated RecipeSummary recipes = 1;
+  // All the tags of the household's recipes, whether listed or not, in
+  // alphabetical order.
+  repeated string tags = 2;
+}
+
+message UpdateRecipeRequest {
+  // The recipe, with its ID and the new values of the fields in
+  // update_mask.
+  Recipe recipe = 1;
+  // The fields to update, e.g. "name,servings". If empty, all fields are
+  // replaced. Lists, like ingredients and steps, are replaced as a whole.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateRecipeResponse {
+  // The updated recipe.
+  Recipe recipe = 1;
+}
+
+message DeleteRecipeRequest {
+  // The ID of the recipe.
+  string id = 1;
+}
+
+message DeleteRecipeResponse {}
