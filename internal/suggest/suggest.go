@@ -140,9 +140,11 @@ const (
 	RecentPenalty  = 3.0
 	RecentDays     = 2
 
-	// MealTagPoints is for a recipe tagged for the slot's meal, and the
-	// penalty for one tagged only for another.
-	MealTagPoints = 2.0
+	// MealTagPoints is for a recipe tagged for the slot's meal, and
+	// OtherMealTagPenalty for one tagged only for another, like breakfast
+	// oats for dinner, which is rarely what the household wants.
+	MealTagPoints       = 2.0
+	OtherMealTagPenalty = 6.0
 )
 
 const (
@@ -382,9 +384,9 @@ type candidate struct {
 	recipe     *recipes.Recipe
 	nutrition  *nutrition.Recipe
 	suggestion *Suggestion
-	// foods are the foods of its ingredients to make, without optional ones
-	// and foods missing from the input, in order, with the grams needed,
-	// and needed the amounts.
+	// foods are the foods of the ingredients to cook it, in order, without
+	// optional ones and foods missing from the input; grams are the grams
+	// of each, and needed the amounts as the shopping list's needs.
 	foods  []pgtype.UUID
 	grams  map[pgtype.UUID]float64
 	needed []shopping.Need
@@ -607,20 +609,22 @@ func (s *scorer) packLeftovers(c *candidate) {
 			break
 		}
 		total += points
+		// The cook it's bought for is named when there's just one.
 		boughtFor := "this week"
-		if srcs := s.sources[id]; len(srcs) > 0 {
+		if srcs := s.sources[id]; len(srcs) == 1 {
 			boughtFor = fmt.Sprintf("for %s's %s", srcs[0].date.Weekday(), srcs[0].name)
 		}
-		pack := "packs"
-		if f.PackageGrams > 0 && base.packs == 1 {
-			pack = "the " + shopping.FormatGrams(f.PackageGrams) + " pack"
-		}
-		if used >= left-crumbGrams {
-			c.add(PackLeftovers, points, "uses the other %s of %s of %s bought %s",
-				shopping.FormatGrams(left), pack, foodName(f), boughtFor)
-		} else {
-			c.add(PackLeftovers, points, "uses %s of the %s of %s left from %s bought %s",
-				shopping.FormatGrams(used), shopping.FormatGrams(left), foodName(f), pack, boughtFor)
+		all := used >= left-crumbGrams
+		switch {
+		case f.PackageGrams > 0 && base.packs == 1 && all:
+			c.add(PackLeftovers, points, "uses the other %s of the %s pack of %s bought %s",
+				shopping.FormatGrams(left), shopping.FormatGrams(f.PackageGrams), foodName(f), boughtFor)
+		case all:
+			c.add(PackLeftovers, points, "uses the %s of %s left over from what's bought %s",
+				shopping.FormatGrams(left), foodName(f), boughtFor)
+		default:
+			c.add(PackLeftovers, points, "uses %s of the %s of %s left over from what's bought %s",
+				shopping.FormatGrams(used), shopping.FormatGrams(left), foodName(f), boughtFor)
 		}
 	}
 }
@@ -933,7 +937,8 @@ func (s *scorer) flavor(c *candidate) {
 	}
 }
 
-// variety penalizes the recipe's cooks on nearby days.
+// variety penalizes the recipe's cooks on nearby days, and its staples of
+// the eaters on the slot's date.
 func (s *scorer) variety(c *candidate) {
 	for _, cook := range s.in.Cooks {
 		if cook.RecipeID != c.recipe.ID {
@@ -952,6 +957,22 @@ func (s *scorer) variety(c *candidate) {
 		}
 		c.add(Variety, -penalty, "already planned on %s", formatDate(cook.Date))
 	}
+	// A recipe an eater has as a staple that day, like their usual
+	// breakfast, is eaten often enough already.
+	for _, st := range s.in.Week.Staples {
+		if st.RecipeID != c.recipe.ID || !st.OccursOn(s.in.Date) {
+			continue
+		}
+		p := s.person(st.PersonID)
+		if p == nil {
+			continue
+		}
+		name := "a meal"
+		if et := p.EatingTime(st.EatingTimeID); et != nil {
+			name = et.Name
+		}
+		c.add(Variety, -(VarietyPenalty + RecentPenalty), "already %s's staple at %s", p.Name, name)
+	}
 }
 
 // mealTags are the tags that say which meal a recipe is for. "snack" is
@@ -960,7 +981,8 @@ var mealTags = []string{"breakfast", "lunch", "dinner", "snack"}
 
 // mealTag scores the recipe's tags for meals: points if it's tagged for
 // the slot's meal, a penalty if it's tagged only for others. Lunch and
-// dinner are interchangeable, so neither counts against the other.
+// dinner are interchangeable, so neither counts against the other, and any
+// recipe can make a small meal.
 func (s *scorer) mealTag(c *candidate) {
 	want := string(s.in.Meal)
 	if s.in.Meal == people.MealNone {
@@ -987,9 +1009,12 @@ func (s *scorer) mealTag(c *candidate) {
 	case len(tagged) == 0:
 	case slices.Contains(tagged, want):
 		c.add(MealTag, MealTagPoints, "tagged %s", want)
+	case want == "snack":
+		// Small meals are often a part of a main meal's recipe, so a recipe
+		// for another meal isn't out of place at one.
 	case (want == "lunch" && slices.Contains(tagged, "dinner")) || (want == "dinner" && slices.Contains(tagged, "lunch")):
 	default:
-		c.add(MealTag, -MealTagPoints, "tagged %s, not %s", list(tagged), want)
+		c.add(MealTag, -OtherMealTagPenalty, "tagged %s, not %s", list(tagged), want)
 	}
 }
 
@@ -1002,24 +1027,35 @@ func isFresh(f *foods.Food) bool {
 	return f.StoreSection == foods.StoreSectionProduce
 }
 
-// foodName returns a food's name for the middle of a sentence: lowercased
-// first, unless it's an acronym like "TVP".
+// foodName returns a food's name for the middle of a sentence. A name
+// with a short qualifier after a comma, the way food databases name foods,
+// reads in order: "Chickpeas, canned" is "canned chickpeas". Names with
+// more qualifiers are kept, as reordering them would garble them.
 func foodName(f *foods.Food) string {
 	name := f.Name
-	if len(name) >= 2 && name[1] >= 'A' && name[1] <= 'Z' {
-		return name
+	if base, qualifier, ok := strings.Cut(name, ", "); ok && !strings.Contains(qualifier, ",") && len(strings.Fields(qualifier)) <= 2 {
+		name = qualifier + " " + lowerFirst(base)
 	}
-	return strings.ToLower(name[:min(1, len(name))]) + name[min(1, len(name)):]
+	return lowerFirst(name)
 }
 
-// format formats an amount, with fewer decimals the larger it is, like the
-// rules' messages: "412", "12.4" or "0.38".
+// lowerFirst lowercases the first letter of a name, unless it starts an
+// acronym like "TVP".
+func lowerFirst(name string) string {
+	if name == "" || (len(name) >= 2 && name[1] >= 'A' && name[1] <= 'Z') {
+		return name
+	}
+	return strings.ToLower(name[:1]) + name[1:]
+}
+
+// format formats an amount, with fewer decimals the larger it is: "412",
+// "6.4" or "0.38".
 func format(v float64) string {
 	digits := 2
 	switch abs := math.Abs(v); {
 	case abs >= 100:
 		digits = 0
-	case abs >= 10:
+	case abs >= 1:
 		digits = 1
 	}
 	scale := math.Pow10(digits)

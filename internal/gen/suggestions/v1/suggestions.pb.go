@@ -43,7 +43,7 @@ const (
 	ScoreKind_SCORE_KIND_KEEPING ScoreKind = 6
 	// Ingredients that go well together.
 	ScoreKind_SCORE_KIND_FLAVOR ScoreKind = 7
-	// The same recipe planned on nearby days.
+	// The same recipe planned on nearby days, or as a staple.
 	ScoreKind_SCORE_KIND_VARIETY ScoreKind = 8
 	// The recipe's tags for meals.
 	ScoreKind_SCORE_KIND_MEAL_TAG ScoreKind = 9

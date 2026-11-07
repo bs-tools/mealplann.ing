@@ -60,7 +60,8 @@ type SuggestionServiceClient interface {
 	//     its leftovers keep until they're eaten.
 	//   - FLAVOR: its ingredients are a known good pairing, like chickpeas and
 	//     cumin.
-	//   - VARIETY: it's already planned on nearby days.
+	//   - VARIETY: it's already planned on nearby days, or is an eater's
+	//     staple that day.
 	//   - MEAL_TAG: its tags say it's for this meal, or for another.
 	//
 	// Portions are split like PlanMeal does, within each person's
@@ -97,7 +98,8 @@ type SuggestionServiceHandler interface {
 	//     its leftovers keep until they're eaten.
 	//   - FLAVOR: its ingredients are a known good pairing, like chickpeas and
 	//     cumin.
-	//   - VARIETY: it's already planned on nearby days.
+	//   - VARIETY: it's already planned on nearby days, or is an eater's
+	//     staple that day.
 	//   - MEAL_TAG: its tags say it's for this meal, or for another.
 	//
 	// Portions are split like PlanMeal does, within each person's

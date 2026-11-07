@@ -248,7 +248,7 @@ func TestPackLeftovers(t *testing.T) {
 	wantComponents(t, suggestionOf(t, list, soup), PackLeftovers,
 		"6 uses the other 200 g of the 400 g pack of coconut milk bought for Tuesday's Thai curry")
 	wantComponents(t, suggestionOf(t, list, stew), PackLeftovers,
-		"3 uses 100 g of the 200 g of coconut milk left from the 400 g pack bought for Tuesday's Thai curry")
+		"3 uses 100 g of the 200 g of coconut milk left over from what's bought for Tuesday's Thai curry")
 	if s := suggestionOf(t, list, soup); slices.ContainsFunc(s.ItemsToBuy, func(it ItemToBuy) bool { return it.Food == coconutMilk }) {
 		t.Errorf("got items %v, want no more coconut milk", s.ItemsToBuy)
 	}
@@ -269,10 +269,10 @@ func TestPantry(t *testing.T) {
 	}{
 		"before the spinach's use-by": {tuesday, []string{
 			"6 uses 150 g of spinach from the pantry, best used by Wed 4 Nov",
-			"2 uses 400 g of chickpeas, canned from the pantry",
+			"2 uses 400 g of canned chickpeas from the pantry",
 		}},
 		// On Thursday, the spinach has gone off.
-		"after": {thursday, []string{"2 uses 400 g of chickpeas, canned from the pantry"}},
+		"after": {thursday, []string{"2 uses 400 g of canned chickpeas from the pantry"}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -467,6 +467,21 @@ func TestVariety(t *testing.T) {
 			wantComponents(t, Suggest(in)[0], Variety, test.want...)
 		})
 	}
+
+	// Ben has oats every weekday breakfast, so they're not much of a
+	// change on Wednesday, but they are on Sunday.
+	oats := recipe("Oats", 1, ingredient(rice, 50))
+	in := input(wednesday, []*people.Person{b}, oats)
+	in.Week.Staples = []*plans.Staple{{
+		PersonID:     b.ID,
+		EatingTimeID: etID(b, "Breakfast"),
+		RecipeID:     oats.ID,
+		Servings:     1,
+		Weekdays:     []time.Weekday{time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday},
+	}}
+	wantComponents(t, Suggest(in)[0], Variety, "-9 already Ben's staple at Breakfast")
+	in.Date = sunday
+	wantComponents(t, Suggest(in)[0], Variety)
 }
 
 func TestMealTag(t *testing.T) {
@@ -481,8 +496,37 @@ func TestMealTag(t *testing.T) {
 	list := Suggest(input(wednesday, []*people.Person{b}, dinner, lunch, oats, none))
 	wantComponents(t, suggestionOf(t, list, dinner), MealTag, "2 tagged dinner")
 	wantComponents(t, suggestionOf(t, list, lunch), MealTag)
-	wantComponents(t, suggestionOf(t, list, oats), MealTag, "-2 tagged breakfast, not dinner")
+	wantComponents(t, suggestionOf(t, list, oats), MealTag, "-6 tagged breakfast, not dinner")
 	wantComponents(t, suggestionOf(t, list, none), MealTag)
+
+	// At a small meal, snacks get points, and other meals' recipes no
+	// penalty, as small meals are often part of a main meal.
+	a := anna()
+	snack := tagged("snack")
+	in := input(wednesday, []*people.Person{a}, dinner, oats, snack)
+	in.Meal = people.MealNone
+	in.EatingTimeID = etID(a, "Mid-afternoon")
+	list = Suggest(in)
+	wantComponents(t, suggestionOf(t, list, snack), MealTag, "2 tagged snack")
+	wantComponents(t, suggestionOf(t, list, dinner), MealTag)
+	wantComponents(t, suggestionOf(t, list, oats), MealTag)
+}
+
+func TestFoodName(t *testing.T) {
+	t.Parallel()
+	for name, want := range map[string]string{
+		"Spinach":                        "spinach",
+		"Chickpeas, canned":              "canned chickpeas",
+		"Tofu, extra firm":               "extra firm tofu",
+		"Beans, black, mature, canned":   "beans, black, mature, canned",
+		"Soy milk, unsweetened, calcium": "soy milk, unsweetened, calcium",
+		"TVP":                            "TVP",
+		"":                               "",
+	} {
+		if got := foodName(&foods.Food{Name: name}); got != want {
+			t.Errorf("foodName(%q) = %q, want %q", name, got, want)
+		}
+	}
 }
 
 func TestSuggest(t *testing.T) {
