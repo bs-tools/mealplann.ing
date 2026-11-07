@@ -47,9 +47,7 @@ left for later.
 The app checks rules and doesn't set them. The values come from the
 person's care team and are entered as-is. Every rule is optional.
 
-- **Daily targets**: energy, protein, carbohydrate, fat and fiber, plus the
-  nutrients vegans watch: B12, iron, calcium, vitamin D, iodine, zinc and
-  omega-3 (ALA).
+- **Daily targets** for any of the tracked nutrients, see Settled details.
 - **Maximum portion per eating time**, in grams.
 - **Minimum protein per eating time**, in grams.
 - **Carbohydrate pairing**: a minimum ratio of protein (and optionally fat
@@ -171,10 +169,17 @@ Version 1 is the first usable version, through the shopping list.
 Later: importing recipes from URLs, supplement tracking, deploying to a new
 GCP project with Neon.
 
-## Open questions
+## Settled details
 
-- Her eating times: how many a day, at what times, and which line up with
-  the household's main meals?
-- Which nutrient targets should the first version track and display?
-- Which stores, and what's bought where?
-- What should the product be called in the app: foodplann.ing, or a name?
+- **Name**: the app calls itself foodplann.ing, like trailrunn.ing.
+- **Eating patterns**: one person eats a regular breakfast, lunch and
+  dinner. The other eats six times a day: small portions of the shared
+  breakfast, lunch and dinner, plus mid-morning, mid-afternoon and evening
+  small meals.
+- **Nutrients shown in version 1**: energy, protein, carbohydrate, sugars,
+  fat and fiber; B12, iron, calcium, vitamin D, iodine, zinc and omega-3
+  (ALA); folate, vitamins A, E and K, copper and magnesium, whose absorption
+  can drop after gastrectomy; and sodium and potassium.
+- **Stores**: one main supermarket plus one or two specialty or bulk
+  stores. Stores are editable in the app, and each food can have a
+  preferred store.
