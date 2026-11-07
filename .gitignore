@@ -1,0 +1,8 @@
+localhost-key.pem
+localhost.pem
+
+# Binaries built with go build
+/foodplanning
+
+# Avatars stored locally, see -avatar-dir
+/avatars/
