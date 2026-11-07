@@ -250,7 +250,8 @@ select
   f.name as food_name,
   f.energy_kcal_per_100_grams, f.protein_grams_per_100_grams, f.carbohydrate_grams_per_100_grams, f.sugars_grams_per_100_grams, f.fat_grams_per_100_grams, f.fiber_grams_per_100_grams, f.vitamin_b12_micrograms_per_100_grams, f.iron_milligrams_per_100_grams, f.calcium_milligrams_per_100_grams, f.vitamin_d_micrograms_per_100_grams, f.iodine_micrograms_per_100_grams, f.zinc_milligrams_per_100_grams, f.omega3_ala_grams_per_100_grams, f.folate_micrograms_per_100_grams, f.vitamin_a_micrograms_per_100_grams, f.vitamin_e_milligrams_per_100_grams, f.vitamin_k_micrograms_per_100_grams, f.copper_milligrams_per_100_grams, f.magnesium_milligrams_per_100_grams, f.sodium_milligrams_per_100_grams, f.potassium_milligrams_per_100_grams,
   f.grams_per_piece,
-  f.grams_per_milliliter
+  f.grams_per_milliliter,
+  f.fast_carb
 from recipe_ingredients
 join foods f on f.id = recipe_ingredients.food_id
 where recipe_ingredients.household_id = $1
@@ -290,6 +291,7 @@ type ListRecipeIngredientsRow struct {
 	PotassiumMilligramsPer100Grams  *float64
 	GramsPerPiece                   *float64
 	GramsPerMilliliter              *float64
+	FastCarb                        bool
 }
 
 // The ingredients of the given recipes, or of all the household's recipes,
@@ -337,6 +339,7 @@ func (q *Queries) ListRecipeIngredients(ctx context.Context, arg *ListRecipeIngr
 			&i.PotassiumMilligramsPer100Grams,
 			&i.GramsPerPiece,
 			&i.GramsPerMilliliter,
+			&i.FastCarb,
 		); err != nil {
 			return nil, err
 		}
@@ -394,6 +397,53 @@ type ListRecipesParams struct {
 
 func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*Recipe, error) {
 	rows, err := q.db.Query(ctx, listRecipes, arg.HouseholdID, arg.Query, arg.Tags)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Recipe
+	for rows.Next() {
+		var i Recipe
+		if err := rows.Scan(
+			&i.ID,
+			&i.HouseholdID,
+			&i.Name,
+			&i.Description,
+			&i.Servings,
+			&i.PrepSeconds,
+			&i.CookSeconds,
+			&i.Steps,
+			&i.Tags,
+			&i.SourceURL,
+			&i.FridgeDays,
+			&i.Freezable,
+			&i.Notes,
+			&i.CreateTime,
+			&i.UpdateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRecipesByID = `-- name: ListRecipesByID :many
+select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time from recipes
+where household_id = $1 and id = any($2::uuid[])
+order by lower(name), id
+`
+
+type ListRecipesByIDParams struct {
+	HouseholdID pgtype.UUID
+	Ids         []pgtype.UUID
+}
+
+func (q *Queries) ListRecipesByID(ctx context.Context, arg *ListRecipesByIDParams) ([]*Recipe, error) {
+	rows, err := q.db.Query(ctx, listRecipesByID, arg.HouseholdID, arg.Ids)
 	if err != nil {
 		return nil, err
 	}

@@ -23,6 +23,131 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Nutrient names a nutrient the app tracks: one value per field of
+// Nutrients, in the same order, in the same unit. People's daily targets
+// (see PersonService) and plan warnings (see PlanService) use it.
+type Nutrient int32
+
+const (
+	Nutrient_NUTRIENT_UNSPECIFIED Nutrient = 0
+	// Energy, in kilocalories (kcal).
+	Nutrient_NUTRIENT_ENERGY_KCAL Nutrient = 1
+	// Protein, in grams.
+	Nutrient_NUTRIENT_PROTEIN_GRAMS Nutrient = 2
+	// Total carbohydrate, in grams, including sugars and fiber.
+	Nutrient_NUTRIENT_CARBOHYDRATE_GRAMS Nutrient = 3
+	// Total sugars, in grams.
+	Nutrient_NUTRIENT_SUGARS_GRAMS Nutrient = 4
+	// Total fat, in grams.
+	Nutrient_NUTRIENT_FAT_GRAMS Nutrient = 5
+	// Dietary fiber, in grams.
+	Nutrient_NUTRIENT_FIBER_GRAMS Nutrient = 6
+	// Vitamin B12, in micrograms.
+	Nutrient_NUTRIENT_VITAMIN_B12_MICROGRAMS Nutrient = 7
+	// Iron, in milligrams.
+	Nutrient_NUTRIENT_IRON_MILLIGRAMS Nutrient = 8
+	// Calcium, in milligrams.
+	Nutrient_NUTRIENT_CALCIUM_MILLIGRAMS Nutrient = 9
+	// Vitamin D, in micrograms.
+	Nutrient_NUTRIENT_VITAMIN_D_MICROGRAMS Nutrient = 10
+	// Iodine, in micrograms.
+	Nutrient_NUTRIENT_IODINE_MICROGRAMS Nutrient = 11
+	// Zinc, in milligrams.
+	Nutrient_NUTRIENT_ZINC_MILLIGRAMS Nutrient = 12
+	// Alpha-linolenic acid (ALA), the plant omega-3, in grams.
+	Nutrient_NUTRIENT_OMEGA3_ALA_GRAMS Nutrient = 13
+	// Folate, in micrograms of dietary folate equivalents.
+	Nutrient_NUTRIENT_FOLATE_MICROGRAMS Nutrient = 14
+	// Vitamin A, in micrograms of retinol activity equivalents.
+	Nutrient_NUTRIENT_VITAMIN_A_MICROGRAMS Nutrient = 15
+	// Vitamin E, in milligrams.
+	Nutrient_NUTRIENT_VITAMIN_E_MILLIGRAMS Nutrient = 16
+	// Vitamin K, in micrograms.
+	Nutrient_NUTRIENT_VITAMIN_K_MICROGRAMS Nutrient = 17
+	// Copper, in milligrams.
+	Nutrient_NUTRIENT_COPPER_MILLIGRAMS Nutrient = 18
+	// Magnesium, in milligrams.
+	Nutrient_NUTRIENT_MAGNESIUM_MILLIGRAMS Nutrient = 19
+	// Sodium, in milligrams.
+	Nutrient_NUTRIENT_SODIUM_MILLIGRAMS Nutrient = 20
+	// Potassium, in milligrams.
+	Nutrient_NUTRIENT_POTASSIUM_MILLIGRAMS Nutrient = 21
+)
+
+// Enum value maps for Nutrient.
+var (
+	Nutrient_name = map[int32]string{
+		0:  "NUTRIENT_UNSPECIFIED",
+		1:  "NUTRIENT_ENERGY_KCAL",
+		2:  "NUTRIENT_PROTEIN_GRAMS",
+		3:  "NUTRIENT_CARBOHYDRATE_GRAMS",
+		4:  "NUTRIENT_SUGARS_GRAMS",
+		5:  "NUTRIENT_FAT_GRAMS",
+		6:  "NUTRIENT_FIBER_GRAMS",
+		7:  "NUTRIENT_VITAMIN_B12_MICROGRAMS",
+		8:  "NUTRIENT_IRON_MILLIGRAMS",
+		9:  "NUTRIENT_CALCIUM_MILLIGRAMS",
+		10: "NUTRIENT_VITAMIN_D_MICROGRAMS",
+		11: "NUTRIENT_IODINE_MICROGRAMS",
+		12: "NUTRIENT_ZINC_MILLIGRAMS",
+		13: "NUTRIENT_OMEGA3_ALA_GRAMS",
+		14: "NUTRIENT_FOLATE_MICROGRAMS",
+		15: "NUTRIENT_VITAMIN_A_MICROGRAMS",
+		16: "NUTRIENT_VITAMIN_E_MILLIGRAMS",
+		17: "NUTRIENT_VITAMIN_K_MICROGRAMS",
+		18: "NUTRIENT_COPPER_MILLIGRAMS",
+		19: "NUTRIENT_MAGNESIUM_MILLIGRAMS",
+		20: "NUTRIENT_SODIUM_MILLIGRAMS",
+		21: "NUTRIENT_POTASSIUM_MILLIGRAMS",
+	}
+	Nutrient_value = map[string]int32{
+		"NUTRIENT_UNSPECIFIED":            0,
+		"NUTRIENT_ENERGY_KCAL":            1,
+		"NUTRIENT_PROTEIN_GRAMS":          2,
+		"NUTRIENT_CARBOHYDRATE_GRAMS":     3,
+		"NUTRIENT_SUGARS_GRAMS":           4,
+		"NUTRIENT_FAT_GRAMS":              5,
+		"NUTRIENT_FIBER_GRAMS":            6,
+		"NUTRIENT_VITAMIN_B12_MICROGRAMS": 7,
+		"NUTRIENT_IRON_MILLIGRAMS":        8,
+		"NUTRIENT_CALCIUM_MILLIGRAMS":     9,
+		"NUTRIENT_VITAMIN_D_MICROGRAMS":   10,
+		"NUTRIENT_IODINE_MICROGRAMS":      11,
+		"NUTRIENT_ZINC_MILLIGRAMS":        12,
+		"NUTRIENT_OMEGA3_ALA_GRAMS":       13,
+		"NUTRIENT_FOLATE_MICROGRAMS":      14,
+		"NUTRIENT_VITAMIN_A_MICROGRAMS":   15,
+		"NUTRIENT_VITAMIN_E_MILLIGRAMS":   16,
+		"NUTRIENT_VITAMIN_K_MICROGRAMS":   17,
+		"NUTRIENT_COPPER_MILLIGRAMS":      18,
+		"NUTRIENT_MAGNESIUM_MILLIGRAMS":   19,
+		"NUTRIENT_SODIUM_MILLIGRAMS":      20,
+		"NUTRIENT_POTASSIUM_MILLIGRAMS":   21,
+	}
+)
+
+func (x Nutrient) Enum() *Nutrient {
+	p := new(Nutrient)
+	*p = x
+	return p
+}
+
+func (x Nutrient) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Nutrient) Descriptor() protoreflect.EnumDescriptor {
+	return file_foods_v1_foods_proto_enumTypes[0].Descriptor()
+}
+
+func (Nutrient) Type() protoreflect.EnumType {
+	return &file_foods_v1_foods_proto_enumTypes[0]
+}
+
+func (x Nutrient) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
 // FoodSource is where a food's nutrients come from.
 type FoodSource int32
 
@@ -59,11 +184,11 @@ func (x FoodSource) String() string {
 }
 
 func (FoodSource) Descriptor() protoreflect.EnumDescriptor {
-	return file_foods_v1_foods_proto_enumTypes[0].Descriptor()
+	return file_foods_v1_foods_proto_enumTypes[1].Descriptor()
 }
 
 func (FoodSource) Type() protoreflect.EnumType {
-	return &file_foods_v1_foods_proto_enumTypes[0]
+	return &file_foods_v1_foods_proto_enumTypes[1]
 }
 
 func (x FoodSource) Number() protoreflect.EnumNumber {
@@ -140,11 +265,11 @@ func (x StoreSection) String() string {
 }
 
 func (StoreSection) Descriptor() protoreflect.EnumDescriptor {
-	return file_foods_v1_foods_proto_enumTypes[1].Descriptor()
+	return file_foods_v1_foods_proto_enumTypes[2].Descriptor()
 }
 
 func (StoreSection) Type() protoreflect.EnumType {
-	return &file_foods_v1_foods_proto_enumTypes[1]
+	return &file_foods_v1_foods_proto_enumTypes[2]
 }
 
 func (x StoreSection) Number() protoreflect.EnumNumber {
@@ -194,11 +319,11 @@ func (x AmountUnit) String() string {
 }
 
 func (AmountUnit) Descriptor() protoreflect.EnumDescriptor {
-	return file_foods_v1_foods_proto_enumTypes[2].Descriptor()
+	return file_foods_v1_foods_proto_enumTypes[3].Descriptor()
 }
 
 func (AmountUnit) Type() protoreflect.EnumType {
-	return &file_foods_v1_foods_proto_enumTypes[2]
+	return &file_foods_v1_foods_proto_enumTypes[3]
 }
 
 func (x AmountUnit) Number() protoreflect.EnumNumber {
@@ -2436,7 +2561,31 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\"#\n" +
 	"\x11DeleteFoodRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
-	"\x12DeleteFoodResponse*V\n" +
+	"\x12DeleteFoodResponse*\xbb\x05\n" +
+	"\bNutrient\x12\x18\n" +
+	"\x14NUTRIENT_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14NUTRIENT_ENERGY_KCAL\x10\x01\x12\x1a\n" +
+	"\x16NUTRIENT_PROTEIN_GRAMS\x10\x02\x12\x1f\n" +
+	"\x1bNUTRIENT_CARBOHYDRATE_GRAMS\x10\x03\x12\x19\n" +
+	"\x15NUTRIENT_SUGARS_GRAMS\x10\x04\x12\x16\n" +
+	"\x12NUTRIENT_FAT_GRAMS\x10\x05\x12\x18\n" +
+	"\x14NUTRIENT_FIBER_GRAMS\x10\x06\x12#\n" +
+	"\x1fNUTRIENT_VITAMIN_B12_MICROGRAMS\x10\a\x12\x1c\n" +
+	"\x18NUTRIENT_IRON_MILLIGRAMS\x10\b\x12\x1f\n" +
+	"\x1bNUTRIENT_CALCIUM_MILLIGRAMS\x10\t\x12!\n" +
+	"\x1dNUTRIENT_VITAMIN_D_MICROGRAMS\x10\n" +
+	"\x12\x1e\n" +
+	"\x1aNUTRIENT_IODINE_MICROGRAMS\x10\v\x12\x1c\n" +
+	"\x18NUTRIENT_ZINC_MILLIGRAMS\x10\f\x12\x1d\n" +
+	"\x19NUTRIENT_OMEGA3_ALA_GRAMS\x10\r\x12\x1e\n" +
+	"\x1aNUTRIENT_FOLATE_MICROGRAMS\x10\x0e\x12!\n" +
+	"\x1dNUTRIENT_VITAMIN_A_MICROGRAMS\x10\x0f\x12!\n" +
+	"\x1dNUTRIENT_VITAMIN_E_MILLIGRAMS\x10\x10\x12!\n" +
+	"\x1dNUTRIENT_VITAMIN_K_MICROGRAMS\x10\x11\x12\x1e\n" +
+	"\x1aNUTRIENT_COPPER_MILLIGRAMS\x10\x12\x12!\n" +
+	"\x1dNUTRIENT_MAGNESIUM_MILLIGRAMS\x10\x13\x12\x1e\n" +
+	"\x1aNUTRIENT_SODIUM_MILLIGRAMS\x10\x14\x12!\n" +
+	"\x1dNUTRIENT_POTASSIUM_MILLIGRAMS\x10\x15*V\n" +
 	"\n" +
 	"FoodSource\x12\x1b\n" +
 	"\x17FOOD_SOURCE_UNSPECIFIED\x10\x00\x12\x13\n" +
@@ -2474,59 +2623,60 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\fcom.foods.v1B\n" +
 	"FoodsProtoP\x01Z?github.com/bs-tools/foodplann.ing/internal/gen/foods/v1;foodsv1\xa2\x02\x03FXX\xaa\x02\bFoods.V1\xca\x02\bFoods\\V1\xe2\x02\x14Foods\\V1\\GPBMetadata\xea\x02\tFoods::V1b\x06proto3"
 
-var file_foods_v1_foods_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_foods_v1_foods_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
 var file_foods_v1_foods_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_foods_v1_foods_proto_goTypes = []any{
-	(FoodSource)(0),                // 0: foods.v1.FoodSource
-	(StoreSection)(0),              // 1: foods.v1.StoreSection
-	(AmountUnit)(0),                // 2: foods.v1.AmountUnit
-	(*Nutrients)(nil),              // 3: foods.v1.Nutrients
-	(*Food)(nil),                   // 4: foods.v1.Food
-	(*FoodData)(nil),               // 5: foods.v1.FoodData
-	(*FoodDataPortion)(nil),        // 6: foods.v1.FoodDataPortion
-	(*SearchFoodDataRequest)(nil),  // 7: foods.v1.SearchFoodDataRequest
-	(*SearchFoodDataResponse)(nil), // 8: foods.v1.SearchFoodDataResponse
-	(*CreateFoodRequest)(nil),      // 9: foods.v1.CreateFoodRequest
-	(*CreateFoodResponse)(nil),     // 10: foods.v1.CreateFoodResponse
-	(*GetFoodRequest)(nil),         // 11: foods.v1.GetFoodRequest
-	(*GetFoodResponse)(nil),        // 12: foods.v1.GetFoodResponse
-	(*ListFoodsRequest)(nil),       // 13: foods.v1.ListFoodsRequest
-	(*ListFoodsResponse)(nil),      // 14: foods.v1.ListFoodsResponse
-	(*UpdateFoodRequest)(nil),      // 15: foods.v1.UpdateFoodRequest
-	(*UpdateFoodResponse)(nil),     // 16: foods.v1.UpdateFoodResponse
-	(*DeleteFoodRequest)(nil),      // 17: foods.v1.DeleteFoodRequest
-	(*DeleteFoodResponse)(nil),     // 18: foods.v1.DeleteFoodResponse
-	(*timestamppb.Timestamp)(nil),  // 19: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),  // 20: google.protobuf.FieldMask
+	(Nutrient)(0),                  // 0: foods.v1.Nutrient
+	(FoodSource)(0),                // 1: foods.v1.FoodSource
+	(StoreSection)(0),              // 2: foods.v1.StoreSection
+	(AmountUnit)(0),                // 3: foods.v1.AmountUnit
+	(*Nutrients)(nil),              // 4: foods.v1.Nutrients
+	(*Food)(nil),                   // 5: foods.v1.Food
+	(*FoodData)(nil),               // 6: foods.v1.FoodData
+	(*FoodDataPortion)(nil),        // 7: foods.v1.FoodDataPortion
+	(*SearchFoodDataRequest)(nil),  // 8: foods.v1.SearchFoodDataRequest
+	(*SearchFoodDataResponse)(nil), // 9: foods.v1.SearchFoodDataResponse
+	(*CreateFoodRequest)(nil),      // 10: foods.v1.CreateFoodRequest
+	(*CreateFoodResponse)(nil),     // 11: foods.v1.CreateFoodResponse
+	(*GetFoodRequest)(nil),         // 12: foods.v1.GetFoodRequest
+	(*GetFoodResponse)(nil),        // 13: foods.v1.GetFoodResponse
+	(*ListFoodsRequest)(nil),       // 14: foods.v1.ListFoodsRequest
+	(*ListFoodsResponse)(nil),      // 15: foods.v1.ListFoodsResponse
+	(*UpdateFoodRequest)(nil),      // 16: foods.v1.UpdateFoodRequest
+	(*UpdateFoodResponse)(nil),     // 17: foods.v1.UpdateFoodResponse
+	(*DeleteFoodRequest)(nil),      // 18: foods.v1.DeleteFoodRequest
+	(*DeleteFoodResponse)(nil),     // 19: foods.v1.DeleteFoodResponse
+	(*timestamppb.Timestamp)(nil),  // 20: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),  // 21: google.protobuf.FieldMask
 }
 var file_foods_v1_foods_proto_depIdxs = []int32{
-	0,  // 0: foods.v1.Food.source:type_name -> foods.v1.FoodSource
-	3,  // 1: foods.v1.Food.nutrients:type_name -> foods.v1.Nutrients
-	1,  // 2: foods.v1.Food.store_section:type_name -> foods.v1.StoreSection
-	19, // 3: foods.v1.Food.create_time:type_name -> google.protobuf.Timestamp
-	19, // 4: foods.v1.Food.update_time:type_name -> google.protobuf.Timestamp
-	3,  // 5: foods.v1.FoodData.nutrients:type_name -> foods.v1.Nutrients
-	6,  // 6: foods.v1.FoodData.portions:type_name -> foods.v1.FoodDataPortion
-	5,  // 7: foods.v1.SearchFoodDataResponse.foods:type_name -> foods.v1.FoodData
-	4,  // 8: foods.v1.CreateFoodRequest.food:type_name -> foods.v1.Food
-	4,  // 9: foods.v1.CreateFoodResponse.food:type_name -> foods.v1.Food
-	4,  // 10: foods.v1.GetFoodResponse.food:type_name -> foods.v1.Food
-	4,  // 11: foods.v1.ListFoodsResponse.foods:type_name -> foods.v1.Food
-	4,  // 12: foods.v1.UpdateFoodRequest.food:type_name -> foods.v1.Food
-	20, // 13: foods.v1.UpdateFoodRequest.update_mask:type_name -> google.protobuf.FieldMask
-	4,  // 14: foods.v1.UpdateFoodResponse.food:type_name -> foods.v1.Food
-	7,  // 15: foods.v1.FoodService.SearchFoodData:input_type -> foods.v1.SearchFoodDataRequest
-	9,  // 16: foods.v1.FoodService.CreateFood:input_type -> foods.v1.CreateFoodRequest
-	11, // 17: foods.v1.FoodService.GetFood:input_type -> foods.v1.GetFoodRequest
-	13, // 18: foods.v1.FoodService.ListFoods:input_type -> foods.v1.ListFoodsRequest
-	15, // 19: foods.v1.FoodService.UpdateFood:input_type -> foods.v1.UpdateFoodRequest
-	17, // 20: foods.v1.FoodService.DeleteFood:input_type -> foods.v1.DeleteFoodRequest
-	8,  // 21: foods.v1.FoodService.SearchFoodData:output_type -> foods.v1.SearchFoodDataResponse
-	10, // 22: foods.v1.FoodService.CreateFood:output_type -> foods.v1.CreateFoodResponse
-	12, // 23: foods.v1.FoodService.GetFood:output_type -> foods.v1.GetFoodResponse
-	14, // 24: foods.v1.FoodService.ListFoods:output_type -> foods.v1.ListFoodsResponse
-	16, // 25: foods.v1.FoodService.UpdateFood:output_type -> foods.v1.UpdateFoodResponse
-	18, // 26: foods.v1.FoodService.DeleteFood:output_type -> foods.v1.DeleteFoodResponse
+	1,  // 0: foods.v1.Food.source:type_name -> foods.v1.FoodSource
+	4,  // 1: foods.v1.Food.nutrients:type_name -> foods.v1.Nutrients
+	2,  // 2: foods.v1.Food.store_section:type_name -> foods.v1.StoreSection
+	20, // 3: foods.v1.Food.create_time:type_name -> google.protobuf.Timestamp
+	20, // 4: foods.v1.Food.update_time:type_name -> google.protobuf.Timestamp
+	4,  // 5: foods.v1.FoodData.nutrients:type_name -> foods.v1.Nutrients
+	7,  // 6: foods.v1.FoodData.portions:type_name -> foods.v1.FoodDataPortion
+	6,  // 7: foods.v1.SearchFoodDataResponse.foods:type_name -> foods.v1.FoodData
+	5,  // 8: foods.v1.CreateFoodRequest.food:type_name -> foods.v1.Food
+	5,  // 9: foods.v1.CreateFoodResponse.food:type_name -> foods.v1.Food
+	5,  // 10: foods.v1.GetFoodResponse.food:type_name -> foods.v1.Food
+	5,  // 11: foods.v1.ListFoodsResponse.foods:type_name -> foods.v1.Food
+	5,  // 12: foods.v1.UpdateFoodRequest.food:type_name -> foods.v1.Food
+	21, // 13: foods.v1.UpdateFoodRequest.update_mask:type_name -> google.protobuf.FieldMask
+	5,  // 14: foods.v1.UpdateFoodResponse.food:type_name -> foods.v1.Food
+	8,  // 15: foods.v1.FoodService.SearchFoodData:input_type -> foods.v1.SearchFoodDataRequest
+	10, // 16: foods.v1.FoodService.CreateFood:input_type -> foods.v1.CreateFoodRequest
+	12, // 17: foods.v1.FoodService.GetFood:input_type -> foods.v1.GetFoodRequest
+	14, // 18: foods.v1.FoodService.ListFoods:input_type -> foods.v1.ListFoodsRequest
+	16, // 19: foods.v1.FoodService.UpdateFood:input_type -> foods.v1.UpdateFoodRequest
+	18, // 20: foods.v1.FoodService.DeleteFood:input_type -> foods.v1.DeleteFoodRequest
+	9,  // 21: foods.v1.FoodService.SearchFoodData:output_type -> foods.v1.SearchFoodDataResponse
+	11, // 22: foods.v1.FoodService.CreateFood:output_type -> foods.v1.CreateFoodResponse
+	13, // 23: foods.v1.FoodService.GetFood:output_type -> foods.v1.GetFoodResponse
+	15, // 24: foods.v1.FoodService.ListFoods:output_type -> foods.v1.ListFoodsResponse
+	17, // 25: foods.v1.FoodService.UpdateFood:output_type -> foods.v1.UpdateFoodResponse
+	19, // 26: foods.v1.FoodService.DeleteFood:output_type -> foods.v1.DeleteFoodResponse
 	21, // [21:27] is the sub-list for method output_type
 	15, // [15:21] is the sub-list for method input_type
 	15, // [15:15] is the sub-list for extension type_name
@@ -2545,7 +2695,7 @@ func file_foods_v1_foods_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_foods_v1_foods_proto_rawDesc), len(file_foods_v1_foods_proto_rawDesc)),
-			NumEnums:      3,
+			NumEnums:      4,
 			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,

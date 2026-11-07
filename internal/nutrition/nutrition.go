@@ -69,6 +69,17 @@ func (n Nutrient) String() string {
 	return fields[n]
 }
 
+// ParseNutrient returns the nutrient with the field name, e.g.
+// "protein_grams", and false if there's none.
+func ParseNutrient(name string) (Nutrient, bool) {
+	for n, field := range fields {
+		if field == name {
+			return Nutrient(n), true
+		}
+	}
+	return 0, false
+}
+
 // Nutrients are amounts of each nutrient in some amount of food, indexed by
 // Nutrient. A nil amount is unknown, which is different from 0.
 type Nutrients [Count]*float64

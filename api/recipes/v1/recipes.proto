@@ -27,7 +27,8 @@ service RecipeService {
   rpc ListRecipes(ListRecipesRequest) returns (ListRecipesResponse);
   // Update a recipe.
   rpc UpdateRecipe(UpdateRecipeRequest) returns (UpdateRecipeResponse);
-  // Delete a recipe.
+  // Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
+  // the plan (see PlanService) use it: delete them first.
   rpc DeleteRecipe(DeleteRecipeRequest) returns (DeleteRecipeResponse);
 }
 

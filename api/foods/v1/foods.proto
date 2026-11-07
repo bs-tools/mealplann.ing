@@ -8,9 +8,10 @@ import "mcp/v1/options.proto";
 
 // FoodService manages the household's foods: the ingredients its recipes are
 // made of, such as chickpeas, a brand of tofu or soy milk, with their
-// nutrients per 100 g. Recipes (see RecipeService) and, later, meal plans,
-// the pantry and the shopping list refer to these foods, and all nutrition
-// is computed from them, so keep one food per ingredient and reuse it.
+// nutrients per 100 g. Recipes (see RecipeService), meal plans (see
+// PlanService) and, later, the pantry and the shopping list refer to these
+// foods, and all nutrition is computed from them, so keep one food per
+// ingredient and reuse it.
 //
 // To add an ingredient:
 //
@@ -48,7 +49,9 @@ service FoodService {
   // right away, as their nutrition is computed from their foods.
   rpc UpdateFood(UpdateFoodRequest) returns (UpdateFoodResponse);
   // Delete one of the household's foods. Fails with FAILED_PRECONDITION,
-  // naming the recipes, if recipes use it: remove it from them first.
+  // naming the recipes, if recipes use it: remove it from them first. Also
+  // fails with FAILED_PRECONDITION if portions or staples of the plan (see
+  // PlanService) eat it: delete them first.
   rpc DeleteFood(DeleteFoodRequest) returns (DeleteFoodResponse);
 }
 
@@ -103,6 +106,55 @@ message Nutrients {
   optional double sodium_milligrams = 20;
   // Potassium, in milligrams.
   optional double potassium_milligrams = 21;
+}
+
+// Nutrient names a nutrient the app tracks: one value per field of
+// Nutrients, in the same order, in the same unit. People's daily targets
+// (see PersonService) and plan warnings (see PlanService) use it.
+enum Nutrient {
+  NUTRIENT_UNSPECIFIED = 0;
+  // Energy, in kilocalories (kcal).
+  NUTRIENT_ENERGY_KCAL = 1;
+  // Protein, in grams.
+  NUTRIENT_PROTEIN_GRAMS = 2;
+  // Total carbohydrate, in grams, including sugars and fiber.
+  NUTRIENT_CARBOHYDRATE_GRAMS = 3;
+  // Total sugars, in grams.
+  NUTRIENT_SUGARS_GRAMS = 4;
+  // Total fat, in grams.
+  NUTRIENT_FAT_GRAMS = 5;
+  // Dietary fiber, in grams.
+  NUTRIENT_FIBER_GRAMS = 6;
+  // Vitamin B12, in micrograms.
+  NUTRIENT_VITAMIN_B12_MICROGRAMS = 7;
+  // Iron, in milligrams.
+  NUTRIENT_IRON_MILLIGRAMS = 8;
+  // Calcium, in milligrams.
+  NUTRIENT_CALCIUM_MILLIGRAMS = 9;
+  // Vitamin D, in micrograms.
+  NUTRIENT_VITAMIN_D_MICROGRAMS = 10;
+  // Iodine, in micrograms.
+  NUTRIENT_IODINE_MICROGRAMS = 11;
+  // Zinc, in milligrams.
+  NUTRIENT_ZINC_MILLIGRAMS = 12;
+  // Alpha-linolenic acid (ALA), the plant omega-3, in grams.
+  NUTRIENT_OMEGA3_ALA_GRAMS = 13;
+  // Folate, in micrograms of dietary folate equivalents.
+  NUTRIENT_FOLATE_MICROGRAMS = 14;
+  // Vitamin A, in micrograms of retinol activity equivalents.
+  NUTRIENT_VITAMIN_A_MICROGRAMS = 15;
+  // Vitamin E, in milligrams.
+  NUTRIENT_VITAMIN_E_MILLIGRAMS = 16;
+  // Vitamin K, in micrograms.
+  NUTRIENT_VITAMIN_K_MICROGRAMS = 17;
+  // Copper, in milligrams.
+  NUTRIENT_COPPER_MILLIGRAMS = 18;
+  // Magnesium, in milligrams.
+  NUTRIENT_MAGNESIUM_MILLIGRAMS = 19;
+  // Sodium, in milligrams.
+  NUTRIENT_SODIUM_MILLIGRAMS = 20;
+  // Potassium, in milligrams.
+  NUTRIENT_POTASSIUM_MILLIGRAMS = 21;
 }
 
 // FoodSource is where a food's nutrients come from.

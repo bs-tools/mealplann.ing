@@ -1,0 +1,555 @@
+syntax = "proto3";
+
+package plans.v1;
+
+import "foods/v1/foods.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "mcp/v1/options.proto";
+import "people/v1/people.proto";
+
+// PlanService plans the household's meals, by week. Weeks start on Monday,
+// and dates are local dates, "YYYY-MM-DD". A plan is made of:
+//
+// 1. Cooks: a recipe (see RecipeService) made on a date for a number of
+//    servings, scaling the recipe, optionally as one of the household's
+//    shared meals (breakfast, lunch or dinner). The ingredients are bought
+//    and used once per cook.
+// 2. Portions: what a person (see PersonService) eats at one of their
+//    eating times on a date. A portion is either a share of a cook, in
+//    servings, or an amount of a food without a recipe, like a handful of
+//    nuts. A portion of a cook on a later date than the cook is a leftover:
+//    batch cooking is one cook with portions over several days.
+// 3. Staples: recurring portions, like a person's usual breakfast or daily
+//    soy milk, on chosen weekdays until changed. They show in every week
+//    without being copied, and can be skipped on a date.
+//
+// To plan a shared meal, use PlanMeal: it creates the cook and splits it
+// into a portion for each person who eats from that meal, keeping each
+// portion within the person's max_portion_grams by moving the rest of
+// their serving to their next small meals. Plan anything else with
+// CreateCook and CreatePortion. Then check the week with GetWeek: it gives
+// each person's eating times with what they eat, their daily totals, and
+// warnings where the plan breaks their rules or targets, or a leftover
+// won't keep, each saying what to change. The rules and targets are the
+// user's, from the person's care team: change the plan to meet them, never
+// the rules.
+service PlanService {
+  // Get a week of the plan: for each day and person, their eating times
+  // with the portions and staples planned, with weights and nutrients; the
+  // day's totals; and every warning. Also the cooks of the week. Read it
+  // after changing the plan, to check the warnings.
+  rpc GetWeek(GetWeekRequest) returns (GetWeekResponse);
+  // Plan a shared household meal: create a cook of a recipe on a date for a
+  // meal, and a portion of it for each person whose eating pattern eats
+  // from that meal, at that eating time. Each person gets one serving. If a
+  // serving weighs more than a person's max_portion_grams, their portion is
+  // capped at it (less what's already planned at that eating time), and the
+  // rest of their serving goes to their next small eating times that day,
+  // then the next day's, as portions of the same cook. A part that doesn't
+  // fit is left unassigned. Returns the cook, the portions and the warnings
+  // of the eating times and cook it touched. Fails with
+  // FAILED_PRECONDITION if nobody eats from the meal.
+  rpc PlanMeal(PlanMealRequest) returns (PlanMealResponse);
+  // Create a cook: a recipe made on a date. Plan who eats it with
+  // CreatePortion, or use PlanMeal to do both.
+  rpc CreateCook(CreateCookRequest) returns (CreateCookResponse);
+  // Update a cook. Its portions stay, so moving a cook to a later date can
+  // leave portions before it, which GetWeek warns about.
+  rpc UpdateCook(UpdateCookRequest) returns (UpdateCookResponse);
+  // Delete a cook. Its portions are deleted too.
+  rpc DeleteCook(DeleteCookRequest) returns (DeleteCookResponse);
+  // Create a portion: what a person eats at one of their eating times on a
+  // date, either a share of a cook or an amount of a food.
+  rpc CreatePortion(CreatePortionRequest) returns (CreatePortionResponse);
+  // Update a portion, e.g. move it to another date or eating time, or
+  // change its servings.
+  rpc UpdatePortion(UpdatePortionRequest) returns (UpdatePortionResponse);
+  // Delete a portion.
+  rpc DeletePortion(DeletePortionRequest) returns (DeletePortionResponse);
+  // Create a staple: a portion a person eats regularly at one of their
+  // eating times, on chosen weekdays.
+  rpc CreateStaple(CreateStapleRequest) returns (CreateStapleResponse);
+  // List the household's staples, ordered by person and eating time.
+  rpc ListStaples(ListStaplesRequest) returns (ListStaplesResponse);
+  // Update a staple. The change applies to every date it's on, past ones
+  // too: to change it from a date on, set end_date on this one and create
+  // another.
+  rpc UpdateStaple(UpdateStapleRequest) returns (UpdateStapleResponse);
+  // Delete a staple, from every date.
+  rpc DeleteStaple(DeleteStapleRequest) returns (DeleteStapleResponse);
+  // Skip a staple on a date, e.g. when the person eats out. Skipping a date
+  // that's already skipped does nothing.
+  rpc SkipStaple(SkipStapleRequest) returns (SkipStapleResponse);
+  // Stop skipping a staple on a date.
+  rpc UnskipStaple(UnskipStapleRequest) returns (UnskipStapleResponse);
+}
+
+// A recipe made on a date, for a number of servings.
+message Cook {
+  // The ID of the cook. Required to update it, and ignored when creating
+  // it.
+  string id = 1;
+  // The ID of the household's recipe. Required.
+  string recipe_id = 2;
+  // The name of the recipe.
+  string recipe_name = 3 [(mcp.v1.field).output_only = true];
+  // The date it's cooked on (YYYY-MM-DD). Required.
+  string date = 4;
+  // How many servings are cooked, from 0.25 to 100, scaling the recipe by
+  // servings divided by the recipe's servings. Required.
+  double servings = 5;
+  // The shared meal it's cooked for, HOUSEHOLD_MEAL_UNSPECIFIED if none,
+  // e.g. for batch cooking.
+  people.v1.HouseholdMeal meal = 6;
+  // Notes, e.g. "double the spices". At most 2000 characters.
+  string notes = 7;
+  // Whether it's been cooked.
+  bool done = 8;
+  // When the cook was created.
+  google.protobuf.Timestamp create_time = 9 [(mcp.v1.field).output_only = true];
+  // When the cook was last changed.
+  google.protobuf.Timestamp update_time = 10 [(mcp.v1.field).output_only = true];
+}
+
+// A share of a cook, in servings.
+message CookShare {
+  // The ID of the cook. Required.
+  string cook_id = 1;
+  // How many servings of the cook, more than 0 and at most 20, e.g. 0.5.
+  double servings = 2;
+}
+
+// A number of servings of a recipe, without a cook.
+message RecipeServings {
+  // The ID of the household's recipe. Required.
+  string recipe_id = 1;
+  // How many servings, more than 0 and at most 20, e.g. 0.5.
+  double servings = 2;
+}
+
+// An amount of a food, without a recipe.
+message FoodAmount {
+  // The ID of the household's food. Required.
+  string food_id = 1;
+  // The amount, in unit. More than 0 and at most 5000.
+  double amount = 2;
+  // The unit of the amount. Required. Milliliters and pieces are weighed
+  // with the food's grams_per_milliliter and grams_per_piece.
+  foods.v1.AmountUnit unit = 3;
+}
+
+// What a person eats at one of their eating times on a date.
+message Portion {
+  // The ID of the portion. Required to update it, and ignored when creating
+  // it.
+  string id = 1;
+  // The ID of the person. Required.
+  string person_id = 2;
+  // The ID of one of the person's eating times. Required.
+  string eating_time_id = 3;
+  // The date it's eaten on (YYYY-MM-DD). Required. A date after the cook's
+  // makes it a leftover.
+  string date = 4;
+  // What's eaten. Required.
+  oneof what {
+    // A share of a cook.
+    CookShare cook = 5;
+    // An amount of a food, like a handful of nuts.
+    FoodAmount food = 6;
+  }
+  // Notes, e.g. "with a squeeze of lemon". At most 500 characters.
+  string notes = 7;
+  // The name of the cook's recipe or of the food.
+  string name = 8 [(mcp.v1.field).output_only = true];
+  // When the portion was created.
+  google.protobuf.Timestamp create_time = 9 [(mcp.v1.field).output_only = true];
+  // When the portion was last changed.
+  google.protobuf.Timestamp update_time = 10 [(mcp.v1.field).output_only = true];
+}
+
+// Weekday is a day of the week.
+enum Weekday {
+  WEEKDAY_UNSPECIFIED = 0;
+  WEEKDAY_MONDAY = 1;
+  WEEKDAY_TUESDAY = 2;
+  WEEKDAY_WEDNESDAY = 3;
+  WEEKDAY_THURSDAY = 4;
+  WEEKDAY_FRIDAY = 5;
+  WEEKDAY_SATURDAY = 6;
+  WEEKDAY_SUNDAY = 7;
+}
+
+// A portion a person eats regularly.
+message Staple {
+  // The ID of the staple. Required to update it, and ignored when creating
+  // it.
+  string id = 1;
+  // The ID of the person. Required.
+  string person_id = 2;
+  // The ID of one of the person's eating times. Required.
+  string eating_time_id = 3;
+  // What's eaten. Required.
+  oneof what {
+    // Servings of a recipe, e.g. overnight oats made each morning.
+    RecipeServings recipe = 4;
+    // An amount of a food, e.g. 250 ml of soy milk.
+    FoodAmount food = 5;
+  }
+  // The weekdays it's eaten on, without repeats. Empty for every day.
+  repeated Weekday weekdays = 6;
+  // The first date it's eaten on (YYYY-MM-DD). Empty if it has no start;
+  // set it to today for a new habit, so past weeks don't change.
+  string start_date = 7;
+  // The last date it's eaten on (YYYY-MM-DD), on or after start_date. Empty
+  // if it goes on.
+  string end_date = 8;
+  // Notes. At most 500 characters.
+  string notes = 9;
+  // The name of the recipe or food.
+  string name = 10 [(mcp.v1.field).output_only = true];
+  // The dates it's skipped on (YYYY-MM-DD), in order. Change them with
+  // SkipStaple and UnskipStaple.
+  repeated string skipped_dates = 11 [(mcp.v1.field).output_only = true];
+  // When the staple was created.
+  google.protobuf.Timestamp create_time = 12 [(mcp.v1.field).output_only = true];
+  // When the staple was last changed.
+  google.protobuf.Timestamp update_time = 13 [(mcp.v1.field).output_only = true];
+}
+
+// WarningKind is what a warning is about.
+enum WarningKind {
+  WARNING_KIND_UNSPECIFIED = 0;
+  // An eating time weighs more than the person's max_portion_grams.
+  WARNING_KIND_PORTION_TOO_LARGE = 1;
+  // An eating time has less protein than the person's min_protein_grams.
+  WARNING_KIND_PROTEIN_LOW = 2;
+  // An eating time has more carbohydrate than the person's
+  // max_carbohydrate_grams.
+  WARNING_KIND_CARBOHYDRATE_HIGH = 3;
+  // An eating time's carbohydrate isn't paired with enough protein and fat:
+  // its (protein + fat) / carbohydrate is under the person's
+  // min_pairing_ratio.
+  WARNING_KIND_CARBOHYDRATE_UNPAIRED = 4;
+  // An eating time has more sugars than the person's max_sugars_grams.
+  WARNING_KIND_SUGARS_HIGH = 5;
+  // An eating time has foods marked fast_carb, and the person has
+  // warn_fast_carbs.
+  WARNING_KIND_FAST_CARBS = 6;
+  // An eating time's weight is only partly known, as some foods can't be
+  // weighed, so its max_portion_grams can't be fully checked.
+  WARNING_KIND_WEIGHT_UNKNOWN = 7;
+  // A day has less of a nutrient than the person's daily minimum.
+  WARNING_KIND_TARGET_LOW = 8;
+  // A day has more of a nutrient than the person's daily maximum.
+  WARNING_KIND_TARGET_HIGH = 9;
+  // A leftover is eaten later than the recipe's fridge_days after it's
+  // cooked, and the recipe isn't freezable.
+  WARNING_KIND_LEFTOVER_PAST_FRIDGE_DAYS = 10;
+  // A leftover is eaten later than the recipe's fridge_days after it's
+  // cooked, but the recipe is freezable: freeze it in time.
+  WARNING_KIND_LEFTOVER_FREEZE = 11;
+  // A portion is eaten before its cook is cooked.
+  WARNING_KIND_PORTION_BEFORE_COOK = 12;
+  // Some of a cook's servings aren't planned for anyone.
+  WARNING_KIND_SERVINGS_UNASSIGNED = 13;
+  // A cook's portions add up to more servings than it makes.
+  WARNING_KIND_SERVINGS_OVERASSIGNED = 14;
+}
+
+// Severity is how much a warning matters.
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  // Something to change.
+  SEVERITY_WARNING = 1;
+  // Something to know, like a leftover to freeze or servings left over.
+  SEVERITY_INFO = 2;
+}
+
+// A problem with the plan, saying what to change.
+message Warning {
+  // What it's about.
+  WarningKind kind = 1;
+  // How much it matters.
+  Severity severity = 2;
+  // What's wrong and what to change, for the user, e.g. "Mid-morning has 6
+  // g of protein, under the minimum of 10 g: add a protein food".
+  string message = 3;
+  // Whether it may be wrong, as some foods lack data: a nutrient that's
+  // missing from some foods is a lower bound, so a "low" warning may be
+  // fine. Complete the foods with FoodService.UpdateFood.
+  bool uncertain = 4;
+  // The person it's about, empty for a cook's servings.
+  string person_id = 5;
+  // The date it's about (YYYY-MM-DD), empty for a cook's servings.
+  string date = 6;
+  // The eating time it's about, empty for daily targets and a cook's
+  // servings.
+  string eating_time_id = 7;
+  // The cook it's about, for leftovers and servings, empty otherwise.
+  string cook_id = 8;
+  // The nutrient, for daily targets, NUTRIENT_UNSPECIFIED otherwise.
+  foods.v1.Nutrient nutrient = 9;
+  // The planned amount checked, in the rule's unit, e.g. grams of protein,
+  // or days for leftovers and servings for a cook.
+  double value = 10;
+  // The rule's limit, in the same unit.
+  double limit = 11;
+}
+
+message GetWeekRequest {
+  // The Monday the week starts on (YYYY-MM-DD). Required.
+  string monday = 1;
+}
+
+message GetWeekResponse {
+  // The Monday the week starts on (YYYY-MM-DD).
+  string monday = 1;
+  // The seven days of the week, from Monday.
+  repeated PlanDay days = 2;
+  // The cooks of the week, by date.
+  repeated PlannedCook cooks = 3;
+}
+
+// A day of the plan.
+message PlanDay {
+  // The date (YYYY-MM-DD).
+  string date = 1;
+  // Each person's day, ordered by name.
+  repeated PersonDay people = 2;
+}
+
+// A person's day of the plan.
+message PersonDay {
+  // The ID of the person.
+  string person_id = 1;
+  // The name of the person.
+  string person_name = 2;
+  // The person's eating times, in order, with what's planned at them.
+  repeated PlannedEatingTime eating_times = 3;
+  // The total weight of the day, in grams, of what can be weighed.
+  double grams = 4;
+  // The nutrients of the day. A nutrient is a lower bound if it's in
+  // incomplete_nutrients, and unset if no food has it.
+  foods.v1.Nutrients nutrients = 5;
+  // The nutrients some planned foods lack, by their field name in
+  // Nutrients, e.g. "iodine_micrograms".
+  repeated string incomplete_nutrients = 6;
+  // The warnings of the day's targets. The eating times have their own.
+  repeated Warning warnings = 7;
+}
+
+// An eating time of a person's day, with what's planned at it.
+message PlannedEatingTime {
+  // The eating time.
+  people.v1.EatingTime eating_time = 1;
+  // The portions and staples planned, staples first.
+  repeated PlannedPortion portions = 2;
+  // The weight of the eating time, in grams, of what can be weighed.
+  double grams = 3;
+  // The energy and macronutrients of the eating time, energy_kcal to
+  // fiber_grams; the other nutrients are only in the day's totals. A
+  // nutrient is a lower bound if some foods lack it, and unset if none
+  // have it.
+  foods.v1.Nutrients nutrients = 4;
+  // The warnings of the eating time, including those of its leftovers.
+  repeated Warning warnings = 5;
+}
+
+// A portion or staple planned at an eating time.
+message PlannedPortion {
+  // The ID of the portion, empty for a staple.
+  string portion_id = 1;
+  // The ID of the staple it comes from, empty for a portion.
+  string staple_id = 2;
+  // The ID of the cook it's a share of, empty if none.
+  string cook_id = 3;
+  // The ID of the recipe, of the cook or staple, empty for a food.
+  string recipe_id = 4;
+  // The ID of the food, empty for a recipe.
+  string food_id = 5;
+  // The name of the recipe or food.
+  string name = 6;
+  // The servings of the cook or recipe, 0 for a food.
+  double servings = 7;
+  // The amount of the food, 0 for a recipe.
+  double amount = 8;
+  // The unit of the food's amount, AMOUNT_UNIT_UNSPECIFIED for a recipe.
+  foods.v1.AmountUnit unit = 9;
+  // The weight, in grams, of what can be weighed.
+  double grams = 10;
+  // Whether some or all of it can't be weighed, so grams is a lower bound.
+  bool unknown_weight = 11;
+  // The date of the cook (YYYY-MM-DD), for shares of a cook.
+  string cook_date = 12;
+  // Whether it's a leftover: a share of a cook cooked on an earlier date.
+  bool leftover = 13;
+  // The notes of the portion or staple.
+  string notes = 14;
+}
+
+// A cook of the week, with how its servings are planned.
+message PlannedCook {
+  // The cook.
+  Cook cook = 1;
+  // The servings planned for people, in all its portions, of any week.
+  double assigned_servings = 2;
+  // The warnings about its servings.
+  repeated Warning warnings = 3;
+}
+
+message PlanMealRequest {
+  // The ID of the household's recipe to cook. Required.
+  string recipe_id = 1;
+  // The date (YYYY-MM-DD). Required.
+  string date = 2;
+  // The shared meal. Required.
+  people.v1.HouseholdMeal meal = 3;
+  // The people to plan for, each of whom must have an eating time for the
+  // meal. Empty for everyone who does.
+  repeated string person_ids = 4;
+  // How many servings to cook, at least the servings planned for people;
+  // the rest are left over, to plan later with CreatePortion. 0 for the
+  // servings planned for people, rounded up to a whole number.
+  double servings = 5;
+  // Notes for the cook. At most 2000 characters.
+  string notes = 6;
+}
+
+message PlanMealResponse {
+  // The created cook.
+  Cook cook = 1;
+  // The created portions, by person and date.
+  repeated Portion portions = 2;
+  // The servings nobody is planned to eat.
+  double unassigned_servings = 3;
+  // The warnings of the eating times the portions are at, and of the cook.
+  repeated Warning warnings = 4;
+}
+
+message CreateCookRequest {
+  // The cook.
+  Cook cook = 1;
+}
+
+message CreateCookResponse {
+  // The created cook.
+  Cook cook = 1;
+}
+
+message UpdateCookRequest {
+  // The cook, with its ID and the new values of the fields in update_mask.
+  Cook cook = 1;
+  // The fields to update, e.g. "done" or "date,servings". If empty, all
+  // fields are replaced.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateCookResponse {
+  // The updated cook.
+  Cook cook = 1;
+}
+
+message DeleteCookRequest {
+  // The ID of the cook.
+  string id = 1;
+}
+
+message DeleteCookResponse {}
+
+message CreatePortionRequest {
+  // The portion.
+  Portion portion = 1;
+}
+
+message CreatePortionResponse {
+  // The created portion.
+  Portion portion = 1;
+}
+
+message UpdatePortionRequest {
+  // The portion, with its ID and the new values of the fields in
+  // update_mask.
+  Portion portion = 1;
+  // The fields to update, e.g. "date,eating_time_id" or "cook.servings". If
+  // empty, all fields are replaced. Switch between a cook and a food by
+  // updating "cook" or "food" as a whole.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdatePortionResponse {
+  // The updated portion.
+  Portion portion = 1;
+}
+
+message DeletePortionRequest {
+  // The ID of the portion.
+  string id = 1;
+}
+
+message DeletePortionResponse {}
+
+message CreateStapleRequest {
+  // The staple.
+  Staple staple = 1;
+}
+
+message CreateStapleResponse {
+  // The created staple.
+  Staple staple = 1;
+}
+
+message ListStaplesRequest {
+  // Only list the staples of this person. Empty for everyone's.
+  string person_id = 1;
+}
+
+message ListStaplesResponse {
+  // The staples, ordered by person name and eating time.
+  repeated Staple staples = 1;
+}
+
+message UpdateStapleRequest {
+  // The staple, with its ID and the new values of the fields in
+  // update_mask.
+  Staple staple = 1;
+  // The fields to update, e.g. "weekdays" or "food.amount". If empty,
+  // all fields are replaced.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateStapleResponse {
+  // The updated staple.
+  Staple staple = 1;
+}
+
+message DeleteStapleRequest {
+  // The ID of the staple.
+  string id = 1;
+}
+
+message DeleteStapleResponse {}
+
+message SkipStapleRequest {
+  // The ID of the staple.
+  string id = 1;
+  // The date to skip (YYYY-MM-DD).
+  string date = 2;
+}
+
+message SkipStapleResponse {
+  // The staple.
+  Staple staple = 1;
+}
+
+message UnskipStapleRequest {
+  // The ID of the staple.
+  string id = 1;
+  // The date to stop skipping (YYYY-MM-DD).
+  string date = 2;
+}
+
+message UnskipStapleResponse {
+  // The staple.
+  Staple staple = 1;
+}

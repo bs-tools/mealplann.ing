@@ -125,11 +125,31 @@ where r.household_id = @household_id
   )
 order by lower(r.name), r.id;
 
+-- name: CountFoodPlanUses :one
+-- How many portions and staples of the plan eat the food.
+select
+  ((select count(*) from portions p where p.household_id = @household_id and p.food_id = @food_id)
+  + (select count(*) from staples s where s.household_id = @household_id and s.food_id = @food_id))::bigint;
+
 -- name: DeleteUnusedFood :execrows
--- Foods used by recipes aren't deleted, see ListRecipesUsingFood.
+-- Foods used by recipes, portions or staples aren't deleted, see
+-- ListRecipesUsingFood and CountFoodPlanUses.
 delete from foods f
 where f.id = @id and f.household_id = @household_id
   and not exists (
     select 1 from recipe_ingredients ri
     where ri.household_id = @household_id and ri.food_id = @id
+  )
+  and not exists (
+    select 1 from portions p
+    where p.household_id = @household_id and p.food_id = @id
+  )
+  and not exists (
+    select 1 from staples s
+    where s.household_id = @household_id and s.food_id = @id
   );
+
+-- name: ListFoodsByID :many
+select * from foods
+where household_id = @household_id and id = any(@ids::uuid[])
+order by lower(name);

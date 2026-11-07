@@ -65,6 +65,110 @@ func (e AmountUnit) Valid() bool {
 	return false
 }
 
+type EatingTimeKind string
+
+const (
+	EatingTimeKindMain  EatingTimeKind = "main"
+	EatingTimeKindSmall EatingTimeKind = "small"
+)
+
+func (e *EatingTimeKind) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = EatingTimeKind(s)
+	case string:
+		*e = EatingTimeKind(s)
+	default:
+		return fmt.Errorf("unsupported scan type for EatingTimeKind: %T", src)
+	}
+	return nil
+}
+
+type NullEatingTimeKind struct {
+	EatingTimeKind EatingTimeKind
+	Valid          bool // Valid is true if EatingTimeKind is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullEatingTimeKind) Scan(value interface{}) error {
+	if value == nil {
+		ns.EatingTimeKind, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.EatingTimeKind.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullEatingTimeKind) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.EatingTimeKind), nil
+}
+
+func (e EatingTimeKind) Valid() bool {
+	switch e {
+	case EatingTimeKindMain,
+		EatingTimeKindSmall:
+		return true
+	}
+	return false
+}
+
+type HouseholdMeal string
+
+const (
+	HouseholdMealBreakfast HouseholdMeal = "breakfast"
+	HouseholdMealLunch     HouseholdMeal = "lunch"
+	HouseholdMealDinner    HouseholdMeal = "dinner"
+)
+
+func (e *HouseholdMeal) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = HouseholdMeal(s)
+	case string:
+		*e = HouseholdMeal(s)
+	default:
+		return fmt.Errorf("unsupported scan type for HouseholdMeal: %T", src)
+	}
+	return nil
+}
+
+type NullHouseholdMeal struct {
+	HouseholdMeal HouseholdMeal
+	Valid         bool // Valid is true if HouseholdMeal is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullHouseholdMeal) Scan(value interface{}) error {
+	if value == nil {
+		ns.HouseholdMeal, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.HouseholdMeal.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullHouseholdMeal) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.HouseholdMeal), nil
+}
+
+func (e HouseholdMeal) Valid() bool {
+	switch e {
+	case HouseholdMealBreakfast,
+		HouseholdMealLunch,
+		HouseholdMealDinner:
+		return true
+	}
+	return false
+}
+
 type InvitationKind string
 
 const (
@@ -111,6 +215,95 @@ func (e InvitationKind) Valid() bool {
 	switch e {
 	case InvitationKindNewUser,
 		InvitationKindAddPasskey:
+		return true
+	}
+	return false
+}
+
+type Nutrient string
+
+const (
+	NutrientEnergyKcal           Nutrient = "energy_kcal"
+	NutrientProteinGrams         Nutrient = "protein_grams"
+	NutrientCarbohydrateGrams    Nutrient = "carbohydrate_grams"
+	NutrientSugarsGrams          Nutrient = "sugars_grams"
+	NutrientFatGrams             Nutrient = "fat_grams"
+	NutrientFiberGrams           Nutrient = "fiber_grams"
+	NutrientVitaminB12Micrograms Nutrient = "vitamin_b12_micrograms"
+	NutrientIronMilligrams       Nutrient = "iron_milligrams"
+	NutrientCalciumMilligrams    Nutrient = "calcium_milligrams"
+	NutrientVitaminDMicrograms   Nutrient = "vitamin_d_micrograms"
+	NutrientIodineMicrograms     Nutrient = "iodine_micrograms"
+	NutrientZincMilligrams       Nutrient = "zinc_milligrams"
+	NutrientOmega3AlaGrams       Nutrient = "omega3_ala_grams"
+	NutrientFolateMicrograms     Nutrient = "folate_micrograms"
+	NutrientVitaminAMicrograms   Nutrient = "vitamin_a_micrograms"
+	NutrientVitaminEMilligrams   Nutrient = "vitamin_e_milligrams"
+	NutrientVitaminKMicrograms   Nutrient = "vitamin_k_micrograms"
+	NutrientCopperMilligrams     Nutrient = "copper_milligrams"
+	NutrientMagnesiumMilligrams  Nutrient = "magnesium_milligrams"
+	NutrientSodiumMilligrams     Nutrient = "sodium_milligrams"
+	NutrientPotassiumMilligrams  Nutrient = "potassium_milligrams"
+)
+
+func (e *Nutrient) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = Nutrient(s)
+	case string:
+		*e = Nutrient(s)
+	default:
+		return fmt.Errorf("unsupported scan type for Nutrient: %T", src)
+	}
+	return nil
+}
+
+type NullNutrient struct {
+	Nutrient Nutrient
+	Valid    bool // Valid is true if Nutrient is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullNutrient) Scan(value interface{}) error {
+	if value == nil {
+		ns.Nutrient, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.Nutrient.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullNutrient) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.Nutrient), nil
+}
+
+func (e Nutrient) Valid() bool {
+	switch e {
+	case NutrientEnergyKcal,
+		NutrientProteinGrams,
+		NutrientCarbohydrateGrams,
+		NutrientSugarsGrams,
+		NutrientFatGrams,
+		NutrientFiberGrams,
+		NutrientVitaminB12Micrograms,
+		NutrientIronMilligrams,
+		NutrientCalciumMilligrams,
+		NutrientVitaminDMicrograms,
+		NutrientIodineMicrograms,
+		NutrientZincMilligrams,
+		NutrientOmega3AlaGrams,
+		NutrientFolateMicrograms,
+		NutrientVitaminAMicrograms,
+		NutrientVitaminEMilligrams,
+		NutrientVitaminKMicrograms,
+		NutrientCopperMilligrams,
+		NutrientMagnesiumMilligrams,
+		NutrientSodiumMilligrams,
+		NutrientPotassiumMilligrams:
 		return true
 	}
 	return false
@@ -243,6 +436,30 @@ type APIToken struct {
 	LastUsedTime pgtype.Timestamptz
 	OAuthGrantID pgtype.UUID
 	ExpireTime   pgtype.Timestamptz
+}
+
+type Cook struct {
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+	RecipeID    pgtype.UUID
+	Date        pgtype.Date
+	Servings    float64
+	Meal        NullHouseholdMeal
+	Notes       string
+	Done        bool
+	CreateTime  pgtype.Timestamptz
+	UpdateTime  pgtype.Timestamptz
+}
+
+type EatingTime struct {
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+	PersonID    pgtype.UUID
+	Position    int32
+	Name        string
+	Kind        EatingTimeKind
+	TimeOfDay   string
+	Meal        NullHouseholdMeal
 }
 
 type FdcFood struct {
@@ -394,6 +611,46 @@ type PasskeyUser struct {
 	Name       string
 }
 
+type Person struct {
+	ID                   pgtype.UUID
+	HouseholdID          pgtype.UUID
+	Name                 string
+	UserID               pgtype.UUID
+	MaxPortionGrams      pgtype.Float8
+	MinProteinGrams      pgtype.Float8
+	MaxCarbohydrateGrams pgtype.Float8
+	MinPairingRatio      pgtype.Float8
+	MaxSugarsGrams       pgtype.Float8
+	WarnFastCarbs        bool
+	Notes                string
+	CreateTime           pgtype.Timestamptz
+	UpdateTime           pgtype.Timestamptz
+}
+
+type PersonTarget struct {
+	HouseholdID pgtype.UUID
+	PersonID    pgtype.UUID
+	Nutrient    Nutrient
+	MinPerDay   pgtype.Float8
+	MaxPerDay   pgtype.Float8
+}
+
+type Portion struct {
+	ID           pgtype.UUID
+	HouseholdID  pgtype.UUID
+	PersonID     pgtype.UUID
+	EatingTimeID pgtype.UUID
+	Date         pgtype.Date
+	CookID       pgtype.UUID
+	Servings     pgtype.Float8
+	FoodID       pgtype.UUID
+	Amount       pgtype.Float8
+	Unit         NullAmountUnit
+	Notes        string
+	CreateTime   pgtype.Timestamptz
+	UpdateTime   pgtype.Timestamptz
+}
+
 type Recipe struct {
 	ID          pgtype.UUID
 	HouseholdID pgtype.UUID
@@ -430,6 +687,30 @@ type Session struct {
 	TokenSHA256 []byte
 	Expiry      pgtype.Timestamptz
 	PasskeyID   []byte
+}
+
+type Staple struct {
+	ID           pgtype.UUID
+	HouseholdID  pgtype.UUID
+	PersonID     pgtype.UUID
+	EatingTimeID pgtype.UUID
+	RecipeID     pgtype.UUID
+	Servings     pgtype.Float8
+	FoodID       pgtype.UUID
+	Amount       pgtype.Float8
+	Unit         NullAmountUnit
+	Weekdays     []int16
+	StartDate    pgtype.Date
+	EndDate      pgtype.Date
+	Notes        string
+	CreateTime   pgtype.Timestamptz
+	UpdateTime   pgtype.Timestamptz
+}
+
+type StapleSkip struct {
+	HouseholdID pgtype.UUID
+	StapleID    pgtype.UUID
+	Date        pgtype.Date
 }
 
 type User struct {

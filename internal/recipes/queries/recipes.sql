@@ -44,6 +44,11 @@ where household_id = @household_id
   and tags @> @tags::text[]
 order by lower(name), id;
 
+-- name: ListRecipesByID :many
+select * from recipes
+where household_id = @household_id and id = any(@ids::uuid[])
+order by lower(name), id;
+
 -- name: ListRecipeTags :many
 select distinct tag::text from recipes, unnest(tags) as tag
 where household_id = @household_id
@@ -112,7 +117,8 @@ select
   f.name as food_name,
   f.energy_kcal_per_100_grams, f.protein_grams_per_100_grams, f.carbohydrate_grams_per_100_grams, f.sugars_grams_per_100_grams, f.fat_grams_per_100_grams, f.fiber_grams_per_100_grams, f.vitamin_b12_micrograms_per_100_grams, f.iron_milligrams_per_100_grams, f.calcium_milligrams_per_100_grams, f.vitamin_d_micrograms_per_100_grams, f.iodine_micrograms_per_100_grams, f.zinc_milligrams_per_100_grams, f.omega3_ala_grams_per_100_grams, f.folate_micrograms_per_100_grams, f.vitamin_a_micrograms_per_100_grams, f.vitamin_e_milligrams_per_100_grams, f.vitamin_k_micrograms_per_100_grams, f.copper_milligrams_per_100_grams, f.magnesium_milligrams_per_100_grams, f.sodium_milligrams_per_100_grams, f.potassium_milligrams_per_100_grams,
   f.grams_per_piece,
-  f.grams_per_milliliter
+  f.grams_per_milliliter,
+  f.fast_carb
 from recipe_ingredients
 join foods f on f.id = recipe_ingredients.food_id
 where recipe_ingredients.household_id = @household_id

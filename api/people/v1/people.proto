@@ -1,0 +1,208 @@
+syntax = "proto3";
+
+package people.v1;
+
+import "foods/v1/foods.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "mcp/v1/options.proto";
+
+// PersonService manages the people the household plans meals for. People
+// are usually the household's users, but don't have to be, like a child.
+//
+// Each person has an eating pattern: their eating times through the day, in
+// order, each a MAIN meal or a SMALL meal. An eating time can eat from one
+// of the household's shared meals (breakfast, lunch or dinner), so that one
+// cook feeds everyone: see PlanService.PlanMeal. For example, one person
+// eats a regular breakfast, lunch and dinner, and another eats six times a
+// day: small portions of the shared breakfast, lunch and dinner, and small
+// meals mid-morning, mid-afternoon and in the evening.
+//
+// A person can also have nutrition rules for every eating time, like a
+// maximum portion or a minimum of protein, and daily targets for
+// nutrients. The plan is checked against them, and PlanService.GetWeek
+// returns warnings saying what to change. The values of rules and targets
+// come from the person's care team, such as a dietitian: only set them to
+// what the user says, never to values you chose or looked up, and never
+// suggest changing them. The app checks and warns; it doesn't give medical
+// advice.
+service PersonService {
+  // Create a person, with their eating pattern, rules and targets.
+  rpc CreatePerson(CreatePersonRequest) returns (CreatePersonResponse);
+  // Get a person.
+  rpc GetPerson(GetPersonRequest) returns (GetPersonResponse);
+  // List the people the household plans for, ordered by name.
+  rpc ListPeople(ListPeopleRequest) returns (ListPeopleResponse);
+  // Update a person. Removing an eating time from eating_times deletes the
+  // portions and staples planned at it, so move them to another eating time
+  // first (see PlanService.UpdatePortion and UpdateStaple) if they should be
+  // kept. Keep the id of the eating times that stay, even when renaming or
+  // reordering them.
+  rpc UpdatePerson(UpdatePersonRequest) returns (UpdatePersonResponse);
+  // Delete a person, with everything planned for them: their portions and
+  // staples. The cooks they ate from stay.
+  rpc DeletePerson(DeletePersonRequest) returns (DeletePersonResponse);
+}
+
+// EatingTimeKind is whether an eating time is a main meal or a small one.
+enum EatingTimeKind {
+  EATING_TIME_KIND_UNSPECIFIED = 0;
+  // A main meal, like breakfast, lunch or dinner.
+  EATING_TIME_KIND_MAIN = 1;
+  // A small meal or snack, like mid-morning. When a shared meal's serving is
+  // more than a person's max_portion_grams, the rest goes to their next
+  // small meal.
+  EATING_TIME_KIND_SMALL = 2;
+}
+
+// HouseholdMeal is one of the meals the household cooks to share.
+enum HouseholdMeal {
+  // None.
+  HOUSEHOLD_MEAL_UNSPECIFIED = 0;
+  // The shared breakfast.
+  HOUSEHOLD_MEAL_BREAKFAST = 1;
+  // The shared lunch.
+  HOUSEHOLD_MEAL_LUNCH = 2;
+  // The shared dinner.
+  HOUSEHOLD_MEAL_DINNER = 3;
+}
+
+// A person the household plans meals for.
+message Person {
+  // The ID of the person. Required to update them, and ignored when
+  // creating them.
+  string id = 1;
+  // The name of the person, e.g. "Anna". From 1 to 100 characters.
+  string name = 2;
+  // The ID of the household's user this person is, empty if none. A user
+  // can be at most one person. See UserService.GetHousehold for the users.
+  string user_id = 3;
+  // The person's eating times, in the order of the day. At most 12, with
+  // at most one per shared meal. Required to plan for the person.
+  repeated EatingTime eating_times = 4;
+  // The rules every eating time of the person is checked against. Unset if
+  // the person has none.
+  EatingRules rules = 5;
+  // The person's daily targets, at most one per nutrient. Empty if none.
+  repeated NutrientTarget daily_targets = 6;
+  // Notes about the person, e.g. what their care team said, or foods they
+  // don't like. At most 2000 characters.
+  string notes = 7;
+  // When the person was created.
+  google.protobuf.Timestamp create_time = 8 [(mcp.v1.field).output_only = true];
+  // When the person was last changed.
+  google.protobuf.Timestamp update_time = 9 [(mcp.v1.field).output_only = true];
+}
+
+// A time of day a person eats at.
+message EatingTime {
+  // The ID of the eating time, which portions and staples refer to. Empty
+  // for a new eating time; keep it when updating an existing one.
+  string id = 1;
+  // The name of the eating time, e.g. "Breakfast" or "Mid-morning". From 1
+  // to 50 characters.
+  string name = 2;
+  // Whether it's a main meal or a small one. Required.
+  EatingTimeKind kind = 3;
+  // The usual time of day, "HH:MM" in 24 hours, e.g. "10:30". Empty if
+  // unknown.
+  string time = 4;
+  // The shared household meal this eating time eats from, e.g.
+  // HOUSEHOLD_MEAL_DINNER for a dinner eaten with the household, so
+  // PlanService.PlanMeal gives the person a portion of it.
+  // HOUSEHOLD_MEAL_UNSPECIFIED for an eating time of the person's own, like
+  // a snack.
+  HouseholdMeal meal = 5;
+}
+
+// The rules each of a person's eating times is checked against: the sum of
+// what's planned at an eating time on a day. Every rule is optional: unset
+// means no rule. The values come from the person's care team, as the user
+// gives them: never set or change them on your own.
+message EatingRules {
+  // The most an eating time may weigh, in grams, e.g. after a gastrectomy.
+  // PlanService.PlanMeal caps a shared meal's portion at it, and moves the
+  // rest of the serving to the person's next small meal.
+  optional double max_portion_grams = 1;
+  // The least protein an eating time should have, in grams.
+  optional double min_protein_grams = 2;
+  // The most carbohydrate an eating time may have, in grams.
+  optional double max_carbohydrate_grams = 3;
+  // The least protein and fat an eating time should have per gram of
+  // carbohydrate: (protein + fat) / carbohydrate, all in grams, e.g. 0.5 for
+  // at least 1 g of protein or fat per 2 g of carbohydrate. For reactive
+  // hypoglycemia, where carbohydrate should be paired with protein and fat,
+  // which slow its absorption. Fat counts, like protein; fiber doesn't, but
+  // is part of carbohydrate. Eating times without carbohydrate pass.
+  optional double min_pairing_ratio = 4;
+  // The most sugars an eating time may have, in grams, as a lot of sugar at
+  // once risks dumping syndrome after gastric surgery.
+  optional double max_sugars_grams = 5;
+  // Whether to warn about eating times with foods marked fast_carb (see
+  // FoodService), which are quickly absorbed.
+  bool warn_fast_carbs = 6;
+}
+
+// A target for how much of a nutrient a person has in a day.
+message NutrientTarget {
+  // The nutrient. Required.
+  foods.v1.Nutrient nutrient = 1;
+  // The least of the nutrient a day should have, in the nutrient's unit,
+  // e.g. grams for NUTRIENT_PROTEIN_GRAMS. Unset if none.
+  optional double min_per_day = 2;
+  // The most of the nutrient a day should have, in the nutrient's unit.
+  // Unset if none. At least min_per_day if both are set; one of them is
+  // required.
+  optional double max_per_day = 3;
+}
+
+message CreatePersonRequest {
+  // The person. The eating times' IDs are ignored, and new ones assigned.
+  Person person = 1;
+}
+
+message CreatePersonResponse {
+  // The created person.
+  Person person = 1;
+}
+
+message GetPersonRequest {
+  // The ID of the person.
+  string id = 1;
+}
+
+message GetPersonResponse {
+  // The person.
+  Person person = 1;
+}
+
+message ListPeopleRequest {}
+
+message ListPeopleResponse {
+  // The people, ordered by name.
+  repeated Person people = 1;
+}
+
+message UpdatePersonRequest {
+  // The person, with their ID and the new values of the fields in
+  // update_mask.
+  Person person = 1;
+  // The fields to update, e.g. "name,eating_times". If empty, all fields
+  // are replaced. Lists, like eating_times and daily_targets, are replaced
+  // as a whole. Rules can be updated one at a time, e.g.
+  // "rules.min_protein_grams"; leaving it unset in person then removes the
+  // rule.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdatePersonResponse {
+  // The updated person.
+  Person person = 1;
+}
+
+message DeletePersonRequest {
+  // The ID of the person.
+  string id = 1;
+}
+
+message DeletePersonResponse {}

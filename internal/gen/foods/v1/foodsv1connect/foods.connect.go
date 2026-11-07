@@ -105,7 +105,9 @@ type FoodServiceClient interface {
 	// right away, as their nutrition is computed from their foods.
 	UpdateFood(context.Context, *v1.UpdateFoodRequest) (*v1.UpdateFoodResponse, error)
 	// Delete one of the household's foods. Fails with FAILED_PRECONDITION,
-	// naming the recipes, if recipes use it: remove it from them first.
+	// naming the recipes, if recipes use it: remove it from them first. Also
+	// fails with FAILED_PRECONDITION if portions or staples of the plan (see
+	// PlanService) eat it: delete them first.
 	DeleteFood(context.Context, *v1.DeleteFoodRequest) (*v1.DeleteFoodResponse, error)
 }
 
@@ -137,7 +139,9 @@ type FoodServiceHandler interface {
 	// right away, as their nutrition is computed from their foods.
 	UpdateFood(context.Context, *v1.UpdateFoodRequest) (*v1.UpdateFoodResponse, error)
 	// Delete one of the household's foods. Fails with FAILED_PRECONDITION,
-	// naming the recipes, if recipes use it: remove it from them first.
+	// naming the recipes, if recipes use it: remove it from them first. Also
+	// fails with FAILED_PRECONDITION if portions or staples of the plan (see
+	// PlanService) eat it: delete them first.
 	DeleteFood(context.Context, *v1.DeleteFoodRequest) (*v1.DeleteFoodResponse, error)
 }
 
