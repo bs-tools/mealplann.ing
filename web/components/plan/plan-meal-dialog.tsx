@@ -1,8 +1,10 @@
 import { WarningList } from "@components/plan/plan-bits";
+import SuggestionList from "@components/plan/suggestion-list";
 import { CheckboxField, SelectField, TextField } from "@components/ui/fields";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
 import {
+  choiceClass,
   labelClass,
   primaryButton,
   secondaryButton,
@@ -23,11 +25,16 @@ import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
+// Tab is how the recipe is chosen: from the suggestions, or from all.
+type Tab = "suggestions" | "recipe";
+
 interface PlanMealDialogProps {
   // The dates to choose from, those of the week shown.
   dates: string[];
   // The date chosen first.
   date: string;
+  // The meal chosen first, dinner if undefined.
+  meal?: HouseholdMeal | undefined;
   people: Person[];
   recipes: RecipeSummary[];
   onClose: () => void;
@@ -36,20 +43,23 @@ interface PlanMealDialogProps {
 /**
  * PlanMealDialog plans a shared meal: a recipe cooked on a day for
  * breakfast, lunch or dinner, split into a portion for everyone who eats
- * it, within their maximum portions. It then shows the split and its
- * warnings.
+ * it, within their maximum portions. The recipe is chosen from the
+ * suggestions for the meal, or from all of them. It then shows the split
+ * and its warnings.
  */
 const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   dates,
   date: initialDate,
+  meal: initialMeal,
   people,
   recipes,
   onClose,
 }) => {
   const queryClient = useQueryClient();
+  const [tab, setTab] = useState<Tab>("suggestions");
   const [recipeId, setRecipeId] = useState(recipes[0]?.id ?? "");
   const [date, setDate] = useState(initialDate);
-  const [meal, setMeal] = useState(HouseholdMeal.DINNER);
+  const [meal, setMeal] = useState(initialMeal ?? HouseholdMeal.DINNER);
   const eaters = people.filter((person) =>
     person.eatingTimes.some((et) => et.meal === meal)
   );
@@ -78,6 +88,10 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
     );
   }
 
+  const chosen = eaters.filter((person) => !skipped.includes(person.id));
+  // Everyone who eats from the meal is sent as no one, like PlanMeal takes.
+  const personIds =
+    chosen.length === eaters.length ? [] : chosen.map((person) => person.id);
   const save = () => {
     setInvalid("");
     const value = parseOptionalNumber(servings);
@@ -85,7 +99,6 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
       setInvalid("Servings must be a number, or empty for one each.");
       return;
     }
-    const chosen = eaters.filter((person) => !skipped.includes(person.id));
     if (chosen.length === 0) {
       setInvalid("Choose who eats it.");
       return;
@@ -94,10 +107,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
       date,
       meal,
       notes,
-      personIds:
-        chosen.length === eaters.length
-          ? []
-          : chosen.map((person) => person.id),
+      personIds,
       recipeId,
       servings: value ?? 0,
     });
@@ -121,28 +131,13 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   }
 
   return (
-    <Modal open onClose={onClose} title="Plan a meal">
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          save();
-        }}
-      >
+    <Modal open onClose={onClose} title="Plan a meal" wide>
+      <div className="flex flex-col gap-3">
         <p className="text-sm text-gray-600">
           One cook for everyone who eats the shared meal. Portions over
           someone&apos;s maximum are split, with the rest at their next small
           meal.
         </p>
-        <SelectField
-          label="Recipe"
-          value={recipeId}
-          options={recipes.map((recipe) => ({
-            label: `${recipe.name} (${formatAmount(recipe.gramsPerServing)} g a serving)`,
-            value: recipe.id,
-          }))}
-          onChange={setRecipeId}
-        />
         <div className="grid grid-cols-2 gap-2">
           <SelectField
             label="Day"
@@ -197,32 +192,115 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
             </div>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <TextField
-            label="Servings to cook"
-            value={servings}
-            inputMode="decimal"
-            placeholder="One each"
-            hint="More are left over, to plan later."
-            onChange={setServings}
-          />
-          <TextField label="Notes" value={notes} onChange={setNotes} />
-        </div>
-        {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
-        <ErrorText error={plan.error} />
-        <div className="flex justify-end gap-2">
-          <button type="button" className={secondaryButton} onClick={onClose}>
-            Cancel
+        <div
+          className="flex gap-1 border-t border-gray-100 pt-3"
+          role="tablist"
+          aria-label="How to choose the recipe"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "suggestions"}
+            className={choiceClass(tab === "suggestions")}
+            onClick={() => {
+              setTab("suggestions");
+            }}
+          >
+            Suggestions
           </button>
           <button
-            type="submit"
-            className={primaryButton}
-            disabled={plan.isPending || recipeId === "" || eaters.length === 0}
+            type="button"
+            role="tab"
+            aria-selected={tab === "recipe"}
+            className={choiceClass(tab === "recipe")}
+            onClick={() => {
+              setTab("recipe");
+            }}
           >
-            {plan.isPending ? "Planning…" : "Plan meal"}
+            Choose a recipe
           </button>
         </div>
-      </form>
+        {tab === "suggestions" ? (
+          <>
+            {eaters.length > 0 && chosen.length > 0 && (
+              <SuggestionList
+                request={{
+                  date,
+                  personIds,
+                  slot: { case: "meal", value: meal },
+                }}
+                planningId={
+                  plan.isPending ? (plan.variables.recipeId ?? "") : ""
+                }
+                disabled={plan.isPending}
+                onPlan={(suggestion) => {
+                  plan.mutate({
+                    date,
+                    meal,
+                    personIds,
+                    recipeId: suggestion.recipeId,
+                  });
+                }}
+              />
+            )}
+            {eaters.length > 0 && chosen.length === 0 && (
+              <p className="text-sm text-gray-700">Choose who eats it.</p>
+            )}
+            <ErrorText error={plan.error} />
+          </>
+        ) : (
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              save();
+            }}
+          >
+            <SelectField
+              label="Recipe"
+              value={recipeId}
+              options={recipes.map((recipe) => ({
+                label: `${recipe.name} (${formatAmount(recipe.gramsPerServing)} g a serving)`,
+                value: recipe.id,
+              }))}
+              onChange={setRecipeId}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <TextField
+                label="Servings to cook"
+                value={servings}
+                inputMode="decimal"
+                placeholder="One each"
+                hint="More are left over, to plan later."
+                onChange={setServings}
+              />
+              <TextField label="Notes" value={notes} onChange={setNotes} />
+            </div>
+            {invalid !== "" && (
+              <p className="text-sm text-red-700">{invalid}</p>
+            )}
+            <ErrorText error={plan.error} />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                className={secondaryButton}
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className={primaryButton}
+                disabled={
+                  plan.isPending || recipeId === "" || eaters.length === 0
+                }
+              >
+                {plan.isPending ? "Planning…" : "Plan meal"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </Modal>
   );
 };

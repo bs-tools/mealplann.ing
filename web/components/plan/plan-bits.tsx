@@ -7,6 +7,7 @@ import {
   InformationCircleIcon,
   PencilIcon,
   PlusIcon,
+  SparklesIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import type { Nutrients } from "gen/foods/v1/foods_pb";
@@ -207,6 +208,8 @@ interface EatingTimeBlockProps {
   planned: PlannedEatingTime;
   disabled: boolean;
   onAdd: () => void;
+  // Suggests recipes for it while it's empty.
+  onSuggest: () => void;
   onEdit: (portion: PlannedPortion) => void;
   onDelete: (portion: PlannedPortion) => void;
   onSkip: (portion: PlannedPortion) => void;
@@ -220,6 +223,7 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
   planned,
   disabled,
   onAdd,
+  onSuggest,
   onEdit,
   onDelete,
   onSkip,
@@ -263,7 +267,19 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
         </button>
       </div>
       {empty ? (
-        <p className="text-xs text-gray-400">Nothing planned</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs text-gray-400">Nothing planned</p>
+          <button
+            type="button"
+            className="inline-flex items-center gap-0.5 rounded px-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 print:hidden"
+            disabled={disabled}
+            title={`Suggest recipes for ${et?.name ?? "this eating time"}`}
+            onClick={onSuggest}
+          >
+            <SparklesIcon className="size-3.5" aria-hidden="true" />
+            Suggest
+          </button>
+        </div>
       ) : (
         <ul className="mt-1 flex flex-col gap-1">
           {planned.portions.map((portion) => (

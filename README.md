@@ -12,14 +12,26 @@ built on the same stack as [trail-tools](https://github.com/johanbrandhorst/trai
 
 ## Status
 
-Milestones 1 to 4: invite-only sign in with passkeys, households, the
-settings page, and the MCP server with OAuth and API tokens; foods from USDA
-FoodData Central or entered by hand, and recipes with their nutrition per
-serving; the people you plan for, with their eating patterns and their care
-team's rules, and weekly plans of shared meals, leftovers and staples,
-checked against those rules; the pantry, which cooks marked done take from,
-and a shared shopping list for one shop a week, by store and aisle, which
-puts what's bought into the pantry. Suggestions come next.
+Version 1 is done, milestones 1 to 5:
+
+- Invite-only sign in with passkeys, households, the settings page, and the
+  MCP server with OAuth and API tokens.
+- Foods from USDA FoodData Central or entered by hand, and recipes with
+  their nutrition per serving.
+- The people you plan for, with their eating patterns and their care team's
+  rules, and weekly plans of shared meals, leftovers and staples, checked
+  against those rules.
+- The pantry, which cooks marked done take from, and a shared shopping list
+  for one shop a week, by store and aisle, which puts what's bought into the
+  pantry.
+- Recipe suggestions for each open meal or small meal of the week, explained
+  point by point: the rest of a can another meal opens, what's in the pantry
+  and going off, ingredients shared with the week's other meals, everyone's
+  nutrition targets and rules, what keeps until the day of the meal from a
+  single weekly shop, flavor pairings and variety. Your AI agent gets the
+  same suggestions, and can propose new recipes beyond them.
+- A home page with the week at a glance: today's meals, the shopping list,
+  and what to use soon.
 
 ## Prerequisites
 

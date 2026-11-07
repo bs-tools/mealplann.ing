@@ -189,25 +189,65 @@ saying what to change.
 
 ## Suggestions
 
-`SuggestRecipes` scores the recipes for an open slot in a plan and explains
-each score, for both the web app and the AI agent:
+`SuggestRecipes`, the only method of the `SuggestionService`, scores all of
+the household's recipes for an open slot of the plan and explains each
+score, for both the web app and the AI agent. A slot is a shared meal on a
+date (breakfast, lunch or dinner, for everyone who eats it or some of them),
+or one person's eating time, like a small meal. It returns the best few,
+each with its total score and the components it's made of, each with points
+and a reason for people, like "uses the other 200 g of the 400 g pack of
+coconut milk bought for Tuesday's Thai curry" or "adds 9 g of protein toward
+Anna's daily minimum of 60 g". It also says which portions it would plan,
+what it needs bought beyond the week's shopping, and the rules it would
+break.
 
-- **Shared base ingredients**: other recipes in the week use the same
-  ingredients, so less is bought and the remainder of a pack is used.
-- **Leftovers**: it uses what remains from the week's packs and cooks.
-- **Pantry**: it uses what's in stock, especially foods close to expiry.
-- **Nutrition**: it fills each person's gaps against their targets, such as
-  iron paired with vitamin C, or legumes and grains together.
-- **Flavor**: its ingredients go together, from a curated list of pairings
-  to start with.
-- **Rules**: it can be portioned within every person's rules, and it keeps
-  well enough for its day in the week.
+- **It's its own service, implemented by the plan's.** Agents get its
+  planning workflow as its own section of the MCP instructions, but it reads
+  the plan and computes nutrition exactly as `PlanService` does, so the plan
+  service implements both. It's read-only, like `Get` and `List` methods.
+- **The scoring is a pure package**, `internal/suggest`, with the weights as
+  documented constants and a test per component. It reuses the app's own
+  logic rather than approximating it: `plans.SplitMeal` for the portions,
+  the shopping list's needs, pantry coverage and pack rounding, the
+  pantry's use-by order, and the rules' checks of eating times.
+- **Two round trips**: the plan from a week before the slot to the end of
+  its week, the people, all recipes, the latest shopping lists and the
+  pantry are read together, then the foods of the recipes.
+- **Rule breaks are penalized, not excluded**, and flagged with
+  `fits_rules` false and the warnings, so the user can still choose.
+- **The shop** is the start date of the latest shopping list not yet
+  complete that covers the slot's date, or else today.
 
-The AI agent uses the same scores through MCP, and can reason beyond them.
+The components and their weights, in points; a good suggestion scores
+roughly 15 to 35:
+
+| Component | Points |
+|---|---|
+| **Shared ingredients**: each ingredient another cook of the week uses (not foods always in stock) | +1.5, +1 more if fresh (keeps a week or less); at most +6 |
+| **New items to buy**: foods neither the pantry nor the week's shopping cover | +1 for each fewer than 3, −1 for each more, down to −5 |
+| **Rest of a pack**: what's left of packs the week buys after rounding to whole packs or pieces | +6 for all of it, in proportion for part; at most +9 |
+| **Pantry**: each food the pantry covers, after the week's own needs, from lots usable on the date | +2 in proportion to the share covered, +4 more for a lot to use within 3 days; at most +12 |
+| **Nutrition**: each eater's daily minimums the portions fill, given the rest of the day | +12 for a whole minimum, in proportion; at most +15 in all |
+| **Nutrition**: a daily maximum the portions go over | −4, −12 more per maximum's worth over |
+| **Rules**: each rule of an eating time a portion breaks that wasn't broken already: maximum portion, minimum protein, maximum carbohydrate, carbohydrate pairing, sugars, fast carbs | −8, or −3 if uncertain as foods lack data, or for too little protein in the part of a serving moved to a later small meal |
+| **Rules**: a portion meeting the minimum protein of the person's eating time | +2 |
+| **Keeping**: each fresh food to buy that won't keep from the shop until the date | −4 |
+| **Keeping**: all fresh foods to buy keep until a date 3 or more days after the shop | +2 |
+| **Keeping**: leftovers on later days within the recipe's fridge days, or to freeze, or that won't keep | +1, −1 or −5 |
+| **Flavor**: each curated pairing, matched on food names (`internal/suggest/pairings.go`) | +1.5, at most +3 |
+| **Variety**: each cook of the recipe within 6 days, or a staple of an eater that day | −6, −3 more within 2 days |
+| **Meal tag**: tagged for the slot's meal (or "snack" for small eating times) | +2, −6 if tagged only for another meal; lunch and dinner are interchangeable, and any recipe can be a small meal |
+
+The web app shows the suggestions in the plan-a-meal dialog, and for an
+empty small meal, with a bar for the score, the reasons as chips, and "Plan
+this", which calls `PlanMeal`, or `CreateCook` and `CreatePortion` for a
+small meal. The AI agent uses the same scores through MCP, and can reason
+beyond them, like proposing a new recipe that would score well.
 
 ## Milestones
 
-Version 1 is the first usable version, through the shopping list.
+Version 1 is the first usable version, with suggestions. All five
+milestones are done.
 
 1. **Skeleton**: the trail-tools copy with its domains removed, households
    instead of per-user ownership, `make run` working locally.
