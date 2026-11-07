@@ -11,7 +11,7 @@ terraform {
   # The state bucket is created once by hand, see the README. Backend
   # blocks can't use variables, so replace the project here too.
   backend "gcs" {
-    bucket = "REPLACE-WITH-PROJECT-ID-tfstate"
+    bucket = "foodplanning-514023-tfstate"
     prefix = "foodplanning"
   }
 }
