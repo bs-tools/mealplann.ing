@@ -7,14 +7,19 @@ on:
   pull_request:
   # Commits and merges with the workflow's token don't trigger workflows, so
   # the Dependabot jobs start runs themselves: on a pull request's branch to
-  # check regenerated code, and on main to check a merge.
+  # check regenerated code, and on main to deploy a merge.
   workflow_dispatch:
 
 # Third-party actions are pinned to commits, as tags can be moved to
-# different code. Dependabot updates the pins.
+# different code. The deploy job holds credentials that can change anything
+# in the Google Cloud project. Dependabot updates the pins.
+#
+# Deploying needs the repository variables GCP_PROJECT_ID and
+# GCP_PROJECT_NUMBER, see the README. Until they're set, the deploy job is
+# skipped.
 
 # A new push to a pull request cancels its now stale run. Runs on main all
-# complete.
+# complete, so each commit is deployed.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -184,6 +189,87 @@ jobs:
           cache-name: mod
           modules: true
 
+  terraform:
+    name: Check Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read the Terraform version
+        id: terraform-version
+        # Kept in images/Dockerfile for Dependabot to update. The Makefile
+        # applies locally with the same version.
+        run: echo "version=$(images/image.sh --tag terraform)" >> "$GITHUB_OUTPUT"
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ steps.terraform-version.outputs.version }}
+      - name: Check formatting and validate
+        run: |
+          terraform -chdir=infra fmt -check -recursive
+          terraform -chdir=infra init -backend=false -input=false
+          terraform -chdir=infra validate
+
+  deploy:
+    name: Deploy
+    if: >-
+      github.event_name != 'pull_request' && github.ref == 'refs/heads/main' &&
+      vars.GCP_PROJECT_ID != '' && vars.GCP_PROJECT_NUMBER != ''
+    needs: [format, lint, gen, build, test, mod, terraform]
+    runs-on: ubuntu-latest
+    # Only one deployment at a time. Terraform also locks its state.
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      # Needed to authenticate to Google Cloud with Workload Identity
+      # Federation, without stored credentials.
+      id-token: write
+    env:
+      KO_DOCKER_REPO: us-west1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/foodplanning/server
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-name: deploy
+      - name: Read the Terraform version
+        id: terraform-version
+        # Kept in images/Dockerfile for Dependabot to update. The Makefile
+        # applies locally with the same version.
+        run: echo "version=$(images/image.sh --tag terraform)" >> "$GITHUB_OUTPUT"
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ steps.terraform-version.outputs.version }}
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
+          service_account: github-terraform@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+      - name: Build and push the image
+        run: |
+          # The base image, kept in images/Dockerfile for Dependabot to
+          # update.
+          KO_DEFAULTBASEIMAGE=$(images/image.sh ko-base)
+          export KO_DEFAULTBASEIMAGE
+          echo "IMAGE=$(go tool ko build --bare --tags "${GITHUB_SHA},latest" .)" >> "$GITHUB_ENV"
+      - name: Apply Terraform
+        run: |
+          terraform -chdir=infra init -input=false
+          terraform -chdir=infra apply -input=false -auto-approve -var "image=${IMAGE}"
+      - name: Save Go caches
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/save-go-cache
+        with:
+          cache-name: deploy
+
   regenerate-dependabot:
     name: Regenerate code for Dependabot's pull request
     # Dependabot updates dependencies without regenerating the code that
@@ -196,7 +282,8 @@ jobs:
     runs-on: ubuntu-latest
     # Code generation runs the updated npm packages and Go tools, so it gets
     # a read-only token, which it doesn't keep in the checkout either. A
-    # compromised dependency could otherwise push to main. commit-dependabot commits its changes, without running any
+    # compromised dependency could otherwise push to main, or start the
+    # deployment. commit-dependabot commits its changes, without running any
     # of the pull request's code.
     permissions:
       contents: read
@@ -294,12 +381,12 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name == 'workflow_dispatch' &&
       startsWith(github.ref, 'refs/heads/dependabot/'))
-    needs: [format, lint, gen, build, test, mod]
+    needs: [format, lint, gen, build, test, mod, terraform]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-      # Needed to start the run on main that checks the merge.
+      # Needed to start the run on main that deploys the merge.
       actions: write
     env:
       GH_TOKEN: ${{ github.token }}
@@ -315,5 +402,5 @@ jobs:
             exit 1
           fi
           gh pr merge "$BRANCH" --repo "$GITHUB_REPOSITORY" --squash --match-head-commit "$HEAD_SHA"
-      - name: Check main
+      - name: Check and deploy main
         run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref main

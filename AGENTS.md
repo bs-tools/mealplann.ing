@@ -3,12 +3,12 @@
 A vegan meal planner for a household: recipes, weekly meal plans, a pantry and
 a shopping list, with nutrition checked against each person's targets. A Go
 server serves a React single-page app and a Connect API, which it also exposes
-to AI agents as an MCP server. Data is in Postgres. It will run on Cloud Run,
-with Neon Postgres, deployed with Terraform, like trail-tools, whose skeleton
-it was copied from. `docs/design.md` has the design and the milestones.
+to AI agents as an MCP server. Data is in Postgres. It runs on Cloud Run, with
+Neon Postgres, deployed with Terraform, like trail-tools, whose skeleton it was
+copied from. `docs/design.md` has the design and the milestones.
 
 Directories have their own AGENTS.md with the rules for their code: `api/`,
-`internal/`, `internal/services/`, `internal/store/` and `web/`.
+`internal/`, `internal/services/`, `internal/store/`, `web/` and `infra/`.
 
 ## Layout
 
@@ -22,9 +22,10 @@ Directories have their own AGENTS.md with the rules for their code: `api/`,
   the MCP server (`mcp`), and telemetry and error reporting (`telemetry`,
   `errreport`).
 - `web/`: the React app. Its bundle in `web/dist/` is embedded in the server.
+- `infra/`: Terraform for Google Cloud.
 - `images/Dockerfile`: the container images the Makefile and CI run, like
-  Node's, Postgres's and the server's base image, kept there for Dependabot
-  to update. `images/image.sh` reads them.
+  Node's, Postgres's and the server's base image, and the Terraform version,
+  kept there for Dependabot to update. `images/image.sh` reads them.
 
 ## Commands
 
