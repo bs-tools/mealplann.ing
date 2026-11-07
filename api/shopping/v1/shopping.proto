@@ -1,0 +1,345 @@
+syntax = "proto3";
+
+package shopping.v1;
+
+import "foods/v1/foods.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "mcp/v1/options.proto";
+import "pantry/v1/pantry.proto";
+
+// ShoppingService makes the household's shopping lists from its meal plan
+// (see PlanService), and manages the stores it shops at. The household aims
+// for one shop a week, at a main store and one or two specialty or bulk
+// stores, ticking items off on a phone; everyone in the household sees the
+// same list.
+//
+// To help with the weekly shop:
+//
+// 1. Plan the week first with PlanService, and check the pantry with
+//    PantryService.ListPantry, asking the user about stock that looks
+//    wrong.
+// 2. Create the list with CreateShoppingList, from the day of the shop. It
+//    adds up the ingredients of the cooks, the portions of foods and the
+//    staples of each day, less what the pantry has, rounded up to whole
+//    packs, and groups them by store and store section.
+// 3. Look at the items with top_up set: they won't keep from the shop until
+//    they're needed, so they need another trip. Suggest moving those meals
+//    earlier in the week, or swapping them for recipes whose ingredients
+//    keep, then call RegenerateShoppingList.
+// 4. Add anything else the user needs with AddManualItem.
+//
+// In the store, the user checks items off in the web app. CompleteShopping
+// then puts the checked items into the pantry.
+service ShoppingService {
+  // Create a store the household shops at. It goes after the others.
+  // Fails with ALREADY_EXISTS if the household has a store of the same
+  // name.
+  rpc CreateStore(CreateStoreRequest) returns (CreateStoreResponse);
+  // List the household's stores, in order. The first is the main store.
+  rpc ListStores(ListStoresRequest) returns (ListStoresResponse);
+  // Update a store, e.g. rename it or move it to another position.
+  rpc UpdateStore(UpdateStoreRequest) returns (UpdateStoreResponse);
+  // Delete a store. Foods bought there, and the items of shopping lists in
+  // it, move to the main store.
+  rpc DeleteStore(DeleteStoreRequest) returns (DeleteStoreResponse);
+  // Create a shopping list for the meals of a range of dates, shopped for
+  // on its first date. Its items are generated from the plan: the
+  // ingredients of the cooks not yet done, scaled to their servings, the
+  // portions of foods and the staples of each date, without optional
+  // ingredients and foods always in stock, less what the pantry has that
+  // keeps until it's needed. Amounts are rounded up to whole packs, or
+  // pieces for foods planned in pieces. Each item goes to its food's
+  // preferred store, or the main store, and is flagged top_up if it won't
+  // keep from the shop until it's needed.
+  rpc CreateShoppingList(CreateShoppingListRequest) returns (CreateShoppingListResponse);
+  // Get a shopping list with its items, ordered by store, then by store
+  // section in the order of a typical shop, then by name.
+  rpc GetShoppingList(GetShoppingListRequest) returns (GetShoppingListResponse);
+  // List the household's shopping lists, latest start_date first, without
+  // their items.
+  rpc ListShoppingLists(ListShoppingListsRequest) returns (ListShoppingListsResponse);
+  // Generate a shopping list's items again, after the plan or the pantry
+  // changed. Items generated before are replaced, keeping the checks and
+  // notes of the items of the same food; items added by hand are kept.
+  // Fails with FAILED_PRECONDITION if the shopping is complete.
+  rpc RegenerateShoppingList(RegenerateShoppingListRequest) returns (RegenerateShoppingListResponse);
+  // Check an item off, as bought, recording who checked it. Checking an
+  // item that's checked does nothing.
+  rpc CheckItem(CheckItemRequest) returns (CheckItemResponse);
+  // Uncheck an item.
+  rpc UncheckItem(UncheckItemRequest) returns (UncheckItemResponse);
+  // Add an item to a shopping list by hand: a food, or free text like
+  // "Dish soap". Regenerating the list keeps it.
+  rpc AddManualItem(AddManualItemRequest) returns (AddManualItemResponse);
+  // Delete an item from a shopping list. A generated item comes back if the
+  // list is regenerated and it's still needed.
+  rpc DeleteItem(DeleteItemRequest) returns (DeleteItemResponse);
+  // Complete the shopping: add the checked items of foods, with their
+  // grams, to the pantry, expiring after their food's shelf_life_days from
+  // the date of the shop, and mark the list complete. Items left unchecked
+  // stay on the list. Only call it when the user says they're done
+  // shopping. Fails with FAILED_PRECONDITION if it's already complete.
+  rpc CompleteShopping(CompleteShoppingRequest) returns (CompleteShoppingResponse);
+  // Delete a shopping list with its items. The pantry doesn't change.
+  rpc DeleteShoppingList(DeleteShoppingListRequest) returns (DeleteShoppingListResponse);
+}
+
+// A store the household shops at.
+message Store {
+  // The ID of the store. Required to update it, and ignored when creating
+  // it.
+  string id = 1;
+  // The name of the store, e.g. "Supermarket" or "Bulk store". From 1 to
+  // 100 characters, and unique in the household, ignoring case.
+  string name = 2;
+  // The store's place in the order of stores, from 0. The store at 0 is the
+  // main store, where foods without a preferred store are bought. Stores at
+  // the same position are ordered by creation. Ignored when creating a
+  // store, which goes after the others.
+  int32 position = 3;
+  // When the store was created.
+  google.protobuf.Timestamp create_time = 4 [(mcp.v1.field).output_only = true];
+  // When the store was last changed.
+  google.protobuf.Timestamp update_time = 5 [(mcp.v1.field).output_only = true];
+}
+
+// A shopping list for the meals of a range of dates.
+message ShoppingList {
+  // The ID of the list.
+  string id = 1;
+  // The first date (YYYY-MM-DD), the day of the shop.
+  string start_date = 2;
+  // The last date (YYYY-MM-DD), whose meals the list is for.
+  string end_date = 3;
+  // Whether the shopping is complete, and the checked items are in the
+  // pantry.
+  bool complete = 4;
+  // The items, ordered by store, then store section in the order of a
+  // typical shop, then name. Empty in ListShoppingLists.
+  repeated ShoppingItem items = 5;
+  // The number of items.
+  int32 item_count = 6;
+  // The number of checked items.
+  int32 checked_count = 7;
+  // The number of items that won't keep until they're needed, so they need
+  // another trip, see ShoppingItem.top_up.
+  int32 top_up_count = 8;
+  // When the shopping was completed, unset if it isn't.
+  google.protobuf.Timestamp complete_time = 9;
+  // When the list was created.
+  google.protobuf.Timestamp create_time = 10;
+  // When the list or its items were last generated.
+  google.protobuf.Timestamp update_time = 11;
+}
+
+// An item of a shopping list.
+message ShoppingItem {
+  // The ID of the item.
+  string id = 1;
+  // The ID of the food, empty for an item of free text.
+  string food_id = 2;
+  // The food's name, or the free text, e.g. "Chickpeas, canned".
+  string name = 3;
+  // The amount to buy, for people, e.g. "2 × 400 g", "3 pieces (~450 g)",
+  // "750 ml" or "1.2 kg". Empty if not given.
+  string amount_text = 4;
+  // The amount to buy, in grams, rounded up to whole packs or pieces. 0 if
+  // unknown, e.g. for free text.
+  double grams = 5;
+  // The amount the plan needs beyond the pantry, in grams, before
+  // rounding: grams less this is what's left over of the packs.
+  double needed_grams = 6;
+  // The amount of the pantry the plan uses, in grams, which isn't bought.
+  double pantry_grams = 7;
+  // The number of packs to buy, 0 if the food has no package_grams.
+  int32 packages = 8;
+  // The ID of the store to buy it at.
+  string store_id = 9;
+  // The name of the store.
+  string store_name = 10;
+  // The part of the store it's found in.
+  foods.v1.StoreSection store_section = 11;
+  // The first date it's needed (YYYY-MM-DD), empty for items added by hand.
+  string needed_by_date = 12;
+  // Whether it won't keep from the shop until needed_by_date, by its
+  // food's shelf_life_days, so it should be bought fresh on a later trip,
+  // or the meals using it moved earlier.
+  bool top_up = 13;
+  // Why it should be bought later, or what's missing to weigh it, for
+  // people. Empty if nothing.
+  string warning = 14;
+  // Whether it's checked off, as bought.
+  bool checked = 15;
+  // The name of who checked it, empty if it isn't checked.
+  string checked_by = 16;
+  // A note, e.g. "the organic one". At most 500 characters.
+  string note = 17;
+  // Whether it was added by hand, rather than generated from the plan.
+  bool manual = 18;
+}
+
+message CreateStoreRequest {
+  // The store.
+  Store store = 1;
+}
+
+message CreateStoreResponse {
+  // The created store.
+  Store store = 1;
+}
+
+message ListStoresRequest {}
+
+message ListStoresResponse {
+  // The stores, by position. The first is the main store.
+  repeated Store stores = 1;
+}
+
+message UpdateStoreRequest {
+  // The store, with its ID and the new values of the fields in
+  // update_mask.
+  Store store = 1;
+  // The fields to update, e.g. "name" or "position". If empty, all fields
+  // are replaced.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateStoreResponse {
+  // The updated store.
+  Store store = 1;
+}
+
+message DeleteStoreRequest {
+  // The ID of the store.
+  string id = 1;
+}
+
+message DeleteStoreResponse {}
+
+message CreateShoppingListRequest {
+  // The first date (YYYY-MM-DD), the day of the shop. Required.
+  string start_date = 1;
+  // The last date (YYYY-MM-DD), from start_date to 13 days after it. Empty
+  // for a week: 6 days after start_date.
+  string end_date = 2;
+}
+
+message CreateShoppingListResponse {
+  // The created list, with its items.
+  ShoppingList list = 1;
+}
+
+message GetShoppingListRequest {
+  // The ID of the list.
+  string id = 1;
+}
+
+message GetShoppingListResponse {
+  // The list, with its items.
+  ShoppingList list = 1;
+}
+
+message ListShoppingListsRequest {
+  // The most lists to return, from 1 to 100. 20 if 0.
+  int32 page_size = 1;
+  // The next_page_token of the previous page, to get the next one. Empty
+  // for the first page.
+  string page_token = 2;
+}
+
+message ListShoppingListsResponse {
+  // The lists, latest start_date first, without their items.
+  repeated ShoppingList lists = 1;
+  // The token to get the next page with, empty if this is the last page.
+  string next_page_token = 2;
+}
+
+message RegenerateShoppingListRequest {
+  // The ID of the list.
+  string id = 1;
+}
+
+message RegenerateShoppingListResponse {
+  // The list, with its items.
+  ShoppingList list = 1;
+}
+
+message CheckItemRequest {
+  // The ID of the item.
+  string id = 1;
+}
+
+message CheckItemResponse {
+  // The checked item.
+  ShoppingItem item = 1;
+}
+
+message UncheckItemRequest {
+  // The ID of the item.
+  string id = 1;
+}
+
+message UncheckItemResponse {
+  // The unchecked item.
+  ShoppingItem item = 1;
+}
+
+message AddManualItemRequest {
+  // The ID of the list. Required.
+  string list_id = 1;
+  // What to buy. Required.
+  oneof what {
+    // The ID of a household's food. It goes to the food's preferred store
+    // and store section.
+    string food_id = 2;
+    // Free text, for things that aren't foods, e.g. "Dish soap". From 1 to
+    // 200 characters.
+    string text = 3;
+  }
+  // The amount to buy, in grams, which goes into the pantry when the
+  // shopping is complete. 0 if not given. At most 100000.
+  double grams = 4;
+  // The amount for people, e.g. "2 rolls". Empty to show grams. At most 100
+  // characters.
+  string amount_text = 5;
+  // The ID of the store to buy it at. Empty for the food's preferred store,
+  // or the main store.
+  string store_id = 6;
+  // A note. At most 500 characters.
+  string note = 7;
+}
+
+message AddManualItemResponse {
+  // The added item.
+  ShoppingItem item = 1;
+}
+
+message DeleteItemRequest {
+  // The ID of the item.
+  string id = 1;
+}
+
+message DeleteItemResponse {}
+
+message CompleteShoppingRequest {
+  // The ID of the list.
+  string id = 1;
+  // The date of the shop (YYYY-MM-DD), which the expiry dates of the items
+  // added to the pantry count from. Empty for today (UTC).
+  string date = 2;
+}
+
+message CompleteShoppingResponse {
+  // The completed list.
+  ShoppingList list = 1;
+  // The lots added to the pantry.
+  repeated pantry.v1.PantryItem pantry_items = 2;
+}
+
+message DeleteShoppingListRequest {
+  // The ID of the list.
+  string id = 1;
+}
+
+message DeleteShoppingListResponse {}

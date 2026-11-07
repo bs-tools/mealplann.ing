@@ -11,6 +11,7 @@ import (
 	foodsv1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
 	"github.com/bs-tools/foodplann.ing/internal/nutrition"
 	"github.com/bs-tools/foodplann.ing/internal/store"
+	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -134,6 +135,11 @@ var storeSectionsToProto = map[foods.StoreSection]foodsv1.StoreSection{
 	foods.StoreSectionOther:       foodsv1.StoreSection_STORE_SECTION_OTHER,
 }
 
+// StoreSectionToProto converts a store section.
+func StoreSectionToProto(s foods.StoreSection) foodsv1.StoreSection {
+	return storeSectionsToProto[s]
+}
+
 var storeSectionsFromProto = func() map[foodsv1.StoreSection]foods.StoreSection {
 	m := map[foodsv1.StoreSection]foods.StoreSection{}
 	for k, v := range storeSectionsToProto {
@@ -161,6 +167,8 @@ func foodToProto(f *foods.Food) *foodsv1.Food {
 		ShelfLifeDays:       f.ShelfLifeDays,
 		OpenedShelfLifeDays: f.OpenedShelfLifeDays,
 		Notes:               f.Notes,
+		PreferredStoreId:    optionalID(f.PreferredStoreID),
+		AlwaysInStock:       f.AlwaysInStock,
 		CreateTime:          timestamppb.New(f.CreateTime),
 		UpdateTime:          timestamppb.New(f.UpdateTime),
 	}.Build()
@@ -203,6 +211,15 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s must be from 0 to %v, with 0 for unknown", check.field, check.most)
 		}
 	}
+	var storeID pgtype.UUID
+	if s := strings.TrimSpace(p.GetPreferredStoreId()); s != "" {
+		var err error
+		storeID, err = store.StringToUUID(s)
+		if err != nil {
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"invalid preferred_store_id: %v; find stores with ListStores, or leave it empty for the main store", err).WithCause(err)
+		}
+	}
 	return &foods.Food{
 		Name:                name,
 		Per100Grams:         per100,
@@ -214,6 +231,8 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 		ShelfLifeDays:       p.GetShelfLifeDays(),
 		OpenedShelfLifeDays: p.GetOpenedShelfLifeDays(),
 		Notes:               notes,
+		PreferredStoreID:    storeID,
+		AlwaysInStock:       p.GetAlwaysInStock(),
 	}, nil
 }
 
@@ -250,6 +269,8 @@ func foodFromFDC(fdcFood *foods.FDCFood, in *foodsv1.Food) (*foods.Food, error) 
 	base.SetShelfLifeDays(in.GetShelfLifeDays())
 	base.SetOpenedShelfLifeDays(in.GetOpenedShelfLifeDays())
 	base.SetNotes(in.GetNotes())
+	base.SetPreferredStoreId(in.GetPreferredStoreId())
+	base.SetAlwaysInStock(in.GetAlwaysInStock())
 	f, err := foodFromProto(base)
 	if err != nil {
 		return nil, err
@@ -285,6 +306,14 @@ func suggestStoreSection(f *foods.FDCFood) foods.StoreSection {
 		return foods.StoreSectionFrozen
 	}
 	return categorySections[strings.ToLower(f.Category)]
+}
+
+// optionalID returns the string of an ID, empty if it's invalid.
+func optionalID(id pgtype.UUID) string {
+	if !id.Valid {
+		return ""
+	}
+	return store.UUIDToString(id)
 }
 
 // truncate shortens s to at most n characters.

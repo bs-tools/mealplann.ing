@@ -1,0 +1,144 @@
+syntax = "proto3";
+
+package pantry.v1;
+
+import "foods/v1/foods.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "mcp/v1/options.proto";
+
+// PantryService tracks the household's pantry: how much of each food (see
+// FoodService) it has in stock, in grams, with when it expires. A food can
+// have several lots, like an opened bag and a new one, each with its own
+// expiry date, so the oldest is used first.
+//
+// The pantry changes by itself in two ways:
+//
+// 1. Completing a shopping list (see ShoppingService.CompleteShopping) adds
+//    the checked items, expiring after the food's shelf_life_days.
+// 2. Marking a cook done (see PlanService.UpdateCook) takes its
+//    ingredients out, from the lots that expire first, and un-marking it
+//    puts them back. Portions of foods and staples aren't taken out, as
+//    they're eaten too irregularly to track: correct the pantry with
+//    UpdatePantryItem when it's off.
+//
+// Foods the household always has, like salt and spices, aren't tracked: set
+// always_in_stock on the food with FoodService.UpdateFood instead of adding
+// them. Check the pantry before generating a shopping list, so the list
+// only has what's missing, and ask the user about stock that looks wrong.
+service PantryService {
+  // List the household's pantry: every lot in stock, with its food's name
+  // and store section, and how many days it has left, ordered by food
+  // name and then by expiry, soonest first. Also the foods always in
+  // stock.
+  rpc ListPantry(ListPantryRequest) returns (ListPantryResponse);
+  // Add an amount of a food to the pantry, as a new lot. The amount is
+  // converted to grams with the food's grams_per_piece or
+  // grams_per_milliliter, and fails with FAILED_PRECONDITION if the food
+  // lacks it: set it with FoodService.UpdateFood, or give the amount in
+  // grams. Also fails with FAILED_PRECONDITION if the food is always in
+  // stock, as those aren't tracked.
+  rpc AddToPantry(AddToPantryRequest) returns (AddToPantryResponse);
+  // Update a lot of the pantry, e.g. its grams after using some, or its
+  // opened_date when opening it.
+  rpc UpdatePantryItem(UpdatePantryItemRequest) returns (UpdatePantryItemResponse);
+  // Remove a lot from the pantry, e.g. when it's used up or thrown away.
+  rpc RemoveFromPantry(RemoveFromPantryRequest) returns (RemoveFromPantryResponse);
+}
+
+// A lot of a food in stock.
+message PantryItem {
+  // The ID of the lot. Required to update it, and ignored when adding it.
+  string id = 1;
+  // The ID of the household's food.
+  string food_id = 2 [(mcp.v1.field).output_only = true];
+  // The name of the food.
+  string food_name = 3 [(mcp.v1.field).output_only = true];
+  // The part of the store the food is found in.
+  foods.v1.StoreSection store_section = 4 [(mcp.v1.field).output_only = true];
+  // The amount in stock, in grams. More than 0 and at most 100000.
+  double grams = 5;
+  // The food's weight per piece, to show the amount in pieces, 0 if
+  // unknown.
+  double grams_per_piece = 6 [(mcp.v1.field).output_only = true];
+  // The date it expires unopened (YYYY-MM-DD), from its pack. Empty if it
+  // doesn't or isn't known.
+  string expiry_date = 7;
+  // The date it was opened (YYYY-MM-DD), empty if it's unopened. Once
+  // opened, it keeps for the food's opened_shelf_life_days.
+  string opened_date = 8;
+  // The date to use it by (YYYY-MM-DD): the earlier of expiry_date and the
+  // end of its opened shelf life. Empty if neither is known.
+  string use_by_date = 9 [(mcp.v1.field).output_only = true];
+  // The days from today (UTC) to use_by_date: 0 for today, negative once
+  // it's past. Unset if use_by_date is empty.
+  optional int32 days_to_expiry = 10 [(mcp.v1.field).output_only = true];
+  // Notes, e.g. "in the freezer". At most 500 characters.
+  string notes = 11;
+  // When the lot was added.
+  google.protobuf.Timestamp create_time = 12 [(mcp.v1.field).output_only = true];
+  // When the lot was last changed.
+  google.protobuf.Timestamp update_time = 13 [(mcp.v1.field).output_only = true];
+}
+
+// A food the household always has, which the pantry doesn't track.
+message AlwaysInStockFood {
+  // The ID of the food.
+  string food_id = 1;
+  // The name of the food.
+  string food_name = 2;
+  // The part of the store the food is found in.
+  foods.v1.StoreSection store_section = 3;
+}
+
+message ListPantryRequest {}
+
+message ListPantryResponse {
+  // The lots in stock, ordered by food name and then use_by_date, soonest
+  // first, lots without one last.
+  repeated PantryItem items = 1;
+  // The foods always in stock, by name.
+  repeated AlwaysInStockFood always_in_stock_foods = 2;
+}
+
+message AddToPantryRequest {
+  // The ID of the household's food. Required.
+  string food_id = 1;
+  // The amount, in unit. More than 0.
+  double amount = 2;
+  // The unit of the amount. Required. Milliliters and pieces are converted
+  // to grams with the food's grams_per_milliliter and grams_per_piece.
+  foods.v1.AmountUnit unit = 3;
+  // The date it expires unopened (YYYY-MM-DD). Empty for today (UTC) plus
+  // the food's shelf_life_days, or no expiry date if that's unknown.
+  string expiry_date = 4;
+  // The date it was opened (YYYY-MM-DD), empty if it's unopened.
+  string opened_date = 5;
+  // Notes. At most 500 characters.
+  string notes = 6;
+}
+
+message AddToPantryResponse {
+  // The added lot.
+  PantryItem item = 1;
+}
+
+message UpdatePantryItemRequest {
+  // The lot, with its ID and the new values of the fields in update_mask.
+  PantryItem item = 1;
+  // The fields to update, e.g. "grams" or "opened_date". If empty, all
+  // fields are replaced.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdatePantryItemResponse {
+  // The updated lot.
+  PantryItem item = 1;
+}
+
+message RemoveFromPantryRequest {
+  // The ID of the lot.
+  string id = 1;
+}
+
+message RemoveFromPantryResponse {}

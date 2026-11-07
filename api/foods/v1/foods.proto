@@ -9,8 +9,8 @@ import "mcp/v1/options.proto";
 // FoodService manages the household's foods: the ingredients its recipes are
 // made of, such as chickpeas, a brand of tofu or soy milk, with their
 // nutrients per 100 g. Recipes (see RecipeService), meal plans (see
-// PlanService) and, later, the pantry and the shopping list refer to these
-// foods, and all nutrition is computed from them, so keep one food per
+// PlanService), the pantry (see PantryService) and the shopping list (see
+// ShoppingService) refer to these foods, and all nutrition is computed from them, so keep one food per
 // ingredient and reuse it.
 //
 // To add an ingredient:
@@ -27,7 +27,9 @@ import "mcp/v1/options.proto";
 //
 // Then check that the food can be weighed: recipes measured in pieces need
 // grams_per_piece, and recipes measured in milliliters need
-// grams_per_milliliter.
+// grams_per_milliliter. The pantry and the shopping list also use
+// store_section, package_grams, shelf_life_days, preferred_store_id and
+// always_in_stock: set them when you know them.
 service FoodService {
   // Search the foods of USDA FoodData Central (the Foundation Foods and SR
   // Legacy datasets, without meat, fish, dairy and eggs) by their
@@ -46,12 +48,15 @@ service FoodService {
   // text, ordered by name.
   rpc ListFoods(ListFoodsRequest) returns (ListFoodsResponse);
   // Update one of the household's foods. Recipes using it see the change
-  // right away, as their nutrition is computed from their foods.
+  // right away, as their nutrition is computed from their foods. Fails with
+  // INVALID_ARGUMENT if preferred_store_id isn't one of the household's
+  // stores.
   rpc UpdateFood(UpdateFoodRequest) returns (UpdateFoodResponse);
   // Delete one of the household's foods. Fails with FAILED_PRECONDITION,
   // naming the recipes, if recipes use it: remove it from them first. Also
   // fails with FAILED_PRECONDITION if portions or staples of the plan (see
-  // PlanService) eat it: delete them first.
+  // PlanService) eat it: delete them first. Its stock in the pantry is
+  // deleted, and shopping list items of it are kept by name.
   rpc DeleteFood(DeleteFoodRequest) returns (DeleteFoodResponse);
 }
 
@@ -257,6 +262,18 @@ message Food {
   google.protobuf.Timestamp create_time = 14 [(mcp.v1.field).output_only = true];
   // When the food was last changed.
   google.protobuf.Timestamp update_time = 15 [(mcp.v1.field).output_only = true];
+  // The ID of the household's store the food is always bought at, e.g. a
+  // bulk store for nuts or an Asian grocery for tofu, see
+  // ShoppingService.ListStores. Empty for the main store, the first one,
+  // where the shopping list puts everything else. Deleting the store
+  // empties it.
+  string preferred_store_id = 16;
+  // Whether the household always has the food, like salt, pepper, dried
+  // spices or oil, so the pantry doesn't track it by weight and the
+  // shopping list leaves it out. Cooks marked done don't take it out of the
+  // pantry. Add it to a shopping list by hand when it runs out. False by
+  // default.
+  bool always_in_stock = 17;
 }
 
 // A food of USDA FoodData Central.

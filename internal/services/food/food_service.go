@@ -274,6 +274,9 @@ func (s *Service) toConnectError(ctx context.Context, err error, msg string) err
 		return connect.NewError(connect.CodeNotFound, "the food doesn't exist in your household; find foods with ListFoods")
 	case errors.Is(err, foods.ErrNameTaken):
 		return connect.NewError(connect.CodeAlreadyExists, "the household already has a food with this name; use that food, or choose another name")
+	case errors.Is(err, foods.ErrUnknownStore):
+		return connect.NewError(connect.CodeInvalidArgument,
+			"preferred_store_id isn't one of your household's stores; find them with ListStores, or leave it empty for the main store")
 	}
 	s.report.Report(ctx, msg, err)
 	return connect.NewError(connect.CodeInternal, msg).WithCause(err)

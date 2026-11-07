@@ -27,23 +27,29 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/gen/auth/v1/authv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/foods/v1/foodsv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/oauth/v1/oauthv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/pantry/v1/pantryv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/people/v1/peoplev1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/plans/v1/plansv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1/recipesv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/shopping/v1/shoppingv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/users/v1/usersv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/html"
 	"github.com/bs-tools/foodplann.ing/internal/mcp"
 	"github.com/bs-tools/foodplann.ing/internal/oauth"
+	"github.com/bs-tools/foodplann.ing/internal/pantry"
 	"github.com/bs-tools/foodplann.ing/internal/people"
 	"github.com/bs-tools/foodplann.ing/internal/plans"
 	"github.com/bs-tools/foodplann.ing/internal/recipes"
 	"github.com/bs-tools/foodplann.ing/internal/services/auth"
 	"github.com/bs-tools/foodplann.ing/internal/services/food"
 	oauthsvc "github.com/bs-tools/foodplann.ing/internal/services/oauth"
+	pantrysvc "github.com/bs-tools/foodplann.ing/internal/services/pantry"
 	"github.com/bs-tools/foodplann.ing/internal/services/person"
 	"github.com/bs-tools/foodplann.ing/internal/services/plan"
 	"github.com/bs-tools/foodplann.ing/internal/services/recipe"
+	shoppingsvc "github.com/bs-tools/foodplann.ing/internal/services/shopping"
 	"github.com/bs-tools/foodplann.ing/internal/services/user"
+	"github.com/bs-tools/foodplann.ing/internal/shopping"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 	"github.com/bs-tools/foodplann.ing/internal/telemetry"
 	"github.com/bs-tools/foodplann.ing/internal/timeouts"
@@ -371,7 +377,11 @@ func run(
 	foodService := food.NewService(log, report, foodRepo)
 	recipeService := recipe.NewService(log, report, recipeRepo)
 	personService := person.NewService(log, report, peopleRepo)
-	planService := plan.NewService(log, report, plans.NewRepository(log, db), peopleRepo, recipeRepo, foodRepo)
+	planRepo := plans.NewRepository(log, db)
+	pantryRepo := pantry.NewRepository(log, db)
+	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, foodRepo, pantryRepo)
+	pantryService := pantrysvc.NewService(log, report, pantryRepo, foodRepo)
+	shoppingService := shoppingsvc.NewService(log, report, shopping.NewRepository(log, db), planRepo, recipeRepo, foodRepo, pantryRepo)
 
 	// Register all services on a single Connect server, served by the API mux
 	server := connect.NewServer()
@@ -382,6 +392,8 @@ func run(
 	recipesv1connect.RegisterRecipeServiceHandler(server, recipeService)
 	peoplev1connect.RegisterPersonServiceHandler(server, personService)
 	plansv1connect.RegisterPlanServiceHandler(server, planService)
+	pantryv1connect.RegisterPantryServiceHandler(server, pantryService)
+	shoppingv1connect.RegisterShoppingServiceHandler(server, shoppingService)
 	// Requests are bounded, so one can't exhaust the server's memory. Only
 	// signed in users can upload files, like avatars.
 	apiMux := http.NewServeMux()
@@ -409,6 +421,8 @@ func run(
 		mcp.Service{Name: recipesv1connect.RecipeServiceName, Handler: recipeService},
 		mcp.Service{Name: peoplev1connect.PersonServiceName, Handler: personService},
 		mcp.Service{Name: plansv1connect.PlanServiceName, Handler: planService},
+		mcp.Service{Name: pantryv1connect.PantryServiceName, Handler: pantryService},
+		mcp.Service{Name: shoppingv1connect.ShoppingServiceName, Handler: shoppingService},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create MCP server: %w", err)
