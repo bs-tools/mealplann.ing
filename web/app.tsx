@@ -9,6 +9,8 @@ import FoodsPage from "pages/foods";
 import HomePage from "pages/home";
 import InvitePage from "pages/invite";
 import OAuthConsentPage from "pages/oauth-consent";
+import PeoplePage from "pages/people";
+import PlanPage from "pages/plan";
 import PrivacyPage from "pages/privacy";
 import RecipePage from "pages/recipe";
 import RecipeEditPage from "pages/recipe-edit";
@@ -103,6 +105,8 @@ const App: React.FC = () => {
         {user !== null && (
           <>
             <Route path="/" element={<HomePage user={user} />} />
+            <Route path="/plan" element={<PlanPage />} />
+            <Route path="/people" element={<PeoplePage />} />
             <Route path="/recipes" element={<RecipesPage />} />
             <Route path="/recipes/new" element={<RecipeEditPage />} />
             <Route path="/recipes/:id" element={<RecipePage />} />

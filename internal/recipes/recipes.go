@@ -11,9 +11,15 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/nutrition"
 	"github.com/bs-tools/foodplann.ing/internal/recipes/internal/gen"
 	"github.com/bs-tools/foodplann.ing/internal/store"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+// ErrPlanned is returned when deleting a recipe that cooks or staples of
+// the plan use.
+var ErrPlanned = errors.New("the recipe is planned")
 
 // UnknownFoodsError is returned when a recipe's ingredients use foods that
 // aren't the household's.
@@ -60,9 +66,11 @@ type Ingredient struct {
 	Note         string
 	OriginalText string
 	Optional     bool
-	// FoodName and Food are read from the food, and ignored when writing.
+	// FoodName, Food and FastCarb are read from the food, and ignored when
+	// writing.
 	FoodName string
 	Food     nutrition.Food
+	FastCarb bool
 }
 
 // Nutrition computes the recipe's nutrition from its ingredients.
@@ -204,6 +212,43 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, q
 	return recipes, allTags, nil
 }
 
+// ListRecipesByID lists the household's recipes with the given IDs, with
+// their ingredients' foods, ordered by name. IDs of recipes the household
+// doesn't have are left out.
+func (r *Repository) ListRecipesByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*Recipe, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var rows []*gen.Recipe
+	var ingredients []*gen.ListRecipeIngredientsRow
+	var b store.Batch
+	b.Read(func(db store.Querier) error {
+		var err error
+		rows, err = gen.New(db).ListRecipesByID(ctx, &gen.ListRecipesByIDParams{HouseholdID: householdID, Ids: ids})
+		return err
+	})
+	b.Read(func(db store.Querier) error {
+		var err error
+		ingredients, err = gen.New(db).ListRecipeIngredients(ctx, &gen.ListRecipeIngredientsParams{
+			HouseholdID: householdID,
+			RecipeIds:   ids,
+		})
+		return err
+	})
+	if err := b.Send(ctx, r.db); err != nil {
+		return nil, fmt.Errorf("failed to list recipes: %w", err)
+	}
+	byRecipe := map[pgtype.UUID][]*gen.ListRecipeIngredientsRow{}
+	for _, in := range ingredients {
+		byRecipe[in.RecipeIngredient.RecipeID] = append(byRecipe[in.RecipeIngredient.RecipeID], in)
+	}
+	recipes := make([]*Recipe, 0, len(rows))
+	for _, row := range rows {
+		recipes = append(recipes, recipeFromDB(row, byRecipe[row.ID]))
+	}
+	return recipes, nil
+}
+
 // UpdateRecipe replaces a household's recipe, other than its times, and
 // its ingredients. It returns store.ErrNotFound if the household has no
 // such recipe, and an *UnknownFoodsError if ingredients use foods that
@@ -250,10 +295,15 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 }
 
 // DeleteRecipe deletes a household's recipe. It returns store.ErrNotFound
-// if the household has no such recipe.
+// if the household has no such recipe, and ErrPlanned if cooks or staples
+// use it.
 func (r *Repository) DeleteRecipe(ctx context.Context, householdID, id pgtype.UUID) error {
 	n, err := r.querier.DeleteRecipe(ctx, &gen.DeleteRecipeParams{ID: id, HouseholdID: householdID})
 	if err != nil {
+		// The plan's foreign keys keep planned recipes.
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == pgerrcode.ForeignKeyViolation {
+			return ErrPlanned
+		}
 		return fmt.Errorf("failed to delete recipe: %w", err)
 	}
 	if n == 0 {
@@ -393,6 +443,7 @@ func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 			GramsPerPiece:      orZero(row.GramsPerPiece),
 			GramsPerMilliliter: orZero(row.GramsPerMilliliter),
 		},
+		FastCarb: row.FastCarb,
 	}
 }
 

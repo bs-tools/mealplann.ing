@@ -255,8 +255,12 @@ func (s *Service) toConnectError(ctx context.Context, err error, msg string) err
 		return connectErr
 	}
 	if inUse, ok := errors.AsType[*foods.InUseError](err); ok {
+		if len(inUse.Recipes) == 0 && inUse.PlanUses > 0 {
+			return connect.Errorf(connect.CodeFailedPrecondition,
+				"the food is eaten in %d portions or staples of the plan; delete them first (see PlanService), or keep the food", inUse.PlanUses)
+		}
 		if len(inUse.Recipes) == 0 {
-			return connect.NewError(connect.CodeFailedPrecondition, "the food is used by recipes; remove it from them first")
+			return connect.NewError(connect.CodeFailedPrecondition, "the food is used by recipes or the plan; remove it from them first")
 		}
 		if len(inUse.Recipes) == 1 {
 			return connect.Errorf(connect.CodeFailedPrecondition,

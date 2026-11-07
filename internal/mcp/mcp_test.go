@@ -21,6 +21,8 @@ import (
 	foodsv1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/foods/v1/foodsv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/oauth/v1/oauthv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/people/v1/peoplev1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/plans/v1/plansv1connect"
 	recipesv1 "github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1/recipesv1connect"
 	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
@@ -47,6 +49,8 @@ func allServices() []Service {
 		{Name: usersv1connect.UserServiceName, Handler: usersv1connect.UnimplementedUserServiceHandler{}},
 		{Name: foodsv1connect.FoodServiceName, Handler: foodsv1connect.UnimplementedFoodServiceHandler{}},
 		{Name: recipesv1connect.RecipeServiceName, Handler: recipesv1connect.UnimplementedRecipeServiceHandler{}},
+		{Name: peoplev1connect.PersonServiceName, Handler: peoplev1connect.UnimplementedPersonServiceHandler{}},
+		{Name: plansv1connect.PlanServiceName, Handler: plansv1connect.UnimplementedPlanServiceHandler{}},
 	}
 }
 
@@ -70,6 +74,7 @@ func TestNewServer(t *testing.T) {
 	for _, name := range []string{
 		"GetCurrentUser", "GetHousehold", "CreateInvitation", "ListInvitations", "ApproveAuthorization",
 		"SearchFoodData", "CreateFood", "UpdateFood", "DeleteFood", "CreateRecipe", "ListRecipes", "UpdateRecipe",
+		"CreatePerson", "ListPeople", "UpdatePerson", "GetWeek", "PlanMeal", "CreatePortion", "CreateStaple", "SkipStaple",
 	} {
 		if _, ok := tools[name]; !ok {
 			t.Errorf("method %s is not a tool", name)
@@ -128,7 +133,7 @@ func TestNewServer(t *testing.T) {
 			title:       "Delete Food",
 			destructive: true,
 			idempotent:  true,
-			description: "Delete one of the household's foods. Fails with FAILED_PRECONDITION, naming the recipes, if recipes use it: remove it from them first.",
+			description: "Delete one of the household's foods. Fails with FAILED_PRECONDITION, naming the recipes, if recipes use it: remove it from them first. Also fails with FAILED_PRECONDITION if portions or staples of the plan (see PlanService) eat it: delete them first.",
 		},
 		{
 			name:  "CreateRecipe",
@@ -311,6 +316,11 @@ func TestInstructions(t *testing.T) {
 		// Numbered lists keep an item per line, so they stay lists in
 		// Markdown.
 		"To add an ingredient:\n\n1. Look for it among the household's foods with ListFoods, and reuse it if it's there.\n2. Otherwise,",
+		"## people.v1.PersonService\n\nPersonService manages the people the household plans meals for.",
+		"## plans.v1.PlanService\n\nPlanService plans the household's meals, by week.",
+		"A plan is made of:\n\n1. Cooks: a recipe (see RecipeService) made on a date for a number of servings, scaling the recipe,",
+		"\n2. Portions: what a person (see PersonService) eats at one of their eating times on a date.",
+		"\n3. Staples: recurring portions,",
 	} {
 		if !strings.Contains(initRes.Instructions, want) {
 			t.Errorf("instructions do not contain %q:\n%s", want, initRes.Instructions)

@@ -50,9 +50,11 @@ person's care team and are entered as-is. Every rule is optional.
 - **Daily targets** for any of the tracked nutrients, see Settled details.
 - **Maximum portion per eating time**, in grams.
 - **Minimum protein per eating time**, in grams.
-- **Carbohydrate pairing**: a minimum ratio of protein (and optionally fat
-  and fiber) to carbohydrate at each eating time, for reactive
-  hypoglycemia.
+- **Carbohydrate pairing**: a minimum ratio of protein and fat to
+  carbohydrate at each eating time, for reactive hypoglycemia: (protein +
+  fat) / carbohydrate, in grams. Fat counts like protein, as both slow
+  absorption; fiber doesn't count separately, as it's part of
+  carbohydrate. Eating times without carbohydrate pass.
 - **Fast carbs**: a warning when an eating time relies on foods tagged as
   quickly absorbed.
 - **Dumping risk**: a warning for eating times high in sugars, and
@@ -101,15 +103,25 @@ saying what to change.
   time on some day. That covers:
   - **Shared meals with split portions**: a household dinner gives one
     person a regular portion, and the other a small one now and another
-    small one later, as their next small meal.
+    small one later, as their next small meal. Planning a shared meal
+    gives each person whose eating pattern eats from it one serving at
+    that eating time. A serving over the person's maximum portion (less
+    what's planned there already) is capped at it, and the rest goes to
+    their next small eating times that day, then the next day's; what fits
+    nowhere is left over on the cook.
   - **Batch cooking and leftovers**: portions of the same cook on later
     days. Ingredients are bought once.
 - Portions can also be eaten without a recipe, such as a handful of nuts,
   as a food and an amount.
 - **Staples** are recurring portions, such as a person's usual breakfast or
   daily soy milk, added to every week until changed.
+- Staples aren't copied into each week: reading a plan expands them on
+  the dates they're on, less the dates they're skipped, in one place that
+  the shopping list reuses.
 - Each day shows, for each person, their eating times, what they eat at
   each, the totals against their daily targets, and any rule warnings.
+  Nutrients some foods lack are lower bounds, so a "low" warning on them
+  only says the value may be low.
 
 ## Pantry
 

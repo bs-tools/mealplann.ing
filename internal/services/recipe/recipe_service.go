@@ -171,6 +171,10 @@ func (s *Service) toConnectError(ctx context.Context, err error, msg string) err
 			"the ingredients' foods %s aren't in your household; find the household's foods with ListFoods, or create them with CreateFood",
 			strings.Join(ids, ", "))
 	}
+	if errors.Is(err, recipes.ErrPlanned) {
+		return connect.NewError(connect.CodeFailedPrecondition,
+			"the recipe is planned: delete its cooks and staples from the plan first (see PlanService), or keep the recipe")
+	}
 	if errors.Is(err, store.ErrNotFound) {
 		return connect.NewError(connect.CodeNotFound, "the recipe doesn't exist in your household; find recipes with ListRecipes")
 	}

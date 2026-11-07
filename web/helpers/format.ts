@@ -62,6 +62,18 @@ export const formatShortDate = (value: string): string => {
   });
 };
 
+// FormatDay formats YYYY-MM-DD as a day of a week, e.g. "Mon, 12 Oct".
+export const formatDay = (value: string): string => {
+  if (value === "") {
+    return "";
+  }
+  return parseDate(value).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    weekday: "short",
+  });
+};
+
 // FormatMonth formats YYYY-MM-DD as e.g. "October 2026".
 export const formatMonth = (value: string): string =>
   parseDate(value).toLocaleDateString(undefined, {

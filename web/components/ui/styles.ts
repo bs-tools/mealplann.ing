@@ -39,3 +39,14 @@ export const thClass =
   "px-2 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase whitespace-nowrap";
 
 export const tdClass = "px-2 py-2 align-top text-gray-800";
+
+/**
+ * ChoiceClass styles a button of a group of choices, like the days of a
+ * week, filled when chosen.
+ */
+export const choiceClass = (active: boolean): string =>
+  `rounded-md px-3 py-1 text-sm font-medium ring-1 ring-inset ${
+    active
+      ? "bg-ink text-white ring-ink"
+      : "bg-white text-gray-700 ring-gray-300 hover:bg-gray-50"
+  }`;

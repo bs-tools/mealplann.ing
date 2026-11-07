@@ -11,6 +11,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countFoodPlanUses = `-- name: CountFoodPlanUses :one
+select
+  ((select count(*) from portions p where p.household_id = $1 and p.food_id = $2)
+  + (select count(*) from staples s where s.household_id = $1 and s.food_id = $2))::bigint
+`
+
+type CountFoodPlanUsesParams struct {
+	HouseholdID pgtype.UUID
+	FoodID      pgtype.UUID
+}
+
+// How many portions and staples of the plan eat the food.
+func (q *Queries) CountFoodPlanUses(ctx context.Context, arg *CountFoodPlanUsesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countFoodPlanUses, arg.HouseholdID, arg.FoodID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createFood = `-- name: CreateFood :one
 insert into foods (
   household_id,
@@ -200,6 +219,14 @@ where f.id = $1 and f.household_id = $2
     select 1 from recipe_ingredients ri
     where ri.household_id = $2 and ri.food_id = $1
   )
+  and not exists (
+    select 1 from portions p
+    where p.household_id = $2 and p.food_id = $1
+  )
+  and not exists (
+    select 1 from staples s
+    where s.household_id = $2 and s.food_id = $1
+  )
 `
 
 type DeleteUnusedFoodParams struct {
@@ -207,7 +234,8 @@ type DeleteUnusedFoodParams struct {
 	HouseholdID pgtype.UUID
 }
 
-// Foods used by recipes aren't deleted, see ListRecipesUsingFood.
+// Foods used by recipes, portions or staples aren't deleted, see
+// ListRecipesUsingFood and CountFoodPlanUses.
 func (q *Queries) DeleteUnusedFood(ctx context.Context, arg *DeleteUnusedFoodParams) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteUnusedFood, arg.ID, arg.HouseholdID)
 	if err != nil {
@@ -292,6 +320,73 @@ func (q *Queries) ListFoods(ctx context.Context, arg *ListFoodsParams) ([]*Food,
 		arg.RowOffset,
 		arg.RowLimit,
 	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Food
+	for rows.Next() {
+		var i Food
+		if err := rows.Scan(
+			&i.ID,
+			&i.HouseholdID,
+			&i.Name,
+			&i.FDCID,
+			&i.EnergyKcalPer100Grams,
+			&i.ProteinGramsPer100Grams,
+			&i.CarbohydrateGramsPer100Grams,
+			&i.SugarsGramsPer100Grams,
+			&i.FatGramsPer100Grams,
+			&i.FiberGramsPer100Grams,
+			&i.VitaminB12MicrogramsPer100Grams,
+			&i.IronMilligramsPer100Grams,
+			&i.CalciumMilligramsPer100Grams,
+			&i.VitaminDMicrogramsPer100Grams,
+			&i.IodineMicrogramsPer100Grams,
+			&i.ZincMilligramsPer100Grams,
+			&i.Omega3ALAGramsPer100Grams,
+			&i.FolateMicrogramsPer100Grams,
+			&i.VitaminAMicrogramsPer100Grams,
+			&i.VitaminEMilligramsPer100Grams,
+			&i.VitaminKMicrogramsPer100Grams,
+			&i.CopperMilligramsPer100Grams,
+			&i.MagnesiumMilligramsPer100Grams,
+			&i.SodiumMilligramsPer100Grams,
+			&i.PotassiumMilligramsPer100Grams,
+			&i.GramsPerPiece,
+			&i.GramsPerMilliliter,
+			&i.FastCarb,
+			&i.StoreSection,
+			&i.PackageGrams,
+			&i.ShelfLifeDays,
+			&i.OpenedShelfLifeDays,
+			&i.Notes,
+			&i.CreateTime,
+			&i.UpdateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFoodsByID = `-- name: ListFoodsByID :many
+select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time from foods
+where household_id = $1 and id = any($2::uuid[])
+order by lower(name)
+`
+
+type ListFoodsByIDParams struct {
+	HouseholdID pgtype.UUID
+	Ids         []pgtype.UUID
+}
+
+func (q *Queries) ListFoodsByID(ctx context.Context, arg *ListFoodsByIDParams) ([]*Food, error) {
+	rows, err := q.db.Query(ctx, listFoodsByID, arg.HouseholdID, arg.Ids)
 	if err != nil {
 		return nil, err
 	}
