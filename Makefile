@@ -140,6 +140,45 @@ admin-invitation: ## Print where to create the first administrator once the loca
 		echo "Open http://localhost:8080 to create the first administrator"; \
 	fi
 
+# The Terraform CI plans and applies with, in images/Dockerfile, where
+# Dependabot updates it. Local applies use the same version, downloaded into
+# .bin on first use: Terraform refuses to read state written by a newer
+# version, so applying with another version breaks either CI's deployments
+# or local applies. Terraform can't be installed with go install, as its
+# go.mod has replace directives.
+TERRAFORM_VERSION := $(shell images/image.sh --tag terraform)
+TERRAFORM := $(CURDIR)/.bin/terraform-$(TERRAFORM_VERSION)
+TERRAFORM_RELEASE := https://releases.hashicorp.com/terraform/$(TERRAFORM_VERSION)
+
+$(TERRAFORM):
+	rm -rf $(CURDIR)/.bin/download && mkdir -p $(CURDIR)/.bin/download && cd $(CURDIR)/.bin/download && \
+		zip=terraform_$(TERRAFORM_VERSION)_$$(uname -s | tr '[:upper:]' '[:lower:]')_$$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/').zip && \
+		curl -fsSLO $(TERRAFORM_RELEASE)/$$zip && \
+		curl -fsSL $(TERRAFORM_RELEASE)/terraform_$(TERRAFORM_VERSION)_SHA256SUMS | grep " $$zip$$" | shasum -a 256 -c && \
+		unzip -q $$zip terraform && \
+		mv terraform $@
+	rm -rf $(CURDIR)/.bin/download
+
+.PHONY: infra-plan
+infra-plan: $(TERRAFORM) ## Plan changes to the Google Cloud project, with your gcloud credentials
+	GOOGLE_OAUTH_ACCESS_TOKEN=$$(gcloud auth print-access-token) && export GOOGLE_OAUTH_ACCESS_TOKEN && \
+		$(TERRAFORM) -chdir=infra init -input=false && \
+		$(TERRAFORM) -chdir=infra plan
+
+# ARGS passes more arguments to terraform apply, like
+# ARGS="-var service_enabled=false" for the first apply, see the README.
+.PHONY: infra-apply
+infra-apply: $(TERRAFORM) ## Apply changes to the Google Cloud project, with your gcloud credentials
+	GOOGLE_OAUTH_ACCESS_TOKEN=$$(gcloud auth print-access-token) && export GOOGLE_OAUTH_ACCESS_TOKEN && \
+		$(TERRAFORM) -chdir=infra init -input=false && \
+		$(TERRAFORM) -chdir=infra apply $(ARGS)
+
+.PHONY: infra-output
+infra-output: $(TERRAFORM) ## Print Terraform's outputs, e.g. make infra-output NAME=domain_records
+	GOOGLE_OAUTH_ACCESS_TOKEN=$$(gcloud auth print-access-token) && export GOOGLE_OAUTH_ACCESS_TOKEN && \
+		$(TERRAFORM) -chdir=infra init -input=false >/dev/null && \
+		$(TERRAFORM) -chdir=infra output $(NAME)
+
 .PHONY: web-deps
 web-deps: ## Install web dependencies
 	$(NODE_RUN) npm install

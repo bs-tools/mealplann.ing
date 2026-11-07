@@ -77,7 +77,9 @@ const (
 	// bodyReadTimeout bounds reading a request's body, which is up to 32 MiB
 	// for uploads of photos from phones on slow connections.
 	bodyReadTimeout = 2 * time.Minute
-	// handlerTimeout bounds how long requests run.
+	// handlerTimeout bounds how long requests run. Cloud Run's request
+	// timeout, in infra/run.tf, is longer, so the server answers a slow
+	// request rather than Cloud Run cutting it off.
 	handlerTimeout = 2 * time.Minute
 	// idleTimeout is how long an idle connection is kept open. Google's front
 	// ends keep idle connections to backends for up to 600 seconds, and one
