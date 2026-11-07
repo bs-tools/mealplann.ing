@@ -174,12 +174,19 @@ type PlanServiceClient interface {
 	// FAILED_PRECONDITION if nobody eats from the meal.
 	PlanMeal(context.Context, *v1.PlanMealRequest) (*v1.PlanMealResponse, error)
 	// Create a cook: a recipe made on a date. Plan who eats it with
-	// CreatePortion, or use PlanMeal to do both.
+	// CreatePortion, or use PlanMeal to do both. A cook created done takes
+	// its ingredients out of the pantry, like UpdateCook.
 	CreateCook(context.Context, *v1.CreateCookRequest) (*v1.CreateCookResponse, error)
 	// Update a cook. Its portions stay, so moving a cook to a later date can
-	// leave portions before it, which GetWeek warns about.
+	// leave portions before it, which GetWeek warns about. Marking it done
+	// takes its ingredients, scaled to its servings and without optional
+	// ones, out of the pantry (see PantryService), from the lots that expire
+	// first, as far as they're in stock; un-marking it puts back exactly what
+	// was taken out. Changing a done cook's recipe or servings doesn't change
+	// the pantry: un-mark it first, then mark it done again.
 	UpdateCook(context.Context, *v1.UpdateCookRequest) (*v1.UpdateCookResponse, error)
-	// Delete a cook. Its portions are deleted too.
+	// Delete a cook. Its portions are deleted too. The pantry doesn't change,
+	// even if it was done.
 	DeleteCook(context.Context, *v1.DeleteCookRequest) (*v1.DeleteCookResponse, error)
 	// Create a portion: what a person eats at one of their eating times on a
 	// date, either a share of a cook or an amount of a food.
@@ -232,12 +239,19 @@ type PlanServiceHandler interface {
 	// FAILED_PRECONDITION if nobody eats from the meal.
 	PlanMeal(context.Context, *v1.PlanMealRequest) (*v1.PlanMealResponse, error)
 	// Create a cook: a recipe made on a date. Plan who eats it with
-	// CreatePortion, or use PlanMeal to do both.
+	// CreatePortion, or use PlanMeal to do both. A cook created done takes
+	// its ingredients out of the pantry, like UpdateCook.
 	CreateCook(context.Context, *v1.CreateCookRequest) (*v1.CreateCookResponse, error)
 	// Update a cook. Its portions stay, so moving a cook to a later date can
-	// leave portions before it, which GetWeek warns about.
+	// leave portions before it, which GetWeek warns about. Marking it done
+	// takes its ingredients, scaled to its servings and without optional
+	// ones, out of the pantry (see PantryService), from the lots that expire
+	// first, as far as they're in stock; un-marking it puts back exactly what
+	// was taken out. Changing a done cook's recipe or servings doesn't change
+	// the pantry: un-mark it first, then mark it done again.
 	UpdateCook(context.Context, *v1.UpdateCookRequest) (*v1.UpdateCookResponse, error)
-	// Delete a cook. Its portions are deleted too.
+	// Delete a cook. Its portions are deleted too. The pantry doesn't change,
+	// even if it was done.
 	DeleteCook(context.Context, *v1.DeleteCookRequest) (*v1.DeleteCookResponse, error)
 	// Create a portion: what a person eats at one of their eating times on a
 	// date, either a share of a cook or an amount of a food.

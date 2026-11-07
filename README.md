@@ -12,10 +12,14 @@ built on the same stack as [trail-tools](https://github.com/johanbrandhorst/trai
 
 ## Status
 
-Milestones 1 and 2: invite-only sign in with passkeys, households, the
+Milestones 1 to 4: invite-only sign in with passkeys, households, the
 settings page, and the MCP server with OAuth and API tokens; foods from USDA
 FoodData Central or entered by hand, and recipes with their nutrition per
-serving. People, plans, the pantry and the shopping list come next.
+serving; the people you plan for, with their eating patterns and their care
+team's rules, and weekly plans of shared meals, leftovers and staples,
+checked against those rules; the pantry, which cooks marked done take from,
+and a shared shopping list for one shop a week, by store and aisle, which
+puts what's bought into the pantry. Suggestions come next.
 
 ## Prerequisites
 

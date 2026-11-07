@@ -31,7 +31,9 @@ insert into foods (
   package_grams,
   shelf_life_days,
   opened_shelf_life_days,
-  notes
+  notes,
+  preferred_store_id,
+  always_in_stock
 ) values (
   @household_id,
   @name,
@@ -64,7 +66,9 @@ insert into foods (
   @package_grams,
   @shelf_life_days,
   @opened_shelf_life_days,
-  @notes
+  @notes,
+  @preferred_store_id,
+  @always_in_stock
 )
 returning *;
 
@@ -112,6 +116,8 @@ update foods set
   shelf_life_days = @shelf_life_days,
   opened_shelf_life_days = @opened_shelf_life_days,
   notes = @notes,
+  preferred_store_id = @preferred_store_id,
+  always_in_stock = @always_in_stock,
   update_time = now()
 where id = @id and household_id = @household_id
 returning *;
@@ -152,4 +158,9 @@ where f.id = @id and f.household_id = @household_id
 -- name: ListFoodsByID :many
 select * from foods
 where household_id = @household_id and id = any(@ids::uuid[])
+order by lower(name);
+
+-- name: ListAlwaysInStockFoods :many
+select * from foods
+where household_id = @household_id and always_in_stock
 order by lower(name);

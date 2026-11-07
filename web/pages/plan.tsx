@@ -13,11 +13,14 @@ import {
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
+  ArchiveBoxIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
+import { PantryService } from "gen/pantry/v1/pantry_pb";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import {
   deleteCook,
@@ -26,7 +29,7 @@ import {
   skipStaple,
   updateCook,
 } from "gen/plans/v1/plans-PlanService_connectquery";
-import type { PlannedPortion } from "gen/plans/v1/plans_pb";
+import type { PlannedPortion, UpdateCookResponse } from "gen/plans/v1/plans_pb";
 import { PlanService, Severity } from "gen/plans/v1/plans_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import {
@@ -37,10 +40,32 @@ import {
   startOfWeek,
   today,
 } from "helpers/dates";
-import { formatShortDate } from "helpers/format";
+import { formatGrams, formatList, formatShortDate } from "helpers/format";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
+
+/**
+ * PantryChangeNote says what marking a cook done took out of the pantry, or
+ * un-marking it put back, e.g. "Took 600 g of lentils and 150 g of onions
+ * out of the pantry."
+ */
+const pantryChangeNote = (response: UpdateCookResponse): string => {
+  const amounts = response.pantryChanges.map(
+    (change) => `${formatGrams(change.grams)} of ${change.foodName}`
+  );
+  if (response.pantryRestored) {
+    return amounts.length === 0
+      ? ""
+      : `Put ${formatList(amounts)} back into the pantry.`;
+  }
+  if (response.cook?.done !== true) {
+    return "";
+  }
+  return amounts.length === 0
+    ? "Cooked. None of its ingredients were in the pantry."
+    : `Cooked: took ${formatList(amounts)} out of the pantry.`;
+};
 
 // PortionEdit is the portion being added or changed, and where.
 interface PortionEdit {
@@ -78,12 +103,19 @@ const PlanPage: React.FC = () => {
   const [planning, setPlanning] = useState<string | null>(null);
   const [editing, setEditing] = useState<PortionEdit | null>(null);
 
+  // What marking a cook done last did to the pantry, empty if nothing.
+  const [pantryNote, setPantryNote] = useState("");
   const onSuccess = async (): Promise<void> => {
     await invalidateServices(queryClient, [PlanService]);
   };
   const remove = useMutation(deletePortion, { onSuccess });
   const skip = useMutation(skipStaple, { onSuccess });
-  const cookDone = useMutation(updateCook, { onSuccess });
+  const cookDone = useMutation(updateCook, {
+    onSuccess: async (response) => {
+      setPantryNote(pantryChangeNote(response));
+      await invalidateServices(queryClient, [PlanService, PantryService]);
+    },
+  });
   const removeCook = useMutation(deleteCook, { onSuccess });
   const pending =
     remove.isPending ||
@@ -272,6 +304,38 @@ const PlanPage: React.FC = () => {
       <ErrorText
         error={remove.error ?? skip.error ?? cookDone.error ?? removeCook.error}
       />
+      {pantryNote !== "" && (
+        /*
+         * It floats at the bottom of the screen, as the cook ticked is
+         * often far down the page.
+         */
+        <div
+          role="status"
+          className="fixed inset-x-3 bottom-3 z-[1000] flex items-start gap-2 rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-gray-800 shadow-lg sm:right-4 sm:left-auto sm:max-w-md print:hidden"
+        >
+          <ArchiveBoxIcon
+            className="mt-0.5 size-4 shrink-0 text-brand-700"
+            aria-hidden="true"
+          />
+          <p className="grow">
+            {pantryNote}{" "}
+            <Link to="/pantry" className={linkClass}>
+              See the pantry
+            </Link>
+          </p>
+          <button
+            type="button"
+            className={iconButton}
+            aria-label="Dismiss"
+            title="Dismiss"
+            onClick={() => {
+              setPantryNote("");
+            }}
+          >
+            <XMarkIcon className="size-4" />
+          </button>
+        </div>
+      )}
       {content}
       {planning !== null && (
         <PlanMealDialog

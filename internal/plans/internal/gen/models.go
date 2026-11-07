@@ -451,6 +451,23 @@ type Cook struct {
 	UpdateTime  pgtype.Timestamptz
 }
 
+type CookPantryDeduction struct {
+	CookID       pgtype.UUID
+	HouseholdID  pgtype.UUID
+	PantryItemID pgtype.UUID
+	FoodID       pgtype.UUID
+	Grams        float64
+	ExpiryDate   pgtype.Date
+	OpenedDate   pgtype.Date
+	Notes        string
+}
+
+type CookPantryUse struct {
+	CookID      pgtype.UUID
+	HouseholdID pgtype.UUID
+	CreateTime  pgtype.Timestamptz
+}
+
 type EatingTime struct {
 	ID          pgtype.UUID
 	HouseholdID pgtype.UUID
@@ -529,6 +546,8 @@ type Food struct {
 	Notes                           string
 	CreateTime                      pgtype.Timestamptz
 	UpdateTime                      pgtype.Timestamptz
+	PreferredStoreID                pgtype.UUID
+	AlwaysInStock                   bool
 }
 
 type Household struct {
@@ -577,6 +596,18 @@ type OauthUsedRefreshToken struct {
 	RefreshTokenSHA256 []byte
 	OAuthGrantID       pgtype.UUID
 	ExpireTime         pgtype.Timestamptz
+}
+
+type PantryItem struct {
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+	FoodID      pgtype.UUID
+	Grams       float64
+	ExpiryDate  pgtype.Date
+	OpenedDate  pgtype.Date
+	Notes       string
+	CreateTime  pgtype.Timestamptz
+	UpdateTime  pgtype.Timestamptz
 }
 
 type Passkey struct {
@@ -689,6 +720,41 @@ type Session struct {
 	PasskeyID   []byte
 }
 
+type ShoppingItem struct {
+	ID           pgtype.UUID
+	HouseholdID  pgtype.UUID
+	ListID       pgtype.UUID
+	FoodID       pgtype.UUID
+	Name         string
+	Grams        float64
+	NeededGrams  float64
+	PantryGrams  float64
+	Packages     int32
+	AmountText   string
+	StoreID      pgtype.UUID
+	StoreSection *StoreSection
+	NeededBy     pgtype.Date
+	TopUp        bool
+	Warning      string
+	Checked      bool
+	CheckedBy    pgtype.UUID
+	CheckTime    pgtype.Timestamptz
+	Note         string
+	Manual       bool
+	CreateTime   pgtype.Timestamptz
+	UpdateTime   pgtype.Timestamptz
+}
+
+type ShoppingList struct {
+	ID           pgtype.UUID
+	HouseholdID  pgtype.UUID
+	StartDate    pgtype.Date
+	EndDate      pgtype.Date
+	CompleteTime pgtype.Timestamptz
+	CreateTime   pgtype.Timestamptz
+	UpdateTime   pgtype.Timestamptz
+}
+
 type Staple struct {
 	ID           pgtype.UUID
 	HouseholdID  pgtype.UUID
@@ -711,6 +777,15 @@ type StapleSkip struct {
 	HouseholdID pgtype.UUID
 	StapleID    pgtype.UUID
 	Date        pgtype.Date
+}
+
+type Store struct {
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+	Name        string
+	Position    int32
+	CreateTime  pgtype.Timestamptz
+	UpdateTime  pgtype.Timestamptz
 }
 
 type User struct {

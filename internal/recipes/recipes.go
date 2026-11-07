@@ -87,6 +87,24 @@ func (r *Recipe) Nutrition() *nutrition.Recipe {
 	return nutrition.ForRecipe(ingredients, int(r.Servings))
 }
 
+// IngredientsFor returns the ingredients used to make a number of servings
+// of the recipe: copies of the ingredients scaled by servings divided by
+// the recipe's servings, without the optional ones, which the shopping list
+// and the pantry leave out like the nutrition does.
+func (r *Recipe) IngredientsFor(servings float64) []*Ingredient {
+	scale := servings / float64(max(r.Servings, 1))
+	scaled := make([]*Ingredient, 0, len(r.Ingredients))
+	for _, in := range r.Ingredients {
+		if in.Optional {
+			continue
+		}
+		c := *in
+		c.Amount *= scale
+		scaled = append(scaled, &c)
+	}
+	return scaled
+}
+
 // Repository stores recipes.
 type Repository struct {
 	log     *slog.Logger

@@ -21,10 +21,12 @@ import (
 	foodsv1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/foods/v1/foodsv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/oauth/v1/oauthv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/pantry/v1/pantryv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/people/v1/peoplev1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/plans/v1/plansv1connect"
 	recipesv1 "github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1/recipesv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/shopping/v1/shoppingv1connect"
 	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/users/v1/usersv1connect"
 	"github.com/google/jsonschema-go/jsonschema"
@@ -51,6 +53,8 @@ func allServices() []Service {
 		{Name: recipesv1connect.RecipeServiceName, Handler: recipesv1connect.UnimplementedRecipeServiceHandler{}},
 		{Name: peoplev1connect.PersonServiceName, Handler: peoplev1connect.UnimplementedPersonServiceHandler{}},
 		{Name: plansv1connect.PlanServiceName, Handler: plansv1connect.UnimplementedPlanServiceHandler{}},
+		{Name: pantryv1connect.PantryServiceName, Handler: pantryv1connect.UnimplementedPantryServiceHandler{}},
+		{Name: shoppingv1connect.ShoppingServiceName, Handler: shoppingv1connect.UnimplementedShoppingServiceHandler{}},
 	}
 }
 
@@ -133,7 +137,7 @@ func TestNewServer(t *testing.T) {
 			title:       "Delete Food",
 			destructive: true,
 			idempotent:  true,
-			description: "Delete one of the household's foods. Fails with FAILED_PRECONDITION, naming the recipes, if recipes use it: remove it from them first. Also fails with FAILED_PRECONDITION if portions or staples of the plan (see PlanService) eat it: delete them first.",
+			description: "Delete one of the household's foods. Fails with FAILED_PRECONDITION, naming the recipes, if recipes use it: remove it from them first. Also fails with FAILED_PRECONDITION if portions or staples of the plan (see PlanService) eat it: delete them first. Its stock in the pantry is deleted, and shopping list items of it are kept by name.",
 		},
 		{
 			name:  "CreateRecipe",
@@ -321,6 +325,14 @@ func TestInstructions(t *testing.T) {
 		"A plan is made of:\n\n1. Cooks: a recipe (see RecipeService) made on a date for a number of servings, scaling the recipe,",
 		"\n2. Portions: what a person (see PersonService) eats at one of their eating times on a date.",
 		"\n3. Staples: recurring portions,",
+		"## pantry.v1.PantryService\n\nPantryService tracks the household's pantry",
+		"The pantry changes by itself in two ways:\n\n1. Completing a shopping list (see ShoppingService.CompleteShopping) adds the checked items,",
+		"\n2. Marking a cook done (see PlanService.UpdateCook) takes its ingredients out,",
+		"## shopping.v1.ShoppingService\n\nShoppingService makes the household's shopping lists from its meal plan",
+		"To help with the weekly shop:\n\n1. Plan the week first with PlanService, and check the pantry with PantryService.ListPantry,",
+		"\n2. Create the list with CreateShoppingList, from the day of the shop.",
+		"\n3. Look at the items with top_up set:",
+		"\n4. Add anything else the user needs with AddManualItem.",
 	} {
 		if !strings.Contains(initRes.Instructions, want) {
 			t.Errorf("instructions do not contain %q:\n%s", want, initRes.Instructions)

@@ -125,25 +125,67 @@ saying what to change.
 
 ## Pantry
 
-- The pantry tracks **quantities** of foods in stock, with an optional
-  expiry date.
-- Checking off the shopping list adds items to the pantry. Marking a cook as
-  done takes its ingredients out.
-- Amounts are kept in grams wherever possible, converted from pieces or
-  milliliters with the food's weights.
+- The pantry tracks **quantities** of foods in stock, in grams, as
+  **lots**: what was bought or added together, with an optional expiry date
+  and an optional opened date. A food can have several lots, so the oldest
+  is used first, and suggestions can find what's close to expiry. A lot's
+  **use-by date** is the earlier of its expiry date and its opened date plus
+  the food's opened shelf life.
+- Amounts are added in grams, milliliters or pieces, and converted to grams
+  with the food's weights; adding an amount that can't be converted fails,
+  saying what to set on the food. A lot added without an expiry date expires
+  after the food's shelf life.
+- Foods the household always has, like salt, spices or oil, are marked
+  **always in stock** on the food. The pantry doesn't weigh them, cooks don't
+  take them out, and the shopping list leaves them out; they're added to a
+  list by hand when they run out.
+- Completing the shopping adds the checked items of foods to the pantry, as
+  new lots of the grams bought, expiring after the food's shelf life from
+  the day of the shop.
+- **Marking a cook done** takes its ingredients out, scaled to its
+  servings and without the optional ones, from the lots to use first, as
+  far as they're in stock and never below zero. What it takes from each lot
+  is recorded, so un-marking it puts back exactly that, into the same lots,
+  recreating emptied ones. A cook takes its ingredients out once, even when
+  two phones mark it at once. Changing or deleting a done cook doesn't change
+  the pantry: un-mark it and mark it again to redo it. Ingredients that can't
+  be weighed are left in.
+- Only cooks take from the pantry. Portions of foods and staples aren't
+  taken out, as they're eaten too irregularly to track; the pantry is
+  corrected by hand when it's off.
 
 ## Shopping list
 
-- Generated from a week's cooks and staples, minus what's in the pantry,
-  with amounts rounded up to what's actually sold where known (such as a
-  400 g can).
-- Grouped by **store**, then by **store section**, for ticking off on a phone
-  in the store. Everyone in the household sees it update.
-- It aims for **a single shop a week**: perishable produce is planned for
-  early in the week, and suggestions prefer recipes later in the week whose
-  ingredients keep. A top-up trip is only suggested when a fresh ingredient
-  won't last until it's cooked.
-- Items can also be added by hand.
+- A list is for the meals of a range of dates, a week by default, and is
+  shopped for on its first date. It's stored, so the household's ticks are
+  shared and survive reloads; phones read it again every few seconds while
+  it's open, which is enough for two people in a store.
+- Generated from the cooks not yet done, scaled to their servings, the
+  portions of foods, and the staples on each date, with the same expansion
+  as the plan's, recipe staples contributing their scaled ingredients.
+  Optional ingredients and foods always in stock are left out.
+- Needs are added up per food and date in grams, and the pantry covers them
+  in date order, from the lots to use first, skipping lots past their
+  use-by date on the date they're needed. What's left is rounded up to whole
+  packs where the food has a pack size (such as a 400 g can), or to whole
+  pieces where it was planned in pieces, and shown in the unit it was
+  planned in: "2 × 400 g", "3 pieces (~450 g)", "750 ml". Amounts that
+  can't be weighed are listed as they are, with what to set on the food.
+- Grouped by **store**, then by **store section**, in the order of a
+  typical shop, for ticking off on a phone in the store. A food goes to its
+  preferred store, or else the **main store**, the first of the household's
+  stores. Deleting a store moves its foods and items to the main store.
+- It aims for **a single shop a week**: a food's needs on dates later than
+  its shelf life after the shop are split into their own **top-up** item,
+  saying when it's needed, to buy fresh closer to then or to move the meal
+  earlier; the list counts them. Meals aren't moved automatically: that's
+  for suggestions.
+- Regenerating a list after the plan or the pantry changes replaces its
+  generated items, keeping the checks and notes of items of the same food,
+  and the items added by hand. A list whose shopping is complete doesn't
+  change.
+- Items can also be added by hand: a food, which goes to its store, or free
+  text, like dish soap.
 
 ## Suggestions
 
@@ -183,6 +225,9 @@ GCP project with Neon.
 
 ## Settled details
 
+- **Pantry lots**: lots rather than one amount per food, so expiry dates and
+  what to use first are kept; lots used up by cooks are deleted.
+
 - **Name**: the app calls itself foodplann.ing, like trailrunn.ing.
 - **Eating patterns**: one person eats a regular breakfast, lunch and
   dinner. The other eats six times a day: small portions of the shared
@@ -193,5 +238,5 @@ GCP project with Neon.
   (ALA); folate, vitamins A, E and K, copper and magnesium, whose absorption
   can drop after gastrectomy; and sodium and potassium.
 - **Stores**: one main supermarket plus one or two specialty or bulk
-  stores. Stores are editable in the app, and each food can have a
-  preferred store.
+  stores. Stores are editable in the app, ordered with the main store
+  first, and each food can have a preferred store.

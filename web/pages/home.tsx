@@ -2,6 +2,7 @@ import Card from "@components/ui/card";
 import { PageHeader } from "@components/ui/misc";
 import { linkClass } from "@components/ui/styles";
 import {
+  ArchiveBoxIcon,
   BookOpenIcon,
   CalendarDaysIcon,
   ChevronRightIcon,
@@ -27,6 +28,20 @@ const READY: {
     icon: CalendarDaysIcon,
     title: "Plan",
     to: "/plan",
+  },
+  {
+    description:
+      "One shop a week, by store and aisle, ticked off together on your phones.",
+    icon: ShoppingCartIcon,
+    title: "Shopping",
+    to: "/shopping",
+  },
+  {
+    description:
+      "What's in stock and what to use soon. Shopping adds to it, and cooking takes from it.",
+    icon: ArchiveBoxIcon,
+    title: "Pantry",
+    to: "/pantry",
   },
   {
     description:
@@ -59,13 +74,7 @@ const COMING: {
 }[] = [
   {
     description:
-      "What's in the cupboard, and a shopping list for one shop a week, by store and aisle.",
-    icon: ShoppingCartIcon,
-    title: "Pantry and shopping",
-  },
-  {
-    description:
-      "Recipes that share ingredients, use up leftovers and fill nutrition gaps.",
+      "Recipes that share ingredients, use up leftovers and what's close to expiry, fill nutrition gaps, and keep for a single weekly shop.",
     icon: SparklesIcon,
     title: "Suggestions",
   },
@@ -85,7 +94,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => (
       subtitle="Vegan meal planning for the whole household."
     />
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Card title="Plan and cook">
+      <Card title="Plan, shop and cook">
         <ul className="-my-2 divide-y divide-gray-100">
           {READY.map(({ icon: Icon, title, description, to }) => (
             <li key={to}>
@@ -145,6 +154,17 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => (
               Plan
             </Link>
             .
+          </li>
+          <li>
+            Add the stores you shop at on the{" "}
+            <Link to="/shopping" className={linkClass}>
+              Shopping
+            </Link>{" "}
+            page, and what you have on the{" "}
+            <Link to="/pantry" className={linkClass}>
+              Pantry
+            </Link>
+            , then make the week&apos;s list.
           </li>
           <li>
             Connect your AI agent over MCP, also in{" "}
