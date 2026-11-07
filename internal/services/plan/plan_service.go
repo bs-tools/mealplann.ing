@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"math"
 	"slices"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect/v2"
@@ -16,6 +17,7 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/foods"
 	plansv1 "github.com/bs-tools/foodplann.ing/internal/gen/plans/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/plans/v1/plansv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/pantry"
 	"github.com/bs-tools/foodplann.ing/internal/people"
 	"github.com/bs-tools/foodplann.ing/internal/plans"
 	"github.com/bs-tools/foodplann.ing/internal/protomask"
@@ -62,6 +64,13 @@ type FoodRepository interface {
 	ListFoodsByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*foods.Food, error)
 }
 
+// PantryRepository takes the ingredients of cooks marked done out of the
+// pantry, and puts them back.
+type PantryRepository interface {
+	UseForCook(ctx context.Context, householdID, cookID pgtype.UUID, uses []pantry.Use) ([]pantry.Deduction, error)
+	RestoreForCook(ctx context.Context, householdID, cookID pgtype.UUID) ([]pantry.Use, error)
+}
+
 // Service implements the PlanService.
 type Service struct {
 	log     *slog.Logger
@@ -70,12 +79,14 @@ type Service struct {
 	people  PeopleRepository
 	recipes RecipeRepository
 	foods   FoodRepository
+	pantry  PantryRepository
 }
 
 // NewService returns a PlanService storing plans in the repository, for
-// the people, recipes and foods in theirs.
-func NewService(log *slog.Logger, report *errreport.Reporter, plans PlanRepository, people PeopleRepository, recipes RecipeRepository, foods FoodRepository) *Service {
-	return &Service{log: log, report: report, plans: plans, people: people, recipes: recipes, foods: foods}
+// the people, recipes and foods in theirs, taking what cooks use out of
+// the pantry.
+func NewService(log *slog.Logger, report *errreport.Reporter, plans PlanRepository, people PeopleRepository, recipes RecipeRepository, foods FoodRepository, pantry PantryRepository) *Service {
+	return &Service{log: log, report: report, plans: plans, people: people, recipes: recipes, foods: foods, pantry: pantry}
 }
 
 // The fields of the plan's resources updates don't change.
@@ -299,7 +310,93 @@ func (s *Service) CreateCook(ctx context.Context, req *plansv1.CreateCookRequest
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to create cook", "")
 	}
-	return plansv1.CreateCookResponse_builder{Cook: cookToProto(created)}.Build(), nil
+	var changes []*plansv1.PantryChange
+	if created.Done {
+		changes, err = s.useForCook(ctx, created)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to take the cook's ingredients out of the pantry", cookNotFound)
+		}
+	}
+	return plansv1.CreateCookResponse_builder{Cook: cookToProto(created), PantryChanges: changes}.Build(), nil
+}
+
+// useForCook takes the ingredients of a cook marked done out of the
+// pantry, scaled to its servings and without the optional ones, and
+// returns what it took out. Ingredients that can't be weighed are left
+// in, as the pantry is in grams.
+func (s *Service) useForCook(ctx context.Context, c *plans.Cook) ([]*plansv1.PantryChange, error) {
+	list, err := s.recipes.ListRecipesByID(ctx, c.HouseholdID, []pgtype.UUID{c.RecipeID})
+	if err != nil {
+		return nil, err
+	}
+	if len(list) == 0 {
+		return nil, nil
+	}
+	names := map[pgtype.UUID]string{}
+	var uses []pantry.Use
+	for _, in := range list[0].IngredientsFor(c.Servings) {
+		grams, ok := in.Food.Grams(in.Amount, in.Unit)
+		if !ok {
+			continue
+		}
+		names[in.FoodID] = in.FoodName
+		uses = append(uses, pantry.Use{FoodID: in.FoodID, Grams: grams})
+	}
+	if len(uses) == 0 {
+		return nil, nil
+	}
+	deductions, err := s.pantry.UseForCook(ctx, c.HouseholdID, c.ID, uses)
+	if err != nil {
+		return nil, err
+	}
+	var used []pantry.Use
+	for _, d := range deductions {
+		if n := len(used); n > 0 && used[n-1].FoodID == d.Item.FoodID {
+			used[n-1].Grams += d.Grams
+			continue
+		}
+		used = append(used, pantry.Use{FoodID: d.Item.FoodID, Grams: d.Grams})
+	}
+	return pantryChanges(used, names), nil
+}
+
+// restoreForCook puts back what a cook took out of the pantry, and returns
+// it.
+func (s *Service) restoreForCook(ctx context.Context, c *plans.Cook) ([]*plansv1.PantryChange, error) {
+	restored, err := s.pantry.RestoreForCook(ctx, c.HouseholdID, c.ID)
+	if err != nil || len(restored) == 0 {
+		return nil, err
+	}
+	names := map[pgtype.UUID]string{}
+	var foodIDs []pgtype.UUID
+	for _, u := range restored {
+		foodIDs = append(foodIDs, u.FoodID)
+	}
+	list, err := s.foods.ListFoodsByID(ctx, c.HouseholdID, foodIDs)
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range list {
+		names[f.ID] = f.Name
+	}
+	return pantryChanges(restored, names), nil
+}
+
+// pantryChanges converts what a cook took out of the pantry or put back,
+// ordered by food name.
+func pantryChanges(uses []pantry.Use, names map[pgtype.UUID]string) []*plansv1.PantryChange {
+	changes := make([]*plansv1.PantryChange, 0, len(uses))
+	for _, u := range uses {
+		changes = append(changes, plansv1.PantryChange_builder{
+			FoodId:   store.UUIDToString(u.FoodID),
+			FoodName: names[u.FoodID],
+			Grams:    round(u.Grams),
+		}.Build())
+	}
+	slices.SortStableFunc(changes, func(a, b *plansv1.PantryChange) int {
+		return strings.Compare(strings.ToLower(a.GetFoodName()), strings.ToLower(b.GetFoodName()))
+	})
+	return changes
 }
 
 func (s *Service) UpdateCook(ctx context.Context, req *plansv1.UpdateCookRequest) (*plansv1.UpdateCookResponse, error) {
@@ -329,7 +426,28 @@ func (s *Service) UpdateCook(ctx context.Context, req *plansv1.UpdateCookRequest
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to update cook", cookNotFound)
 	}
-	return plansv1.UpdateCookResponse_builder{Cook: cookToProto(updated)}.Build(), nil
+	// Only a change of done changes the pantry, so cooks marked done before
+	// the pantry existed don't take their ingredients out when edited. The
+	// pantry's own records make taking out and putting back happen once
+	// each, even if two phones mark the cook at the same time.
+	var changes []*plansv1.PantryChange
+	switch {
+	case updated.Done && !existing.Done:
+		changes, err = s.useForCook(ctx, updated)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to take the cook's ingredients out of the pantry", cookNotFound)
+		}
+	case !updated.Done && existing.Done:
+		changes, err = s.restoreForCook(ctx, updated)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to put the cook's ingredients back into the pantry", cookNotFound)
+		}
+	}
+	return plansv1.UpdateCookResponse_builder{
+		Cook:           cookToProto(updated),
+		PantryChanges:  changes,
+		PantryRestored: !updated.Done && existing.Done,
+	}.Build(), nil
 }
 
 func (s *Service) DeleteCook(ctx context.Context, req *plansv1.DeleteCookRequest) (*plansv1.DeleteCookResponse, error) {

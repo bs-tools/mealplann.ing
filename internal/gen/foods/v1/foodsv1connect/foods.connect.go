@@ -102,12 +102,15 @@ type FoodServiceClient interface {
 	// text, ordered by name.
 	ListFoods(context.Context, *v1.ListFoodsRequest) (*v1.ListFoodsResponse, error)
 	// Update one of the household's foods. Recipes using it see the change
-	// right away, as their nutrition is computed from their foods.
+	// right away, as their nutrition is computed from their foods. Fails with
+	// INVALID_ARGUMENT if preferred_store_id isn't one of the household's
+	// stores.
 	UpdateFood(context.Context, *v1.UpdateFoodRequest) (*v1.UpdateFoodResponse, error)
 	// Delete one of the household's foods. Fails with FAILED_PRECONDITION,
 	// naming the recipes, if recipes use it: remove it from them first. Also
 	// fails with FAILED_PRECONDITION if portions or staples of the plan (see
-	// PlanService) eat it: delete them first.
+	// PlanService) eat it: delete them first. Its stock in the pantry is
+	// deleted, and shopping list items of it are kept by name.
 	DeleteFood(context.Context, *v1.DeleteFoodRequest) (*v1.DeleteFoodResponse, error)
 }
 
@@ -136,12 +139,15 @@ type FoodServiceHandler interface {
 	// text, ordered by name.
 	ListFoods(context.Context, *v1.ListFoodsRequest) (*v1.ListFoodsResponse, error)
 	// Update one of the household's foods. Recipes using it see the change
-	// right away, as their nutrition is computed from their foods.
+	// right away, as their nutrition is computed from their foods. Fails with
+	// INVALID_ARGUMENT if preferred_store_id isn't one of the household's
+	// stores.
 	UpdateFood(context.Context, *v1.UpdateFoodRequest) (*v1.UpdateFoodResponse, error)
 	// Delete one of the household's foods. Fails with FAILED_PRECONDITION,
 	// naming the recipes, if recipes use it: remove it from them first. Also
 	// fails with FAILED_PRECONDITION if portions or staples of the plan (see
-	// PlanService) eat it: delete them first.
+	// PlanService) eat it: delete them first. Its stock in the pantry is
+	// deleted, and shopping list items of it are kept by name.
 	DeleteFood(context.Context, *v1.DeleteFoodRequest) (*v1.DeleteFoodResponse, error)
 }
 

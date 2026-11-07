@@ -52,12 +52,19 @@ service PlanService {
   // FAILED_PRECONDITION if nobody eats from the meal.
   rpc PlanMeal(PlanMealRequest) returns (PlanMealResponse);
   // Create a cook: a recipe made on a date. Plan who eats it with
-  // CreatePortion, or use PlanMeal to do both.
+  // CreatePortion, or use PlanMeal to do both. A cook created done takes
+  // its ingredients out of the pantry, like UpdateCook.
   rpc CreateCook(CreateCookRequest) returns (CreateCookResponse);
   // Update a cook. Its portions stay, so moving a cook to a later date can
-  // leave portions before it, which GetWeek warns about.
+  // leave portions before it, which GetWeek warns about. Marking it done
+  // takes its ingredients, scaled to its servings and without optional
+  // ones, out of the pantry (see PantryService), from the lots that expire
+  // first, as far as they're in stock; un-marking it puts back exactly what
+  // was taken out. Changing a done cook's recipe or servings doesn't change
+  // the pantry: un-mark it first, then mark it done again.
   rpc UpdateCook(UpdateCookRequest) returns (UpdateCookResponse);
-  // Delete a cook. Its portions are deleted too.
+  // Delete a cook. Its portions are deleted too. The pantry doesn't change,
+  // even if it was done.
   rpc DeleteCook(DeleteCookRequest) returns (DeleteCookResponse);
   // Create a portion: what a person eats at one of their eating times on a
   // date, either a share of a cook or an amount of a food.
@@ -104,7 +111,8 @@ message Cook {
   people.v1.HouseholdMeal meal = 6;
   // Notes, e.g. "double the spices". At most 2000 characters.
   string notes = 7;
-  // Whether it's been cooked.
+  // Whether it's been cooked. Marking it done takes its ingredients out of
+  // the pantry, see UpdateCook.
   bool done = 8;
   // When the cook was created.
   google.protobuf.Timestamp create_time = 9 [(mcp.v1.field).output_only = true];
@@ -435,6 +443,19 @@ message CreateCookRequest {
 message CreateCookResponse {
   // The created cook.
   Cook cook = 1;
+  // What was taken out of the pantry, if the cook was created done.
+  repeated PantryChange pantry_changes = 2;
+}
+
+// An amount of a food taken out of the pantry, or put back, by marking a
+// cook done or not.
+message PantryChange {
+  // The ID of the food.
+  string food_id = 1;
+  // The name of the food.
+  string food_name = 2;
+  // The grams taken out or put back.
+  double grams = 3;
 }
 
 message UpdateCookRequest {
@@ -448,6 +469,11 @@ message UpdateCookRequest {
 message UpdateCookResponse {
   // The updated cook.
   Cook cook = 1;
+  // What marking the cook done took out of the pantry, or un-marking it put
+  // back. Empty if done didn't change, or nothing was in stock.
+  repeated PantryChange pantry_changes = 2;
+  // Whether pantry_changes were put back, rather than taken out.
+  bool pantry_restored = 3;
 }
 
 message DeleteCookRequest {

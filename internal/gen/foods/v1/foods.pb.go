@@ -1052,6 +1052,8 @@ type Food struct {
 	xxx_hidden_Notes               string                 `protobuf:"bytes,13,opt,name=notes,proto3"`
 	xxx_hidden_CreateTime          *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=create_time,json=createTime,proto3"`
 	xxx_hidden_UpdateTime          *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=update_time,json=updateTime,proto3"`
+	xxx_hidden_PreferredStoreId    string                 `protobuf:"bytes,16,opt,name=preferred_store_id,json=preferredStoreId,proto3"`
+	xxx_hidden_AlwaysInStock       bool                   `protobuf:"varint,17,opt,name=always_in_stock,json=alwaysInStock,proto3"`
 	unknownFields                  protoimpl.UnknownFields
 	sizeCache                      protoimpl.SizeCache
 }
@@ -1186,6 +1188,20 @@ func (x *Food) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Food) GetPreferredStoreId() string {
+	if x != nil {
+		return x.xxx_hidden_PreferredStoreId
+	}
+	return ""
+}
+
+func (x *Food) GetAlwaysInStock() bool {
+	if x != nil {
+		return x.xxx_hidden_AlwaysInStock
+	}
+	return false
+}
+
 func (x *Food) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -1244,6 +1260,14 @@ func (x *Food) SetCreateTime(v *timestamppb.Timestamp) {
 
 func (x *Food) SetUpdateTime(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdateTime = v
+}
+
+func (x *Food) SetPreferredStoreId(v string) {
+	x.xxx_hidden_PreferredStoreId = v
+}
+
+func (x *Food) SetAlwaysInStock(v bool) {
+	x.xxx_hidden_AlwaysInStock = v
 }
 
 func (x *Food) HasNutrients() bool {
@@ -1330,6 +1354,18 @@ type Food_builder struct {
 	CreateTime *timestamppb.Timestamp
 	// When the food was last changed.
 	UpdateTime *timestamppb.Timestamp
+	// The ID of the household's store the food is always bought at, e.g. a
+	// bulk store for nuts or an Asian grocery for tofu, see
+	// ShoppingService.ListStores. Empty for the main store, the first one,
+	// where the shopping list puts everything else. Deleting the store
+	// empties it.
+	PreferredStoreId string
+	// Whether the household always has the food, like salt, pepper, dried
+	// spices or oil, so the pantry doesn't track it by weight and the
+	// shopping list leaves it out. Cooks marked done don't take it out of the
+	// pantry. Add it to a shopping list by hand when it runs out. False by
+	// default.
+	AlwaysInStock bool
 }
 
 func (b0 Food_builder) Build() *Food {
@@ -1351,6 +1387,8 @@ func (b0 Food_builder) Build() *Food {
 	x.xxx_hidden_Notes = b.Notes
 	x.xxx_hidden_CreateTime = b.CreateTime
 	x.xxx_hidden_UpdateTime = b.UpdateTime
+	x.xxx_hidden_PreferredStoreId = b.PreferredStoreId
+	x.xxx_hidden_AlwaysInStock = b.AlwaysInStock
 	return m0
 }
 
@@ -2500,7 +2538,7 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x12_copper_milligramsB\x17\n" +
 	"\x15_magnesium_milligramsB\x14\n" +
 	"\x12_sodium_milligramsB\x17\n" +
-	"\x15_potassium_milligrams\"\x88\x05\n" +
+	"\x15_potassium_milligrams\"\xde\x05\n" +
 	"\x04Food\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x124\n" +
@@ -2519,7 +2557,9 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\vcreate_time\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"createTime\x12C\n" +
 	"\vupdate_time\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
-	"updateTime\"\xff\x01\n" +
+	"updateTime\x12,\n" +
+	"\x12preferred_store_id\x18\x10 \x01(\tR\x10preferredStoreId\x12&\n" +
+	"\x0falways_in_stock\x18\x11 \x01(\bR\ralwaysInStock\"\xff\x01\n" +
 	"\bFoodData\x12\x15\n" +
 	"\x06fdc_id\x18\x01 \x01(\x05R\x05fdcId\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1a\n" +

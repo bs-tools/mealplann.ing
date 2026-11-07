@@ -42,7 +42,9 @@ export const listFoods = FoodService.method.listFoods;
 
 /**
  * Update one of the household's foods. Recipes using it see the change
- * right away, as their nutrition is computed from their foods.
+ * right away, as their nutrition is computed from their foods. Fails with
+ * INVALID_ARGUMENT if preferred_store_id isn't one of the household's
+ * stores.
  *
  * @generated from rpc foods.v1.FoodService.UpdateFood
  */
@@ -52,7 +54,8 @@ export const updateFood = FoodService.method.updateFood;
  * Delete one of the household's foods. Fails with FAILED_PRECONDITION,
  * naming the recipes, if recipes use it: remove it from them first. Also
  * fails with FAILED_PRECONDITION if portions or staples of the plan (see
- * PlanService) eat it: delete them first.
+ * PlanService) eat it: delete them first. Its stock in the pantry is
+ * deleted, and shopping list items of it are kept by name.
  *
  * @generated from rpc foods.v1.FoodService.DeleteFood
  */

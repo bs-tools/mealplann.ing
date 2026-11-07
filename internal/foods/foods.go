@@ -23,6 +23,10 @@ import (
 // name, ignoring case.
 var ErrNameTaken = errors.New("the household already has a food with this name")
 
+// ErrUnknownStore is returned when a food's preferred store isn't one of
+// its household's stores.
+var ErrUnknownStore = errors.New("the preferred store isn't one of the household's stores")
+
 // InUseError is returned when deleting a food that recipes or the plan
 // use.
 type InUseError struct {
@@ -81,8 +85,15 @@ type Food struct {
 	ShelfLifeDays       int32
 	OpenedShelfLifeDays int32
 	Notes               string
-	CreateTime          time.Time
-	UpdateTime          time.Time
+	// PreferredStoreID is the store the food is always bought at, invalid
+	// for the household's main store.
+	PreferredStoreID pgtype.UUID
+	// AlwaysInStock is whether the household always has the food, like salt
+	// or spices, so the pantry doesn't track it and the shopping list leaves
+	// it out.
+	AlwaysInStock bool
+	CreateTime    time.Time
+	UpdateTime    time.Time
 }
 
 // Nutrition returns what nutrition math needs of the food.
@@ -143,10 +154,15 @@ func (r *Repository) CreateFood(ctx context.Context, f *Food) (*Food, error) {
 		ShelfLifeDays:                   positive(f.ShelfLifeDays),
 		OpenedShelfLifeDays:             positive(f.OpenedShelfLifeDays),
 		Notes:                           f.Notes,
+		PreferredStoreID:                f.PreferredStoreID,
+		AlwaysInStock:                   f.AlwaysInStock,
 	})
 	if err != nil {
-		if isNameTaken(err) {
+		switch {
+		case isNameTaken(err):
 			return nil, ErrNameTaken
+		case isUnknownStore(err):
+			return nil, ErrUnknownStore
 		}
 		return nil, fmt.Errorf("failed to create food: %w", err)
 	}
@@ -223,6 +239,8 @@ func (r *Repository) UpdateFood(ctx context.Context, f *Food) (*Food, error) {
 		ShelfLifeDays:                   positive(f.ShelfLifeDays),
 		OpenedShelfLifeDays:             positive(f.OpenedShelfLifeDays),
 		Notes:                           f.Notes,
+		PreferredStoreID:                f.PreferredStoreID,
+		AlwaysInStock:                   f.AlwaysInStock,
 	})
 	if err != nil {
 		switch {
@@ -230,6 +248,8 @@ func (r *Repository) UpdateFood(ctx context.Context, f *Food) (*Food, error) {
 			return nil, store.ErrNotFound
 		case isNameTaken(err):
 			return nil, ErrNameTaken
+		case isUnknownStore(err):
+			return nil, ErrUnknownStore
 		}
 		return nil, fmt.Errorf("failed to update food: %w", err)
 	}
@@ -293,6 +313,28 @@ func (r *Repository) ListFoodsByID(ctx context.Context, householdID pgtype.UUID,
 	return list, nil
 }
 
+// ListAlwaysInStockFoods lists a household's foods marked always in stock,
+// ordered by name.
+func (r *Repository) ListAlwaysInStockFoods(ctx context.Context, householdID pgtype.UUID) ([]*Food, error) {
+	rows, err := r.querier.ListAlwaysInStockFoods(ctx, householdID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list foods always in stock: %w", err)
+	}
+	list := make([]*Food, 0, len(rows))
+	for _, row := range rows {
+		list = append(list, foodFromDB(row))
+	}
+	return list, nil
+}
+
+// isUnknownStore reports whether err is the violation of the foreign key
+// of a food's preferred store.
+func isUnknownStore(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation &&
+		pgErr.ConstraintName == "foods_household_id_preferred_store_id_fkey"
+}
+
 // isNameTaken reports whether err is the violation of the unique name of a
 // household's foods.
 func isNameTaken(err error) bool {
@@ -338,6 +380,8 @@ func foodFromDB(row *gen.Food) *Food {
 		ShelfLifeDays:       orZero(row.ShelfLifeDays),
 		OpenedShelfLifeDays: orZero(row.OpenedShelfLifeDays),
 		Notes:               row.Notes,
+		PreferredStoreID:    row.PreferredStoreID,
+		AlwaysInStock:       row.AlwaysInStock,
 		CreateTime:          row.CreateTime.Time,
 		UpdateTime:          row.UpdateTime.Time,
 	}

@@ -32,7 +32,8 @@ export const planMeal = PlanService.method.planMeal;
 
 /**
  * Create a cook: a recipe made on a date. Plan who eats it with
- * CreatePortion, or use PlanMeal to do both.
+ * CreatePortion, or use PlanMeal to do both. A cook created done takes
+ * its ingredients out of the pantry, like UpdateCook.
  *
  * @generated from rpc plans.v1.PlanService.CreateCook
  */
@@ -40,14 +41,20 @@ export const createCook = PlanService.method.createCook;
 
 /**
  * Update a cook. Its portions stay, so moving a cook to a later date can
- * leave portions before it, which GetWeek warns about.
+ * leave portions before it, which GetWeek warns about. Marking it done
+ * takes its ingredients, scaled to its servings and without optional
+ * ones, out of the pantry (see PantryService), from the lots that expire
+ * first, as far as they're in stock; un-marking it puts back exactly what
+ * was taken out. Changing a done cook's recipe or servings doesn't change
+ * the pantry: un-mark it first, then mark it done again.
  *
  * @generated from rpc plans.v1.PlanService.UpdateCook
  */
 export const updateCook = PlanService.method.updateCook;
 
 /**
- * Delete a cook. Its portions are deleted too.
+ * Delete a cook. Its portions are deleted too. The pantry doesn't change,
+ * even if it was done.
  *
  * @generated from rpc plans.v1.PlanService.DeleteCook
  */
