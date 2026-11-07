@@ -32,6 +32,7 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/gen/plans/v1/plansv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1/recipesv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/shopping/v1/shoppingv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/suggestions/v1/suggestionsv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/users/v1/usersv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/html"
 	"github.com/bs-tools/foodplann.ing/internal/mcp"
@@ -379,9 +380,12 @@ func run(
 	personService := person.NewService(log, report, peopleRepo)
 	planRepo := plans.NewRepository(log, db)
 	pantryRepo := pantry.NewRepository(log, db)
-	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, foodRepo, pantryRepo)
+	shoppingRepo := shopping.NewRepository(log, db)
+	// The plan service also serves suggestions, as they read the plan and
+	// compute its nutrition the same way.
+	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, foodRepo, pantryRepo, shoppingRepo)
 	pantryService := pantrysvc.NewService(log, report, pantryRepo, foodRepo)
-	shoppingService := shoppingsvc.NewService(log, report, shopping.NewRepository(log, db), planRepo, recipeRepo, foodRepo, pantryRepo)
+	shoppingService := shoppingsvc.NewService(log, report, shoppingRepo, planRepo, recipeRepo, foodRepo, pantryRepo)
 
 	// Register all services on a single Connect server, served by the API mux
 	server := connect.NewServer()
@@ -394,6 +398,7 @@ func run(
 	plansv1connect.RegisterPlanServiceHandler(server, planService)
 	pantryv1connect.RegisterPantryServiceHandler(server, pantryService)
 	shoppingv1connect.RegisterShoppingServiceHandler(server, shoppingService)
+	suggestionsv1connect.RegisterSuggestionServiceHandler(server, planService)
 	// Requests are bounded, so one can't exhaust the server's memory. Only
 	// signed in users can upload files, like avatars.
 	apiMux := http.NewServeMux()
@@ -423,6 +428,7 @@ func run(
 		mcp.Service{Name: plansv1connect.PlanServiceName, Handler: planService},
 		mcp.Service{Name: pantryv1connect.PantryServiceName, Handler: pantryService},
 		mcp.Service{Name: shoppingv1connect.ShoppingServiceName, Handler: shoppingService},
+		mcp.Service{Name: suggestionsv1connect.SuggestionServiceName, Handler: planService},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create MCP server: %w", err)

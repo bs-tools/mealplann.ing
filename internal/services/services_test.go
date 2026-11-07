@@ -28,6 +28,7 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/gen/plans/v1/plansv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1/recipesv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/shopping/v1/shoppingv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/suggestions/v1/suggestionsv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/users/v1/usersv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/mcp"
 	"github.com/bs-tools/foodplann.ing/internal/oauth"
@@ -101,6 +102,12 @@ type env struct {
 	shopping      shoppingv1connect.ShoppingServiceClient
 	otherShopping shoppingv1connect.ShoppingServiceClient
 	anonShopping  shoppingv1connect.ShoppingServiceClient
+
+	// The suggestion service, signed in with the API token, as the other
+	// user in another household, and anonymously.
+	suggestions      suggestionsv1connect.SuggestionServiceClient
+	otherSuggestions suggestionsv1connect.SuggestionServiceClient
+	anonSuggestions  suggestionsv1connect.SuggestionServiceClient
 }
 
 // consentPage stands in for the frontend's OAuth consent page.
@@ -149,9 +156,10 @@ func newEnv(t *testing.T) *env {
 	personService := person.NewService(log, report, peopleRepo)
 	planRepo := plans.NewRepository(log, db)
 	pantryRepo := pantry.NewRepository(log, db)
-	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, e.foodRepo, pantryRepo)
+	shoppingRepo := shopping.NewRepository(log, db)
+	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, e.foodRepo, pantryRepo, shoppingRepo)
 	pantryService := pantrysvc.NewService(log, report, pantryRepo, e.foodRepo)
-	shoppingService := shoppingsvc.NewService(log, report, shopping.NewRepository(log, db), planRepo, recipeRepo, e.foodRepo, pantryRepo)
+	shoppingService := shoppingsvc.NewService(log, report, shoppingRepo, planRepo, recipeRepo, e.foodRepo, pantryRepo)
 
 	// Start listening before creating the handler, as the OAuth server needs
 	// the URL of the server.
@@ -176,6 +184,7 @@ func newEnv(t *testing.T) *env {
 	plansv1connect.RegisterPlanServiceHandler(srv2, planService)
 	pantryv1connect.RegisterPantryServiceHandler(srv2, pantryService)
 	shoppingv1connect.RegisterShoppingServiceHandler(srv2, shoppingService)
+	suggestionsv1connect.RegisterSuggestionServiceHandler(srv2, planService)
 	apilimit.Mount(mux, srv2)
 	mux.Handle(user.AvatarPath, userService.AvatarHandler())
 	// The same services as main.go serves over MCP.
@@ -187,6 +196,7 @@ func newEnv(t *testing.T) *env {
 		mcp.Service{Name: plansv1connect.PlanServiceName, Handler: planService},
 		mcp.Service{Name: pantryv1connect.PantryServiceName, Handler: pantryService},
 		mcp.Service{Name: shoppingv1connect.ShoppingServiceName, Handler: shoppingService},
+		mcp.Service{Name: suggestionsv1connect.SuggestionServiceName, Handler: planService},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -229,6 +239,9 @@ func newEnv(t *testing.T) *env {
 	e.shopping = shoppingv1connect.NewShoppingServiceClient(authed)
 	e.otherShopping = shoppingv1connect.NewShoppingServiceClient(other)
 	e.anonShopping = shoppingv1connect.NewShoppingServiceClient(anon)
+	e.suggestions = suggestionsv1connect.NewSuggestionServiceClient(authed)
+	e.otherSuggestions = suggestionsv1connect.NewSuggestionServiceClient(other)
+	e.anonSuggestions = suggestionsv1connect.NewSuggestionServiceClient(anon)
 	return e
 }
 
