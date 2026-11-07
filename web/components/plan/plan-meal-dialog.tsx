@@ -1,0 +1,296 @@
+import { WarningList } from "@components/plan/plan-bits";
+import { CheckboxField, SelectField, TextField } from "@components/ui/fields";
+import Modal from "@components/ui/modal";
+import { ErrorText } from "@components/ui/query-error";
+import {
+  labelClass,
+  primaryButton,
+  secondaryButton,
+} from "@components/ui/styles";
+import { useMutation } from "@connectrpc/connect-query";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Person } from "gen/people/v1/people_pb";
+import { HouseholdMeal } from "gen/people/v1/people_pb";
+import { planMeal } from "gen/plans/v1/plans-PlanService_connectquery";
+import type { PlanMealResponse } from "gen/plans/v1/plans_pb";
+import { PlanService } from "gen/plans/v1/plans_pb";
+import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
+import { formatDay } from "helpers/format";
+import { HOUSEHOLD_MEALS, formatServings, optionValue } from "helpers/labels";
+import { formatAmount } from "helpers/nutrients";
+import { parseOptionalNumber } from "helpers/parse";
+import { invalidateServices } from "helpers/query";
+import React, { useState } from "react";
+import { Link } from "react-router";
+
+interface PlanMealDialogProps {
+  // The dates to choose from, those of the week shown.
+  dates: string[];
+  // The date chosen first.
+  date: string;
+  people: Person[];
+  recipes: RecipeSummary[];
+  onClose: () => void;
+}
+
+/**
+ * PlanMealDialog plans a shared meal: a recipe cooked on a day for
+ * breakfast, lunch or dinner, split into a portion for everyone who eats
+ * it, within their maximum portions. It then shows the split and its
+ * warnings.
+ */
+const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
+  dates,
+  date: initialDate,
+  people,
+  recipes,
+  onClose,
+}) => {
+  const queryClient = useQueryClient();
+  const [recipeId, setRecipeId] = useState(recipes[0]?.id ?? "");
+  const [date, setDate] = useState(initialDate);
+  const [meal, setMeal] = useState(HouseholdMeal.DINNER);
+  const eaters = people.filter((person) =>
+    person.eatingTimes.some((et) => et.meal === meal)
+  );
+  const [skipped, setSkipped] = useState<string[]>([]);
+  const [servings, setServings] = useState("");
+  const [notes, setNotes] = useState("");
+  const [invalid, setInvalid] = useState("");
+  const [result, setResult] = useState<PlanMealResponse | null>(null);
+  const plan = useMutation(planMeal, {
+    onSuccess: async (response) => {
+      setResult(response);
+      await invalidateServices(queryClient, [PlanService]);
+    },
+  });
+
+  if (result !== null) {
+    return (
+      <Modal open onClose={onClose} title="Meal planned">
+        <PlanMealResult
+          result={result}
+          people={people}
+          recipes={recipes}
+          onClose={onClose}
+        />
+      </Modal>
+    );
+  }
+
+  const save = () => {
+    setInvalid("");
+    const value = parseOptionalNumber(servings);
+    if (value === null) {
+      setInvalid("Servings must be a number, or empty for one each.");
+      return;
+    }
+    const chosen = eaters.filter((person) => !skipped.includes(person.id));
+    if (chosen.length === 0) {
+      setInvalid("Choose who eats it.");
+      return;
+    }
+    plan.mutate({
+      date,
+      meal,
+      notes,
+      personIds:
+        chosen.length === eaters.length
+          ? []
+          : chosen.map((person) => person.id),
+      recipeId,
+      servings: value ?? 0,
+    });
+  };
+
+  if (recipes.length === 0) {
+    return (
+      <Modal open onClose={onClose} title="Plan a meal">
+        <p className="text-sm text-gray-700">
+          There are no recipes yet.{" "}
+          <Link
+            to="/recipes/new"
+            className="font-medium text-brand-600 hover:underline"
+          >
+            Add a recipe
+          </Link>{" "}
+          first.
+        </p>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal open onClose={onClose} title="Plan a meal">
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          save();
+        }}
+      >
+        <p className="text-sm text-gray-600">
+          One cook for everyone who eats the shared meal. Portions over
+          someone&apos;s maximum are split, with the rest at their next small
+          meal.
+        </p>
+        <SelectField
+          label="Recipe"
+          value={recipeId}
+          options={recipes.map((recipe) => ({
+            label: `${recipe.name} (${formatAmount(recipe.gramsPerServing)} g a serving)`,
+            value: recipe.id,
+          }))}
+          onChange={setRecipeId}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <SelectField
+            label="Day"
+            value={date}
+            options={dates.map((value) => ({
+              label: formatDay(value),
+              value,
+            }))}
+            onChange={setDate}
+          />
+          <SelectField
+            label="Meal"
+            value={String(meal)}
+            options={HOUSEHOLD_MEALS.map((option) => ({
+              label: option.label,
+              value: String(option.value),
+            }))}
+            onChange={(value) => {
+              setMeal(
+                optionValue(HOUSEHOLD_MEALS, value, HouseholdMeal.DINNER)
+              );
+            }}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className={labelClass}>Who eats it</span>
+          {eaters.length === 0 ? (
+            <p className="text-sm text-amber-800">
+              Nobody eats from this meal: give someone an eating time for it on
+              the{" "}
+              <Link to="/people" className="font-medium underline">
+                People
+              </Link>{" "}
+              page.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {eaters.map((person) => (
+                <CheckboxField
+                  key={person.id}
+                  label={person.name}
+                  checked={!skipped.includes(person.id)}
+                  onChange={(checked) => {
+                    setSkipped(
+                      checked
+                        ? skipped.filter((id) => id !== person.id)
+                        : [...skipped, person.id]
+                    );
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <TextField
+            label="Servings to cook"
+            value={servings}
+            inputMode="decimal"
+            placeholder="One each"
+            hint="More are left over, to plan later."
+            onChange={setServings}
+          />
+          <TextField label="Notes" value={notes} onChange={setNotes} />
+        </div>
+        {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+        <ErrorText error={plan.error} />
+        <div className="flex justify-end gap-2">
+          <button type="button" className={secondaryButton} onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className={primaryButton}
+            disabled={plan.isPending || recipeId === "" || eaters.length === 0}
+          >
+            {plan.isPending ? "Planning…" : "Plan meal"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+interface PlanMealResultProps {
+  result: PlanMealResponse;
+  people: Person[];
+  recipes: RecipeSummary[];
+  onClose: () => void;
+}
+
+// PlanMealResult shows how a planned meal was split, and its warnings.
+const PlanMealResult: React.FC<PlanMealResultProps> = ({
+  result,
+  people,
+  recipes,
+  onClose,
+}) => {
+  const { cook } = result;
+  const gramsPerServing =
+    recipes.find((recipe) => recipe.id === cook?.recipeId)?.gramsPerServing ??
+    0;
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-gray-700">
+        {cook?.recipeName} on {formatDay(cook?.date ?? "")}, cooking{" "}
+        {formatServings(cook?.servings ?? 0)}:
+      </p>
+      <ul className="divide-y divide-gray-100 rounded-md border border-gray-200 text-sm">
+        {result.portions.map((portion) => {
+          const person = people.find((other) => other.id === portion.personId);
+          const et = person?.eatingTimes.find(
+            (other) => other.id === portion.eatingTimeId
+          );
+          const servings =
+            portion.what.case === "cook" ? portion.what.value.servings : 0;
+          return (
+            <li
+              key={portion.id}
+              className="flex flex-wrap justify-between gap-2 px-3 py-2"
+            >
+              <span>
+                <span className="font-medium">{person?.name}</span> · {et?.name}
+                {portion.date !== cook?.date && ` · ${formatDay(portion.date)}`}
+              </span>
+              <span className="text-gray-600 tabular-nums">
+                {formatServings(servings)}
+                {gramsPerServing > 0 &&
+                  ` · ${formatAmount(servings * gramsPerServing)} g`}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      {result.unassignedServings > 0 && (
+        <p className="text-sm text-gray-600">
+          {formatServings(result.unassignedServings)} left over, to plan as
+          leftovers.
+        </p>
+      )}
+      <WarningList warnings={result.warnings} />
+      <div className="flex justify-end">
+        <button type="button" className={primaryButton} onClick={onClose}>
+          Done
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default PlanMealDialog;

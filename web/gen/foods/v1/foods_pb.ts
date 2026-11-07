@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file foods/v1/foods.proto.
  */
 export const file_foods_v1_foods: GenFile = /*@__PURE__*/
-  fileDesc("ChRmb29kcy92MS9mb29kcy5wcm90bxIIZm9vZHMudjEi5wgKCU51dHJpZW50cxIYCgtlbmVyZ3lfa2NhbBgBIAEoAUgAiAEBEhoKDXByb3RlaW5fZ3JhbXMYAiABKAFIAYgBARIfChJjYXJib2h5ZHJhdGVfZ3JhbXMYAyABKAFIAogBARIZCgxzdWdhcnNfZ3JhbXMYBCABKAFIA4gBARIWCglmYXRfZ3JhbXMYBSABKAFIBIgBARIYCgtmaWJlcl9ncmFtcxgGIAEoAUgFiAEBEiMKFnZpdGFtaW5fYjEyX21pY3JvZ3JhbXMYByABKAFIBogBARIcCg9pcm9uX21pbGxpZ3JhbXMYCCABKAFIB4gBARIfChJjYWxjaXVtX21pbGxpZ3JhbXMYCSABKAFICIgBARIhChR2aXRhbWluX2RfbWljcm9ncmFtcxgKIAEoAUgJiAEBEh4KEWlvZGluZV9taWNyb2dyYW1zGAsgASgBSAqIAQESHAoPemluY19taWxsaWdyYW1zGAwgASgBSAuIAQESHQoQb21lZ2EzX2FsYV9ncmFtcxgNIAEoAUgMiAEBEh4KEWZvbGF0ZV9taWNyb2dyYW1zGA4gASgBSA2IAQESIQoUdml0YW1pbl9hX21pY3JvZ3JhbXMYDyABKAFIDogBARIhChR2aXRhbWluX2VfbWlsbGlncmFtcxgQIAEoAUgPiAEBEiEKFHZpdGFtaW5fa19taWNyb2dyYW1zGBEgASgBSBCIAQESHgoRY29wcGVyX21pbGxpZ3JhbXMYEiABKAFIEYgBARIhChRtYWduZXNpdW1fbWlsbGlncmFtcxgTIAEoAUgSiAEBEh4KEXNvZGl1bV9taWxsaWdyYW1zGBQgASgBSBOIAQESIQoUcG90YXNzaXVtX21pbGxpZ3JhbXMYFSABKAFIFIgBAUIOCgxfZW5lcmd5X2tjYWxCEAoOX3Byb3RlaW5fZ3JhbXNCFQoTX2NhcmJvaHlkcmF0ZV9ncmFtc0IPCg1fc3VnYXJzX2dyYW1zQgwKCl9mYXRfZ3JhbXNCDgoMX2ZpYmVyX2dyYW1zQhkKF192aXRhbWluX2IxMl9taWNyb2dyYW1zQhIKEF9pcm9uX21pbGxpZ3JhbXNCFQoTX2NhbGNpdW1fbWlsbGlncmFtc0IXChVfdml0YW1pbl9kX21pY3JvZ3JhbXNCFAoSX2lvZGluZV9taWNyb2dyYW1zQhIKEF96aW5jX21pbGxpZ3JhbXNCEwoRX29tZWdhM19hbGFfZ3JhbXNCFAoSX2ZvbGF0ZV9taWNyb2dyYW1zQhcKFV92aXRhbWluX2FfbWljcm9ncmFtc0IXChVfdml0YW1pbl9lX21pbGxpZ3JhbXNCFwoVX3ZpdGFtaW5fa19taWNyb2dyYW1zQhQKEl9jb3BwZXJfbWlsbGlncmFtc0IXChVfbWFnbmVzaXVtX21pbGxpZ3JhbXNCFAoSX3NvZGl1bV9taWxsaWdyYW1zQhcKFV9wb3Rhc3NpdW1fbWlsbGlncmFtcyLYAwoERm9vZBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEiwKBnNvdXJjZRgDIAEoDjIULmZvb2RzLnYxLkZvb2RTb3VyY2VCBqqfGQIIARIWCgZmZGNfaWQYBCABKAVCBqqfGQIIARImCgludXRyaWVudHMYBSABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSFwoPZ3JhbXNfcGVyX3BpZWNlGAYgASgBEhwKFGdyYW1zX3Blcl9taWxsaWxpdGVyGAcgASgBEhEKCWZhc3RfY2FyYhgIIAEoCBItCg1zdG9yZV9zZWN0aW9uGAkgASgOMhYuZm9vZHMudjEuU3RvcmVTZWN0aW9uEhUKDXBhY2thZ2VfZ3JhbXMYCiABKAESFwoPc2hlbGZfbGlmZV9kYXlzGAsgASgFEh4KFm9wZW5lZF9zaGVsZl9saWZlX2RheXMYDCABKAUSDQoFbm90ZXMYDSABKAkSNwoLY3JlYXRlX3RpbWUYDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAEiugEKCEZvb2REYXRhEg4KBmZkY19pZBgBIAEoBRITCgtkZXNjcmlwdGlvbhgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCRIRCglkYXRhX3R5cGUYBCABKAkSJgoJbnV0cmllbnRzGAUgASgLMhMuZm9vZHMudjEuTnV0cmllbnRzEisKCHBvcnRpb25zGAYgAygLMhkuZm9vZHMudjEuRm9vZERhdGFQb3J0aW9uEg8KB2Zvb2RfaWQYByABKAkiNQoPRm9vZERhdGFQb3J0aW9uEhMKC2Rlc2NyaXB0aW9uGAEgASgJEg0KBWdyYW1zGAIgASgBIjkKFVNlYXJjaEZvb2REYXRhUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIRCglwYWdlX3NpemUYAiABKAUiOwoWU2VhcmNoRm9vZERhdGFSZXNwb25zZRIhCgVmb29kcxgBIAMoCzISLmZvb2RzLnYxLkZvb2REYXRhIkEKEUNyZWF0ZUZvb2RSZXF1ZXN0Eg4KBmZkY19pZBgBIAEoBRIcCgRmb29kGAIgASgLMg4uZm9vZHMudjEuRm9vZCIyChJDcmVhdGVGb29kUmVzcG9uc2USHAoEZm9vZBgBIAEoCzIOLmZvb2RzLnYxLkZvb2QiHAoOR2V0Rm9vZFJlcXVlc3QSCgoCaWQYASABKAkiLwoPR2V0Rm9vZFJlc3BvbnNlEhwKBGZvb2QYASABKAsyDi5mb29kcy52MS5Gb29kIkgKEExpc3RGb29kc1JlcXVlc3QSDQoFcXVlcnkYASABKAkSEQoJcGFnZV9zaXplGAIgASgFEhIKCnBhZ2VfdG9rZW4YAyABKAkiSwoRTGlzdEZvb2RzUmVzcG9uc2USHQoFZm9vZHMYASADKAsyDi5mb29kcy52MS5Gb29kEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJiChFVcGRhdGVGb29kUmVxdWVzdBIcCgRmb29kGAEgASgLMg4uZm9vZHMudjEuRm9vZBIvCgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2siMgoSVXBkYXRlRm9vZFJlc3BvbnNlEhwKBGZvb2QYASABKAsyDi5mb29kcy52MS5Gb29kIh8KEURlbGV0ZUZvb2RSZXF1ZXN0EgoKAmlkGAEgASgJIhQKEkRlbGV0ZUZvb2RSZXNwb25zZSpWCgpGb29kU291cmNlEhsKF0ZPT0RfU09VUkNFX1VOU1BFQ0lGSUVEEAASEwoPRk9PRF9TT1VSQ0VfRkRDEAESFgoSRk9PRF9TT1VSQ0VfQ1VTVE9NEAIquAIKDFN0b3JlU2VjdGlvbhIdChlTVE9SRV9TRUNUSU9OX1VOU1BFQ0lGSUVEEAASGQoVU1RPUkVfU0VDVElPTl9QUk9EVUNFEAESGAoUU1RPUkVfU0VDVElPTl9CQUtFUlkQAhIZChVTVE9SRV9TRUNUSU9OX0NISUxMRUQQAxIYChRTVE9SRV9TRUNUSU9OX0ZST1pFThAEEhsKF1NUT1JFX1NFQ1RJT05fRFJZX0dPT0RTEAUSGAoUU1RPUkVfU0VDVElPTl9DQU5ORUQQBhIYChRTVE9SRV9TRUNUSU9OX1NQSUNFUxAHEhgKFFNUT1JFX1NFQ1RJT05fRFJJTktTEAgSGwoXU1RPUkVfU0VDVElPTl9IT1VTRUhPTEQQCRIXChNTVE9SRV9TRUNUSU9OX09USEVSEAoqdQoKQW1vdW50VW5pdBIbChdBTU9VTlRfVU5JVF9VTlNQRUNJRklFRBAAEhUKEUFNT1VOVF9VTklUX0dSQU1TEAESGwoXQU1PVU5UX1VOSVRfTUlMTElMSVRFUlMQAhIWChJBTU9VTlRfVU5JVF9QSUVDRVMQAzLDAwoLRm9vZFNlcnZpY2USUwoOU2VhcmNoRm9vZERhdGESHy5mb29kcy52MS5TZWFyY2hGb29kRGF0YVJlcXVlc3QaIC5mb29kcy52MS5TZWFyY2hGb29kRGF0YVJlc3BvbnNlEkcKCkNyZWF0ZUZvb2QSGy5mb29kcy52MS5DcmVhdGVGb29kUmVxdWVzdBocLmZvb2RzLnYxLkNyZWF0ZUZvb2RSZXNwb25zZRI+CgdHZXRGb29kEhguZm9vZHMudjEuR2V0Rm9vZFJlcXVlc3QaGS5mb29kcy52MS5HZXRGb29kUmVzcG9uc2USRAoJTGlzdEZvb2RzEhouZm9vZHMudjEuTGlzdEZvb2RzUmVxdWVzdBobLmZvb2RzLnYxLkxpc3RGb29kc1Jlc3BvbnNlEkcKClVwZGF0ZUZvb2QSGy5mb29kcy52MS5VcGRhdGVGb29kUmVxdWVzdBocLmZvb2RzLnYxLlVwZGF0ZUZvb2RSZXNwb25zZRJHCgpEZWxldGVGb29kEhsuZm9vZHMudjEuRGVsZXRlRm9vZFJlcXVlc3QaHC5mb29kcy52MS5EZWxldGVGb29kUmVzcG9uc2VCnAEKDGNvbS5mb29kcy52MUIKRm9vZHNQcm90b1ABWj9naXRodWIuY29tL2JzLXRvb2xzL2Zvb2RwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL2Zvb2RzL3YxO2Zvb2RzdjGiAgNGWFiqAghGb29kcy5WMcoCCEZvb2RzXFYx4gIURm9vZHNcVjFcR1BCTWV0YWRhdGHqAglGb29kczo6VjFiBnByb3RvMw", [file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChRmb29kcy92MS9mb29kcy5wcm90bxIIZm9vZHMudjEi5wgKCU51dHJpZW50cxIYCgtlbmVyZ3lfa2NhbBgBIAEoAUgAiAEBEhoKDXByb3RlaW5fZ3JhbXMYAiABKAFIAYgBARIfChJjYXJib2h5ZHJhdGVfZ3JhbXMYAyABKAFIAogBARIZCgxzdWdhcnNfZ3JhbXMYBCABKAFIA4gBARIWCglmYXRfZ3JhbXMYBSABKAFIBIgBARIYCgtmaWJlcl9ncmFtcxgGIAEoAUgFiAEBEiMKFnZpdGFtaW5fYjEyX21pY3JvZ3JhbXMYByABKAFIBogBARIcCg9pcm9uX21pbGxpZ3JhbXMYCCABKAFIB4gBARIfChJjYWxjaXVtX21pbGxpZ3JhbXMYCSABKAFICIgBARIhChR2aXRhbWluX2RfbWljcm9ncmFtcxgKIAEoAUgJiAEBEh4KEWlvZGluZV9taWNyb2dyYW1zGAsgASgBSAqIAQESHAoPemluY19taWxsaWdyYW1zGAwgASgBSAuIAQESHQoQb21lZ2EzX2FsYV9ncmFtcxgNIAEoAUgMiAEBEh4KEWZvbGF0ZV9taWNyb2dyYW1zGA4gASgBSA2IAQESIQoUdml0YW1pbl9hX21pY3JvZ3JhbXMYDyABKAFIDogBARIhChR2aXRhbWluX2VfbWlsbGlncmFtcxgQIAEoAUgPiAEBEiEKFHZpdGFtaW5fa19taWNyb2dyYW1zGBEgASgBSBCIAQESHgoRY29wcGVyX21pbGxpZ3JhbXMYEiABKAFIEYgBARIhChRtYWduZXNpdW1fbWlsbGlncmFtcxgTIAEoAUgSiAEBEh4KEXNvZGl1bV9taWxsaWdyYW1zGBQgASgBSBOIAQESIQoUcG90YXNzaXVtX21pbGxpZ3JhbXMYFSABKAFIFIgBAUIOCgxfZW5lcmd5X2tjYWxCEAoOX3Byb3RlaW5fZ3JhbXNCFQoTX2NhcmJvaHlkcmF0ZV9ncmFtc0IPCg1fc3VnYXJzX2dyYW1zQgwKCl9mYXRfZ3JhbXNCDgoMX2ZpYmVyX2dyYW1zQhkKF192aXRhbWluX2IxMl9taWNyb2dyYW1zQhIKEF9pcm9uX21pbGxpZ3JhbXNCFQoTX2NhbGNpdW1fbWlsbGlncmFtc0IXChVfdml0YW1pbl9kX21pY3JvZ3JhbXNCFAoSX2lvZGluZV9taWNyb2dyYW1zQhIKEF96aW5jX21pbGxpZ3JhbXNCEwoRX29tZWdhM19hbGFfZ3JhbXNCFAoSX2ZvbGF0ZV9taWNyb2dyYW1zQhcKFV92aXRhbWluX2FfbWljcm9ncmFtc0IXChVfdml0YW1pbl9lX21pbGxpZ3JhbXNCFwoVX3ZpdGFtaW5fa19taWNyb2dyYW1zQhQKEl9jb3BwZXJfbWlsbGlncmFtc0IXChVfbWFnbmVzaXVtX21pbGxpZ3JhbXNCFAoSX3NvZGl1bV9taWxsaWdyYW1zQhcKFV9wb3Rhc3NpdW1fbWlsbGlncmFtcyLYAwoERm9vZBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEiwKBnNvdXJjZRgDIAEoDjIULmZvb2RzLnYxLkZvb2RTb3VyY2VCBqqfGQIIARIWCgZmZGNfaWQYBCABKAVCBqqfGQIIARImCgludXRyaWVudHMYBSABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSFwoPZ3JhbXNfcGVyX3BpZWNlGAYgASgBEhwKFGdyYW1zX3Blcl9taWxsaWxpdGVyGAcgASgBEhEKCWZhc3RfY2FyYhgIIAEoCBItCg1zdG9yZV9zZWN0aW9uGAkgASgOMhYuZm9vZHMudjEuU3RvcmVTZWN0aW9uEhUKDXBhY2thZ2VfZ3JhbXMYCiABKAESFwoPc2hlbGZfbGlmZV9kYXlzGAsgASgFEh4KFm9wZW5lZF9zaGVsZl9saWZlX2RheXMYDCABKAUSDQoFbm90ZXMYDSABKAkSNwoLY3JlYXRlX3RpbWUYDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAEiugEKCEZvb2REYXRhEg4KBmZkY19pZBgBIAEoBRITCgtkZXNjcmlwdGlvbhgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCRIRCglkYXRhX3R5cGUYBCABKAkSJgoJbnV0cmllbnRzGAUgASgLMhMuZm9vZHMudjEuTnV0cmllbnRzEisKCHBvcnRpb25zGAYgAygLMhkuZm9vZHMudjEuRm9vZERhdGFQb3J0aW9uEg8KB2Zvb2RfaWQYByABKAkiNQoPRm9vZERhdGFQb3J0aW9uEhMKC2Rlc2NyaXB0aW9uGAEgASgJEg0KBWdyYW1zGAIgASgBIjkKFVNlYXJjaEZvb2REYXRhUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIRCglwYWdlX3NpemUYAiABKAUiOwoWU2VhcmNoRm9vZERhdGFSZXNwb25zZRIhCgVmb29kcxgBIAMoCzISLmZvb2RzLnYxLkZvb2REYXRhIkEKEUNyZWF0ZUZvb2RSZXF1ZXN0Eg4KBmZkY19pZBgBIAEoBRIcCgRmb29kGAIgASgLMg4uZm9vZHMudjEuRm9vZCIyChJDcmVhdGVGb29kUmVzcG9uc2USHAoEZm9vZBgBIAEoCzIOLmZvb2RzLnYxLkZvb2QiHAoOR2V0Rm9vZFJlcXVlc3QSCgoCaWQYASABKAkiLwoPR2V0Rm9vZFJlc3BvbnNlEhwKBGZvb2QYASABKAsyDi5mb29kcy52MS5Gb29kIkgKEExpc3RGb29kc1JlcXVlc3QSDQoFcXVlcnkYASABKAkSEQoJcGFnZV9zaXplGAIgASgFEhIKCnBhZ2VfdG9rZW4YAyABKAkiSwoRTGlzdEZvb2RzUmVzcG9uc2USHQoFZm9vZHMYASADKAsyDi5mb29kcy52MS5Gb29kEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJiChFVcGRhdGVGb29kUmVxdWVzdBIcCgRmb29kGAEgASgLMg4uZm9vZHMudjEuRm9vZBIvCgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2siMgoSVXBkYXRlRm9vZFJlc3BvbnNlEhwKBGZvb2QYASABKAsyDi5mb29kcy52MS5Gb29kIh8KEURlbGV0ZUZvb2RSZXF1ZXN0EgoKAmlkGAEgASgJIhQKEkRlbGV0ZUZvb2RSZXNwb25zZSq7BQoITnV0cmllbnQSGAoUTlVUUklFTlRfVU5TUEVDSUZJRUQQABIYChROVVRSSUVOVF9FTkVSR1lfS0NBTBABEhoKFk5VVFJJRU5UX1BST1RFSU5fR1JBTVMQAhIfChtOVVRSSUVOVF9DQVJCT0hZRFJBVEVfR1JBTVMQAxIZChVOVVRSSUVOVF9TVUdBUlNfR1JBTVMQBBIWChJOVVRSSUVOVF9GQVRfR1JBTVMQBRIYChROVVRSSUVOVF9GSUJFUl9HUkFNUxAGEiMKH05VVFJJRU5UX1ZJVEFNSU5fQjEyX01JQ1JPR1JBTVMQBxIcChhOVVRSSUVOVF9JUk9OX01JTExJR1JBTVMQCBIfChtOVVRSSUVOVF9DQUxDSVVNX01JTExJR1JBTVMQCRIhCh1OVVRSSUVOVF9WSVRBTUlOX0RfTUlDUk9HUkFNUxAKEh4KGk5VVFJJRU5UX0lPRElORV9NSUNST0dSQU1TEAsSHAoYTlVUUklFTlRfWklOQ19NSUxMSUdSQU1TEAwSHQoZTlVUUklFTlRfT01FR0EzX0FMQV9HUkFNUxANEh4KGk5VVFJJRU5UX0ZPTEFURV9NSUNST0dSQU1TEA4SIQodTlVUUklFTlRfVklUQU1JTl9BX01JQ1JPR1JBTVMQDxIhCh1OVVRSSUVOVF9WSVRBTUlOX0VfTUlMTElHUkFNUxAQEiEKHU5VVFJJRU5UX1ZJVEFNSU5fS19NSUNST0dSQU1TEBESHgoaTlVUUklFTlRfQ09QUEVSX01JTExJR1JBTVMQEhIhCh1OVVRSSUVOVF9NQUdORVNJVU1fTUlMTElHUkFNUxATEh4KGk5VVFJJRU5UX1NPRElVTV9NSUxMSUdSQU1TEBQSIQodTlVUUklFTlRfUE9UQVNTSVVNX01JTExJR1JBTVMQFSpWCgpGb29kU291cmNlEhsKF0ZPT0RfU09VUkNFX1VOU1BFQ0lGSUVEEAASEwoPRk9PRF9TT1VSQ0VfRkRDEAESFgoSRk9PRF9TT1VSQ0VfQ1VTVE9NEAIquAIKDFN0b3JlU2VjdGlvbhIdChlTVE9SRV9TRUNUSU9OX1VOU1BFQ0lGSUVEEAASGQoVU1RPUkVfU0VDVElPTl9QUk9EVUNFEAESGAoUU1RPUkVfU0VDVElPTl9CQUtFUlkQAhIZChVTVE9SRV9TRUNUSU9OX0NISUxMRUQQAxIYChRTVE9SRV9TRUNUSU9OX0ZST1pFThAEEhsKF1NUT1JFX1NFQ1RJT05fRFJZX0dPT0RTEAUSGAoUU1RPUkVfU0VDVElPTl9DQU5ORUQQBhIYChRTVE9SRV9TRUNUSU9OX1NQSUNFUxAHEhgKFFNUT1JFX1NFQ1RJT05fRFJJTktTEAgSGwoXU1RPUkVfU0VDVElPTl9IT1VTRUhPTEQQCRIXChNTVE9SRV9TRUNUSU9OX09USEVSEAoqdQoKQW1vdW50VW5pdBIbChdBTU9VTlRfVU5JVF9VTlNQRUNJRklFRBAAEhUKEUFNT1VOVF9VTklUX0dSQU1TEAESGwoXQU1PVU5UX1VOSVRfTUlMTElMSVRFUlMQAhIWChJBTU9VTlRfVU5JVF9QSUVDRVMQAzLDAwoLRm9vZFNlcnZpY2USUwoOU2VhcmNoRm9vZERhdGESHy5mb29kcy52MS5TZWFyY2hGb29kRGF0YVJlcXVlc3QaIC5mb29kcy52MS5TZWFyY2hGb29kRGF0YVJlc3BvbnNlEkcKCkNyZWF0ZUZvb2QSGy5mb29kcy52MS5DcmVhdGVGb29kUmVxdWVzdBocLmZvb2RzLnYxLkNyZWF0ZUZvb2RSZXNwb25zZRI+CgdHZXRGb29kEhguZm9vZHMudjEuR2V0Rm9vZFJlcXVlc3QaGS5mb29kcy52MS5HZXRGb29kUmVzcG9uc2USRAoJTGlzdEZvb2RzEhouZm9vZHMudjEuTGlzdEZvb2RzUmVxdWVzdBobLmZvb2RzLnYxLkxpc3RGb29kc1Jlc3BvbnNlEkcKClVwZGF0ZUZvb2QSGy5mb29kcy52MS5VcGRhdGVGb29kUmVxdWVzdBocLmZvb2RzLnYxLlVwZGF0ZUZvb2RSZXNwb25zZRJHCgpEZWxldGVGb29kEhsuZm9vZHMudjEuRGVsZXRlRm9vZFJlcXVlc3QaHC5mb29kcy52MS5EZWxldGVGb29kUmVzcG9uc2VCnAEKDGNvbS5mb29kcy52MUIKRm9vZHNQcm90b1ABWj9naXRodWIuY29tL2JzLXRvb2xzL2Zvb2RwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL2Zvb2RzL3YxO2Zvb2RzdjGiAgNGWFiqAghGb29kcy5WMcoCCEZvb2RzXFYx4gIURm9vZHNcVjFcR1BCTWV0YWRhdGHqAglGb29kczo6VjFiBnByb3RvMw", [file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * Nutrients are the amounts of the nutrients the app tracks in an amount of
@@ -693,6 +693,173 @@ export const DeleteFoodResponseSchema: GenMessage<DeleteFoodResponse> = /*@__PUR
   messageDesc(file_foods_v1_foods, 15);
 
 /**
+ * Nutrient names a nutrient the app tracks: one value per field of
+ * Nutrients, in the same order, in the same unit. People's daily targets
+ * (see PersonService) and plan warnings (see PlanService) use it.
+ *
+ * @generated from enum foods.v1.Nutrient
+ */
+export enum Nutrient {
+  /**
+   * @generated from enum value: NUTRIENT_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Energy, in kilocalories (kcal).
+   *
+   * @generated from enum value: NUTRIENT_ENERGY_KCAL = 1;
+   */
+  ENERGY_KCAL = 1,
+
+  /**
+   * Protein, in grams.
+   *
+   * @generated from enum value: NUTRIENT_PROTEIN_GRAMS = 2;
+   */
+  PROTEIN_GRAMS = 2,
+
+  /**
+   * Total carbohydrate, in grams, including sugars and fiber.
+   *
+   * @generated from enum value: NUTRIENT_CARBOHYDRATE_GRAMS = 3;
+   */
+  CARBOHYDRATE_GRAMS = 3,
+
+  /**
+   * Total sugars, in grams.
+   *
+   * @generated from enum value: NUTRIENT_SUGARS_GRAMS = 4;
+   */
+  SUGARS_GRAMS = 4,
+
+  /**
+   * Total fat, in grams.
+   *
+   * @generated from enum value: NUTRIENT_FAT_GRAMS = 5;
+   */
+  FAT_GRAMS = 5,
+
+  /**
+   * Dietary fiber, in grams.
+   *
+   * @generated from enum value: NUTRIENT_FIBER_GRAMS = 6;
+   */
+  FIBER_GRAMS = 6,
+
+  /**
+   * Vitamin B12, in micrograms.
+   *
+   * @generated from enum value: NUTRIENT_VITAMIN_B12_MICROGRAMS = 7;
+   */
+  VITAMIN_B12_MICROGRAMS = 7,
+
+  /**
+   * Iron, in milligrams.
+   *
+   * @generated from enum value: NUTRIENT_IRON_MILLIGRAMS = 8;
+   */
+  IRON_MILLIGRAMS = 8,
+
+  /**
+   * Calcium, in milligrams.
+   *
+   * @generated from enum value: NUTRIENT_CALCIUM_MILLIGRAMS = 9;
+   */
+  CALCIUM_MILLIGRAMS = 9,
+
+  /**
+   * Vitamin D, in micrograms.
+   *
+   * @generated from enum value: NUTRIENT_VITAMIN_D_MICROGRAMS = 10;
+   */
+  VITAMIN_D_MICROGRAMS = 10,
+
+  /**
+   * Iodine, in micrograms.
+   *
+   * @generated from enum value: NUTRIENT_IODINE_MICROGRAMS = 11;
+   */
+  IODINE_MICROGRAMS = 11,
+
+  /**
+   * Zinc, in milligrams.
+   *
+   * @generated from enum value: NUTRIENT_ZINC_MILLIGRAMS = 12;
+   */
+  ZINC_MILLIGRAMS = 12,
+
+  /**
+   * Alpha-linolenic acid (ALA), the plant omega-3, in grams.
+   *
+   * @generated from enum value: NUTRIENT_OMEGA3_ALA_GRAMS = 13;
+   */
+  OMEGA3_ALA_GRAMS = 13,
+
+  /**
+   * Folate, in micrograms of dietary folate equivalents.
+   *
+   * @generated from enum value: NUTRIENT_FOLATE_MICROGRAMS = 14;
+   */
+  FOLATE_MICROGRAMS = 14,
+
+  /**
+   * Vitamin A, in micrograms of retinol activity equivalents.
+   *
+   * @generated from enum value: NUTRIENT_VITAMIN_A_MICROGRAMS = 15;
+   */
+  VITAMIN_A_MICROGRAMS = 15,
+
+  /**
+   * Vitamin E, in milligrams.
+   *
+   * @generated from enum value: NUTRIENT_VITAMIN_E_MILLIGRAMS = 16;
+   */
+  VITAMIN_E_MILLIGRAMS = 16,
+
+  /**
+   * Vitamin K, in micrograms.
+   *
+   * @generated from enum value: NUTRIENT_VITAMIN_K_MICROGRAMS = 17;
+   */
+  VITAMIN_K_MICROGRAMS = 17,
+
+  /**
+   * Copper, in milligrams.
+   *
+   * @generated from enum value: NUTRIENT_COPPER_MILLIGRAMS = 18;
+   */
+  COPPER_MILLIGRAMS = 18,
+
+  /**
+   * Magnesium, in milligrams.
+   *
+   * @generated from enum value: NUTRIENT_MAGNESIUM_MILLIGRAMS = 19;
+   */
+  MAGNESIUM_MILLIGRAMS = 19,
+
+  /**
+   * Sodium, in milligrams.
+   *
+   * @generated from enum value: NUTRIENT_SODIUM_MILLIGRAMS = 20;
+   */
+  SODIUM_MILLIGRAMS = 20,
+
+  /**
+   * Potassium, in milligrams.
+   *
+   * @generated from enum value: NUTRIENT_POTASSIUM_MILLIGRAMS = 21;
+   */
+  POTASSIUM_MILLIGRAMS = 21,
+}
+
+/**
+ * Describes the enum foods.v1.Nutrient.
+ */
+export const NutrientSchema: GenEnum<Nutrient> = /*@__PURE__*/
+  enumDesc(file_foods_v1_foods, 0);
+
+/**
  * FoodSource is where a food's nutrients come from.
  *
  * @generated from enum foods.v1.FoodSource
@@ -722,7 +889,7 @@ export enum FoodSource {
  * Describes the enum foods.v1.FoodSource.
  */
 export const FoodSourceSchema: GenEnum<FoodSource> = /*@__PURE__*/
-  enumDesc(file_foods_v1_foods, 0);
+  enumDesc(file_foods_v1_foods, 1);
 
 /**
  * StoreSection is the part of a store a food is found in, which groups the
@@ -813,7 +980,7 @@ export enum StoreSection {
  * Describes the enum foods.v1.StoreSection.
  */
 export const StoreSectionSchema: GenEnum<StoreSection> = /*@__PURE__*/
-  enumDesc(file_foods_v1_foods, 1);
+  enumDesc(file_foods_v1_foods, 2);
 
 /**
  * AmountUnit is the unit of an amount of a food, e.g. of a recipe's
@@ -855,14 +1022,15 @@ export enum AmountUnit {
  * Describes the enum foods.v1.AmountUnit.
  */
 export const AmountUnitSchema: GenEnum<AmountUnit> = /*@__PURE__*/
-  enumDesc(file_foods_v1_foods, 2);
+  enumDesc(file_foods_v1_foods, 3);
 
 /**
  * FoodService manages the household's foods: the ingredients its recipes are
  * made of, such as chickpeas, a brand of tofu or soy milk, with their
- * nutrients per 100 g. Recipes (see RecipeService) and, later, meal plans,
- * the pantry and the shopping list refer to these foods, and all nutrition
- * is computed from them, so keep one food per ingredient and reuse it.
+ * nutrients per 100 g. Recipes (see RecipeService), meal plans (see
+ * PlanService) and, later, the pantry and the shopping list refer to these
+ * foods, and all nutrition is computed from them, so keep one food per
+ * ingredient and reuse it.
  *
  * To add an ingredient:
  *
@@ -944,7 +1112,9 @@ export const FoodService: GenService<{
   },
   /**
    * Delete one of the household's foods. Fails with FAILED_PRECONDITION,
-   * naming the recipes, if recipes use it: remove it from them first.
+   * naming the recipes, if recipes use it: remove it from them first. Also
+   * fails with FAILED_PRECONDITION if portions or staples of the plan (see
+   * PlanService) eat it: delete them first.
    *
    * @generated from rpc foods.v1.FoodService.DeleteFood
    */

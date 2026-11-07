@@ -23,13 +23,19 @@ import (
 // name, ignoring case.
 var ErrNameTaken = errors.New("the household already has a food with this name")
 
-// InUseError is returned when deleting a food that recipes use.
+// InUseError is returned when deleting a food that recipes or the plan
+// use.
 type InUseError struct {
 	// Recipes are the names of the recipes using the food, by name.
 	Recipes []string
+	// PlanUses is how many portions and staples of the plan eat the food.
+	PlanUses int64
 }
 
 func (e *InUseError) Error() string {
+	if len(e.Recipes) == 0 {
+		return fmt.Sprintf("the food is eaten in %d portions or staples", e.PlanUses)
+	}
 	return "the food is used by the recipes " + strings.Join(e.Recipes, ", ")
 }
 
@@ -236,11 +242,16 @@ func (r *Repository) DeleteFood(ctx context.Context, householdID, id pgtype.UUID
 	// Finding the recipes and deleting the food unless there are any take a
 	// single round trip.
 	var recipes []string
-	var deleted int64
+	var planUses, deleted int64
 	var b store.Batch
 	b.Read(func(db store.Querier) error {
 		var err error
 		recipes, err = gen.New(db).ListRecipesUsingFood(ctx, &gen.ListRecipesUsingFoodParams{HouseholdID: householdID, FoodID: id})
+		return err
+	})
+	b.Read(func(db store.Querier) error {
+		var err error
+		planUses, err = gen.New(db).CountFoodPlanUses(ctx, &gen.CountFoodPlanUsesParams{HouseholdID: householdID, FoodID: id})
 		return err
 	})
 	b.Read(func(db store.Querier) error {
@@ -256,13 +267,30 @@ func (r *Repository) DeleteFood(ctx context.Context, householdID, id pgtype.UUID
 		}
 		return fmt.Errorf("failed to delete food: %w", err)
 	}
-	if len(recipes) > 0 {
-		return &InUseError{Recipes: recipes}
+	if len(recipes) > 0 || planUses > 0 {
+		return &InUseError{Recipes: recipes, PlanUses: planUses}
 	}
 	if deleted == 0 {
 		return store.ErrNotFound
 	}
 	return nil
+}
+
+// ListFoodsByID lists the household's foods with the given IDs, ordered by
+// name. IDs of foods the household doesn't have are left out.
+func (r *Repository) ListFoodsByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*Food, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	rows, err := r.querier.ListFoodsByID(ctx, &gen.ListFoodsByIDParams{HouseholdID: householdID, Ids: ids})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list foods: %w", err)
+	}
+	list := make([]*Food, 0, len(rows))
+	for _, row := range rows {
+		list = append(list, foodFromDB(row))
+	}
+	return list, nil
 }
 
 // isNameTaken reports whether err is the violation of the unique name of a

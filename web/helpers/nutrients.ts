@@ -1,4 +1,5 @@
 import type { Nutrients } from "gen/foods/v1/foods_pb";
+import { Nutrient } from "gen/foods/v1/foods_pb";
 
 // NutrientKey is the name of a nutrient's field in Nutrients.
 export type NutrientKey = Exclude<keyof Nutrients, "$typeName" | "$unknown">;
@@ -14,6 +15,8 @@ export interface NutrientInfo {
   // The field's name in the API, which issues and incomplete nutrients use.
   field: string;
   label: string;
+  // The nutrient in the API's Nutrient enum.
+  nutrient: Nutrient;
   unit: "kcal" | "g" | "mg" | "µg";
   group: NutrientGroup;
   // A note on what's measured, for hints.
@@ -27,6 +30,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Energy and macronutrients",
     key: "energyKcal",
     label: "Energy",
+    nutrient: Nutrient.ENERGY_KCAL,
     unit: "kcal",
   },
   {
@@ -34,6 +38,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Energy and macronutrients",
     key: "proteinGrams",
     label: "Protein",
+    nutrient: Nutrient.PROTEIN_GRAMS,
     unit: "g",
   },
   {
@@ -42,6 +47,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     hint: "Including fiber. European labels leave fiber out: add it.",
     key: "carbohydrateGrams",
     label: "Carbohydrate",
+    nutrient: Nutrient.CARBOHYDRATE_GRAMS,
     unit: "g",
   },
   {
@@ -49,6 +55,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Energy and macronutrients",
     key: "sugarsGrams",
     label: "Sugars",
+    nutrient: Nutrient.SUGARS_GRAMS,
     unit: "g",
   },
   {
@@ -56,6 +63,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Energy and macronutrients",
     key: "fatGrams",
     label: "Fat",
+    nutrient: Nutrient.FAT_GRAMS,
     unit: "g",
   },
   {
@@ -63,6 +71,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Energy and macronutrients",
     key: "fiberGrams",
     label: "Fiber",
+    nutrient: Nutrient.FIBER_GRAMS,
     unit: "g",
   },
   {
@@ -70,6 +79,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Vitamins",
     key: "vitaminB12Micrograms",
     label: "Vitamin B12",
+    nutrient: Nutrient.VITAMIN_B12_MICROGRAMS,
     unit: "µg",
   },
   {
@@ -77,6 +87,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Minerals",
     key: "ironMilligrams",
     label: "Iron",
+    nutrient: Nutrient.IRON_MILLIGRAMS,
     unit: "mg",
   },
   {
@@ -84,6 +95,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Minerals",
     key: "calciumMilligrams",
     label: "Calcium",
+    nutrient: Nutrient.CALCIUM_MILLIGRAMS,
     unit: "mg",
   },
   {
@@ -92,6 +104,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     hint: "1 µg is 40 IU.",
     key: "vitaminDMicrograms",
     label: "Vitamin D",
+    nutrient: Nutrient.VITAMIN_D_MICROGRAMS,
     unit: "µg",
   },
   {
@@ -99,6 +112,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Minerals",
     key: "iodineMicrograms",
     label: "Iodine",
+    nutrient: Nutrient.IODINE_MICROGRAMS,
     unit: "µg",
   },
   {
@@ -106,6 +120,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Minerals",
     key: "zincMilligrams",
     label: "Zinc",
+    nutrient: Nutrient.ZINC_MILLIGRAMS,
     unit: "mg",
   },
   {
@@ -113,6 +128,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Energy and macronutrients",
     key: "omega3AlaGrams",
     label: "Omega-3 (ALA)",
+    nutrient: Nutrient.OMEGA3_ALA_GRAMS,
     unit: "g",
   },
   {
@@ -121,6 +137,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     hint: "Dietary folate equivalents (DFE).",
     key: "folateMicrograms",
     label: "Folate",
+    nutrient: Nutrient.FOLATE_MICROGRAMS,
     unit: "µg",
   },
   {
@@ -129,6 +146,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     hint: "Retinol activity equivalents (RAE).",
     key: "vitaminAMicrograms",
     label: "Vitamin A",
+    nutrient: Nutrient.VITAMIN_A_MICROGRAMS,
     unit: "µg",
   },
   {
@@ -136,6 +154,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Vitamins",
     key: "vitaminEMilligrams",
     label: "Vitamin E",
+    nutrient: Nutrient.VITAMIN_E_MILLIGRAMS,
     unit: "mg",
   },
   {
@@ -143,6 +162,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Vitamins",
     key: "vitaminKMicrograms",
     label: "Vitamin K",
+    nutrient: Nutrient.VITAMIN_K_MICROGRAMS,
     unit: "µg",
   },
   {
@@ -150,6 +170,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Minerals",
     key: "copperMilligrams",
     label: "Copper",
+    nutrient: Nutrient.COPPER_MILLIGRAMS,
     unit: "mg",
   },
   {
@@ -157,6 +178,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Minerals",
     key: "magnesiumMilligrams",
     label: "Magnesium",
+    nutrient: Nutrient.MAGNESIUM_MILLIGRAMS,
     unit: "mg",
   },
   {
@@ -165,6 +187,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     hint: "Salt divided by 2.5.",
     key: "sodiumMilligrams",
     label: "Sodium",
+    nutrient: Nutrient.SODIUM_MILLIGRAMS,
     unit: "mg",
   },
   {
@@ -172,6 +195,7 @@ export const NUTRIENTS: NutrientInfo[] = [
     group: "Minerals",
     key: "potassiumMilligrams",
     label: "Potassium",
+    nutrient: Nutrient.POTASSIUM_MILLIGRAMS,
     unit: "mg",
   },
 ];
@@ -182,6 +206,10 @@ export const NUTRIENT_GROUPS: NutrientGroup[] = [
   "Vitamins",
   "Minerals",
 ];
+
+// NutrientInfoOf returns what's known of a nutrient of the Nutrient enum.
+export const nutrientInfoOf = (nutrient: Nutrient): NutrientInfo | undefined =>
+  NUTRIENTS.find((info) => info.nutrient === nutrient);
 
 // NutrientLabel returns a nutrient's label from its API field name.
 export const nutrientLabel = (field: string): string =>

@@ -23,14 +23,20 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/gen/auth/v1/authv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/foods/v1/foodsv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/oauth/v1/oauthv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/people/v1/peoplev1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/plans/v1/plansv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1/recipesv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/users/v1/usersv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/mcp"
 	"github.com/bs-tools/foodplann.ing/internal/oauth"
+	"github.com/bs-tools/foodplann.ing/internal/people"
+	"github.com/bs-tools/foodplann.ing/internal/plans"
 	"github.com/bs-tools/foodplann.ing/internal/recipes"
 	"github.com/bs-tools/foodplann.ing/internal/services/auth"
 	"github.com/bs-tools/foodplann.ing/internal/services/food"
 	oauthsvc "github.com/bs-tools/foodplann.ing/internal/services/oauth"
+	"github.com/bs-tools/foodplann.ing/internal/services/person"
+	"github.com/bs-tools/foodplann.ing/internal/services/plan"
 	"github.com/bs-tools/foodplann.ing/internal/services/recipe"
 	"github.com/bs-tools/foodplann.ing/internal/services/user"
 	"github.com/bs-tools/foodplann.ing/internal/store"
@@ -71,6 +77,15 @@ type env struct {
 	otherRecipes recipesv1connect.RecipeServiceClient
 	anonRecipes  recipesv1connect.RecipeServiceClient
 	foodRepo     *foods.Repository
+
+	// The person and plan services, signed in with the API token, as the
+	// other user in another household, and anonymously.
+	people      peoplev1connect.PersonServiceClient
+	otherPeople peoplev1connect.PersonServiceClient
+	anonPeople  peoplev1connect.PersonServiceClient
+	plans       plansv1connect.PlanServiceClient
+	otherPlans  plansv1connect.PlanServiceClient
+	anonPlans   plansv1connect.PlanServiceClient
 }
 
 // consentPage stands in for the frontend's OAuth consent page.
@@ -113,7 +128,11 @@ func newEnv(t *testing.T) *env {
 	userService := user.NewService(log, report, userRepo, userRepo, userRepo, avatars)
 	e.foodRepo = foods.NewRepository(log, db)
 	foodService := food.NewService(log, report, e.foodRepo)
-	recipeService := recipe.NewService(log, report, recipes.NewRepository(log, db))
+	recipeRepo := recipes.NewRepository(log, db)
+	recipeService := recipe.NewService(log, report, recipeRepo)
+	peopleRepo := people.NewRepository(log, db)
+	personService := person.NewService(log, report, peopleRepo)
+	planService := plan.NewService(log, report, plans.NewRepository(log, db), peopleRepo, recipeRepo, e.foodRepo)
 
 	// Start listening before creating the handler, as the OAuth server needs
 	// the URL of the server.
@@ -134,6 +153,8 @@ func newEnv(t *testing.T) *env {
 	authv1connect.RegisterAuthServiceHandler(srv2, authService)
 	foodsv1connect.RegisterFoodServiceHandler(srv2, foodService)
 	recipesv1connect.RegisterRecipeServiceHandler(srv2, recipeService)
+	peoplev1connect.RegisterPersonServiceHandler(srv2, personService)
+	plansv1connect.RegisterPlanServiceHandler(srv2, planService)
 	apilimit.Mount(mux, srv2)
 	mux.Handle(user.AvatarPath, userService.AvatarHandler())
 	// The same services as main.go serves over MCP.
@@ -141,6 +162,8 @@ func newEnv(t *testing.T) *env {
 		mcp.Service{Name: usersv1connect.UserServiceName, Handler: userService},
 		mcp.Service{Name: foodsv1connect.FoodServiceName, Handler: foodService},
 		mcp.Service{Name: recipesv1connect.RecipeServiceName, Handler: recipeService},
+		mcp.Service{Name: peoplev1connect.PersonServiceName, Handler: personService},
+		mcp.Service{Name: plansv1connect.PlanServiceName, Handler: planService},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -171,6 +194,12 @@ func newEnv(t *testing.T) *env {
 	e.recipes = recipesv1connect.NewRecipeServiceClient(authed)
 	e.otherRecipes = recipesv1connect.NewRecipeServiceClient(other)
 	e.anonRecipes = recipesv1connect.NewRecipeServiceClient(anon)
+	e.people = peoplev1connect.NewPersonServiceClient(authed)
+	e.otherPeople = peoplev1connect.NewPersonServiceClient(other)
+	e.anonPeople = peoplev1connect.NewPersonServiceClient(anon)
+	e.plans = plansv1connect.NewPlanServiceClient(authed)
+	e.otherPlans = plansv1connect.NewPlanServiceClient(other)
+	e.anonPlans = plansv1connect.NewPlanServiceClient(anon)
 	return e
 }
 

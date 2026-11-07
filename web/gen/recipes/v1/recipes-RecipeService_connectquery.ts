@@ -36,7 +36,8 @@ export const listRecipes = RecipeService.method.listRecipes;
 export const updateRecipe = RecipeService.method.updateRecipe;
 
 /**
- * Delete a recipe.
+ * Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
+ * the plan (see PlanService) use it: delete them first.
  *
  * @generated from rpc recipes.v1.RecipeService.DeleteRecipe
  */

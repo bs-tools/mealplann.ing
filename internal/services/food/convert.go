@@ -46,6 +46,21 @@ var nutrientFields = func() [nutrition.Count]protoreflect.FieldDescriptor {
 	return fds
 }()
 
+// NutrientToProto converts a nutrient to the API's Nutrient, whose values
+// are in the same order, from 1.
+func NutrientToProto(n nutrition.Nutrient) foodsv1.Nutrient {
+	return foodsv1.Nutrient(n + 1)
+}
+
+// NutrientFromProto converts the API's Nutrient, returning false if it's
+// unspecified or unknown.
+func NutrientFromProto(n foodsv1.Nutrient) (nutrition.Nutrient, bool) {
+	if n <= foodsv1.Nutrient_NUTRIENT_UNSPECIFIED || int(n) > int(nutrition.Count) {
+		return 0, false
+	}
+	return nutrition.Nutrient(n - 1), true
+}
+
 // maxPer100Grams is the most of a nutrient in 100 g of food: all of it for
 // a nutrient in grams, and the energy of pure fat.
 func maxPer100Grams(n nutrition.Nutrient) float64 {

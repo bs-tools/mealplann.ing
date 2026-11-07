@@ -87,7 +87,8 @@ type RecipeServiceClient interface {
 	ListRecipes(context.Context, *v1.ListRecipesRequest) (*v1.ListRecipesResponse, error)
 	// Update a recipe.
 	UpdateRecipe(context.Context, *v1.UpdateRecipeRequest) (*v1.UpdateRecipeResponse, error)
-	// Delete a recipe.
+	// Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
+	// the plan (see PlanService) use it: delete them first.
 	DeleteRecipe(context.Context, *v1.DeleteRecipeRequest) (*v1.DeleteRecipeResponse, error)
 }
 
@@ -110,7 +111,8 @@ type RecipeServiceHandler interface {
 	ListRecipes(context.Context, *v1.ListRecipesRequest) (*v1.ListRecipesResponse, error)
 	// Update a recipe.
 	UpdateRecipe(context.Context, *v1.UpdateRecipeRequest) (*v1.UpdateRecipeResponse, error)
-	// Delete a recipe.
+	// Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
+	// the plan (see PlanService) use it: delete them first.
 	DeleteRecipe(context.Context, *v1.DeleteRecipeRequest) (*v1.DeleteRecipeResponse, error)
 }
 

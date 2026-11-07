@@ -1,4 +1,6 @@
 import { AmountUnit, StoreSection } from "gen/foods/v1/foods_pb";
+import { EatingTimeKind, HouseholdMeal } from "gen/people/v1/people_pb";
+import { Weekday } from "gen/plans/v1/plans_pb";
 
 // STORE_SECTIONS are the store sections, in the order of a typical shop.
 export const STORE_SECTIONS: { value: StoreSection; label: string }[] = [
@@ -41,4 +43,71 @@ export const formatIngredientAmount = (
     return `${value} ml`;
   }
   return value;
+};
+
+/**
+ * OptionValue returns the value of the option whose value's string is
+ * text, or fallback. Select inputs give strings, and looking the option up
+ * keeps the enum's type.
+ */
+export const optionValue = <Value>(
+  options: { value: Value; label: string }[],
+  text: string,
+  fallback: Value
+): Value =>
+  options.find((option) => String(option.value) === text)?.value ?? fallback;
+
+// EATING_TIME_KINDS are the kinds of eating times.
+export const EATING_TIME_KINDS: { value: EatingTimeKind; label: string }[] = [
+  { label: "Main meal", value: EatingTimeKind.MAIN },
+  { label: "Small meal", value: EatingTimeKind.SMALL },
+];
+
+// HOUSEHOLD_MEALS are the meals a household cooks to share.
+export const HOUSEHOLD_MEALS: { value: HouseholdMeal; label: string }[] = [
+  { label: "Breakfast", value: HouseholdMeal.BREAKFAST },
+  { label: "Lunch", value: HouseholdMeal.LUNCH },
+  { label: "Dinner", value: HouseholdMeal.DINNER },
+];
+
+// HouseholdMealLabel names a shared meal, "" if none.
+export const householdMealLabel = (meal: HouseholdMeal): string =>
+  HOUSEHOLD_MEALS.find((option) => option.value === meal)?.label ?? "";
+
+// WEEKDAYS are the days of the week, from Monday.
+export const WEEKDAYS: { value: Weekday; label: string }[] = [
+  { label: "Mon", value: Weekday.MONDAY },
+  { label: "Tue", value: Weekday.TUESDAY },
+  { label: "Wed", value: Weekday.WEDNESDAY },
+  { label: "Thu", value: Weekday.THURSDAY },
+  { label: "Fri", value: Weekday.FRIDAY },
+  { label: "Sat", value: Weekday.SATURDAY },
+  { label: "Sun", value: Weekday.SUNDAY },
+];
+
+/**
+ * FormatWeekdays describes the days a staple is on, e.g. "Every day",
+ * "Weekdays" or "Mon · Wed · Fri".
+ */
+export const formatWeekdays = (weekdays: Weekday[]): string => {
+  if (weekdays.length === 0 || weekdays.length === WEEKDAYS.length) {
+    return "Every day";
+  }
+  const days = WEEKDAYS.filter((option) => weekdays.includes(option.value));
+  const names = days.map((option) => option.label).join(" · ");
+  if (names === "Mon · Tue · Wed · Thu · Fri") {
+    return "Weekdays";
+  }
+  if (names === "Sat · Sun") {
+    return "Weekends";
+  }
+  return names;
+};
+
+// FormatServings formats servings, e.g. "1 serving" or "0.66 servings".
+export const formatServings = (servings: number): string => {
+  const value = servings.toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  });
+  return `${value} ${servings === 1 ? "serving" : "servings"}`;
 };
