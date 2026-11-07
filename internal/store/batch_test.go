@@ -6,9 +6,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 	"github.com/bs-tools/foodplann.ing/internal/store/storetest"
+	"github.com/jackc/pgx/v5"
 )
 
 func TestBatch(t *testing.T) {

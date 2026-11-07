@@ -3,9 +3,9 @@ package users
 import (
 	"log/slog"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 	"github.com/bs-tools/foodplann.ing/internal/users/internal/gen"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type User interface {

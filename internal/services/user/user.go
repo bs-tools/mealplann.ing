@@ -26,9 +26,9 @@ func userToProto(user users.User) (*usersv1.User, error) {
 	switch u := user.(type) {
 	case *users.PasskeyUser:
 		return usersv1.User_builder{
-			Id:        store.UUIDToString(user.ID()),
-			Name:      u.Name,
-			AvatarUrl: AvatarURL(u.AvatarKey),
+			Id:          store.UUIDToString(user.ID()),
+			Name:        u.Name,
+			AvatarUrl:   AvatarURL(u.AvatarKey),
 			Admin:       u.IsAdmin(),
 			HouseholdId: store.UUIDToString(u.HouseholdID()),
 		}.Build(), nil

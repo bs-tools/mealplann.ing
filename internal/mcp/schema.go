@@ -5,9 +5,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/bs-tools/foodplann.ing/internal/apidesc"
 	mcpv1 "github.com/bs-tools/foodplann.ing/internal/gen/mcp/v1"
+	"github.com/google/jsonschema-go/jsonschema"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"

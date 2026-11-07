@@ -18,9 +18,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect/v2"
-	"github.com/go-passkeys/go-passkeys/webauthn"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/bs-tools/foodplann.ing/internal/authn"
 	"github.com/bs-tools/foodplann.ing/internal/errreport"
 	authv1 "github.com/bs-tools/foodplann.ing/internal/gen/auth/v1"
@@ -28,6 +25,9 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/html"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 	"github.com/bs-tools/foodplann.ing/internal/users"
+	"github.com/go-passkeys/go-passkeys/webauthn"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	"gitlab.com/greyxor/slogor"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

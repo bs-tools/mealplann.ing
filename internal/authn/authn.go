@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"connectrpc.com/connect/v2"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/bs-tools/foodplann.ing/internal/errreport"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 	"github.com/bs-tools/foodplann.ing/internal/users"
+	"github.com/jackc/pgx/v5/pgtype"
 	"gitlab.com/greyxor/slogor"
 )
 

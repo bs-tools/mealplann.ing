@@ -8,7 +8,6 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect/v2"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/bs-tools/foodplann.ing/internal/authn"
 	"github.com/bs-tools/foodplann.ing/internal/errreport"
 	oauthv1 "github.com/bs-tools/foodplann.ing/internal/gen/oauth/v1"
@@ -16,6 +15,7 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/oauth"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 	"github.com/bs-tools/foodplann.ing/internal/users"
+	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

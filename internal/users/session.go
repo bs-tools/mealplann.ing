@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 	"github.com/bs-tools/foodplann.ing/internal/users/internal/gen"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Session is an unexpired session.

@@ -4,11 +4,11 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/bs-tools/foodplann.ing/internal/blob"
 	"github.com/bs-tools/foodplann.ing/internal/errreport"
 	"github.com/bs-tools/foodplann.ing/internal/gen/users/v1/usersv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/users"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var _ usersv1connect.UserServiceHandler = (*Service)(nil)

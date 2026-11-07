@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/bs-tools/foodplann.ing/internal/errreport"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // adminRepo is a Repository that only knows whether there is an

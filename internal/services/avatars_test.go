@@ -103,7 +103,7 @@ func TestAvatars(t *testing.T) {
 	if status, _ := get(second); status != http.StatusNotFound {
 		t.Errorf("GET the deleted avatar: %d, want 404", status)
 	}
-	for _, path := range []string{"/avatars/../trip-photos/x.jpg", "/avatars/ABC.jpg", "/avatars/"} {
+	for _, path := range []string{"/avatars/../photos/x.jpg", "/avatars/ABC.jpg", "/avatars/"} {
 		if status, _ := get(path); status != http.StatusNotFound {
 			t.Errorf("GET %s: %d, want 404", path, status)
 		}
