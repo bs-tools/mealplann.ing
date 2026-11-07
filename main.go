@@ -23,14 +23,20 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/authn"
 	"github.com/bs-tools/foodplann.ing/internal/blob"
 	"github.com/bs-tools/foodplann.ing/internal/errreport"
+	"github.com/bs-tools/foodplann.ing/internal/foods"
 	"github.com/bs-tools/foodplann.ing/internal/gen/auth/v1/authv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/foods/v1/foodsv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/oauth/v1/oauthv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1/recipesv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/users/v1/usersv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/html"
 	"github.com/bs-tools/foodplann.ing/internal/mcp"
 	"github.com/bs-tools/foodplann.ing/internal/oauth"
+	"github.com/bs-tools/foodplann.ing/internal/recipes"
 	"github.com/bs-tools/foodplann.ing/internal/services/auth"
+	"github.com/bs-tools/foodplann.ing/internal/services/food"
 	oauthsvc "github.com/bs-tools/foodplann.ing/internal/services/oauth"
+	"github.com/bs-tools/foodplann.ing/internal/services/recipe"
 	"github.com/bs-tools/foodplann.ing/internal/services/user"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 	"github.com/bs-tools/foodplann.ing/internal/telemetry"
@@ -166,6 +172,13 @@ var (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == importFDCCommand {
+		if err := importFDC(os.Args[2:]); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to import FoodData Central: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
 	flag.Parse()
 	if err := setFlagsFromEnv(flag.CommandLine); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to set flags from the environment: %v\n", err)
@@ -346,12 +359,16 @@ func run(
 	// authorization server instead of API tokens.
 	oauthServer := oauth.NewServer(log, report, users, baseURL, mcpPath)
 	oauthService := oauthsvc.NewService(log, report, oauthServer, users)
+	foodService := food.NewService(log, report, foods.NewRepository(log, db))
+	recipeService := recipe.NewService(log, report, recipes.NewRepository(log, db))
 
 	// Register all services on a single Connect server, served by the API mux
 	server := connect.NewServer()
 	usersv1connect.RegisterUserServiceHandler(server, userService)
 	authv1connect.RegisterAuthServiceHandler(server, authService)
 	oauthv1connect.RegisterOAuthServiceHandler(server, oauthService)
+	foodsv1connect.RegisterFoodServiceHandler(server, foodService)
+	recipesv1connect.RegisterRecipeServiceHandler(server, recipeService)
 	// Requests are bounded, so one can't exhaust the server's memory. Only
 	// signed in users can upload files, like avatars.
 	apiMux := http.NewServeMux()
@@ -375,6 +392,8 @@ func run(
 	// with API tokens or OAuth access tokens.
 	mcpServer, err := mcp.NewServer(log, report,
 		mcp.Service{Name: usersv1connect.UserServiceName, Handler: userService},
+		mcp.Service{Name: foodsv1connect.FoodServiceName, Handler: foodService},
+		mcp.Service{Name: recipesv1connect.RecipeServiceName, Handler: recipeService},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create MCP server: %w", err)

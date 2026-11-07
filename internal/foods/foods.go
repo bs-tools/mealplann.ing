@@ -1,0 +1,347 @@
+// Package foods stores the households' foods, the ingredients of their
+// recipes, and the foods of USDA FoodData Central they're created from.
+package foods
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"strings"
+	"time"
+
+	"github.com/bs-tools/foodplann.ing/internal/foods/internal/gen"
+	"github.com/bs-tools/foodplann.ing/internal/nutrition"
+	"github.com/bs-tools/foodplann.ing/internal/store"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+// ErrNameTaken is returned when a household already has a food with the
+// name, ignoring case.
+var ErrNameTaken = errors.New("the household already has a food with this name")
+
+// InUseError is returned when deleting a food that recipes use.
+type InUseError struct {
+	// Recipes are the names of the recipes using the food, by name.
+	Recipes []string
+}
+
+func (e *InUseError) Error() string {
+	return "the food is used by the recipes " + strings.Join(e.Recipes, ", ")
+}
+
+// StoreSection is the part of a store a food is found in.
+type StoreSection string
+
+// The store sections, as stored. The zero value is unspecified.
+const (
+	StoreSectionUnspecified StoreSection = ""
+	StoreSectionProduce     StoreSection = "produce"
+	StoreSectionBakery      StoreSection = "bakery"
+	StoreSectionChilled     StoreSection = "chilled"
+	StoreSectionFrozen      StoreSection = "frozen"
+	StoreSectionDryGoods    StoreSection = "dry_goods"
+	StoreSectionCanned      StoreSection = "canned"
+	StoreSectionSpices      StoreSection = "spices"
+	StoreSectionDrinks      StoreSection = "drinks"
+	StoreSectionHousehold   StoreSection = "household"
+	StoreSectionOther       StoreSection = "other"
+)
+
+// Food is a household's food: an ingredient, with its nutrients.
+type Food struct {
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+	Name        string
+	// FDCID is the FoodData Central food its nutrients were copied from, 0
+	// for custom foods.
+	FDCID int32
+	// Per100Grams are the nutrients in 100 g of the food, nil where unknown.
+	Per100Grams nutrition.Nutrients
+	// GramsPerPiece is the typical weight of a piece, 0 if unknown.
+	GramsPerPiece float64
+	// GramsPerMilliliter is the density, 0 if unknown.
+	GramsPerMilliliter float64
+	// FastCarb is whether the food's carbohydrate is quickly absorbed.
+	FastCarb     bool
+	StoreSection StoreSection
+	// PackageGrams is the typical pack size, 0 if unknown.
+	PackageGrams float64
+	// ShelfLifeDays and OpenedShelfLifeDays are how long the food keeps,
+	// unopened and opened, 0 if unknown.
+	ShelfLifeDays       int32
+	OpenedShelfLifeDays int32
+	Notes               string
+	CreateTime          time.Time
+	UpdateTime          time.Time
+}
+
+// Nutrition returns what nutrition math needs of the food.
+func (f *Food) Nutrition() *nutrition.Food {
+	return &nutrition.Food{
+		Per100Grams:        f.Per100Grams,
+		GramsPerPiece:      f.GramsPerPiece,
+		GramsPerMilliliter: f.GramsPerMilliliter,
+	}
+}
+
+// Repository stores foods.
+type Repository struct {
+	log     *slog.Logger
+	db      *store.DB
+	querier *gen.Queries
+}
+
+// NewRepository returns a repository of the foods in the database.
+func NewRepository(log *slog.Logger, db *store.DB) *Repository {
+	return &Repository{log: log, db: db, querier: gen.New(db)}
+}
+
+// CreateFood creates a food in its household. It returns ErrNameTaken if
+// the household has a food with the same name.
+func (r *Repository) CreateFood(ctx context.Context, f *Food) (*Food, error) {
+	n := &f.Per100Grams
+	row, err := r.querier.CreateFood(ctx, &gen.CreateFoodParams{
+		HouseholdID:                     f.HouseholdID,
+		Name:                            f.Name,
+		FDCID:                           positive(f.FDCID),
+		EnergyKcalPer100Grams:           n[nutrition.EnergyKcal],
+		ProteinGramsPer100Grams:         n[nutrition.ProteinGrams],
+		CarbohydrateGramsPer100Grams:    n[nutrition.CarbohydrateGrams],
+		SugarsGramsPer100Grams:          n[nutrition.SugarsGrams],
+		FatGramsPer100Grams:             n[nutrition.FatGrams],
+		FiberGramsPer100Grams:           n[nutrition.FiberGrams],
+		VitaminB12MicrogramsPer100Grams: n[nutrition.VitaminB12Micrograms],
+		IronMilligramsPer100Grams:       n[nutrition.IronMilligrams],
+		CalciumMilligramsPer100Grams:    n[nutrition.CalciumMilligrams],
+		VitaminDMicrogramsPer100Grams:   n[nutrition.VitaminDMicrograms],
+		IodineMicrogramsPer100Grams:     n[nutrition.IodineMicrograms],
+		ZincMilligramsPer100Grams:       n[nutrition.ZincMilligrams],
+		Omega3ALAGramsPer100Grams:       n[nutrition.Omega3ALAGrams],
+		FolateMicrogramsPer100Grams:     n[nutrition.FolateMicrograms],
+		VitaminAMicrogramsPer100Grams:   n[nutrition.VitaminAMicrograms],
+		VitaminEMilligramsPer100Grams:   n[nutrition.VitaminEMilligrams],
+		VitaminKMicrogramsPer100Grams:   n[nutrition.VitaminKMicrograms],
+		CopperMilligramsPer100Grams:     n[nutrition.CopperMilligrams],
+		MagnesiumMilligramsPer100Grams:  n[nutrition.MagnesiumMilligrams],
+		SodiumMilligramsPer100Grams:     n[nutrition.SodiumMilligrams],
+		PotassiumMilligramsPer100Grams:  n[nutrition.PotassiumMilligrams],
+		GramsPerPiece:                   positive(f.GramsPerPiece),
+		GramsPerMilliliter:              positive(f.GramsPerMilliliter),
+		FastCarb:                        f.FastCarb,
+		StoreSection:                    storeSectionToDB(f.StoreSection),
+		PackageGrams:                    positive(f.PackageGrams),
+		ShelfLifeDays:                   positive(f.ShelfLifeDays),
+		OpenedShelfLifeDays:             positive(f.OpenedShelfLifeDays),
+		Notes:                           f.Notes,
+	})
+	if err != nil {
+		if isNameTaken(err) {
+			return nil, ErrNameTaken
+		}
+		return nil, fmt.Errorf("failed to create food: %w", err)
+	}
+	return foodFromDB(row), nil
+}
+
+// GetFood gets a household's food. It returns store.ErrNotFound if the
+// household has no such food.
+func (r *Repository) GetFood(ctx context.Context, householdID, id pgtype.UUID) (*Food, error) {
+	row, err := r.querier.GetFood(ctx, &gen.GetFoodParams{ID: id, HouseholdID: householdID})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, store.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get food: %w", err)
+	}
+	return foodFromDB(row), nil
+}
+
+// ListFoods lists a household's foods whose name contains query, ignoring
+// case, ordered by name: limit of them, after skipping offset.
+func (r *Repository) ListFoods(ctx context.Context, householdID pgtype.UUID, query string, limit, offset int32) ([]*Food, error) {
+	rows, err := r.querier.ListFoods(ctx, &gen.ListFoodsParams{
+		HouseholdID: householdID,
+		Query:       query,
+		RowLimit:    limit,
+		RowOffset:   offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list foods: %w", err)
+	}
+	foods := make([]*Food, 0, len(rows))
+	for _, row := range rows {
+		foods = append(foods, foodFromDB(row))
+	}
+	return foods, nil
+}
+
+// UpdateFood replaces the fields of a household's food, other than its
+// FDC ID and times. It returns store.ErrNotFound if the household has no
+// such food, and ErrNameTaken if another of its foods has the name.
+func (r *Repository) UpdateFood(ctx context.Context, f *Food) (*Food, error) {
+	n := &f.Per100Grams
+	row, err := r.querier.UpdateFood(ctx, &gen.UpdateFoodParams{
+		ID:                              f.ID,
+		HouseholdID:                     f.HouseholdID,
+		Name:                            f.Name,
+		EnergyKcalPer100Grams:           n[nutrition.EnergyKcal],
+		ProteinGramsPer100Grams:         n[nutrition.ProteinGrams],
+		CarbohydrateGramsPer100Grams:    n[nutrition.CarbohydrateGrams],
+		SugarsGramsPer100Grams:          n[nutrition.SugarsGrams],
+		FatGramsPer100Grams:             n[nutrition.FatGrams],
+		FiberGramsPer100Grams:           n[nutrition.FiberGrams],
+		VitaminB12MicrogramsPer100Grams: n[nutrition.VitaminB12Micrograms],
+		IronMilligramsPer100Grams:       n[nutrition.IronMilligrams],
+		CalciumMilligramsPer100Grams:    n[nutrition.CalciumMilligrams],
+		VitaminDMicrogramsPer100Grams:   n[nutrition.VitaminDMicrograms],
+		IodineMicrogramsPer100Grams:     n[nutrition.IodineMicrograms],
+		ZincMilligramsPer100Grams:       n[nutrition.ZincMilligrams],
+		Omega3ALAGramsPer100Grams:       n[nutrition.Omega3ALAGrams],
+		FolateMicrogramsPer100Grams:     n[nutrition.FolateMicrograms],
+		VitaminAMicrogramsPer100Grams:   n[nutrition.VitaminAMicrograms],
+		VitaminEMilligramsPer100Grams:   n[nutrition.VitaminEMilligrams],
+		VitaminKMicrogramsPer100Grams:   n[nutrition.VitaminKMicrograms],
+		CopperMilligramsPer100Grams:     n[nutrition.CopperMilligrams],
+		MagnesiumMilligramsPer100Grams:  n[nutrition.MagnesiumMilligrams],
+		SodiumMilligramsPer100Grams:     n[nutrition.SodiumMilligrams],
+		PotassiumMilligramsPer100Grams:  n[nutrition.PotassiumMilligrams],
+		GramsPerPiece:                   positive(f.GramsPerPiece),
+		GramsPerMilliliter:              positive(f.GramsPerMilliliter),
+		FastCarb:                        f.FastCarb,
+		StoreSection:                    storeSectionToDB(f.StoreSection),
+		PackageGrams:                    positive(f.PackageGrams),
+		ShelfLifeDays:                   positive(f.ShelfLifeDays),
+		OpenedShelfLifeDays:             positive(f.OpenedShelfLifeDays),
+		Notes:                           f.Notes,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, store.ErrNotFound
+		case isNameTaken(err):
+			return nil, ErrNameTaken
+		}
+		return nil, fmt.Errorf("failed to update food: %w", err)
+	}
+	return foodFromDB(row), nil
+}
+
+// DeleteFood deletes a household's food. It returns an *InUseError if
+// recipes use it, and store.ErrNotFound if the household has no such food.
+func (r *Repository) DeleteFood(ctx context.Context, householdID, id pgtype.UUID) error {
+	// Finding the recipes and deleting the food unless there are any take a
+	// single round trip.
+	var recipes []string
+	var deleted int64
+	var b store.Batch
+	b.Read(func(db store.Querier) error {
+		var err error
+		recipes, err = gen.New(db).ListRecipesUsingFood(ctx, &gen.ListRecipesUsingFoodParams{HouseholdID: householdID, FoodID: id})
+		return err
+	})
+	b.Read(func(db store.Querier) error {
+		var err error
+		deleted, err = gen.New(db).DeleteUnusedFood(ctx, &gen.DeleteUnusedFoodParams{ID: id, HouseholdID: householdID})
+		return err
+	})
+	if err := b.Send(ctx, r.db); err != nil {
+		// A recipe can start using the food between the two statements.
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.ForeignKeyViolation {
+			return &InUseError{}
+		}
+		return fmt.Errorf("failed to delete food: %w", err)
+	}
+	if len(recipes) > 0 {
+		return &InUseError{Recipes: recipes}
+	}
+	if deleted == 0 {
+		return store.ErrNotFound
+	}
+	return nil
+}
+
+// isNameTaken reports whether err is the violation of the unique name of a
+// household's foods.
+func isNameTaken(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation &&
+		pgErr.ConstraintName == "foods_household_id_lower_name"
+}
+
+func foodFromDB(row *gen.Food) *Food {
+	return &Food{
+		ID:          row.ID,
+		HouseholdID: row.HouseholdID,
+		Name:        row.Name,
+		FDCID:       orZero(row.FDCID),
+		Per100Grams: nutrition.Nutrients{
+			nutrition.EnergyKcal:           row.EnergyKcalPer100Grams,
+			nutrition.ProteinGrams:         row.ProteinGramsPer100Grams,
+			nutrition.CarbohydrateGrams:    row.CarbohydrateGramsPer100Grams,
+			nutrition.SugarsGrams:          row.SugarsGramsPer100Grams,
+			nutrition.FatGrams:             row.FatGramsPer100Grams,
+			nutrition.FiberGrams:           row.FiberGramsPer100Grams,
+			nutrition.VitaminB12Micrograms: row.VitaminB12MicrogramsPer100Grams,
+			nutrition.IronMilligrams:       row.IronMilligramsPer100Grams,
+			nutrition.CalciumMilligrams:    row.CalciumMilligramsPer100Grams,
+			nutrition.VitaminDMicrograms:   row.VitaminDMicrogramsPer100Grams,
+			nutrition.IodineMicrograms:     row.IodineMicrogramsPer100Grams,
+			nutrition.ZincMilligrams:       row.ZincMilligramsPer100Grams,
+			nutrition.Omega3ALAGrams:       row.Omega3ALAGramsPer100Grams,
+			nutrition.FolateMicrograms:     row.FolateMicrogramsPer100Grams,
+			nutrition.VitaminAMicrograms:   row.VitaminAMicrogramsPer100Grams,
+			nutrition.VitaminEMilligrams:   row.VitaminEMilligramsPer100Grams,
+			nutrition.VitaminKMicrograms:   row.VitaminKMicrogramsPer100Grams,
+			nutrition.CopperMilligrams:     row.CopperMilligramsPer100Grams,
+			nutrition.MagnesiumMilligrams:  row.MagnesiumMilligramsPer100Grams,
+			nutrition.SodiumMilligrams:     row.SodiumMilligramsPer100Grams,
+			nutrition.PotassiumMilligrams:  row.PotassiumMilligramsPer100Grams,
+		},
+		GramsPerPiece:       orZero(row.GramsPerPiece),
+		GramsPerMilliliter:  orZero(row.GramsPerMilliliter),
+		FastCarb:            row.FastCarb,
+		StoreSection:        storeSectionFromDB(row.StoreSection),
+		PackageGrams:        orZero(row.PackageGrams),
+		ShelfLifeDays:       orZero(row.ShelfLifeDays),
+		OpenedShelfLifeDays: orZero(row.OpenedShelfLifeDays),
+		Notes:               row.Notes,
+		CreateTime:          row.CreateTime.Time,
+		UpdateTime:          row.UpdateTime.Time,
+	}
+}
+
+func storeSectionToDB(s StoreSection) *gen.StoreSection {
+	if s == StoreSectionUnspecified {
+		return nil
+	}
+	return new(gen.StoreSection(s))
+}
+
+func storeSectionFromDB(s *gen.StoreSection) StoreSection {
+	if s == nil {
+		return StoreSectionUnspecified
+	}
+	return StoreSection(*s)
+}
+
+// positive returns a pointer to v, or nil for the null of unknown values,
+// which the API sends as 0.
+func positive[T int32 | float64](v T) *T {
+	if v <= 0 {
+		return nil
+	}
+	return &v
+}
+
+// orZero returns *v, or 0 for null.
+func orZero[T int32 | float64](v *T) T {
+	if v == nil {
+		return 0
+	}
+	return *v
+}

@@ -40,9 +40,12 @@ NODE_RUN := $(CONTAINER_BIN) run --rm $(NODE_ARGS)
 # first administrator, see admin-invitation.
 ADMIN_BOOTSTRAP_TOKEN := local-admin
 
+# The database of the local server.
+DATABASE_URL := postgres://postgres:password@localhost:5432/postgres?sslmode=disable
+
 # Flags shared by the `run` and `watch` backend invocations.
 SERVER_FLAGS := \
-	-database-url postgres://postgres:password@localhost:5432/postgres?sslmode=disable \
+	-database-url $(DATABASE_URL) \
 	-log-level debug \
 	-admin-bootstrap-token $(ADMIN_BOOTSTRAP_TOKEN) \
 	-local-sign-in
@@ -123,6 +126,12 @@ run: db ## Run the backend (starts db)
 	@$(WAIT_DB)
 	@$(MAKE) --no-print-directory admin-invitation &
 	go run . $(SERVER_FLAGS)
+
+.PHONY: import-fdc
+import-fdc: db ## Import USDA FoodData Central into the local database: make import-fdc FDC="<zip or dir> ..."
+	@$(WAIT_DB)
+	@if [ -z "$(FDC)" ]; then echo 'Set FDC to the Foundation Foods and SR Legacy CSV downloads, e.g. make import-fdc FDC="FoodData_Central_foundation_food_csv_2025-04-24.zip FoodData_Central_sr_legacy_food_csv_2018-04.zip"' >&2; exit 1; fi
+	go run . import-fdc -database-url '$(DATABASE_URL)' $(FDC)
 
 .PHONY: admin-invitation
 admin-invitation: ## Print where to create the first administrator once the local server is up, if there's no administrator yet

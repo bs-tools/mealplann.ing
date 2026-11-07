@@ -6,10 +6,64 @@ package gen
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type AmountUnit string
+
+const (
+	AmountUnitGrams       AmountUnit = "grams"
+	AmountUnitMilliliters AmountUnit = "milliliters"
+	AmountUnitPieces      AmountUnit = "pieces"
+)
+
+func (e *AmountUnit) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = AmountUnit(s)
+	case string:
+		*e = AmountUnit(s)
+	default:
+		return fmt.Errorf("unsupported scan type for AmountUnit: %T", src)
+	}
+	return nil
+}
+
+type NullAmountUnit struct {
+	AmountUnit AmountUnit
+	Valid      bool // Valid is true if AmountUnit is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullAmountUnit) Scan(value interface{}) error {
+	if value == nil {
+		ns.AmountUnit, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.AmountUnit.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullAmountUnit) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.AmountUnit), nil
+}
+
+func (e AmountUnit) Valid() bool {
+	switch e {
+	case AmountUnitGrams,
+		AmountUnitMilliliters,
+		AmountUnitPieces:
+		return true
+	}
+	return false
+}
 
 type InvitationKind string
 
@@ -113,6 +167,73 @@ func (e PasskeyCeremony) Valid() bool {
 	return false
 }
 
+type StoreSection string
+
+const (
+	StoreSectionProduce   StoreSection = "produce"
+	StoreSectionBakery    StoreSection = "bakery"
+	StoreSectionChilled   StoreSection = "chilled"
+	StoreSectionFrozen    StoreSection = "frozen"
+	StoreSectionDryGoods  StoreSection = "dry_goods"
+	StoreSectionCanned    StoreSection = "canned"
+	StoreSectionSpices    StoreSection = "spices"
+	StoreSectionDrinks    StoreSection = "drinks"
+	StoreSectionHousehold StoreSection = "household"
+	StoreSectionOther     StoreSection = "other"
+)
+
+func (e *StoreSection) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = StoreSection(s)
+	case string:
+		*e = StoreSection(s)
+	default:
+		return fmt.Errorf("unsupported scan type for StoreSection: %T", src)
+	}
+	return nil
+}
+
+type NullStoreSection struct {
+	StoreSection StoreSection
+	Valid        bool // Valid is true if StoreSection is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullStoreSection) Scan(value interface{}) error {
+	if value == nil {
+		ns.StoreSection, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.StoreSection.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullStoreSection) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.StoreSection), nil
+}
+
+func (e StoreSection) Valid() bool {
+	switch e {
+	case StoreSectionProduce,
+		StoreSectionBakery,
+		StoreSectionChilled,
+		StoreSectionFrozen,
+		StoreSectionDryGoods,
+		StoreSectionCanned,
+		StoreSectionSpices,
+		StoreSectionDrinks,
+		StoreSectionHousehold,
+		StoreSectionOther:
+		return true
+	}
+	return false
+}
+
 type APIToken struct {
 	ID           pgtype.UUID
 	UserID       pgtype.UUID
@@ -122,6 +243,75 @@ type APIToken struct {
 	LastUsedTime pgtype.Timestamptz
 	OAuthGrantID pgtype.UUID
 	ExpireTime   pgtype.Timestamptz
+}
+
+type FdcFood struct {
+	FdcID                           int32
+	DataType                        string
+	Description                     string
+	Category                        string
+	Portions                        json.RawMessage
+	PublicationDate                 pgtype.Date
+	EnergyKcalPer100Grams           pgtype.Float8
+	ProteinGramsPer100Grams         pgtype.Float8
+	CarbohydrateGramsPer100Grams    pgtype.Float8
+	SugarsGramsPer100Grams          pgtype.Float8
+	FatGramsPer100Grams             pgtype.Float8
+	FiberGramsPer100Grams           pgtype.Float8
+	VitaminB12MicrogramsPer100Grams pgtype.Float8
+	IronMilligramsPer100Grams       pgtype.Float8
+	CalciumMilligramsPer100Grams    pgtype.Float8
+	VitaminDMicrogramsPer100Grams   pgtype.Float8
+	IodineMicrogramsPer100Grams     pgtype.Float8
+	ZincMilligramsPer100Grams       pgtype.Float8
+	Omega3AlaGramsPer100Grams       pgtype.Float8
+	FolateMicrogramsPer100Grams     pgtype.Float8
+	VitaminAMicrogramsPer100Grams   pgtype.Float8
+	VitaminEMilligramsPer100Grams   pgtype.Float8
+	VitaminKMicrogramsPer100Grams   pgtype.Float8
+	CopperMilligramsPer100Grams     pgtype.Float8
+	MagnesiumMilligramsPer100Grams  pgtype.Float8
+	SodiumMilligramsPer100Grams     pgtype.Float8
+	PotassiumMilligramsPer100Grams  pgtype.Float8
+	UpdateTime                      pgtype.Timestamptz
+}
+
+type Food struct {
+	ID                              pgtype.UUID
+	HouseholdID                     pgtype.UUID
+	Name                            string
+	FdcID                           pgtype.Int4
+	EnergyKcalPer100Grams           pgtype.Float8
+	ProteinGramsPer100Grams         pgtype.Float8
+	CarbohydrateGramsPer100Grams    pgtype.Float8
+	SugarsGramsPer100Grams          pgtype.Float8
+	FatGramsPer100Grams             pgtype.Float8
+	FiberGramsPer100Grams           pgtype.Float8
+	VitaminB12MicrogramsPer100Grams pgtype.Float8
+	IronMilligramsPer100Grams       pgtype.Float8
+	CalciumMilligramsPer100Grams    pgtype.Float8
+	VitaminDMicrogramsPer100Grams   pgtype.Float8
+	IodineMicrogramsPer100Grams     pgtype.Float8
+	ZincMilligramsPer100Grams       pgtype.Float8
+	Omega3AlaGramsPer100Grams       pgtype.Float8
+	FolateMicrogramsPer100Grams     pgtype.Float8
+	VitaminAMicrogramsPer100Grams   pgtype.Float8
+	VitaminEMilligramsPer100Grams   pgtype.Float8
+	VitaminKMicrogramsPer100Grams   pgtype.Float8
+	CopperMilligramsPer100Grams     pgtype.Float8
+	MagnesiumMilligramsPer100Grams  pgtype.Float8
+	SodiumMilligramsPer100Grams     pgtype.Float8
+	PotassiumMilligramsPer100Grams  pgtype.Float8
+	GramsPerPiece                   pgtype.Float8
+	GramsPerMilliliter              pgtype.Float8
+	FastCarb                        bool
+	StoreSection                    NullStoreSection
+	PackageGrams                    pgtype.Float8
+	ShelfLifeDays                   pgtype.Int4
+	OpenedShelfLifeDays             pgtype.Int4
+	Notes                           string
+	CreateTime                      pgtype.Timestamptz
+	UpdateTime                      pgtype.Timestamptz
 }
 
 type Household struct {
@@ -202,6 +392,36 @@ type PasskeyUser struct {
 	ID         pgtype.UUID
 	UserHandle []byte
 	Name       string
+}
+
+type Recipe struct {
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+	Name        string
+	Description string
+	Servings    int32
+	PrepSeconds int32
+	CookSeconds int32
+	Steps       []string
+	Tags        []string
+	SourceUrl   string
+	FridgeDays  pgtype.Int4
+	Freezable   bool
+	Notes       string
+	CreateTime  pgtype.Timestamptz
+	UpdateTime  pgtype.Timestamptz
+}
+
+type RecipeIngredient struct {
+	RecipeID     pgtype.UUID
+	HouseholdID  pgtype.UUID
+	Position     int32
+	FoodID       pgtype.UUID
+	Amount       float64
+	Unit         AmountUnit
+	Note         string
+	OriginalText string
+	Optional     bool
 }
 
 type Session struct {

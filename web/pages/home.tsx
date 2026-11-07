@@ -4,12 +4,37 @@ import { linkClass } from "@components/ui/styles";
 import {
   BookOpenIcon,
   CalendarDaysIcon,
+  ChevronRightIcon,
   ShoppingCartIcon,
   SparklesIcon,
+  Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 import type { User } from "gen/users/v1/users_pb";
 import React from "react";
 import { Link } from "react-router";
+
+// The parts of the app that are ready, to go to.
+const READY: {
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  title: string;
+  description: string;
+  to: string;
+}[] = [
+  {
+    description:
+      "Your recipes, with nutrition per serving, entered here or by your AI agent.",
+    icon: BookOpenIcon,
+    title: "Recipes",
+    to: "/recipes",
+  },
+  {
+    description:
+      "The ingredients you cook with, from USDA FoodData Central or a label.",
+    icon: Squares2X2Icon,
+    title: "Foods",
+    to: "/foods",
+  },
+];
 
 // The parts of the app still to come, in the order they're built.
 const COMING: {
@@ -17,12 +42,6 @@ const COMING: {
   title: string;
   description: string;
 }[] = [
-  {
-    description:
-      "Ingredients with their nutrients, and your recipes, entered here or by your AI agent.",
-    icon: BookOpenIcon,
-    title: "Foods and recipes",
-  },
   {
     description:
       "Everyone's eating times and targets, and a week of shared meals split into the right portions.",
@@ -58,6 +77,31 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => (
       subtitle="Vegan meal planning for the whole household."
     />
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <Card title="Cook">
+        <ul className="-my-2 divide-y divide-gray-100">
+          {READY.map(({ icon: Icon, title, description, to }) => (
+            <li key={to}>
+              <Link
+                to={to}
+                className="-mx-2 flex items-center gap-3 rounded px-2 py-3 hover:bg-gray-50"
+              >
+                <Icon
+                  className="size-5 shrink-0 text-brand-600"
+                  aria-hidden="true"
+                />
+                <div className="grow">
+                  <p className="font-medium text-gray-900">{title}</p>
+                  <p className="text-sm text-gray-600">{description}</p>
+                </div>
+                <ChevronRightIcon
+                  className="size-4 shrink-0 text-gray-400"
+                  aria-hidden="true"
+                />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Card>
       <Card title="Coming soon">
         <ul className="flex flex-col gap-4">
           {COMING.map(({ icon: Icon, title, description }) => (
@@ -88,7 +132,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => (
             <Link to="/settings" className={linkClass}>
               settings
             </Link>
-            , to plan with it as the features arrive.
+            , to enter recipes and plan with it.
           </li>
         </ul>
       </Card>

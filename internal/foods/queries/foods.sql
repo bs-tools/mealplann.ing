@@ -1,0 +1,135 @@
+-- name: CreateFood :one
+insert into foods (
+  household_id,
+  name,
+  fdc_id,
+  energy_kcal_per_100_grams,
+  protein_grams_per_100_grams,
+  carbohydrate_grams_per_100_grams,
+  sugars_grams_per_100_grams,
+  fat_grams_per_100_grams,
+  fiber_grams_per_100_grams,
+  vitamin_b12_micrograms_per_100_grams,
+  iron_milligrams_per_100_grams,
+  calcium_milligrams_per_100_grams,
+  vitamin_d_micrograms_per_100_grams,
+  iodine_micrograms_per_100_grams,
+  zinc_milligrams_per_100_grams,
+  omega3_ala_grams_per_100_grams,
+  folate_micrograms_per_100_grams,
+  vitamin_a_micrograms_per_100_grams,
+  vitamin_e_milligrams_per_100_grams,
+  vitamin_k_micrograms_per_100_grams,
+  copper_milligrams_per_100_grams,
+  magnesium_milligrams_per_100_grams,
+  sodium_milligrams_per_100_grams,
+  potassium_milligrams_per_100_grams,
+  grams_per_piece,
+  grams_per_milliliter,
+  fast_carb,
+  store_section,
+  package_grams,
+  shelf_life_days,
+  opened_shelf_life_days,
+  notes
+) values (
+  @household_id,
+  @name,
+  @fdc_id,
+  @energy_kcal_per_100_grams,
+  @protein_grams_per_100_grams,
+  @carbohydrate_grams_per_100_grams,
+  @sugars_grams_per_100_grams,
+  @fat_grams_per_100_grams,
+  @fiber_grams_per_100_grams,
+  @vitamin_b12_micrograms_per_100_grams,
+  @iron_milligrams_per_100_grams,
+  @calcium_milligrams_per_100_grams,
+  @vitamin_d_micrograms_per_100_grams,
+  @iodine_micrograms_per_100_grams,
+  @zinc_milligrams_per_100_grams,
+  @omega3_ala_grams_per_100_grams,
+  @folate_micrograms_per_100_grams,
+  @vitamin_a_micrograms_per_100_grams,
+  @vitamin_e_milligrams_per_100_grams,
+  @vitamin_k_micrograms_per_100_grams,
+  @copper_milligrams_per_100_grams,
+  @magnesium_milligrams_per_100_grams,
+  @sodium_milligrams_per_100_grams,
+  @potassium_milligrams_per_100_grams,
+  @grams_per_piece,
+  @grams_per_milliliter,
+  @fast_carb,
+  @store_section,
+  @package_grams,
+  @shelf_life_days,
+  @opened_shelf_life_days,
+  @notes
+)
+returning *;
+
+-- name: GetFood :one
+select * from foods where id = @id and household_id = @household_id;
+
+-- name: ListFoods :many
+-- Foods are ordered by name ignoring case, which the unique index on
+-- lower(name) also makes unique.
+select * from foods
+where household_id = @household_id
+  and (@query::text = '' or strpos(lower(name), lower(@query)) > 0)
+order by lower(name)
+limit @row_limit offset @row_offset;
+
+-- name: UpdateFood :one
+update foods set
+  name = @name,
+  energy_kcal_per_100_grams = @energy_kcal_per_100_grams,
+  protein_grams_per_100_grams = @protein_grams_per_100_grams,
+  carbohydrate_grams_per_100_grams = @carbohydrate_grams_per_100_grams,
+  sugars_grams_per_100_grams = @sugars_grams_per_100_grams,
+  fat_grams_per_100_grams = @fat_grams_per_100_grams,
+  fiber_grams_per_100_grams = @fiber_grams_per_100_grams,
+  vitamin_b12_micrograms_per_100_grams = @vitamin_b12_micrograms_per_100_grams,
+  iron_milligrams_per_100_grams = @iron_milligrams_per_100_grams,
+  calcium_milligrams_per_100_grams = @calcium_milligrams_per_100_grams,
+  vitamin_d_micrograms_per_100_grams = @vitamin_d_micrograms_per_100_grams,
+  iodine_micrograms_per_100_grams = @iodine_micrograms_per_100_grams,
+  zinc_milligrams_per_100_grams = @zinc_milligrams_per_100_grams,
+  omega3_ala_grams_per_100_grams = @omega3_ala_grams_per_100_grams,
+  folate_micrograms_per_100_grams = @folate_micrograms_per_100_grams,
+  vitamin_a_micrograms_per_100_grams = @vitamin_a_micrograms_per_100_grams,
+  vitamin_e_milligrams_per_100_grams = @vitamin_e_milligrams_per_100_grams,
+  vitamin_k_micrograms_per_100_grams = @vitamin_k_micrograms_per_100_grams,
+  copper_milligrams_per_100_grams = @copper_milligrams_per_100_grams,
+  magnesium_milligrams_per_100_grams = @magnesium_milligrams_per_100_grams,
+  sodium_milligrams_per_100_grams = @sodium_milligrams_per_100_grams,
+  potassium_milligrams_per_100_grams = @potassium_milligrams_per_100_grams,
+  grams_per_piece = @grams_per_piece,
+  grams_per_milliliter = @grams_per_milliliter,
+  fast_carb = @fast_carb,
+  store_section = @store_section,
+  package_grams = @package_grams,
+  shelf_life_days = @shelf_life_days,
+  opened_shelf_life_days = @opened_shelf_life_days,
+  notes = @notes,
+  update_time = now()
+where id = @id and household_id = @household_id
+returning *;
+
+-- name: ListRecipesUsingFood :many
+select r.name from recipes r
+where r.household_id = @household_id
+  and r.id in (
+    select ri.recipe_id from recipe_ingredients ri
+    where ri.household_id = @household_id and ri.food_id = @food_id
+  )
+order by lower(r.name), r.id;
+
+-- name: DeleteUnusedFood :execrows
+-- Foods used by recipes aren't deleted, see ListRecipesUsingFood.
+delete from foods f
+where f.id = @id and f.household_id = @household_id
+  and not exists (
+    select 1 from recipe_ingredients ri
+    where ri.household_id = @household_id and ri.food_id = @id
+  );

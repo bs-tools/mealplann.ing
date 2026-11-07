@@ -37,7 +37,11 @@ interface NavGroup {
 }
 
 // The pages linked directly from the header.
-const TOP_ITEMS: NavItem[] = [{ end: true, label: "Home", to: "/" }];
+const TOP_ITEMS: NavItem[] = [
+  { end: true, label: "Home", to: "/" },
+  { label: "Recipes", to: "/recipes" },
+  { label: "Foods", to: "/foods" },
+];
 
 // The pages grouped in menus, once there are too many for the header.
 const GROUPS: NavGroup[] = [];

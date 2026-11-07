@@ -116,6 +116,50 @@ func TestOptionsResolved(t *testing.T) {
 	}
 }
 
+// TestFieldMaskPaths checks that the fields updates can name in their
+// update masks have names that FieldMask's JSON encoding, which the web app
+// and MCP clients use, can carry. It writes paths in lowerCamelCase, and
+// refuses names it can't convert back, like "per_100_grams", whose
+// "Per100Grams" would come back as "per100_grams".
+func TestFieldMaskPaths(t *testing.T) {
+	files, err := Files()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var check func(md protoreflect.MessageDescriptor)
+	check = func(md protoreflect.MessageDescriptor) {
+		fields := md.Fields()
+		for i := range fields.Len() {
+			fd := fields.Get(i)
+			opts := fd.Options().(*descriptorpb.FieldOptions)
+			if proto.GetExtension(opts, mcpv1.E_Field).(*mcpv1.FieldOptions).GetOutputOnly() {
+				continue
+			}
+			name := string(fd.Name())
+			for j := range len(name) - 1 {
+				if name[j] == '_' && (name[j+1] < 'a' || name[j+1] > 'z') {
+					t.Errorf("%s can't be a FieldMask path in JSON: rename it so each underscore is followed by a lowercase letter", fd.FullName())
+					break
+				}
+			}
+		}
+		messages := md.Messages()
+		for i := range messages.Len() {
+			check(messages.Get(i))
+		}
+	}
+	files.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
+		if strings.HasPrefix(fd.Path(), "google/") {
+			return true
+		}
+		messages := fd.Messages()
+		for i := range messages.Len() {
+			check(messages.Get(i))
+		}
+		return true
+	})
+}
+
 func TestComment(t *testing.T) {
 	tests := []struct {
 		name string
