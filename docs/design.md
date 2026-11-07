@@ -260,8 +260,10 @@ milestones are done.
    pantry.
 5. **Suggestions**: `SuggestRecipes` and planning for a single weekly shop.
 
-Later: importing recipes from URLs, supplement tracking, deploying to a new
-GCP project with Neon.
+6. **Deploying**: Terraform for Cloud Run and Neon in `us-west1`, deployed
+   by CI from `main`, see the README.
+
+Later: importing recipes from URLs, supplement tracking.
 
 ## Settled details
 
