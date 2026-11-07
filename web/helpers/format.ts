@@ -62,6 +62,24 @@ export const formatShortDate = (value: string): string => {
   });
 };
 
+/**
+ * FormatNearDate formats YYYY-MM-DD as e.g. "12 Oct", with the year if it
+ * isn't this year's, e.g. "12 Oct 2027".
+ */
+export const formatNearDate = (value: string): string => {
+  if (value === "") {
+    return "";
+  }
+  if (value.slice(0, 4) === today().slice(0, 4)) {
+    return formatShortDate(value);
+  }
+  return parseDate(value).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
 // FormatDay formats YYYY-MM-DD as a day of a week, e.g. "Mon, 12 Oct".
 export const formatDay = (value: string): string => {
   if (value === "") {
@@ -72,6 +90,14 @@ export const formatDay = (value: string): string => {
     month: "short",
     weekday: "short",
   });
+};
+
+// FormatWeekday formats YYYY-MM-DD as its weekday, e.g. "Thu".
+export const formatWeekday = (value: string): string => {
+  if (value === "") {
+    return "";
+  }
+  return parseDate(value).toLocaleDateString(undefined, { weekday: "short" });
 };
 
 // FormatMonth formats YYYY-MM-DD as e.g. "October 2026".
@@ -151,3 +177,23 @@ export const formatBytes = (bytes: number): string => {
 // Liechtenstein".
 export const formatList = (items: string[]): string =>
   new Intl.ListFormat("en", { type: "conjunction" }).format(items);
+
+// FormatGrams formats a weight, e.g. "450 g" or "1.25 kg".
+export const formatGrams = (grams: number): string => {
+  if (grams >= 1000) {
+    return `${(grams / 1000).toLocaleString(undefined, { maximumFractionDigits: 2 })} kg`;
+  }
+  return `${Math.round(grams).toLocaleString()} g`;
+};
+
+/**
+ * FormatStock formats an amount in stock, with its pieces when the food has
+ * a weight per piece, e.g. "450 g (~3 pieces)".
+ */
+export const formatStock = (grams: number, gramsPerPiece: number): string => {
+  if (gramsPerPiece <= 0) {
+    return formatGrams(grams);
+  }
+  const pieces = Math.round((grams / gramsPerPiece) * 10) / 10;
+  return `${formatGrams(grams)} (~${pieces.toLocaleString()} ${pieces === 1 ? "piece" : "pieces"})`;
+};

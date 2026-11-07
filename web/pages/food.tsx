@@ -25,6 +25,8 @@ import {
 import type { Food } from "gen/foods/v1/foods_pb";
 import { FoodService, FoodSource, StoreSection } from "gen/foods/v1/foods_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
+import { listStores } from "gen/shopping/v1/shopping-ShoppingService_connectquery";
+import type { Store } from "gen/shopping/v1/shopping_pb";
 import { STORE_SECTIONS } from "helpers/labels";
 import type { NutrientKey } from "helpers/nutrients";
 import { NUTRIENT_GROUPS, NUTRIENTS } from "helpers/nutrients";
@@ -42,6 +44,7 @@ const FoodPage: React.FC = () => {
   const { isPending, isError, data, error, refetch } = useQuery(getFood, {
     id,
   });
+  const stores = useQuery(listStores, {});
   if (isPending) {
     return <Loading />;
   }
@@ -65,7 +68,13 @@ const FoodPage: React.FC = () => {
    */
   const version =
     food.updateTime === undefined ? 0 : timestampMs(food.updateTime);
-  return <FoodForm key={`${food.id}-${version}`} food={food} />;
+  return (
+    <FoodForm
+      key={`${food.id}-${version}`}
+      food={food}
+      stores={stores.data?.stores ?? []}
+    />
+  );
 };
 
 // NutrientInputs are the text of the nutrients' inputs.
@@ -85,10 +94,12 @@ const zeroAsEmpty = (value: number): string =>
 
 interface FoodFormProps {
   food: Food;
+  // The household's stores, to choose the food's own store from.
+  stores: Store[];
 }
 
 // FoodForm edits a food.
-const FoodForm: React.FC<FoodFormProps> = ({ food }) => {
+const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [name, setName] = useState(food.name);
@@ -110,6 +121,10 @@ const FoodForm: React.FC<FoodFormProps> = ({ food }) => {
   );
   const [storeSection, setStoreSection] = useState(food.storeSection);
   const [fastCarb, setFastCarb] = useState(food.fastCarb);
+  const [preferredStoreId, setPreferredStoreId] = useState(
+    food.preferredStoreId
+  );
+  const [alwaysInStock, setAlwaysInStock] = useState(food.alwaysInStock);
   const [notes, setNotes] = useState(food.notes);
   const [invalid, setInvalid] = useState("");
 
@@ -182,6 +197,12 @@ const FoodForm: React.FC<FoodFormProps> = ({ food }) => {
   if (fastCarb !== food.fastCarb) {
     paths.push("fast_carb");
   }
+  if (preferredStoreId !== food.preferredStoreId) {
+    paths.push("preferred_store_id");
+  }
+  if (alwaysInStock !== food.alwaysInStock) {
+    paths.push("always_in_stock");
+  }
   if (notes !== food.notes) {
     paths.push("notes");
   }
@@ -216,6 +237,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food }) => {
     }
     update.mutate({
       food: {
+        alwaysInStock,
         fastCarb,
         gramsPerMilliliter: parsed.grams_per_milliliter ?? 0,
         gramsPerPiece: parsed.grams_per_piece ?? 0,
@@ -225,6 +247,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food }) => {
         nutrients: values,
         openedShelfLifeDays: Math.round(parsed.opened_shelf_life_days ?? 0),
         packageGrams: parsed.package_grams ?? 0,
+        preferredStoreId,
         shelfLifeDays: Math.round(parsed.shelf_life_days ?? 0),
         storeSection,
       },
@@ -302,6 +325,35 @@ const FoodForm: React.FC<FoodFormProps> = ({ food }) => {
                   );
                 }}
               />
+              {stores.length > 1 && (
+                <SelectField
+                  label="Store"
+                  value={preferredStoreId}
+                  options={[
+                    {
+                      label: `The main store (${stores[0]?.name ?? ""})`,
+                      value: "",
+                    },
+                    ...stores.slice(1).map((store) => ({
+                      label: store.name,
+                      value: store.id,
+                    })),
+                  ]}
+                  onChange={setPreferredStoreId}
+                />
+              )}
+              <div>
+                <CheckboxField
+                  label="Always in stock"
+                  checked={alwaysInStock}
+                  onChange={setAlwaysInStock}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  For things you always have, like salt and spices: the pantry
+                  doesn&apos;t weigh them, and the shopping list leaves them
+                  out.
+                </p>
+              </div>
               <div>
                 <CheckboxField
                   label="Fast carb"

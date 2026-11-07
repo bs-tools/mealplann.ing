@@ -46,7 +46,11 @@ const CookRow: React.FC<CookRowProps> = ({
           checked={cook.done}
           disabled={disabled}
           aria-label={`${cook.recipeName} is cooked`}
-          title={cook.done ? "Cooked" : "Mark as cooked"}
+          title={
+            cook.done
+              ? "Cooked: its ingredients were taken out of the pantry. Uncheck to put them back."
+              : "Mark as cooked, taking its ingredients out of the pantry"
+          }
           onChange={(event) => {
             onDone(event.target.checked);
           }}
@@ -153,6 +157,12 @@ const DayCard: React.FC<DayCardProps> = ({
             />
           ))}
         </ul>
+      )}
+      {cooks.some((planned) => planned.cook?.done === false) && (
+        <p className="text-xs text-gray-500 print:hidden">
+          Tick a cook once it&apos;s cooked: its ingredients come out of the
+          pantry, and go back if you untick it.
+        </p>
       )}
     </div>
     <div
