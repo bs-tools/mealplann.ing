@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "foodplanning",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["run"],
+      "port": 8080
+    },
+    {
+      "name": "foodplanning-watch",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["watch"],
+      "port": 8080
+    }
+  ]
+}
