@@ -279,3 +279,35 @@ func TestKeepChecks(t *testing.T) {
 		t.Errorf("got %v, want who checked it and when", generated[0])
 	}
 }
+
+func TestPantryGrams(t *testing.T) {
+	t.Parallel()
+	// The pantry covers all of the onions, which have no item, part of the
+	// chickpeas, and none of the spinach, gone off by Wednesday. Salt is
+	// always in stock.
+	got := PantryGrams(&Input{
+		ShopDate: date("2026-11-02"),
+		Needs: []Need{
+			{FoodID: onions.ID, Date: date("2026-11-02"), Amount: 1, Unit: nutrition.Pieces},
+			{FoodID: chickpeas.ID, Date: date("2026-11-02"), Amount: 600, Unit: nutrition.Grams},
+			{FoodID: spinach.ID, Date: date("2026-11-04"), Amount: 100, Unit: nutrition.Grams},
+			{FoodID: salt.ID, Date: date("2026-11-02"), Amount: 5, Unit: nutrition.Grams},
+		},
+		Foods: allFoods,
+		Lots: []*pantry.Item{
+			{FoodID: onions.ID, Grams: 300},
+			{FoodID: chickpeas.ID, Grams: 400},
+			{FoodID: spinach.ID, Grams: 200, ExpiryDate: date("2026-11-03")},
+			{FoodID: salt.ID, Grams: 500},
+		},
+	})
+	want := map[pgtype.UUID]float64{onions.ID: 150, chickpeas.ID: 400, spinach.ID: 0}
+	if len(got) != len(want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+	for id, grams := range want {
+		if got[id] != grams {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	}
+}

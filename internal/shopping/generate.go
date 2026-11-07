@@ -111,6 +111,46 @@ type dayNeed struct {
 // whole pieces for foods planned in pieces. Foods always in stock are left
 // out. Items are in the order of their foods' first needs.
 func Generate(in *Input) []*Item {
+	order, byFood := cover(in)
+	var items []*Item
+	for _, foodID := range order {
+		f := in.Foods[foodID]
+		var keeps, late []*dayNeed
+		for _, d := range byFood[foodID] {
+			if f.ShelfLifeDays > 0 && pantry.DaysTo(in.ShopDate, d.date) > int(f.ShelfLifeDays) {
+				late = append(late, d)
+			} else {
+				keeps = append(keeps, d)
+			}
+		}
+		if it := itemOf(f, keeps, false); it != nil {
+			items = append(items, it)
+		}
+		if it := itemOf(f, late, true); it != nil {
+			items = append(items, it)
+		}
+	}
+	return items
+}
+
+// PantryGrams returns the grams of each food the pantry covers of the
+// needs, like Generate covers them, including the foods it covers fully,
+// which have no item. Foods always in stock are left out.
+func PantryGrams(in *Input) map[pgtype.UUID]float64 {
+	order, byFood := cover(in)
+	grams := make(map[pgtype.UUID]float64, len(order))
+	for _, foodID := range order {
+		for _, d := range byFood[foodID] {
+			grams[foodID] += d.pantryGrams
+		}
+	}
+	return grams
+}
+
+// cover adds up the needs per food and date, and covers them from the
+// pantry. It returns the foods in the order of their first needs, and
+// their needs by date.
+func cover(in *Input) ([]pgtype.UUID, map[pgtype.UUID][]*dayNeed) {
 	var order []pgtype.UUID
 	byFood := map[pgtype.UUID][]*dayNeed{}
 	for _, n := range in.Needs {
@@ -146,28 +186,12 @@ func Generate(in *Input) []*Item {
 	for _, lot := range in.Lots {
 		lotsByFood[lot.FoodID] = append(lotsByFood[lot.FoodID], lot)
 	}
-	var items []*Item
 	for _, foodID := range order {
-		f := in.Foods[foodID]
 		days := byFood[foodID]
 		slices.SortStableFunc(days, func(a, b *dayNeed) int { return a.date.Compare(b.date) })
 		coverFromPantry(days, lotsByFood[foodID])
-		var keeps, late []*dayNeed
-		for _, d := range days {
-			if f.ShelfLifeDays > 0 && pantry.DaysTo(in.ShopDate, d.date) > int(f.ShelfLifeDays) {
-				late = append(late, d)
-			} else {
-				keeps = append(keeps, d)
-			}
-		}
-		if it := itemOf(f, keeps, false); it != nil {
-			items = append(items, it)
-		}
-		if it := itemOf(f, late, true); it != nil {
-			items = append(items, it)
-		}
 	}
-	return items
+	return order, byFood
 }
 
 // coverFromPantry covers the days' needs from the lots, in date order, from

@@ -5,7 +5,7 @@
 // messages suggest changing the plan, never the rules.
 //
 // It has no database or API, so the web app and AI agents get the same
-// warnings, and later the recipe suggestions can score with them.
+// warnings, and the recipe suggestions score with them.
 package rules
 
 import (

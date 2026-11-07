@@ -39,7 +39,7 @@ const instructionsPreamble = `Tools for planning vegan meals for a household: it
 var (
 	// readOnlyPrefixes are the method name prefixes of methods that don't
 	// modify any state.
-	readOnlyPrefixes = []string{"Get", "List", "Search", "Find", "Summarize", "Preview"}
+	readOnlyPrefixes = []string{"Get", "List", "Search", "Find", "Summarize", "Preview", "Suggest"}
 
 	contextType = reflect.TypeFor[context.Context]()
 	errorType   = reflect.TypeFor[error]()

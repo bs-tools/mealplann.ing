@@ -1,5 +1,6 @@
 import Loading from "@components/loading";
 import DayCard from "@components/plan/day-card";
+import EatingTimeSuggestionsDialog from "@components/plan/eating-time-suggestions-dialog";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import type { Slot } from "@components/plan/portion-dialog";
 import PortionDialog from "@components/plan/portion-dialog";
@@ -22,6 +23,7 @@ import {
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
+import { HouseholdMeal } from "gen/people/v1/people_pb";
 import {
   deleteCook,
   deletePortion,
@@ -67,6 +69,13 @@ const pantryChangeNote = (response: UpdateCookResponse): string => {
     : `Cooked: took ${formatList(amounts)} out of the pantry.`;
 };
 
+// MealPlanning is the shared meal being planned.
+interface MealPlanning {
+  date: string;
+  // The meal, undefined to choose one.
+  meal?: HouseholdMeal | undefined;
+}
+
 // PortionEdit is the portion being added or changed, and where.
 interface PortionEdit {
   slot: Slot;
@@ -99,9 +108,10 @@ const PlanPage: React.FC = () => {
   );
   const people = useQuery(listPeople, {});
   const recipes = useQuery(listRecipes, {});
-  // The date of the meal being planned, or null.
-  const [planning, setPlanning] = useState<string | null>(null);
+  const [planning, setPlanning] = useState<MealPlanning | null>(null);
   const [editing, setEditing] = useState<PortionEdit | null>(null);
+  // The empty eating time recipes are suggested for, or null.
+  const [suggesting, setSuggesting] = useState<Slot | null>(null);
 
   // What marking a cook done last did to the pantry, empty if nothing.
   const [pantryNote, setPantryNote] = useState("");
@@ -222,6 +232,18 @@ const PlanPage: React.FC = () => {
             onAdd={(slot) => {
               setEditing({ slot });
             }}
+            onSuggest={(slot, eatingTime) => {
+              /*
+               * An eating time of a shared meal plans the meal for
+               * everyone; others plan a portion of their own.
+               */
+              const meal = eatingTime?.meal ?? HouseholdMeal.UNSPECIFIED;
+              if (meal === HouseholdMeal.UNSPECIFIED) {
+                setSuggesting(slot);
+              } else {
+                setPlanning({ date: slot.date, meal });
+              }
+            }}
             onEdit={(slot, portion) => {
               setEditing({ portion, slot });
             }}
@@ -292,7 +314,7 @@ const PlanPage: React.FC = () => {
               className={primaryButton}
               disabled={recipes.isPending}
               onClick={() => {
-                setPlanning(day);
+                setPlanning({ date: day });
               }}
             >
               <PlusIcon className="size-4" aria-hidden="true" />
@@ -340,11 +362,21 @@ const PlanPage: React.FC = () => {
       {planning !== null && (
         <PlanMealDialog
           dates={dates}
-          date={planning}
+          date={planning.date}
+          meal={planning.meal}
           people={people.data?.people ?? []}
           recipes={recipes.data?.recipes ?? []}
           onClose={() => {
             setPlanning(null);
+          }}
+        />
+      )}
+      {suggesting !== null && (
+        <EatingTimeSuggestionsDialog
+          slot={suggesting}
+          people={people.data?.people ?? []}
+          onClose={() => {
+            setSuggesting(null);
           }}
         />
       )}

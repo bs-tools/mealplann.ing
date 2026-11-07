@@ -7,7 +7,7 @@ import type { Slot } from "@components/plan/portion-dialog";
 import ConfirmButton from "@components/ui/confirm-button";
 import { cardClass, iconButton } from "@components/ui/styles";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import type { Person } from "gen/people/v1/people_pb";
+import type { EatingTime, Person } from "gen/people/v1/people_pb";
 import type {
   PlanDay,
   PlannedCook,
@@ -108,6 +108,8 @@ interface DayCardProps {
   // Whether it's shown on phones, which show one day at a time.
   shownOnPhones: boolean;
   onAdd: (slot: Slot) => void;
+  // Suggests recipes for an empty eating time.
+  onSuggest: (slot: Slot, eatingTime: EatingTime | undefined) => void;
   onEdit: (slot: Slot, portion: PlannedPortion) => void;
   onDelete: (portion: PlannedPortion) => void;
   onSkip: (portion: PlannedPortion, date: string) => void;
@@ -127,6 +129,7 @@ const DayCard: React.FC<DayCardProps> = ({
   disabled,
   shownOnPhones,
   onAdd,
+  onSuggest,
   onEdit,
   onDelete,
   onSkip,
@@ -201,6 +204,9 @@ const DayCard: React.FC<DayCardProps> = ({
                       disabled={disabled}
                       onAdd={() => {
                         onAdd(slot);
+                      }}
+                      onSuggest={() => {
+                        onSuggest(slot, planned.eatingTime);
                       }}
                       onEdit={(portion) => {
                         onEdit(slot, portion);

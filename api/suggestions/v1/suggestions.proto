@@ -1,0 +1,208 @@
+syntax = "proto3";
+
+package suggestions.v1;
+
+import "people/v1/people.proto";
+import "plans/v1/plans.proto";
+
+// SuggestionService suggests which of the household's recipes (see
+// RecipeService) to cook for an open slot of the plan (see PlanService):
+// a shared meal on a date, or one person's eating time, like a small meal.
+// It scores every recipe against the rest of the week, explaining each
+// score, so the household shops once a week, wastes little, and meets
+// everyone's rules and targets.
+//
+// To plan a week with it:
+//
+// 1. Read the week with PlanService.GetWeek, and find the open slots: the
+//    shared meals with nothing planned, and eating times left empty.
+// 2. Call SuggestRecipes for a slot. Plan the fullest days and the meals
+//    that share fresh ingredients first, as each suggestion counts what's
+//    already planned.
+// 3. Read the components of the top suggestions, not just the score: a
+//    suggestion with fits_rules false breaks someone's rules, saying how in
+//    warnings, and is only worth planning if the user accepts that or it's
+//    paired with something that fixes it.
+// 4. Plan the chosen recipe: with PlanService.PlanMeal for a shared meal,
+//    or for an eating time with PlanService.CreateCook of cook_servings and
+//    PlanService.CreatePortion of the suggested portion. Then call
+//    SuggestRecipes for the next slot, as the scores change with the plan.
+// 5. When the week is planned, make the shopping list with
+//    ShoppingService.CreateShoppingList.
+//
+// The scores are a guide, not a rule: reason beyond them with what the
+// user says they like or have time for. If no recipe scores well, propose
+// a new one that would, e.g. one using the pantry's foods close to their
+// use-by date, the rest of a pack, or more of a nutrient someone is short
+// of, and create it with RecipeService.CreateRecipe once the user agrees.
+// Never change a person's rules or targets to make a suggestion fit: they
+// come from the person's care team.
+service SuggestionService {
+  // Score the household's recipes for an open slot of the plan, and return
+  // the best, best first. Each suggestion has its total score and the
+  // components it's made of, each with points and a reason, of these
+  // kinds:
+  //
+  // - SHARED_INGREDIENTS: it uses ingredients other cooks of the week buy,
+  //   especially fresh ones, and how many new items it adds to the shop.
+  // - PACK_LEFTOVERS: it uses what's left of packs the week's plan buys,
+  //   like the other half of a can.
+  // - PANTRY: it uses what's in the pantry, more so for lots close to their
+  //   use-by date. Foods always in stock don't count.
+  // - NUTRITION: it fills the eaters' daily minimums, or pushes them over
+  //   their daily maximums, given the rest of the day's plan.
+  // - RULES: its portions break, or meet, the eaters' rules for each eating
+  //   time, like the minimum protein or the carbohydrate pairing.
+  // - KEEPING: what it needs bought keeps from the shop until the date, and
+  //   its leftovers keep until they're eaten.
+  // - FLAVOR: its ingredients are a known good pairing, like chickpeas and
+  //   cumin.
+  // - VARIETY: it's already planned on nearby days, or is an eater's
+  //   staple that day.
+  // - MEAL_TAG: its tags say it's for this meal, or for another.
+  //
+  // Portions are split like PlanMeal does, within each person's
+  // max_portion_grams. Nothing is changed. Fails with INVALID_ARGUMENT for
+  // a bad date or an eating time that isn't the person's, and with
+  // FAILED_PRECONDITION if nobody eats from the shared meal.
+  rpc SuggestRecipes(SuggestRecipesRequest) returns (SuggestRecipesResponse);
+}
+
+// An eating time of one person, to suggest a recipe for, like a small
+// meal.
+message EatingTimeSlot {
+  // The ID of the person. Required.
+  string person_id = 1;
+  // The ID of one of the person's eating times. Required.
+  string eating_time_id = 2;
+}
+
+message SuggestRecipesRequest {
+  // The date of the slot (YYYY-MM-DD). Required.
+  string date = 1;
+  // The slot to suggest for. Required.
+  oneof slot {
+    // A shared meal, eaten by everyone whose eating pattern eats from it,
+    // like PlanMeal.
+    people.v1.HouseholdMeal meal = 2;
+    // One person's eating time, e.g. a small meal between main meals.
+    EatingTimeSlot eating_time = 3;
+  }
+  // For a shared meal, the people who eat it, each of whom must have an
+  // eating time for it. Empty for everyone who does. Ignored for an eating
+  // time.
+  repeated string person_ids = 4;
+  // How many suggestions to return, from 1 to 50. 0 for 8.
+  int32 max_suggestions = 5;
+}
+
+message SuggestRecipesResponse {
+  // The suggestions, highest score first.
+  repeated Suggestion suggestions = 1;
+  // The date of the shop the slot's fresh foods are bought on
+  // (YYYY-MM-DD): the start date of the latest shopping list not yet
+  // complete whose dates include the slot's, or else today (UTC), or the
+  // slot's date if that's earlier. KEEPING counts from it.
+  string shop_date = 2;
+  // How many recipes were scored: all of the household's.
+  int32 recipe_count = 3;
+}
+
+// ScoreKind is what a component of a suggestion's score is about.
+enum ScoreKind {
+  SCORE_KIND_UNSPECIFIED = 0;
+  // Ingredients shared with the week's other cooks, and the new items it
+  // adds to the shop.
+  SCORE_KIND_SHARED_INGREDIENTS = 1;
+  // The rest of packs the week's plan already buys.
+  SCORE_KIND_PACK_LEFTOVERS = 2;
+  // Foods in the pantry, especially those to use soon.
+  SCORE_KIND_PANTRY = 3;
+  // The eaters' daily nutrient targets.
+  SCORE_KIND_NUTRITION = 4;
+  // The eaters' rules for each eating time.
+  SCORE_KIND_RULES = 5;
+  // Whether what it needs keeps from the shop, and its leftovers until
+  // they're eaten.
+  SCORE_KIND_KEEPING = 6;
+  // Ingredients that go well together.
+  SCORE_KIND_FLAVOR = 7;
+  // The same recipe planned on nearby days, or as a staple.
+  SCORE_KIND_VARIETY = 8;
+  // The recipe's tags for meals.
+  SCORE_KIND_MEAL_TAG = 9;
+}
+
+// A part of a suggestion's score.
+message ScoreComponent {
+  // What it's about.
+  ScoreKind kind = 1;
+  // The points it adds, negative for a penalty.
+  double points = 2;
+  // Why, for the user, e.g. "uses the other 200 g of the 400 g pack of
+  // coconut milk bought for Tuesday's Thai curry".
+  string reason = 3;
+}
+
+// A portion a suggestion would plan, split like PlanMeal splits a shared
+// meal.
+message SuggestedPortion {
+  // The ID of the person.
+  string person_id = 1;
+  // The name of the person.
+  string person_name = 2;
+  // The ID of the eating time.
+  string eating_time_id = 3;
+  // The name of the eating time.
+  string eating_time_name = 4;
+  // The date it's eaten (YYYY-MM-DD), later than the slot's for a part
+  // moved to the next day's small meals.
+  string date = 5;
+  // The servings of the recipe.
+  double servings = 6;
+  // The weight, in grams, 0 if the recipe can't be weighed.
+  double grams = 7;
+}
+
+// A food a suggestion needs bought, beyond the week's shopping.
+message ItemToBuy {
+  // The ID of the food.
+  string food_id = 1;
+  // The name of the food.
+  string food_name = 2;
+  // How much more to buy, e.g. "1 × 400 g" or "150 g".
+  string amount_text = 3;
+  // Whether the week's plan already buys some of the food, so it's more of
+  // an item on the list rather than a new one.
+  bool already_listed = 4;
+}
+
+// A recipe suggested for the slot, with why.
+message Suggestion {
+  // The ID of the recipe.
+  string recipe_id = 1;
+  // The name of the recipe.
+  string recipe_name = 2;
+  // The total score: the sum of the components' points. Only comparable
+  // between suggestions for the same slot.
+  double score = 3;
+  // The components of the score, largest first.
+  repeated ScoreComponent components = 4;
+  // Whether its portions keep within every eater's rules for their eating
+  // times. If false, warnings say which rules break; it can still be
+  // planned if the user chooses.
+  bool fits_rules = 5;
+  // The rules its portions would break, like GetWeek's warnings, with the
+  // person's name in the message.
+  repeated plans.v1.Warning warnings = 6;
+  // The portions it would plan, by person and date.
+  repeated SuggestedPortion portions = 7;
+  // The servings to cook: those PlanMeal would cook for a shared meal, or
+  // the portion's for an eating time, at least 0.25.
+  double cook_servings = 8;
+  // How many of items_to_buy aren't on the week's shopping already.
+  int32 new_item_count = 9;
+  // What it needs bought beyond the pantry and the week's shopping,
+  // rounded to whole packs, by name.
+  repeated ItemToBuy items_to_buy = 10;
+}

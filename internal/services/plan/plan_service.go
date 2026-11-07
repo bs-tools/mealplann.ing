@@ -1,5 +1,8 @@
 // Package plan implements the PlanService: the households' weekly plans of
 // cooks, portions and staples, checked against people's rules and targets.
+// It also implements the SuggestionService, which scores recipes for the
+// plan's open slots, as it reads the plan and computes its nutrition the
+// same way.
 package plan
 
 import (
@@ -17,17 +20,22 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/foods"
 	plansv1 "github.com/bs-tools/foodplann.ing/internal/gen/plans/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/plans/v1/plansv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/suggestions/v1/suggestionsv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/pantry"
 	"github.com/bs-tools/foodplann.ing/internal/people"
 	"github.com/bs-tools/foodplann.ing/internal/plans"
 	"github.com/bs-tools/foodplann.ing/internal/protomask"
 	"github.com/bs-tools/foodplann.ing/internal/recipes"
+	"github.com/bs-tools/foodplann.ing/internal/shopping"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-var _ plansv1connect.PlanServiceHandler = (*Service)(nil)
+var (
+	_ plansv1connect.PlanServiceHandler             = (*Service)(nil)
+	_ suggestionsv1connect.SuggestionServiceHandler = (*Service)(nil)
+)
 
 // PlanRepository stores plans.
 type PlanRepository interface {
@@ -54,8 +62,10 @@ type PeopleRepository interface {
 	ListPeople(ctx context.Context, householdID pgtype.UUID) ([]*people.Person, error)
 }
 
-// RecipeRepository reads the recipes plans cook.
+// RecipeRepository reads the recipes plans cook, and those suggestions
+// score.
 type RecipeRepository interface {
+	ListRecipes(ctx context.Context, householdID pgtype.UUID, query string, tags []string) ([]*recipes.Recipe, []string, error)
 	ListRecipesByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*recipes.Recipe, error)
 }
 
@@ -65,28 +75,49 @@ type FoodRepository interface {
 }
 
 // PantryRepository takes the ingredients of cooks marked done out of the
-// pantry, and puts them back.
+// pantry, and puts them back. Suggestions read what's in it.
 type PantryRepository interface {
+	ListItems(ctx context.Context, householdID pgtype.UUID) ([]*pantry.Item, error)
 	UseForCook(ctx context.Context, householdID, cookID pgtype.UUID, uses []pantry.Use) ([]pantry.Deduction, error)
 	RestoreForCook(ctx context.Context, householdID, cookID pgtype.UUID) ([]pantry.Use, error)
 }
 
-// Service implements the PlanService.
-type Service struct {
-	log     *slog.Logger
-	report  *errreport.Reporter
-	plans   PlanRepository
-	people  PeopleRepository
-	recipes RecipeRepository
-	foods   FoodRepository
-	pantry  PantryRepository
+// ShoppingRepository reads the shopping lists, whose shop suggestions
+// plan for.
+type ShoppingRepository interface {
+	ListLists(ctx context.Context, householdID pgtype.UUID, limit, offset int32) ([]*shopping.List, error)
 }
 
-// NewService returns a PlanService storing plans in the repository, for
-// the people, recipes and foods in theirs, taking what cooks use out of
-// the pantry.
-func NewService(log *slog.Logger, report *errreport.Reporter, plans PlanRepository, people PeopleRepository, recipes RecipeRepository, foods FoodRepository, pantry PantryRepository) *Service {
-	return &Service{log: log, report: report, plans: plans, people: people, recipes: recipes, foods: foods, pantry: pantry}
+// Service implements the PlanService and the SuggestionService.
+type Service struct {
+	log      *slog.Logger
+	report   *errreport.Reporter
+	plans    PlanRepository
+	people   PeopleRepository
+	recipes  RecipeRepository
+	foods    FoodRepository
+	pantry   PantryRepository
+	shopping ShoppingRepository
+	// nowFn returns the current time, which today's date is taken from.
+	nowFn func() time.Time
+}
+
+// NewService returns a PlanService and SuggestionService storing plans in
+// the repository, for the people, recipes and foods in theirs, taking what
+// cooks use out of the pantry, and suggesting for the shopping lists'
+// shops.
+func NewService(log *slog.Logger, report *errreport.Reporter, plans PlanRepository, people PeopleRepository, recipes RecipeRepository, foods FoodRepository, pantry PantryRepository, shopping ShoppingRepository) *Service {
+	return &Service{
+		log:      log,
+		report:   report,
+		plans:    plans,
+		people:   people,
+		recipes:  recipes,
+		foods:    foods,
+		pantry:   pantry,
+		shopping: shopping,
+		nowFn:    time.Now,
+	}
 }
 
 // The fields of the plan's resources updates don't change.

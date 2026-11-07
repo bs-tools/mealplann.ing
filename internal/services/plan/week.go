@@ -95,6 +95,13 @@ func (s *Service) loadPlan(ctx context.Context, householdID pgtype.UUID, from, t
 	if foodsErr != nil {
 		return nil, foodsErr
 	}
+	d.index(recipeList, foodList)
+	return d, nil
+}
+
+// index indexes the recipes and foods by ID, and the plan's portions and
+// staples by slot.
+func (d *planData) index(recipeList []*recipes.Recipe, foodList []*foods.Food) {
 	d.recipes = map[pgtype.UUID]*recipes.Recipe{}
 	d.recipeNutrition = map[pgtype.UUID]*nutrition.Recipe{}
 	for _, r := range recipeList {
@@ -112,7 +119,6 @@ func (s *Service) loadPlan(ctx context.Context, householdID pgtype.UUID, from, t
 	for _, p := range d.plan.Portions {
 		d.addItem(&item{portion: p, date: p.Date})
 	}
-	return d, nil
 }
 
 // addItem adds a portion or staple to the slot it's planned at.
@@ -239,15 +245,7 @@ func (d *planData) slot(p *people.Person, et *people.EatingTime, date time.Time)
 	wc := warningContext{personID: p.ID, date: date, eatingTimeID: et.ID}
 	for _, it := range d.items[slot] {
 		e := d.eaten(it)
-		ruleSlot.Amount.Add(&e.amount)
-		for _, name := range e.fastCarbs {
-			if !slices.Contains(ruleSlot.FastCarbFoods, name) {
-				ruleSlot.FastCarbFoods = append(ruleSlot.FastCarbFoods, name)
-			}
-		}
-		if e.amount.UnknownWeight && !slices.Contains(ruleSlot.UnweighedNames, it.name()) {
-			ruleSlot.UnweighedNames = append(ruleSlot.UnweighedNames, it.name())
-		}
+		addEaten(ruleSlot, it, &e)
 		portions = append(portions, d.plannedPortion(it, &e))
 		if it.portion != nil {
 			if c := d.cookOf(it.portion); c != nil {
@@ -277,6 +275,34 @@ func (d *planData) slot(p *people.Person, et *people.EatingTime, date time.Time)
 		Warnings:   warnings,
 	}.Build()
 	return sp
+}
+
+// addEaten adds an item eaten at an eating time to what its rules check.
+func addEaten(et *rules.EatingTime, it *item, e *eaten) {
+	et.Amount.Add(&e.amount)
+	for _, name := range e.fastCarbs {
+		if !slices.Contains(et.FastCarbFoods, name) {
+			et.FastCarbFoods = append(et.FastCarbFoods, name)
+		}
+	}
+	if e.amount.UnknownWeight && !slices.Contains(et.UnweighedNames, it.name()) {
+		et.UnweighedNames = append(et.UnweighedNames, it.name())
+	}
+}
+
+// ruleEatingTime returns what's planned at a slot, as its rules check it,
+// or nil if nothing is.
+func (d *planData) ruleEatingTime(slot plans.Slot, name string) *rules.EatingTime {
+	items := d.items[slot]
+	if len(items) == 0 {
+		return nil
+	}
+	et := &rules.EatingTime{Name: name}
+	for _, it := range items {
+		e := d.eaten(it)
+		addEaten(et, it, &e)
+	}
+	return et
 }
 
 // plannedPortion converts an item to the API.
