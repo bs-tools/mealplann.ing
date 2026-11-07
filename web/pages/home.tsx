@@ -126,10 +126,7 @@ const PersonToday: React.FC<PersonTodayProps> = ({ day }) => {
             const et = planned.eatingTime;
             const names = planned.portions.map((portion) => portion.name);
             return (
-              <li
-                key={et?.id}
-                className="flex gap-2"
-              >
+              <li key={et?.id} className="flex gap-2">
                 <span
                   className={`w-28 shrink-0 truncate text-gray-500 ${et?.kind === EatingTimeKind.SMALL ? "pl-3" : ""}`}
                 >
