@@ -452,9 +452,13 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
                         className={`${inputClass} w-28`}
                         value={ingredient.unit}
                         onChange={(event) => {
-                          setIngredient(index, {
-                            unit: Number(event.target.value),
-                          });
+                          // The option's own value keeps the enum's type.
+                          const option = AMOUNT_UNITS.find(
+                            ({ value }) => String(value) === event.target.value
+                          );
+                          if (option !== undefined) {
+                            setIngredient(index, { unit: option.value });
+                          }
                         }}
                       >
                         {AMOUNT_UNITS.map((option) => (

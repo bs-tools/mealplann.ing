@@ -294,7 +294,12 @@ const FoodForm: React.FC<FoodFormProps> = ({ food }) => {
                   })),
                 ]}
                 onChange={(value) => {
-                  setStoreSection(Number(value));
+                  // The option's own value keeps the enum's type.
+                  setStoreSection(
+                    STORE_SECTIONS.find(
+                      (option) => String(option.value) === value
+                    )?.value ?? StoreSection.UNSPECIFIED
+                  );
                 }}
               />
               <div>
