@@ -25,9 +25,9 @@ STANDARD lint rules, and `make buf-format` formats the files.
   empty.
 - Method names must be unique across all services, as they're the MCP tool
   names.
-- Methods named `Get`, `List`, `Search`, `Find`, `Summarize` or `Preview`
-  are marked read-only for MCP clients, so don't use those prefixes for methods
-  that change anything.
+- Methods named `Get`, `List`, `Search`, `Find`, `Summarize`, `Preview` or
+  `Suggest` are marked read-only for MCP clients, so don't use those prefixes
+  for methods that change anything.
 
 ## Messages and fields
 

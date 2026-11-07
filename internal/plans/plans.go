@@ -2,7 +2,7 @@
 // portions people eat of them or of foods, and staples, the portions
 // people eat regularly. It also expands staples into the dates they're on,
 // and splits a shared meal into portions, for every reader of a plan to
-// share: the week's view, and later the shopping list and suggestions.
+// share: the week's view, the shopping list and the suggestions.
 package plans
 
 import (

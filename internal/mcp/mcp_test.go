@@ -27,6 +27,7 @@ import (
 	recipesv1 "github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1/recipesv1connect"
 	"github.com/bs-tools/foodplann.ing/internal/gen/shopping/v1/shoppingv1connect"
+	"github.com/bs-tools/foodplann.ing/internal/gen/suggestions/v1/suggestionsv1connect"
 	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
 	"github.com/bs-tools/foodplann.ing/internal/gen/users/v1/usersv1connect"
 	"github.com/google/jsonschema-go/jsonschema"
@@ -55,6 +56,7 @@ func allServices() []Service {
 		{Name: plansv1connect.PlanServiceName, Handler: plansv1connect.UnimplementedPlanServiceHandler{}},
 		{Name: pantryv1connect.PantryServiceName, Handler: pantryv1connect.UnimplementedPantryServiceHandler{}},
 		{Name: shoppingv1connect.ShoppingServiceName, Handler: shoppingv1connect.UnimplementedShoppingServiceHandler{}},
+		{Name: suggestionsv1connect.SuggestionServiceName, Handler: suggestionsv1connect.UnimplementedSuggestionServiceHandler{}},
 	}
 }
 
@@ -129,6 +131,12 @@ func TestNewServer(t *testing.T) {
 		{
 			name:       "SearchFoodData",
 			title:      "Search Food Data",
+			readOnly:   true,
+			idempotent: true,
+		},
+		{
+			name:       "SuggestRecipes",
+			title:      "Suggest Recipes",
 			readOnly:   true,
 			idempotent: true,
 		},
@@ -333,6 +341,12 @@ func TestInstructions(t *testing.T) {
 		"\n2. Create the list with CreateShoppingList, from the day of the shop.",
 		"\n3. Look at the items with top_up set:",
 		"\n4. Add anything else the user needs with AddManualItem.",
+		"## suggestions.v1.SuggestionService\n\nSuggestionService suggests which of the household's recipes",
+		"To plan a week with it:\n\n1. Read the week with PlanService.GetWeek, and find the open slots:",
+		"\n2. Call SuggestRecipes for a slot.",
+		"\n3. Read the components of the top suggestions, not just the score:",
+		"\n4. Plan the chosen recipe: with PlanService.PlanMeal for a shared meal,",
+		"\n5. When the week is planned, make the shopping list with ShoppingService.CreateShoppingList.",
 	} {
 		if !strings.Contains(initRes.Instructions, want) {
 			t.Errorf("instructions do not contain %q:\n%s", want, initRes.Instructions)
