@@ -399,7 +399,8 @@ means everyone adds a passkey on the new one. To move:
 1. Verify the new domain with `gcloud domains verify <domain>`.
 2. Change `domain` to it, and add the old one to `redirect_domains`. Before
    merging, map the new domain on its own, locally, as its verified owner:
-   `make infra-apply ARGS='-target=google_cloud_run_domain_mapping.domain["<domain>"]'`.
+   `make infra-apply ARGS='-target=google_cloud_run_domain_mapping.domain[\"<domain>\"]'`,
+   with the quotes escaped, as make passes `ARGS` through a second shell.
    This leaves the service as it is. Create its DNS records from
    `make infra-output NAME=domain_records`, and wait for
    `https://<domain>` to serve the app.
