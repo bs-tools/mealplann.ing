@@ -17,7 +17,9 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/foods"
 	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
 	"github.com/bs-tools/mealplann.ing/internal/gen/foods/v1/foodsv1connect"
+	"github.com/bs-tools/mealplann.ing/internal/idempotency"
 	"github.com/bs-tools/mealplann.ing/internal/protomask"
+	"github.com/bs-tools/mealplann.ing/internal/services/batch"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -40,14 +42,16 @@ type Repository interface {
 
 // Service implements the FoodService.
 type Service struct {
-	log    *slog.Logger
-	report *errreport.Reporter
-	foods  Repository
+	log      *slog.Logger
+	report   *errreport.Reporter
+	foods    Repository
+	requests *idempotency.Store
 }
 
-// NewService returns a FoodService storing foods in the repository.
-func NewService(log *slog.Logger, report *errreport.Reporter, foods Repository) *Service {
-	return &Service{log: log, report: report, foods: foods}
+// NewService returns a FoodService storing foods in the repository, and
+// the responses of requests with request IDs in requests.
+func NewService(log *slog.Logger, report *errreport.Reporter, foods Repository, requests *idempotency.Store) *Service {
+	return &Service{log: log, report: report, foods: foods, requests: requests}
 }
 
 const (
@@ -99,6 +103,13 @@ func (s *Service) CreateFood(ctx context.Context, req *foodsv1.CreateFoodRequest
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, "")
 	}
+	return idempotency.Do(ctx, s.requests, user.HouseholdID(), "CreateFood", req.GetRequestId(), func() (*foodsv1.CreateFoodResponse, error) {
+		return s.createFood(ctx, user.HouseholdID(), req)
+	})
+}
+
+// createFood creates a food, without a request ID.
+func (s *Service) createFood(ctx context.Context, householdID pgtype.UUID, req *foodsv1.CreateFoodRequest) (*foodsv1.CreateFoodResponse, error) {
 	in := req.GetFood()
 	if in == nil {
 		in = &foodsv1.Food{}
@@ -128,12 +139,41 @@ func (s *Service) CreateFood(ctx context.Context, req *foodsv1.CreateFoodRequest
 			return nil, err
 		}
 	}
-	f.HouseholdID = user.HouseholdID()
+	f.HouseholdID = householdID
 	created, err := s.foods.CreateFood(ctx, f)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to create food")
 	}
 	return foodsv1.CreateFoodResponse_builder{Food: foodToProto(created)}.Build(), nil
+}
+
+func (s *Service) CreateFoods(ctx context.Context, req *foodsv1.CreateFoodsRequest) (*foodsv1.CreateFoodsResponse, error) {
+	user, ok := authn.GetUser(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+	}
+	if err := batch.Check(len(req.GetRequests())); err != nil {
+		return nil, err
+	}
+	return idempotency.Do(ctx, s.requests, user.HouseholdID(), "CreateFoods", req.GetRequestId(), func() (*foodsv1.CreateFoodsResponse, error) {
+		return s.createFoods(ctx, user.HouseholdID(), req)
+	})
+}
+
+// createFoods creates foods, ignoring their requests' request IDs.
+func (s *Service) createFoods(ctx context.Context, householdID pgtype.UUID, req *foodsv1.CreateFoodsRequest) (*foodsv1.CreateFoodsResponse, error) {
+	results := batch.Run(ctx, req.GetRequests(), func(ctx context.Context, req *foodsv1.CreateFoodRequest) (*foodsv1.CreateFoodResponse, error) {
+		return s.createFood(ctx, householdID, req)
+	})
+	out := make([]*foodsv1.CreateFoodResult, 0, len(results))
+	for _, r := range results {
+		out = append(out, foodsv1.CreateFoodResult_builder{
+			Food:         r.Value.GetFood(),
+			ErrorCode:    r.ErrorCode,
+			ErrorMessage: r.ErrorMessage,
+		}.Build())
+	}
+	return foodsv1.CreateFoodsResponse_builder{Results: out}.Build(), nil
 }
 
 func (s *Service) GetFood(ctx context.Context, req *foodsv1.GetFoodRequest) (*foodsv1.GetFoodResponse, error) {

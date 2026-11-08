@@ -28,6 +28,8 @@ const (
 	FoodServiceSearchFoodDataProcedure = "/foods.v1.FoodService/SearchFoodData"
 	// FoodServiceCreateFoodProcedure is the procedure name of the FoodService's CreateFood RPC.
 	FoodServiceCreateFoodProcedure = "/foods.v1.FoodService/CreateFood"
+	// FoodServiceCreateFoodsProcedure is the procedure name of the FoodService's CreateFoods RPC.
+	FoodServiceCreateFoodsProcedure = "/foods.v1.FoodService/CreateFoods"
 	// FoodServiceGetFoodProcedure is the procedure name of the FoodService's GetFood RPC.
 	FoodServiceGetFoodProcedure = "/foods.v1.FoodService/GetFood"
 	// FoodServiceListFoodsProcedure is the procedure name of the FoodService's ListFoods RPC.
@@ -53,6 +55,13 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_foods_v1_foods_proto.Services().ByName("FoodService").Methods().ByName("CreateFood"),
 			Procedure:  FoodServiceCreateFoodProcedure,
+		}
+	})
+	foodServiceCreateFoodsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_foods_v1_foods_proto.Services().ByName("FoodService").Methods().ByName("CreateFoods"),
+			Procedure:  FoodServiceCreateFoodsProcedure,
 		}
 	})
 	foodServiceGetFoodSpec = sync.OnceValue(func() connect.Spec {
@@ -109,6 +118,11 @@ type FoodServiceClient interface {
 	// household has a food with the same name, which should then be reused
 	// instead, and with INVALID_ARGUMENT if the reference food doesn't exist.
 	CreateFood(context.Context, *v1.CreateFoodRequest) (*v1.CreateFoodResponse, error)
+	// Create several foods at once, like the foods of a shelf or a receipt.
+	// Each is created on its own, like CreateFood, in parallel: the response
+	// has a result per request, in order, with what was created or the error.
+	// At most 100 requests.
+	CreateFoods(context.Context, *v1.CreateFoodsRequest) (*v1.CreateFoodsResponse, error)
 	// Get one of the household's foods, by its ID or its name. Fails with
 	// NOT_FOUND naming the foods with similar names if no food has the name.
 	GetFood(context.Context, *v1.GetFoodRequest) (*v1.GetFoodResponse, error)
@@ -156,6 +170,11 @@ type FoodServiceHandler interface {
 	// household has a food with the same name, which should then be reused
 	// instead, and with INVALID_ARGUMENT if the reference food doesn't exist.
 	CreateFood(context.Context, *v1.CreateFoodRequest) (*v1.CreateFoodResponse, error)
+	// Create several foods at once, like the foods of a shelf or a receipt.
+	// Each is created on its own, like CreateFood, in parallel: the response
+	// has a result per request, in order, with what was created or the error.
+	// At most 100 requests.
+	CreateFoods(context.Context, *v1.CreateFoodsRequest) (*v1.CreateFoodsResponse, error)
 	// Get one of the household's foods, by its ID or its name. Fails with
 	// NOT_FOUND naming the foods with similar names if no food has the name.
 	GetFood(context.Context, *v1.GetFoodRequest) (*v1.GetFoodResponse, error)
@@ -186,6 +205,7 @@ func RegisterFoodServiceHandler(server *connect.Server, svc FoodServiceHandler) 
 	server.Register(
 		connect.Method{Spec: foodServiceSearchFoodDataSpec(), Handler: adapter.searchFoodData},
 		connect.Method{Spec: foodServiceCreateFoodSpec(), Handler: adapter.createFood},
+		connect.Method{Spec: foodServiceCreateFoodsSpec(), Handler: adapter.createFoods},
 		connect.Method{Spec: foodServiceGetFoodSpec(), Handler: adapter.getFood},
 		connect.Method{Spec: foodServiceListFoodsSpec(), Handler: adapter.listFoods},
 		connect.Method{Spec: foodServiceUpdateFoodSpec(), Handler: adapter.updateFood},
@@ -203,6 +223,10 @@ func (UnimplementedFoodServiceHandler) SearchFoodData(context.Context, *v1.Searc
 
 func (UnimplementedFoodServiceHandler) CreateFood(context.Context, *v1.CreateFoodRequest) (*v1.CreateFoodResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "foods.v1.FoodService.CreateFood is not implemented")
+}
+
+func (UnimplementedFoodServiceHandler) CreateFoods(context.Context, *v1.CreateFoodsRequest) (*v1.CreateFoodsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "foods.v1.FoodService.CreateFoods is not implemented")
 }
 
 func (UnimplementedFoodServiceHandler) GetFood(context.Context, *v1.GetFoodRequest) (*v1.GetFoodResponse, error) {
@@ -240,6 +264,14 @@ func (c *foodServiceClient) SearchFoodData(ctx context.Context, req *v1.SearchFo
 func (c *foodServiceClient) CreateFood(ctx context.Context, req *v1.CreateFoodRequest) (*v1.CreateFoodResponse, error) {
 	var res v1.CreateFoodResponse
 	if err := c.client.CallUnary(ctx, foodServiceCreateFoodSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *foodServiceClient) CreateFoods(ctx context.Context, req *v1.CreateFoodsRequest) (*v1.CreateFoodsResponse, error) {
+	var res v1.CreateFoodsResponse
+	if err := c.client.CallUnary(ctx, foodServiceCreateFoodsSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -305,6 +337,18 @@ func (h foodServiceHandler) createFood(ctx context.Context, _ connect.Spec, stre
 		return err
 	}
 	res, err := h.svc.CreateFood(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h foodServiceHandler) createFoods(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.CreateFoodsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.CreateFoods(ctx, &req)
 	if err != nil {
 		return err
 	}

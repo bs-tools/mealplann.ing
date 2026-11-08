@@ -43,6 +43,20 @@ service RecipeService {
   // Update a recipe. To mark it as a favorite, or unmark it, set favorite
   // with the update_mask "favorite".
   rpc UpdateRecipe(UpdateRecipeRequest) returns (UpdateRecipeResponse);
+  // Update several recipes at once. Each is updated on its own, like UpdateRecipe, in parallel: the response
+  // has a result per request, in order, with what was updated or the error.
+  // At most 100 requests.
+  rpc UpdateRecipes(UpdateRecipesRequest) returns (UpdateRecipesResponse);
+  // Replace a food with another in the household's recipes, keeping each
+  // ingredient's amount, unit, note and place, or scaling the amount: e.g.
+  // replace canned black beans with black beans cooked from dry in every
+  // recipe at once. Recipes using the food only through a component recipe
+  // change through the component. An ingredient in pieces or milliliters
+  // stays in them: if the new food can't be weighed in them, the recipe's
+  // nutrition reports it, and grams_per_piece or grams_per_milliliter on
+  // the new food fix it. Each recipe changes on its own: if some fail, the
+  // error names them, and the others are changed.
+  rpc ReplaceFood(ReplaceFoodRequest) returns (ReplaceFoodResponse);
   // Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
   // the plan (see PlanService), or other recipes as a component, use it:
   // delete or change them first.
@@ -222,6 +236,11 @@ message RecipeSummary {
 message CreateRecipeRequest {
   // The recipe.
   Recipe recipe = 1;
+  // An ID the caller chooses for this request, like a UUID, to retry it
+  // safely: a retry with the same request_id within a day returns the
+  // first response instead of creating again. Empty to not deduplicate. At
+  // most 100 characters.
+  string request_id = 2;
 }
 
 message CreateRecipeResponse {
@@ -282,6 +301,46 @@ message UpdateRecipeRequest {
 message UpdateRecipeResponse {
   // The updated recipe.
   Recipe recipe = 1;
+}
+
+message UpdateRecipesRequest {
+  // The updates, each as UpdateRecipe takes it. At most 100.
+  repeated UpdateRecipeRequest requests = 1;
+}
+
+message UpdateRecipesResponse {
+  // A result per request, in order.
+  repeated UpdateRecipeResult results = 1;
+}
+
+// The result of updating one of several recipes.
+message UpdateRecipeResult {
+  // The updated recipe, unset if it failed.
+  Recipe recipe = 1;
+  // The code of the error, like "invalid_argument" or "not_found", empty
+  // if the recipe was updated.
+  string error_code = 2;
+  // What went wrong and what to do, empty if the recipe was updated.
+  string error_message = 3;
+}
+
+message ReplaceFoodRequest {
+  // The ID of the food to replace. Required.
+  string food_id = 1;
+  // The ID of the household's food to use instead. Required.
+  string new_food_id = 2;
+  // Only replace it in these recipes. Empty for every recipe using it. At
+  // most 100.
+  repeated string recipe_ids = 3;
+  // What to multiply each amount by, e.g. 2.4 to replace 100 g of dried
+  // chickpeas with 240 g of chickpeas cooked from dry. 0 to keep the
+  // amounts.
+  double amount_ratio = 4;
+}
+
+message ReplaceFoodResponse {
+  // The recipes changed, by name.
+  repeated RecipeSummary recipes = 1;
 }
 
 message DeleteRecipeRequest {

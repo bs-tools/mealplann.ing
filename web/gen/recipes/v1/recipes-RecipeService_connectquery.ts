@@ -39,6 +39,30 @@ export const listRecipes = RecipeService.method.listRecipes;
 export const updateRecipe = RecipeService.method.updateRecipe;
 
 /**
+ * Update several recipes at once. Each is updated on its own, like UpdateRecipe, in parallel: the response
+ * has a result per request, in order, with what was updated or the error.
+ * At most 100 requests.
+ *
+ * @generated from rpc recipes.v1.RecipeService.UpdateRecipes
+ */
+export const updateRecipes = RecipeService.method.updateRecipes;
+
+/**
+ * Replace a food with another in the household's recipes, keeping each
+ * ingredient's amount, unit, note and place, or scaling the amount: e.g.
+ * replace canned black beans with black beans cooked from dry in every
+ * recipe at once. Recipes using the food only through a component recipe
+ * change through the component. An ingredient in pieces or milliliters
+ * stays in them: if the new food can't be weighed in them, the recipe's
+ * nutrition reports it, and grams_per_piece or grams_per_milliliter on
+ * the new food fix it. Each recipe changes on its own: if some fail, the
+ * error names them, and the others are changed.
+ *
+ * @generated from rpc recipes.v1.RecipeService.ReplaceFood
+ */
+export const replaceFood = RecipeService.method.replaceFood;
+
+/**
  * Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
  * the plan (see PlanService), or other recipes as a component, use it:
  * delete or change them first.

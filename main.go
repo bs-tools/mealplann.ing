@@ -35,6 +35,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1/suggestionsv1connect"
 	"github.com/bs-tools/mealplann.ing/internal/gen/users/v1/usersv1connect"
 	"github.com/bs-tools/mealplann.ing/internal/html"
+	"github.com/bs-tools/mealplann.ing/internal/idempotency"
 	"github.com/bs-tools/mealplann.ing/internal/mcp"
 	"github.com/bs-tools/mealplann.ing/internal/oauth"
 	"github.com/bs-tools/mealplann.ing/internal/pantry"
@@ -388,8 +389,11 @@ func run(
 	foodRepo := foods.NewRepository(log, db)
 	recipeRepo := recipes.NewRepository(log, db)
 	peopleRepo := people.NewRepository(log, db)
-	foodService := food.NewService(log, report, foodRepo)
-	recipeService := recipe.NewService(log, report, recipeRepo)
+	// Create requests with a request ID record their responses, so agents
+	// can retry them without creating twice.
+	requests := idempotency.NewStore(log, report, db)
+	foodService := food.NewService(log, report, foodRepo, requests)
+	recipeService := recipe.NewService(log, report, recipeRepo, requests)
 	personService := person.NewService(log, report, peopleRepo)
 	planRepo := plans.NewRepository(log, db)
 	pantryRepo := pantry.NewRepository(log, db)
@@ -398,7 +402,7 @@ func run(
 	// read the plan and compute its nutrition the same way.
 	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, foodRepo, pantryRepo, shoppingRepo,
 		templates.NewRepository(log, db))
-	pantryService := pantrysvc.NewService(log, report, pantryRepo, foodRepo)
+	pantryService := pantrysvc.NewService(log, report, pantryRepo, foodRepo, requests)
 	shoppingService := shoppingsvc.NewService(log, report, shoppingRepo, planRepo, recipeRepo, foodRepo, pantryRepo)
 
 	// Register all services on a single Connect server, served by the API mux
