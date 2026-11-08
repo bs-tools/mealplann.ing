@@ -51,6 +51,12 @@ CI fails if `make format` or `make gen` change anything, if `go mod tidy`
 changes `go.mod`, or if lint or tests fail. Before finishing a change, run
 the targets that cover it.
 
+When you open a pull request, enable auto-merge on it with the squash method,
+so it merges once the required checks pass. If its checks have already passed,
+which leaves no auto-merge to enable, squash-merge it directly. Merge it as
+yourself, not with a workflow's token, because merges with that token don't
+start the run on main that deploys them.
+
 ## Generated code
 
 Generated code is committed: `internal/gen/` and `web/gen/` from the protos,
