@@ -216,6 +216,10 @@ func TestCheckPortion(t *testing.T) {
 	keeps3 := &Cook{RecipeName: "Chana masala", Date: monday, FridgeDays: new(int32(3))}
 	freezable := &Cook{RecipeName: "Lentil soup", Date: monday, FridgeDays: new(int32(3)), Freezable: true}
 	unknown := &Cook{RecipeName: "Stew", Date: monday}
+	// The soup is frozen on Monday, and keeps 30 days frozen; the chili was
+	// frozen though its recipe isn't marked freezable.
+	frozen := &Cook{RecipeName: "Lentil soup", Date: monday, FridgeDays: new(int32(3)), Freezable: true, FreezerDays: new(int32(30)), FrozenServings: 2}
+	frozenChili := &Cook{RecipeName: "Chili", Date: monday, FridgeDays: new(int32(3)), FrozenServings: 2}
 	tests := map[string]struct {
 		cook *Cook
 		date time.Time
@@ -227,6 +231,11 @@ func TestCheckPortion(t *testing.T) {
 		"freeze":           {cook: freezable, date: day(5), want: LeftoverFreeze},
 		"unknown":          {cook: unknown, date: day(10)},
 		"before cook":      {cook: keeps3, date: day(-1), want: PortionBeforeCook},
+		"frozen, fresh":    {cook: frozen, date: day(2)},
+		"thaw":             {cook: frozen, date: day(20), want: LeftoverThaw},
+		"last frozen day":  {cook: frozen, date: day(30), want: LeftoverThaw},
+		"past freezer":     {cook: frozen, date: day(31), want: LeftoverPastFreezerDays},
+		"frozen anyway":    {cook: frozenChili, date: day(60), want: LeftoverThaw},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -247,6 +256,13 @@ func TestCheckPortion(t *testing.T) {
 	if got := CheckPortion(freezable, day(5)); !got.Info {
 		t.Errorf("freezing is %v, want info", got)
 	}
+	if got := CheckPortion(frozen, day(20)); !got.Info || got.Message != "This portion of Lentil soup comes from the freezer: thaw it in the fridge on Sat 21 Nov." {
+		t.Errorf("got %+v, want a reminder to thaw it the day before", got)
+	}
+	if got := CheckPortion(frozen, day(31)); got.Info ||
+		got.Message != "Lentil soup frozen on Mon 2 Nov keeps 30 days in the freezer, so it won't keep until Thu 3 Dec: eat it by Wed 2 Dec, or plan another cook." {
+		t.Errorf("got %+v, want a warning that it won't keep frozen", got)
+	}
 }
 
 func TestCheckServings(t *testing.T) {
@@ -265,5 +281,21 @@ func TestCheckServings(t *testing.T) {
 	}
 	if got := CheckServings(c, 5); got == nil || got.Kind != ServingsOverassigned || got.Info {
 		t.Errorf("got %+v, want servings overassigned", got)
+	}
+
+	// With 2 servings frozen and 1 of them planned, the other is in the
+	// freezer, not unassigned.
+	frozen := &Cook{RecipeName: "Dal", Servings: 4, FrozenServings: 2, LateServings: 1}
+	if got := CheckServings(frozen, 3); got != nil {
+		t.Errorf("got %v with a serving in the freezer, want none", got)
+	}
+	if got := CheckServings(frozen, 2.5); got == nil || got.Kind != ServingsUnassigned || got.Value != 0.5 {
+		t.Errorf("got %+v, want half a serving unassigned beside the frozen one", got)
+	}
+	// Planning 3 servings after the fridge days needs 3 frozen.
+	short := &Cook{RecipeName: "Dal", Servings: 4, FrozenServings: 2, LateServings: 3}
+	if got := CheckServings(short, 4); got == nil || got.Kind != FrozenServingsShort || got.Info ||
+		got.Message != "3 servings of Dal are planned after it keeps in the fridge, but only 2 are frozen: freeze more, or eat them sooner." {
+		t.Errorf("got %+v, want too few frozen", got)
 	}
 }

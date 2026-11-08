@@ -53,7 +53,9 @@ type Recipe struct {
 	// unknown.
 	FridgeDays *int32
 	Freezable  bool
-	Notes      string
+	// FreezerDays is how many days frozen leftovers keep, nil if unknown.
+	FreezerDays *int32
+	Notes       string
 	// Favorite is whether the household marked the recipe as a favorite,
 	// which suggestions score higher.
 	Favorite   bool
@@ -147,6 +149,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			SourceURL:   recipe.SourceURL,
 			FridgeDays:  recipe.FridgeDays,
 			Freezable:   recipe.Freezable,
+			FreezerDays: recipe.FreezerDays,
 			Notes:       recipe.Notes,
 			Favorite:    recipe.Favorite,
 		})
@@ -307,6 +310,7 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			SourceURL:   recipe.SourceURL,
 			FridgeDays:  recipe.FridgeDays,
 			Freezable:   recipe.Freezable,
+			FreezerDays: recipe.FreezerDays,
 			Notes:       recipe.Notes,
 			Favorite:    recipe.Favorite,
 		})
@@ -429,6 +433,7 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) 
 		SourceURL:   row.SourceURL,
 		FridgeDays:  row.FridgeDays,
 		Freezable:   row.Freezable,
+		FreezerDays: row.FreezerDays,
 		Notes:       row.Notes,
 		Favorite:    row.Favorite,
 		CreateTime:  row.CreateTime.Time,

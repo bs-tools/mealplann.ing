@@ -12,6 +12,7 @@ insert into recipes (
   source_url,
   fridge_days,
   freezable,
+  freezer_days,
   notes,
   favorite
 ) values (
@@ -27,6 +28,7 @@ insert into recipes (
   @source_url,
   @fridge_days,
   @freezable,
+  @freezer_days,
   @notes,
   @favorite
 )
@@ -69,6 +71,7 @@ update recipes set
   source_url = @source_url,
   fridge_days = @fridge_days,
   freezable = @freezable,
+  freezer_days = @freezer_days,
   notes = @notes,
   favorite = @favorite,
   update_time = now()

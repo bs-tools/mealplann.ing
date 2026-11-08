@@ -97,6 +97,13 @@ service PlanService {
   rpc SkipStaple(SkipStapleRequest) returns (SkipStapleResponse);
   // Stop skipping a staple on a date.
   rpc UnskipStaple(UnskipStapleRequest) returns (UnskipStapleResponse);
+  // List what's in the freezer: the frozen leftovers of cooks (see
+  // Cook.frozen_servings) not all planned yet, by the date they were
+  // cooked, each with the servings left to plan and the last date they
+  // keep. Plan them with CreatePortion, as shares of their cook on any
+  // later date, or discard them by setting the cook's frozen_servings to
+  // the servings planned.
+  rpc ListFrozenLeftovers(ListFrozenLeftoversRequest) returns (ListFrozenLeftoversResponse);
 }
 
 // A recipe made on a date, for a number of servings.
@@ -125,6 +132,12 @@ message Cook {
   google.protobuf.Timestamp create_time = 9 [(mcp.v1.field).output_only = true];
   // When the cook was last changed.
   google.protobuf.Timestamp update_time = 10 [(mcp.v1.field).output_only = true];
+  // How many of its servings are frozen on the day it's cooked, from 0 to
+  // servings, to keep for the recipe's freezer_days rather than its
+  // fridge_days. Its portions eaten after the fridge days come from them,
+  // and those not planned yet are in the freezer (see
+  // ListFrozenLeftovers), to plan later. 0 if none.
+  double frozen_servings = 11;
 }
 
 // A share of a cook, in servings.
@@ -270,6 +283,14 @@ enum WarningKind {
   WARNING_KIND_SERVINGS_UNASSIGNED = 13;
   // A cook's portions add up to more servings than it makes.
   WARNING_KIND_SERVINGS_OVERASSIGNED = 14;
+  // A leftover comes from the freezer: thaw it in the fridge the day
+  // before.
+  WARNING_KIND_LEFTOVER_THAW = 15;
+  // A leftover from the freezer is eaten after it stops keeping frozen.
+  WARNING_KIND_LEFTOVER_PAST_FREEZER_DAYS = 16;
+  // More of a cook's servings are planned after they stop keeping in the
+  // fridge than are frozen: freeze more, or eat them sooner.
+  WARNING_KIND_FROZEN_SERVINGS_SHORT = 17;
 }
 
 // Severity is how much a warning matters.
@@ -609,4 +630,34 @@ message UnskipStapleRequest {
 message UnskipStapleResponse {
   // The staple.
   Staple staple = 1;
+}
+
+message ListFrozenLeftoversRequest {}
+
+message ListFrozenLeftoversResponse {
+  // The frozen leftovers, by the date they were cooked.
+  repeated FrozenLeftover leftovers = 1;
+}
+
+// Frozen servings of a cook, not all planned yet.
+message FrozenLeftover {
+  // The cook.
+  Cook cook = 1;
+  // How many of its frozen servings aren't planned yet: those in the
+  // freezer.
+  double remaining_servings = 2;
+  // How many of its frozen servings are planned already, as portions eaten
+  // after the recipe's fridge days.
+  double planned_servings = 3;
+  // The last date (YYYY-MM-DD) they keep frozen: the cook's date plus the
+  // recipe's freezer_days. Empty if unknown.
+  string keeps_until = 4;
+  // Whether keeps_until is before today, so they should be thrown out:
+  // discard them by setting the cook's frozen_servings to
+  // planned_servings.
+  bool expired = 5;
+  // The first date (YYYY-MM-DD) a portion of them is from the freezer: the
+  // day after the recipe's fridge days. Empty if the recipe's fridge days
+  // are unknown.
+  string frozen_from = 6;
 }

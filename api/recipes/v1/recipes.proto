@@ -65,7 +65,8 @@ message Recipe {
   // How many days leftovers keep in the fridge, e.g. 3. Unset if unknown, 0
   // if they don't keep. At most 14.
   optional int32 fridge_days = 11;
-  // Whether leftovers can be frozen.
+  // Whether leftovers can be frozen, to keep longer than fridge_days: see
+  // Cook.frozen_servings.
   bool freezable = 12;
   // Notes, e.g. variations or what to serve it with. At most 5000
   // characters.
@@ -80,6 +81,10 @@ message Recipe {
   // SuggestionService.SuggestRecipes scores favorites higher, so they're
   // suggested more often. Only mark recipes the user says they like.
   bool favorite = 17;
+  // How many days frozen leftovers keep, from the day it's cooked, e.g.
+  // 90. Unset if unknown, so frozen leftovers aren't checked against a
+  // limit. From 1 to 365.
+  optional int32 freezer_days = 18;
 }
 
 // An ingredient of a recipe: an amount of a food.

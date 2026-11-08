@@ -44,6 +44,7 @@ type Recipe struct {
 	xxx_hidden_CreateTime  *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=create_time,json=createTime,proto3"`
 	xxx_hidden_UpdateTime  *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=update_time,json=updateTime,proto3"`
 	xxx_hidden_Favorite    bool                   `protobuf:"varint,17,opt,name=favorite,proto3"`
+	xxx_hidden_FreezerDays int32                  `protobuf:"varint,18,opt,name=freezer_days,json=freezerDays,proto3,oneof"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
@@ -196,6 +197,13 @@ func (x *Recipe) GetFavorite() bool {
 	return false
 }
 
+func (x *Recipe) GetFreezerDays() int32 {
+	if x != nil {
+		return x.xxx_hidden_FreezerDays
+	}
+	return 0
+}
+
 func (x *Recipe) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -238,7 +246,7 @@ func (x *Recipe) SetSourceUrl(v string) {
 
 func (x *Recipe) SetFridgeDays(v int32) {
 	x.xxx_hidden_FridgeDays = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 17)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 18)
 }
 
 func (x *Recipe) SetFreezable(v bool) {
@@ -263,6 +271,11 @@ func (x *Recipe) SetUpdateTime(v *timestamppb.Timestamp) {
 
 func (x *Recipe) SetFavorite(v bool) {
 	x.xxx_hidden_Favorite = v
+}
+
+func (x *Recipe) SetFreezerDays(v int32) {
+	x.xxx_hidden_FreezerDays = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 18)
 }
 
 func (x *Recipe) HasFridgeDays() bool {
@@ -293,6 +306,13 @@ func (x *Recipe) HasUpdateTime() bool {
 	return x.xxx_hidden_UpdateTime != nil
 }
 
+func (x *Recipe) HasFreezerDays() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 17)
+}
+
 func (x *Recipe) ClearFridgeDays() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
 	x.xxx_hidden_FridgeDays = 0
@@ -308,6 +328,11 @@ func (x *Recipe) ClearCreateTime() {
 
 func (x *Recipe) ClearUpdateTime() {
 	x.xxx_hidden_UpdateTime = nil
+}
+
+func (x *Recipe) ClearFreezerDays() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 17)
+	x.xxx_hidden_FreezerDays = 0
 }
 
 type Recipe_builder struct {
@@ -343,7 +368,8 @@ type Recipe_builder struct {
 	// How many days leftovers keep in the fridge, e.g. 3. Unset if unknown, 0
 	// if they don't keep. At most 14.
 	FridgeDays *int32
-	// Whether leftovers can be frozen.
+	// Whether leftovers can be frozen, to keep longer than fridge_days: see
+	// Cook.frozen_servings.
 	Freezable bool
 	// Notes, e.g. variations or what to serve it with. At most 5000
 	// characters.
@@ -358,6 +384,10 @@ type Recipe_builder struct {
 	// SuggestionService.SuggestRecipes scores favorites higher, so they're
 	// suggested more often. Only mark recipes the user says they like.
 	Favorite bool
+	// How many days frozen leftovers keep, from the day it's cooked, e.g.
+	// 90. Unset if unknown, so frozen leftovers aren't checked against a
+	// limit. From 1 to 365.
+	FreezerDays *int32
 }
 
 func (b0 Recipe_builder) Build() *Recipe {
@@ -375,7 +405,7 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_Tags = b.Tags
 	x.xxx_hidden_SourceUrl = b.SourceUrl
 	if b.FridgeDays != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 17)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 18)
 		x.xxx_hidden_FridgeDays = *b.FridgeDays
 	}
 	x.xxx_hidden_Freezable = b.Freezable
@@ -384,6 +414,10 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_CreateTime = b.CreateTime
 	x.xxx_hidden_UpdateTime = b.UpdateTime
 	x.xxx_hidden_Favorite = b.Favorite
+	if b.FreezerDays != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 18)
+		x.xxx_hidden_FreezerDays = *b.FreezerDays
+	}
 	return m0
 }
 
@@ -1846,7 +1880,7 @@ var File_recipes_v1_recipes_proto protoreflect.FileDescriptor
 const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\n" +
 	"\x18recipes/v1/recipes.proto\x12\n" +
-	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\x86\x05\n" +
+	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xbf\x05\n" +
 	"\x06Recipe\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -1869,8 +1903,10 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"createTime\x12C\n" +
 	"\vupdate_time\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"updateTime\x12\x1a\n" +
-	"\bfavorite\x18\x11 \x01(\bR\bfavoriteB\x0e\n" +
-	"\f_fridge_days\"\xe1\x01\n" +
+	"\bfavorite\x18\x11 \x01(\bR\bfavorite\x12&\n" +
+	"\ffreezer_days\x18\x12 \x01(\x05H\x01R\vfreezerDays\x88\x01\x01B\x0e\n" +
+	"\f_fridge_daysB\x0f\n" +
+	"\r_freezer_days\"\xe1\x01\n" +
 	"\n" +
 	"Ingredient\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12#\n" +

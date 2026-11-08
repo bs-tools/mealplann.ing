@@ -172,6 +172,9 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
     recipe?.fridgeDays === undefined ? "" : String(recipe.fridgeDays)
   );
   const [freezable, setFreezable] = useState(recipe?.freezable ?? false);
+  const [freezerDays, setFreezerDays] = useState(
+    recipe?.freezerDays === undefined ? "" : String(recipe.freezerDays)
+  );
   const [notes, setNotes] = useState(recipe?.notes ?? "");
   const [invalid, setInvalid] = useState("");
 
@@ -213,6 +216,11 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
         (recipe?.fridgeDays === undefined ? "" : String(recipe.fridgeDays)),
     ],
     ["freezable", freezable !== (recipe?.freezable ?? false)],
+    [
+      "freezer_days",
+      freezerDays !==
+        (recipe?.freezerDays === undefined ? "" : String(recipe.freezerDays)),
+    ],
     ["notes", notes !== (recipe?.notes ?? "")],
   ];
   const paths = changed
@@ -239,6 +247,17 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
     if (days === null || (days !== undefined && !Number.isInteger(days))) {
       setInvalid(
         "Days in the fridge must be a whole number, or empty if unknown."
+      );
+      return;
+    }
+    const frozenDays = parseOptionalNumber(freezerDays);
+    if (
+      frozenDays === null ||
+      (frozenDays !== undefined &&
+        (!Number.isInteger(frozenDays) || frozenDays < 1))
+    ) {
+      setInvalid(
+        "Days in the freezer must be a whole number of at least 1, or empty if unknown."
       );
       return;
     }
@@ -270,6 +289,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
       cookSeconds,
       description,
       freezable,
+      freezerDays: frozenDays,
       fridgeDays: days,
       ingredients: parsedIngredients,
       name,
@@ -407,6 +427,16 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
                 className="pb-2"
                 onChange={setFreezable}
               />
+              {freezable && (
+                <TextField
+                  label="Keeps in the freezer (days)"
+                  value={freezerDays}
+                  inputMode="numeric"
+                  placeholder="Unknown"
+                  hint="Frozen leftovers are checked against it."
+                  onChange={setFreezerDays}
+                />
+              )}
             </div>
             <TextField
               label="Source"

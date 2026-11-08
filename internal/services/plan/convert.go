@@ -96,16 +96,17 @@ func checkServings(field string, v float64) error {
 
 func cookToProto(c *plans.Cook) *plansv1.Cook {
 	return plansv1.Cook_builder{
-		Id:         store.UUIDToString(c.ID),
-		RecipeId:   store.UUIDToString(c.RecipeID),
-		RecipeName: c.RecipeName,
-		Date:       store.FormatDate(c.Date),
-		Servings:   c.Servings,
-		Meal:       person.MealsToProto[c.Meal],
-		Notes:      c.Notes,
-		Done:       c.Done,
-		CreateTime: timestamppb.New(c.CreateTime),
-		UpdateTime: timestamppb.New(c.UpdateTime),
+		Id:             store.UUIDToString(c.ID),
+		RecipeId:       store.UUIDToString(c.RecipeID),
+		RecipeName:     c.RecipeName,
+		Date:           store.FormatDate(c.Date),
+		Servings:       c.Servings,
+		Meal:           person.MealsToProto[c.Meal],
+		Notes:          c.Notes,
+		Done:           c.Done,
+		FrozenServings: c.FrozenServings,
+		CreateTime:     timestamppb.New(c.CreateTime),
+		UpdateTime:     timestamppb.New(c.UpdateTime),
 	}.Build()
 }
 
@@ -131,13 +132,18 @@ func cookFromProto(p *plansv1.Cook) (*plans.Cook, error) {
 	if err != nil {
 		return nil, err
 	}
+	if f := p.GetFrozenServings(); math.IsNaN(f) || f < 0 || f > p.GetServings() {
+		return nil, connect.Errorf(connect.CodeInvalidArgument,
+			"frozen_servings must be from 0 to servings, %v: freeze at most the servings cooked", p.GetServings())
+	}
 	return &plans.Cook{
-		RecipeID: recipeID,
-		Date:     date,
-		Servings: p.GetServings(),
-		Meal:     meal,
-		Notes:    notes,
-		Done:     p.GetDone(),
+		RecipeID:       recipeID,
+		Date:           date,
+		Servings:       p.GetServings(),
+		Meal:           meal,
+		Notes:          notes,
+		Done:           p.GetDone(),
+		FrozenServings: p.GetFrozenServings(),
 	}, nil
 }
 

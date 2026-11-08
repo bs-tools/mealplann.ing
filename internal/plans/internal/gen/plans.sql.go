@@ -12,19 +12,20 @@ import (
 )
 
 const createCook = `-- name: CreateCook :execrows
-insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done)
-values ($1, $2, $3, $4, $5, $6, $7, $8)
+insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done, frozen_servings)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 `
 
 type CreateCookParams struct {
-	ID          pgtype.UUID
-	HouseholdID pgtype.UUID
-	RecipeID    pgtype.UUID
-	Date        pgtype.Date
-	Servings    float64
-	Meal        *HouseholdMeal
-	Notes       string
-	Done        bool
+	ID             pgtype.UUID
+	HouseholdID    pgtype.UUID
+	RecipeID       pgtype.UUID
+	Date           pgtype.Date
+	Servings       float64
+	Meal           *HouseholdMeal
+	Notes          string
+	Done           bool
+	FrozenServings float64
 }
 
 func (q *Queries) CreateCook(ctx context.Context, arg *CreateCookParams) (int64, error) {
@@ -37,6 +38,7 @@ func (q *Queries) CreateCook(ctx context.Context, arg *CreateCookParams) (int64,
 		arg.Meal,
 		arg.Notes,
 		arg.Done,
+		arg.FrozenServings,
 	)
 	if err != nil {
 		return 0, err
@@ -225,9 +227,13 @@ func (q *Queries) DeleteStaple(ctx context.Context, arg *DeleteStapleParams) (in
 
 const listCooks = `-- name: ListCooks :many
 select
-  cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time,
+  cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings,
   r.name as recipe_name,
-  coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings
+  coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
+  coalesce((
+    select sum(p.servings) from portions p
+    where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
+  ), 0)::double precision as late_servings
 from cooks
 join recipes r on r.id = cooks.recipe_id
 where cooks.household_id = $1
@@ -249,11 +255,13 @@ type ListCooksRow struct {
 	Cook             Cook
 	RecipeName       string
 	AssignedServings float64
+	LateServings     float64
 }
 
 // The household's cooks, given by ID or cooked in a range of dates, with
-// their recipe's name, and the servings of all their portions, whatever
-// their date.
+// their recipe's name, the servings of all their portions, whatever their
+// date, and of those eaten after the recipe's fridge days, which come from
+// the freezer.
 func (q *Queries) ListCooks(ctx context.Context, arg *ListCooksParams) ([]*ListCooksRow, error) {
 	rows, err := q.db.Query(ctx, listCooks,
 		arg.HouseholdID,
@@ -279,8 +287,74 @@ func (q *Queries) ListCooks(ctx context.Context, arg *ListCooksParams) ([]*ListC
 			&i.Cook.Done,
 			&i.Cook.CreateTime,
 			&i.Cook.UpdateTime,
+			&i.Cook.FrozenServings,
 			&i.RecipeName,
 			&i.AssignedServings,
+			&i.LateServings,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFrozenCooks = `-- name: ListFrozenCooks :many
+select
+  cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings,
+  r.name as recipe_name,
+  r.fridge_days,
+  r.freezer_days,
+  late.servings::double precision as late_servings
+from cooks
+join recipes r on r.id = cooks.recipe_id
+cross join lateral (
+  select coalesce(sum(p.servings), 0) as servings from portions p
+  where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
+) late
+where cooks.household_id = $1 and cooks.frozen_servings > late.servings + 0.01
+order by cooks.date, cooks.id
+`
+
+type ListFrozenCooksRow struct {
+	Cook         Cook
+	RecipeName   string
+	FridgeDays   *int32
+	FreezerDays  *int32
+	LateServings float64
+}
+
+// The household's cooks with frozen servings not all planned yet: those in
+// the freezer, with their recipe's name and keeping days, and the servings
+// of their portions eaten after the recipe's fridge days, by date.
+func (q *Queries) ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) ([]*ListFrozenCooksRow, error) {
+	rows, err := q.db.Query(ctx, listFrozenCooks, householdID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListFrozenCooksRow
+	for rows.Next() {
+		var i ListFrozenCooksRow
+		if err := rows.Scan(
+			&i.Cook.ID,
+			&i.Cook.HouseholdID,
+			&i.Cook.RecipeID,
+			&i.Cook.Date,
+			&i.Cook.Servings,
+			&i.Cook.Meal,
+			&i.Cook.Notes,
+			&i.Cook.Done,
+			&i.Cook.CreateTime,
+			&i.Cook.UpdateTime,
+			&i.Cook.FrozenServings,
+			&i.RecipeName,
+			&i.FridgeDays,
+			&i.FreezerDays,
+			&i.LateServings,
 		); err != nil {
 			return nil, err
 		}
@@ -297,7 +371,8 @@ select
   portions.id, portions.household_id, portions.person_id, portions.eating_time_id, portions.date, portions.cook_id, portions.servings, portions.food_id, portions.amount, portions.unit, portions.notes, portions.create_time, portions.update_time,
   coalesce(r.name, f.name, '')::text as name,
   c.date as cook_date,
-  c.recipe_id as cook_recipe_id
+  c.recipe_id as cook_recipe_id,
+  c.frozen_servings as cook_frozen_servings
 from portions
 left join cooks c on c.id = portions.cook_id
 left join recipes r on r.id = c.recipe_id
@@ -318,10 +393,11 @@ type ListPortionsParams struct {
 }
 
 type ListPortionsRow struct {
-	Portion      Portion
-	Name         string
-	CookDate     pgtype.Date
-	CookRecipeID pgtype.UUID
+	Portion            Portion
+	Name               string
+	CookDate           pgtype.Date
+	CookRecipeID       pgtype.UUID
+	CookFrozenServings *float64
 }
 
 // The household's portions, given by ID or eaten in a range of dates, with
@@ -357,6 +433,7 @@ func (q *Queries) ListPortions(ctx context.Context, arg *ListPortionsParams) ([]
 			&i.Name,
 			&i.CookDate,
 			&i.CookRecipeID,
+			&i.CookFrozenServings,
 		); err != nil {
 			return nil, err
 		}
@@ -529,19 +606,21 @@ update cooks set
   meal = $4,
   notes = $5,
   done = $6,
+  frozen_servings = $7,
   update_time = now()
-where id = $7 and household_id = $8
+where id = $8 and household_id = $9
 `
 
 type UpdateCookParams struct {
-	RecipeID    pgtype.UUID
-	Date        pgtype.Date
-	Servings    float64
-	Meal        *HouseholdMeal
-	Notes       string
-	Done        bool
-	ID          pgtype.UUID
-	HouseholdID pgtype.UUID
+	RecipeID       pgtype.UUID
+	Date           pgtype.Date
+	Servings       float64
+	Meal           *HouseholdMeal
+	Notes          string
+	Done           bool
+	FrozenServings float64
+	ID             pgtype.UUID
+	HouseholdID    pgtype.UUID
 }
 
 func (q *Queries) UpdateCook(ctx context.Context, arg *UpdateCookParams) (int64, error) {
@@ -552,6 +631,7 @@ func (q *Queries) UpdateCook(ctx context.Context, arg *UpdateCookParams) (int64,
 		arg.Meal,
 		arg.Notes,
 		arg.Done,
+		arg.FrozenServings,
 		arg.ID,
 		arg.HouseholdID,
 	)

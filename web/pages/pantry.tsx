@@ -1,6 +1,7 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
 import Loading from "@components/loading";
+import FreezerCard from "@components/pantry/freezer-card";
 import PantryItemDialog from "@components/pantry/pantry-item-dialog";
 import Card from "@components/ui/card";
 import ConfirmButton from "@components/ui/confirm-button";
@@ -216,6 +217,7 @@ const PantryPage: React.FC = () => {
           )}
         </div>
         <div className="flex flex-col gap-4">
+          <FreezerCard />
           <Card title="Always in stock">
             <div className="flex flex-col gap-3 text-sm">
               <p className="text-gray-600">

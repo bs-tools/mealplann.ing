@@ -56,6 +56,14 @@ const (
 	// ServingsOverassigned is a cook whose portions add up to more than it
 	// makes.
 	ServingsOverassigned
+	// LeftoverThaw is a leftover from the freezer, to thaw the day before.
+	LeftoverThaw
+	// LeftoverPastFreezerDays is a leftover from the freezer eaten after it
+	// stops keeping frozen.
+	LeftoverPastFreezerDays
+	// FrozenServingsShort is a cook with more servings eaten after its
+	// fridge days than it has frozen.
+	FrozenServingsShort
 )
 
 // Warning is a problem with a plan.
@@ -267,6 +275,17 @@ type Cook struct {
 	FridgeDays *int32
 	// Freezable is whether its leftovers can be frozen.
 	Freezable bool
+	// FreezerDays is how many days its frozen leftovers keep, nil if
+	// unknown.
+	FreezerDays *int32
+	// FrozenServings is how many of its servings are frozen on its date,
+	// for the portions eaten after its fridge days. A cook with frozen
+	// servings counts as frozen even if its recipe isn't marked freezable,
+	// as the household froze it.
+	FrozenServings float64
+	// LateServings is how many servings its portions eat after its fridge
+	// days, which CheckServings checks against FrozenServings.
+	LateServings float64
 }
 
 // CheckPortion checks when a portion of the cook is eaten: not before it's
@@ -287,14 +306,35 @@ func CheckPortion(c *Cook, date time.Time) *Warning {
 	}
 	fridgeDays := int(*c.FridgeDays)
 	last := c.Date.AddDate(0, 0, fridgeDays)
+	if c.FrozenServings > 0 {
+		if c.FreezerDays != nil && days > int(*c.FreezerDays) {
+			freezerDays := int(*c.FreezerDays)
+			return &Warning{
+				Kind:  LeftoverPastFreezerDays,
+				Value: float64(days),
+				Limit: float64(freezerDays),
+				Message: fmt.Sprintf("%s frozen on %s keeps %d %s in the freezer, so it won't keep until %s: eat it by %s, or plan another cook.",
+					c.RecipeName, formatDate(c.Date), freezerDays, plural(freezerDays, "day", "days"), formatDate(date),
+					formatDate(c.Date.AddDate(0, 0, freezerDays))),
+			}
+		}
+		return &Warning{
+			Kind:  LeftoverThaw,
+			Info:  true,
+			Value: float64(days),
+			Limit: float64(fridgeDays),
+			Message: fmt.Sprintf("This portion of %s comes from the freezer: thaw it in the fridge on %s.",
+				c.RecipeName, formatDate(date.AddDate(0, 0, -1))),
+		}
+	}
 	if c.Freezable {
 		return &Warning{
 			Kind:  LeftoverFreeze,
 			Info:  true,
 			Value: float64(days),
 			Limit: float64(fridgeDays),
-			Message: fmt.Sprintf("%s keeps %d %s in the fridge: freeze this portion by %s, and thaw it for %s.",
-				c.RecipeName, fridgeDays, plural(fridgeDays, "day", "days"), formatDate(last), formatDate(date)),
+			Message: fmt.Sprintf("%s keeps %d %s in the fridge: freeze servings of it on %s for this portion, and thaw it for %s.",
+				c.RecipeName, fridgeDays, plural(fridgeDays, "day", "days"), formatDate(c.Date), formatDate(date)),
 		}
 	}
 	return &Warning{
@@ -307,9 +347,20 @@ func CheckPortion(c *Cook, date time.Time) *Warning {
 }
 
 // CheckServings checks that a cook's servings match the servings of its
-// portions, assigned. It returns nil if they do.
+// portions, assigned, and that it has frozen enough servings for those
+// eaten after its fridge days. Frozen servings not planned yet are in the
+// freezer, rather than unassigned. It returns nil if all's well.
 func CheckServings(c *Cook, assigned float64) *Warning {
+	inFreezer := max(c.FrozenServings-c.LateServings, 0)
 	switch {
+	case c.FrozenServings > 0 && c.LateServings > c.FrozenServings+servingsSlack:
+		return &Warning{
+			Kind:  FrozenServingsShort,
+			Value: c.LateServings,
+			Limit: c.FrozenServings,
+			Message: fmt.Sprintf("%s servings of %s are planned after it keeps in the fridge, but only %s are frozen: freeze more, or eat them sooner.",
+				format(c.LateServings), c.RecipeName, format(c.FrozenServings)),
+		}
 	case assigned > c.Servings+servingsSlack:
 		return &Warning{
 			Kind:  ServingsOverassigned,
@@ -318,8 +369,8 @@ func CheckServings(c *Cook, assigned float64) *Warning {
 			Message: fmt.Sprintf("The portions of %s add up to %s servings, more than the %s cooked: cook more servings, or plan smaller portions.",
 				c.RecipeName, format(assigned), format(c.Servings)),
 		}
-	case assigned < c.Servings-servingsSlack:
-		left := c.Servings - assigned
+	case assigned+inFreezer < c.Servings-servingsSlack:
+		left := c.Servings - assigned - inFreezer
 		return &Warning{
 			Kind:  ServingsUnassigned,
 			Info:  true,
