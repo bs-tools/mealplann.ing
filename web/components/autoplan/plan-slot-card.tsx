@@ -97,12 +97,25 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
         );
         break;
       }
+      case PlanSlotState.FILLED_BY_MEAL: {
+        body = (
+          <p className="text-sm text-gray-600">
+            The rest of an earlier meal, which is more than the most they eat at
+            once.
+          </p>
+        );
+        break;
+      }
       case PlanSlotState.UNSPECIFIED:
       case PlanSlotState.SUGGESTED:
       case PlanSlotState.KEPT:
       case PlanSlotState.UNFILLED: {
         body = (
-          <p className="text-sm text-gray-500">No recipe meets the criteria.</p>
+          <p className="text-sm text-gray-500">
+            {slot.unfilledReason === ""
+              ? "No recipe meets the criteria."
+              : slot.unfilledReason}
+          </p>
         );
         break;
       }

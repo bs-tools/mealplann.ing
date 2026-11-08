@@ -213,3 +213,26 @@ func TestPlanDone(t *testing.T) {
 		t.Errorf("got %d rollouts and %v, want 1 greedy rollout", result.Rollouts, plannedNames(result))
 	}
 }
+
+func TestFitsMeal(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		tags []string
+		want map[string]bool
+	}{
+		// No meal tag is a main meal.
+		{nil, map[string]bool{"breakfast": false, "lunch": true, "dinner": true, "": true, "snack": false}},
+		{[]string{"quick"}, map[string]bool{"breakfast": false, "lunch": true, "dinner": true, "": true, "snack": false}},
+		{[]string{" Breakfast "}, map[string]bool{"breakfast": true, "lunch": false, "dinner": false, "": false, "snack": false}},
+		{[]string{"dinner"}, map[string]bool{"breakfast": false, "lunch": true, "dinner": true, "": true, "snack": false}},
+		{[]string{"snack"}, map[string]bool{"breakfast": false, "lunch": false, "dinner": false, "": false, "snack": true}},
+		{[]string{"breakfast", "dinner"}, map[string]bool{"breakfast": true, "lunch": true, "dinner": true, "": true, "snack": false}},
+	} {
+		r := &recipes.Recipe{Name: "R", Tags: tt.tags}
+		for tag, want := range tt.want {
+			if got := FitsMeal(r, tag); got != want {
+				t.Errorf("FitsMeal(%v, %q) = %v, want %v", tt.tags, tag, got, want)
+			}
+		}
+	}
+}

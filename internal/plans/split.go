@@ -168,3 +168,25 @@ func floorStep(v float64) float64 {
 func roundStep(v float64) float64 {
 	return math.Round(v*stepsPerServing) / stepsPerServing
 }
+
+// minCookServings is the fewest servings a cook can have.
+const minCookServings = 0.25
+
+// EatingTimeServings returns the servings of a recipe for one person's
+// eating time, and the servings to cook for it: a serving, or less if it
+// weighs more than the person's maximum portion less what's planned there
+// already, plannedGrams. If the eating time is full already, it's a
+// portion of the maximum, which the rules then warn about. The cook is
+// rounded up to minCookServings.
+func EatingTimeServings(p *people.Person, gramsPerServing, plannedGrams float64) (servings, cookServings float64) {
+	servings = 1.0
+	if limit := p.Rules.MaxPortionGrams; limit != nil && gramsPerServing > 0 {
+		room := *limit - plannedGrams
+		if room < minShare*gramsPerServing {
+			room = *limit
+		}
+		servings = max(min(1, floorStep(room/gramsPerServing)), minShare)
+	}
+	cookServings = max(math.Ceil(servings/minCookServings-1e-9)*minCookServings, minCookServings)
+	return servings, cookServings
+}

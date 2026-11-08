@@ -29,8 +29,9 @@ const (
 	// with enough tries in its budget.
 	maxPlanDays = 14
 	// maxMealsToPlan is the most meals PlanMeals plans at once: two weeks
-	// of the three shared meals, rounded up.
-	maxMealsToPlan = 60
+	// of the three shared meals and a few eating times of one person each
+	// day, like snacks.
+	maxMealsToPlan = 150
 	// maxPlanSeconds is the longest max_total_seconds of plan criteria: a
 	// day.
 	maxPlanSeconds = 24 * 60 * 60
@@ -58,10 +59,74 @@ var emphasisWeights = map[suggestionsv1.Emphasis]float64{
 	suggestionsv1.Emphasis_EMPHASIS_HIGH:        2,
 }
 
-// slotKey identifies a slot of a plan: a shared meal on a date.
+// slotKey identifies a slot of a plan: a shared meal on a date, or one
+// person's eating time on a date, with meal MealNone.
 type slotKey struct {
-	date time.Time
-	meal people.Meal
+	date         time.Time
+	meal         people.Meal
+	personID     pgtype.UUID
+	eatingTimeID pgtype.UUID
+}
+
+// personal reports whether the slot is one person's eating time.
+func (k slotKey) personal() bool {
+	return k.eatingTimeID.Valid
+}
+
+// personalSlot returns the key of one person's eating time on a date.
+func personalSlot(date time.Time, personID, eatingTimeID pgtype.UUID) slotKey {
+	return slotKey{date: date, personID: personID, eatingTimeID: eatingTimeID}
+}
+
+// personalEatingTime returns a person of the household and their eating
+// time that eats from no shared meal, or INVALID_ARGUMENT naming the field
+// if there's none.
+func personalEatingTime(all []*people.Person, field, rawPersonID, rawEatingTimeID string) (*people.Person, *people.EatingTime, error) {
+	personID, err := parseID(field+".person_id", rawPersonID, "find people with ListPeople")
+	if err != nil {
+		return nil, nil, err
+	}
+	eatingTimeID, err := parseID(field+".eating_time_id", rawEatingTimeID, "find people's eating times with ListPeople")
+	if err != nil {
+		return nil, nil, err
+	}
+	i := slices.IndexFunc(all, func(p *people.Person) bool { return p.ID == personID })
+	if i < 0 {
+		return nil, nil, connect.Errorf(connect.CodeInvalidArgument, "%s.person_id isn't in your household; find people with ListPeople", field)
+	}
+	et := all[i].EatingTime(eatingTimeID)
+	switch {
+	case et == nil:
+		return nil, nil, connect.Errorf(connect.CodeInvalidArgument,
+			"%s.eating_time_id isn't one of %s's eating times; find them with ListPeople", field, all[i].Name)
+	case et.Meal != people.MealNone:
+		return nil, nil, connect.Errorf(connect.CodeInvalidArgument,
+			"%s's %s eats from the shared %s: give meal instead of the eating time", all[i].Name, et.Name, et.Meal)
+	}
+	return all[i], et, nil
+}
+
+// personalSlots returns the eating times of one person that eat from no
+// shared meal, by person and in the order of their day.
+func personalSlots(all []*people.Person) []struct {
+	person     *people.Person
+	eatingTime *people.EatingTime
+} {
+	var slots []struct {
+		person     *people.Person
+		eatingTime *people.EatingTime
+	}
+	for _, p := range all {
+		for _, et := range p.EatingTimes {
+			if et.Meal == people.MealNone {
+				slots = append(slots, struct {
+					person     *people.Person
+					eatingTime *people.EatingTime
+				}{p, et})
+			}
+		}
+	}
+	return slots
 }
 
 func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPlanRequest) (*suggestionsv1.SuggestPlanResponse, error) {
@@ -116,6 +181,7 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 		excludeIDs = append(excludeIDs, id)
 	}
 	choices := map[slotKey]pgtype.UUID{}
+	var personalChoices []*suggestionsv1.PlanChoice
 	for i, c := range req.GetChoices() {
 		field := fmt.Sprintf("choices[%d]", i)
 		date, err := parseDate(field+".date", c.GetDate())
@@ -126,14 +192,30 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.date must be one of the days planned, from %s to %s",
 				field, store.FormatDate(start), store.FormatDate(end))
 		}
-		meal, err := mealFromProto(c.GetMeal())
-		if err != nil {
-			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.%s", field, mealRequired)
+		var key slotKey
+		if c.GetEatingTimeId() != "" || c.GetPersonId() != "" {
+			// The person and eating time are checked once the people are
+			// read.
+			personID, err := parseID(field+".person_id", c.GetPersonId(), "find people with ListPeople")
+			if err != nil {
+				return nil, err
+			}
+			eatingTimeID, err := parseID(field+".eating_time_id", c.GetEatingTimeId(), "find people's eating times with ListPeople")
+			if err != nil {
+				return nil, err
+			}
+			key = personalSlot(date, personID, eatingTimeID)
+			personalChoices = append(personalChoices, c)
+		} else {
+			meal, err := mealFromProto(c.GetMeal())
+			if err != nil {
+				return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.%s, or person_id and eating_time_id", field, mealRequired)
+			}
+			key = slotKey{date: date, meal: meal}
 		}
-		key := slotKey{date, meal}
 		if _, ok := choices[key]; ok {
-			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s is the second choice for %s on %s: give at most one per slot",
-				field, meal, store.FormatDate(date))
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s is the second choice for its slot on %s: give at most one per slot",
+				field, store.FormatDate(date))
 		}
 		var id pgtype.UUID
 		if c.GetRecipeId() != "" {
@@ -152,8 +234,20 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 	for key, id := range choices {
 		if _, ok := d.recipes[id]; id.Valid && !ok {
 			return nil, connect.Errorf(connect.CodeInvalidArgument,
-				"the recipe chosen for %s on %s isn't in your household; find recipes with ListRecipes", key.meal, store.FormatDate(key.date))
+				"the recipe chosen for a slot on %s isn't in your household; find recipes with ListRecipes", store.FormatDate(key.date))
 		}
+	}
+	for _, c := range personalChoices {
+		if _, _, err := personalEatingTime(d.people, "choices", c.GetPersonId(), c.GetEatingTimeId()); err != nil {
+			return nil, err
+		}
+	}
+	var personal []struct {
+		person     *people.Person
+		eatingTime *people.EatingTime
+	}
+	if !req.GetSkipPersonalEatingTimes() {
+		personal = personalSlots(d.people)
 	}
 
 	// The meals are those asked for, each of which someone must eat, or
@@ -166,9 +260,9 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 				eaters[meal] = list
 			}
 		}
-		if len(meals) == 0 {
+		if len(meals) == 0 && len(personal) == 0 {
 			return nil, connect.NewError(connect.CodeFailedPrecondition,
-				"nobody eats from a shared meal: set the meal of people's eating times with UpdatePerson")
+				"nobody eats from a shared meal, nor has eating times of their own: set people's eating times with UpdatePerson")
 		}
 	}
 	for _, meal := range meals {
@@ -198,28 +292,50 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 	states := map[slotKey]suggestionsv1.PlanSlotState{}
 	plannedNames := map[slotKey][]string{}
 	for _, c := range d.plan.Cooks {
-		key := slotKey{c.Date, c.Meal}
+		if c.Meal == people.MealNone {
+			continue
+		}
+		key := slotKey{date: c.Date, meal: c.Meal}
 		plannedNames[key] = append(plannedNames[key], c.RecipeName)
 	}
+	// One person's eating time is planned if it has portions or staples.
+	for slot, items := range d.items {
+		key := personalSlot(slot.Date, slot.PersonID, slot.EatingTimeID)
+		for _, it := range items {
+			plannedNames[key] = append(plannedNames[key], it.name())
+		}
+	}
 	toChoose := 0
+	slotOf := map[slotKey]*suggest.PlanSlot{}
+	addSlot := func(key slotKey, slot *suggest.PlanSlot) {
+		keys = append(keys, key)
+		id, chosen := choices[key]
+		switch {
+		case len(plannedNames[key]) > 0:
+			states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_PLANNED
+		case chosen && !id.Valid:
+			states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_SKIPPED
+		case chosen:
+			states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_KEPT
+			slot.Fixed = d.recipes[id]
+			in.Slots = append(in.Slots, slot)
+		default:
+			states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_SUGGESTED
+			in.Slots = append(in.Slots, slot)
+			toChoose++
+		}
+		slotOf[key] = slot
+	}
+	// Each day's shared meals come first, then each person's own eating
+	// times, so those are planned given the meals' portions, which spill
+	// into them when they're more than the person's maximum portion.
 	for date := start; !date.After(end); date = date.AddDate(0, 0, 1) {
 		for _, meal := range meals {
-			key := slotKey{date, meal}
-			keys = append(keys, key)
-			id, chosen := choices[key]
-			switch {
-			case len(plannedNames[key]) > 0:
-				states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_PLANNED
-			case chosen && !id.Valid:
-				states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_SKIPPED
-			case chosen:
-				states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_KEPT
-				in.Slots = append(in.Slots, &suggest.PlanSlot{Date: date, Meal: meal, People: eaters[meal], Fixed: d.recipes[id]})
-			default:
-				states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_SUGGESTED
-				in.Slots = append(in.Slots, &suggest.PlanSlot{Date: date, Meal: meal, People: eaters[meal]})
-				toChoose++
-			}
+			addSlot(slotKey{date: date, meal: meal}, &suggest.PlanSlot{Date: date, Meal: meal, People: eaters[meal]})
+		}
+		for _, ps := range personal {
+			addSlot(personalSlot(date, ps.person.ID, ps.eatingTime.ID),
+				&suggest.PlanSlot{Date: date, People: []*people.Person{ps.person}, EatingTimeID: ps.eatingTime.ID})
 		}
 	}
 	if toChoose > 0 && len(candidates) == 0 {
@@ -234,9 +350,9 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 	in.Rand = rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15))
 	result := suggest.Plan(in)
 
-	planned := map[slotKey]*suggest.PlannedSlot{}
+	planned := map[*suggest.PlanSlot]*suggest.PlannedSlot{}
 	for _, ps := range result.Slots {
-		planned[slotKey{ps.Slot.Date, ps.Slot.Meal}] = ps
+		planned[ps.Slot] = ps
 	}
 	slots := make([]*suggestionsv1.PlanSlot, 0, len(keys))
 	for _, key := range keys {
@@ -245,13 +361,25 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 			Meal:  person.MealsToProto[key.meal],
 			State: states[key],
 		}
+		if key.personal() {
+			p := slotOf[key].People[0]
+			b.PersonId = store.UUIDToString(p.ID)
+			b.PersonName = p.Name
+			b.EatingTimeId = store.UUIDToString(key.eatingTimeID)
+			b.EatingTimeName = p.EatingTime(key.eatingTimeID).Name
+		}
 		switch states[key] {
 		case suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_PLANNED:
 			b.PlannedRecipeNames = plannedNames[key]
 		case suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_SUGGESTED, suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_KEPT:
-			ps := planned[key]
+			ps := planned[slotOf[key]]
+			if ps.FilledByMeal {
+				b.State = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_FILLED_BY_MEAL
+				break
+			}
 			if ps.Suggestion == nil {
 				b.State = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_UNFILLED
+				b.UnfilledReason = unfilledReason(ps)
 				break
 			}
 			b.Suggestion = suggestionToProto(ps.Suggestion)
@@ -269,6 +397,27 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 		Seed:        seed,
 		RecipeCount: int32(len(candidates)),
 	}.Build(), nil
+}
+
+// unfilledReason says why a slot got no recipe.
+func unfilledReason(ps *suggest.PlannedSlot) string {
+	if ps.Eligible > 0 {
+		return "No recipe could be planned here."
+	}
+	switch tag := ps.Slot.Tag(); tag {
+	case "breakfast", "snack":
+		return fmt.Sprintf("No recipe meeting the criteria is tagged %q: tag the recipes that make a good %s.", tag, tag)
+	default:
+		return `No recipe meeting the criteria is for a main meal: those have no meal tag, or are tagged "lunch" or "dinner".`
+	}
+}
+
+// boolInt returns 1 for true and 0 for false, to sort by.
+func boolInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 // planWeights returns the weights of the scores' components for plan
@@ -372,23 +521,40 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 		if err != nil {
 			return nil, err
 		}
-		meal, err := mealFromProto(m.GetMeal())
-		if err != nil {
-			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.%s", field, mealRequired)
+		var key slotKey
+		if m.GetPersonId() != "" || m.GetEatingTimeId() != "" {
+			// The person and eating time are checked once the people are
+			// read.
+			personID, err := parseID(field+".person_id", m.GetPersonId(), "find people with ListPeople")
+			if err != nil {
+				return nil, err
+			}
+			eatingTimeID, err := parseID(field+".eating_time_id", m.GetEatingTimeId(), "find people's eating times with ListPeople")
+			if err != nil {
+				return nil, err
+			}
+			key = personalSlot(date, personID, eatingTimeID)
+		} else {
+			meal, err := mealFromProto(m.GetMeal())
+			if err != nil {
+				return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.%s, or person_id and eating_time_id", field, mealRequired)
+			}
+			key = slotKey{date: date, meal: meal}
 		}
-		key := slotKey{date, meal}
 		if seen[key] {
-			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s is a second %s on %s: plan at most one per date and meal",
-				field, meal, store.FormatDate(date))
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s is a second meal at its slot on %s: plan at most one per date and meal or eating time",
+				field, store.FormatDate(date))
 		}
 		seen[key] = true
 		list = append(list, mealToPlan{recipeID, key})
 		recipeIDs = append(recipeIDs, recipeID)
 	}
 	// The meals are split in order, each given the portions of those
-	// before it, as if planned one by one with PlanMeal.
-	slices.SortFunc(list, func(a, b mealToPlan) int {
-		return cmp.Or(a.date.Compare(b.date), compareMeals(a.meal, b.meal))
+	// before it, as if planned one by one with PlanMeal, and each day's
+	// eating times of one person after its shared meals, as SuggestPlan
+	// plans them.
+	slices.SortStableFunc(list, func(a, b mealToPlan) int {
+		return cmp.Or(a.date.Compare(b.date), cmp.Compare(boolInt(a.personal()), boolInt(b.personal())), compareMeals(a.meal, b.meal))
 	})
 	from, to := list[0].date, list[len(list)-1].date.AddDate(0, 0, 1)
 	d, err := s.loadPlan(ctx, user.HouseholdID(), from, to, unique(recipeIDs)...)
@@ -398,10 +564,30 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 	planned := d.plannedGrams()
 	eaters := map[people.Meal][]*people.Person{}
 	toCreate := make([]*plans.CookWithPortions, 0, len(list))
-	for _, m := range list {
+	for i, m := range list {
 		if _, ok := d.recipes[m.recipeID]; !ok {
-			return nil, connect.Errorf(connect.CodeNotFound, "the recipe for %s on %s doesn't exist in your household; find recipes with ListRecipes",
-				m.meal, store.FormatDate(m.date))
+			return nil, connect.Errorf(connect.CodeNotFound, "the recipe for a meal on %s doesn't exist in your household; find recipes with ListRecipes",
+				store.FormatDate(m.date))
+		}
+		gramsPerServing := d.recipeNutrition[m.recipeID].GramsPerServing
+		if m.personal() {
+			p, _, err := personalEatingTime(d.people, fmt.Sprintf("meals[%d]", i), store.UUIDToString(m.personID), store.UUIDToString(m.eatingTimeID))
+			if err != nil {
+				return nil, err
+			}
+			slot := plans.Slot{PersonID: p.ID, EatingTimeID: m.eatingTimeID, Date: m.date}
+			servings, cookServings := plans.EatingTimeServings(p, gramsPerServing, planned[slot])
+			planned[slot] += servings * gramsPerServing
+			toCreate = append(toCreate, &plans.CookWithPortions{
+				Cook: &plans.Cook{
+					HouseholdID: user.HouseholdID(),
+					RecipeID:    m.recipeID,
+					Date:        m.date,
+					Servings:    cookServings,
+				},
+				Portions: []*plans.Portion{{PersonID: p.ID, EatingTimeID: m.eatingTimeID, Date: m.date, Servings: servings}},
+			})
+			continue
 		}
 		if _, ok := eaters[m.meal]; !ok {
 			eaters[m.meal], err = mealEaters(d.people, m.meal, nil)
@@ -409,7 +595,6 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 				return nil, err
 			}
 		}
-		gramsPerServing := d.recipeNutrition[m.recipeID].GramsPerServing
 		split, err := plans.SplitMeal(&plans.SplitInput{
 			Date:            m.date,
 			Meal:            m.meal,

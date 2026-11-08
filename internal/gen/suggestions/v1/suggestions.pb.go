@@ -172,8 +172,12 @@ const (
 	PlanSlotState_PLAN_SLOT_STATE_SKIPPED PlanSlotState = 3
 	// Nothing new, as it's planned already: see planned_recipe_names.
 	PlanSlotState_PLAN_SLOT_STATE_PLANNED PlanSlotState = 4
-	// Nothing, as no recipe could be suggested.
+	// Nothing, as no recipe could be suggested: see unfilled_reason.
 	PlanSlotState_PLAN_SLOT_STATE_UNFILLED PlanSlotState = 5
+	// Nothing new, for one person's eating time: they eat the rest of a
+	// shared meal of the plan there, as it's more than their
+	// max_portion_grams.
+	PlanSlotState_PLAN_SLOT_STATE_FILLED_BY_MEAL PlanSlotState = 6
 )
 
 // Enum value maps for PlanSlotState.
@@ -185,14 +189,16 @@ var (
 		3: "PLAN_SLOT_STATE_SKIPPED",
 		4: "PLAN_SLOT_STATE_PLANNED",
 		5: "PLAN_SLOT_STATE_UNFILLED",
+		6: "PLAN_SLOT_STATE_FILLED_BY_MEAL",
 	}
 	PlanSlotState_value = map[string]int32{
-		"PLAN_SLOT_STATE_UNSPECIFIED": 0,
-		"PLAN_SLOT_STATE_SUGGESTED":   1,
-		"PLAN_SLOT_STATE_KEPT":        2,
-		"PLAN_SLOT_STATE_SKIPPED":     3,
-		"PLAN_SLOT_STATE_PLANNED":     4,
-		"PLAN_SLOT_STATE_UNFILLED":    5,
+		"PLAN_SLOT_STATE_UNSPECIFIED":    0,
+		"PLAN_SLOT_STATE_SUGGESTED":      1,
+		"PLAN_SLOT_STATE_KEPT":           2,
+		"PLAN_SLOT_STATE_SKIPPED":        3,
+		"PLAN_SLOT_STATE_PLANNED":        4,
+		"PLAN_SLOT_STATE_UNFILLED":       5,
+		"PLAN_SLOT_STATE_FILLED_BY_MEAL": 6,
 	}
 )
 
@@ -1334,12 +1340,14 @@ func (b0 PlanCriteria_builder) Build() *PlanCriteria {
 
 // The user's choice for a slot of a suggested plan.
 type PlanChoice struct {
-	state               protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Date     string                 `protobuf:"bytes,1,opt,name=date,proto3"`
-	xxx_hidden_Meal     v1.HouseholdMeal       `protobuf:"varint,2,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
-	xxx_hidden_RecipeId string                 `protobuf:"bytes,3,opt,name=recipe_id,json=recipeId,proto3"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Date         string                 `protobuf:"bytes,1,opt,name=date,proto3"`
+	xxx_hidden_Meal         v1.HouseholdMeal       `protobuf:"varint,2,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_RecipeId     string                 `protobuf:"bytes,3,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_PersonId     string                 `protobuf:"bytes,4,opt,name=person_id,json=personId,proto3"`
+	xxx_hidden_EatingTimeId string                 `protobuf:"bytes,5,opt,name=eating_time_id,json=eatingTimeId,proto3"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *PlanChoice) Reset() {
@@ -1388,6 +1396,20 @@ func (x *PlanChoice) GetRecipeId() string {
 	return ""
 }
 
+func (x *PlanChoice) GetPersonId() string {
+	if x != nil {
+		return x.xxx_hidden_PersonId
+	}
+	return ""
+}
+
+func (x *PlanChoice) GetEatingTimeId() string {
+	if x != nil {
+		return x.xxx_hidden_EatingTimeId
+	}
+	return ""
+}
+
 func (x *PlanChoice) SetDate(v string) {
 	x.xxx_hidden_Date = v
 }
@@ -1400,16 +1422,29 @@ func (x *PlanChoice) SetRecipeId(v string) {
 	x.xxx_hidden_RecipeId = v
 }
 
+func (x *PlanChoice) SetPersonId(v string) {
+	x.xxx_hidden_PersonId = v
+}
+
+func (x *PlanChoice) SetEatingTimeId(v string) {
+	x.xxx_hidden_EatingTimeId = v
+}
+
 type PlanChoice_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	// The date of the slot (YYYY-MM-DD). Required.
 	Date string
-	// The shared meal of the slot. Required.
+	// The shared meal of the slot. Required, unless eating_time_id is set.
 	Meal v1.HouseholdMeal
 	// The ID of the recipe to keep at the slot, whatever the criteria, or
 	// empty to leave the slot empty.
 	RecipeId string
+	// Instead of a shared meal, the person of a slot of one person's eating
+	// time, with eating_time_id.
+	PersonId string
+	// The person's eating time, with person_id.
+	EatingTimeId string
 }
 
 func (b0 PlanChoice_builder) Build() *PlanChoice {
@@ -1419,19 +1454,22 @@ func (b0 PlanChoice_builder) Build() *PlanChoice {
 	x.xxx_hidden_Date = b.Date
 	x.xxx_hidden_Meal = b.Meal
 	x.xxx_hidden_RecipeId = b.RecipeId
+	x.xxx_hidden_PersonId = b.PersonId
+	x.xxx_hidden_EatingTimeId = b.EatingTimeId
 	return m0
 }
 
 type SuggestPlanRequest struct {
-	state                protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_StartDate string                 `protobuf:"bytes,1,opt,name=start_date,json=startDate,proto3"`
-	xxx_hidden_Days      int32                  `protobuf:"varint,2,opt,name=days,proto3"`
-	xxx_hidden_Meals     []v1.HouseholdMeal     `protobuf:"varint,3,rep,packed,name=meals,proto3,enum=people.v1.HouseholdMeal"`
-	xxx_hidden_Criteria  *PlanCriteria          `protobuf:"bytes,4,opt,name=criteria,proto3"`
-	xxx_hidden_Choices   *[]*PlanChoice         `protobuf:"bytes,5,rep,name=choices,proto3"`
-	xxx_hidden_Seed      uint64                 `protobuf:"varint,6,opt,name=seed,proto3"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	state                              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_StartDate               string                 `protobuf:"bytes,1,opt,name=start_date,json=startDate,proto3"`
+	xxx_hidden_Days                    int32                  `protobuf:"varint,2,opt,name=days,proto3"`
+	xxx_hidden_Meals                   []v1.HouseholdMeal     `protobuf:"varint,3,rep,packed,name=meals,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_Criteria                *PlanCriteria          `protobuf:"bytes,4,opt,name=criteria,proto3"`
+	xxx_hidden_Choices                 *[]*PlanChoice         `protobuf:"bytes,5,rep,name=choices,proto3"`
+	xxx_hidden_Seed                    uint64                 `protobuf:"varint,6,opt,name=seed,proto3"`
+	xxx_hidden_SkipPersonalEatingTimes bool                   `protobuf:"varint,7,opt,name=skip_personal_eating_times,json=skipPersonalEatingTimes,proto3"`
+	unknownFields                      protoimpl.UnknownFields
+	sizeCache                          protoimpl.SizeCache
 }
 
 func (x *SuggestPlanRequest) Reset() {
@@ -1503,6 +1541,13 @@ func (x *SuggestPlanRequest) GetSeed() uint64 {
 	return 0
 }
 
+func (x *SuggestPlanRequest) GetSkipPersonalEatingTimes() bool {
+	if x != nil {
+		return x.xxx_hidden_SkipPersonalEatingTimes
+	}
+	return false
+}
+
 func (x *SuggestPlanRequest) SetStartDate(v string) {
 	x.xxx_hidden_StartDate = v
 }
@@ -1525,6 +1570,10 @@ func (x *SuggestPlanRequest) SetChoices(v []*PlanChoice) {
 
 func (x *SuggestPlanRequest) SetSeed(v uint64) {
 	x.xxx_hidden_Seed = v
+}
+
+func (x *SuggestPlanRequest) SetSkipPersonalEatingTimes(v bool) {
+	x.xxx_hidden_SkipPersonalEatingTimes = v
 }
 
 func (x *SuggestPlanRequest) HasCriteria() bool {
@@ -1557,6 +1606,9 @@ type SuggestPlanRequest_builder struct {
 	// seed suggests the same plan, if the household's data hasn't changed.
 	// 0 for a new one, which the response returns.
 	Seed uint64
+	// Whether to leave out the eating times of one person, like snacks, and
+	// plan only the shared meals.
+	SkipPersonalEatingTimes bool
 }
 
 func (b0 SuggestPlanRequest_builder) Build() *SuggestPlanRequest {
@@ -1569,10 +1621,12 @@ func (b0 SuggestPlanRequest_builder) Build() *SuggestPlanRequest {
 	x.xxx_hidden_Criteria = b.Criteria
 	x.xxx_hidden_Choices = &b.Choices
 	x.xxx_hidden_Seed = b.Seed
+	x.xxx_hidden_SkipPersonalEatingTimes = b.SkipPersonalEatingTimes
 	return m0
 }
 
-// A slot of a suggested plan: a shared meal on a date.
+// A slot of a suggested plan: a shared meal on a date, or one person's
+// eating time that eats from no shared meal, like a snack.
 type PlanSlot struct {
 	state                         protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Date               string                 `protobuf:"bytes,1,opt,name=date,proto3"`
@@ -1582,6 +1636,11 @@ type PlanSlot struct {
 	xxx_hidden_Alternatives       *[]*Suggestion         `protobuf:"bytes,5,rep,name=alternatives,proto3"`
 	xxx_hidden_PlannedRecipeNames []string               `protobuf:"bytes,6,rep,name=planned_recipe_names,json=plannedRecipeNames,proto3"`
 	xxx_hidden_FittingRecipeCount int32                  `protobuf:"varint,7,opt,name=fitting_recipe_count,json=fittingRecipeCount,proto3"`
+	xxx_hidden_PersonId           string                 `protobuf:"bytes,8,opt,name=person_id,json=personId,proto3"`
+	xxx_hidden_PersonName         string                 `protobuf:"bytes,9,opt,name=person_name,json=personName,proto3"`
+	xxx_hidden_EatingTimeId       string                 `protobuf:"bytes,10,opt,name=eating_time_id,json=eatingTimeId,proto3"`
+	xxx_hidden_EatingTimeName     string                 `protobuf:"bytes,11,opt,name=eating_time_name,json=eatingTimeName,proto3"`
+	xxx_hidden_UnfilledReason     string                 `protobuf:"bytes,12,opt,name=unfilled_reason,json=unfilledReason,proto3"`
 	unknownFields                 protoimpl.UnknownFields
 	sizeCache                     protoimpl.SizeCache
 }
@@ -1662,6 +1721,41 @@ func (x *PlanSlot) GetFittingRecipeCount() int32 {
 	return 0
 }
 
+func (x *PlanSlot) GetPersonId() string {
+	if x != nil {
+		return x.xxx_hidden_PersonId
+	}
+	return ""
+}
+
+func (x *PlanSlot) GetPersonName() string {
+	if x != nil {
+		return x.xxx_hidden_PersonName
+	}
+	return ""
+}
+
+func (x *PlanSlot) GetEatingTimeId() string {
+	if x != nil {
+		return x.xxx_hidden_EatingTimeId
+	}
+	return ""
+}
+
+func (x *PlanSlot) GetEatingTimeName() string {
+	if x != nil {
+		return x.xxx_hidden_EatingTimeName
+	}
+	return ""
+}
+
+func (x *PlanSlot) GetUnfilledReason() string {
+	if x != nil {
+		return x.xxx_hidden_UnfilledReason
+	}
+	return ""
+}
+
 func (x *PlanSlot) SetDate(v string) {
 	x.xxx_hidden_Date = v
 }
@@ -1690,6 +1784,26 @@ func (x *PlanSlot) SetFittingRecipeCount(v int32) {
 	x.xxx_hidden_FittingRecipeCount = v
 }
 
+func (x *PlanSlot) SetPersonId(v string) {
+	x.xxx_hidden_PersonId = v
+}
+
+func (x *PlanSlot) SetPersonName(v string) {
+	x.xxx_hidden_PersonName = v
+}
+
+func (x *PlanSlot) SetEatingTimeId(v string) {
+	x.xxx_hidden_EatingTimeId = v
+}
+
+func (x *PlanSlot) SetEatingTimeName(v string) {
+	x.xxx_hidden_EatingTimeName = v
+}
+
+func (x *PlanSlot) SetUnfilledReason(v string) {
+	x.xxx_hidden_UnfilledReason = v
+}
+
 func (x *PlanSlot) HasSuggestion() bool {
 	if x == nil {
 		return false
@@ -1706,7 +1820,8 @@ type PlanSlot_builder struct {
 
 	// The date (YYYY-MM-DD).
 	Date string
-	// The shared meal.
+	// The shared meal, HOUSEHOLD_MEAL_UNSPECIFIED for one person's eating
+	// time.
 	Meal v1.HouseholdMeal
 	// What it holds.
 	State PlanSlotState
@@ -1724,6 +1839,18 @@ type PlanSlot_builder struct {
 	// suggest adding recipes that fit, or checking that the rules are the
 	// care team's.
 	FittingRecipeCount int32
+	// The person, for one person's eating time.
+	PersonId string
+	// The person's name, for one person's eating time.
+	PersonName string
+	// The eating time, for one person's eating time.
+	EatingTimeId string
+	// The eating time's name, e.g. "Mid-morning snack", for one person's
+	// eating time.
+	EatingTimeName string
+	// Why no recipe could be suggested, for UNFILLED, e.g. that no recipe
+	// meeting the criteria is tagged "breakfast".
+	UnfilledReason string
 }
 
 func (b0 PlanSlot_builder) Build() *PlanSlot {
@@ -1737,6 +1864,11 @@ func (b0 PlanSlot_builder) Build() *PlanSlot {
 	x.xxx_hidden_Alternatives = &b.Alternatives
 	x.xxx_hidden_PlannedRecipeNames = b.PlannedRecipeNames
 	x.xxx_hidden_FittingRecipeCount = b.FittingRecipeCount
+	x.xxx_hidden_PersonId = b.PersonId
+	x.xxx_hidden_PersonName = b.PersonName
+	x.xxx_hidden_EatingTimeId = b.EatingTimeId
+	x.xxx_hidden_EatingTimeName = b.EatingTimeName
+	x.xxx_hidden_UnfilledReason = b.UnfilledReason
 	return m0
 }
 
@@ -1836,7 +1968,8 @@ func (x *SuggestPlanResponse) SetRecipeCount(v int32) {
 type SuggestPlanResponse_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// Every slot of the days and meals, by date and meal.
+	// Every slot of the days, by date: the shared meals, in order, then the
+	// eating times of one person, by person and in the order of their day.
 	Slots []*PlanSlot
 	// The plan's score: the sum of its slots'.
 	Score float64
@@ -1926,12 +2059,14 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\tnutrition\x18\x05 \x01(\x0e2\x18.suggestions.v1.EmphasisR\tnutrition\x12*\n" +
 	"\x11max_total_seconds\x18\x06 \x01(\x05R\x0fmaxTotalSeconds\x12!\n" +
 	"\fexclude_tags\x18\a \x03(\tR\vexcludeTags\x12,\n" +
-	"\x12exclude_recipe_ids\x18\b \x03(\tR\x10excludeRecipeIds\"k\n" +
+	"\x12exclude_recipe_ids\x18\b \x03(\tR\x10excludeRecipeIds\"\xae\x01\n" +
 	"\n" +
 	"PlanChoice\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +
 	"\x04meal\x18\x02 \x01(\x0e2\x18.people.v1.HouseholdMealR\x04meal\x12\x1b\n" +
-	"\trecipe_id\x18\x03 \x01(\tR\brecipeId\"\xfb\x01\n" +
+	"\trecipe_id\x18\x03 \x01(\tR\brecipeId\x12\x1b\n" +
+	"\tperson_id\x18\x04 \x01(\tR\bpersonId\x12$\n" +
+	"\x0eeating_time_id\x18\x05 \x01(\tR\featingTimeId\"\xb8\x02\n" +
 	"\x12SuggestPlanRequest\x12\x1d\n" +
 	"\n" +
 	"start_date\x18\x01 \x01(\tR\tstartDate\x12\x12\n" +
@@ -1939,7 +2074,8 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x05meals\x18\x03 \x03(\x0e2\x18.people.v1.HouseholdMealR\x05meals\x128\n" +
 	"\bcriteria\x18\x04 \x01(\v2\x1c.suggestions.v1.PlanCriteriaR\bcriteria\x124\n" +
 	"\achoices\x18\x05 \x03(\v2\x1a.suggestions.v1.PlanChoiceR\achoices\x12\x12\n" +
-	"\x04seed\x18\x06 \x01(\x04R\x04seed\"\xe1\x02\n" +
+	"\x04seed\x18\x06 \x01(\x04R\x04seed\x12;\n" +
+	"\x1askip_personal_eating_times\x18\a \x01(\bR\x17skipPersonalEatingTimes\"\x98\x04\n" +
 	"\bPlanSlot\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +
 	"\x04meal\x18\x02 \x01(\x0e2\x18.people.v1.HouseholdMealR\x04meal\x123\n" +
@@ -1949,7 +2085,14 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"suggestion\x12>\n" +
 	"\falternatives\x18\x05 \x03(\v2\x1a.suggestions.v1.SuggestionR\falternatives\x120\n" +
 	"\x14planned_recipe_names\x18\x06 \x03(\tR\x12plannedRecipeNames\x120\n" +
-	"\x14fitting_recipe_count\x18\a \x01(\x05R\x12fittingRecipeCount\"\xb3\x01\n" +
+	"\x14fitting_recipe_count\x18\a \x01(\x05R\x12fittingRecipeCount\x12\x1b\n" +
+	"\tperson_id\x18\b \x01(\tR\bpersonId\x12\x1f\n" +
+	"\vperson_name\x18\t \x01(\tR\n" +
+	"personName\x12$\n" +
+	"\x0eeating_time_id\x18\n" +
+	" \x01(\tR\featingTimeId\x12(\n" +
+	"\x10eating_time_name\x18\v \x01(\tR\x0eeatingTimeName\x12'\n" +
+	"\x0funfilled_reason\x18\f \x01(\tR\x0eunfilledReason\"\xb3\x01\n" +
 	"\x13SuggestPlanResponse\x12.\n" +
 	"\x05slots\x18\x01 \x03(\v2\x18.suggestions.v1.PlanSlotR\x05slots\x12\x14\n" +
 	"\x05score\x18\x02 \x01(\x01R\x05score\x12\x1f\n" +
@@ -1975,14 +2118,15 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\fEMPHASIS_OFF\x10\x01\x12\x10\n" +
 	"\fEMPHASIS_LOW\x10\x02\x12\x13\n" +
 	"\x0fEMPHASIS_NORMAL\x10\x03\x12\x11\n" +
-	"\rEMPHASIS_HIGH\x10\x04*\xc1\x01\n" +
+	"\rEMPHASIS_HIGH\x10\x04*\xe5\x01\n" +
 	"\rPlanSlotState\x12\x1f\n" +
 	"\x1bPLAN_SLOT_STATE_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19PLAN_SLOT_STATE_SUGGESTED\x10\x01\x12\x18\n" +
 	"\x14PLAN_SLOT_STATE_KEPT\x10\x02\x12\x1b\n" +
 	"\x17PLAN_SLOT_STATE_SKIPPED\x10\x03\x12\x1b\n" +
 	"\x17PLAN_SLOT_STATE_PLANNED\x10\x04\x12\x1c\n" +
-	"\x18PLAN_SLOT_STATE_UNFILLED\x10\x052\xcc\x01\n" +
+	"\x18PLAN_SLOT_STATE_UNFILLED\x10\x05\x12\"\n" +
+	"\x1ePLAN_SLOT_STATE_FILLED_BY_MEAL\x10\x062\xcc\x01\n" +
 	"\x11SuggestionService\x12_\n" +
 	"\x0eSuggestRecipes\x12%.suggestions.v1.SuggestRecipesRequest\x1a&.suggestions.v1.SuggestRecipesResponse\x12V\n" +
 	"\vSuggestPlan\x12\".suggestions.v1.SuggestPlanRequest\x1a#.suggestions.v1.SuggestPlanResponseB\xcc\x01\n" +

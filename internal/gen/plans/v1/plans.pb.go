@@ -3150,12 +3150,14 @@ func (b0 PlanMealResponse_builder) Build() *PlanMealResponse {
 
 // A shared meal to plan with PlanMeals.
 type MealToPlan struct {
-	state               protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_RecipeId string                 `protobuf:"bytes,1,opt,name=recipe_id,json=recipeId,proto3"`
-	xxx_hidden_Date     string                 `protobuf:"bytes,2,opt,name=date,proto3"`
-	xxx_hidden_Meal     v1.HouseholdMeal       `protobuf:"varint,3,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_RecipeId     string                 `protobuf:"bytes,1,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_Date         string                 `protobuf:"bytes,2,opt,name=date,proto3"`
+	xxx_hidden_Meal         v1.HouseholdMeal       `protobuf:"varint,3,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_PersonId     string                 `protobuf:"bytes,4,opt,name=person_id,json=personId,proto3"`
+	xxx_hidden_EatingTimeId string                 `protobuf:"bytes,5,opt,name=eating_time_id,json=eatingTimeId,proto3"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *MealToPlan) Reset() {
@@ -3204,6 +3206,20 @@ func (x *MealToPlan) GetMeal() v1.HouseholdMeal {
 	return v1.HouseholdMeal(0)
 }
 
+func (x *MealToPlan) GetPersonId() string {
+	if x != nil {
+		return x.xxx_hidden_PersonId
+	}
+	return ""
+}
+
+func (x *MealToPlan) GetEatingTimeId() string {
+	if x != nil {
+		return x.xxx_hidden_EatingTimeId
+	}
+	return ""
+}
+
 func (x *MealToPlan) SetRecipeId(v string) {
 	x.xxx_hidden_RecipeId = v
 }
@@ -3216,6 +3232,14 @@ func (x *MealToPlan) SetMeal(v v1.HouseholdMeal) {
 	x.xxx_hidden_Meal = v
 }
 
+func (x *MealToPlan) SetPersonId(v string) {
+	x.xxx_hidden_PersonId = v
+}
+
+func (x *MealToPlan) SetEatingTimeId(v string) {
+	x.xxx_hidden_EatingTimeId = v
+}
+
 type MealToPlan_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -3223,8 +3247,13 @@ type MealToPlan_builder struct {
 	RecipeId string
 	// The date (YYYY-MM-DD). Required.
 	Date string
-	// The shared meal. Required.
+	// The shared meal. Required, unless eating_time_id is set.
 	Meal v1.HouseholdMeal
+	// Instead of a shared meal, the person whose eating time it is, with
+	// eating_time_id: e.g. one person's snack mid-morning.
+	PersonId string
+	// The person's eating time, with person_id.
+	EatingTimeId string
 }
 
 func (b0 MealToPlan_builder) Build() *MealToPlan {
@@ -3234,6 +3263,8 @@ func (b0 MealToPlan_builder) Build() *MealToPlan {
 	x.xxx_hidden_RecipeId = b.RecipeId
 	x.xxx_hidden_Date = b.Date
 	x.xxx_hidden_Meal = b.Meal
+	x.xxx_hidden_PersonId = b.PersonId
+	x.xxx_hidden_EatingTimeId = b.EatingTimeId
 	return m0
 }
 
@@ -3285,9 +3316,9 @@ func (x *PlanMealsRequest) SetMeals(v []*MealToPlan) {
 type PlanMealsRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The meals to plan, from 1 to 60, at most one per date and meal. Each
-	// is cooked for everyone who eats from it, with the servings planned
-	// for them.
+	// The meals to plan, from 1 to 150, at most one per date and meal or
+	// eating time. Each shared meal is cooked for everyone who eats from it,
+	// with the servings planned for them.
 	Meals []*MealToPlan
 }
 
@@ -5725,12 +5756,14 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x04cook\x18\x01 \x01(\v2\x0e.plans.v1.CookR\x04cook\x12-\n" +
 	"\bportions\x18\x02 \x03(\v2\x11.plans.v1.PortionR\bportions\x12/\n" +
 	"\x13unassigned_servings\x18\x03 \x01(\x01R\x12unassignedServings\x12-\n" +
-	"\bwarnings\x18\x04 \x03(\v2\x11.plans.v1.WarningR\bwarnings\"k\n" +
+	"\bwarnings\x18\x04 \x03(\v2\x11.plans.v1.WarningR\bwarnings\"\xae\x01\n" +
 	"\n" +
 	"MealToPlan\x12\x1b\n" +
 	"\trecipe_id\x18\x01 \x01(\tR\brecipeId\x12\x12\n" +
 	"\x04date\x18\x02 \x01(\tR\x04date\x12,\n" +
-	"\x04meal\x18\x03 \x01(\x0e2\x18.people.v1.HouseholdMealR\x04meal\">\n" +
+	"\x04meal\x18\x03 \x01(\x0e2\x18.people.v1.HouseholdMealR\x04meal\x12\x1b\n" +
+	"\tperson_id\x18\x04 \x01(\tR\bpersonId\x12$\n" +
+	"\x0eeating_time_id\x18\x05 \x01(\tR\featingTimeId\">\n" +
 	"\x10PlanMealsRequest\x12*\n" +
 	"\x05meals\x18\x01 \x03(\v2\x14.plans.v1.MealToPlanR\x05meals\"^\n" +
 	"\x11PlanMealsResponse\x12$\n" +

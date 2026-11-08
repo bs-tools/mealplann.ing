@@ -70,10 +70,15 @@ service SuggestionService {
   // a bad date or an eating time that isn't the person's, and with
   // FAILED_PRECONDITION if nobody eats from the shared meal.
   rpc SuggestRecipes(SuggestRecipesRequest) returns (SuggestRecipesResponse);
-  // Suggest a whole plan of shared meals for the next days at once: a
-  // recipe for each open breakfast, lunch or dinner, chosen together so
-  // the days share ingredients and packs, use the pantry, vary, and meet
-  // everyone's rules and targets. It's the fastest way to plan a week:
+  // Suggest a whole plan for the household for the next days at once: a
+  // recipe for each open breakfast, lunch or dinner, and for each eating
+  // time of one person that eats from no shared meal, like a snack
+  // mid-morning, chosen together so the days share ingredients and packs,
+  // use the pantry, vary, and meet everyone's rules and targets. Slots only
+  // get recipes tagged for them: breakfast and snacks need recipes tagged
+  // "breakfast" or "snack", and lunch, dinner and other main eating times
+  // take recipes tagged "lunch" or "dinner", or with no meal tag. A slot
+  // left without one says why. It's the fastest way to plan a week:
   //
   // 1. Call SuggestPlan with the first date, the number of days and the
   //    meals, and criteria from what the user wants, like more variety,
@@ -91,8 +96,11 @@ service SuggestionService {
   // seconds, picking each slot's recipe among the best for it given the
   // slots planned before, keeps the best plan, and then improves each slot
   // given all the others. Slots that already have a cook of their meal
-  // aren't planned again. A slot only gets a recipe that breaks someone's
-  // rules if every recipe does. Nothing is changed. Fails with
+  // aren't planned again, nor are eating times with portions or staples.
+  // An eating time where the rest of a shared meal of the plan is eaten,
+  // as it's more than the person's max_portion_grams, isn't planned
+  // either. A slot only gets a recipe that breaks someone's rules if every
+  // recipe does. Nothing is changed. Fails with
   // INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
   // nobody eats from the meals, or no recipe meets the criteria.
   rpc SuggestPlan(SuggestPlanRequest) returns (SuggestPlanResponse);
@@ -283,11 +291,16 @@ message PlanCriteria {
 message PlanChoice {
   // The date of the slot (YYYY-MM-DD). Required.
   string date = 1;
-  // The shared meal of the slot. Required.
+  // The shared meal of the slot. Required, unless eating_time_id is set.
   people.v1.HouseholdMeal meal = 2;
   // The ID of the recipe to keep at the slot, whatever the criteria, or
   // empty to leave the slot empty.
   string recipe_id = 3;
+  // Instead of a shared meal, the person of a slot of one person's eating
+  // time, with eating_time_id.
+  string person_id = 4;
+  // The person's eating time, with person_id.
+  string eating_time_id = 5;
 }
 
 message SuggestPlanRequest {
@@ -307,6 +320,9 @@ message SuggestPlanRequest {
   // seed suggests the same plan, if the household's data hasn't changed.
   // 0 for a new one, which the response returns.
   uint64 seed = 6;
+  // Whether to leave out the eating times of one person, like snacks, and
+  // plan only the shared meals.
+  bool skip_personal_eating_times = 7;
 }
 
 // PlanSlotState is what a slot of a suggested plan holds.
@@ -320,15 +336,21 @@ enum PlanSlotState {
   PLAN_SLOT_STATE_SKIPPED = 3;
   // Nothing new, as it's planned already: see planned_recipe_names.
   PLAN_SLOT_STATE_PLANNED = 4;
-  // Nothing, as no recipe could be suggested.
+  // Nothing, as no recipe could be suggested: see unfilled_reason.
   PLAN_SLOT_STATE_UNFILLED = 5;
+  // Nothing new, for one person's eating time: they eat the rest of a
+  // shared meal of the plan there, as it's more than their
+  // max_portion_grams.
+  PLAN_SLOT_STATE_FILLED_BY_MEAL = 6;
 }
 
-// A slot of a suggested plan: a shared meal on a date.
+// A slot of a suggested plan: a shared meal on a date, or one person's
+// eating time that eats from no shared meal, like a snack.
 message PlanSlot {
   // The date (YYYY-MM-DD).
   string date = 1;
-  // The shared meal.
+  // The shared meal, HOUSEHOLD_MEAL_UNSPECIFIED for one person's eating
+  // time.
   people.v1.HouseholdMeal meal = 2;
   // What it holds.
   PlanSlotState state = 3;
@@ -346,10 +368,23 @@ message PlanSlot {
   // suggest adding recipes that fit, or checking that the rules are the
   // care team's.
   int32 fitting_recipe_count = 7;
+  // The person, for one person's eating time.
+  string person_id = 8;
+  // The person's name, for one person's eating time.
+  string person_name = 9;
+  // The eating time, for one person's eating time.
+  string eating_time_id = 10;
+  // The eating time's name, e.g. "Mid-morning snack", for one person's
+  // eating time.
+  string eating_time_name = 11;
+  // Why no recipe could be suggested, for UNFILLED, e.g. that no recipe
+  // meeting the criteria is tagged "breakfast".
+  string unfilled_reason = 12;
 }
 
 message SuggestPlanResponse {
-  // Every slot of the days and meals, by date and meal.
+  // Every slot of the days, by date: the shared meals, in order, then the
+  // eating times of one person, by person and in the order of their day.
   repeated PlanSlot slots = 1;
   // The plan's score: the sum of its slots'.
   double score = 2;

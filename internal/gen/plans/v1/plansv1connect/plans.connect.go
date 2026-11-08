@@ -203,12 +203,15 @@ type PlanServiceClient interface {
 	// of the eating times and cook it touched. Fails with
 	// FAILED_PRECONDITION if nobody eats from the meal.
 	PlanMeal(context.Context, *v1.PlanMealRequest) (*v1.PlanMealResponse, error)
-	// Plan several shared meals at once, like PlanMeal for each, in order of
-	// date and meal, so each splits its portions given those before it. Use
-	// it to save a plan from SuggestionService.SuggestPlan. Nothing is
-	// planned if any meal fails. Fails with INVALID_ARGUMENT if two meals
-	// are at the same date and meal, and FAILED_PRECONDITION if nobody eats
-	// from a meal.
+	// Plan several shared meals, or one person's eating times, at once, like
+	// PlanMeal for each shared meal, in order of date and meal, so each
+	// splits its portions given those before it. An eating time of one
+	// person gets a cook for their portion: a serving, or less if their
+	// max_portion_grams says so. Each date's shared meals are planned before
+	// its eating times of one person. Use it to save a plan from
+	// SuggestionService.SuggestPlan. Nothing is planned if any meal fails.
+	// Fails with INVALID_ARGUMENT if two meals are at the same date and meal
+	// or eating time, and FAILED_PRECONDITION if nobody eats from a meal.
 	PlanMeals(context.Context, *v1.PlanMealsRequest) (*v1.PlanMealsResponse, error)
 	// Create a cook: a recipe made on a date. Plan who eats it with
 	// CreatePortion, or use PlanMeal to do both. A cook created done takes
@@ -295,12 +298,15 @@ type PlanServiceHandler interface {
 	// of the eating times and cook it touched. Fails with
 	// FAILED_PRECONDITION if nobody eats from the meal.
 	PlanMeal(context.Context, *v1.PlanMealRequest) (*v1.PlanMealResponse, error)
-	// Plan several shared meals at once, like PlanMeal for each, in order of
-	// date and meal, so each splits its portions given those before it. Use
-	// it to save a plan from SuggestionService.SuggestPlan. Nothing is
-	// planned if any meal fails. Fails with INVALID_ARGUMENT if two meals
-	// are at the same date and meal, and FAILED_PRECONDITION if nobody eats
-	// from a meal.
+	// Plan several shared meals, or one person's eating times, at once, like
+	// PlanMeal for each shared meal, in order of date and meal, so each
+	// splits its portions given those before it. An eating time of one
+	// person gets a cook for their portion: a serving, or less if their
+	// max_portion_grams says so. Each date's shared meals are planned before
+	// its eating times of one person. Use it to save a plan from
+	// SuggestionService.SuggestPlan. Nothing is planned if any meal fails.
+	// Fails with INVALID_ARGUMENT if two meals are at the same date and meal
+	// or eating time, and FAILED_PRECONDITION if nobody eats from a meal.
 	PlanMeals(context.Context, *v1.PlanMealsRequest) (*v1.PlanMealsResponse, error)
 	// Create a cook: a recipe made on a date. Plan who eats it with
 	// CreatePortion, or use PlanMeal to do both. A cook created done takes

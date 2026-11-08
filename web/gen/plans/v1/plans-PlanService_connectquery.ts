@@ -32,12 +32,15 @@ export const getWeek = PlanService.method.getWeek;
 export const planMeal = PlanService.method.planMeal;
 
 /**
- * Plan several shared meals at once, like PlanMeal for each, in order of
- * date and meal, so each splits its portions given those before it. Use
- * it to save a plan from SuggestionService.SuggestPlan. Nothing is
- * planned if any meal fails. Fails with INVALID_ARGUMENT if two meals
- * are at the same date and meal, and FAILED_PRECONDITION if nobody eats
- * from a meal.
+ * Plan several shared meals, or one person's eating times, at once, like
+ * PlanMeal for each shared meal, in order of date and meal, so each
+ * splits its portions given those before it. An eating time of one
+ * person gets a cook for their portion: a serving, or less if their
+ * max_portion_grams says so. Each date's shared meals are planned before
+ * its eating times of one person. Use it to save a plan from
+ * SuggestionService.SuggestPlan. Nothing is planned if any meal fails.
+ * Fails with INVALID_ARGUMENT if two meals are at the same date and meal
+ * or eating time, and FAILED_PRECONDITION if nobody eats from a meal.
  *
  * @generated from rpc plans.v1.PlanService.PlanMeals
  */
