@@ -115,13 +115,6 @@ resource "google_cloud_run_domain_mapping" "domain" {
   }
 }
 
-# The mapping of foodplann.ing, the domain before mealplann.ing, which now
-# redirects.
-moved {
-  from = google_cloud_run_domain_mapping.domain[0]
-  to   = google_cloud_run_domain_mapping.domain["foodplann.ing"]
-}
-
 # Lets the service report errors to Error Reporting, which is free.
 resource "google_project_iam_member" "run_error_reporting" {
   project = var.project
