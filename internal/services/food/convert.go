@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"connectrpc.com/connect/v2"
+	"github.com/bs-tools/foodplann.ing/internal/foodimport"
 	"github.com/bs-tools/foodplann.ing/internal/foods"
 	foodsv1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
 	"github.com/bs-tools/foodplann.ing/internal/nutrition"
@@ -148,16 +149,83 @@ var storeSectionsFromProto = func() map[foodsv1.StoreSection]foods.StoreSection 
 	return m
 }()
 
+// sourcesToProto are the API's sources of the reference foods' sources.
+var sourcesToProto = map[foods.Source]foodsv1.FoodSource{
+	foods.SourceFDC: foodsv1.FoodSource_FOOD_SOURCE_FDC,
+	foods.SourceCNF: foodsv1.FoodSource_FOOD_SOURCE_CNF,
+}
+
+var sourcesFromProto = func() map[foodsv1.FoodSource]foods.Source {
+	m := map[foodsv1.FoodSource]foods.Source{}
+	for k, v := range sourcesToProto {
+		m[v] = k
+	}
+	return m
+}()
+
+// sourceNames name the sources in errors.
+var sourceNames = map[foods.Source]string{
+	foods.SourceFDC: "FoodData Central",
+	foods.SourceCNF: "Canadian Nutrient File",
+}
+
+// fdcID returns a reference food's FDC ID, 0 unless it's from FDC.
+func fdcID(source foods.Source, id int32) int32 {
+	if source != foods.SourceFDC {
+		return 0
+	}
+	return id
+}
+
+// referenceFromProto returns the reference food a CreateFoodRequest creates
+// its food from, SourceNone for a custom food. fdc_id is the same as source
+// FDC with its source_id, which it predates.
+func referenceFromProto(req *foodsv1.CreateFoodRequest) (foods.Source, int32, error) {
+	protoSource, id, legacyID := req.GetSource(), req.GetSourceId(), req.GetFdcId()
+	if legacyID < 0 || id < 0 {
+		return foods.SourceNone, 0, connect.NewError(connect.CodeInvalidArgument,
+			"source_id and fdc_id can't be negative; pass the source_id of a food found with SearchFoodData")
+	}
+	if legacyID != 0 {
+		switch {
+		case protoSource == foodsv1.FoodSource_FOOD_SOURCE_UNSPECIFIED && id == 0,
+			protoSource == foodsv1.FoodSource_FOOD_SOURCE_FDC && (id == 0 || id == legacyID):
+			return foods.SourceFDC, legacyID, nil
+		}
+		return foods.SourceNone, 0, connect.NewError(connect.CodeInvalidArgument,
+			"fdc_id is another way to pass source FOOD_SOURCE_FDC and its source_id; pass either fdc_id or source and source_id, not both")
+	}
+	switch protoSource {
+	case foodsv1.FoodSource_FOOD_SOURCE_UNSPECIFIED, foodsv1.FoodSource_FOOD_SOURCE_CUSTOM:
+		if id != 0 {
+			return foods.SourceNone, 0, connect.NewError(connect.CodeInvalidArgument,
+				"source_id needs its source; pass the source and source_id of a food found with SearchFoodData")
+		}
+		return foods.SourceNone, 0, nil
+	}
+	source, ok := sourcesFromProto[protoSource]
+	if !ok {
+		return foods.SourceNone, 0, connect.Errorf(connect.CodeInvalidArgument,
+			"invalid source %v; pass FOOD_SOURCE_CNF or FOOD_SOURCE_FDC with a source_id, or leave it unset for a custom food", protoSource)
+	}
+	if id == 0 {
+		return foods.SourceNone, 0, connect.NewError(connect.CodeInvalidArgument,
+			"source_id is required with source; pass the source_id of a food found with SearchFoodData")
+	}
+	return source, id, nil
+}
+
 func foodToProto(f *foods.Food) *foodsv1.Food {
-	source := foodsv1.FoodSource_FOOD_SOURCE_CUSTOM
-	if f.FDCID != 0 {
-		source = foodsv1.FoodSource_FOOD_SOURCE_FDC
+	source, ok := sourcesToProto[f.Source]
+	if !ok {
+		source = foodsv1.FoodSource_FOOD_SOURCE_CUSTOM
 	}
 	return foodsv1.Food_builder{
 		Id:                  store.UUIDToString(f.ID),
 		Name:                f.Name,
 		Source:              source,
-		FdcId:               f.FDCID,
+		SourceId:            f.SourceID,
+		FdcId:               fdcID(f.Source, f.SourceID),
 		Nutrients:           NutrientsToProto(&f.Per100Grams, -1),
 		GramsPerPiece:       f.GramsPerPiece,
 		GramsPerMilliliter:  f.GramsPerMilliliter,
@@ -174,8 +242,8 @@ func foodToProto(f *foods.Food) *foodsv1.Food {
 	}.Build()
 }
 
-// foodFromProto converts and validates a food. Its ID, FDC ID, household
-// and times are left for the caller to set.
+// foodFromProto converts and validates a food. Its ID, reference food,
+// household and times are left for the caller to set.
 func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 	name := strings.TrimSpace(p.GetName())
 	switch {
@@ -236,22 +304,22 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 	}, nil
 }
 
-// foodFromFDC returns a food created from an FDC food, with the fields set
-// in the request's food overriding what's taken from FDC.
-func foodFromFDC(fdcFood *foods.FDCFood, in *foodsv1.Food) (*foods.Food, error) {
+// foodFromReference returns a food created from a reference food, with the
+// fields set in the request's food overriding what's taken from it.
+func foodFromReference(ref *foods.ReferenceFood, in *foodsv1.Food) (*foods.Food, error) {
 	if in.HasNutrients() {
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
-			"the nutrients are copied from FoodData Central food %d, so leave nutrients unset; change them with UpdateFood afterwards if needed",
-			fdcFood.FDCID)
+			"the nutrients are copied from %s food %d, so leave nutrients unset; change them with UpdateFood afterwards if needed",
+			sourceNames[ref.Source], ref.SourceID)
 	}
 	base := foodsv1.Food_builder{
-		Name:               truncate(fdcFood.Description, maxNameLength),
-		GramsPerPiece:      fdcFood.SuggestGramsPerPiece(),
-		GramsPerMilliliter: fdcFood.SuggestGramsPerMilliliter(),
-		StoreSection:       storeSectionsToProto[suggestStoreSection(fdcFood)],
+		Name:               truncate(ref.Description, maxNameLength),
+		GramsPerPiece:      ref.SuggestGramsPerPiece(),
+		GramsPerMilliliter: ref.SuggestGramsPerMilliliter(),
+		StoreSection:       storeSectionsToProto[suggestStoreSection(ref)],
 	}.Build()
 	// Proto3 scalars have no presence, so fields left at their zero value
-	// keep what FDC suggests.
+	// keep what the reference food suggests.
 	if name := strings.TrimSpace(in.GetName()); name != "" {
 		base.SetName(name)
 	}
@@ -275,29 +343,42 @@ func foodFromFDC(fdcFood *foods.FDCFood, in *foodsv1.Food) (*foods.Food, error) 
 	if err != nil {
 		return nil, err
 	}
-	f.FDCID = fdcFood.FDCID
-	f.Per100Grams = fdcFood.Per100Grams
+	f.Source = ref.Source
+	f.SourceID = ref.SourceID
+	f.Per100Grams = ref.Per100Grams
 	return f, nil
 }
 
-// categorySections are the store sections of the FDC food categories whose
-// foods are mostly found in one.
+// categorySections are the store sections of the reference food
+// categories whose foods are mostly found in one, by their names
+// normalized with foodimport.NormalizeCategory, which FDC's and CNF's
+// variants share.
 var categorySections = map[string]foods.StoreSection{
-	"vegetables and vegetable products": foods.StoreSectionProduce,
-	"fruits and fruit juices":           foods.StoreSectionProduce,
-	"spices and herbs":                  foods.StoreSectionSpices,
-	"baked products":                    foods.StoreSectionBakery,
-	"beverages":                         foods.StoreSectionDrinks,
-	"cereal grains and pasta":           foods.StoreSectionDryGoods,
-	"breakfast cereals":                 foods.StoreSectionDryGoods,
-	"nut and seed products":             foods.StoreSectionDryGoods,
+	// FDC's and CNF's "Vegetables and Vegetable Products".
+	"vegetables vegetable": foods.StoreSectionProduce,
+	// FDC's "Fruits and Fruit Juices" and CNF's "Fruits and fruit juices".
+	"fruits fruit juices": foods.StoreSectionProduce,
+	// FDC's and CNF's "Spices and Herbs".
+	"spices herbs": foods.StoreSectionSpices,
+	// FDC's and CNF's "Baked Products".
+	"baked": foods.StoreSectionBakery,
+	// FDC's and CNF's "Beverages".
+	"beverages": foods.StoreSectionDrinks,
+	// FDC's "Cereal Grains and Pasta" and CNF's "Cereals, Grains and Pasta".
+	"cereal grains pasta":  foods.StoreSectionDryGoods,
+	"cereals grains pasta": foods.StoreSectionDryGoods,
+	// FDC's and CNF's "Breakfast Cereals".
+	"breakfast cereals": foods.StoreSectionDryGoods,
+	// FDC's "Nut and Seed Products" and CNF's "Nuts and Seeds".
+	"nut seed":   foods.StoreSectionDryGoods,
+	"nuts seeds": foods.StoreSectionDryGoods,
 }
 
-// suggestStoreSection suggests where an FDC food is found in the store,
-// from how it's sold, like canned or frozen, or its category. It's
+// suggestStoreSection suggests where a reference food is found in the
+// store, from how it's sold, like canned or frozen, or its category. It's
 // unspecified when the category is too mixed to tell, like legumes, which
 // are dried, canned or chilled.
-func suggestStoreSection(f *foods.FDCFood) foods.StoreSection {
+func suggestStoreSection(f *foods.ReferenceFood) foods.StoreSection {
 	description := strings.ToLower(f.Description)
 	switch {
 	case strings.Contains(description, "canned"):
@@ -305,7 +386,7 @@ func suggestStoreSection(f *foods.FDCFood) foods.StoreSection {
 	case strings.Contains(description, "frozen"):
 		return foods.StoreSectionFrozen
 	}
-	return categorySections[strings.ToLower(f.Category)]
+	return categorySections[foodimport.NormalizeCategory(f.Category)]
 }
 
 // optionalID returns the string of an ID, empty if it's invalid.
@@ -324,7 +405,7 @@ func truncate(s string, n int) string {
 	return string([]rune(s)[:n])
 }
 
-func foodDataToProto(m *foods.FDCMatch) *foodsv1.FoodData {
+func foodDataToProto(m *foods.ReferenceMatch) *foodsv1.FoodData {
 	portions := make([]*foodsv1.FoodDataPortion, 0, len(m.Portions))
 	for _, p := range m.Portions {
 		portions = append(portions, foodsv1.FoodDataPortion_builder{
@@ -333,12 +414,15 @@ func foodDataToProto(m *foods.FDCMatch) *foodsv1.FoodData {
 		}.Build())
 	}
 	return foodsv1.FoodData_builder{
-		FdcId:       m.FDCID,
-		Description: m.Description,
-		Category:    m.Category,
-		DataType:    m.DataType,
-		Nutrients:   NutrientsToProto(&m.Per100Grams, -1),
-		Portions:    portions,
-		FoodId:      store.UUIDToString(m.FoodID),
+		FdcId:             fdcID(m.Source, m.SourceID),
+		Source:            sourcesToProto[m.Source],
+		SourceId:          m.SourceID,
+		Description:       m.Description,
+		FrenchDescription: m.FrenchDescription,
+		Category:          m.Category,
+		DataType:          m.DataType,
+		Nutrients:         NutrientsToProto(&m.Per100Grams, -1),
+		Portions:          portions,
+		FoodId:            store.UUIDToString(m.FoodID),
 	}.Build()
 }

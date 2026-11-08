@@ -1,5 +1,6 @@
 // Package foods stores the households' foods, the ingredients of their
-// recipes, and the foods of USDA FoodData Central they're created from.
+// recipes, and the reference foods of USDA FoodData Central and the
+// Canadian Nutrient File they're created from.
 package foods
 
 import (
@@ -66,9 +67,12 @@ type Food struct {
 	ID          pgtype.UUID
 	HouseholdID pgtype.UUID
 	Name        string
-	// FDCID is the FoodData Central food its nutrients were copied from, 0
-	// for custom foods.
-	FDCID int32
+	// Source is the source of the reference food its nutrients were copied
+	// from, SourceNone for custom foods.
+	Source Source
+	// SourceID is the ID of that reference food in its source, 0 for custom
+	// foods.
+	SourceID int32
 	// Per100Grams are the nutrients in 100 g of the food, nil where unknown.
 	Per100Grams nutrition.Nutrients
 	// GramsPerPiece is the typical weight of a piece, 0 if unknown.
@@ -124,7 +128,9 @@ func (r *Repository) CreateFood(ctx context.Context, f *Food) (*Food, error) {
 	row, err := r.querier.CreateFood(ctx, &gen.CreateFoodParams{
 		HouseholdID:                     f.HouseholdID,
 		Name:                            f.Name,
-		FDCID:                           positive(f.FDCID),
+		ReferenceSource:                 sourceToDB(f.Source),
+		ReferenceID:                     sourceIDToDB(f.Source, f.SourceID),
+		FDCID:                           fdcIDToDB(f.Source, f.SourceID),
 		EnergyKcalPer100Grams:           n[nutrition.EnergyKcal],
 		ProteinGramsPer100Grams:         n[nutrition.ProteinGrams],
 		CarbohydrateGramsPer100Grams:    n[nutrition.CarbohydrateGrams],
@@ -202,7 +208,7 @@ func (r *Repository) ListFoods(ctx context.Context, householdID pgtype.UUID, que
 }
 
 // UpdateFood replaces the fields of a household's food, other than its
-// FDC ID and times. It returns store.ErrNotFound if the household has no
+// reference food and times. It returns store.ErrNotFound if the household has no
 // such food, and ErrNameTaken if another of its foods has the name.
 func (r *Repository) UpdateFood(ctx context.Context, f *Food) (*Food, error) {
 	n := &f.Per100Grams
@@ -344,11 +350,21 @@ func isNameTaken(err error) bool {
 }
 
 func foodFromDB(row *gen.Food) *Food {
+	source, sourceID := SourceNone, int32(0)
+	switch {
+	case row.ReferenceSource != nil && row.ReferenceID != nil:
+		source, sourceID = Source(*row.ReferenceSource), *row.ReferenceID
+	case row.FDCID != nil:
+		// The previous revision creates foods from FDC with only their FDC
+		// ID while this one starts, or after a rollback, see migration 005.
+		source, sourceID = SourceFDC, *row.FDCID
+	}
 	return &Food{
 		ID:          row.ID,
 		HouseholdID: row.HouseholdID,
 		Name:        row.Name,
-		FDCID:       orZero(row.FDCID),
+		Source:      source,
+		SourceID:    sourceID,
 		Per100Grams: nutrition.Nutrients{
 			nutrition.EnergyKcal:           row.EnergyKcalPer100Grams,
 			nutrition.ProteinGrams:         row.ProteinGramsPer100Grams,
@@ -385,6 +401,32 @@ func foodFromDB(row *gen.Food) *Food {
 		CreateTime:          row.CreateTime.Time,
 		UpdateTime:          row.UpdateTime.Time,
 	}
+}
+
+// sourceToDB returns the reference source of a food, nil for custom foods.
+func sourceToDB(s Source) *gen.ReferenceFoodSource {
+	if s == SourceNone {
+		return nil
+	}
+	return new(gen.ReferenceFoodSource(s))
+}
+
+// sourceIDToDB returns the reference ID of a food, nil for custom foods.
+func sourceIDToDB(s Source, id int32) *int32 {
+	if s == SourceNone {
+		return nil
+	}
+	return &id
+}
+
+// fdcIDToDB returns the FDC ID of a food, nil unless it's from FDC. It's
+// still written for the previous revision, which only knows fdc_id, see
+// migration 005.
+func fdcIDToDB(s Source, id int32) *int32 {
+	if s != SourceFDC {
+		return nil
+	}
+	return &id
 }
 
 func storeSectionToDB(s StoreSection) *gen.StoreSection {

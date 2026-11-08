@@ -187,12 +187,14 @@ var (
 )
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == importFDCCommand {
-		if err := importFDC(os.Args[2:]); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to import FoodData Central: %v\n", err)
-			os.Exit(1)
+	if len(os.Args) > 1 {
+		if c := findImportCommand(os.Args[1]); c != nil {
+			if err := c.runImport(os.Args[2:]); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to import %s: %v\n", c.source, err)
+				os.Exit(1)
+			}
+			return
 		}
-		return
 	}
 	flag.Parse()
 	if err := setFlagsFromEnv(flag.CommandLine); err != nil {

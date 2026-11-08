@@ -153,10 +153,15 @@ type FoodSource int32
 
 const (
 	FoodSource_FOOD_SOURCE_UNSPECIFIED FoodSource = 0
-	// USDA FoodData Central, see fdc_id.
+	// USDA FoodData Central, the US food composition database. Its IDs are
+	// FDC IDs, e.g. 173756.
 	FoodSource_FOOD_SOURCE_FDC FoodSource = 1
-	// Entered by hand or by an agent, e.g. from a product's label.
+	// Entered by hand or by an agent, e.g. from a product's label. Only for
+	// the household's foods.
 	FoodSource_FOOD_SOURCE_CUSTOM FoodSource = 2
+	// Health Canada's Canadian Nutrient File, Canada's food composition
+	// database. Its IDs are CNF food IDs, e.g. 3183.
+	FoodSource_FOOD_SOURCE_CNF FoodSource = 3
 )
 
 // Enum value maps for FoodSource.
@@ -165,11 +170,13 @@ var (
 		0: "FOOD_SOURCE_UNSPECIFIED",
 		1: "FOOD_SOURCE_FDC",
 		2: "FOOD_SOURCE_CUSTOM",
+		3: "FOOD_SOURCE_CNF",
 	}
 	FoodSource_value = map[string]int32{
 		"FOOD_SOURCE_UNSPECIFIED": 0,
 		"FOOD_SOURCE_FDC":         1,
 		"FOOD_SOURCE_CUSTOM":      2,
+		"FOOD_SOURCE_CNF":         3,
 	}
 )
 
@@ -332,9 +339,10 @@ func (x AmountUnit) Number() protoreflect.EnumNumber {
 
 // Nutrients are the amounts of the nutrients the app tracks in an amount of
 // food, e.g. per 100 g of a food or per serving of a recipe. Every field is
-// optional: unset means unknown, which is different from 0. FoodData Central
-// often lacks iodine, vitamin B12 and vitamin D, for example. Only set the
-// values you know, from FDC or a food's label, and never guess them.
+// optional: unset means unknown, which is different from 0. The reference
+// foods often lack iodine, vitamin B12 and vitamin D, for example. Only set
+// the values you know, from a reference food or a food's label, and never
+// guess them.
 type Nutrients struct {
 	state                           protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_EnergyKcal           float64                `protobuf:"fixed64,1,opt,name=energy_kcal,json=energyKcal,proto3,oneof"`
@@ -900,9 +908,9 @@ type Nutrients_builder struct {
 	EnergyKcal *float64
 	// Protein, in grams.
 	ProteinGrams *float64
-	// Total carbohydrate, in grams, including sugars and fiber, as FoodData
-	// Central and US labels give it. European labels give carbohydrate
-	// without fiber: add the label's fiber to it.
+	// Total carbohydrate, in grams, including sugars and fiber, as the
+	// reference foods and US and Canadian labels give it. European labels
+	// give carbohydrate without fiber: add the label's fiber to it.
 	CarbohydrateGrams *float64
 	// Total sugars, in grams. Part of carbohydrate_grams.
 	SugarsGrams *float64
@@ -1054,6 +1062,7 @@ type Food struct {
 	xxx_hidden_UpdateTime          *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=update_time,json=updateTime,proto3"`
 	xxx_hidden_PreferredStoreId    string                 `protobuf:"bytes,16,opt,name=preferred_store_id,json=preferredStoreId,proto3"`
 	xxx_hidden_AlwaysInStock       bool                   `protobuf:"varint,17,opt,name=always_in_stock,json=alwaysInStock,proto3"`
+	xxx_hidden_SourceId            int32                  `protobuf:"varint,18,opt,name=source_id,json=sourceId,proto3"`
 	unknownFields                  protoimpl.UnknownFields
 	sizeCache                      protoimpl.SizeCache
 }
@@ -1202,6 +1211,13 @@ func (x *Food) GetAlwaysInStock() bool {
 	return false
 }
 
+func (x *Food) GetSourceId() int32 {
+	if x != nil {
+		return x.xxx_hidden_SourceId
+	}
+	return 0
+}
+
 func (x *Food) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -1270,6 +1286,10 @@ func (x *Food) SetAlwaysInStock(v bool) {
 	x.xxx_hidden_AlwaysInStock = v
 }
 
+func (x *Food) SetSourceId(v int32) {
+	x.xxx_hidden_SourceId = v
+}
+
 func (x *Food) HasNutrients() bool {
 	if x == nil {
 		return false
@@ -1313,10 +1333,12 @@ type Food_builder struct {
 	// canned" or "Tofu, firm". From 1 to 200 characters, and unique in the
 	// household, ignoring case.
 	Name string
-	// Where the food's nutrients come from.
+	// Where the food's nutrients come from: the source of the reference food
+	// it was created from, or FOOD_SOURCE_CUSTOM.
 	Source FoodSource
-	// The ID of the FoodData Central food it was created from, 0 for custom
-	// foods.
+	// The ID of the FoodData Central food it was created from, 0 for foods
+	// from other sources and custom foods. The same as source_id for foods
+	// from FDC; prefer source and source_id.
 	FdcId int32
 	// The nutrients in 100 g of the food. Unset nutrients are unknown. For
 	// custom foods, enter the values from the label's "per 100 g" column;
@@ -1366,6 +1388,9 @@ type Food_builder struct {
 	// pantry. Add it to a shopping list by hand when it runs out. False by
 	// default.
 	AlwaysInStock bool
+	// The ID of the reference food it was created from in its source, e.g.
+	// a CNF food ID for FOOD_SOURCE_CNF. 0 for custom foods.
+	SourceId int32
 }
 
 func (b0 Food_builder) Build() *Food {
@@ -1389,21 +1414,25 @@ func (b0 Food_builder) Build() *Food {
 	x.xxx_hidden_UpdateTime = b.UpdateTime
 	x.xxx_hidden_PreferredStoreId = b.PreferredStoreId
 	x.xxx_hidden_AlwaysInStock = b.AlwaysInStock
+	x.xxx_hidden_SourceId = b.SourceId
 	return m0
 }
 
-// A food of USDA FoodData Central.
+// A reference food, of the Canadian Nutrient File or USDA FoodData Central.
 type FoodData struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_FdcId       int32                  `protobuf:"varint,1,opt,name=fdc_id,json=fdcId,proto3"`
-	xxx_hidden_Description string                 `protobuf:"bytes,2,opt,name=description,proto3"`
-	xxx_hidden_Category    string                 `protobuf:"bytes,3,opt,name=category,proto3"`
-	xxx_hidden_DataType    string                 `protobuf:"bytes,4,opt,name=data_type,json=dataType,proto3"`
-	xxx_hidden_Nutrients   *Nutrients             `protobuf:"bytes,5,opt,name=nutrients,proto3"`
-	xxx_hidden_Portions    *[]*FoodDataPortion    `protobuf:"bytes,6,rep,name=portions,proto3"`
-	xxx_hidden_FoodId      string                 `protobuf:"bytes,7,opt,name=food_id,json=foodId,proto3"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state                        protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FdcId             int32                  `protobuf:"varint,1,opt,name=fdc_id,json=fdcId,proto3"`
+	xxx_hidden_Description       string                 `protobuf:"bytes,2,opt,name=description,proto3"`
+	xxx_hidden_Category          string                 `protobuf:"bytes,3,opt,name=category,proto3"`
+	xxx_hidden_DataType          string                 `protobuf:"bytes,4,opt,name=data_type,json=dataType,proto3"`
+	xxx_hidden_Nutrients         *Nutrients             `protobuf:"bytes,5,opt,name=nutrients,proto3"`
+	xxx_hidden_Portions          *[]*FoodDataPortion    `protobuf:"bytes,6,rep,name=portions,proto3"`
+	xxx_hidden_FoodId            string                 `protobuf:"bytes,7,opt,name=food_id,json=foodId,proto3"`
+	xxx_hidden_Source            FoodSource             `protobuf:"varint,8,opt,name=source,proto3,enum=foods.v1.FoodSource"`
+	xxx_hidden_SourceId          int32                  `protobuf:"varint,9,opt,name=source_id,json=sourceId,proto3"`
+	xxx_hidden_FrenchDescription string                 `protobuf:"bytes,10,opt,name=french_description,json=frenchDescription,proto3"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
 }
 
 func (x *FoodData) Reset() {
@@ -1482,6 +1511,27 @@ func (x *FoodData) GetFoodId() string {
 	return ""
 }
 
+func (x *FoodData) GetSource() FoodSource {
+	if x != nil {
+		return x.xxx_hidden_Source
+	}
+	return FoodSource_FOOD_SOURCE_UNSPECIFIED
+}
+
+func (x *FoodData) GetSourceId() int32 {
+	if x != nil {
+		return x.xxx_hidden_SourceId
+	}
+	return 0
+}
+
+func (x *FoodData) GetFrenchDescription() string {
+	if x != nil {
+		return x.xxx_hidden_FrenchDescription
+	}
+	return ""
+}
+
 func (x *FoodData) SetFdcId(v int32) {
 	x.xxx_hidden_FdcId = v
 }
@@ -1510,6 +1560,18 @@ func (x *FoodData) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
 
+func (x *FoodData) SetSource(v FoodSource) {
+	x.xxx_hidden_Source = v
+}
+
+func (x *FoodData) SetSourceId(v int32) {
+	x.xxx_hidden_SourceId = v
+}
+
+func (x *FoodData) SetFrenchDescription(v string) {
+	x.xxx_hidden_FrenchDescription = v
+}
+
 func (x *FoodData) HasNutrients() bool {
 	if x == nil {
 		return false
@@ -1524,25 +1586,35 @@ func (x *FoodData) ClearNutrients() {
 type FoodData_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The FDC ID of the food, to create a food from with CreateFood.
+	// The FDC ID of the food for foods of FoodData Central, 0 for foods of
+	// other sources. The same as source_id; prefer source and source_id.
 	FdcId int32
-	// The FDC description, e.g. "Chickpeas (garbanzo beans, bengal gram),
-	// mature seeds, cooked, boiled, without salt".
+	// The description in its source, e.g. "Chickpeas (garbanzo beans, bengal
+	// gram), mature seeds, cooked, boiled, without salt".
 	Description string
-	// The FDC food category, e.g. "Legumes and Legume Products".
+	// The source's food category or group, e.g. "Legumes and Legume
+	// Products".
 	Category string
-	// The FDC dataset: "foundation_food" for Foundation Foods, which are
+	// The dataset: for FDC, "foundation_food" for Foundation Foods, which are
 	// analyzed recently, or "sr_legacy_food" for SR Legacy, which has more
-	// foods and nutrients.
+	// foods and nutrients; "cnf" for the Canadian Nutrient File.
 	DataType string
 	// The nutrients in 100 g of the food. Unset nutrients are unknown.
 	Nutrients *Nutrients
 	// Common portions of the food with their weight, e.g. "1 cup" or "1
 	// medium".
 	Portions []*FoodDataPortion
-	// The ID of the household's food created from this FDC food, empty if
-	// none. Reuse that food rather than creating another.
+	// The ID of the household's food created from this reference food, empty
+	// if none. Reuse that food rather than creating another.
 	FoodId string
+	// The source of the food: FOOD_SOURCE_CNF or FOOD_SOURCE_FDC.
+	Source FoodSource
+	// The ID of the food in its source, to create a food from with
+	// CreateFood, with source.
+	SourceId int32
+	// The French description, for foods of the Canadian Nutrient File, e.g.
+	// "Pois chiches, en conserve". Empty for FDC.
+	FrenchDescription string
 }
 
 func (b0 FoodData_builder) Build() *FoodData {
@@ -1556,10 +1628,13 @@ func (b0 FoodData_builder) Build() *FoodData {
 	x.xxx_hidden_Nutrients = b.Nutrients
 	x.xxx_hidden_Portions = &b.Portions
 	x.xxx_hidden_FoodId = b.FoodId
+	x.xxx_hidden_Source = b.Source
+	x.xxx_hidden_SourceId = b.SourceId
+	x.xxx_hidden_FrenchDescription = b.FrenchDescription
 	return m0
 }
 
-// A common portion of a FoodData Central food.
+// A common portion of a reference food.
 type FoodDataPortion struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Description string                 `protobuf:"bytes,1,opt,name=description,proto3"`
@@ -1618,7 +1693,8 @@ func (x *FoodDataPortion) SetGrams(v float64) {
 type FoodDataPortion_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The portion, e.g. "1 cup, chopped" or "1 medium (2-1/2\" dia)".
+	// The portion, e.g. "1 cup, chopped", "1 medium (2-1/2\" dia)" or
+	// "250ml".
 	Description string
 	// The weight of the portion, in grams.
 	Grams float64
@@ -1691,8 +1767,8 @@ func (x *SearchFoodDataRequest) SetPageSize(v int32) {
 type SearchFoodDataRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The words to search for in FDC descriptions, e.g. "lentils red raw".
-	// Required.
+	// The words to search for in the English descriptions, e.g. "lentils red
+	// raw". Required.
 	Query string
 	// The most foods to return, from 1 to 50. 10 if 0.
 	PageSize int32
@@ -1755,7 +1831,7 @@ func (x *SearchFoodDataResponse) SetFoods(v []*FoodData) {
 type SearchFoodDataResponse_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The matching foods, the best match first.
+	// The matching foods of both sources, the best match first.
 	Foods []*FoodData
 }
 
@@ -1768,11 +1844,13 @@ func (b0 SearchFoodDataResponse_builder) Build() *SearchFoodDataResponse {
 }
 
 type CreateFoodRequest struct {
-	state            protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_FdcId int32                  `protobuf:"varint,1,opt,name=fdc_id,json=fdcId,proto3"`
-	xxx_hidden_Food  *Food                  `protobuf:"bytes,2,opt,name=food,proto3"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FdcId    int32                  `protobuf:"varint,1,opt,name=fdc_id,json=fdcId,proto3"`
+	xxx_hidden_Food     *Food                  `protobuf:"bytes,2,opt,name=food,proto3"`
+	xxx_hidden_Source   FoodSource             `protobuf:"varint,3,opt,name=source,proto3,enum=foods.v1.FoodSource"`
+	xxx_hidden_SourceId int32                  `protobuf:"varint,4,opt,name=source_id,json=sourceId,proto3"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *CreateFoodRequest) Reset() {
@@ -1814,12 +1892,34 @@ func (x *CreateFoodRequest) GetFood() *Food {
 	return nil
 }
 
+func (x *CreateFoodRequest) GetSource() FoodSource {
+	if x != nil {
+		return x.xxx_hidden_Source
+	}
+	return FoodSource_FOOD_SOURCE_UNSPECIFIED
+}
+
+func (x *CreateFoodRequest) GetSourceId() int32 {
+	if x != nil {
+		return x.xxx_hidden_SourceId
+	}
+	return 0
+}
+
 func (x *CreateFoodRequest) SetFdcId(v int32) {
 	x.xxx_hidden_FdcId = v
 }
 
 func (x *CreateFoodRequest) SetFood(v *Food) {
 	x.xxx_hidden_Food = v
+}
+
+func (x *CreateFoodRequest) SetSource(v FoodSource) {
+	x.xxx_hidden_Source = v
+}
+
+func (x *CreateFoodRequest) SetSourceId(v int32) {
+	x.xxx_hidden_SourceId = v
 }
 
 func (x *CreateFoodRequest) HasFood() bool {
@@ -1836,16 +1936,24 @@ func (x *CreateFoodRequest) ClearFood() {
 type CreateFoodRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The FoodData Central food to create the food from, found with
-	// SearchFoodData. Its nutrients are copied, so leave
-	// food.nutrients unset. Its description is the name unless
-	// food.name is set, and its portions suggest grams_per_piece and
-	// grams_per_milliliter unless they're set. 0 for a custom food.
+	// The FoodData Central food to create the food from. The same as source
+	// FOOD_SOURCE_FDC with source_id; prefer those. 0 if not set.
 	FdcId int32
-	// The food. For a custom food, name is required. With fdc_id, all fields
-	// are optional, and override what's taken from FDC: prefer a short name,
-	// like "Chickpeas, cooked", to the long FDC description.
+	// The food. For a custom food, name is required. From a reference food,
+	// all fields are optional, and override what's taken from it: prefer a
+	// short name, like "Chickpeas, cooked", to the long description.
 	Food *Food
+	// The source of the reference food to create the food from, found with
+	// SearchFoodData: FOOD_SOURCE_CNF or FOOD_SOURCE_FDC, with source_id. Its
+	// nutrients are copied, so leave food.nutrients unset. Its description is
+	// the name unless food.name is set, and its portions suggest
+	// grams_per_piece and grams_per_milliliter unless they're set.
+	// FOOD_SOURCE_UNSPECIFIED, with neither source_id nor fdc_id, for a
+	// custom food.
+	Source FoodSource
+	// The ID of the reference food in source, the source_id of
+	// SearchFoodData's result. Required with source.
+	SourceId int32
 }
 
 func (b0 CreateFoodRequest_builder) Build() *CreateFoodRequest {
@@ -1854,6 +1962,8 @@ func (b0 CreateFoodRequest_builder) Build() *CreateFoodRequest {
 	_, _ = b, x
 	x.xxx_hidden_FdcId = b.FdcId
 	x.xxx_hidden_Food = b.Food
+	x.xxx_hidden_Source = b.Source
+	x.xxx_hidden_SourceId = b.SourceId
 	return m0
 }
 
@@ -2538,7 +2648,7 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x12_copper_milligramsB\x17\n" +
 	"\x15_magnesium_milligramsB\x14\n" +
 	"\x12_sodium_milligramsB\x17\n" +
-	"\x15_potassium_milligrams\"\xde\x05\n" +
+	"\x15_potassium_milligrams\"\x83\x06\n" +
 	"\x04Food\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x124\n" +
@@ -2559,7 +2669,8 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\vupdate_time\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"updateTime\x12,\n" +
 	"\x12preferred_store_id\x18\x10 \x01(\tR\x10preferredStoreId\x12&\n" +
-	"\x0falways_in_stock\x18\x11 \x01(\bR\ralwaysInStock\"\xff\x01\n" +
+	"\x0falways_in_stock\x18\x11 \x01(\bR\ralwaysInStock\x12#\n" +
+	"\tsource_id\x18\x12 \x01(\x05B\x06\xaa\x9f\x19\x02\b\x01R\bsourceId\"\xf9\x02\n" +
 	"\bFoodData\x12\x15\n" +
 	"\x06fdc_id\x18\x01 \x01(\x05R\x05fdcId\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1a\n" +
@@ -2567,7 +2678,11 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\tdata_type\x18\x04 \x01(\tR\bdataType\x121\n" +
 	"\tnutrients\x18\x05 \x01(\v2\x13.foods.v1.NutrientsR\tnutrients\x125\n" +
 	"\bportions\x18\x06 \x03(\v2\x19.foods.v1.FoodDataPortionR\bportions\x12\x17\n" +
-	"\afood_id\x18\a \x01(\tR\x06foodId\"I\n" +
+	"\afood_id\x18\a \x01(\tR\x06foodId\x12,\n" +
+	"\x06source\x18\b \x01(\x0e2\x14.foods.v1.FoodSourceR\x06source\x12\x1b\n" +
+	"\tsource_id\x18\t \x01(\x05R\bsourceId\x12-\n" +
+	"\x12french_description\x18\n" +
+	" \x01(\tR\x11frenchDescription\"I\n" +
 	"\x0fFoodDataPortion\x12 \n" +
 	"\vdescription\x18\x01 \x01(\tR\vdescription\x12\x14\n" +
 	"\x05grams\x18\x02 \x01(\x01R\x05grams\"J\n" +
@@ -2575,10 +2690,12 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\"B\n" +
 	"\x16SearchFoodDataResponse\x12(\n" +
-	"\x05foods\x18\x01 \x03(\v2\x12.foods.v1.FoodDataR\x05foods\"N\n" +
+	"\x05foods\x18\x01 \x03(\v2\x12.foods.v1.FoodDataR\x05foods\"\x99\x01\n" +
 	"\x11CreateFoodRequest\x12\x15\n" +
 	"\x06fdc_id\x18\x01 \x01(\x05R\x05fdcId\x12\"\n" +
-	"\x04food\x18\x02 \x01(\v2\x0e.foods.v1.FoodR\x04food\"8\n" +
+	"\x04food\x18\x02 \x01(\v2\x0e.foods.v1.FoodR\x04food\x12,\n" +
+	"\x06source\x18\x03 \x01(\x0e2\x14.foods.v1.FoodSourceR\x06source\x12\x1b\n" +
+	"\tsource_id\x18\x04 \x01(\x05R\bsourceId\"8\n" +
 	"\x12CreateFoodResponse\x12\"\n" +
 	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\" \n" +
 	"\x0eGetFoodRequest\x12\x0e\n" +
@@ -2625,12 +2742,13 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x1aNUTRIENT_COPPER_MILLIGRAMS\x10\x12\x12!\n" +
 	"\x1dNUTRIENT_MAGNESIUM_MILLIGRAMS\x10\x13\x12\x1e\n" +
 	"\x1aNUTRIENT_SODIUM_MILLIGRAMS\x10\x14\x12!\n" +
-	"\x1dNUTRIENT_POTASSIUM_MILLIGRAMS\x10\x15*V\n" +
+	"\x1dNUTRIENT_POTASSIUM_MILLIGRAMS\x10\x15*k\n" +
 	"\n" +
 	"FoodSource\x12\x1b\n" +
 	"\x17FOOD_SOURCE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fFOOD_SOURCE_FDC\x10\x01\x12\x16\n" +
-	"\x12FOOD_SOURCE_CUSTOM\x10\x02*\xb8\x02\n" +
+	"\x12FOOD_SOURCE_CUSTOM\x10\x02\x12\x13\n" +
+	"\x0fFOOD_SOURCE_CNF\x10\x03*\xb8\x02\n" +
 	"\fStoreSection\x12\x1d\n" +
 	"\x19STORE_SECTION_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15STORE_SECTION_PRODUCE\x10\x01\x12\x18\n" +
@@ -2697,31 +2815,33 @@ var file_foods_v1_foods_proto_depIdxs = []int32{
 	20, // 4: foods.v1.Food.update_time:type_name -> google.protobuf.Timestamp
 	4,  // 5: foods.v1.FoodData.nutrients:type_name -> foods.v1.Nutrients
 	7,  // 6: foods.v1.FoodData.portions:type_name -> foods.v1.FoodDataPortion
-	6,  // 7: foods.v1.SearchFoodDataResponse.foods:type_name -> foods.v1.FoodData
-	5,  // 8: foods.v1.CreateFoodRequest.food:type_name -> foods.v1.Food
-	5,  // 9: foods.v1.CreateFoodResponse.food:type_name -> foods.v1.Food
-	5,  // 10: foods.v1.GetFoodResponse.food:type_name -> foods.v1.Food
-	5,  // 11: foods.v1.ListFoodsResponse.foods:type_name -> foods.v1.Food
-	5,  // 12: foods.v1.UpdateFoodRequest.food:type_name -> foods.v1.Food
-	21, // 13: foods.v1.UpdateFoodRequest.update_mask:type_name -> google.protobuf.FieldMask
-	5,  // 14: foods.v1.UpdateFoodResponse.food:type_name -> foods.v1.Food
-	8,  // 15: foods.v1.FoodService.SearchFoodData:input_type -> foods.v1.SearchFoodDataRequest
-	10, // 16: foods.v1.FoodService.CreateFood:input_type -> foods.v1.CreateFoodRequest
-	12, // 17: foods.v1.FoodService.GetFood:input_type -> foods.v1.GetFoodRequest
-	14, // 18: foods.v1.FoodService.ListFoods:input_type -> foods.v1.ListFoodsRequest
-	16, // 19: foods.v1.FoodService.UpdateFood:input_type -> foods.v1.UpdateFoodRequest
-	18, // 20: foods.v1.FoodService.DeleteFood:input_type -> foods.v1.DeleteFoodRequest
-	9,  // 21: foods.v1.FoodService.SearchFoodData:output_type -> foods.v1.SearchFoodDataResponse
-	11, // 22: foods.v1.FoodService.CreateFood:output_type -> foods.v1.CreateFoodResponse
-	13, // 23: foods.v1.FoodService.GetFood:output_type -> foods.v1.GetFoodResponse
-	15, // 24: foods.v1.FoodService.ListFoods:output_type -> foods.v1.ListFoodsResponse
-	17, // 25: foods.v1.FoodService.UpdateFood:output_type -> foods.v1.UpdateFoodResponse
-	19, // 26: foods.v1.FoodService.DeleteFood:output_type -> foods.v1.DeleteFoodResponse
-	21, // [21:27] is the sub-list for method output_type
-	15, // [15:21] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	1,  // 7: foods.v1.FoodData.source:type_name -> foods.v1.FoodSource
+	6,  // 8: foods.v1.SearchFoodDataResponse.foods:type_name -> foods.v1.FoodData
+	5,  // 9: foods.v1.CreateFoodRequest.food:type_name -> foods.v1.Food
+	1,  // 10: foods.v1.CreateFoodRequest.source:type_name -> foods.v1.FoodSource
+	5,  // 11: foods.v1.CreateFoodResponse.food:type_name -> foods.v1.Food
+	5,  // 12: foods.v1.GetFoodResponse.food:type_name -> foods.v1.Food
+	5,  // 13: foods.v1.ListFoodsResponse.foods:type_name -> foods.v1.Food
+	5,  // 14: foods.v1.UpdateFoodRequest.food:type_name -> foods.v1.Food
+	21, // 15: foods.v1.UpdateFoodRequest.update_mask:type_name -> google.protobuf.FieldMask
+	5,  // 16: foods.v1.UpdateFoodResponse.food:type_name -> foods.v1.Food
+	8,  // 17: foods.v1.FoodService.SearchFoodData:input_type -> foods.v1.SearchFoodDataRequest
+	10, // 18: foods.v1.FoodService.CreateFood:input_type -> foods.v1.CreateFoodRequest
+	12, // 19: foods.v1.FoodService.GetFood:input_type -> foods.v1.GetFoodRequest
+	14, // 20: foods.v1.FoodService.ListFoods:input_type -> foods.v1.ListFoodsRequest
+	16, // 21: foods.v1.FoodService.UpdateFood:input_type -> foods.v1.UpdateFoodRequest
+	18, // 22: foods.v1.FoodService.DeleteFood:input_type -> foods.v1.DeleteFoodRequest
+	9,  // 23: foods.v1.FoodService.SearchFoodData:output_type -> foods.v1.SearchFoodDataResponse
+	11, // 24: foods.v1.FoodService.CreateFood:output_type -> foods.v1.CreateFoodResponse
+	13, // 25: foods.v1.FoodService.GetFood:output_type -> foods.v1.GetFoodResponse
+	15, // 26: foods.v1.FoodService.ListFoods:output_type -> foods.v1.ListFoodsResponse
+	17, // 27: foods.v1.FoodService.UpdateFood:output_type -> foods.v1.UpdateFoodResponse
+	19, // 28: foods.v1.FoodService.DeleteFood:output_type -> foods.v1.DeleteFoodResponse
+	23, // [23:29] is the sub-list for method output_type
+	17, // [17:23] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_foods_v1_foods_proto_init() }

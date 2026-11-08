@@ -316,3 +316,172 @@ func TestFoods(t *testing.T) {
 	_, err = e.anonFoods.CreateFood(ctx, foodsv1.CreateFoodRequest_builder{Food: foodsv1.Food_builder{Name: "x"}.Build()}.Build())
 	wantCode(t, err, connect.CodeUnauthenticated)
 }
+
+func TestReferenceFoodSources(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	e.importFDC()
+	e.importCNF()
+	ctx := context.Background()
+
+	// Searching finds the chickpeas of both sources, each with its source
+	// and ID, and an FDC ID only for FDC's.
+	search, err := e.foods.SearchFoodData(ctx, foodsv1.SearchFoodDataRequest_builder{Query: "chickpeas"}.Build())
+	if err != nil {
+		t.Fatalf("SearchFoodData: %v", err)
+	}
+	var cnfChickpeas, fdcChickpeas *foodsv1.FoodData
+	for _, f := range search.GetFoods() {
+		switch f.GetSource() {
+		case foodsv1.FoodSource_FOOD_SOURCE_CNF:
+			cnfChickpeas = f
+		case foodsv1.FoodSource_FOOD_SOURCE_FDC:
+			fdcChickpeas = f
+		default:
+			t.Errorf("got %v, want a CNF or FDC food", f)
+		}
+	}
+	if cnfChickpeas == nil || fdcChickpeas == nil {
+		t.Fatalf("got %v, want chickpeas from CNF and FDC", search.GetFoods())
+	}
+	if cnfChickpeas.GetSourceId() != 3183 || cnfChickpeas.GetFdcId() != 0 || cnfChickpeas.GetDataType() != "cnf" ||
+		cnfChickpeas.GetFrenchDescription() != "Pois chiches, grains entiers mûrs, en conserve" ||
+		cnfChickpeas.GetNutrients().GetEnergyKcal() != 139 || len(cnfChickpeas.GetPortions()) != 3 {
+		t.Errorf("got %v, want CNF's canned chickpeas", cnfChickpeas)
+	}
+	if fdcChickpeas.GetSourceId() != 173756 || fdcChickpeas.GetFdcId() != 173756 || fdcChickpeas.GetFrenchDescription() != "" {
+		t.Errorf("got %v, want FDC's chickpeas with their FDC ID", fdcChickpeas)
+	}
+
+	// Creating a food from a CNF food copies its fortified nutrients, and
+	// suggests its density from its metric measures.
+	soy := createFood(t, e.foods, foodsv1.CreateFoodRequest_builder{
+		Source:   foodsv1.FoodSource_FOOD_SOURCE_CNF,
+		SourceId: 6288,
+		Food:     foodsv1.Food_builder{Name: "Soy beverage"}.Build(),
+	}.Build())
+	if soy.GetSource() != foodsv1.FoodSource_FOOD_SOURCE_CNF || soy.GetSourceId() != 6288 || soy.GetFdcId() != 0 ||
+		soy.GetNutrients().GetVitaminDMicrograms() != 1.03 || soy.GetNutrients().GetVitaminB12Micrograms() != 0.39 ||
+		soy.GetGramsPerMilliliter() != 1.032 || soy.GetGramsPerPiece() != 0 {
+		t.Errorf("got %v, want the fortified soy beverage from CNF", soy)
+	}
+	// Without a name, it's named after CNF's description, weighs what its
+	// medium one does, and is in produce for its food group.
+	apple := createFood(t, e.foods, foodsv1.CreateFoodRequest_builder{
+		Source:   foodsv1.FoodSource_FOOD_SOURCE_CNF,
+		SourceId: 1520,
+	}.Build())
+	if apple.GetName() != "Apple, raw, with skin" || apple.GetGramsPerPiece() != 182 ||
+		apple.GetStoreSection() != foodsv1.StoreSection_STORE_SECTION_PRODUCE {
+		t.Errorf("got %v, want an apple from CNF", apple)
+	}
+	// fdc_id still creates foods from FDC, alone or with source FDC.
+	fdcChickpeasFood := createFood(t, e.foods, foodsv1.CreateFoodRequest_builder{
+		FdcId: 173756,
+		Food:  foodsv1.Food_builder{Name: "Chickpeas, dried"}.Build(),
+	}.Build())
+	if fdcChickpeasFood.GetSource() != foodsv1.FoodSource_FOOD_SOURCE_FDC || fdcChickpeasFood.GetSourceId() != 173756 ||
+		fdcChickpeasFood.GetFdcId() != 173756 {
+		t.Errorf("got %v, want chickpeas from FDC", fdcChickpeasFood)
+	}
+	tofu := createFood(t, e.foods, foodsv1.CreateFoodRequest_builder{
+		FdcId:  172475,
+		Source: foodsv1.FoodSource_FOOD_SOURCE_FDC,
+	}.Build())
+	if tofu.GetSourceId() != 172475 || tofu.GetFdcId() != 172475 {
+		t.Errorf("got %v, want tofu from FDC", tofu)
+	}
+	// GetFood returns the source too.
+	got, err := e.foods.GetFood(ctx, foodsv1.GetFoodRequest_builder{Id: soy.GetId()}.Build())
+	if err != nil {
+		t.Fatalf("GetFood: %v", err)
+	}
+	if got.GetFood().GetSource() != foodsv1.FoodSource_FOOD_SOURCE_CNF || got.GetFood().GetSourceId() != 6288 {
+		t.Errorf("got %v, want the soy beverage from CNF", got.GetFood())
+	}
+
+	// References that don't fit are refused.
+	for name, req := range map[string]*foodsv1.CreateFoodRequest{
+		"unknown CNF food":  foodsv1.CreateFoodRequest_builder{Source: foodsv1.FoodSource_FOOD_SOURCE_CNF, SourceId: 173756}.Build(),
+		"source without ID": foodsv1.CreateFoodRequest_builder{Source: foodsv1.FoodSource_FOOD_SOURCE_CNF}.Build(),
+		"ID without source": foodsv1.CreateFoodRequest_builder{SourceId: 3183, Food: foodsv1.Food_builder{Name: "x"}.Build()}.Build(),
+		"fdc_id and CNF": foodsv1.CreateFoodRequest_builder{
+			FdcId: 173756, Source: foodsv1.FoodSource_FOOD_SOURCE_CNF, SourceId: 3183,
+		}.Build(),
+		"fdc_id and another ID": foodsv1.CreateFoodRequest_builder{
+			FdcId: 173756, Source: foodsv1.FoodSource_FOOD_SOURCE_FDC, SourceId: 1,
+		}.Build(),
+		"custom with ID": foodsv1.CreateFoodRequest_builder{Source: foodsv1.FoodSource_FOOD_SOURCE_CUSTOM, SourceId: 1}.Build(),
+		"CNF with nutrients": foodsv1.CreateFoodRequest_builder{
+			Source: foodsv1.FoodSource_FOOD_SOURCE_CNF, SourceId: 3183,
+			Food: foodsv1.Food_builder{Nutrients: foodsv1.Nutrients_builder{ProteinGrams: new(1.0)}.Build()}.Build(),
+		}.Build(),
+		"negative ID":    foodsv1.CreateFoodRequest_builder{Source: foodsv1.FoodSource_FOOD_SOURCE_CNF, SourceId: -1}.Build(),
+		"unknown source": foodsv1.CreateFoodRequest_builder{Source: foodsv1.FoodSource(99), SourceId: 1}.Build(),
+	} {
+		_, err := e.foods.CreateFood(ctx, req)
+		if connect.CodeOf(err) != connect.CodeInvalidArgument {
+			t.Errorf("%s: got %v, want INVALID_ARGUMENT", name, err)
+		}
+	}
+
+	// The search points to the household's foods of the same source only:
+	// CNF's chickpeas aren't the household's chickpeas from FDC.
+	search, err = e.foods.SearchFoodData(ctx, foodsv1.SearchFoodDataRequest_builder{Query: "chickpeas"}.Build())
+	if err != nil {
+		t.Fatalf("SearchFoodData: %v", err)
+	}
+	for _, f := range search.GetFoods() {
+		want := ""
+		if f.GetSource() == foodsv1.FoodSource_FOOD_SOURCE_FDC && f.GetSourceId() == 173756 {
+			want = fdcChickpeasFood.GetId()
+		}
+		if f.GetFoodId() != want {
+			t.Errorf("got %v pointing to %q, want %q", f, f.GetFoodId(), want)
+		}
+	}
+	search, err = e.foods.SearchFoodData(ctx, foodsv1.SearchFoodDataRequest_builder{Query: "soy beverage"}.Build())
+	if err != nil {
+		t.Fatalf("SearchFoodData: %v", err)
+	}
+	if len(search.GetFoods()) == 0 || search.GetFoods()[0].GetFoodId() != soy.GetId() {
+		t.Errorf("got %v, want the soy beverage pointing to the household's food", search.GetFoods())
+	}
+
+	// A food the previous revision created from FDC, with only its FDC ID,
+	// is from FDC, and the search finds it.
+	if _, err := e.db.Exec(ctx, `
+		insert into foods (household_id, name, fdc_id)
+		select household_id, 'Spinach', 168462 from users where id = $1`, e.userID); err != nil {
+		t.Fatal(err)
+	}
+	list, err := e.foods.ListFoods(ctx, foodsv1.ListFoodsRequest_builder{Query: "spinach"}.Build())
+	if err != nil {
+		t.Fatalf("ListFoods: %v", err)
+	}
+	if len(list.GetFoods()) != 1 || list.GetFoods()[0].GetSource() != foodsv1.FoodSource_FOOD_SOURCE_FDC ||
+		list.GetFoods()[0].GetSourceId() != 168462 || list.GetFoods()[0].GetFdcId() != 168462 {
+		t.Errorf("got %v, want the spinach from FDC", list.GetFoods())
+	}
+	search, err = e.foods.SearchFoodData(ctx, foodsv1.SearchFoodDataRequest_builder{Query: "spinach", PageSize: 1}.Build())
+	if err != nil {
+		t.Fatalf("SearchFoodData: %v", err)
+	}
+	if len(search.GetFoods()) != 1 || search.GetFoods()[0].GetFoodId() != list.GetFoods()[0].GetId() {
+		t.Errorf("got %v, want the spinach pointing to the household's food", search.GetFoods())
+	}
+
+	// Another household sees the reference foods, but not this one's foods
+	// made from them.
+	search, err = e.otherFoods.SearchFoodData(ctx, foodsv1.SearchFoodDataRequest_builder{Query: "soy beverage"}.Build())
+	if err != nil {
+		t.Fatalf("SearchFoodData: %v", err)
+	}
+	if len(search.GetFoods()) == 0 || search.GetFoods()[0].GetSourceId() != 6288 || search.GetFoods()[0].GetFoodId() != "" {
+		t.Errorf("got %v, want the soy beverage without the other household's food", search.GetFoods())
+	}
+	_, err = e.otherFoods.GetFood(ctx, foodsv1.GetFoodRequest_builder{Id: soy.GetId()}.Build())
+	wantCode(t, err, connect.CodeNotFound)
+	_, err = e.anonFoods.SearchFoodData(ctx, foodsv1.SearchFoodDataRequest_builder{Query: "soy"}.Build())
+	wantCode(t, err, connect.CodeUnauthenticated)
+}

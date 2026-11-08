@@ -1,8 +1,10 @@
--- name: UpsertFDCFood :exec
-insert into fdc_foods (
-  fdc_id,
+-- name: UpsertReferenceFood :exec
+insert into reference_foods (
+  source,
+  source_id,
   data_type,
   description,
+  french_description,
   category,
   portions,
   publication_date,
@@ -28,9 +30,11 @@ insert into fdc_foods (
   sodium_milligrams_per_100_grams,
   potassium_milligrams_per_100_grams
 ) values (
-  @fdc_id,
+  @source,
+  @source_id,
   @data_type,
   @description,
+  @french_description,
   @category,
   @portions,
   @publication_date,
@@ -56,9 +60,10 @@ insert into fdc_foods (
   @sodium_milligrams_per_100_grams,
   @potassium_milligrams_per_100_grams
 )
-on conflict (fdc_id) do update set
+on conflict (source, source_id) do update set
   data_type = excluded.data_type,
   description = excluded.description,
+  french_description = excluded.french_description,
   category = excluded.category,
   portions = excluded.portions,
   publication_date = excluded.publication_date,
@@ -85,25 +90,32 @@ on conflict (fdc_id) do update set
   potassium_milligrams_per_100_grams = excluded.potassium_milligrams_per_100_grams,
   update_time = now();
 
--- name: GetFDCFood :one
-select * from fdc_foods where fdc_id = @fdc_id;
+-- name: GetReferenceFood :one
+select * from reference_foods where source = @source and source_id = @source_id;
 
--- name: SearchFDCFoods :many
--- Foods match all the query's words, stemmed, or, for misspelled and
--- partial words, enough of its trigrams. The best matches are those whose
--- words are most like the query, especially at the start of the
--- description, where FDC names the food ("Lentils, raw"), then the
--- shortest, which are the plainest ("Spinach, raw" before "Spinach,
--- cooked, boiled, drained, with salt").
+-- name: SearchReferenceFoods :many
+-- Foods of all sources match all the query's words, stemmed, or, for
+-- misspelled and partial words, enough of its trigrams. The best matches
+-- are those whose words are most like the query, especially at the start of
+-- the description, where FDC and CNF name the food ("Lentils, raw"), then
+-- the shortest, which are the plainest ("Spinach, raw" before "Spinach,
+-- cooked, boiled, drained, with salt"). Neither source is preferred, so
+-- foods both have are side by side.
 select
-  sqlc.embed(fdc_foods),
+  sqlc.embed(reference_foods),
   (
     select f.id from foods f
-    where f.household_id = @household_id and f.fdc_id = fdc_foods.fdc_id
+    where f.household_id = @household_id
+      and (
+        (f.reference_source = reference_foods.source and f.reference_id = reference_foods.source_id)
+        -- Foods the previous revision created have only an FDC ID, see
+        -- migration 005.
+        or (f.reference_source is null and reference_foods.source = 'fdc' and f.fdc_id = reference_foods.source_id)
+      )
     order by f.create_time, f.id
     limit 1
   )::uuid as food_id
-from fdc_foods
+from reference_foods
 where to_tsvector('english', description) @@ websearch_to_tsquery('english', @query)
   or @query <% description
 order by
@@ -111,5 +123,6 @@ order by
     + similarity(@query, split_part(description, ',', 1))
     + ts_rank(to_tsvector('english', description), websearch_to_tsquery('english', @query)) desc,
   length(description),
-  fdc_id
+  source,
+  source_id
 limit @row_limit;

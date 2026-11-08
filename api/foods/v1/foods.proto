@@ -17,13 +17,25 @@ import "mcp/v1/options.proto";
 //
 // 1. Look for it among the household's foods with ListFoods, and reuse it if
 //    it's there.
-// 2. Otherwise, search USDA FoodData Central with SearchFoodData, and create
-//    the food from the best match with CreateFood and its fdc_id. Its
-//    nutrients are copied from FDC. Prefer generic FDC foods for
-//    ingredients like vegetables, legumes and grains.
-// 3. Only for branded products FDC doesn't have, like a particular tofu or
-//    plant milk, create a custom food with the nutrients from its label,
-//    converted to per 100 g.
+// 2. Otherwise, search the reference foods with SearchFoodData, and create
+//    the food from the best match with CreateFood, its source and its
+//    source_id. Its nutrients are copied from the reference food. Prefer
+//    generic reference foods for ingredients like vegetables, legumes and
+//    grains.
+// 3. Only for branded products the reference foods don't have, like a
+//    particular tofu or plant milk, create a custom food with the nutrients
+//    from its label, converted to per 100 g.
+//
+// The reference foods come from two sources, searched together:
+//
+// - The Canadian Nutrient File (CNF, source FOOD_SOURCE_CNF), Health
+//   Canada's food composition database. Its foods are as sold in Canada,
+//   including Canadian fortification, like the vitamin D and B12 added to
+//   plant beverages and margarine, and Canadian products. For a household in
+//   Canada, prefer a CNF match when it fits as well as an FDC one.
+// - USDA FoodData Central (FDC, source FOOD_SOURCE_FDC), the US database,
+//   which has more foods, and more recently analyzed ones in its Foundation
+//   Foods dataset. Its fortified foods are as sold in the US.
 //
 // Then check that the food can be weighed: recipes measured in pieces need
 // grams_per_piece, and recipes measured in milliliters need
@@ -31,16 +43,20 @@ import "mcp/v1/options.proto";
 // store_section, package_grams, shelf_life_days, preferred_store_id and
 // always_in_stock: set them when you know them.
 service FoodService {
-  // Search the foods of USDA FoodData Central (the Foundation Foods and SR
-  // Legacy datasets, without meat, fish, dairy and eggs) by their
-  // description, e.g. "chickpeas cooked" or "spinach raw". Returns the best
-  // matches first, with their nutrients per 100 g and common portions. Use it
-  // to pick the fdc_id to create a food with CreateFood.
+  // Search the reference foods of the Canadian Nutrient File and USDA
+  // FoodData Central (its Foundation Foods and SR Legacy datasets), without
+  // meat, fish, dairy and eggs, by their English description, e.g.
+  // "chickpeas cooked" or "spinach raw". Returns the best matches of both
+  // sources first, with their source, nutrients per 100 g and common
+  // portions. Both sources often have the same food under the same name:
+  // see FoodService for which to prefer. Use it to pick the source and
+  // source_id to create a food with CreateFood.
   rpc SearchFoodData(SearchFoodDataRequest) returns (SearchFoodDataResponse);
-  // Create a food in the household, either from a FoodData Central food,
-  // copying its nutrients, or as a custom food with the given nutrients.
-  // Fails with ALREADY_EXISTS if the household has a food with the same
-  // name, which should then be reused instead.
+  // Create a food in the household, either from a reference food of the
+  // Canadian Nutrient File or FoodData Central, copying its nutrients, or as
+  // a custom food with the given nutrients. Fails with ALREADY_EXISTS if the
+  // household has a food with the same name, which should then be reused
+  // instead, and with INVALID_ARGUMENT if the reference food doesn't exist.
   rpc CreateFood(CreateFoodRequest) returns (CreateFoodResponse);
   // Get one of the household's foods.
   rpc GetFood(GetFoodRequest) returns (GetFoodResponse);
@@ -62,17 +78,18 @@ service FoodService {
 
 // Nutrients are the amounts of the nutrients the app tracks in an amount of
 // food, e.g. per 100 g of a food or per serving of a recipe. Every field is
-// optional: unset means unknown, which is different from 0. FoodData Central
-// often lacks iodine, vitamin B12 and vitamin D, for example. Only set the
-// values you know, from FDC or a food's label, and never guess them.
+// optional: unset means unknown, which is different from 0. The reference
+// foods often lack iodine, vitamin B12 and vitamin D, for example. Only set
+// the values you know, from a reference food or a food's label, and never
+// guess them.
 message Nutrients {
   // Energy, in kilocalories (kcal).
   optional double energy_kcal = 1;
   // Protein, in grams.
   optional double protein_grams = 2;
-  // Total carbohydrate, in grams, including sugars and fiber, as FoodData
-  // Central and US labels give it. European labels give carbohydrate
-  // without fiber: add the label's fiber to it.
+  // Total carbohydrate, in grams, including sugars and fiber, as the
+  // reference foods and US and Canadian labels give it. European labels
+  // give carbohydrate without fiber: add the label's fiber to it.
   optional double carbohydrate_grams = 3;
   // Total sugars, in grams. Part of carbohydrate_grams.
   optional double sugars_grams = 4;
@@ -165,10 +182,15 @@ enum Nutrient {
 // FoodSource is where a food's nutrients come from.
 enum FoodSource {
   FOOD_SOURCE_UNSPECIFIED = 0;
-  // USDA FoodData Central, see fdc_id.
+  // USDA FoodData Central, the US food composition database. Its IDs are
+  // FDC IDs, e.g. 173756.
   FOOD_SOURCE_FDC = 1;
-  // Entered by hand or by an agent, e.g. from a product's label.
+  // Entered by hand or by an agent, e.g. from a product's label. Only for
+  // the household's foods.
   FOOD_SOURCE_CUSTOM = 2;
+  // Health Canada's Canadian Nutrient File, Canada's food composition
+  // database. Its IDs are CNF food IDs, e.g. 3183.
+  FOOD_SOURCE_CNF = 3;
 }
 
 // StoreSection is the part of a store a food is found in, which groups the
@@ -221,10 +243,12 @@ message Food {
   // canned" or "Tofu, firm". From 1 to 200 characters, and unique in the
   // household, ignoring case.
   string name = 2;
-  // Where the food's nutrients come from.
+  // Where the food's nutrients come from: the source of the reference food
+  // it was created from, or FOOD_SOURCE_CUSTOM.
   FoodSource source = 3 [(mcp.v1.field).output_only = true];
-  // The ID of the FoodData Central food it was created from, 0 for custom
-  // foods.
+  // The ID of the FoodData Central food it was created from, 0 for foods
+  // from other sources and custom foods. The same as source_id for foods
+  // from FDC; prefer source and source_id.
   int32 fdc_id = 4 [(mcp.v1.field).output_only = true];
   // The nutrients in 100 g of the food. Unset nutrients are unknown. For
   // custom foods, enter the values from the label's "per 100 g" column;
@@ -274,63 +298,85 @@ message Food {
   // pantry. Add it to a shopping list by hand when it runs out. False by
   // default.
   bool always_in_stock = 17;
+  // The ID of the reference food it was created from in its source, e.g.
+  // a CNF food ID for FOOD_SOURCE_CNF. 0 for custom foods.
+  int32 source_id = 18 [(mcp.v1.field).output_only = true];
 }
 
-// A food of USDA FoodData Central.
+// A reference food, of the Canadian Nutrient File or USDA FoodData Central.
 message FoodData {
-  // The FDC ID of the food, to create a food from with CreateFood.
+  // The FDC ID of the food for foods of FoodData Central, 0 for foods of
+  // other sources. The same as source_id; prefer source and source_id.
   int32 fdc_id = 1;
-  // The FDC description, e.g. "Chickpeas (garbanzo beans, bengal gram),
-  // mature seeds, cooked, boiled, without salt".
+  // The description in its source, e.g. "Chickpeas (garbanzo beans, bengal
+  // gram), mature seeds, cooked, boiled, without salt".
   string description = 2;
-  // The FDC food category, e.g. "Legumes and Legume Products".
+  // The source's food category or group, e.g. "Legumes and Legume
+  // Products".
   string category = 3;
-  // The FDC dataset: "foundation_food" for Foundation Foods, which are
+  // The dataset: for FDC, "foundation_food" for Foundation Foods, which are
   // analyzed recently, or "sr_legacy_food" for SR Legacy, which has more
-  // foods and nutrients.
+  // foods and nutrients; "cnf" for the Canadian Nutrient File.
   string data_type = 4;
   // The nutrients in 100 g of the food. Unset nutrients are unknown.
   Nutrients nutrients = 5;
   // Common portions of the food with their weight, e.g. "1 cup" or "1
   // medium".
   repeated FoodDataPortion portions = 6;
-  // The ID of the household's food created from this FDC food, empty if
-  // none. Reuse that food rather than creating another.
+  // The ID of the household's food created from this reference food, empty
+  // if none. Reuse that food rather than creating another.
   string food_id = 7;
+  // The source of the food: FOOD_SOURCE_CNF or FOOD_SOURCE_FDC.
+  FoodSource source = 8;
+  // The ID of the food in its source, to create a food from with
+  // CreateFood, with source.
+  int32 source_id = 9;
+  // The French description, for foods of the Canadian Nutrient File, e.g.
+  // "Pois chiches, en conserve". Empty for FDC.
+  string french_description = 10;
 }
 
-// A common portion of a FoodData Central food.
+// A common portion of a reference food.
 message FoodDataPortion {
-  // The portion, e.g. "1 cup, chopped" or "1 medium (2-1/2\" dia)".
+  // The portion, e.g. "1 cup, chopped", "1 medium (2-1/2\" dia)" or
+  // "250ml".
   string description = 1;
   // The weight of the portion, in grams.
   double grams = 2;
 }
 
 message SearchFoodDataRequest {
-  // The words to search for in FDC descriptions, e.g. "lentils red raw".
-  // Required.
+  // The words to search for in the English descriptions, e.g. "lentils red
+  // raw". Required.
   string query = 1;
   // The most foods to return, from 1 to 50. 10 if 0.
   int32 page_size = 2;
 }
 
 message SearchFoodDataResponse {
-  // The matching foods, the best match first.
+  // The matching foods of both sources, the best match first.
   repeated FoodData foods = 1;
 }
 
 message CreateFoodRequest {
-  // The FoodData Central food to create the food from, found with
-  // SearchFoodData. Its nutrients are copied, so leave
-  // food.nutrients unset. Its description is the name unless
-  // food.name is set, and its portions suggest grams_per_piece and
-  // grams_per_milliliter unless they're set. 0 for a custom food.
+  // The FoodData Central food to create the food from. The same as source
+  // FOOD_SOURCE_FDC with source_id; prefer those. 0 if not set.
   int32 fdc_id = 1;
-  // The food. For a custom food, name is required. With fdc_id, all fields
-  // are optional, and override what's taken from FDC: prefer a short name,
-  // like "Chickpeas, cooked", to the long FDC description.
+  // The food. For a custom food, name is required. From a reference food,
+  // all fields are optional, and override what's taken from it: prefer a
+  // short name, like "Chickpeas, cooked", to the long description.
   Food food = 2;
+  // The source of the reference food to create the food from, found with
+  // SearchFoodData: FOOD_SOURCE_CNF or FOOD_SOURCE_FDC, with source_id. Its
+  // nutrients are copied, so leave food.nutrients unset. Its description is
+  // the name unless food.name is set, and its portions suggest
+  // grams_per_piece and grams_per_milliliter unless they're set.
+  // FOOD_SOURCE_UNSPECIFIED, with neither source_id nor fdc_id, for a
+  // custom food.
+  FoodSource source = 3;
+  // The ID of the reference food in source, the source_id of
+  // SearchFoodData's result. Required with source.
+  int32 source_id = 4;
 }
 
 message CreateFoodResponse {

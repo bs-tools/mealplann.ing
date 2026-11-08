@@ -51,16 +51,16 @@ func zipDir(t *testing.T, dir string) string {
 	return p
 }
 
-func byID(fdcFoods []*foods.FDCFood) map[int32]*foods.FDCFood {
-	m := map[int32]*foods.FDCFood{}
+func byID(fdcFoods []*foods.ReferenceFood) map[int32]*foods.ReferenceFood {
+	m := map[int32]*foods.ReferenceFood{}
 	for _, f := range fdcFoods {
-		m[f.FDCID] = f
+		m[f.SourceID] = f
 	}
 	return m
 }
 
 // wantNutrient checks a food's amount of a nutrient, nil for unknown.
-func wantNutrient(t *testing.T, f *foods.FDCFood, n nutrition.Nutrient, want *float64) {
+func wantNutrient(t *testing.T, f *foods.ReferenceFood, n nutrition.Nutrient, want *float64) {
 	t.Helper()
 	got := f.Per100Grams[n]
 	switch {
@@ -83,7 +83,7 @@ func TestReadSRLegacy(t *testing.T) {
 	if stats.Foods != 5 || stats.Excluded != 2 || len(fdcFoods) != 5 {
 		t.Errorf("got %d foods and stats %+v, want 5 foods and 2 excluded", len(fdcFoods), stats)
 	}
-	if !slices.IsSortedFunc(fdcFoods, func(a, b *foods.FDCFood) int { return int(a.FDCID - b.FDCID) }) {
+	if !slices.IsSortedFunc(fdcFoods, func(a, b *foods.ReferenceFood) int { return int(a.SourceID - b.SourceID) }) {
 		t.Error("foods aren't ordered by FDC ID")
 	}
 	m := byID(fdcFoods)
@@ -288,7 +288,7 @@ func TestReadSRLegacyJSON(t *testing.T) {
 		t.Fatalf("got %d foods and stats %+v, want the kale, 1 food and 1 excluded", len(fdcFoods), stats)
 	}
 	kale := fdcFoods[0]
-	if kale.FDCID != 168421 || kale.DataType != "sr_legacy_food" || kale.PublicationDate != time.Date(2019, 4, 1, 0, 0, 0, 0, time.UTC) {
+	if kale.SourceID != 168421 || kale.DataType != "sr_legacy_food" || kale.PublicationDate != time.Date(2019, 4, 1, 0, 0, 0, 0, time.UTC) {
 		t.Errorf("got kale %+v, want SR Legacy food 168421 published on 2019-04-01", kale)
 	}
 	wantNutrient(t, kale, nutrition.ProteinGrams, new(2.92))
@@ -393,16 +393,16 @@ func TestImport(t *testing.T) {
 		t.Fatalf("Import again: %v", err)
 	}
 	var count int
-	if err := db.QueryRow(ctx, "select count(*) from fdc_foods").Scan(&count); err != nil {
+	if err := db.QueryRow(ctx, "select count(*) from reference_foods where source = 'fdc'").Scan(&count); err != nil {
 		t.Fatal(err)
 	}
 	if count != 7 {
 		t.Errorf("got %d FDC foods, want 7", count)
 	}
 
-	chickpeas, err := repo.GetFDCFood(ctx, 173756)
+	chickpeas, err := repo.GetReferenceFood(ctx, foods.SourceFDC, 173756)
 	if err != nil {
-		t.Fatalf("GetFDCFood: %v", err)
+		t.Fatalf("GetReferenceFood: %v", err)
 	}
 	if got := chickpeas.Per100Grams[nutrition.ProteinGrams]; got == nil || *got != 20.47 || chickpeas.Per100Grams[nutrition.IodineMicrograms] != nil {
 		t.Errorf("got chickpeas %+v, want their protein and no iodine", chickpeas)
@@ -426,16 +426,16 @@ func TestImport(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			matches, err := repo.SearchFDCFoods(ctx, pgtype.UUID{}, tt.query, 10)
+			matches, err := repo.SearchReferenceFoods(ctx, pgtype.UUID{}, tt.query, 10)
 			if err != nil {
-				t.Fatalf("SearchFDCFoods: %v", err)
+				t.Fatalf("SearchReferenceFoods: %v", err)
 			}
 			var got []int32
 			for _, m := range matches {
-				got = append(got, m.FDCID)
+				got = append(got, m.SourceID)
 			}
 			if !slices.Equal(got, tt.want) {
-				t.Errorf("SearchFDCFoods(%q) = %v, want %v", tt.query, got, tt.want)
+				t.Errorf("SearchReferenceFoods(%q) = %v, want %v", tt.query, got, tt.want)
 			}
 		})
 	}

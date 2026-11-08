@@ -133,6 +133,12 @@ import-fdc: db ## Import USDA FoodData Central into the local database: make imp
 	@if [ -z "$(FDC)" ]; then echo 'Set FDC to the Foundation Foods and SR Legacy downloads, e.g. make import-fdc FDC="FoodData_Central_foundation_food_json_2026-10-29.zip FoodData_Central_sr_legacy_food_csv_2018-04.zip"' >&2; exit 1; fi
 	go run . import-fdc -database-url '$(DATABASE_URL)' $(FDC)
 
+.PHONY: import-cnf
+import-cnf: db ## Import Health Canada's Canadian Nutrient File into the local database: make import-cnf CNF=<zip or dir>
+	@$(WAIT_DB)
+	@if [ -z "$(CNF)" ]; then echo 'Set CNF to the Canadian Nutrient File CSV download, e.g. make import-cnf CNF=cnf-fcen-csv.zip' >&2; exit 1; fi
+	go run . import-cnf -database-url '$(DATABASE_URL)' '$(CNF)'
+
 .PHONY: admin-invitation
 admin-invitation: ## Print where to create the first administrator once the local server is up, if there's no administrator yet
 	@for i in $$(seq 1 300); do curl -sf -o /dev/null http://localhost:8080/ && break; sleep 1; done; \
