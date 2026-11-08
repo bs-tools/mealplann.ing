@@ -294,6 +294,40 @@ scoring as `SuggestRecipes`.
   hundred rollouts; two weeks of three meals gets about a dozen, and relies
   more on the polishing pass.
 
+## Templates
+
+A plan template is a plan of some days that isn't tied to dates, like a
+dietitian's sample week or a week the household liked, to plan again from
+any start date (`PlanTemplateService`, and the "Templates" page of the
+plan).
+
+- **Slots** are its times of day. A slot with a shared meal maps to each
+  person's eating time for that meal; one without maps to each person's
+  eating time of the same kind in the same position among those without a
+  shared meal, so the second small-meal slot is everyone's second small
+  meal.
+- **Entries** are a recipe at a slot on a day, with servings for everyone
+  whose eating time matches, and different servings for some, like a
+  third of a serving for a child, or 0 for someone who doesn't eat it.
+- **Batches** are entries of one recipe cooked together on a day, for a
+  number of servings, so leftovers are portions of one cook. Every other
+  entry is a cook of its own on its day.
+- **Applying** a template for people from a date creates the cooks with
+  their portions in one round trip, and returns the warnings of the eating
+  times and cooks they touch, who was left out because no eating time of
+  theirs matches a slot, and what the cooks need bought beyond the pantry.
+  `PreviewPlanTemplate` is the same without planning, so it's read-only
+  for agents. The app then makes the shopping list for its dates.
+- **From a plan**: `CreatePlanTemplateFromPlan` copies days of the plan:
+  each person's portions of a cook at a slot on a day become an entry, and
+  a cook eaten at several slots or days, or with servings to spare, a
+  batch. Staples and portions of foods aren't copied.
+- **Stored as a document**: a template's slots, entries and batches are
+  JSON in one row, as a template is edited and applied as a whole. Its
+  recipes and people are checked when it's saved, and its recipes again
+  when it's applied, which says which entries lost theirs, rather than
+  blocking the recipe's deletion.
+
 ## Milestones
 
 Version 1 is the first usable version, with suggestions. All five

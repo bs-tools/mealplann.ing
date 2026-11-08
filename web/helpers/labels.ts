@@ -151,3 +151,17 @@ export const foodSourceInfo = (
   }
   return undefined;
 };
+
+// FormatShare formats a person's servings, e.g. "⅓" or "1.5".
+export const formatShare = (servings: number): string => {
+  const thirds = servings * 3;
+  if (
+    Math.abs(thirds - Math.round(thirds)) < 0.02 &&
+    Math.round(thirds) % 3 !== 0
+  ) {
+    const whole = Math.floor(Math.round(thirds) / 3);
+    const fraction = Math.round(thirds) % 3 === 1 ? "⅓" : "⅔";
+    return whole > 0 ? `${whole}${fraction}` : fraction;
+  }
+  return servings.toLocaleString(undefined, { maximumFractionDigits: 2 });
+};

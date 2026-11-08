@@ -89,7 +89,8 @@ type ShoppingRepository interface {
 	ListLists(ctx context.Context, householdID pgtype.UUID, limit, offset int32) ([]*shopping.List, error)
 }
 
-// Service implements the PlanService and the SuggestionService.
+// Service implements the PlanService, the PlanTemplateService and the
+// SuggestionService.
 type Service struct {
 	log      *slog.Logger
 	report   *errreport.Reporter
@@ -99,6 +100,8 @@ type Service struct {
 	foods    FoodRepository
 	pantry   PantryRepository
 	shopping ShoppingRepository
+	// templates stores the plan templates.
+	templates TemplateRepository
 	// nowFn returns the current time, which today's date is taken from.
 	nowFn func() time.Time
 }
@@ -107,17 +110,18 @@ type Service struct {
 // the repository, for the people, recipes and foods in theirs, taking what
 // cooks use out of the pantry, and suggesting for the shopping lists'
 // shops.
-func NewService(log *slog.Logger, report *errreport.Reporter, plans PlanRepository, people PeopleRepository, recipes RecipeRepository, foods FoodRepository, pantry PantryRepository, shopping ShoppingRepository) *Service {
+func NewService(log *slog.Logger, report *errreport.Reporter, plans PlanRepository, people PeopleRepository, recipes RecipeRepository, foods FoodRepository, pantry PantryRepository, shopping ShoppingRepository, templates TemplateRepository) *Service {
 	return &Service{
-		log:      log,
-		report:   report,
-		plans:    plans,
-		people:   people,
-		recipes:  recipes,
-		foods:    foods,
-		pantry:   pantry,
-		shopping: shopping,
-		nowFn:    time.Now,
+		log:       log,
+		report:    report,
+		plans:     plans,
+		people:    people,
+		recipes:   recipes,
+		foods:     foods,
+		pantry:    pantry,
+		shopping:  shopping,
+		templates: templates,
+		nowFn:     time.Now,
 	}
 }
 

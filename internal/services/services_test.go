@@ -49,6 +49,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/shopping"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/bs-tools/mealplann.ing/internal/store/storetest"
+	"github.com/bs-tools/mealplann.ing/internal/templates"
 	"github.com/bs-tools/mealplann.ing/internal/users"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -94,6 +95,11 @@ type env struct {
 	plans       plansv1connect.PlanServiceClient
 	otherPlans  plansv1connect.PlanServiceClient
 	anonPlans   plansv1connect.PlanServiceClient
+	// templates, otherTemplates and anonTemplates are the plan template
+	// clients of the same users.
+	templates      plansv1connect.PlanTemplateServiceClient
+	otherTemplates plansv1connect.PlanTemplateServiceClient
+	anonTemplates  plansv1connect.PlanTemplateServiceClient
 
 	// The pantry and shopping services, signed in with the API token, as
 	// the other user in another household, and anonymously.
@@ -158,7 +164,7 @@ func newEnv(t *testing.T) *env {
 	planRepo := plans.NewRepository(log, db)
 	pantryRepo := pantry.NewRepository(log, db)
 	shoppingRepo := shopping.NewRepository(log, db)
-	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, e.foodRepo, pantryRepo, shoppingRepo)
+	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, e.foodRepo, pantryRepo, shoppingRepo, templates.NewRepository(log, db))
 	pantryService := pantrysvc.NewService(log, report, pantryRepo, e.foodRepo)
 	shoppingService := shoppingsvc.NewService(log, report, shoppingRepo, planRepo, recipeRepo, e.foodRepo, pantryRepo)
 
@@ -183,6 +189,7 @@ func newEnv(t *testing.T) *env {
 	recipesv1connect.RegisterRecipeServiceHandler(srv2, recipeService)
 	peoplev1connect.RegisterPersonServiceHandler(srv2, personService)
 	plansv1connect.RegisterPlanServiceHandler(srv2, planService)
+	plansv1connect.RegisterPlanTemplateServiceHandler(srv2, planService)
 	pantryv1connect.RegisterPantryServiceHandler(srv2, pantryService)
 	shoppingv1connect.RegisterShoppingServiceHandler(srv2, shoppingService)
 	suggestionsv1connect.RegisterSuggestionServiceHandler(srv2, planService)
@@ -195,6 +202,7 @@ func newEnv(t *testing.T) *env {
 		mcp.Service{Name: recipesv1connect.RecipeServiceName, Handler: recipeService},
 		mcp.Service{Name: peoplev1connect.PersonServiceName, Handler: personService},
 		mcp.Service{Name: plansv1connect.PlanServiceName, Handler: planService},
+		mcp.Service{Name: plansv1connect.PlanTemplateServiceName, Handler: planService},
 		mcp.Service{Name: pantryv1connect.PantryServiceName, Handler: pantryService},
 		mcp.Service{Name: shoppingv1connect.ShoppingServiceName, Handler: shoppingService},
 		mcp.Service{Name: suggestionsv1connect.SuggestionServiceName, Handler: planService},
@@ -234,6 +242,9 @@ func newEnv(t *testing.T) *env {
 	e.plans = plansv1connect.NewPlanServiceClient(authed)
 	e.otherPlans = plansv1connect.NewPlanServiceClient(other)
 	e.anonPlans = plansv1connect.NewPlanServiceClient(anon)
+	e.templates = plansv1connect.NewPlanTemplateServiceClient(authed)
+	e.otherTemplates = plansv1connect.NewPlanTemplateServiceClient(other)
+	e.anonTemplates = plansv1connect.NewPlanTemplateServiceClient(anon)
 	e.pantry = pantryv1connect.NewPantryServiceClient(authed)
 	e.otherPantry = pantryv1connect.NewPantryServiceClient(other)
 	e.anonPantry = pantryv1connect.NewPantryServiceClient(anon)

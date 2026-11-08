@@ -1,0 +1,313 @@
+syntax = "proto3";
+
+package plans.v1;
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "mcp/v1/options.proto";
+import "people/v1/people.proto";
+import "plans/v1/plans.proto";
+
+// PlanTemplateService manages the household's plan templates: plans of
+// some days that aren't tied to dates, like a dietitian's sample week or a
+// week the household liked, to plan again from any start date.
+//
+// A template has slots, the times of day its meals are eaten at, which map
+// to each person's eating times (see PersonService):
+//
+// - A slot with a shared meal (breakfast, lunch or dinner) is each
+//   person's eating time for that meal.
+// - A slot without one is each person's eating time of the same kind and
+//   position among their eating times without a shared meal: the second
+//   small-meal slot is each person's second small meal.
+//
+// Its entries say who eats what: a recipe at a slot on a day, with
+// servings for each person whose eating time matches, and different
+// servings for some people, like a third of a serving for a child, or 0
+// for someone who doesn't eat it. Its batches say which entries are cooked
+// together, so leftovers are portions of one cook; every other entry is
+// cooked on its own day.
+//
+// To use templates:
+//
+// 1. Make one with CreatePlanTemplateFromPlan from days the household
+//    planned already, or with CreatePlanTemplate, e.g. from a meal plan a
+//    user shares. Find recipes with RecipeService.ListRecipes, and create
+//    those missing first.
+// 2. Check what it would plan with PreviewPlanTemplate for the people and
+//    start date: the cooks, the portions, everyone's warnings with what's
+//    already planned, and what to buy. Fix the template's entries or the
+//    plan if there are warnings.
+// 3. Plan it with ApplyPlanTemplate, and make the shopping list for its
+//    dates with ShoppingService.CreateShoppingList.
+service PlanTemplateService {
+  // Create a template. Fails with INVALID_ARGUMENT if it refers to recipes
+  // or people that aren't the household's, and ALREADY_EXISTS if the
+  // household has a template of the name.
+  rpc CreatePlanTemplate(CreatePlanTemplateRequest) returns (CreatePlanTemplateResponse);
+  // Make a template from days of the plan: its slots from the household's
+  // eating times, an entry for each cook eaten at a slot on a day, with the
+  // servings people ate, and a batch for each cook eaten at several slots
+  // or days, or with servings to spare. Portions of foods without a recipe
+  // and staples aren't copied, as staples recur anyway. Fails with
+  // FAILED_PRECONDITION if the days have no cooks.
+  rpc CreatePlanTemplateFromPlan(CreatePlanTemplateFromPlanRequest) returns (CreatePlanTemplateFromPlanResponse);
+  // Get a template.
+  rpc GetPlanTemplate(GetPlanTemplateRequest) returns (GetPlanTemplateResponse);
+  // List the household's templates, ordered by name, as summaries.
+  rpc ListPlanTemplates(ListPlanTemplatesRequest) returns (ListPlanTemplatesResponse);
+  // Update a template.
+  rpc UpdatePlanTemplate(UpdatePlanTemplateRequest) returns (UpdatePlanTemplateResponse);
+  // Delete a template. The plans made from it stay.
+  rpc DeletePlanTemplate(DeletePlanTemplateRequest) returns (DeletePlanTemplateResponse);
+  // Show what applying a template would plan, without planning it: a dry
+  // run of ApplyPlanTemplate, with the same response. Its cooks and
+  // portions have IDs that link portions to their cooks in the response,
+  // but aren't saved: don't use them with other methods.
+  rpc PreviewPlanTemplate(PreviewPlanTemplateRequest) returns (PreviewPlanTemplateResponse);
+  // Plan a template for people from a start date: create its cooks, each
+  // with the portions of its entries. Returns them, with the warnings of
+  // the eating times and cooks they touch, given what was planned there
+  // already, and what they need bought. Nothing is planned if anything
+  // fails. Fails with FAILED_PRECONDITION if an entry's recipe was deleted:
+  // update the template first.
+  rpc ApplyPlanTemplate(ApplyPlanTemplateRequest) returns (ApplyPlanTemplateResponse);
+}
+
+// A plan template.
+message PlanTemplate {
+  // The ID of the template. Required to update it, and ignored when
+  // creating it.
+  string id = 1;
+  // The name, unique in the household, e.g. "Dietitian week 1". From 1 to
+  // 200 characters.
+  string name = 2;
+  // Where it comes from, e.g. "Dietitian, 3 Nov 2026", or a URL. At most
+  // 500 characters.
+  string source = 3;
+  // Notes, e.g. what it's for. At most 5000 characters.
+  string notes = 4;
+  // How many days it plans, from 1 to 28. Entries are on days from 0 to
+  // days - 1.
+  int32 days = 5;
+  // The times of day its entries are eaten at, in the order of a day, from
+  // 1 to 20.
+  repeated TemplateSlot slots = 6;
+  // What people eat, at most 500.
+  repeated TemplateEntry entries = 7;
+  // The entries cooked together, at most 200. Each entry is in at most
+  // one batch.
+  repeated TemplateBatch batches = 8;
+  // When the template was created.
+  google.protobuf.Timestamp create_time = 9 [(mcp.v1.field).output_only = true];
+  // When the template was last changed.
+  google.protobuf.Timestamp update_time = 10 [(mcp.v1.field).output_only = true];
+}
+
+// A time of day of a template, which maps to an eating time of each
+// person.
+message TemplateSlot {
+  // How entries refer to it, unique in the template: lowercase letters,
+  // digits and dashes, at most 40, e.g. "dinner" or "small-2".
+  string key = 1;
+  // Its name, e.g. "Mid-afternoon". From 1 to 100 characters.
+  string name = 2;
+  // The kind of eating time it is. Required.
+  people.v1.EatingTimeKind kind = 3;
+  // The shared meal it is, mapping to each person's eating time for it, or
+  // unspecified to map by kind and position. At most one slot per meal.
+  people.v1.HouseholdMeal meal = 4;
+}
+
+// A recipe people eat at a slot on a day of a template.
+message TemplateEntry {
+  // How batches refer to it, unique in the template: lowercase letters,
+  // digits and dashes, at most 60. Empty for "d<day + 1>-<slot>", e.g.
+  // "d1-dinner".
+  string key = 1;
+  // The day, from 0 for the first.
+  int32 day = 2;
+  // The key of its slot. Required.
+  string slot_key = 3;
+  // The ID of the household's recipe. Required.
+  string recipe_id = 4;
+  // The recipe's name, empty if it was deleted.
+  string recipe_name = 5 [(mcp.v1.field).output_only = true];
+  // How many servings each person whose eating time matches the slot eats,
+  // more than 0 and at most 20. 0 for 1.
+  double servings = 6;
+  // People who eat a different amount, at most one each.
+  repeated PersonServings person_servings = 7;
+}
+
+// How many servings of an entry a person eats.
+message PersonServings {
+  // The ID of the household's person. Required.
+  string person_id = 1;
+  // How many servings, from 0 to 20; 0 if they don't eat it, e.g. 0.33
+  // for a third of a serving.
+  double servings = 2;
+}
+
+// Entries of the same recipe cooked together on a day, so those on later
+// days are leftovers, portions of the same cook.
+message TemplateBatch {
+  // The day it's cooked, on or before its entries' days.
+  int32 day = 1;
+  // How many servings to cook, at most 100, at least the servings its
+  // entries plan, so that the rest is left over. 0 for the servings they
+  // plan.
+  double servings = 2;
+  // The keys of its entries, at least one, all of the same recipe.
+  repeated string entry_keys = 3;
+  // The ID of its entries' recipe.
+  string recipe_id = 4 [(mcp.v1.field).output_only = true];
+  // The name of its entries' recipe.
+  string recipe_name = 5 [(mcp.v1.field).output_only = true];
+}
+
+// A summary of a template, for lists.
+message PlanTemplateSummary {
+  // The ID of the template.
+  string id = 1;
+  // The name.
+  string name = 2;
+  // Where it comes from.
+  string source = 3;
+  // How many days it plans.
+  int32 days = 4;
+  // How many entries it has.
+  int32 entry_count = 5;
+  // The names of its recipes, in order of first use, without repeats.
+  repeated string recipe_names = 6;
+  // When it was last changed.
+  google.protobuf.Timestamp update_time = 7;
+}
+
+message CreatePlanTemplateRequest {
+  // The template.
+  PlanTemplate template = 1;
+}
+
+message CreatePlanTemplateResponse {
+  // The created template.
+  PlanTemplate template = 1;
+}
+
+message CreatePlanTemplateFromPlanRequest {
+  // The name of the template, as in PlanTemplate. Required.
+  string name = 1;
+  // Where it comes from, as in PlanTemplate.
+  string source = 2;
+  // The first day to copy (YYYY-MM-DD). Required.
+  string start_date = 3;
+  // How many days to copy, from 1 to 28. 0 for 7.
+  int32 days = 4;
+}
+
+message CreatePlanTemplateFromPlanResponse {
+  // The created template.
+  PlanTemplate template = 1;
+}
+
+message GetPlanTemplateRequest {
+  // The ID of the template.
+  string id = 1;
+}
+
+message GetPlanTemplateResponse {
+  // The template.
+  PlanTemplate template = 1;
+}
+
+message ListPlanTemplatesRequest {}
+
+message ListPlanTemplatesResponse {
+  // The templates, ordered by name.
+  repeated PlanTemplateSummary templates = 1;
+}
+
+message UpdatePlanTemplateRequest {
+  // The template, with its ID and the new values of the fields in
+  // update_mask.
+  PlanTemplate template = 1;
+  // The fields to update, e.g. "name,source". If empty, all fields are
+  // replaced. Lists, like entries and batches, are replaced as a whole.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdatePlanTemplateResponse {
+  // The updated template.
+  PlanTemplate template = 1;
+}
+
+message DeletePlanTemplateRequest {
+  // The ID of the template.
+  string id = 1;
+}
+
+message DeletePlanTemplateResponse {}
+
+message PreviewPlanTemplateRequest {
+  // The ID of the template. Required.
+  string template_id = 1;
+  // The date its first day is planned on (YYYY-MM-DD). Required.
+  string start_date = 2;
+  // The people to plan for. Empty for everyone in the household.
+  repeated string person_ids = 3;
+}
+
+message PreviewPlanTemplateResponse {
+  // What it would plan.
+  AppliedTemplate result = 1;
+}
+
+message ApplyPlanTemplateRequest {
+  // The ID of the template. Required.
+  string template_id = 1;
+  // The date its first day is planned on (YYYY-MM-DD). Required.
+  string start_date = 2;
+  // The people to plan for. Empty for everyone in the household.
+  repeated string person_ids = 3;
+}
+
+message ApplyPlanTemplateResponse {
+  // What it planned.
+  AppliedTemplate result = 1;
+}
+
+// What applying a template plans.
+message AppliedTemplate {
+  // The last date planned (YYYY-MM-DD): the start date plus the
+  // template's days, less one. Make the shopping list from the start date
+  // to it with ShoppingService.CreateShoppingList.
+  string end_date = 1;
+  // The cooks, by date and meal.
+  repeated Cook cooks = 2;
+  // The portions, by cook, then person and date.
+  repeated Portion portions = 3;
+  // The warnings of the eating times the portions are at, with what was
+  // planned there already, and of the cooks, each saying what to change.
+  repeated Warning warnings = 4;
+  // The entries people are left out of, as no eating time of theirs
+  // matches the slot, e.g. "Ben has no eating time for the Mid-afternoon
+  // slot, so they're left out of entry d2-small-2 on day 2". Give them 0
+  // servings of the entry, or change the slot, to plan without them.
+  repeated string skipped = 5;
+  // What the cooks need bought beyond the pantry, as the shopping list
+  // would have it if they were all that's planned.
+  repeated TemplateShoppingItem shopping = 6;
+}
+
+// A food to buy for a template's cooks.
+message TemplateShoppingItem {
+  // The ID of the food.
+  string food_id = 1;
+  // The name of the food.
+  string food_name = 2;
+  // How much to buy, e.g. "2 × 400 g".
+  string amount_text = 3;
+  // Whether it won't keep from the shop on the start date until it's
+  // needed, so it's bought on a later trip.
+  bool top_up = 4;
+}

@@ -35,14 +35,14 @@ const (
 // timeOfDay matches "HH:MM" in 24 hours.
 var timeOfDay = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d$`)
 
-// KindsToProto and MealsToProto convert eating times' kinds and meals to
-// the API.
+// KindsToProto, KindsFromProto, MealsToProto and MealsFromProto convert
+// eating times' kinds and meals to and from the API.
 var (
 	KindsToProto = map[people.Kind]peoplev1.EatingTimeKind{
 		people.KindMain:  peoplev1.EatingTimeKind_EATING_TIME_KIND_MAIN,
 		people.KindSmall: peoplev1.EatingTimeKind_EATING_TIME_KIND_SMALL,
 	}
-	kindsFromProto = map[peoplev1.EatingTimeKind]people.Kind{
+	KindsFromProto = map[peoplev1.EatingTimeKind]people.Kind{
 		peoplev1.EatingTimeKind_EATING_TIME_KIND_MAIN:  people.KindMain,
 		peoplev1.EatingTimeKind_EATING_TIME_KIND_SMALL: people.KindSmall,
 	}
@@ -173,7 +173,7 @@ func eatingTimesFromProto(list []*peoplev1.EatingTime, existing *people.Person) 
 		case utf8.RuneCountInString(name) > maxEatingTimeNameLength:
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.name must be at most %d characters", field, maxEatingTimeNameLength)
 		}
-		kind, ok := kindsFromProto[p.GetKind()]
+		kind, ok := KindsFromProto[p.GetKind()]
 		if !ok {
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.kind is required: EATING_TIME_KIND_MAIN or EATING_TIME_KIND_SMALL", field)
 		}

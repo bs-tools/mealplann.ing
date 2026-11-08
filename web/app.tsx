@@ -13,6 +13,8 @@ import OAuthConsentPage from "pages/oauth-consent";
 import PantryPage from "pages/pantry";
 import PeoplePage from "pages/people";
 import PlanPage from "pages/plan";
+import PlanTemplatePage from "pages/plan-template";
+import PlanTemplatesPage from "pages/plan-templates";
 import PrivacyPage from "pages/privacy";
 import RecipePage from "pages/recipe";
 import RecipeEditPage from "pages/recipe-edit";
@@ -110,6 +112,8 @@ const App: React.FC = () => {
             <Route path="/" element={<HomePage user={user} />} />
             <Route path="/plan" element={<PlanPage />} />
             <Route path="/plan/auto" element={<AutoPlanPage />} />
+            <Route path="/plan/templates" element={<PlanTemplatesPage />} />
+            <Route path="/plan/templates/:id" element={<PlanTemplatePage />} />
             <Route path="/people" element={<PeoplePage />} />
             <Route path="/shopping" element={<ShoppingPage />} />
             <Route path="/pantry" element={<PantryPage />} />
