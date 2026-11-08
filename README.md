@@ -276,9 +276,10 @@ Once, in order:
 
 7. Add the secrets' values, see [Secrets](#secrets).
 8. Set the repository variables `GCP_PROJECT_ID` and `GCP_PROJECT_NUMBER`
-   under Settings → Secrets and variables → Actions → Variables. They aren't
-   secret: the workflows only use them to name the project and its service
-   accounts.
+   with `make github-apply`, see [Repository settings](#repository-settings),
+   or by hand under Settings → Secrets and variables → Actions → Variables.
+   They aren't secret: the workflows only use them to name the project and
+   its service accounts.
 9. Merge to `main`, or rerun CI on it: the deploy job builds the image and
    creates the service.
 10. Set up the [custom domain](#custom-domain), then create the first
@@ -307,6 +308,34 @@ aren't stored in the Terraform state:
 
   Passkeys are bound to the domain, so create the administrator on the
   domain you'll use.
+
+### Repository settings
+
+The GitHub repository's settings are Terraform too, in
+[`infra/github`](infra/github), the same as trail-tools': squash merges with
+the pull request's title and description as the commit message, auto-merge,
+deleting merged branches, Dependabot alerts and security updates, the
+`GCP_PROJECT_ID` and `GCP_PROJECT_NUMBER` Actions variables, and a ruleset
+on `main` that requires CI's checks and refuses force-pushes and deletion,
+which admins can bypass.
+
+Managing them needs a repository admin, which GitHub Actions' token isn't,
+and storing an admin token in CI would hand it to every workflow, including
+those running Dependabot's updates before anyone reviews them. So they're
+applied from your machine, with your gh and gcloud credentials (the state is
+in the same bucket):
+
+```sh
+$ make github-plan
+$ make github-apply
+```
+
+The first plan imports the existing repository and variables, and shows
+what changes before anything is applied. Commit the
+`infra/github/.terraform.lock.hcl` that the first run creates. GitHub only
+offers rulesets on private repositories of paid plans: if the plan fails
+saying so, set `protect_default_branch = false` in
+[`infra/github/terraform.tfvars`](infra/github/terraform.tfvars).
 
 ### Custom domain
 
