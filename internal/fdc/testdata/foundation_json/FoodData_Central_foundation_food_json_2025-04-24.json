@@ -1,0 +1,454 @@
+{
+ "FoundationFoods": [
+  {
+   "foodClass": "FinalFood",
+   "description": "Soy milk, unsweetened, plain, shelf stable",
+   "foodNutrients": [
+    {
+     "type": "FoodNutrient",
+     "id": 30000001,
+     "nutrient": {
+      "id": 2047,
+      "number": "957",
+      "name": "Energy (Atwater General Factors)",
+      "rank": 280,
+      "unitName": "kcal"
+     },
+     "dataPoints": 1,
+     "amount": 33.0
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000002,
+     "nutrient": {
+      "id": 2048,
+      "number": "958",
+      "name": "Energy (Atwater Specific Factors)",
+      "rank": 290,
+      "unitName": "kcal"
+     },
+     "dataPoints": 1,
+     "amount": 32.3
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000003,
+     "nutrient": {
+      "id": 1003,
+      "number": "203",
+      "name": "Protein",
+      "rank": 600,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 3.55
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000004,
+     "nutrient": {
+      "id": 1004,
+      "number": "204",
+      "name": "Total lipid (fat)",
+      "rank": 800,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 1.87
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000005,
+     "nutrient": {
+      "id": 1005,
+      "number": "205",
+      "name": "Carbohydrate, by difference",
+      "rank": 1110,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 1.29
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000006,
+     "nutrient": {
+      "id": 1063,
+      "number": "269.3",
+      "name": "Sugars, Total",
+      "rank": 1500,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 0.0
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000007,
+     "nutrient": {
+      "id": 1087,
+      "number": "301",
+      "name": "Calcium, Ca",
+      "rank": 5300,
+      "unitName": "mg"
+     },
+     "dataPoints": 1,
+     "amount": 126.0
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000008,
+     "nutrient": {
+      "id": 1089,
+      "number": "303",
+      "name": "Iron, Fe",
+      "rank": 5400,
+      "unitName": "mg"
+     },
+     "dataPoints": 1,
+     "amount": 0.54
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000009,
+     "nutrient": {
+      "id": 1092,
+      "number": "306",
+      "name": "Potassium, K",
+      "rank": 5700,
+      "unitName": "mg"
+     },
+     "dataPoints": 1,
+     "amount": 149.0
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000010,
+     "nutrient": {
+      "id": 1093,
+      "number": "307",
+      "name": "Sodium, Na",
+      "rank": 5800,
+      "unitName": "mg"
+     },
+     "dataPoints": 1,
+     "amount": 47.0
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000011,
+     "nutrient": {
+      "id": 1178,
+      "number": "418",
+      "name": "Vitamin B-12",
+      "rank": 7340,
+      "unitName": "µg"
+     },
+     "dataPoints": 1,
+     "amount": 1.11
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000012,
+     "nutrient": {
+      "id": 1114,
+      "number": "328",
+      "name": "Vitamin D (D2 + D3)",
+      "rank": 8700,
+      "unitName": "µg"
+     },
+     "dataPoints": 1,
+     "amount": 1.2
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000013,
+     "nutrient": {
+      "id": 1404,
+      "number": "851",
+      "name": "PUFA 18:3 n-3 c,c,c (ALA)",
+      "rank": 14100,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 0.12
+    }
+   ],
+   "foodAttributes": [],
+   "nutrientConversionFactors": [],
+   "isHistoricalReference": false,
+   "ndbNumber": 0,
+   "foodPortions": [
+    {
+     "id": 270001,
+     "value": 1.0,
+     "measureUnit": {
+      "id": 1000,
+      "name": "cup",
+      "abbreviation": "cup"
+     },
+     "modifier": "",
+     "gramWeight": 243.0,
+     "sequenceNumber": 1,
+     "amount": 1.0,
+     "minYearAcquired": 2021
+    },
+    {
+     "id": 270002,
+     "value": 1.0,
+     "measureUnit": {
+      "id": 1001,
+      "name": "tablespoon",
+      "abbreviation": "tablespoon"
+     },
+     "modifier": "",
+     "gramWeight": 15.2,
+     "sequenceNumber": 2,
+     "amount": 1.0,
+     "minYearAcquired": 2021
+    }
+   ],
+   "publicationDate": "4/28/2022",
+   "foodCategory": {
+    "description": "Legumes and Legume Products"
+   },
+   "fdcId": 2257046,
+   "dataType": "Foundation",
+   "inputFoods": [
+    {
+     "id": 1,
+     "foodDescription": "Soy milk sample",
+     "inputFood": {
+      "foodClass": "Composite",
+      "description": "Soy milk, unsweetened, plain, shelf stable",
+      "dataType": "Sub Sample Food",
+      "fdcId": 2257047,
+      "publicationDate": "4/28/2022"
+     }
+    }
+   ]
+  },
+  {
+   "foodClass": "FinalFood",
+   "description": "Onions, yellow, raw",
+   "foodNutrients": [
+    {
+     "type": "FoodNutrient",
+     "id": 30000016,
+     "nutrient": {
+      "id": 2047,
+      "number": "957",
+      "name": "Energy (Atwater General Factors)",
+      "rank": 280,
+      "unitName": "kcal"
+     },
+     "dataPoints": 1,
+     "amount": 38.1
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000017,
+     "nutrient": {
+      "id": 2048,
+      "number": "958",
+      "name": "Energy (Atwater Specific Factors)",
+      "rank": 290,
+      "unitName": "kcal"
+     },
+     "dataPoints": 1,
+     "amount": 35.6
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000018,
+     "nutrient": {
+      "id": 1003,
+      "number": "203",
+      "name": "Protein",
+      "rank": 600,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 0.83
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000019,
+     "nutrient": {
+      "id": 1004,
+      "number": "204",
+      "name": "Total lipid (fat)",
+      "rank": 800,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 0.05
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000020,
+     "nutrient": {
+      "id": 1005,
+      "number": "205",
+      "name": "Carbohydrate, by difference",
+      "rank": 1110,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 8.61
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000021,
+     "nutrient": {
+      "id": 1063,
+      "number": "269.3",
+      "name": "Sugars, Total",
+      "rank": 1500,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 5.76
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000022,
+     "nutrient": {
+      "id": 1079,
+      "number": "291",
+      "name": "Fiber, total dietary",
+      "rank": 1200,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 1.24
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000023,
+     "nutrient": {
+      "id": 1087,
+      "number": "301",
+      "name": "Calcium, Ca",
+      "rank": 5300,
+      "unitName": "mg"
+     },
+     "dataPoints": 1,
+     "amount": 15.0
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000024,
+     "nutrient": {
+      "id": 1089,
+      "number": "303",
+      "name": "Iron, Fe",
+      "rank": 5400,
+      "unitName": "mg"
+     },
+     "dataPoints": 1,
+     "amount": 0.13
+    }
+   ],
+   "foodAttributes": [],
+   "nutrientConversionFactors": [],
+   "isHistoricalReference": false,
+   "ndbNumber": 0,
+   "foodPortions": [
+    {
+     "id": 270003,
+     "value": 1.0,
+     "measureUnit": {
+      "id": 9999,
+      "name": "undetermined",
+      "abbreviation": "undetermined"
+     },
+     "modifier": "",
+     "gramWeight": 143.0,
+     "sequenceNumber": 1,
+     "amount": 1.0,
+     "minYearAcquired": 2021,
+     "portionDescription": "1 medium"
+    }
+   ],
+   "publicationDate": "10/28/2022",
+   "foodCategory": {
+    "description": "Vegetables and Vegetable Products"
+   },
+   "fdcId": 2346393,
+   "dataType": "Foundation"
+  },
+  {
+   "foodClass": "FinalFood",
+   "description": "Eggs, Grade A, Large, egg whole",
+   "foodNutrients": [
+    {
+     "type": "FoodNutrient",
+     "id": 30000025,
+     "nutrient": {
+      "id": 2047,
+      "number": "957",
+      "name": "Energy (Atwater General Factors)",
+      "rank": 280,
+      "unitName": "kcal"
+     },
+     "dataPoints": 1,
+     "amount": 148.0
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000026,
+     "nutrient": {
+      "id": 1003,
+      "number": "203",
+      "name": "Protein",
+      "rank": 600,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 12.4
+    },
+    {
+     "type": "FoodNutrient",
+     "id": 30000027,
+     "nutrient": {
+      "id": 1004,
+      "number": "204",
+      "name": "Total lipid (fat)",
+      "rank": 800,
+      "unitName": "g"
+     },
+     "dataPoints": 1,
+     "amount": 9.96
+    }
+   ],
+   "foodAttributes": [],
+   "nutrientConversionFactors": [],
+   "isHistoricalReference": false,
+   "ndbNumber": 0,
+   "foodPortions": [
+    {
+     "id": 270004,
+     "value": 1.0,
+     "measureUnit": {
+      "id": 9999,
+      "name": "undetermined",
+      "abbreviation": "undetermined"
+     },
+     "modifier": "",
+     "gramWeight": 50.0,
+     "sequenceNumber": 1,
+     "amount": 1.0,
+     "minYearAcquired": 2021,
+     "portionDescription": "1 large"
+    }
+   ],
+   "publicationDate": "10/28/2022",
+   "foodCategory": {
+    "description": "Dairy and Egg Products"
+   },
+   "fdcId": 2346394,
+   "dataType": "Foundation"
+  }
+ ]
+}

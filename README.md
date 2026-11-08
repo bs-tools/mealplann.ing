@@ -66,12 +66,14 @@ http://localhost:8080/local-sign-in.
 
 Households create their foods from USDA FoodData Central (FDC), so their
 nutrients are filled in, or enter them by hand. To make FDC's foods
-available, download the **Foundation Foods** and **SR Legacy** datasets as
-CSV from https://fdc.nal.usda.gov/download-datasets, and import them into
-the local database, as the zip files or extracted:
+available, download the **Foundation Foods** and **SR Legacy** datasets
+from https://fdc.nal.usda.gov/download-datasets, and import them into the
+local database, as the zip files or extracted. Take Foundation Foods as
+**JSON**: its CSV download of October 2026 has no foods or nutrients, only
+the samples they were analyzed from. SR Legacy works as JSON or CSV.
 
 ```sh
-$ make import-fdc FDC="FoodData_Central_foundation_food_csv_2025-04-24.zip FoodData_Central_sr_legacy_food_csv_2018-04.zip"
+$ make import-fdc FDC="FoodData_Central_foundation_food_json_2026-10-29.zip FoodData_Central_sr_legacy_food_csv_2018-04.zip"
 ```
 
 That runs `foodplanning import-fdc -database-url <url> <dataset>...`, which
@@ -328,7 +330,7 @@ USDA publishes new data, so it runs from your machine against the database
 rather than as a job in the cloud:
 
 ```sh
-$ go run . import-fdc -database-url '<the database-url secret>' FoodData_Central_foundation_food_csv_*.zip FoodData_Central_sr_legacy_food_csv_*.zip
+$ go run . import-fdc -database-url '<the database-url secret>' FoodData_Central_foundation_food_json_*.zip FoodData_Central_sr_legacy_food_csv_*.zip
 ```
 
 ### Avatars

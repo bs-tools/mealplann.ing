@@ -1,7 +1,10 @@
 // Package fdc imports the foods of USDA FoodData Central
-// (https://fdc.nal.usda.gov/download-datasets) from the CSV downloads of
-// its Foundation Foods and SR Legacy datasets, which households create
-// their foods from. The Branded dataset is too big for the free tier, so
+// (https://fdc.nal.usda.gov/download-datasets) from the CSV or JSON
+// downloads of its Foundation Foods and SR Legacy datasets, which households
+// create their foods from. Both formats are read because USDA's releases
+// differ: the Foundation Foods CSV download of October 2026 has no food.csv,
+// food_nutrient.csv or food_portion.csv, while its JSON download has every
+// food with its nutrients and portions. The Branded dataset is too big for the free tier, so
 // branded products are entered as custom foods instead.
 package fdc
 
@@ -117,14 +120,17 @@ type Stats struct {
 	Excluded int
 }
 
-// Read reads the foods of an FDC dataset's CSV download, extracted or not,
-// in fsys. The CSV files may be in a directory, as they are in the zip
-// files. Foods of excluded categories are left out. Foods are returned by
-// FDC ID.
+// Read reads the foods of an FDC dataset's CSV or JSON download, extracted
+// or not, in fsys. The CSV files may be in a directory, as they are in the
+// zip files. Foods of excluded categories are left out. Foods are returned
+// by FDC ID.
 func Read(fsys fs.FS) ([]*foods.FDCFood, Stats, error) {
-	dir, err := findDataset(fsys)
+	dir, jsonFile, err := findDataset(fsys)
 	if err != nil {
 		return nil, Stats{}, err
+	}
+	if jsonFile != "" {
+		return readJSON(fsys, jsonFile)
 	}
 	sub, err := fs.Sub(fsys, dir)
 	if err != nil {
@@ -134,26 +140,41 @@ func Read(fsys fs.FS) ([]*foods.FDCFood, Stats, error) {
 	return r.read()
 }
 
-// findDataset returns the directory of fsys with food.csv.
-func findDataset(fsys fs.FS) (string, error) {
-	var found string
-	err := fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
+// findDataset returns the directory of fsys with food.csv, for a CSV
+// download, or else the path of its JSON file, for a JSON download.
+func findDataset(fsys fs.FS) (csvDir, jsonFile string, err error) {
+	// The files seen, to say what the download has instead.
+	var seen []string
+	err = fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if !d.IsDir() && d.Name() == "food.csv" {
-			found = path.Dir(p)
+		switch {
+		case d.IsDir():
+		case d.Name() == "food.csv":
+			csvDir = path.Dir(p)
 			return fs.SkipAll
+		case jsonFile == "" && strings.EqualFold(path.Ext(p), ".json"):
+			jsonFile = p
+		case len(seen) < 10:
+			seen = append(seen, path.Base(p))
 		}
 		return nil
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to look for food.csv: %w", err)
+		return "", "", fmt.Errorf("failed to look for the dataset: %w", err)
 	}
-	if found == "" {
-		return "", errors.New("no food.csv found; give the Foundation Foods or SR Legacy CSV download, as a zip file or extracted")
+	if csvDir != "" {
+		return csvDir, "", nil
 	}
-	return found, nil
+	if jsonFile != "" {
+		return "", jsonFile, nil
+	}
+	msg := "no food.csv or JSON file found; give the Foundation Foods or SR Legacy download, CSV or JSON, as a zip file or extracted"
+	if len(seen) > 0 {
+		msg += fmt.Sprintf(" (it has %s)", strings.Join(seen, ", "))
+	}
+	return "", "", errors.New(msg)
 }
 
 // reader reads a dataset.
@@ -180,11 +201,7 @@ func (r *reader) read() ([]*foods.FDCFood, Stats, error) {
 		if err != nil {
 			return fmt.Errorf("invalid nutrient ID: %w", err)
 		}
-		if want, ok := trackedUnits[id]; ok && !strings.EqualFold(row.get("unit_name"), want) {
-			return fmt.Errorf("nutrient %d (%s) is in %s, want %s: the importer needs updating for this release of FDC",
-				id, row.get("name"), row.get("unit_name"), want)
-		}
-		return nil
+		return checkUnit(id, row.get("name"), row.get("unit_name"))
 	}); err != nil {
 		return nil, stats, err
 	}
@@ -256,19 +273,42 @@ func (r *reader) read() ([]*foods.FDCFood, Stats, error) {
 	result := make([]*foods.FDCFood, 0, len(r.foods))
 	for _, id := range slices.Sorted(maps.Keys(r.foods)) {
 		f := r.foods[id]
-		amounts := r.amounts[id]
-		for n, s := range sources {
-			for _, nutrientID := range s.ids {
-				if v, ok := amounts[nutrientID]; ok {
-					f.Per100Grams[n] = new(v)
-					break
-				}
-			}
-		}
+		setNutrients(f, r.amounts[id])
 		result = append(result, f)
 	}
 	stats.Foods = len(result)
 	return result, stats, nil
+}
+
+// setNutrients sets a food's nutrients from the amounts of its FDC
+// nutrients, by nutrient ID, each from the first of its sources the food
+// has.
+func setNutrients(f *foods.FDCFood, amounts map[int]float64) {
+	for n, s := range sources {
+		for _, nutrientID := range s.ids {
+			if v, ok := amounts[nutrientID]; ok {
+				f.Per100Grams[n] = new(v)
+				break
+			}
+		}
+	}
+}
+
+// checkUnit checks that an FDC nutrient the app tracks is in the unit the
+// importer expects, as a release that changed it would import amounts off by
+// a thousand or more.
+func checkUnit(id int, name, unit string) error {
+	want, ok := trackedUnits[id]
+	if !ok {
+		return nil
+	}
+	// The JSON downloads write micrograms with the micro sign.
+	normalized := strings.NewReplacer("µ", "U", "μ", "U").Replace(unit)
+	if !strings.EqualFold(normalized, want) {
+		return fmt.Errorf("nutrient %d (%s) is in %s, want %s: the importer needs updating for this release of FDC",
+			id, name, unit, want)
+	}
+	return nil
 }
 
 // readPortions reads the portions of the foods kept, in their order.
@@ -419,8 +459,8 @@ type Upserter interface {
 // about 7,800 foods, and each upsert sends about 30 parameters.
 const batchSize = 500
 
-// Import imports the FDC datasets at paths, each a CSV download as a zip
-// file or extracted into a directory, upserting their foods.
+// Import imports the FDC datasets at paths, each a CSV or JSON download as a
+// zip file or extracted into a directory, upserting their foods.
 func Import(ctx context.Context, log *slog.Logger, db Upserter, paths ...string) error {
 	if len(paths) == 0 {
 		return errors.New("give the path of at least one dataset")

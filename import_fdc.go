@@ -19,15 +19,16 @@ import (
 const importFDCCommand = "import-fdc"
 
 // importFDC imports the FoodData Central datasets given as arguments, the
-// Foundation Foods and SR Legacy CSV downloads from
+// Foundation Foods and SR Legacy CSV or JSON downloads from
 // https://fdc.nal.usda.gov/download-datasets, as zip files or extracted.
 // Importing again updates the foods.
 func importFDC(args []string) error {
 	fs := flag.NewFlagSet(importFDCCommand, flag.ContinueOnError)
 	fs.Usage = func() {
 		fmt.Fprintf(fs.Output(), "Usage: %s %s [flags] <dataset>...\n\n"+
-			"Imports the Foundation Foods and SR Legacy CSV downloads of USDA FoodData Central\n"+
-			"(https://fdc.nal.usda.gov/download-datasets), as zip files or extracted directories.\n\n",
+			"Imports the Foundation Foods and SR Legacy CSV or JSON downloads of USDA FoodData Central\n"+
+			"(https://fdc.nal.usda.gov/download-datasets), as zip files or extracted directories.\n"+
+			"Take Foundation Foods as JSON: its CSV download of October 2026 has no foods or nutrients.\n\n",
 			os.Args[0], importFDCCommand)
 		fs.PrintDefaults()
 	}

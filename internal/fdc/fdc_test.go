@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	"github.com/bs-tools/foodplann.ing/internal/foods"
 	"github.com/bs-tools/foodplann.ing/internal/nutrition"
@@ -24,6 +25,8 @@ import (
 const (
 	srLegacyDir   = "testdata/sr_legacy"
 	foundationDir = "testdata/foundation"
+	// The same Foundation foods as foundationDir, as a JSON download.
+	foundationJSONDir = "testdata/foundation_json"
 )
 
 // zipDir zips a directory into a file, like FDC's downloads, and returns
@@ -191,6 +194,115 @@ func TestReadFoundationZip(t *testing.T) {
 	}
 }
 
+func TestReadFoundationJSONZip(t *testing.T) {
+	t.Parallel()
+	z, err := zip.OpenReader(zipDir(t, foundationJSONDir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer z.Close()
+	fdcFoods, stats, err := Read(z)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	// The samples are nested in the soy milk, not foods, and the eggs are
+	// excluded.
+	if stats.Foods != 2 || stats.Excluded != 1 {
+		t.Errorf("got stats %+v, want 2 foods and 1 excluded", stats)
+	}
+	m := byID(fdcFoods)
+	soyMilk := m[2257046]
+	if soyMilk == nil || m[2257047] != nil {
+		t.Fatalf("got foods %v, want the soy milk without its samples", m)
+	}
+	if soyMilk.DataType != "foundation_food" || soyMilk.Category != "Legumes and Legume Products" ||
+		soyMilk.PublicationDate != time.Date(2022, 4, 28, 0, 0, 0, 0, time.UTC) {
+		t.Errorf("got soy milk %+v, want a Foundation legume product published on 2022-04-28", soyMilk)
+	}
+	// The same nutrients as from the CSV download, including those in
+	// micrograms, which the JSON writes with the micro sign.
+	wantNutrient(t, soyMilk, nutrition.EnergyKcal, new(32.3))
+	wantNutrient(t, soyMilk, nutrition.SugarsGrams, new(0.0))
+	wantNutrient(t, soyMilk, nutrition.Omega3ALAGrams, new(0.12))
+	wantNutrient(t, soyMilk, nutrition.VitaminDMicrograms, new(1.2))
+	wantNutrient(t, soyMilk, nutrition.VitaminB12Micrograms, new(1.11))
+	wantNutrient(t, soyMilk, nutrition.IodineMicrograms, nil)
+	wantPortions := []foods.Portion{
+		{Description: "1 cup", Amount: 1, Grams: 243},
+		{Description: "1 tablespoon", Amount: 1, Grams: 15.2},
+	}
+	if !slices.Equal(soyMilk.Portions, wantPortions) {
+		t.Errorf("got soy milk portions %+v, want %+v", soyMilk.Portions, wantPortions)
+	}
+	if got := soyMilk.SuggestGramsPerMilliliter(); got != 1.027 {
+		t.Errorf("soy milk's density = %v, want 1.027", got)
+	}
+	if got := m[2346393].SuggestGramsPerPiece(); got != 143 {
+		t.Errorf("a yellow onion weighs %v g, want 143 g", got)
+	}
+}
+
+func TestReadSRLegacyJSON(t *testing.T) {
+	t.Parallel()
+	fsys := fstest.MapFS{"FoodData_Central_sr_legacy_food_json_2018-04.json": {Data: []byte(`{
+		"SRLegacyFoods": [
+			{
+				"foodClass": "FinalFood",
+				"description": "Kale, raw",
+				"foodNutrients": [
+					{"nutrient": {"id": 1003, "name": "Protein", "unitName": "g"}, "amount": 2.92},
+					{"nutrient": {"id": 1008, "name": "Energy", "unitName": "kcal"}, "amount": 35},
+					{"nutrient": {"id": 2000, "name": "Sugars, total including NLEA", "unitName": "g"}, "amount": 0.99},
+					{"nutrient": {"id": 1087, "name": "Calcium, Ca", "unitName": "mg"}, "amount": 254},
+					{"nutrient": {"id": 1062, "name": "Energy", "unitName": "kJ"}, "amount": 146},
+					{"nutrient": {"id": 1100, "name": "Iodine, I", "unitName": "µg"}}
+				],
+				"foodPortions": [
+					{"amount": 1, "measureUnit": {"name": "undetermined"}, "modifier": "cup, chopped", "gramWeight": 21, "sequenceNumber": 1}
+				],
+				"publicationDate": "4/1/2019",
+				"foodCategory": {"description": "Vegetables and Vegetable Products"},
+				"fdcId": 168421,
+				"dataType": "SR Legacy"
+			},
+			{
+				"foodClass": "FinalFood",
+				"description": "Beef, ground, raw",
+				"foodCategory": {"description": "Beef Products"},
+				"fdcId": 1,
+				"dataType": "SR Legacy"
+			},
+			{
+				"description": "A branded food",
+				"fdcId": 2,
+				"dataType": "Branded"
+			}
+		],
+		"metadata": {"version": "2018-04"}
+	}`)}}
+	fdcFoods, stats, err := Read(fsys)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	if stats.Foods != 1 || stats.Excluded != 1 || len(fdcFoods) != 1 {
+		t.Fatalf("got %d foods and stats %+v, want the kale, 1 food and 1 excluded", len(fdcFoods), stats)
+	}
+	kale := fdcFoods[0]
+	if kale.FDCID != 168421 || kale.DataType != "sr_legacy_food" || kale.PublicationDate != time.Date(2019, 4, 1, 0, 0, 0, 0, time.UTC) {
+		t.Errorf("got kale %+v, want SR Legacy food 168421 published on 2019-04-01", kale)
+	}
+	wantNutrient(t, kale, nutrition.ProteinGrams, new(2.92))
+	wantNutrient(t, kale, nutrition.EnergyKcal, new(35.0))
+	wantNutrient(t, kale, nutrition.SugarsGrams, new(0.99))
+	wantNutrient(t, kale, nutrition.CalciumMilligrams, new(254.0))
+	// A nutrient without an amount is unknown.
+	wantNutrient(t, kale, nutrition.IodineMicrograms, nil)
+	want := []foods.Portion{{Description: "1 cup, chopped", Amount: 1, Grams: 21}}
+	if !slices.Equal(kale.Portions, want) {
+		t.Errorf("got kale portions %+v, want %+v", kale.Portions, want)
+	}
+}
+
 func TestReadErrors(t *testing.T) {
 	t.Parallel()
 	dataset := func(nutrients string) fstest.MapFS {
@@ -207,7 +319,31 @@ func TestReadErrors(t *testing.T) {
 	}{
 		"no food.csv": {
 			fsys:    fstest.MapFS{"dl/foods.csv": {}},
-			wantErr: "no food.csv found",
+			wantErr: "no food.csv or JSON file found; give the Foundation Foods or SR Legacy download, CSV or JSON, as a zip file or extracted (it has foods.csv)",
+		},
+		// The Foundation Foods CSV download of October 2026 has the samples
+		// and lab methods, but not the foods or their nutrients.
+		"csv without foods": {
+			fsys: fstest.MapFS{
+				"FoodData_Central_foundation_food_csv_2026-10-29/foundation_food.csv":     {},
+				"FoodData_Central_foundation_food_csv_2026-10-29/sub_sample_result.csv":   {},
+				"FoodData_Central_foundation_food_csv_2026-10-29/nutrient.csv":            {},
+				"FoodData_Central_foundation_food_csv_2026-10-29/acquisition_samples.csv": {},
+			},
+			wantErr: "no food.csv or JSON file found",
+		},
+		"json not an object": {
+			fsys:    fstest.MapFS{"dl.json": {Data: []byte(`[]`)}},
+			wantErr: "dl.json isn't an FDC JSON download",
+		},
+		"json without foods": {
+			fsys:    fstest.MapFS{"dl.json": {Data: []byte(`{"other": [1, 2]}`)}},
+			wantErr: "dl.json has no foods; give the Foundation Foods or SR Legacy JSON download",
+		},
+		"json wrong unit": {
+			fsys: fstest.MapFS{"dl.json": {Data: []byte(`{"SRLegacyFoods": [{"fdcId": 1, "dataType": "SR Legacy",
+				"foodNutrients": [{"nutrient": {"id": 1003, "name": "Protein", "unitName": "mg"}, "amount": 2.9}]}]}`)}},
+			wantErr: "dl.json, food 1: nutrient 1003 (Protein) is in mg, want G",
 		},
 		"wrong unit": {
 			fsys:    dataset("id,name,unit_name\n1003,Protein,MG\n"),
@@ -251,8 +387,9 @@ func TestImport(t *testing.T) {
 	if err := Import(ctx, log, repo, srLegacyDir, zipDir(t, foundationDir)); err != nil {
 		t.Fatalf("Import: %v", err)
 	}
-	// Importing again replaces the foods.
-	if err := Import(ctx, log, repo, srLegacyDir); err != nil {
+	// Importing again replaces the foods, and the JSON download of the same
+	// Foundation foods replaces them without adding any.
+	if err := Import(ctx, log, repo, srLegacyDir, zipDir(t, foundationJSONDir)); err != nil {
 		t.Fatalf("Import again: %v", err)
 	}
 	var count int
