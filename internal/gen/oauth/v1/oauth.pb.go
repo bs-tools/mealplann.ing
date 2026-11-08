@@ -776,7 +776,7 @@ const file_oauth_v1_oauth_proto_rawDesc = "" +
 	"\x0fListConnections\x12 .oauth.v1.ListConnectionsRequest\x1a!.oauth.v1.ListConnectionsResponse\x12Y\n" +
 	"\x10DeleteConnection\x12!.oauth.v1.DeleteConnectionRequest\x1a\".oauth.v1.DeleteConnectionResponseB\x9c\x01\n" +
 	"\fcom.oauth.v1B\n" +
-	"OauthProtoP\x01Z?github.com/bs-tools/foodplann.ing/internal/gen/oauth/v1;oauthv1\xa2\x02\x03OXX\xaa\x02\bOauth.V1\xca\x02\bOauth\\V1\xe2\x02\x14Oauth\\V1\\GPBMetadata\xea\x02\tOauth::V1b\x06proto3"
+	"OauthProtoP\x01Z?github.com/bs-tools/mealplann.ing/internal/gen/oauth/v1;oauthv1\xa2\x02\x03OXX\xaa\x02\bOauth.V1\xca\x02\bOauth\\V1\xe2\x02\x14Oauth\\V1\\GPBMetadata\xea\x02\tOauth::V1b\x06proto3"
 
 var file_oauth_v1_oauth_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_oauth_v1_oauth_proto_goTypes = []any{

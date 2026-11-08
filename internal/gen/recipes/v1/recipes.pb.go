@@ -7,8 +7,8 @@
 package recipesv1
 
 import (
-	v1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
-	_ "github.com/bs-tools/foodplann.ing/internal/gen/mcp/v1"
+	v1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	_ "github.com/bs-tools/mealplann.ing/internal/gen/mcp/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -1896,7 +1896,7 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\vListRecipes\x12\x1e.recipes.v1.ListRecipesRequest\x1a\x1f.recipes.v1.ListRecipesResponse\x12Q\n" +
 	"\fUpdateRecipe\x12\x1f.recipes.v1.UpdateRecipeRequest\x1a .recipes.v1.UpdateRecipeResponse\x12Q\n" +
 	"\fDeleteRecipe\x12\x1f.recipes.v1.DeleteRecipeRequest\x1a .recipes.v1.DeleteRecipeResponseB\xac\x01\n" +
-	"\x0ecom.recipes.v1B\fRecipesProtoP\x01ZCgithub.com/bs-tools/foodplann.ing/internal/gen/recipes/v1;recipesv1\xa2\x02\x03RXX\xaa\x02\n" +
+	"\x0ecom.recipes.v1B\fRecipesProtoP\x01ZCgithub.com/bs-tools/mealplann.ing/internal/gen/recipes/v1;recipesv1\xa2\x02\x03RXX\xaa\x02\n" +
 	"Recipes.V1\xca\x02\n" +
 	"Recipes\\V1\xe2\x02\x16Recipes\\V1\\GPBMetadata\xea\x02\vRecipes::V1b\x06proto3"
 

@@ -11,9 +11,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/foods"
-	"github.com/bs-tools/foodplann.ing/internal/pantry/internal/gen"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/foods"
+	"github.com/bs-tools/mealplann.ing/internal/pantry/internal/gen"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"

@@ -1,4 +1,4 @@
-module github.com/bs-tools/foodplann.ing
+module github.com/bs-tools/mealplann.ing
 
 go 1.26.7
 

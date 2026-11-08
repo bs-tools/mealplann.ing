@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/foodimport"
-	"github.com/bs-tools/foodplann.ing/internal/foods"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/foodimport"
+	"github.com/bs-tools/mealplann.ing/internal/foods"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 )
 
 // jsonDataTypes are the data types of the foods imported, as the JSON

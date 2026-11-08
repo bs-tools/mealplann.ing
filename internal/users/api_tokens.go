@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bs-tools/foodplann.ing/internal/store"
-	"github.com/bs-tools/foodplann.ing/internal/users/internal/gen"
+	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/users/internal/gen"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )

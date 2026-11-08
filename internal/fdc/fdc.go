@@ -22,10 +22,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/foodimport"
-	"github.com/bs-tools/foodplann.ing/internal/foods"
-	"github.com/bs-tools/foodplann.ing/internal/nutrition"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/foodimport"
+	"github.com/bs-tools/mealplann.ing/internal/foods"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 )
 
 // dataTypes are the data types of the foods imported. Foundation Foods'

@@ -2026,7 +2026,7 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x19FinishPasskeyRegistration\x12).auth.v1.FinishPasskeyRegistrationRequest\x1a*.auth.v1.FinishPasskeyRegistrationResponse\x12Z\n" +
 	"\x11BeginPasskeyLogin\x12!.auth.v1.BeginPasskeyLoginRequest\x1a\".auth.v1.BeginPasskeyLoginResponse\x12]\n" +
 	"\x12FinishPasskeyLogin\x12\".auth.v1.FinishPasskeyLoginRequest\x1a#.auth.v1.FinishPasskeyLoginResponseB\x94\x01\n" +
-	"\vcom.auth.v1B\tAuthProtoP\x01Z=github.com/bs-tools/foodplann.ing/internal/gen/auth/v1;authv1\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
+	"\vcom.auth.v1B\tAuthProtoP\x01Z=github.com/bs-tools/mealplann.ing/internal/gen/auth/v1;authv1\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
 
 var file_auth_v1_auth_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 24)

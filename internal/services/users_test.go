@@ -8,9 +8,9 @@ import (
 
 	"connectrpc.com/connect/v2"
 	"connectrpc.com/connect/v2/connecthttp"
-	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
-	"github.com/bs-tools/foodplann.ing/internal/gen/users/v1/usersv1connect"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	usersv1 "github.com/bs-tools/mealplann.ing/internal/gen/users/v1"
+	"github.com/bs-tools/mealplann.ing/internal/gen/users/v1/usersv1connect"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 )
 
 func TestAPITokens(t *testing.T) {

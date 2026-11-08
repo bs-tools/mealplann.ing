@@ -13,8 +13,8 @@ import (
 	"testing"
 
 	"connectrpc.com/connect/v2"
-	oauthv1 "github.com/bs-tools/foodplann.ing/internal/gen/oauth/v1"
-	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
+	oauthv1 "github.com/bs-tools/mealplann.ing/internal/gen/oauth/v1"
+	usersv1 "github.com/bs-tools/mealplann.ing/internal/gen/users/v1"
 	"github.com/modelcontextprotocol/go-sdk/auth"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/modelcontextprotocol/go-sdk/oauthex"

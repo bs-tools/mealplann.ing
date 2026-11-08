@@ -189,7 +189,7 @@ const file_mcp_v1_options_proto_rawDesc = "" +
 	"\x06method\x12\x1e.google.protobuf.MethodOptions\x18\xf4\x93\x03 \x01(\v2\x15.mcp.v1.MethodOptionsR\x06method:K\n" +
 	"\x05field\x12\x1d.google.protobuf.FieldOptions\x18\xf5\x93\x03 \x01(\v2\x14.mcp.v1.FieldOptionsR\x05fieldB\x90\x01\n" +
 	"\n" +
-	"com.mcp.v1B\fOptionsProtoP\x01Z;github.com/bs-tools/foodplann.ing/internal/gen/mcp/v1;mcpv1\xa2\x02\x03MXX\xaa\x02\x06Mcp.V1\xca\x02\x06Mcp\\V1\xe2\x02\x12Mcp\\V1\\GPBMetadata\xea\x02\aMcp::V1b\x06proto3"
+	"com.mcp.v1B\fOptionsProtoP\x01Z;github.com/bs-tools/mealplann.ing/internal/gen/mcp/v1;mcpv1\xa2\x02\x03MXX\xaa\x02\x06Mcp.V1\xca\x02\x06Mcp\\V1\xe2\x02\x12Mcp\\V1\\GPBMetadata\xea\x02\aMcp::V1b\x06proto3"
 
 var file_mcp_v1_options_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_mcp_v1_options_proto_goTypes = []any{

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/bs-tools/foodplann.ing/internal/protomask"
+	"github.com/bs-tools/mealplann.ing/internal/protomask"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"

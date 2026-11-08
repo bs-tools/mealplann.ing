@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/nutrition"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 )
 
 // amount returns an amount weighing grams with the given nutrients, the

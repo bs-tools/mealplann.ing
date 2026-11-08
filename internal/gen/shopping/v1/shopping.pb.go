@@ -7,9 +7,9 @@
 package shoppingv1
 
 import (
-	v1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
-	_ "github.com/bs-tools/foodplann.ing/internal/gen/mcp/v1"
-	v11 "github.com/bs-tools/foodplann.ing/internal/gen/pantry/v1"
+	v1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	_ "github.com/bs-tools/mealplann.ing/internal/gen/mcp/v1"
+	v11 "github.com/bs-tools/mealplann.ing/internal/gen/pantry/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -2868,7 +2868,7 @@ const file_shopping_v1_shopping_proto_rawDesc = "" +
 	"DeleteItem\x12\x1e.shopping.v1.DeleteItemRequest\x1a\x1f.shopping.v1.DeleteItemResponse\x12_\n" +
 	"\x10CompleteShopping\x12$.shopping.v1.CompleteShoppingRequest\x1a%.shopping.v1.CompleteShoppingResponse\x12e\n" +
 	"\x12DeleteShoppingList\x12&.shopping.v1.DeleteShoppingListRequest\x1a'.shopping.v1.DeleteShoppingListResponseB\xb4\x01\n" +
-	"\x0fcom.shopping.v1B\rShoppingProtoP\x01ZEgithub.com/bs-tools/foodplann.ing/internal/gen/shopping/v1;shoppingv1\xa2\x02\x03SXX\xaa\x02\vShopping.V1\xca\x02\vShopping\\V1\xe2\x02\x17Shopping\\V1\\GPBMetadata\xea\x02\fShopping::V1b\x06proto3"
+	"\x0fcom.shopping.v1B\rShoppingProtoP\x01ZEgithub.com/bs-tools/mealplann.ing/internal/gen/shopping/v1;shoppingv1\xa2\x02\x03SXX\xaa\x02\vShopping.V1\xca\x02\vShopping\\V1\xe2\x02\x17Shopping\\V1\\GPBMetadata\xea\x02\fShopping::V1b\x06proto3"
 
 var file_shopping_v1_shopping_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_shopping_v1_shopping_proto_goTypes = []any{

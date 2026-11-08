@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/bs-tools/foodplann.ing/internal/errreport"
+	"github.com/bs-tools/mealplann.ing/internal/errreport"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"

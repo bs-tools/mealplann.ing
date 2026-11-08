@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/timeouts"
+	"github.com/bs-tools/mealplann.ing/internal/timeouts"
 )
 
 // result is what a test handler saw.

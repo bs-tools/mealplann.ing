@@ -48,8 +48,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/bs-tools/foodplann.ing/internal/foodimport"
-	"github.com/bs-tools/foodplann.ing/internal/foods"
+	"github.com/bs-tools/mealplann.ing/internal/foodimport"
+	"github.com/bs-tools/mealplann.ing/internal/foods"
 	"golang.org/x/text/encoding/charmap"
 )
 

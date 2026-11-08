@@ -9,12 +9,12 @@ import (
 	"unicode/utf8"
 
 	"connectrpc.com/connect/v2"
-	foodsv1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
-	recipesv1 "github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1"
-	"github.com/bs-tools/foodplann.ing/internal/nutrition"
-	"github.com/bs-tools/foodplann.ing/internal/recipes"
-	"github.com/bs-tools/foodplann.ing/internal/services/food"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
+	"github.com/bs-tools/mealplann.ing/internal/recipes"
+	"github.com/bs-tools/mealplann.ing/internal/services/food"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

@@ -1,5 +1,5 @@
 owner       = "bs-tools"
-repository  = "foodplann.ing"
+repository  = "mealplann.ing"
 description = "Food planning software"
 visibility  = "private"
 project     = "foodplanning-514023"

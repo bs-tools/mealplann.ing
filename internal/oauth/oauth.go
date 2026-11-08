@@ -37,9 +37,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/errreport"
-	"github.com/bs-tools/foodplann.ing/internal/store"
-	"github.com/bs-tools/foodplann.ing/internal/users"
+	"github.com/bs-tools/mealplann.ing/internal/errreport"
+	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/users"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/modelcontextprotocol/go-sdk/oauthex"
 )

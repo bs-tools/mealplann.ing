@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/bs-tools/foodplann.ing/internal/store/storetest"
-	"github.com/bs-tools/foodplann.ing/internal/users"
+	"github.com/bs-tools/mealplann.ing/internal/store/storetest"
+	"github.com/bs-tools/mealplann.ing/internal/users"
 )
 
 func TestLocalAdmin(t *testing.T) {

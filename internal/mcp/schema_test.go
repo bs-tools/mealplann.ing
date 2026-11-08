@@ -9,11 +9,11 @@ import (
 
 	// Register the types of the services the tests don't otherwise use, so
 	// every API method's schema can be validated.
-	_ "github.com/bs-tools/foodplann.ing/internal/gen/auth/v1"
-	_ "github.com/bs-tools/foodplann.ing/internal/gen/oauth/v1"
+	_ "github.com/bs-tools/mealplann.ing/internal/gen/auth/v1"
+	_ "github.com/bs-tools/mealplann.ing/internal/gen/oauth/v1"
 
-	"github.com/bs-tools/foodplann.ing/internal/apidesc"
-	mcpv1 "github.com/bs-tools/foodplann.ing/internal/gen/mcp/v1"
+	"github.com/bs-tools/mealplann.ing/internal/apidesc"
+	mcpv1 "github.com/bs-tools/mealplann.ing/internal/gen/mcp/v1"
 	"github.com/google/jsonschema-go/jsonschema"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"

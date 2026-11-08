@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/bs-tools/foodplann.ing/web"
+	"github.com/bs-tools/mealplann.ing/web"
 )
 
 // bundle is the frontend's bundle embedded in the server.

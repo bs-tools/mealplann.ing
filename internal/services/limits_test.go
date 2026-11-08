@@ -12,8 +12,8 @@ import (
 	"testing"
 
 	"connectrpc.com/connect/v2"
-	"github.com/bs-tools/foodplann.ing/internal/apilimit"
-	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
+	"github.com/bs-tools/mealplann.ing/internal/apilimit"
+	usersv1 "github.com/bs-tools/mealplann.ing/internal/gen/users/v1"
 )
 
 // noisePNG returns a PNG image of random pixels, which don't compress, so

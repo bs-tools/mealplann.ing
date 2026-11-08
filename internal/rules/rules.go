@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/nutrition"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 )
 
 // Kind is what a warning is about.

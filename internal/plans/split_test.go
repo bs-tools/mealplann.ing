@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/people"
-	"github.com/bs-tools/foodplann.ing/internal/rules"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/people"
+	"github.com/bs-tools/mealplann.ing/internal/rules"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 

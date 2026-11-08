@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"connectrpc.com/connect/v2"
-	foodsv1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
-	pantryv1 "github.com/bs-tools/foodplann.ing/internal/gen/pantry/v1"
-	plansv1 "github.com/bs-tools/foodplann.ing/internal/gen/plans/v1"
-	recipesv1 "github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1"
+	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	pantryv1 "github.com/bs-tools/mealplann.ing/internal/gen/pantry/v1"
+	plansv1 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
+	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 

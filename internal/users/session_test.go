@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/store"
-	"github.com/bs-tools/foodplann.ing/internal/store/storetest"
-	"github.com/bs-tools/foodplann.ing/internal/users"
+	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/store/storetest"
+	"github.com/bs-tools/mealplann.ing/internal/users"
 )
 
 func TestSessions(t *testing.T) {

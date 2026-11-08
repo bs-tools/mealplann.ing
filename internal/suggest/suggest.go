@@ -20,14 +20,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/foods"
-	"github.com/bs-tools/foodplann.ing/internal/nutrition"
-	"github.com/bs-tools/foodplann.ing/internal/pantry"
-	"github.com/bs-tools/foodplann.ing/internal/people"
-	"github.com/bs-tools/foodplann.ing/internal/plans"
-	"github.com/bs-tools/foodplann.ing/internal/recipes"
-	"github.com/bs-tools/foodplann.ing/internal/rules"
-	"github.com/bs-tools/foodplann.ing/internal/shopping"
+	"github.com/bs-tools/mealplann.ing/internal/foods"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
+	"github.com/bs-tools/mealplann.ing/internal/pantry"
+	"github.com/bs-tools/mealplann.ing/internal/people"
+	"github.com/bs-tools/mealplann.ing/internal/plans"
+	"github.com/bs-tools/mealplann.ing/internal/recipes"
+	"github.com/bs-tools/mealplann.ing/internal/rules"
+	"github.com/bs-tools/mealplann.ing/internal/shopping"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 

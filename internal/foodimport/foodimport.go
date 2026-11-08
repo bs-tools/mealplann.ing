@@ -18,7 +18,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/bs-tools/foodplann.ing/internal/foods"
+	"github.com/bs-tools/mealplann.ing/internal/foods"
 )
 
 // excludedCategories are the food categories of meat, fish, dairy and

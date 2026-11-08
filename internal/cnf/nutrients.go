@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/bs-tools/foodplann.ing/internal/foodimport"
-	"github.com/bs-tools/foodplann.ing/internal/nutrition"
+	"github.com/bs-tools/mealplann.ing/internal/foodimport"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 )
 
 // source is a CNF nutrient a nutrient the app tracks is read from. CNF's

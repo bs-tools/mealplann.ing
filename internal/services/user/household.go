@@ -7,10 +7,10 @@ import (
 	"unicode/utf8"
 
 	"connectrpc.com/connect/v2"
-	"github.com/bs-tools/foodplann.ing/internal/authn"
-	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
-	"github.com/bs-tools/foodplann.ing/internal/store"
-	"github.com/bs-tools/foodplann.ing/internal/users"
+	"github.com/bs-tools/mealplann.ing/internal/authn"
+	usersv1 "github.com/bs-tools/mealplann.ing/internal/gen/users/v1"
+	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/users"
 )
 
 // maxHouseholdNameLength is the most characters in a household's name.

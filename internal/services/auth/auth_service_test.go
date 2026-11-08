@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/errreport"
+	"github.com/bs-tools/mealplann.ing/internal/errreport"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 

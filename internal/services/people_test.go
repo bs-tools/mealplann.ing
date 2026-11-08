@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"connectrpc.com/connect/v2"
-	foodsv1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
-	peoplev1 "github.com/bs-tools/foodplann.ing/internal/gen/people/v1"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	peoplev1 "github.com/bs-tools/mealplann.ing/internal/gen/people/v1"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
