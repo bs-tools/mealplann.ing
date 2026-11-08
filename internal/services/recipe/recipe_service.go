@@ -27,7 +27,7 @@ var _ recipesv1connect.RecipeServiceHandler = (*Service)(nil)
 type Repository interface {
 	CreateRecipe(ctx context.Context, recipe *recipes.Recipe) (*recipes.Recipe, error)
 	GetRecipe(ctx context.Context, householdID, id pgtype.UUID) (*recipes.Recipe, error)
-	ListRecipes(ctx context.Context, householdID pgtype.UUID, query string, tags []string) ([]*recipes.Recipe, []string, error)
+	ListRecipes(ctx context.Context, householdID pgtype.UUID, filter recipes.ListFilter) ([]*recipes.Recipe, []string, error)
 	UpdateRecipe(ctx context.Context, recipe *recipes.Recipe) (*recipes.Recipe, error)
 	DeleteRecipe(ctx context.Context, householdID, id pgtype.UUID) error
 }
@@ -93,7 +93,11 @@ func (s *Service) ListRecipes(ctx context.Context, req *recipesv1.ListRecipesReq
 	if err != nil {
 		return nil, err
 	}
-	list, allTags, err := s.recipes.ListRecipes(ctx, user.HouseholdID(), query, tags)
+	list, allTags, err := s.recipes.ListRecipes(ctx, user.HouseholdID(), recipes.ListFilter{
+		Query:         query,
+		Tags:          tags,
+		FavoritesOnly: req.GetFavoritesOnly(),
+	})
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to list recipes")
 	}

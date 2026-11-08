@@ -65,7 +65,7 @@ type PeopleRepository interface {
 // RecipeRepository reads the recipes plans cook, and those suggestions
 // score.
 type RecipeRepository interface {
-	ListRecipes(ctx context.Context, householdID pgtype.UUID, query string, tags []string) ([]*recipes.Recipe, []string, error)
+	ListRecipes(ctx context.Context, householdID pgtype.UUID, filter recipes.ListFilter) ([]*recipes.Recipe, []string, error)
 	ListRecipesByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*recipes.Recipe, error)
 }
 

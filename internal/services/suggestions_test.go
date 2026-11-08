@@ -17,6 +17,7 @@ import (
 	shoppingv1 "github.com/bs-tools/mealplann.ing/internal/gen/shopping/v1"
 	suggestionsv1 "github.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1"
 	"github.com/bs-tools/mealplann.ing/internal/store"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // suggestionNames returns the names of the suggested recipes, in order.
@@ -215,6 +216,36 @@ func TestSuggestRecipes(t *testing.T) {
 		if s.GetRecipeName() == "Juice and rice pudding" && (s.GetFitsRules() || !slices.Equal(reasons(s, suggestionsv1.ScoreKind_SCORE_KIND_MEAL_TAG), []string{"tagged snack"})) {
 			t.Errorf("got %v, want the pudding tagged as a snack, breaking the rules", s)
 		}
+	}
+
+	// Marking the curry as a favorite raises its score for Saturday's
+	// dinner by the favorite's points, saying why.
+	saturdayDinner := suggestionsv1.SuggestRecipesRequest_builder{Date: saturday, Meal: new(dinner), MaxSuggestions: 50}.Build()
+	curryOn := func() *suggestionsv1.Suggestion {
+		t.Helper()
+		resp, err := e.suggestions.SuggestRecipes(ctx, saturdayDinner)
+		if err != nil {
+			t.Fatalf("SuggestRecipes: %v", err)
+		}
+		i := slices.Index(suggestionNames(resp), "Chickpea coconut curry")
+		if i < 0 {
+			t.Fatalf("got %v, want the curry", suggestionNames(resp))
+		}
+		return resp.GetSuggestions()[i]
+	}
+	before := curryOn()
+	if _, err := e.recipes.UpdateRecipe(ctx, recipesv1.UpdateRecipeRequest_builder{
+		Recipe:     recipesv1.Recipe_builder{Id: curry.GetId(), Favorite: true}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"favorite"}},
+	}.Build()); err != nil {
+		t.Fatalf("UpdateRecipe: %v", err)
+	}
+	after := curryOn()
+	if got := reasons(after, suggestionsv1.ScoreKind_SCORE_KIND_FAVORITE); !slices.Equal(got, []string{"a household favorite"}) {
+		t.Errorf("got favorite reasons %v, want the household's favorite", got)
+	}
+	if diff := after.GetScore() - before.GetScore(); math.Abs(diff-5) > 0.05 {
+		t.Errorf("got the score up by %v, want 5", diff)
 	}
 
 	// Bad requests fail.

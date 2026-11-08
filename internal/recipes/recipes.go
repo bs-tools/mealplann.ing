@@ -54,6 +54,9 @@ type Recipe struct {
 	FridgeDays *int32
 	Freezable  bool
 	Notes      string
+	// Favorite is whether the household marked the recipe as a favorite,
+	// which suggestions score higher.
+	Favorite   bool
 	CreateTime time.Time
 	UpdateTime time.Time
 }
@@ -145,6 +148,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			FridgeDays:  recipe.FridgeDays,
 			Freezable:   recipe.Freezable,
 			Notes:       recipe.Notes,
+			Favorite:    recipe.Favorite,
 		})
 		return err
 	})
@@ -183,11 +187,21 @@ func (r *Repository) GetRecipe(ctx context.Context, householdID, id pgtype.UUID)
 	return recipeFromDB(row, ingredients), nil
 }
 
-// ListRecipes lists a household's recipes, with their ingredients' foods,
-// whose name or description contains query, ignoring case, and that have
-// all of tags, ordered by name. It also returns all the tags of the
-// household's recipes, in order.
-func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, query string, tags []string) ([]*Recipe, []string, error) {
+// ListFilter selects the recipes to list. Its zero value selects all.
+type ListFilter struct {
+	// Query is a text the name or description contains, ignoring case,
+	// empty for any.
+	Query string
+	// Tags are tags the recipes all have, empty for any.
+	Tags []string
+	// FavoritesOnly is whether to list only favorites.
+	FavoritesOnly bool
+}
+
+// ListRecipes lists a household's recipes that match the filter, with
+// their ingredients' foods, ordered by name. It also returns all the tags
+// of the household's recipes, in order.
+func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, filter ListFilter) ([]*Recipe, []string, error) {
 	var rows []*gen.Recipe
 	var allTags []string
 	var ingredients []*gen.ListRecipeIngredientsRow
@@ -195,9 +209,10 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, q
 	b.Read(func(db store.Querier) error {
 		var err error
 		rows, err = gen.New(db).ListRecipes(ctx, &gen.ListRecipesParams{
-			HouseholdID: householdID,
-			Query:       query,
-			Tags:        nonNil(tags),
+			HouseholdID:   householdID,
+			Query:         filter.Query,
+			Tags:          nonNil(filter.Tags),
+			FavoritesOnly: filter.FavoritesOnly,
 		})
 		return err
 	})
@@ -293,6 +308,7 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			FridgeDays:  recipe.FridgeDays,
 			Freezable:   recipe.Freezable,
 			Notes:       recipe.Notes,
+			Favorite:    recipe.Favorite,
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return store.ErrNotFound
@@ -414,6 +430,7 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) 
 		FridgeDays:  row.FridgeDays,
 		Freezable:   row.Freezable,
 		Notes:       row.Notes,
+		Favorite:    row.Favorite,
 		CreateTime:  row.CreateTime.Time,
 		UpdateTime:  row.UpdateTime.Time,
 		Ingredients: make([]*Ingredient, 0, len(ingredients)),

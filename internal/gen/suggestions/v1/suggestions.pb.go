@@ -47,21 +47,24 @@ const (
 	ScoreKind_SCORE_KIND_VARIETY ScoreKind = 8
 	// The recipe's tags for meals.
 	ScoreKind_SCORE_KIND_MEAL_TAG ScoreKind = 9
+	// The household's favorite recipes.
+	ScoreKind_SCORE_KIND_FAVORITE ScoreKind = 10
 )
 
 // Enum value maps for ScoreKind.
 var (
 	ScoreKind_name = map[int32]string{
-		0: "SCORE_KIND_UNSPECIFIED",
-		1: "SCORE_KIND_SHARED_INGREDIENTS",
-		2: "SCORE_KIND_PACK_LEFTOVERS",
-		3: "SCORE_KIND_PANTRY",
-		4: "SCORE_KIND_NUTRITION",
-		5: "SCORE_KIND_RULES",
-		6: "SCORE_KIND_KEEPING",
-		7: "SCORE_KIND_FLAVOR",
-		8: "SCORE_KIND_VARIETY",
-		9: "SCORE_KIND_MEAL_TAG",
+		0:  "SCORE_KIND_UNSPECIFIED",
+		1:  "SCORE_KIND_SHARED_INGREDIENTS",
+		2:  "SCORE_KIND_PACK_LEFTOVERS",
+		3:  "SCORE_KIND_PANTRY",
+		4:  "SCORE_KIND_NUTRITION",
+		5:  "SCORE_KIND_RULES",
+		6:  "SCORE_KIND_KEEPING",
+		7:  "SCORE_KIND_FLAVOR",
+		8:  "SCORE_KIND_VARIETY",
+		9:  "SCORE_KIND_MEAL_TAG",
+		10: "SCORE_KIND_FAVORITE",
 	}
 	ScoreKind_value = map[string]int32{
 		"SCORE_KIND_UNSPECIFIED":        0,
@@ -74,6 +77,7 @@ var (
 		"SCORE_KIND_FLAVOR":             7,
 		"SCORE_KIND_VARIETY":            8,
 		"SCORE_KIND_MEAL_TAG":           9,
+		"SCORE_KIND_FAVORITE":           10,
 	}
 )
 
@@ -1100,7 +1104,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x0enew_item_count\x18\t \x01(\x05R\fnewItemCount\x12;\n" +
 	"\fitems_to_buy\x18\n" +
 	" \x03(\v2\x19.suggestions.v1.ItemToBuyR\n" +
-	"itemsToBuy*\x90\x02\n" +
+	"itemsToBuy*\xa9\x02\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
@@ -1111,7 +1115,9 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x12SCORE_KIND_KEEPING\x10\x06\x12\x15\n" +
 	"\x11SCORE_KIND_FLAVOR\x10\a\x12\x16\n" +
 	"\x12SCORE_KIND_VARIETY\x10\b\x12\x17\n" +
-	"\x13SCORE_KIND_MEAL_TAG\x10\t2t\n" +
+	"\x13SCORE_KIND_MEAL_TAG\x10\t\x12\x17\n" +
+	"\x13SCORE_KIND_FAVORITE\x10\n" +
+	"2t\n" +
 	"\x11SuggestionService\x12_\n" +
 	"\x0eSuggestRecipes\x12%.suggestions.v1.SuggestRecipesRequest\x1a&.suggestions.v1.SuggestRecipesResponseB\xcc\x01\n" +
 	"\x12com.suggestions.v1B\x10SuggestionsProtoP\x01ZKgithub.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1;suggestionsv1\xa2\x02\x03SXX\xaa\x02\x0eSuggestions.V1\xca\x02\x0eSuggestions\\V1\xe2\x02\x1aSuggestions\\V1\\GPBMetadata\xea\x02\x0fSuggestions::V1b\x06proto3"

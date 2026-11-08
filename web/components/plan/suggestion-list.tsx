@@ -30,6 +30,7 @@ const KIND_LABELS: Record<ScoreKind, string> = {
   [ScoreKind.FLAVOR]: "Flavor",
   [ScoreKind.VARIETY]: "Variety",
   [ScoreKind.MEAL_TAG]: "Meal",
+  [ScoreKind.FAVORITE]: "Favorite",
 };
 
 // FormatPoints formats a component's points with their sign, e.g. "+6".

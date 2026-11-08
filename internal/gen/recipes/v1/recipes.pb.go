@@ -43,6 +43,7 @@ type Recipe struct {
 	xxx_hidden_Nutrition   *RecipeNutrition       `protobuf:"bytes,14,opt,name=nutrition,proto3"`
 	xxx_hidden_CreateTime  *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=create_time,json=createTime,proto3"`
 	xxx_hidden_UpdateTime  *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=update_time,json=updateTime,proto3"`
+	xxx_hidden_Favorite    bool                   `protobuf:"varint,17,opt,name=favorite,proto3"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
@@ -188,6 +189,13 @@ func (x *Recipe) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Recipe) GetFavorite() bool {
+	if x != nil {
+		return x.xxx_hidden_Favorite
+	}
+	return false
+}
+
 func (x *Recipe) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -230,7 +238,7 @@ func (x *Recipe) SetSourceUrl(v string) {
 
 func (x *Recipe) SetFridgeDays(v int32) {
 	x.xxx_hidden_FridgeDays = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 16)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 17)
 }
 
 func (x *Recipe) SetFreezable(v bool) {
@@ -251,6 +259,10 @@ func (x *Recipe) SetCreateTime(v *timestamppb.Timestamp) {
 
 func (x *Recipe) SetUpdateTime(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdateTime = v
+}
+
+func (x *Recipe) SetFavorite(v bool) {
+	x.xxx_hidden_Favorite = v
 }
 
 func (x *Recipe) HasFridgeDays() bool {
@@ -342,6 +354,10 @@ type Recipe_builder struct {
 	CreateTime *timestamppb.Timestamp
 	// When the recipe was last changed.
 	UpdateTime *timestamppb.Timestamp
+	// Whether the household marked the recipe as a favorite.
+	// SuggestionService.SuggestRecipes scores favorites higher, so they're
+	// suggested more often. Only mark recipes the user says they like.
+	Favorite bool
 }
 
 func (b0 Recipe_builder) Build() *Recipe {
@@ -359,7 +375,7 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_Tags = b.Tags
 	x.xxx_hidden_SourceUrl = b.SourceUrl
 	if b.FridgeDays != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 16)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 17)
 		x.xxx_hidden_FridgeDays = *b.FridgeDays
 	}
 	x.xxx_hidden_Freezable = b.Freezable
@@ -367,6 +383,7 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_Nutrition = b.Nutrition
 	x.xxx_hidden_CreateTime = b.CreateTime
 	x.xxx_hidden_UpdateTime = b.UpdateTime
+	x.xxx_hidden_Favorite = b.Favorite
 	return m0
 }
 
@@ -827,6 +844,7 @@ type RecipeSummary struct {
 	xxx_hidden_GramsPerServing             float64                `protobuf:"fixed64,11,opt,name=grams_per_serving,json=gramsPerServing,proto3"`
 	xxx_hidden_HasIssues                   bool                   `protobuf:"varint,12,opt,name=has_issues,json=hasIssues,proto3"`
 	xxx_hidden_UpdateTime                  *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=update_time,json=updateTime,proto3"`
+	xxx_hidden_Favorite                    bool                   `protobuf:"varint,14,opt,name=favorite,proto3"`
 	XXX_raceDetectHookData                 protoimpl.RaceDetectHookData
 	XXX_presence                           [1]uint32
 	unknownFields                          protoimpl.UnknownFields
@@ -949,6 +967,13 @@ func (x *RecipeSummary) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *RecipeSummary) GetFavorite() bool {
+	if x != nil {
+		return x.xxx_hidden_Favorite
+	}
+	return false
+}
+
 func (x *RecipeSummary) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -979,17 +1004,17 @@ func (x *RecipeSummary) SetTags(v []string) {
 
 func (x *RecipeSummary) SetEnergyKcalPerServing(v float64) {
 	x.xxx_hidden_EnergyKcalPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 14)
 }
 
 func (x *RecipeSummary) SetProteinGramsPerServing(v float64) {
 	x.xxx_hidden_ProteinGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 14)
 }
 
 func (x *RecipeSummary) SetCarbohydrateGramsPerServing(v float64) {
 	x.xxx_hidden_CarbohydrateGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 14)
 }
 
 func (x *RecipeSummary) SetGramsPerServing(v float64) {
@@ -1002,6 +1027,10 @@ func (x *RecipeSummary) SetHasIssues(v bool) {
 
 func (x *RecipeSummary) SetUpdateTime(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdateTime = v
+}
+
+func (x *RecipeSummary) SetFavorite(v bool) {
+	x.xxx_hidden_Favorite = v
 }
 
 func (x *RecipeSummary) HasEnergyKcalPerServing() bool {
@@ -1081,6 +1110,8 @@ type RecipeSummary_builder struct {
 	HasIssues bool
 	// When the recipe was last changed.
 	UpdateTime *timestamppb.Timestamp
+	// Whether the household marked the recipe as a favorite.
+	Favorite bool
 }
 
 func (b0 RecipeSummary_builder) Build() *RecipeSummary {
@@ -1095,20 +1126,21 @@ func (b0 RecipeSummary_builder) Build() *RecipeSummary {
 	x.xxx_hidden_CookSeconds = b.CookSeconds
 	x.xxx_hidden_Tags = b.Tags
 	if b.EnergyKcalPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 14)
 		x.xxx_hidden_EnergyKcalPerServing = *b.EnergyKcalPerServing
 	}
 	if b.ProteinGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 14)
 		x.xxx_hidden_ProteinGramsPerServing = *b.ProteinGramsPerServing
 	}
 	if b.CarbohydrateGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 14)
 		x.xxx_hidden_CarbohydrateGramsPerServing = *b.CarbohydrateGramsPerServing
 	}
 	x.xxx_hidden_GramsPerServing = b.GramsPerServing
 	x.xxx_hidden_HasIssues = b.HasIssues
 	x.xxx_hidden_UpdateTime = b.UpdateTime
+	x.xxx_hidden_Favorite = b.Favorite
 	return m0
 }
 
@@ -1378,11 +1410,12 @@ func (b0 GetRecipeResponse_builder) Build() *GetRecipeResponse {
 }
 
 type ListRecipesRequest struct {
-	state            protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Query string                 `protobuf:"bytes,1,opt,name=query,proto3"`
-	xxx_hidden_Tags  []string               `protobuf:"bytes,2,rep,name=tags,proto3"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Query         string                 `protobuf:"bytes,1,opt,name=query,proto3"`
+	xxx_hidden_Tags          []string               `protobuf:"bytes,2,rep,name=tags,proto3"`
+	xxx_hidden_FavoritesOnly bool                   `protobuf:"varint,3,opt,name=favorites_only,json=favoritesOnly,proto3"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *ListRecipesRequest) Reset() {
@@ -1424,12 +1457,23 @@ func (x *ListRecipesRequest) GetTags() []string {
 	return nil
 }
 
+func (x *ListRecipesRequest) GetFavoritesOnly() bool {
+	if x != nil {
+		return x.xxx_hidden_FavoritesOnly
+	}
+	return false
+}
+
 func (x *ListRecipesRequest) SetQuery(v string) {
 	x.xxx_hidden_Query = v
 }
 
 func (x *ListRecipesRequest) SetTags(v []string) {
 	x.xxx_hidden_Tags = v
+}
+
+func (x *ListRecipesRequest) SetFavoritesOnly(v bool) {
+	x.xxx_hidden_FavoritesOnly = v
 }
 
 type ListRecipesRequest_builder struct {
@@ -1440,6 +1484,8 @@ type ListRecipesRequest_builder struct {
 	Query string
 	// Only list recipes with all of these tags. Empty to list all.
 	Tags []string
+	// Only list the household's favorite recipes.
+	FavoritesOnly bool
 }
 
 func (b0 ListRecipesRequest_builder) Build() *ListRecipesRequest {
@@ -1448,6 +1494,7 @@ func (b0 ListRecipesRequest_builder) Build() *ListRecipesRequest {
 	_, _ = b, x
 	x.xxx_hidden_Query = b.Query
 	x.xxx_hidden_Tags = b.Tags
+	x.xxx_hidden_FavoritesOnly = b.FavoritesOnly
 	return m0
 }
 
@@ -1799,7 +1846,7 @@ var File_recipes_v1_recipes_proto protoreflect.FileDescriptor
 const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\n" +
 	"\x18recipes/v1/recipes.proto\x12\n" +
-	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xea\x04\n" +
+	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\x86\x05\n" +
 	"\x06Recipe\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -1821,7 +1868,8 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\vcreate_time\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"createTime\x12C\n" +
 	"\vupdate_time\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
-	"updateTimeB\x0e\n" +
+	"updateTime\x12\x1a\n" +
+	"\bfavorite\x18\x11 \x01(\bR\bfavoriteB\x0e\n" +
 	"\f_fridge_days\"\xe1\x01\n" +
 	"\n" +
 	"Ingredient\x12\x17\n" +
@@ -1846,7 +1894,7 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\afood_id\x18\x02 \x01(\tR\x06foodId\x12\x1b\n" +
 	"\tfood_name\x18\x03 \x01(\tR\bfoodName\x12%\n" +
 	"\x0eunknown_weight\x18\x04 \x01(\bR\runknownWeight\x12+\n" +
-	"\x11unknown_nutrients\x18\x05 \x03(\tR\x10unknownNutrients\"\xf6\x04\n" +
+	"\x11unknown_nutrients\x18\x05 \x03(\tR\x10unknownNutrients\"\x92\x05\n" +
 	"\rRecipeSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -1863,7 +1911,8 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\n" +
 	"has_issues\x18\f \x01(\bR\thasIssues\x12;\n" +
 	"\vupdate_time\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTimeB\x1a\n" +
+	"updateTime\x12\x1a\n" +
+	"\bfavorite\x18\x0e \x01(\bR\bfavoriteB\x1a\n" +
 	"\x18_energy_kcal_per_servingB\x1c\n" +
 	"\x1a_protein_grams_per_servingB!\n" +
 	"\x1f_carbohydrate_grams_per_serving\"A\n" +
@@ -1874,10 +1923,11 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x10GetRecipeRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"?\n" +
 	"\x11GetRecipeResponse\x12*\n" +
-	"\x06recipe\x18\x01 \x01(\v2\x12.recipes.v1.RecipeR\x06recipe\">\n" +
+	"\x06recipe\x18\x01 \x01(\v2\x12.recipes.v1.RecipeR\x06recipe\"e\n" +
 	"\x12ListRecipesRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x12\n" +
-	"\x04tags\x18\x02 \x03(\tR\x04tags\"^\n" +
+	"\x04tags\x18\x02 \x03(\tR\x04tags\x12%\n" +
+	"\x0efavorites_only\x18\x03 \x01(\bR\rfavoritesOnly\"^\n" +
 	"\x13ListRecipesResponse\x123\n" +
 	"\arecipes\x18\x01 \x03(\v2\x19.recipes.v1.RecipeSummaryR\arecipes\x12\x12\n" +
 	"\x04tags\x18\x02 \x03(\tR\x04tags\"~\n" +

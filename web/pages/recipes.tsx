@@ -8,7 +8,9 @@ import {
   ExclamationTriangleIcon,
   MagnifyingGlassIcon,
   PlusIcon,
+  StarIcon,
 } from "@heroicons/react/24/outline";
+import { StarIcon as FilledStarIcon } from "@heroicons/react/24/solid";
 import { keepPreviousData } from "@tanstack/react-query";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
@@ -19,27 +21,36 @@ import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
 /**
- * RecipesPage lists the household's recipes, filtered by a search and
- * tags kept in the URL, with their main nutrients per serving.
+ * RecipesPage lists the household's recipes, filtered by a search, tags
+ * and whether they're favorites, kept in the URL, with their main
+ * nutrients per serving.
  */
 const RecipesPage: React.FC = () => {
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState(params.get("q") ?? "");
   const tags = params.getAll("tag");
+  const favoritesOnly = params.get("favorites") === "1";
   const search = useDebouncedValue(query.trim());
   const { isPending, isError, data, error, refetch } = useQuery(
     listRecipes,
-    { query: search, tags },
+    { favoritesOnly, query: search, tags },
     { placeholderData: keepPreviousData }
   );
 
-  const setFilters = (nextQuery: string, nextTags: string[]) => {
+  const setFilters = (
+    nextQuery: string,
+    nextTags: string[],
+    nextFavoritesOnly = favoritesOnly
+  ) => {
     const next = new URLSearchParams();
     if (nextQuery !== "") {
       next.set("q", nextQuery);
     }
     for (const tag of nextTags) {
       next.append("tag", tag);
+    }
+    if (nextFavoritesOnly) {
+      next.set("favorites", "1");
     }
     setParams(next, { replace: true });
   };
@@ -57,16 +68,26 @@ const RecipesPage: React.FC = () => {
       />
     );
   } else if (data.recipes.length === 0) {
-    content =
-      search === "" && tags.length === 0 ? (
+    if (search === "" && tags.length === 0 && !favoritesOnly) {
+      content = (
         <EmptyState title="No recipes yet">
           Add your first recipe, or ask your AI agent to enter some.
         </EmptyState>
-      ) : (
-        <EmptyState title="No recipes found">
-          Try another search, or fewer tags.
+      );
+    } else if (search === "" && tags.length === 0) {
+      content = (
+        <EmptyState title="No favorites yet">
+          Mark the recipes your household likes as favorites, on their pages, to
+          have them suggested more often.
         </EmptyState>
       );
+    } else {
+      content = (
+        <EmptyState title="No recipes found">
+          Try another search, or fewer filters.
+        </EmptyState>
+      );
+    }
   } else {
     content = (
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -104,40 +125,57 @@ const RecipesPage: React.FC = () => {
             }}
           />
         </label>
-        {data !== undefined && data.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5" aria-label="Filter by tag">
-            {data.tags.map((tag) => {
-              const active = tags.includes(tag);
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  aria-pressed={active}
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+        <div className="flex flex-wrap gap-1.5" aria-label="Filters">
+          <button
+            type="button"
+            aria-pressed={favoritesOnly}
+            className={`${filterClass(favoritesOnly)} inline-flex items-center gap-1`}
+            onClick={() => {
+              setFilters(query.trim(), tags, !favoritesOnly);
+            }}
+          >
+            {favoritesOnly ? (
+              <FilledStarIcon className="size-3.5" aria-hidden="true" />
+            ) : (
+              <StarIcon className="size-3.5" aria-hidden="true" />
+            )}
+            Favorites
+          </button>
+          {data?.tags.map((tag) => {
+            const active = tags.includes(tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                aria-pressed={active}
+                className={filterClass(active)}
+                onClick={() => {
+                  setFilters(
+                    query.trim(),
                     active
-                      ? "bg-brand-600 text-white ring-brand-600"
-                      : "bg-white text-gray-700 ring-gray-300 hover:bg-gray-50"
-                  }`}
-                  onClick={() => {
-                    setFilters(
-                      query.trim(),
-                      active
-                        ? tags.filter((other) => other !== tag)
-                        : [...tags, tag]
-                    );
-                  }}
-                >
-                  {tag}
-                </button>
-              );
-            })}
-          </div>
-        )}
+                      ? tags.filter((other) => other !== tag)
+                      : [...tags, tag]
+                  );
+                }}
+              >
+                {tag}
+              </button>
+            );
+          })}
+        </div>
       </div>
       {content}
     </div>
   );
 };
+
+// FilterClass styles a filter of the list, filled when it's on.
+const filterClass = (active: boolean): string =>
+  `rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+    active
+      ? "bg-brand-600 text-white ring-brand-600"
+      : "bg-white text-gray-700 ring-gray-300 hover:bg-gray-50"
+  }`;
 
 interface RecipeCardProps {
   recipe: RecipeSummary;
@@ -163,7 +201,15 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
         className={`${cardClass} flex h-full flex-col gap-2 p-4 hover:border-gray-300 hover:shadow`}
       >
         <div>
-          <h2 className="font-semibold text-gray-900">{recipe.name}</h2>
+          <h2 className="font-semibold text-gray-900">
+            {recipe.name}
+            {recipe.favorite && (
+              <FilledStarIcon
+                className="ml-1 inline size-4 align-text-bottom text-amber-500"
+                aria-label="Favorite"
+              />
+            )}
+          </h2>
           {recipe.description !== "" && (
             <p className="line-clamp-2 text-sm text-gray-600">
               {recipe.description}

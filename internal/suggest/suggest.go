@@ -56,6 +56,8 @@ const (
 	Variety
 	// MealTag is the recipe's tags for meals.
 	MealTag
+	// Favorite is the household's favorite recipes.
+	Favorite
 )
 
 // The weights of the components, in points. A typical good suggestion
@@ -145,6 +147,13 @@ const (
 	// oats for dinner, which is rarely what the household wants.
 	MealTagPoints       = 2.0
 	OtherMealTagPenalty = 6.0
+
+	// FavoritePoints is for a recipe the household marked as a favorite.
+	// It's about what using the rest of a pack earns, so favorites come up
+	// more often, but less than VarietyPenalty plus RecentPenalty, so a
+	// favorite cooked recently still makes way for others, and less than
+	// RuleWarningPenalty, so it doesn't hide a broken rule.
+	FavoritePoints = 5.0
 )
 
 const (
@@ -439,6 +448,9 @@ func (s *scorer) score(r *recipes.Recipe) *Suggestion {
 	s.flavor(c)
 	s.variety(c)
 	s.mealTag(c)
+	if r.Favorite {
+		c.add(Favorite, FavoritePoints, "a household favorite")
+	}
 
 	sg := c.suggestion
 	slices.SortStableFunc(sg.Components, func(a, b Component) int { return cmp.Compare(b.Points, a.Points) })

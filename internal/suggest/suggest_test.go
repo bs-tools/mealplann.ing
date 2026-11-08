@@ -512,6 +512,29 @@ func TestMealTag(t *testing.T) {
 	wantComponents(t, suggestionOf(t, list, oats), MealTag)
 }
 
+func TestFavorite(t *testing.T) {
+	t.Parallel()
+	b := ben()
+	// The two curries are the same but for the favorite, which comes
+	// first.
+	plain := recipe("Plain curry", 2, ingredient(chickpeas, 400))
+	favorite := recipe("Favorite curry", 2, ingredient(chickpeas, 400))
+	favorite.Favorite = true
+	in := input(wednesday, []*people.Person{b}, plain, favorite)
+	list := Suggest(in)
+	if list[0].Recipe != favorite {
+		t.Errorf("got %s first, want the favorite", list[0].Recipe.Name)
+	}
+	wantComponents(t, suggestionOf(t, list, favorite), Favorite, "5 a household favorite")
+	wantComponents(t, suggestionOf(t, list, plain), Favorite)
+
+	// Cooked yesterday, the favorite makes way for the other curry.
+	in.cook(favorite, tuesday, 2)
+	if list := Suggest(in); list[0].Recipe != plain {
+		t.Errorf("got %s first, want the curry not cooked yesterday", list[0].Recipe.Name)
+	}
+}
+
 func TestFoodName(t *testing.T) {
 	t.Parallel()
 	for name, want := range map[string]string{

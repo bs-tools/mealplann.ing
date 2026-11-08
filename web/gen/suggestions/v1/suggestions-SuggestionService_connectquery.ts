@@ -27,6 +27,10 @@ import { SuggestionService } from "./suggestions_pb";
  * - VARIETY: it's already planned on nearby days, or is an eater's
  *   staple that day.
  * - MEAL_TAG: its tags say it's for this meal, or for another.
+ * - FAVORITE: the household marked it as a favorite (see
+ *   RecipeService). It's worth about as much as using the rest of a
+ *   pack, so favorites come up more often, but less than having cooked
+ *   it in the last few days or breaking someone's rule.
  *
  * Portions are split like PlanMeal does, within each person's
  * max_portion_grams. Nothing is changed. Fails with INVALID_ARGUMENT for

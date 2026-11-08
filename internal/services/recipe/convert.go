@@ -84,6 +84,7 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 		FridgeDays:  r.FridgeDays,
 		Freezable:   r.Freezable,
 		Notes:       r.Notes,
+		Favorite:    r.Favorite,
 		Nutrition:   nutritionToProto(r),
 		CreateTime:  timestamppb.New(r.CreateTime),
 		UpdateTime:  timestamppb.New(r.UpdateTime),
@@ -143,6 +144,7 @@ func summaryToProto(r *recipes.Recipe) *recipesv1.RecipeSummary {
 		GramsPerServing:             round(n.GramsPerServing),
 		HasIssues:                   len(n.Issues) > 0,
 		UpdateTime:                  timestamppb.New(r.UpdateTime),
+		Favorite:                    r.Favorite,
 	}.Build()
 }
 
@@ -211,6 +213,7 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 		FridgeDays:  fridgeDays,
 		Freezable:   p.GetFreezable(),
 		Notes:       notes,
+		Favorite:    p.GetFavorite(),
 	}, nil
 }
 
