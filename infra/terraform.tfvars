@@ -12,4 +12,4 @@ domain          = "foodplann.ing"
 github_repository_id = "1449424396"
 # Enable once the domain is verified, applying locally as a verified owner.
 # See the README.
-domain_enabled = false
+domain_enabled = true
