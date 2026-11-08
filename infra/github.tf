@@ -31,6 +31,8 @@ resource "google_iam_workload_identity_pool_provider" "github" {
 resource "google_service_account" "terraform" {
   account_id   = "github-terraform"
   display_name = "Applies foodplann.ing Terraform from GitHub Actions"
+
+  depends_on = [google_project_service.services]
 }
 
 # Only the main branch can apply. The provider only accepts tokens from the
@@ -59,11 +61,15 @@ resource "google_project_iam_member" "terraform" {
   project = var.project
   role    = each.value
   member  = google_service_account.terraform.member
+
+  depends_on = [google_project_service.services]
 }
 
 resource "google_service_account" "terraform_plan" {
   account_id   = "github-terraform-plan"
   display_name = "Plans foodplann.ing Terraform changes in GitHub Actions pull requests"
+
+  depends_on = [google_project_service.services]
 }
 
 resource "google_service_account_iam_member" "terraform_plan_github" {
@@ -85,6 +91,8 @@ resource "google_project_iam_member" "terraform_plan" {
   project = var.project
   role    = each.value
   member  = google_service_account.terraform_plan.member
+
+  depends_on = [google_project_service.services]
 }
 
 # Plans read the state without locking it.
