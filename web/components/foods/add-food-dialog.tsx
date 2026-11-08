@@ -1,6 +1,6 @@
 import Loading from "@components/loading";
 import { TextField } from "@components/ui/fields";
-import { EmptyState } from "@components/ui/misc";
+import { Badge, EmptyState } from "@components/ui/misc";
 import Modal from "@components/ui/modal";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
@@ -20,12 +20,17 @@ import {
 import type { Food, FoodData } from "gen/foods/v1/foods_pb";
 import { FoodService } from "gen/foods/v1/foods_pb";
 import { useDebouncedValue } from "helpers/hooks";
+import { foodSourceInfo } from "helpers/labels";
 import { formatNutrient } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
-type Tab = "fdc" | "custom";
+type Tab = "search" | "custom";
+
+// FoodDataKey identifies a reference food among both sources' foods.
+const foodDataKey = (data: FoodData): string =>
+  `${data.source}-${data.sourceId}`;
 
 // TabClass styles a tab of the dialog.
 const tabClass = (active: boolean): string =>
@@ -42,9 +47,10 @@ interface AddFoodDialogProps {
 }
 
 /**
- * AddFoodDialog adds a food to the household: from USDA FoodData Central,
- * with its nutrients, or as a custom food whose nutrients are entered from
- * its label afterwards.
+ * AddFoodDialog adds a food to the household: from a reference food of
+ * Health Canada's Canadian Nutrient File or USDA FoodData Central, with its
+ * nutrients, or as a custom food whose nutrients are entered from its label
+ * afterwards.
  */
 const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
   initialQuery = "",
@@ -52,10 +58,10 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
   onCreated,
 }) => {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<Tab>("fdc");
+  const [tab, setTab] = useState<Tab>("search");
   const [query, setQuery] = useState(initialQuery);
   const [customName, setCustomName] = useState(initialQuery);
-  // The FDC food picked to add, and the name to add it as.
+  // The reference food picked to add, and the name to add it as.
   const [picked, setPicked] = useState<FoodData | null>(null);
   const [name, setName] = useState("");
   const search = useDebouncedValue(query.trim());
@@ -103,9 +109,11 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
       <ul className="flex max-h-96 flex-col divide-y divide-gray-100 overflow-y-auto">
         {results.data.foods.map((data) => (
           <FoodDataRow
-            key={data.fdcId}
+            key={foodDataKey(data)}
             data={data}
-            picked={picked?.fdcId === data.fdcId}
+            picked={
+              picked !== null && foodDataKey(picked) === foodDataKey(data)
+            }
             onPick={() => {
               setPicked(data);
               setName(data.description);
@@ -125,13 +133,13 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
           <button
             type="button"
             role="tab"
-            aria-selected={tab === "fdc"}
-            className={tabClass(tab === "fdc")}
+            aria-selected={tab === "search"}
+            className={tabClass(tab === "search")}
             onClick={() => {
-              setTab("fdc");
+              setTab("search");
             }}
           >
-            FoodData Central
+            Nutrient databases
           </button>
           <button
             type="button"
@@ -145,15 +153,17 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
             Custom
           </button>
         </div>
-        {tab === "fdc" ? (
+        {tab === "search" ? (
           <>
             <label className="relative block">
-              <span className="sr-only">Search FoodData Central</span>
+              <span className="sr-only">
+                Search the Canadian Nutrient File and USDA FoodData Central
+              </span>
               <MagnifyingGlassIcon className="pointer-events-none absolute top-2 left-2.5 size-4 text-gray-400" />
               <input
                 className={`${inputClass} pl-8`}
                 value={query}
-                placeholder="Search USDA FoodData Central"
+                placeholder="Search Canadian and USDA foods"
                 autoFocus
                 onChange={(event) => {
                   setQuery(event.target.value);
@@ -172,8 +182,9 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
                    */
                   event.stopPropagation();
                   create.mutate({
-                    fdcId: picked.fdcId,
                     food: { name: name.trim() },
+                    source: picked.source,
+                    sourceId: picked.sourceId,
                   });
                 }}
               >
@@ -217,9 +228,9 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
             }}
           >
             <p className="text-sm text-gray-600">
-              For products FoodData Central doesn&apos;t have, like a brand of
-              tofu or plant milk. You&apos;ll enter its nutrients per 100 g from
-              its label next.
+              For products the nutrient databases don&apos;t have, like a brand
+              of tofu or plant milk. You&apos;ll enter its nutrients per 100 g
+              from its label next.
             </p>
             <TextField
               label="Name"
@@ -258,7 +269,7 @@ interface FoodDataRowProps {
   onClose: () => void;
 }
 
-// FoodDataRow shows a FoodData Central food found, to add.
+// FoodDataRow shows a reference food found, to add, with its source.
 const FoodDataRow: React.FC<FoodDataRowProps> = ({
   data,
   picked,
@@ -266,6 +277,7 @@ const FoodDataRow: React.FC<FoodDataRowProps> = ({
   onClose,
 }) => {
   const { nutrients } = data;
+  const source = foodSourceInfo(data.source, data.sourceId);
   const facts: string[] = [];
   if (nutrients?.energyKcal !== undefined) {
     facts.push(formatNutrient(nutrients.energyKcal, "kcal"));
@@ -282,9 +294,16 @@ const FoodDataRow: React.FC<FoodDataRowProps> = ({
     >
       <div className="min-w-0">
         <p className="text-sm font-medium text-gray-900">{data.description}</p>
-        <p className="text-xs text-gray-500">
-          {data.category}
-          {data.dataType === "foundation_food" ? " · Foundation" : ""}
+        <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-gray-500">
+          {source !== undefined && (
+            <Badge className={source.badgeClass} title={source.name}>
+              {source.badge}
+            </Badge>
+          )}
+          <span>
+            {data.category}
+            {data.dataType === "foundation_food" ? " · Foundation" : ""}
+          </span>
         </p>
         {facts.length > 0 && (
           <p className="text-xs text-gray-600 tabular-nums">
