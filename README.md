@@ -387,10 +387,6 @@ The app is served on `mealplann.ing`, set as `domain` in
    domain's registrar. Cloud Run provisions and renews the TLS certificate,
    which takes up to about 15 minutes after the records resolve.
 
-`foodplann.ing`, the domain before, is in `redirect_domains`. It stays mapped
-to the service, which permanently redirects its requests to the same path on
-`mealplann.ing`.
-
 #### Moving to a new domain
 
 Passkeys are bound to the domain they were created on, so moving domains
@@ -414,6 +410,9 @@ means everyone adds a passkey on the new one. To move:
    domain, then deletes their old passkeys on the settings page. Point MCP
    clients at the new domain's `/mcp`: API tokens keep working, and clients
    that connected with OAuth connect again.
+6. Once nothing uses the old domain any more, remove it from
+   `redirect_domains` and merge, which unmaps it. Then delete its DNS
+   records.
 
 ### Importing the reference foods
 

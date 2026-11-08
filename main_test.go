@@ -46,7 +46,7 @@ func TestRedirectToPublicURL(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTeapot)
 	})
-	h, err := redirectToPublicURL(next, "https://mealplann.ing", []string{" foodplann.ing", "", "www.foodplann.ing"})
+	h, err := redirectToPublicURL(next, "https://mealplann.ing", []string{" old.example", "", "www.old.example"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,10 +55,10 @@ func TestRedirectToPublicURL(t *testing.T) {
 		wantCode     int
 		wantLocation string
 	}{
-		{http.MethodGet, "https://foodplann.ing/invite?token=abc", http.StatusMovedPermanently, "https://mealplann.ing/invite?token=abc"},
-		{http.MethodHead, "https://FOODPLANN.ING:443/", http.StatusMovedPermanently, "https://mealplann.ing/"},
-		{http.MethodPost, "https://www.foodplann.ing/mcp", http.StatusPermanentRedirect, "https://mealplann.ing/mcp"},
-		{http.MethodGet, "https://foodplann.ing/recipes/a%2Fb", http.StatusMovedPermanently, "https://mealplann.ing/recipes/a%2Fb"},
+		{http.MethodGet, "https://old.example/invite?token=abc", http.StatusMovedPermanently, "https://mealplann.ing/invite?token=abc"},
+		{http.MethodHead, "https://OLD.EXAMPLE:443/", http.StatusMovedPermanently, "https://mealplann.ing/"},
+		{http.MethodPost, "https://www.old.example/mcp", http.StatusPermanentRedirect, "https://mealplann.ing/mcp"},
+		{http.MethodGet, "https://old.example/recipes/a%2Fb", http.StatusMovedPermanently, "https://mealplann.ing/recipes/a%2Fb"},
 		{http.MethodGet, "https://mealplann.ing/plans", http.StatusTeapot, ""},
 		{http.MethodGet, "https://foodplanning-abc-uw.a.run.app/", http.StatusTeapot, ""},
 	} {

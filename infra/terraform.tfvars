@@ -7,8 +7,6 @@ billing_account = "011594-64C1DB-C0AD77"
 budget_amount   = 1
 budget_currency = "CAD"
 domain          = "mealplann.ing"
-# The previous domain, which redirects to the new one.
-redirect_domains = ["foodplann.ing"]
 # The ID of bs-tools/mealplann.ing (the same as before it was renamed from
 # bs-tools/foodplann.ing), from
 # gh api repos/bs-tools/mealplann.ing --jq .id
