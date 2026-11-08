@@ -1,7 +1,7 @@
 owner       = "bs-tools"
 repository  = "mealplann.ing"
 description = "Food planning software"
-visibility  = "private"
+visibility  = "public"
 project     = "foodplanning-514023"
 # The jobs in .github/workflows/ci.yml that check every change. The deploy
 # and Dependabot jobs aren't checks.
