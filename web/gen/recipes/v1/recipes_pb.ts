@@ -986,10 +986,11 @@ export const RecipeService: GenService<{
    * ingredient's amount, unit, note and place, or scaling the amount: e.g.
    * replace canned black beans with black beans cooked from dry in every
    * recipe at once. Recipes using the food only through a component recipe
-   * change through the component. Fails with INVALID_ARGUMENT if a recipe
-   * measures the food in pieces or milliliters the new food can't be
-   * weighed in, changing none: set grams_per_piece or grams_per_milliliter
-   * on the new food first.
+   * change through the component. An ingredient in pieces or milliliters
+   * stays in them: if the new food can't be weighed in them, the recipe's
+   * nutrition reports it, and grams_per_piece or grams_per_milliliter on
+   * the new food fix it. Each recipe changes on its own: if some fail, the
+   * error names them, and the others are changed.
    *
    * @generated from rpc recipes.v1.RecipeService.ReplaceFood
    */
