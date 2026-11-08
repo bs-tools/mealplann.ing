@@ -13,14 +13,15 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file foods/v1/foods.proto.
  */
 export const file_foods_v1_foods: GenFile = /*@__PURE__*/
-  fileDesc("ChRmb29kcy92MS9mb29kcy5wcm90bxIIZm9vZHMudjEi5wgKCU51dHJpZW50cxIYCgtlbmVyZ3lfa2NhbBgBIAEoAUgAiAEBEhoKDXByb3RlaW5fZ3JhbXMYAiABKAFIAYgBARIfChJjYXJib2h5ZHJhdGVfZ3JhbXMYAyABKAFIAogBARIZCgxzdWdhcnNfZ3JhbXMYBCABKAFIA4gBARIWCglmYXRfZ3JhbXMYBSABKAFIBIgBARIYCgtmaWJlcl9ncmFtcxgGIAEoAUgFiAEBEiMKFnZpdGFtaW5fYjEyX21pY3JvZ3JhbXMYByABKAFIBogBARIcCg9pcm9uX21pbGxpZ3JhbXMYCCABKAFIB4gBARIfChJjYWxjaXVtX21pbGxpZ3JhbXMYCSABKAFICIgBARIhChR2aXRhbWluX2RfbWljcm9ncmFtcxgKIAEoAUgJiAEBEh4KEWlvZGluZV9taWNyb2dyYW1zGAsgASgBSAqIAQESHAoPemluY19taWxsaWdyYW1zGAwgASgBSAuIAQESHQoQb21lZ2EzX2FsYV9ncmFtcxgNIAEoAUgMiAEBEh4KEWZvbGF0ZV9taWNyb2dyYW1zGA4gASgBSA2IAQESIQoUdml0YW1pbl9hX21pY3JvZ3JhbXMYDyABKAFIDogBARIhChR2aXRhbWluX2VfbWlsbGlncmFtcxgQIAEoAUgPiAEBEiEKFHZpdGFtaW5fa19taWNyb2dyYW1zGBEgASgBSBCIAQESHgoRY29wcGVyX21pbGxpZ3JhbXMYEiABKAFIEYgBARIhChRtYWduZXNpdW1fbWlsbGlncmFtcxgTIAEoAUgSiAEBEh4KEXNvZGl1bV9taWxsaWdyYW1zGBQgASgBSBOIAQESIQoUcG90YXNzaXVtX21pbGxpZ3JhbXMYFSABKAFIFIgBAUIOCgxfZW5lcmd5X2tjYWxCEAoOX3Byb3RlaW5fZ3JhbXNCFQoTX2NhcmJvaHlkcmF0ZV9ncmFtc0IPCg1fc3VnYXJzX2dyYW1zQgwKCl9mYXRfZ3JhbXNCDgoMX2ZpYmVyX2dyYW1zQhkKF192aXRhbWluX2IxMl9taWNyb2dyYW1zQhIKEF9pcm9uX21pbGxpZ3JhbXNCFQoTX2NhbGNpdW1fbWlsbGlncmFtc0IXChVfdml0YW1pbl9kX21pY3JvZ3JhbXNCFAoSX2lvZGluZV9taWNyb2dyYW1zQhIKEF96aW5jX21pbGxpZ3JhbXNCEwoRX29tZWdhM19hbGFfZ3JhbXNCFAoSX2ZvbGF0ZV9taWNyb2dyYW1zQhcKFV92aXRhbWluX2FfbWljcm9ncmFtc0IXChVfdml0YW1pbl9lX21pbGxpZ3JhbXNCFwoVX3ZpdGFtaW5fa19taWNyb2dyYW1zQhQKEl9jb3BwZXJfbWlsbGlncmFtc0IXChVfbWFnbmVzaXVtX21pbGxpZ3JhbXNCFAoSX3NvZGl1bV9taWxsaWdyYW1zQhcKFV9wb3Rhc3NpdW1fbWlsbGlncmFtcyKNBAoERm9vZBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEiwKBnNvdXJjZRgDIAEoDjIULmZvb2RzLnYxLkZvb2RTb3VyY2VCBqqfGQIIARIWCgZmZGNfaWQYBCABKAVCBqqfGQIIARImCgludXRyaWVudHMYBSABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSFwoPZ3JhbXNfcGVyX3BpZWNlGAYgASgBEhwKFGdyYW1zX3Blcl9taWxsaWxpdGVyGAcgASgBEhEKCWZhc3RfY2FyYhgIIAEoCBItCg1zdG9yZV9zZWN0aW9uGAkgASgOMhYuZm9vZHMudjEuU3RvcmVTZWN0aW9uEhUKDXBhY2thZ2VfZ3JhbXMYCiABKAESFwoPc2hlbGZfbGlmZV9kYXlzGAsgASgFEh4KFm9wZW5lZF9zaGVsZl9saWZlX2RheXMYDCABKAUSDQoFbm90ZXMYDSABKAkSNwoLY3JlYXRlX3RpbWUYDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESGgoScHJlZmVycmVkX3N0b3JlX2lkGBAgASgJEhcKD2Fsd2F5c19pbl9zdG9jaxgRIAEoCCK6AQoIRm9vZERhdGESDgoGZmRjX2lkGAEgASgFEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEhEKCWRhdGFfdHlwZRgEIAEoCRImCgludXRyaWVudHMYBSABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSKwoIcG9ydGlvbnMYBiADKAsyGS5mb29kcy52MS5Gb29kRGF0YVBvcnRpb24SDwoHZm9vZF9pZBgHIAEoCSI1Cg9Gb29kRGF0YVBvcnRpb24SEwoLZGVzY3JpcHRpb24YASABKAkSDQoFZ3JhbXMYAiABKAEiOQoVU2VhcmNoRm9vZERhdGFSZXF1ZXN0Eg0KBXF1ZXJ5GAEgASgJEhEKCXBhZ2Vfc2l6ZRgCIAEoBSI7ChZTZWFyY2hGb29kRGF0YVJlc3BvbnNlEiEKBWZvb2RzGAEgAygLMhIuZm9vZHMudjEuRm9vZERhdGEiQQoRQ3JlYXRlRm9vZFJlcXVlc3QSDgoGZmRjX2lkGAEgASgFEhwKBGZvb2QYAiABKAsyDi5mb29kcy52MS5Gb29kIjIKEkNyZWF0ZUZvb2RSZXNwb25zZRIcCgRmb29kGAEgASgLMg4uZm9vZHMudjEuRm9vZCIcCg5HZXRGb29kUmVxdWVzdBIKCgJpZBgBIAEoCSIvCg9HZXRGb29kUmVzcG9uc2USHAoEZm9vZBgBIAEoCzIOLmZvb2RzLnYxLkZvb2QiSAoQTGlzdEZvb2RzUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIRCglwYWdlX3NpemUYAiABKAUSEgoKcGFnZV90b2tlbhgDIAEoCSJLChFMaXN0Rm9vZHNSZXNwb25zZRIdCgVmb29kcxgBIAMoCzIOLmZvb2RzLnYxLkZvb2QSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJImIKEVVwZGF0ZUZvb2RSZXF1ZXN0EhwKBGZvb2QYASABKAsyDi5mb29kcy52MS5Gb29kEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayIyChJVcGRhdGVGb29kUmVzcG9uc2USHAoEZm9vZBgBIAEoCzIOLmZvb2RzLnYxLkZvb2QiHwoRRGVsZXRlRm9vZFJlcXVlc3QSCgoCaWQYASABKAkiFAoSRGVsZXRlRm9vZFJlc3BvbnNlKrsFCghOdXRyaWVudBIYChROVVRSSUVOVF9VTlNQRUNJRklFRBAAEhgKFE5VVFJJRU5UX0VORVJHWV9LQ0FMEAESGgoWTlVUUklFTlRfUFJPVEVJTl9HUkFNUxACEh8KG05VVFJJRU5UX0NBUkJPSFlEUkFURV9HUkFNUxADEhkKFU5VVFJJRU5UX1NVR0FSU19HUkFNUxAEEhYKEk5VVFJJRU5UX0ZBVF9HUkFNUxAFEhgKFE5VVFJJRU5UX0ZJQkVSX0dSQU1TEAYSIwofTlVUUklFTlRfVklUQU1JTl9CMTJfTUlDUk9HUkFNUxAHEhwKGE5VVFJJRU5UX0lST05fTUlMTElHUkFNUxAIEh8KG05VVFJJRU5UX0NBTENJVU1fTUlMTElHUkFNUxAJEiEKHU5VVFJJRU5UX1ZJVEFNSU5fRF9NSUNST0dSQU1TEAoSHgoaTlVUUklFTlRfSU9ESU5FX01JQ1JPR1JBTVMQCxIcChhOVVRSSUVOVF9aSU5DX01JTExJR1JBTVMQDBIdChlOVVRSSUVOVF9PTUVHQTNfQUxBX0dSQU1TEA0SHgoaTlVUUklFTlRfRk9MQVRFX01JQ1JPR1JBTVMQDhIhCh1OVVRSSUVOVF9WSVRBTUlOX0FfTUlDUk9HUkFNUxAPEiEKHU5VVFJJRU5UX1ZJVEFNSU5fRV9NSUxMSUdSQU1TEBASIQodTlVUUklFTlRfVklUQU1JTl9LX01JQ1JPR1JBTVMQERIeChpOVVRSSUVOVF9DT1BQRVJfTUlMTElHUkFNUxASEiEKHU5VVFJJRU5UX01BR05FU0lVTV9NSUxMSUdSQU1TEBMSHgoaTlVUUklFTlRfU09ESVVNX01JTExJR1JBTVMQFBIhCh1OVVRSSUVOVF9QT1RBU1NJVU1fTUlMTElHUkFNUxAVKlYKCkZvb2RTb3VyY2USGwoXRk9PRF9TT1VSQ0VfVU5TUEVDSUZJRUQQABITCg9GT09EX1NPVVJDRV9GREMQARIWChJGT09EX1NPVVJDRV9DVVNUT00QAiq4AgoMU3RvcmVTZWN0aW9uEh0KGVNUT1JFX1NFQ1RJT05fVU5TUEVDSUZJRUQQABIZChVTVE9SRV9TRUNUSU9OX1BST0RVQ0UQARIYChRTVE9SRV9TRUNUSU9OX0JBS0VSWRACEhkKFVNUT1JFX1NFQ1RJT05fQ0hJTExFRBADEhgKFFNUT1JFX1NFQ1RJT05fRlJPWkVOEAQSGwoXU1RPUkVfU0VDVElPTl9EUllfR09PRFMQBRIYChRTVE9SRV9TRUNUSU9OX0NBTk5FRBAGEhgKFFNUT1JFX1NFQ1RJT05fU1BJQ0VTEAcSGAoUU1RPUkVfU0VDVElPTl9EUklOS1MQCBIbChdTVE9SRV9TRUNUSU9OX0hPVVNFSE9MRBAJEhcKE1NUT1JFX1NFQ1RJT05fT1RIRVIQCip1CgpBbW91bnRVbml0EhsKF0FNT1VOVF9VTklUX1VOU1BFQ0lGSUVEEAASFQoRQU1PVU5UX1VOSVRfR1JBTVMQARIbChdBTU9VTlRfVU5JVF9NSUxMSUxJVEVSUxACEhYKEkFNT1VOVF9VTklUX1BJRUNFUxADMsMDCgtGb29kU2VydmljZRJTCg5TZWFyY2hGb29kRGF0YRIfLmZvb2RzLnYxLlNlYXJjaEZvb2REYXRhUmVxdWVzdBogLmZvb2RzLnYxLlNlYXJjaEZvb2REYXRhUmVzcG9uc2USRwoKQ3JlYXRlRm9vZBIbLmZvb2RzLnYxLkNyZWF0ZUZvb2RSZXF1ZXN0GhwuZm9vZHMudjEuQ3JlYXRlRm9vZFJlc3BvbnNlEj4KB0dldEZvb2QSGC5mb29kcy52MS5HZXRGb29kUmVxdWVzdBoZLmZvb2RzLnYxLkdldEZvb2RSZXNwb25zZRJECglMaXN0Rm9vZHMSGi5mb29kcy52MS5MaXN0Rm9vZHNSZXF1ZXN0GhsuZm9vZHMudjEuTGlzdEZvb2RzUmVzcG9uc2USRwoKVXBkYXRlRm9vZBIbLmZvb2RzLnYxLlVwZGF0ZUZvb2RSZXF1ZXN0GhwuZm9vZHMudjEuVXBkYXRlRm9vZFJlc3BvbnNlEkcKCkRlbGV0ZUZvb2QSGy5mb29kcy52MS5EZWxldGVGb29kUmVxdWVzdBocLmZvb2RzLnYxLkRlbGV0ZUZvb2RSZXNwb25zZUKcAQoMY29tLmZvb2RzLnYxQgpGb29kc1Byb3RvUAFaP2dpdGh1Yi5jb20vYnMtdG9vbHMvZm9vZHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vZm9vZHMvdjE7Zm9vZHN2MaICA0ZYWKoCCEZvb2RzLlYxygIIRm9vZHNcVjHiAhRGb29kc1xWMVxHUEJNZXRhZGF0YeoCCUZvb2RzOjpWMWIGcHJvdG8z", [file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChRmb29kcy92MS9mb29kcy5wcm90bxIIZm9vZHMudjEi5wgKCU51dHJpZW50cxIYCgtlbmVyZ3lfa2NhbBgBIAEoAUgAiAEBEhoKDXByb3RlaW5fZ3JhbXMYAiABKAFIAYgBARIfChJjYXJib2h5ZHJhdGVfZ3JhbXMYAyABKAFIAogBARIZCgxzdWdhcnNfZ3JhbXMYBCABKAFIA4gBARIWCglmYXRfZ3JhbXMYBSABKAFIBIgBARIYCgtmaWJlcl9ncmFtcxgGIAEoAUgFiAEBEiMKFnZpdGFtaW5fYjEyX21pY3JvZ3JhbXMYByABKAFIBogBARIcCg9pcm9uX21pbGxpZ3JhbXMYCCABKAFIB4gBARIfChJjYWxjaXVtX21pbGxpZ3JhbXMYCSABKAFICIgBARIhChR2aXRhbWluX2RfbWljcm9ncmFtcxgKIAEoAUgJiAEBEh4KEWlvZGluZV9taWNyb2dyYW1zGAsgASgBSAqIAQESHAoPemluY19taWxsaWdyYW1zGAwgASgBSAuIAQESHQoQb21lZ2EzX2FsYV9ncmFtcxgNIAEoAUgMiAEBEh4KEWZvbGF0ZV9taWNyb2dyYW1zGA4gASgBSA2IAQESIQoUdml0YW1pbl9hX21pY3JvZ3JhbXMYDyABKAFIDogBARIhChR2aXRhbWluX2VfbWlsbGlncmFtcxgQIAEoAUgPiAEBEiEKFHZpdGFtaW5fa19taWNyb2dyYW1zGBEgASgBSBCIAQESHgoRY29wcGVyX21pbGxpZ3JhbXMYEiABKAFIEYgBARIhChRtYWduZXNpdW1fbWlsbGlncmFtcxgTIAEoAUgSiAEBEh4KEXNvZGl1bV9taWxsaWdyYW1zGBQgASgBSBOIAQESIQoUcG90YXNzaXVtX21pbGxpZ3JhbXMYFSABKAFIFIgBAUIOCgxfZW5lcmd5X2tjYWxCEAoOX3Byb3RlaW5fZ3JhbXNCFQoTX2NhcmJvaHlkcmF0ZV9ncmFtc0IPCg1fc3VnYXJzX2dyYW1zQgwKCl9mYXRfZ3JhbXNCDgoMX2ZpYmVyX2dyYW1zQhkKF192aXRhbWluX2IxMl9taWNyb2dyYW1zQhIKEF9pcm9uX21pbGxpZ3JhbXNCFQoTX2NhbGNpdW1fbWlsbGlncmFtc0IXChVfdml0YW1pbl9kX21pY3JvZ3JhbXNCFAoSX2lvZGluZV9taWNyb2dyYW1zQhIKEF96aW5jX21pbGxpZ3JhbXNCEwoRX29tZWdhM19hbGFfZ3JhbXNCFAoSX2ZvbGF0ZV9taWNyb2dyYW1zQhcKFV92aXRhbWluX2FfbWljcm9ncmFtc0IXChVfdml0YW1pbl9lX21pbGxpZ3JhbXNCFwoVX3ZpdGFtaW5fa19taWNyb2dyYW1zQhQKEl9jb3BwZXJfbWlsbGlncmFtc0IXChVfbWFnbmVzaXVtX21pbGxpZ3JhbXNCFAoSX3NvZGl1bV9taWxsaWdyYW1zQhcKFV9wb3Rhc3NpdW1fbWlsbGlncmFtcyKoBAoERm9vZBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEiwKBnNvdXJjZRgDIAEoDjIULmZvb2RzLnYxLkZvb2RTb3VyY2VCBqqfGQIIARIWCgZmZGNfaWQYBCABKAVCBqqfGQIIARImCgludXRyaWVudHMYBSABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSFwoPZ3JhbXNfcGVyX3BpZWNlGAYgASgBEhwKFGdyYW1zX3Blcl9taWxsaWxpdGVyGAcgASgBEhEKCWZhc3RfY2FyYhgIIAEoCBItCg1zdG9yZV9zZWN0aW9uGAkgASgOMhYuZm9vZHMudjEuU3RvcmVTZWN0aW9uEhUKDXBhY2thZ2VfZ3JhbXMYCiABKAESFwoPc2hlbGZfbGlmZV9kYXlzGAsgASgFEh4KFm9wZW5lZF9zaGVsZl9saWZlX2RheXMYDCABKAUSDQoFbm90ZXMYDSABKAkSNwoLY3JlYXRlX3RpbWUYDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESGgoScHJlZmVycmVkX3N0b3JlX2lkGBAgASgJEhcKD2Fsd2F5c19pbl9zdG9jaxgRIAEoCBIZCglzb3VyY2VfaWQYEiABKAVCBqqfGQIIASKPAgoIRm9vZERhdGESDgoGZmRjX2lkGAEgASgFEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhAKCGNhdGVnb3J5GAMgASgJEhEKCWRhdGFfdHlwZRgEIAEoCRImCgludXRyaWVudHMYBSABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSKwoIcG9ydGlvbnMYBiADKAsyGS5mb29kcy52MS5Gb29kRGF0YVBvcnRpb24SDwoHZm9vZF9pZBgHIAEoCRIkCgZzb3VyY2UYCCABKA4yFC5mb29kcy52MS5Gb29kU291cmNlEhEKCXNvdXJjZV9pZBgJIAEoBRIaChJmcmVuY2hfZGVzY3JpcHRpb24YCiABKAkiNQoPRm9vZERhdGFQb3J0aW9uEhMKC2Rlc2NyaXB0aW9uGAEgASgJEg0KBWdyYW1zGAIgASgBIjkKFVNlYXJjaEZvb2REYXRhUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIRCglwYWdlX3NpemUYAiABKAUiOwoWU2VhcmNoRm9vZERhdGFSZXNwb25zZRIhCgVmb29kcxgBIAMoCzISLmZvb2RzLnYxLkZvb2REYXRhInoKEUNyZWF0ZUZvb2RSZXF1ZXN0Eg4KBmZkY19pZBgBIAEoBRIcCgRmb29kGAIgASgLMg4uZm9vZHMudjEuRm9vZBIkCgZzb3VyY2UYAyABKA4yFC5mb29kcy52MS5Gb29kU291cmNlEhEKCXNvdXJjZV9pZBgEIAEoBSIyChJDcmVhdGVGb29kUmVzcG9uc2USHAoEZm9vZBgBIAEoCzIOLmZvb2RzLnYxLkZvb2QiHAoOR2V0Rm9vZFJlcXVlc3QSCgoCaWQYASABKAkiLwoPR2V0Rm9vZFJlc3BvbnNlEhwKBGZvb2QYASABKAsyDi5mb29kcy52MS5Gb29kIkgKEExpc3RGb29kc1JlcXVlc3QSDQoFcXVlcnkYASABKAkSEQoJcGFnZV9zaXplGAIgASgFEhIKCnBhZ2VfdG9rZW4YAyABKAkiSwoRTGlzdEZvb2RzUmVzcG9uc2USHQoFZm9vZHMYASADKAsyDi5mb29kcy52MS5Gb29kEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJiChFVcGRhdGVGb29kUmVxdWVzdBIcCgRmb29kGAEgASgLMg4uZm9vZHMudjEuRm9vZBIvCgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2siMgoSVXBkYXRlRm9vZFJlc3BvbnNlEhwKBGZvb2QYASABKAsyDi5mb29kcy52MS5Gb29kIh8KEURlbGV0ZUZvb2RSZXF1ZXN0EgoKAmlkGAEgASgJIhQKEkRlbGV0ZUZvb2RSZXNwb25zZSq7BQoITnV0cmllbnQSGAoUTlVUUklFTlRfVU5TUEVDSUZJRUQQABIYChROVVRSSUVOVF9FTkVSR1lfS0NBTBABEhoKFk5VVFJJRU5UX1BST1RFSU5fR1JBTVMQAhIfChtOVVRSSUVOVF9DQVJCT0hZRFJBVEVfR1JBTVMQAxIZChVOVVRSSUVOVF9TVUdBUlNfR1JBTVMQBBIWChJOVVRSSUVOVF9GQVRfR1JBTVMQBRIYChROVVRSSUVOVF9GSUJFUl9HUkFNUxAGEiMKH05VVFJJRU5UX1ZJVEFNSU5fQjEyX01JQ1JPR1JBTVMQBxIcChhOVVRSSUVOVF9JUk9OX01JTExJR1JBTVMQCBIfChtOVVRSSUVOVF9DQUxDSVVNX01JTExJR1JBTVMQCRIhCh1OVVRSSUVOVF9WSVRBTUlOX0RfTUlDUk9HUkFNUxAKEh4KGk5VVFJJRU5UX0lPRElORV9NSUNST0dSQU1TEAsSHAoYTlVUUklFTlRfWklOQ19NSUxMSUdSQU1TEAwSHQoZTlVUUklFTlRfT01FR0EzX0FMQV9HUkFNUxANEh4KGk5VVFJJRU5UX0ZPTEFURV9NSUNST0dSQU1TEA4SIQodTlVUUklFTlRfVklUQU1JTl9BX01JQ1JPR1JBTVMQDxIhCh1OVVRSSUVOVF9WSVRBTUlOX0VfTUlMTElHUkFNUxAQEiEKHU5VVFJJRU5UX1ZJVEFNSU5fS19NSUNST0dSQU1TEBESHgoaTlVUUklFTlRfQ09QUEVSX01JTExJR1JBTVMQEhIhCh1OVVRSSUVOVF9NQUdORVNJVU1fTUlMTElHUkFNUxATEh4KGk5VVFJJRU5UX1NPRElVTV9NSUxMSUdSQU1TEBQSIQodTlVUUklFTlRfUE9UQVNTSVVNX01JTExJR1JBTVMQFSprCgpGb29kU291cmNlEhsKF0ZPT0RfU09VUkNFX1VOU1BFQ0lGSUVEEAASEwoPRk9PRF9TT1VSQ0VfRkRDEAESFgoSRk9PRF9TT1VSQ0VfQ1VTVE9NEAISEwoPRk9PRF9TT1VSQ0VfQ05GEAMquAIKDFN0b3JlU2VjdGlvbhIdChlTVE9SRV9TRUNUSU9OX1VOU1BFQ0lGSUVEEAASGQoVU1RPUkVfU0VDVElPTl9QUk9EVUNFEAESGAoUU1RPUkVfU0VDVElPTl9CQUtFUlkQAhIZChVTVE9SRV9TRUNUSU9OX0NISUxMRUQQAxIYChRTVE9SRV9TRUNUSU9OX0ZST1pFThAEEhsKF1NUT1JFX1NFQ1RJT05fRFJZX0dPT0RTEAUSGAoUU1RPUkVfU0VDVElPTl9DQU5ORUQQBhIYChRTVE9SRV9TRUNUSU9OX1NQSUNFUxAHEhgKFFNUT1JFX1NFQ1RJT05fRFJJTktTEAgSGwoXU1RPUkVfU0VDVElPTl9IT1VTRUhPTEQQCRIXChNTVE9SRV9TRUNUSU9OX09USEVSEAoqdQoKQW1vdW50VW5pdBIbChdBTU9VTlRfVU5JVF9VTlNQRUNJRklFRBAAEhUKEUFNT1VOVF9VTklUX0dSQU1TEAESGwoXQU1PVU5UX1VOSVRfTUlMTElMSVRFUlMQAhIWChJBTU9VTlRfVU5JVF9QSUVDRVMQAzLDAwoLRm9vZFNlcnZpY2USUwoOU2VhcmNoRm9vZERhdGESHy5mb29kcy52MS5TZWFyY2hGb29kRGF0YVJlcXVlc3QaIC5mb29kcy52MS5TZWFyY2hGb29kRGF0YVJlc3BvbnNlEkcKCkNyZWF0ZUZvb2QSGy5mb29kcy52MS5DcmVhdGVGb29kUmVxdWVzdBocLmZvb2RzLnYxLkNyZWF0ZUZvb2RSZXNwb25zZRI+CgdHZXRGb29kEhguZm9vZHMudjEuR2V0Rm9vZFJlcXVlc3QaGS5mb29kcy52MS5HZXRGb29kUmVzcG9uc2USRAoJTGlzdEZvb2RzEhouZm9vZHMudjEuTGlzdEZvb2RzUmVxdWVzdBobLmZvb2RzLnYxLkxpc3RGb29kc1Jlc3BvbnNlEkcKClVwZGF0ZUZvb2QSGy5mb29kcy52MS5VcGRhdGVGb29kUmVxdWVzdBocLmZvb2RzLnYxLlVwZGF0ZUZvb2RSZXNwb25zZRJHCgpEZWxldGVGb29kEhsuZm9vZHMudjEuRGVsZXRlRm9vZFJlcXVlc3QaHC5mb29kcy52MS5EZWxldGVGb29kUmVzcG9uc2VCnAEKDGNvbS5mb29kcy52MUIKRm9vZHNQcm90b1ABWj9naXRodWIuY29tL2JzLXRvb2xzL2Zvb2RwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL2Zvb2RzL3YxO2Zvb2RzdjGiAgNGWFiqAghGb29kcy5WMcoCCEZvb2RzXFYx4gIURm9vZHNcVjFcR1BCTWV0YWRhdGHqAglGb29kczo6VjFiBnByb3RvMw", [file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * Nutrients are the amounts of the nutrients the app tracks in an amount of
  * food, e.g. per 100 g of a food or per serving of a recipe. Every field is
- * optional: unset means unknown, which is different from 0. FoodData Central
- * often lacks iodine, vitamin B12 and vitamin D, for example. Only set the
- * values you know, from FDC or a food's label, and never guess them.
+ * optional: unset means unknown, which is different from 0. The reference
+ * foods often lack iodine, vitamin B12 and vitamin D, for example. Only set
+ * the values you know, from a reference food or a food's label, and never
+ * guess them.
  *
  * @generated from message foods.v1.Nutrients
  */
@@ -40,9 +41,9 @@ export type Nutrients = Message<"foods.v1.Nutrients"> & {
   proteinGrams?: number | undefined;
 
   /**
-   * Total carbohydrate, in grams, including sugars and fiber, as FoodData
-   * Central and US labels give it. European labels give carbohydrate
-   * without fiber: add the label's fiber to it.
+   * Total carbohydrate, in grams, including sugars and fiber, as the
+   * reference foods and US and Canadian labels give it. European labels
+   * give carbohydrate without fiber: add the label's fiber to it.
    *
    * @generated from field: optional double carbohydrate_grams = 3;
    */
@@ -207,15 +208,17 @@ export type Food = Message<"foods.v1.Food"> & {
   name: string;
 
   /**
-   * Where the food's nutrients come from.
+   * Where the food's nutrients come from: the source of the reference food
+   * it was created from, or FOOD_SOURCE_CUSTOM.
    *
    * @generated from field: foods.v1.FoodSource source = 3;
    */
   source: FoodSource;
 
   /**
-   * The ID of the FoodData Central food it was created from, 0 for custom
-   * foods.
+   * The ID of the FoodData Central food it was created from, 0 for foods
+   * from other sources and custom foods. The same as source_id for foods
+   * from FDC; prefer source and source_id.
    *
    * @generated from field: int32 fdc_id = 4;
    */
@@ -333,6 +336,14 @@ export type Food = Message<"foods.v1.Food"> & {
    * @generated from field: bool always_in_stock = 17;
    */
   alwaysInStock: boolean;
+
+  /**
+   * The ID of the reference food it was created from in its source, e.g.
+   * a CNF food ID for FOOD_SOURCE_CNF. 0 for custom foods.
+   *
+   * @generated from field: int32 source_id = 18;
+   */
+  sourceId: number;
 };
 
 /**
@@ -343,37 +354,39 @@ export const FoodSchema: GenMessage<Food> = /*@__PURE__*/
   messageDesc(file_foods_v1_foods, 1);
 
 /**
- * A food of USDA FoodData Central.
+ * A reference food, of the Canadian Nutrient File or USDA FoodData Central.
  *
  * @generated from message foods.v1.FoodData
  */
 export type FoodData = Message<"foods.v1.FoodData"> & {
   /**
-   * The FDC ID of the food, to create a food from with CreateFood.
+   * The FDC ID of the food for foods of FoodData Central, 0 for foods of
+   * other sources. The same as source_id; prefer source and source_id.
    *
    * @generated from field: int32 fdc_id = 1;
    */
   fdcId: number;
 
   /**
-   * The FDC description, e.g. "Chickpeas (garbanzo beans, bengal gram),
-   * mature seeds, cooked, boiled, without salt".
+   * The description in its source, e.g. "Chickpeas (garbanzo beans, bengal
+   * gram), mature seeds, cooked, boiled, without salt".
    *
    * @generated from field: string description = 2;
    */
   description: string;
 
   /**
-   * The FDC food category, e.g. "Legumes and Legume Products".
+   * The source's food category or group, e.g. "Legumes and Legume
+   * Products".
    *
    * @generated from field: string category = 3;
    */
   category: string;
 
   /**
-   * The FDC dataset: "foundation_food" for Foundation Foods, which are
+   * The dataset: for FDC, "foundation_food" for Foundation Foods, which are
    * analyzed recently, or "sr_legacy_food" for SR Legacy, which has more
-   * foods and nutrients.
+   * foods and nutrients; "cnf" for the Canadian Nutrient File.
    *
    * @generated from field: string data_type = 4;
    */
@@ -395,12 +408,35 @@ export type FoodData = Message<"foods.v1.FoodData"> & {
   portions: FoodDataPortion[];
 
   /**
-   * The ID of the household's food created from this FDC food, empty if
-   * none. Reuse that food rather than creating another.
+   * The ID of the household's food created from this reference food, empty
+   * if none. Reuse that food rather than creating another.
    *
    * @generated from field: string food_id = 7;
    */
   foodId: string;
+
+  /**
+   * The source of the food: FOOD_SOURCE_CNF or FOOD_SOURCE_FDC.
+   *
+   * @generated from field: foods.v1.FoodSource source = 8;
+   */
+  source: FoodSource;
+
+  /**
+   * The ID of the food in its source, to create a food from with
+   * CreateFood, with source.
+   *
+   * @generated from field: int32 source_id = 9;
+   */
+  sourceId: number;
+
+  /**
+   * The French description, for foods of the Canadian Nutrient File, e.g.
+   * "Pois chiches, en conserve". Empty for FDC.
+   *
+   * @generated from field: string french_description = 10;
+   */
+  frenchDescription: string;
 };
 
 /**
@@ -411,13 +447,14 @@ export const FoodDataSchema: GenMessage<FoodData> = /*@__PURE__*/
   messageDesc(file_foods_v1_foods, 2);
 
 /**
- * A common portion of a FoodData Central food.
+ * A common portion of a reference food.
  *
  * @generated from message foods.v1.FoodDataPortion
  */
 export type FoodDataPortion = Message<"foods.v1.FoodDataPortion"> & {
   /**
-   * The portion, e.g. "1 cup, chopped" or "1 medium (2-1/2\" dia)".
+   * The portion, e.g. "1 cup, chopped", "1 medium (2-1/2\" dia)" or
+   * "250ml".
    *
    * @generated from field: string description = 1;
    */
@@ -443,8 +480,8 @@ export const FoodDataPortionSchema: GenMessage<FoodDataPortion> = /*@__PURE__*/
  */
 export type SearchFoodDataRequest = Message<"foods.v1.SearchFoodDataRequest"> & {
   /**
-   * The words to search for in FDC descriptions, e.g. "lentils red raw".
-   * Required.
+   * The words to search for in the English descriptions, e.g. "lentils red
+   * raw". Required.
    *
    * @generated from field: string query = 1;
    */
@@ -470,7 +507,7 @@ export const SearchFoodDataRequestSchema: GenMessage<SearchFoodDataRequest> = /*
  */
 export type SearchFoodDataResponse = Message<"foods.v1.SearchFoodDataResponse"> & {
   /**
-   * The matching foods, the best match first.
+   * The matching foods of both sources, the best match first.
    *
    * @generated from field: repeated foods.v1.FoodData foods = 1;
    */
@@ -489,24 +526,42 @@ export const SearchFoodDataResponseSchema: GenMessage<SearchFoodDataResponse> = 
  */
 export type CreateFoodRequest = Message<"foods.v1.CreateFoodRequest"> & {
   /**
-   * The FoodData Central food to create the food from, found with
-   * SearchFoodData. Its nutrients are copied, so leave
-   * food.nutrients unset. Its description is the name unless
-   * food.name is set, and its portions suggest grams_per_piece and
-   * grams_per_milliliter unless they're set. 0 for a custom food.
+   * The FoodData Central food to create the food from. The same as source
+   * FOOD_SOURCE_FDC with source_id; prefer those. 0 if not set.
    *
    * @generated from field: int32 fdc_id = 1;
    */
   fdcId: number;
 
   /**
-   * The food. For a custom food, name is required. With fdc_id, all fields
-   * are optional, and override what's taken from FDC: prefer a short name,
-   * like "Chickpeas, cooked", to the long FDC description.
+   * The food. For a custom food, name is required. From a reference food,
+   * all fields are optional, and override what's taken from it: prefer a
+   * short name, like "Chickpeas, cooked", to the long description.
    *
    * @generated from field: foods.v1.Food food = 2;
    */
   food?: Food | undefined;
+
+  /**
+   * The source of the reference food to create the food from, found with
+   * SearchFoodData: FOOD_SOURCE_CNF or FOOD_SOURCE_FDC, with source_id. Its
+   * nutrients are copied, so leave food.nutrients unset. Its description is
+   * the name unless food.name is set, and its portions suggest
+   * grams_per_piece and grams_per_milliliter unless they're set.
+   * FOOD_SOURCE_UNSPECIFIED, with neither source_id nor fdc_id, for a
+   * custom food.
+   *
+   * @generated from field: foods.v1.FoodSource source = 3;
+   */
+  source: FoodSource;
+
+  /**
+   * The ID of the reference food in source, the source_id of
+   * SearchFoodData's result. Required with source.
+   *
+   * @generated from field: int32 source_id = 4;
+   */
+  sourceId: number;
 };
 
 /**
@@ -893,18 +948,28 @@ export enum FoodSource {
   UNSPECIFIED = 0,
 
   /**
-   * USDA FoodData Central, see fdc_id.
+   * USDA FoodData Central, the US food composition database. Its IDs are
+   * FDC IDs, e.g. 173756.
    *
    * @generated from enum value: FOOD_SOURCE_FDC = 1;
    */
   FDC = 1,
 
   /**
-   * Entered by hand or by an agent, e.g. from a product's label.
+   * Entered by hand or by an agent, e.g. from a product's label. Only for
+   * the household's foods.
    *
    * @generated from enum value: FOOD_SOURCE_CUSTOM = 2;
    */
   CUSTOM = 2,
+
+  /**
+   * Health Canada's Canadian Nutrient File, Canada's food composition
+   * database. Its IDs are CNF food IDs, e.g. 3183.
+   *
+   * @generated from enum value: FOOD_SOURCE_CNF = 3;
+   */
+  CNF = 3,
 }
 
 /**
@@ -1058,13 +1123,25 @@ export const AmountUnitSchema: GenEnum<AmountUnit> = /*@__PURE__*/
  *
  * 1. Look for it among the household's foods with ListFoods, and reuse it if
  *    it's there.
- * 2. Otherwise, search USDA FoodData Central with SearchFoodData, and create
- *    the food from the best match with CreateFood and its fdc_id. Its
- *    nutrients are copied from FDC. Prefer generic FDC foods for
- *    ingredients like vegetables, legumes and grains.
- * 3. Only for branded products FDC doesn't have, like a particular tofu or
- *    plant milk, create a custom food with the nutrients from its label,
- *    converted to per 100 g.
+ * 2. Otherwise, search the reference foods with SearchFoodData, and create
+ *    the food from the best match with CreateFood, its source and its
+ *    source_id. Its nutrients are copied from the reference food. Prefer
+ *    generic reference foods for ingredients like vegetables, legumes and
+ *    grains.
+ * 3. Only for branded products the reference foods don't have, like a
+ *    particular tofu or plant milk, create a custom food with the nutrients
+ *    from its label, converted to per 100 g.
+ *
+ * The reference foods come from two sources, searched together:
+ *
+ * - The Canadian Nutrient File (CNF, source FOOD_SOURCE_CNF), Health
+ *   Canada's food composition database. Its foods are as sold in Canada,
+ *   including Canadian fortification, like the vitamin D and B12 added to
+ *   plant beverages and margarine, and Canadian products. For a household in
+ *   Canada, prefer a CNF match when it fits as well as an FDC one.
+ * - USDA FoodData Central (FDC, source FOOD_SOURCE_FDC), the US database,
+ *   which has more foods, and more recently analyzed ones in its Foundation
+ *   Foods dataset. Its fortified foods are as sold in the US.
  *
  * Then check that the food can be weighed: recipes measured in pieces need
  * grams_per_piece, and recipes measured in milliliters need
@@ -1076,11 +1153,14 @@ export const AmountUnitSchema: GenEnum<AmountUnit> = /*@__PURE__*/
  */
 export const FoodService: GenService<{
   /**
-   * Search the foods of USDA FoodData Central (the Foundation Foods and SR
-   * Legacy datasets, without meat, fish, dairy and eggs) by their
-   * description, e.g. "chickpeas cooked" or "spinach raw". Returns the best
-   * matches first, with their nutrients per 100 g and common portions. Use it
-   * to pick the fdc_id to create a food with CreateFood.
+   * Search the reference foods of the Canadian Nutrient File and USDA
+   * FoodData Central (its Foundation Foods and SR Legacy datasets), without
+   * meat, fish, dairy and eggs, by their English description, e.g.
+   * "chickpeas cooked" or "spinach raw". Returns the best matches of both
+   * sources first, with their source, nutrients per 100 g and common
+   * portions. Both sources often have the same food under the same name:
+   * see FoodService for which to prefer. Use it to pick the source and
+   * source_id to create a food with CreateFood.
    *
    * @generated from rpc foods.v1.FoodService.SearchFoodData
    */
@@ -1090,10 +1170,11 @@ export const FoodService: GenService<{
     output: typeof SearchFoodDataResponseSchema;
   },
   /**
-   * Create a food in the household, either from a FoodData Central food,
-   * copying its nutrients, or as a custom food with the given nutrients.
-   * Fails with ALREADY_EXISTS if the household has a food with the same
-   * name, which should then be reused instead.
+   * Create a food in the household, either from a reference food of the
+   * Canadian Nutrient File or FoodData Central, copying its nutrients, or as
+   * a custom food with the given nutrients. Fails with ALREADY_EXISTS if the
+   * household has a food with the same name, which should then be reused
+   * instead, and with INVALID_ARGUMENT if the reference food doesn't exist.
    *
    * @generated from rpc foods.v1.FoodService.CreateFood
    */

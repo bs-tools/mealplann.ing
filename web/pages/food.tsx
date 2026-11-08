@@ -23,11 +23,11 @@ import {
   updateFood,
 } from "gen/foods/v1/foods-FoodService_connectquery";
 import type { Food } from "gen/foods/v1/foods_pb";
-import { FoodService, FoodSource, StoreSection } from "gen/foods/v1/foods_pb";
+import { FoodService, StoreSection } from "gen/foods/v1/foods_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
 import { listStores } from "gen/shopping/v1/shopping-ShoppingService_connectquery";
 import type { Store } from "gen/shopping/v1/shopping_pb";
-import { STORE_SECTIONS } from "helpers/labels";
+import { STORE_SECTIONS, foodSourceInfo } from "helpers/labels";
 import type { NutrientKey } from "helpers/nutrients";
 import { NUTRIENT_GROUPS, NUTRIENTS } from "helpers/nutrients";
 import { optionalNumberInput, parseOptionalNumber } from "helpers/parse";
@@ -459,7 +459,8 @@ interface FoodSourceNoteProps {
 
 // FoodSourceNote says where a food's nutrients come from.
 const FoodSourceNote: React.FC<FoodSourceNoteProps> = ({ food }) => {
-  if (food.source !== FoodSource.FDC) {
+  const info = foodSourceInfo(food.source, food.sourceId);
+  if (info === undefined) {
     return (
       <span className="inline-flex items-center gap-2">
         <Badge>Custom</Badge>
@@ -469,16 +470,16 @@ const FoodSourceNote: React.FC<FoodSourceNoteProps> = ({ food }) => {
   }
   return (
     <span className="inline-flex flex-wrap items-center gap-2">
-      <Badge className="bg-sky-50 text-sky-800 ring-sky-200">FDC</Badge>
+      <Badge className={info.badgeClass}>{info.badge}</Badge>
       <span>
-        Nutrients from USDA FoodData Central,{" "}
+        Nutrients from {info.name},{" "}
         <a
-          href={`https://fdc.nal.usda.gov/food-details/${food.fdcId}/nutrients`}
+          href={info.url}
           target="_blank"
           rel="noreferrer"
           className="font-medium text-brand-600 hover:underline"
         >
-          food {food.fdcId}
+          food {food.sourceId}
         </a>
         .
       </span>

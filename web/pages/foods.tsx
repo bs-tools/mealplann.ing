@@ -17,9 +17,8 @@ import {
 import { keepPreviousData } from "@tanstack/react-query";
 import { listFoods } from "gen/foods/v1/foods-FoodService_connectquery";
 import type { Food } from "gen/foods/v1/foods_pb";
-import { FoodSource } from "gen/foods/v1/foods_pb";
 import { useDebouncedValue } from "helpers/hooks";
-import { storeSectionLabel } from "helpers/labels";
+import { foodSourceInfo, storeSectionLabel } from "helpers/labels";
 import { formatNutrient } from "helpers/nutrients";
 import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
@@ -172,6 +171,7 @@ const FoodRow: React.FC<FoodRowProps> = ({ food }) => {
     facts.push(`${formatNutrient(nutrients.carbohydrateGrams, "g")} carbs`);
   }
   const section = storeSectionLabel(food.storeSection);
+  const source = foodSourceInfo(food.source, food.sourceId);
   return (
     <li>
       <Link
@@ -197,15 +197,13 @@ const FoodRow: React.FC<FoodRowProps> = ({ food }) => {
             </Badge>
           )}
           {section !== "" && <Badge>{section}</Badge>}
-          <Badge
-            className={
-              food.source === FoodSource.FDC
-                ? "bg-sky-50 text-sky-800 ring-sky-200"
-                : "bg-gray-100 text-gray-700 ring-gray-300"
-            }
-          >
-            {food.source === FoodSource.FDC ? "FDC" : "Custom"}
-          </Badge>
+          {source === undefined ? (
+            <Badge>Custom</Badge>
+          ) : (
+            <Badge className={source.badgeClass} title={source.name}>
+              {source.badge}
+            </Badge>
+          )}
         </div>
       </Link>
     </li>

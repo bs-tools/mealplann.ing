@@ -1,4 +1,4 @@
-import { AmountUnit, StoreSection } from "gen/foods/v1/foods_pb";
+import { AmountUnit, FoodSource, StoreSection } from "gen/foods/v1/foods_pb";
 import { EatingTimeKind, HouseholdMeal } from "gen/people/v1/people_pb";
 import { Weekday } from "gen/plans/v1/plans_pb";
 
@@ -110,4 +110,44 @@ export const formatServings = (servings: number): string => {
     maximumFractionDigits: 2,
   });
   return `${value} ${servings === 1 ? "serving" : "servings"}`;
+};
+
+// FoodSourceInfo describes a source of reference foods.
+export interface FoodSourceInfo {
+  // The short label of its badge, e.g. "Canada".
+  badge: string;
+  // The Tailwind classes of its badge.
+  badgeClass: string;
+  // Its full name, e.g. "Health Canada's Canadian Nutrient File".
+  name: string;
+  // The link to the food on the source's website.
+  url: string;
+}
+
+/**
+ * FoodSourceInfo describes the source of a reference food with an ID, or
+ * returns undefined for custom foods. Badges name the country rather than
+ * the database, which reads better to home cooks than "CNF" or "FDC".
+ */
+export const foodSourceInfo = (
+  source: FoodSource,
+  sourceId: number
+): FoodSourceInfo | undefined => {
+  if (source === FoodSource.CNF) {
+    return {
+      badge: "Canada",
+      badgeClass: "bg-red-50 text-red-800 ring-red-200",
+      name: "Health Canada's Canadian Nutrient File",
+      url: `https://food-nutrition.canada.ca/cnf-fce/foodDetails?lang=eng&id=${sourceId}`,
+    };
+  }
+  if (source === FoodSource.FDC) {
+    return {
+      badge: "USDA",
+      badgeClass: "bg-sky-50 text-sky-800 ring-sky-200",
+      name: "USDA FoodData Central",
+      url: `https://fdc.nal.usda.gov/food-details/${sourceId}/nutrients`,
+    };
+  }
+  return undefined;
 };

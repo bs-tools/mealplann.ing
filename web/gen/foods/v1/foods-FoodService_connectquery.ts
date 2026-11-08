@@ -5,21 +5,25 @@
 import { FoodService } from "./foods_pb";
 
 /**
- * Search the foods of USDA FoodData Central (the Foundation Foods and SR
- * Legacy datasets, without meat, fish, dairy and eggs) by their
- * description, e.g. "chickpeas cooked" or "spinach raw". Returns the best
- * matches first, with their nutrients per 100 g and common portions. Use it
- * to pick the fdc_id to create a food with CreateFood.
+ * Search the reference foods of the Canadian Nutrient File and USDA
+ * FoodData Central (its Foundation Foods and SR Legacy datasets), without
+ * meat, fish, dairy and eggs, by their English description, e.g.
+ * "chickpeas cooked" or "spinach raw". Returns the best matches of both
+ * sources first, with their source, nutrients per 100 g and common
+ * portions. Both sources often have the same food under the same name:
+ * see FoodService for which to prefer. Use it to pick the source and
+ * source_id to create a food with CreateFood.
  *
  * @generated from rpc foods.v1.FoodService.SearchFoodData
  */
 export const searchFoodData = FoodService.method.searchFoodData;
 
 /**
- * Create a food in the household, either from a FoodData Central food,
- * copying its nutrients, or as a custom food with the given nutrients.
- * Fails with ALREADY_EXISTS if the household has a food with the same
- * name, which should then be reused instead.
+ * Create a food in the household, either from a reference food of the
+ * Canadian Nutrient File or FoodData Central, copying its nutrients, or as
+ * a custom food with the given nutrients. Fails with ALREADY_EXISTS if the
+ * household has a food with the same name, which should then be reused
+ * instead, and with INVALID_ARGUMENT if the reference food doesn't exist.
  *
  * @generated from rpc foods.v1.FoodService.CreateFood
  */

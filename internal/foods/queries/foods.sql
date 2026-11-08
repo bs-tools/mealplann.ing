@@ -2,6 +2,8 @@
 insert into foods (
   household_id,
   name,
+  reference_source,
+  reference_id,
   fdc_id,
   energy_kcal_per_100_grams,
   protein_grams_per_100_grams,
@@ -37,6 +39,8 @@ insert into foods (
 ) values (
   @household_id,
   @name,
+  @reference_source,
+  @reference_id,
   @fdc_id,
   @energy_kcal_per_100_grams,
   @protein_grams_per_100_grams,

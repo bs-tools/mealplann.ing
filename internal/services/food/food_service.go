@@ -1,5 +1,6 @@
 // Package food implements the FoodService: the households' foods, and the
-// foods of USDA FoodData Central they're created from.
+// reference foods of the Canadian Nutrient File and USDA FoodData Central
+// they're created from.
 package food
 
 import (
@@ -24,15 +25,15 @@ import (
 
 var _ foodsv1connect.FoodServiceHandler = (*Service)(nil)
 
-// Repository stores foods and the FoodData Central foods.
+// Repository stores foods and the reference foods.
 type Repository interface {
 	CreateFood(ctx context.Context, f *foods.Food) (*foods.Food, error)
 	GetFood(ctx context.Context, householdID, id pgtype.UUID) (*foods.Food, error)
 	ListFoods(ctx context.Context, householdID pgtype.UUID, query string, limit, offset int32) ([]*foods.Food, error)
 	UpdateFood(ctx context.Context, f *foods.Food) (*foods.Food, error)
 	DeleteFood(ctx context.Context, householdID, id pgtype.UUID) error
-	GetFDCFood(ctx context.Context, fdcID int32) (*foods.FDCFood, error)
-	SearchFDCFoods(ctx context.Context, householdID pgtype.UUID, query string, limit int32) ([]*foods.FDCMatch, error)
+	GetReferenceFood(ctx context.Context, source foods.Source, id int32) (*foods.ReferenceFood, error)
+	SearchReferenceFoods(ctx context.Context, householdID pgtype.UUID, query string, limit int32) ([]*foods.ReferenceMatch, error)
 }
 
 // Service implements the FoodService.
@@ -48,8 +49,8 @@ func NewService(log *slog.Logger, report *errreport.Reporter, foods Repository) 
 }
 
 const (
-	// defaultSearchSize and maxSearchSize are the default and most FDC
-	// foods SearchFoodData returns. Each comes with its nutrients and
+	// defaultSearchSize and maxSearchSize are the default and most
+	// reference foods SearchFoodData returns. Each comes with its nutrients and
 	// portions, which cost agents tokens.
 	defaultSearchSize = 10
 	maxSearchSize     = 50
@@ -62,7 +63,7 @@ const (
 )
 
 // keepFields are the fields of a food updates don't change.
-var keepFields = []protoreflect.Name{"id", "source", "fdc_id", "create_time", "update_time"}
+var keepFields = []protoreflect.Name{"id", "source", "source_id", "fdc_id", "create_time", "update_time"}
 
 func (s *Service) SearchFoodData(ctx context.Context, req *foodsv1.SearchFoodDataRequest) (*foodsv1.SearchFoodDataResponse, error) {
 	user, ok := authn.GetUser(ctx)
@@ -80,9 +81,9 @@ func (s *Service) SearchFoodData(ctx context.Context, req *foodsv1.SearchFoodDat
 	if err != nil {
 		return nil, err
 	}
-	matches, err := s.foods.SearchFDCFoods(ctx, user.HouseholdID(), query, size)
+	matches, err := s.foods.SearchReferenceFoods(ctx, user.HouseholdID(), query, size)
 	if err != nil {
-		return nil, s.toConnectError(ctx, err, "failed to search FoodData Central")
+		return nil, s.toConnectError(ctx, err, "failed to search reference foods")
 	}
 	result := make([]*foodsv1.FoodData, 0, len(matches))
 	for _, m := range matches {
@@ -100,17 +101,21 @@ func (s *Service) CreateFood(ctx context.Context, req *foodsv1.CreateFoodRequest
 	if in == nil {
 		in = &foodsv1.Food{}
 	}
+	source, sourceID, err := referenceFromProto(req)
+	if err != nil {
+		return nil, err
+	}
 	var f *foods.Food
-	if fdcID := req.GetFdcId(); fdcID != 0 {
-		fdcFood, err := s.foods.GetFDCFood(ctx, fdcID)
+	if source != foods.SourceNone {
+		ref, err := s.foods.GetReferenceFood(ctx, source, sourceID)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
-					"there's no FoodData Central food %d; find one with SearchFoodData", fdcID)
+					"there's no %s food %d; find one with SearchFoodData, and pass its source and source_id", sourceNames[source], sourceID)
 			}
-			return nil, s.toConnectError(ctx, err, "failed to get FoodData Central food")
+			return nil, s.toConnectError(ctx, err, "failed to get reference food")
 		}
-		f, err = foodFromFDC(fdcFood, in)
+		f, err = foodFromReference(ref, in)
 		if err != nil {
 			return nil, err
 		}

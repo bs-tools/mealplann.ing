@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bs-tools/foodplann.ing/internal/foodimport"
 	"github.com/bs-tools/foodplann.ing/internal/foods"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 )
@@ -74,7 +75,7 @@ var jsonDateLayouts = []string{"1/2/2006", store.DateLayout}
 // readJSON reads the foods of a JSON download, the file at name in fsys:
 // an object with an array of foods, FoundationFoods or SRLegacyFoods. It's
 // read one food at a time, as SR Legacy's is a couple of hundred megabytes.
-func readJSON(fsys fs.FS, name string) ([]*foods.FDCFood, Stats, error) {
+func readJSON(fsys fs.FS, name string) ([]*foods.ReferenceFood, Stats, error) {
 	var stats Stats
 	f, err := fsys.Open(name)
 	if err != nil {
@@ -87,7 +88,7 @@ func readJSON(fsys fs.FS, name string) ([]*foods.FDCFood, Stats, error) {
 	}
 	// The foods read, by FDC ID: a food listed twice keeps its last entry, as
 	// upserting both would.
-	byID := map[int32]*foods.FDCFood{}
+	byID := map[int32]*foods.ReferenceFood{}
 	foundFoods := false
 	for dec.More() {
 		tok, err := dec.Token()
@@ -121,7 +122,7 @@ func readJSON(fsys fs.FS, name string) ([]*foods.FDCFood, Stats, error) {
 				stats.Excluded++
 			}
 			if food != nil {
-				byID[food.FDCID] = food
+				byID[food.SourceID] = food
 			}
 		}
 		if _, err := dec.Token(); err != nil {
@@ -131,7 +132,7 @@ func readJSON(fsys fs.FS, name string) ([]*foods.FDCFood, Stats, error) {
 	if !foundFoods {
 		return nil, stats, fmt.Errorf("%s has no foods; give the Foundation Foods or SR Legacy JSON download", name)
 	}
-	result := make([]*foods.FDCFood, 0, len(byID))
+	result := make([]*foods.ReferenceFood, 0, len(byID))
 	for _, id := range slices.Sorted(maps.Keys(byID)) {
 		result = append(result, byID[id])
 	}
@@ -141,17 +142,18 @@ func readJSON(fsys fs.FS, name string) ([]*foods.FDCFood, Stats, error) {
 
 // food converts a food of a JSON download, returning nil for foods that
 // aren't imported, and whether it's of an excluded category.
-func (jf *jsonFood) food() (*foods.FDCFood, bool, error) {
+func (jf *jsonFood) food() (*foods.ReferenceFood, bool, error) {
 	dataType, ok := jsonDataTypes[jf.DataType]
 	if !ok || (jf.FoodClass != "" && jf.FoodClass != "FinalFood") {
 		return nil, false, nil
 	}
 	category := jf.FoodCategory.Description
-	if excludedCategories[strings.ToLower(category)] {
+	if foodimport.IsExcludedCategory(category) {
 		return nil, true, nil
 	}
-	f := &foods.FDCFood{
-		FDCID:       jf.FDCID,
+	f := &foods.ReferenceFood{
+		Source:      foods.SourceFDC,
+		SourceID:    jf.FDCID,
 		DataType:    dataType,
 		Description: jf.Description,
 		Category:    category,

@@ -66,17 +66,32 @@ saying what to change.
 ## Foods and nutrition
 
 - A **food** is an ingredient, such as chickpeas, a brand of tofu or soy
-  milk. It has nutrients per 100 g, either from **USDA FoodData Central**
-  (linked by FDC ID) or entered by hand or by an AI agent from a label.
-- `foodplanning import-fdc` imports the Foundation Foods and SR Legacy
-  datasets into Postgres, like trail-tools' `import-osm`. The Branded
-  dataset is too big for the free tier and is left out; branded products
-  are entered as custom foods.
+  milk. It has nutrients per 100 g, either copied from a **reference food**
+  (linked by its source and its ID there) or entered by hand or by an AI
+  agent from a label.
+- Reference foods come from two sources, in one `reference_foods` table
+  keyed by source and ID, searched together, without the categories of
+  meat, fish, dairy and eggs:
+  - Health Canada's **Canadian Nutrient File** (CNF), imported by
+    `foodplanning import-cnf` from its CSV download. Its foods reflect
+    Canadian products and fortification, like vitamin D and B12 in plant
+    beverages and vitamin D in margarine, so the API tells agents to prefer
+    a CNF match for a Canadian household when both fit. Its nutrient IDs
+    are mapped to the app's nutrients by number, and each is checked by name
+    and unit on import.
+  - **USDA FoodData Central** (FDC), whose Foundation Foods and SR Legacy
+    datasets `foodplanning import-fdc` imports, like trail-tools'
+    `import-osm`. It has more foods. The Branded dataset is too big for the
+    free tier and is left out; branded products are entered as custom
+    foods.
+- The search ranks both sources' foods alike, so the same food from each is
+  side by side with its source; a household setting to prefer one could
+  come later.
 - Each food also has:
   - A typical **weight per piece** ("1 onion" ≈ 150 g) and a **density** for
     milliliters, so amounts can be converted to grams.
-  - Whether it's a **fast carb**, set by hand or by the agent, since FDC has
-    no glycemic index.
+  - Whether it's a **fast carb**, set by hand or by the agent, since neither
+    source has a glycemic index.
   - A **store section** (produce, dry goods, chilled, frozen and so on) and
     optionally a **preferred store**.
   - A **shelf life** once bought and once opened, for planning the week
@@ -251,7 +266,7 @@ milestones are done.
 
 1. **Skeleton**: the trail-tools copy with its domains removed, households
    instead of per-user ownership, `make run` working locally.
-2. **Foods and recipes**: FDC import, custom foods, recipes in the web app
+2. **Foods and recipes**: FDC and CNF imports, custom foods, recipes in the web app
    and over MCP, with nutrition per serving.
 3. **People and plans**: eating patterns, rules, weekly plans with cooks
    and portions, leftovers, staples, daily totals and warnings.

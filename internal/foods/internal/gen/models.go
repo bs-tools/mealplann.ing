@@ -360,6 +360,57 @@ func (e PasskeyCeremony) Valid() bool {
 	return false
 }
 
+type ReferenceFoodSource string
+
+const (
+	ReferenceFoodSourceFDC ReferenceFoodSource = "fdc"
+	ReferenceFoodSourceCNF ReferenceFoodSource = "cnf"
+)
+
+func (e *ReferenceFoodSource) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ReferenceFoodSource(s)
+	case string:
+		*e = ReferenceFoodSource(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ReferenceFoodSource: %T", src)
+	}
+	return nil
+}
+
+type NullReferenceFoodSource struct {
+	ReferenceFoodSource ReferenceFoodSource
+	Valid               bool // Valid is true if ReferenceFoodSource is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullReferenceFoodSource) Scan(value interface{}) error {
+	if value == nil {
+		ns.ReferenceFoodSource, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ReferenceFoodSource.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullReferenceFoodSource) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ReferenceFoodSource), nil
+}
+
+func (e ReferenceFoodSource) Valid() bool {
+	switch e {
+	case ReferenceFoodSourceFDC,
+		ReferenceFoodSourceCNF:
+		return true
+	}
+	return false
+}
+
 type StoreSection string
 
 const (
@@ -548,6 +599,8 @@ type Food struct {
 	UpdateTime                      pgtype.Timestamptz
 	PreferredStoreID                pgtype.UUID
 	AlwaysInStock                   bool
+	ReferenceSource                 *ReferenceFoodSource
+	ReferenceID                     *int32
 }
 
 type Household struct {
@@ -710,6 +763,39 @@ type RecipeIngredient struct {
 	Note         string
 	OriginalText string
 	Optional     bool
+}
+
+type ReferenceFood struct {
+	Source                          ReferenceFoodSource
+	SourceID                        int32
+	DataType                        string
+	Description                     string
+	FrenchDescription               string
+	Category                        string
+	Portions                        json.RawMessage
+	PublicationDate                 pgtype.Date
+	EnergyKcalPer100Grams           *float64
+	ProteinGramsPer100Grams         *float64
+	CarbohydrateGramsPer100Grams    *float64
+	SugarsGramsPer100Grams          *float64
+	FatGramsPer100Grams             *float64
+	FiberGramsPer100Grams           *float64
+	VitaminB12MicrogramsPer100Grams *float64
+	IronMilligramsPer100Grams       *float64
+	CalciumMilligramsPer100Grams    *float64
+	VitaminDMicrogramsPer100Grams   *float64
+	IodineMicrogramsPer100Grams     *float64
+	ZincMilligramsPer100Grams       *float64
+	Omega3ALAGramsPer100Grams       *float64
+	FolateMicrogramsPer100Grams     *float64
+	VitaminAMicrogramsPer100Grams   *float64
+	VitaminEMilligramsPer100Grams   *float64
+	VitaminKMicrogramsPer100Grams   *float64
+	CopperMilligramsPer100Grams     *float64
+	MagnesiumMilligramsPer100Grams  *float64
+	SodiumMilligramsPer100Grams     *float64
+	PotassiumMilligramsPer100Grams  *float64
+	UpdateTime                      pgtype.Timestamptz
 }
 
 type Session struct {

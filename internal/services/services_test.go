@@ -17,6 +17,7 @@ import (
 	"github.com/bs-tools/foodplann.ing/internal/apilimit"
 	"github.com/bs-tools/foodplann.ing/internal/authn"
 	"github.com/bs-tools/foodplann.ing/internal/blob"
+	"github.com/bs-tools/foodplann.ing/internal/cnf"
 	"github.com/bs-tools/foodplann.ing/internal/errreport"
 	"github.com/bs-tools/foodplann.ing/internal/fdc"
 	"github.com/bs-tools/foodplann.ing/internal/foods"
@@ -253,6 +254,17 @@ func (e *env) importFDC() {
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	if err := fdc.Import(context.Background(), log, e.foodRepo, "../fdc/testdata/sr_legacy", "../fdc/testdata/foundation"); err != nil {
 		e.t.Fatalf("importing FDC: %v", err)
+	}
+}
+
+// importCNF imports the Canadian Nutrient File fixture of the importer's
+// tests: a fortified soy beverage and margarine, canned chickpeas and an
+// apple.
+func (e *env) importCNF() {
+	e.t.Helper()
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	if err := cnf.Import(context.Background(), log, e.foodRepo, "../cnf/testdata/cnf_2015"); err != nil {
+		e.t.Fatalf("importing CNF: %v", err)
 	}
 }
 

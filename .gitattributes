@@ -12,3 +12,6 @@ internal/apidesc/descriptor.binpb linguist-generated
 internal/*/internal/gen/** linguist-generated
 # The embedded map data of Squamish, see internal/demo.
 internal/demo/*.bin.gz linguist-generated -diff
+# The CNF importer's fixtures keep their Windows line endings and their
+# Windows-1252 file byte for byte, as the reader must handle both.
+internal/cnf/testdata/** -text

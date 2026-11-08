@@ -16,7 +16,8 @@ Version 1 is done, milestones 1 to 5:
 
 - Invite-only sign in with passkeys, households, the settings page, and the
   MCP server with OAuth and API tokens.
-- Foods from USDA FoodData Central or entered by hand, and recipes with
+- Foods from Health Canada's Canadian Nutrient File or USDA FoodData
+  Central, or entered by hand, and recipes with
   their nutrition per serving.
 - The people you plan for, with their eating patterns and their care team's
   rules, and weekly plans of shared meals, leftovers and staples, checked
@@ -62,11 +63,44 @@ share its recipes, plans, pantry and shopping list.
 in without a passkey, as the local administrator, at
 http://localhost:8080/local-sign-in.
 
-### Foods from USDA FoodData Central
+### Reference foods: the Canadian Nutrient File and FoodData Central
 
-Households create their foods from USDA FoodData Central (FDC), so their
-nutrients are filled in, or enter them by hand. To make FDC's foods
-available, download the **Foundation Foods** and **SR Legacy** datasets
+Households create their foods from reference foods, so their nutrients are
+filled in, or enter them by hand. The reference foods come from two
+sources, searched together, each match showing where it's from:
+
+- Health Canada's **Canadian Nutrient File** (CNF), with the foods as sold
+  in Canada, including Canadian fortification, like the vitamin D and B12
+  added to plant beverages and margarine.
+- USDA **FoodData Central** (FDC), which has more foods, as sold in the US.
+
+Import either or both.
+
+#### Importing the Canadian Nutrient File
+
+Download the CSV files of CNF 2015, a zip file, from
+https://www.canada.ca/en/health-canada/services/food-nutrition/healthy-eating/nutrient-data/canadian-nutrient-file-2015-download-files.html,
+and import them into the local database, as the zip file or extracted, e.g.
+(with the zip file's name):
+
+```sh
+$ make import-cnf CNF=cnf-fcen-csv.zip
+```
+
+That runs `foodplanning import-cnf -database-url <url> <download>`, which
+also imports into other databases. It reads `FOOD NAME.csv`, `FOOD
+GROUP.csv`, `NUTRIENT NAME.csv`, `NUTRIENT AMOUNT.csv`, `CONVERSION
+FACTOR.csv` and `MEASURE NAME.csv`, found ignoring case, spaces and
+underscores, and files in Windows-1252 as well as UTF-8. It skips the food
+groups of meat, fish, dairy and eggs (see `excludedCategories` in
+`internal/foodimport`), and importing again updates the foods. It checks
+that each CNF nutrient it reads has the name and unit it expects (see
+`sources` in `internal/cnf`, which documents the mapping), and fails naming
+the nutrient if a release differs, rather than importing wrong amounts.
+
+#### Importing FoodData Central
+
+Download the **Foundation Foods** and **SR Legacy** datasets
 from https://fdc.nal.usda.gov/download-datasets, and import them into the
 local database, as the zip files or extracted. Take Foundation Foods as
 **JSON**: its CSV download of October 2026 has no foods or nutrients, only
@@ -78,7 +112,7 @@ $ make import-fdc FDC="FoodData_Central_foundation_food_json_2026-10-29.zip Food
 
 That runs `foodplanning import-fdc -database-url <url> <dataset>...`, which
 also imports into other databases. It skips the categories of meat, fish,
-dairy and eggs (see `excludedCategories` in `internal/fdc`), and importing
+dairy and eggs (see `excludedCategories` in `internal/foodimport`), and importing
 again, e.g. a newer release, updates the foods. The Branded dataset is too
 big for the free tier: enter branded products as custom foods, from their
 labels.
@@ -284,7 +318,8 @@ Once, in order:
    creates the service.
 10. Set up the [custom domain](#custom-domain), then create the first
    administrator on it.
-11. [Import FoodData Central](#importing-fooddata-central).
+11. [Import the reference foods](#importing-the-reference-foods): the
+    Canadian Nutrient File and FoodData Central.
 
 ### Secrets
 
@@ -352,13 +387,16 @@ The app is served on `foodplann.ing`, set as `domain` in
    domain's registrar. Cloud Run provisions and renews the TLS certificate,
    which takes up to about 15 minutes after the records resolve.
 
-### Importing FoodData Central
+### Importing the reference foods
 
-The FoodData Central import is a few thousand foods, run once and again when
-USDA publishes new data, so it runs from your machine against the database
-rather than as a job in the cloud:
+The imports of the Canadian Nutrient File and FoodData Central are a few
+thousand foods each, run once and again when Health Canada or USDA publish
+new data, so they run from your machine against the database rather than as
+jobs in the cloud (see [Reference foods](#reference-foods-the-canadian-nutrient-file-and-fooddata-central)
+for the downloads):
 
 ```sh
+$ go run . import-cnf -database-url '<the database-url secret>' cnf-fcen-csv.zip
 $ go run . import-fdc -database-url '<the database-url secret>' FoodData_Central_foundation_food_json_*.zip FoodData_Central_sr_legacy_food_csv_*.zip
 ```
 

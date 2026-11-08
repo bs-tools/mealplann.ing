@@ -1,0 +1,6 @@
+FoodID,FoodCode,FoodGroupID,FoodSourceID,FoodDescription,FoodDescriptionF,FoodDateOfEntry,FoodDateOfPublication,CountryCode,ScientificName
+102,102,4,73,"Margarine, soft, non-hydrogenated, canola oil, fortified","Margarine molle, non hydrogénée, huile de canola, enrichie",1981-01-01,2015-05-06,,
+1520,1520,9,73,"Apple, raw, with skin","Pomme, crue, avec pelure",01/01/1981,05/06/2015,9003,Malus domestica
+1931,1931,13,73,"Beef, ground, lean, raw","Bœuf haché, maigre, cru",1981-01-01,2015-05,23562,
+3183,3183,16,73,"Chickpeas (garbanzo beans, bengal gram), mature seeds, canned","Pois chiches, grains entiers mûrs, en conserve",1981-01-01,2015-05-06,16359,Cicer arietinum
+6288,6288,16,73,"Soy beverage, original, fortified","Boisson de soya, originale, enrichie",2009-03-01,,,

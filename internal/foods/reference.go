@@ -17,90 +17,122 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// FDCFood is a food of USDA FoodData Central.
-type FDCFood struct {
-	FDCID int32
-	// DataType is the dataset: "foundation_food" or "sr_legacy_food".
+// Source is a database of reference foods, which households create their
+// foods from.
+type Source string
+
+// The sources, as stored. The zero value is no source, for custom foods.
+const (
+	SourceNone Source = ""
+	// SourceFDC is USDA FoodData Central's Foundation Foods and SR Legacy.
+	SourceFDC Source = "fdc"
+	// SourceCNF is Health Canada's Canadian Nutrient File.
+	SourceCNF Source = "cnf"
+)
+
+// ReferenceFood is a food of a reference database, FDC or CNF.
+type ReferenceFood struct {
+	Source Source
+	// SourceID is the food's ID in its source: FDC's fdc_id or CNF's
+	// FoodID.
+	SourceID int32
+	// DataType is the dataset: "foundation_food" or "sr_legacy_food" for
+	// FDC, "cnf" for CNF.
 	DataType    string
 	Description string
-	Category    string
-	// PublicationDate is when FDC published the food, zero if unknown.
+	// FrenchDescription is the French description, empty if the source has
+	// none, like FDC.
+	FrenchDescription string
+	// Category is the source's food category or group.
+	Category string
+	// PublicationDate is when the source published the food, zero if
+	// unknown.
 	PublicationDate time.Time
 	// Per100Grams are the nutrients in 100 g of the food, nil where unknown.
 	Per100Grams nutrition.Nutrients
 	Portions    []Portion
 }
 
-// Portion is a common portion of an FDC food, stored as JSON.
+// Portion is a common portion of a reference food, stored as JSON.
 type Portion struct {
-	// Description is the portion, e.g. "1 cup, chopped" or "1 medium".
+	// Description is the portion, e.g. "1 cup, chopped", "1 medium" or
+	// "250ml".
 	Description string `json:"description"`
 	// Amount is how many of the portion's unit it is, e.g. 0.5 for "0.5
-	// cup".
+	// cup" or 250 for "250ml".
 	Amount float64 `json:"amount"`
 	// Grams is the portion's weight.
 	Grams float64 `json:"grams"`
 }
 
-// FDCMatch is an FDC food found by a search.
-type FDCMatch struct {
-	*FDCFood
+// ReferenceMatch is a reference food found by a search.
+type ReferenceMatch struct {
+	*ReferenceFood
 	// FoodID is the household's food created from it, invalid if none.
 	FoodID pgtype.UUID
 }
 
-// GetFDCFood gets an FDC food. It returns store.ErrNotFound if it isn't
-// imported.
-func (r *Repository) GetFDCFood(ctx context.Context, fdcID int32) (*FDCFood, error) {
-	row, err := r.querier.GetFDCFood(ctx, fdcID)
+// GetReferenceFood gets a reference food. It returns store.ErrNotFound if
+// it isn't imported.
+func (r *Repository) GetReferenceFood(ctx context.Context, source Source, id int32) (*ReferenceFood, error) {
+	row, err := r.querier.GetReferenceFood(ctx, &gen.GetReferenceFoodParams{
+		Source:   gen.ReferenceFoodSource(source),
+		SourceID: id,
+	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, store.ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to get FDC food: %w", err)
+		return nil, fmt.Errorf("failed to get reference food: %w", err)
 	}
-	return fdcFoodFromDB(row)
+	return referenceFoodFromDB(row)
 }
 
-// SearchFDCFoods returns the limit FDC foods best matching query, with the
-// household's foods created from them.
-func (r *Repository) SearchFDCFoods(ctx context.Context, householdID pgtype.UUID, query string, limit int32) ([]*FDCMatch, error) {
-	rows, err := r.querier.SearchFDCFoods(ctx, &gen.SearchFDCFoodsParams{
+// SearchReferenceFoods returns the limit reference foods of all sources
+// best matching query, with the household's foods created from them.
+func (r *Repository) SearchReferenceFoods(ctx context.Context, householdID pgtype.UUID, query string, limit int32) ([]*ReferenceMatch, error) {
+	rows, err := r.querier.SearchReferenceFoods(ctx, &gen.SearchReferenceFoodsParams{
 		HouseholdID: householdID,
 		Query:       query,
 		RowLimit:    limit,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to search FDC foods: %w", err)
+		return nil, fmt.Errorf("failed to search reference foods: %w", err)
 	}
-	matches := make([]*FDCMatch, 0, len(rows))
+	matches := make([]*ReferenceMatch, 0, len(rows))
 	for _, row := range rows {
-		f, err := fdcFoodFromDB(&row.FDCFood)
+		f, err := referenceFoodFromDB(&row.ReferenceFood)
 		if err != nil {
 			return nil, err
 		}
-		matches = append(matches, &FDCMatch{FDCFood: f, FoodID: row.FoodID})
+		matches = append(matches, &ReferenceMatch{ReferenceFood: f, FoodID: row.FoodID})
 	}
 	return matches, nil
 }
 
-// UpsertFDCFoods creates or replaces FDC foods, in a single round trip.
-func (r *Repository) UpsertFDCFoods(ctx context.Context, foods []*FDCFood) error {
+// UpsertReferenceFoods creates or replaces reference foods, in a single
+// round trip.
+func (r *Repository) UpsertReferenceFoods(ctx context.Context, foods []*ReferenceFood) error {
 	var b store.Batch
 	q := gen.New(&b)
 	for _, f := range foods {
+		if f.Source != SourceFDC && f.Source != SourceCNF {
+			return fmt.Errorf("reference food %d has an unknown source %q", f.SourceID, f.Source)
+		}
 		portions, err := json.Marshal(f.Portions)
 		if err != nil {
-			return fmt.Errorf("failed to encode the portions of FDC food %d: %w", f.FDCID, err)
+			return fmt.Errorf("failed to encode the portions of %s food %d: %w", f.Source, f.SourceID, err)
 		}
 		if f.Portions == nil {
 			portions = []byte("[]")
 		}
 		n := &f.Per100Grams
-		_ = q.UpsertFDCFood(ctx, &gen.UpsertFDCFoodParams{
-			FDCID:                           f.FDCID,
+		_ = q.UpsertReferenceFood(ctx, &gen.UpsertReferenceFoodParams{
+			Source:                          gen.ReferenceFoodSource(f.Source),
+			SourceID:                        f.SourceID,
 			DataType:                        f.DataType,
 			Description:                     f.Description,
+			FrenchDescription:               f.FrenchDescription,
 			Category:                        f.Category,
 			Portions:                        portions,
 			PublicationDate:                 store.DateToPG(f.PublicationDate),
@@ -128,22 +160,24 @@ func (r *Repository) UpsertFDCFoods(ctx context.Context, foods []*FDCFood) error
 		})
 	}
 	if err := b.Send(ctx, r.db); err != nil {
-		return fmt.Errorf("failed to upsert FDC foods: %w", err)
+		return fmt.Errorf("failed to upsert reference foods: %w", err)
 	}
 	return nil
 }
 
-func fdcFoodFromDB(row *gen.FDCFood) (*FDCFood, error) {
+func referenceFoodFromDB(row *gen.ReferenceFood) (*ReferenceFood, error) {
 	var portions []Portion
 	if err := json.Unmarshal(row.Portions, &portions); err != nil {
-		return nil, fmt.Errorf("failed to decode the portions of FDC food %d: %w", row.FDCID, err)
+		return nil, fmt.Errorf("failed to decode the portions of %s food %d: %w", row.Source, row.SourceID, err)
 	}
-	return &FDCFood{
-		FDCID:           row.FDCID,
-		DataType:        row.DataType,
-		Description:     row.Description,
-		Category:        row.Category,
-		PublicationDate: store.DateFromPG(row.PublicationDate),
+	return &ReferenceFood{
+		Source:            Source(row.Source),
+		SourceID:          row.SourceID,
+		DataType:          row.DataType,
+		Description:       row.Description,
+		FrenchDescription: row.FrenchDescription,
+		Category:          row.Category,
+		PublicationDate:   store.DateFromPG(row.PublicationDate),
 		Per100Grams: nutrition.Nutrients{
 			nutrition.EnergyKcal:           row.EnergyKcalPer100Grams,
 			nutrition.ProteinGrams:         row.ProteinGramsPer100Grams,
@@ -178,6 +212,7 @@ var notPieceWords = map[string]bool{
 	"cup": true, "cups": true, "tbsp": true, "tablespoon": true, "tablespoons": true,
 	"tsp": true, "teaspoon": true, "teaspoons": true, "fl": true, "oz": true,
 	"ounce": true, "ounces": true, "ml": true, "milliliter": true, "milliliters": true,
+	"millilitre": true, "millilitres": true, "litre": true, "litres": true,
 	"l": true, "liter": true, "liters": true, "quart": true, "pint": true, "gallon": true,
 	"lb": true, "lbs": true, "pound": true, "g": true, "gram": true, "grams": true,
 	"kg": true, "serving": true, "servings": true, "package": true, "container": true,
@@ -188,11 +223,13 @@ var notPieceWords = map[string]bool{
 }
 
 // milliliters are the volumes of the units of portions, by their words.
+// FDC's are mostly US cups and spoons, CNF's metric, like "250ml".
 var milliliters = map[string]float64{
 	"cup": 236.588, "cups": 236.588,
 	"tbsp": 14.787, "tablespoon": 14.787, "tablespoons": 14.787,
 	"tsp": 4.929, "teaspoon": 4.929, "teaspoons": 4.929,
-	"ml": 1, "milliliter": 1, "milliliters": 1,
+	"ml": 1, "milliliter": 1, "milliliters": 1, "millilitre": 1, "millilitres": 1,
+	"l": 1000, "liter": 1000, "liters": 1000, "litre": 1000, "litres": 1000,
 }
 
 // portionWords returns the lowercase words of a portion's description.
@@ -206,7 +243,7 @@ func portionWords(p Portion) []string {
 // its portions: preferably a medium one, else the first portion that's a
 // whole piece rather than a volume or weight, like "1 large" or "1 clove".
 // It returns 0 if there's none.
-func (f *FDCFood) SuggestGramsPerPiece() float64 {
+func (f *ReferenceFood) SuggestGramsPerPiece() float64 {
 	var first float64
 	for _, p := range f.Portions {
 		if p.Amount <= 0 || p.Grams <= 0 {
@@ -237,19 +274,25 @@ func (f *FDCFood) SuggestGramsPerPiece() float64 {
 }
 
 // SuggestGramsPerMilliliter suggests the density of the food from its
-// portions measured by volume, preferring cups, the largest and so the
-// most precise. It returns 0 if there's none.
-func (f *FDCFood) SuggestGramsPerMilliliter() float64 {
+// portions measured by volume, preferring the largest, like "1 cup" over
+// "1 tbsp" or "250ml" over "15ml", as the most precise. It returns 0 if
+// there's none.
+func (f *ReferenceFood) SuggestGramsPerMilliliter() float64 {
 	var best, bestMilliliters float64
 	for _, p := range f.Portions {
 		if p.Amount <= 0 || p.Grams <= 0 {
 			continue
 		}
 		for _, w := range portionWords(p) {
-			if ml, ok := milliliters[w]; ok && ml > bestMilliliters {
-				best, bestMilliliters = round(p.Grams/(p.Amount*ml)), ml
-				break
+			ml, ok := milliliters[w]
+			if !ok {
+				continue
 			}
+			// The portion's unit is its first word that's a volume.
+			if total := p.Amount * ml; total > bestMilliliters {
+				best, bestMilliliters = round(p.Grams/total), total
+			}
+			break
 		}
 	}
 	return best

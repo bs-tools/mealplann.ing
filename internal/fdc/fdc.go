@@ -9,42 +9,24 @@
 package fdc
 
 import (
-	"archive/zip"
 	"cmp"
 	"context"
-	"encoding/csv"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"log/slog"
 	"maps"
-	"os"
 	"path"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/bs-tools/foodplann.ing/internal/foodimport"
 	"github.com/bs-tools/foodplann.ing/internal/foods"
 	"github.com/bs-tools/foodplann.ing/internal/nutrition"
 	"github.com/bs-tools/foodplann.ing/internal/store"
 )
-
-// excludedCategories are the FDC food categories of meat, fish, dairy and
-// eggs, which a vegan household never cooks with, so they aren't imported.
-// They're matched by name, ignoring case, as the datasets share them. Other
-// categories can still hold some animal foods, like lard among fats and
-// oils.
-var excludedCategories = map[string]bool{
-	"beef products":                  true,
-	"pork products":                  true,
-	"poultry products":               true,
-	"finfish and shellfish products": true,
-	"lamb, veal, and game products":  true,
-	"sausages and luncheon meats":    true,
-	"dairy and egg products":         true,
-}
 
 // dataTypes are the data types of the foods imported. Foundation Foods'
 // downloads also have the samples and acquisitions its foods were analyzed
@@ -122,9 +104,10 @@ type Stats struct {
 
 // Read reads the foods of an FDC dataset's CSV or JSON download, extracted
 // or not, in fsys. The CSV files may be in a directory, as they are in the
-// zip files. Foods of excluded categories are left out. Foods are returned
-// by FDC ID.
-func Read(fsys fs.FS) ([]*foods.FDCFood, Stats, error) {
+// zip files. Foods of excluded categories (see
+// foodimport.IsExcludedCategory) are left out. Foods are returned by FDC
+// ID.
+func Read(fsys fs.FS) ([]*foods.ReferenceFood, Stats, error) {
 	dir, jsonFile, err := findDataset(fsys)
 	if err != nil {
 		return nil, Stats{}, err
@@ -181,52 +164,53 @@ func findDataset(fsys fs.FS) (csvDir, jsonFile string, err error) {
 type reader struct {
 	fsys fs.FS
 	// foods are the foods read so far, by FDC ID.
-	foods map[int32]*foods.FDCFood
+	foods map[int32]*foods.ReferenceFood
 	// amounts are the amounts of each food's tracked nutrients, by FDC ID
 	// and nutrient ID.
 	amounts map[int32]map[int]float64
 }
 
-func (r *reader) read() ([]*foods.FDCFood, Stats, error) {
+func (r *reader) read() ([]*foods.ReferenceFood, Stats, error) {
 	var stats Stats
 	categories := map[string]string{}
-	if err := readCSV(r.fsys, "food_category.csv", true, func(row record) error {
-		categories[row.get("id")] = row.get("description")
+	if err := readCSV(r.fsys, "food_category.csv", true, func(row foodimport.Record) error {
+		categories[row.Get("id")] = row.Get("description")
 		return nil
 	}); err != nil {
 		return nil, stats, err
 	}
-	if err := readCSV(r.fsys, "nutrient.csv", true, func(row record) error {
-		id, err := strconv.Atoi(row.get("id"))
+	if err := readCSV(r.fsys, "nutrient.csv", true, func(row foodimport.Record) error {
+		id, err := strconv.Atoi(row.Get("id"))
 		if err != nil {
 			return fmt.Errorf("invalid nutrient ID: %w", err)
 		}
-		return checkUnit(id, row.get("name"), row.get("unit_name"))
+		return checkUnit(id, row.Get("name"), row.Get("unit_name"))
 	}); err != nil {
 		return nil, stats, err
 	}
 
-	r.foods = map[int32]*foods.FDCFood{}
+	r.foods = map[int32]*foods.ReferenceFood{}
 	r.amounts = map[int32]map[int]float64{}
-	if err := readCSV(r.fsys, "food.csv", true, func(row record) error {
-		if !dataTypes[row.get("data_type")] {
+	if err := readCSV(r.fsys, "food.csv", true, func(row foodimport.Record) error {
+		if !dataTypes[row.Get("data_type")] {
 			return nil
 		}
-		id, err := parseID(row.get("fdc_id"))
+		id, err := parseID(row.Get("fdc_id"))
 		if err != nil {
 			return err
 		}
-		category := cmp.Or(categories[row.get("food_category_id")], row.get("food_category_id"))
-		if excludedCategories[strings.ToLower(category)] {
+		category := cmp.Or(categories[row.Get("food_category_id")], row.Get("food_category_id"))
+		if foodimport.IsExcludedCategory(category) {
 			stats.Excluded++
 			return nil
 		}
 		// Foods without a publication date are kept, without it.
-		published, _ := time.Parse(store.DateLayout, row.get("publication_date"))
-		r.foods[id] = &foods.FDCFood{
-			FDCID:           id,
-			DataType:        row.get("data_type"),
-			Description:     row.get("description"),
+		published, _ := time.Parse(store.DateLayout, row.Get("publication_date"))
+		r.foods[id] = &foods.ReferenceFood{
+			Source:          foods.SourceFDC,
+			SourceID:        id,
+			DataType:        row.Get("data_type"),
+			Description:     row.Get("description"),
 			Category:        category,
 			PublicationDate: published,
 		}
@@ -242,22 +226,22 @@ func (r *reader) read() ([]*foods.FDCFood, Stats, error) {
 	// food_nutrient.csv is the largest file, with hundreds of thousands of
 	// rows, so only the amounts of the tracked nutrients of the foods kept
 	// are held.
-	if err := readCSV(r.fsys, "food_nutrient.csv", true, func(row record) error {
-		id, err := parseID(row.get("fdc_id"))
+	if err := readCSV(r.fsys, "food_nutrient.csv", true, func(row foodimport.Record) error {
+		id, err := parseID(row.Get("fdc_id"))
 		if err != nil {
 			return err
 		}
 		if r.foods[id] == nil {
 			return nil
 		}
-		nutrientID, err := strconv.Atoi(row.get("nutrient_id"))
+		nutrientID, err := strconv.Atoi(row.Get("nutrient_id"))
 		if err != nil {
 			return fmt.Errorf("invalid nutrient ID: %w", err)
 		}
-		if _, ok := trackedUnits[nutrientID]; !ok || row.get("amount") == "" {
+		if _, ok := trackedUnits[nutrientID]; !ok || row.Get("amount") == "" {
 			return nil
 		}
-		amount, err := strconv.ParseFloat(row.get("amount"), 64)
+		amount, err := strconv.ParseFloat(row.Get("amount"), 64)
 		if err != nil {
 			return fmt.Errorf("invalid amount of nutrient %d of food %d: %w", nutrientID, id, err)
 		}
@@ -270,7 +254,7 @@ func (r *reader) read() ([]*foods.FDCFood, Stats, error) {
 		return nil, stats, err
 	}
 
-	result := make([]*foods.FDCFood, 0, len(r.foods))
+	result := make([]*foods.ReferenceFood, 0, len(r.foods))
 	for _, id := range slices.Sorted(maps.Keys(r.foods)) {
 		f := r.foods[id]
 		setNutrients(f, r.amounts[id])
@@ -283,7 +267,7 @@ func (r *reader) read() ([]*foods.FDCFood, Stats, error) {
 // setNutrients sets a food's nutrients from the amounts of its FDC
 // nutrients, by nutrient ID, each from the first of its sources the food
 // has.
-func setNutrients(f *foods.FDCFood, amounts map[int]float64) {
+func setNutrients(f *foods.ReferenceFood, amounts map[int]float64) {
 	for n, s := range sources {
 		for _, nutrientID := range s.ids {
 			if v, ok := amounts[nutrientID]; ok {
@@ -303,8 +287,7 @@ func checkUnit(id int, name, unit string) error {
 		return nil
 	}
 	// The JSON downloads write micrograms with the micro sign.
-	normalized := strings.NewReplacer("µ", "U", "μ", "U").Replace(unit)
-	if !strings.EqualFold(normalized, want) {
+	if foodimport.NormalizeUnit(unit) != strings.ToLower(want) {
 		return fmt.Errorf("nutrient %d (%s) is in %s, want %s: the importer needs updating for this release of FDC",
 			id, name, unit, want)
 	}
@@ -315,8 +298,8 @@ func checkUnit(id int, name, unit string) error {
 // Datasets without portions are read without them.
 func (r *reader) readPortions() error {
 	units := map[string]string{}
-	if err := readCSV(r.fsys, "measure_unit.csv", false, func(row record) error {
-		units[row.get("id")] = row.get("name")
+	if err := readCSV(r.fsys, "measure_unit.csv", false, func(row foodimport.Record) error {
+		units[row.Get("id")] = row.Get("name")
 		return nil
 	}); err != nil {
 		return err
@@ -326,27 +309,27 @@ func (r *reader) readPortions() error {
 		seq int
 	}
 	portions := map[int32][]portion{}
-	if err := readCSV(r.fsys, "food_portion.csv", false, func(row record) error {
-		id, err := parseID(row.get("fdc_id"))
+	if err := readCSV(r.fsys, "food_portion.csv", false, func(row foodimport.Record) error {
+		id, err := parseID(row.Get("fdc_id"))
 		if err != nil {
 			return err
 		}
 		if r.foods[id] == nil {
 			return nil
 		}
-		amount, err := strconv.ParseFloat(cmp.Or(row.get("amount"), "1"), 64)
+		amount, err := strconv.ParseFloat(cmp.Or(row.Get("amount"), "1"), 64)
 		if err != nil {
 			return fmt.Errorf("invalid amount of a portion of food %d: %w", id, err)
 		}
-		grams, err := strconv.ParseFloat(row.get("gram_weight"), 64)
+		grams, err := strconv.ParseFloat(row.Get("gram_weight"), 64)
 		if err != nil {
 			return fmt.Errorf("invalid weight of a portion of food %d: %w", id, err)
 		}
 		// Portions are ordered by their sequence number, if any.
-		seq, _ := strconv.Atoi(row.get("seq_num"))
+		seq, _ := strconv.Atoi(row.Get("seq_num"))
 		portions[id] = append(portions[id], portion{
 			Portion: foods.Portion{
-				Description: describePortion(amount, units[row.get("measure_unit_id")], row.get("portion_description"), row.get("modifier")),
+				Description: describePortion(amount, units[row.Get("measure_unit_id")], row.Get("portion_description"), row.Get("modifier")),
 				Amount:      amount,
 				Grams:       grams,
 			},
@@ -398,24 +381,9 @@ func parseID(s string) (int32, error) {
 	return int32(id), nil
 }
 
-// record is a row of a CSV file, with the columns of its header.
-type record struct {
-	columns map[string]int
-	fields  []string
-}
-
-// get returns the row's field in a column, or "" if there's no such column.
-func (r record) get(column string) string {
-	i, ok := r.columns[column]
-	if !ok || i >= len(r.fields) {
-		return ""
-	}
-	return r.fields[i]
-}
-
 // readCSV streams the rows of a CSV file with a header to fn. A missing
 // file is an error if it's required, and has no rows otherwise.
-func readCSV(fsys fs.FS, name string, required bool, fn func(record) error) error {
+func readCSV(fsys fs.FS, name string, required bool, fn func(foodimport.Record) error) error {
 	f, err := fsys.Open(name)
 	if err != nil {
 		if !required && errors.Is(err, fs.ErrNotExist) {
@@ -424,49 +392,17 @@ func readCSV(fsys fs.FS, name string, required bool, fn func(record) error) erro
 		return fmt.Errorf("failed to open %s: %w", name, err)
 	}
 	defer f.Close()
-	cr := csv.NewReader(f)
-	cr.ReuseRecord = true
-	cr.FieldsPerRecord = -1
-	header, err := cr.Read()
-	if err != nil {
-		return fmt.Errorf("failed to read the header of %s: %w", name, err)
-	}
-	columns := map[string]int{}
-	for i, column := range header {
-		// Some downloads start with a byte order mark.
-		columns[strings.TrimPrefix(column, "\ufeff")] = i
-	}
-	for line := 2; ; line++ {
-		fields, err := cr.Read()
-		if errors.Is(err, io.EOF) {
-			return nil
-		}
-		if err != nil {
-			return fmt.Errorf("failed to read %s: %w", name, err)
-		}
-		if err := fn(record{columns: columns, fields: fields}); err != nil {
-			return fmt.Errorf("%s, line %d: %w", name, line, err)
-		}
-	}
+	return foodimport.ReadCSV(f, name, fn)
 }
-
-// Upserter stores FDC foods.
-type Upserter interface {
-	UpsertFDCFoods(ctx context.Context, foods []*foods.FDCFood) error
-}
-
-// batchSize is how many foods are upserted in a round trip. SR Legacy has
-// about 7,800 foods, and each upsert sends about 30 parameters.
-const batchSize = 500
 
 // Import imports the FDC datasets at paths, each a CSV or JSON download as a
 // zip file or extracted into a directory, upserting their foods.
-func Import(ctx context.Context, log *slog.Logger, db Upserter, paths ...string) error {
+func Import(ctx context.Context, log *slog.Logger, db foodimport.Upserter, paths ...string) error {
 	if len(paths) == 0 {
 		return errors.New("give the path of at least one dataset")
 	}
 	for _, p := range paths {
-		fsys, closeFn, err := open(p)
+		fsys, closeFn, err := foodimport.Open(p)
 		if err != nil {
 			return err
 		}
@@ -478,30 +414,11 @@ func Import(ctx context.Context, log *slog.Logger, db Upserter, paths ...string)
 		if closeErr != nil {
 			return fmt.Errorf("failed to close %s: %w", p, closeErr)
 		}
-		for batch := range slices.Chunk(fdcFoods, batchSize) {
-			if err := db.UpsertFDCFoods(ctx, batch); err != nil {
-				return err
-			}
+		if err := foodimport.Upsert(ctx, db, fdcFoods); err != nil {
+			return err
 		}
 		log.InfoContext(ctx, "Imported FDC dataset", slog.String("path", p),
 			slog.Int("foods", stats.Foods), slog.Int("excluded", stats.Excluded))
 	}
 	return nil
-}
-
-// open opens a dataset, a zip file or a directory, returning a function
-// closing it.
-func open(p string) (fs.FS, func() error, error) {
-	info, err := os.Stat(p)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open dataset: %w", err)
-	}
-	if info.IsDir() {
-		return os.DirFS(p), func() error { return nil }, nil
-	}
-	z, err := zip.OpenReader(p)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open %s as a zip file: %w", p, err)
-	}
-	return z, z.Close, nil
 }
