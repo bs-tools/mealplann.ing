@@ -1,3 +1,4 @@
+import FreezeDialog from "@components/plan/freeze-dialog";
 import {
   DayTotals,
   EatingTimeBlock,
@@ -6,7 +7,10 @@ import {
 import type { Slot } from "@components/plan/portion-dialog";
 import ConfirmButton from "@components/ui/confirm-button";
 import { cardClass, iconButton } from "@components/ui/styles";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import {
+  ArchiveBoxArrowDownIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import type { EatingTime, Person } from "gen/people/v1/people_pb";
 import type {
   PlanDay,
@@ -15,7 +19,7 @@ import type {
 } from "gen/plans/v1/plans_pb";
 import { formatDate } from "helpers/format";
 import { formatServings, householdMealLabel } from "helpers/labels";
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router";
 
 interface CookRowProps {
@@ -32,11 +36,15 @@ const CookRow: React.FC<CookRowProps> = ({
   onDone,
   onDelete,
 }) => {
+  const [freezing, setFreezing] = useState(false);
   const { cook } = planned;
   if (cook === undefined) {
     return null;
   }
   const meal = householdMealLabel(cook.meal);
+  const frozen = cook.frozenServings.toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  });
   return (
     <li className="flex flex-col gap-1 rounded-md bg-brand-50 px-2.5 py-1.5">
       <div className="flex items-center gap-2 text-sm">
@@ -66,8 +74,21 @@ const CookRow: React.FC<CookRowProps> = ({
             {" "}
             · {meal === "" ? "" : `${meal} · `}
             {formatServings(cook.servings)}
+            {cook.frozenServings > 0 && ` · ${frozen} frozen`}
           </span>
         </span>
+        <button
+          type="button"
+          className={`${iconButton} print:hidden`}
+          aria-label={`Freeze ${cook.recipeName}`}
+          title="Freeze leftovers, to keep them longer"
+          disabled={disabled}
+          onClick={() => {
+            setFreezing(true);
+          }}
+        >
+          <ArchiveBoxArrowDownIcon className="size-4" />
+        </button>
         <ConfirmButton
           className={`${iconButton} print:hidden`}
           title={`Delete ${cook.recipeName}?`}
@@ -82,6 +103,14 @@ const CookRow: React.FC<CookRowProps> = ({
         </ConfirmButton>
       </div>
       <WarningList warnings={planned.warnings} />
+      {freezing && (
+        <FreezeDialog
+          planned={planned}
+          onClose={() => {
+            setFreezing(false);
+          }}
+        />
+      )}
     </li>
   );
 };

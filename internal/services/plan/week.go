@@ -219,10 +219,11 @@ func (d *planData) cookOf(p *plans.Portion) *rules.Cook {
 	if !p.CookID.Valid {
 		return nil
 	}
-	c := &rules.Cook{RecipeName: p.Name, Date: p.CookDate}
+	c := &rules.Cook{RecipeName: p.Name, Date: p.CookDate, FrozenServings: p.CookFrozenServings}
 	if r, ok := d.recipes[p.CookRecipeID]; ok {
 		c.FridgeDays = r.FridgeDays
 		c.Freezable = r.Freezable
+		c.FreezerDays = r.FreezerDays
 	}
 	return c
 }
@@ -393,7 +394,13 @@ func (d *planData) days(from, to time.Time) []*plansv1.PlanDay {
 // plannedCook checks a cook's servings.
 func (d *planData) plannedCook(c *plans.Cook) *plansv1.PlannedCook {
 	var warnings []*plansv1.Warning
-	check := &rules.Cook{RecipeName: c.RecipeName, Date: c.Date, Servings: c.Servings}
+	check := &rules.Cook{
+		RecipeName:     c.RecipeName,
+		Date:           c.Date,
+		Servings:       c.Servings,
+		FrozenServings: c.FrozenServings,
+		LateServings:   c.LateServings,
+	}
 	if w := rules.CheckServings(check, c.AssignedServings); w != nil {
 		warnings = append(warnings, warningToProto(w, warningContext{cookID: c.ID}))
 	}
@@ -413,20 +420,23 @@ type warningContext struct {
 }
 
 var kindsToProto = map[rules.Kind]plansv1.WarningKind{
-	rules.PortionTooLarge:        plansv1.WarningKind_WARNING_KIND_PORTION_TOO_LARGE,
-	rules.ProteinLow:             plansv1.WarningKind_WARNING_KIND_PROTEIN_LOW,
-	rules.CarbohydrateHigh:       plansv1.WarningKind_WARNING_KIND_CARBOHYDRATE_HIGH,
-	rules.CarbohydrateUnpaired:   plansv1.WarningKind_WARNING_KIND_CARBOHYDRATE_UNPAIRED,
-	rules.SugarsHigh:             plansv1.WarningKind_WARNING_KIND_SUGARS_HIGH,
-	rules.FastCarbs:              plansv1.WarningKind_WARNING_KIND_FAST_CARBS,
-	rules.WeightUnknown:          plansv1.WarningKind_WARNING_KIND_WEIGHT_UNKNOWN,
-	rules.TargetLow:              plansv1.WarningKind_WARNING_KIND_TARGET_LOW,
-	rules.TargetHigh:             plansv1.WarningKind_WARNING_KIND_TARGET_HIGH,
-	rules.LeftoverPastFridgeDays: plansv1.WarningKind_WARNING_KIND_LEFTOVER_PAST_FRIDGE_DAYS,
-	rules.LeftoverFreeze:         plansv1.WarningKind_WARNING_KIND_LEFTOVER_FREEZE,
-	rules.PortionBeforeCook:      plansv1.WarningKind_WARNING_KIND_PORTION_BEFORE_COOK,
-	rules.ServingsUnassigned:     plansv1.WarningKind_WARNING_KIND_SERVINGS_UNASSIGNED,
-	rules.ServingsOverassigned:   plansv1.WarningKind_WARNING_KIND_SERVINGS_OVERASSIGNED,
+	rules.PortionTooLarge:         plansv1.WarningKind_WARNING_KIND_PORTION_TOO_LARGE,
+	rules.ProteinLow:              plansv1.WarningKind_WARNING_KIND_PROTEIN_LOW,
+	rules.CarbohydrateHigh:        plansv1.WarningKind_WARNING_KIND_CARBOHYDRATE_HIGH,
+	rules.CarbohydrateUnpaired:    plansv1.WarningKind_WARNING_KIND_CARBOHYDRATE_UNPAIRED,
+	rules.SugarsHigh:              plansv1.WarningKind_WARNING_KIND_SUGARS_HIGH,
+	rules.FastCarbs:               plansv1.WarningKind_WARNING_KIND_FAST_CARBS,
+	rules.WeightUnknown:           plansv1.WarningKind_WARNING_KIND_WEIGHT_UNKNOWN,
+	rules.TargetLow:               plansv1.WarningKind_WARNING_KIND_TARGET_LOW,
+	rules.TargetHigh:              plansv1.WarningKind_WARNING_KIND_TARGET_HIGH,
+	rules.LeftoverPastFridgeDays:  plansv1.WarningKind_WARNING_KIND_LEFTOVER_PAST_FRIDGE_DAYS,
+	rules.LeftoverFreeze:          plansv1.WarningKind_WARNING_KIND_LEFTOVER_FREEZE,
+	rules.PortionBeforeCook:       plansv1.WarningKind_WARNING_KIND_PORTION_BEFORE_COOK,
+	rules.ServingsUnassigned:      plansv1.WarningKind_WARNING_KIND_SERVINGS_UNASSIGNED,
+	rules.ServingsOverassigned:    plansv1.WarningKind_WARNING_KIND_SERVINGS_OVERASSIGNED,
+	rules.LeftoverThaw:            plansv1.WarningKind_WARNING_KIND_LEFTOVER_THAW,
+	rules.LeftoverPastFreezerDays: plansv1.WarningKind_WARNING_KIND_LEFTOVER_PAST_FREEZER_DAYS,
+	rules.FrozenServingsShort:     plansv1.WarningKind_WARNING_KIND_FROZEN_SERVINGS_SHORT,
 }
 
 func warningToProto(w *rules.Warning, c warningContext) *plansv1.Warning {

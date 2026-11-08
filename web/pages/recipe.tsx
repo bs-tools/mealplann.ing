@@ -38,7 +38,11 @@ const fridgeNote = (recipe: Recipe): string => {
     );
   }
   if (recipe.freezable) {
-    notes.push("Freezes well");
+    notes.push(
+      recipe.freezerDays === undefined
+        ? "Freezes well"
+        : `Keeps ${recipe.freezerDays} ${recipe.freezerDays === 1 ? "day" : "days"} frozen`
+    );
   }
   return notes.join(" · ");
 };

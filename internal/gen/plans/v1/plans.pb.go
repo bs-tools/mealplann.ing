@@ -125,6 +125,14 @@ const (
 	WarningKind_WARNING_KIND_SERVINGS_UNASSIGNED WarningKind = 13
 	// A cook's portions add up to more servings than it makes.
 	WarningKind_WARNING_KIND_SERVINGS_OVERASSIGNED WarningKind = 14
+	// A leftover comes from the freezer: thaw it in the fridge the day
+	// before.
+	WarningKind_WARNING_KIND_LEFTOVER_THAW WarningKind = 15
+	// A leftover from the freezer is eaten after it stops keeping frozen.
+	WarningKind_WARNING_KIND_LEFTOVER_PAST_FREEZER_DAYS WarningKind = 16
+	// More of a cook's servings are planned after they stop keeping in the
+	// fridge than are frozen: freeze more, or eat them sooner.
+	WarningKind_WARNING_KIND_FROZEN_SERVINGS_SHORT WarningKind = 17
 )
 
 // Enum value maps for WarningKind.
@@ -145,23 +153,29 @@ var (
 		12: "WARNING_KIND_PORTION_BEFORE_COOK",
 		13: "WARNING_KIND_SERVINGS_UNASSIGNED",
 		14: "WARNING_KIND_SERVINGS_OVERASSIGNED",
+		15: "WARNING_KIND_LEFTOVER_THAW",
+		16: "WARNING_KIND_LEFTOVER_PAST_FREEZER_DAYS",
+		17: "WARNING_KIND_FROZEN_SERVINGS_SHORT",
 	}
 	WarningKind_value = map[string]int32{
-		"WARNING_KIND_UNSPECIFIED":               0,
-		"WARNING_KIND_PORTION_TOO_LARGE":         1,
-		"WARNING_KIND_PROTEIN_LOW":               2,
-		"WARNING_KIND_CARBOHYDRATE_HIGH":         3,
-		"WARNING_KIND_CARBOHYDRATE_UNPAIRED":     4,
-		"WARNING_KIND_SUGARS_HIGH":               5,
-		"WARNING_KIND_FAST_CARBS":                6,
-		"WARNING_KIND_WEIGHT_UNKNOWN":            7,
-		"WARNING_KIND_TARGET_LOW":                8,
-		"WARNING_KIND_TARGET_HIGH":               9,
-		"WARNING_KIND_LEFTOVER_PAST_FRIDGE_DAYS": 10,
-		"WARNING_KIND_LEFTOVER_FREEZE":           11,
-		"WARNING_KIND_PORTION_BEFORE_COOK":       12,
-		"WARNING_KIND_SERVINGS_UNASSIGNED":       13,
-		"WARNING_KIND_SERVINGS_OVERASSIGNED":     14,
+		"WARNING_KIND_UNSPECIFIED":                0,
+		"WARNING_KIND_PORTION_TOO_LARGE":          1,
+		"WARNING_KIND_PROTEIN_LOW":                2,
+		"WARNING_KIND_CARBOHYDRATE_HIGH":          3,
+		"WARNING_KIND_CARBOHYDRATE_UNPAIRED":      4,
+		"WARNING_KIND_SUGARS_HIGH":                5,
+		"WARNING_KIND_FAST_CARBS":                 6,
+		"WARNING_KIND_WEIGHT_UNKNOWN":             7,
+		"WARNING_KIND_TARGET_LOW":                 8,
+		"WARNING_KIND_TARGET_HIGH":                9,
+		"WARNING_KIND_LEFTOVER_PAST_FRIDGE_DAYS":  10,
+		"WARNING_KIND_LEFTOVER_FREEZE":            11,
+		"WARNING_KIND_PORTION_BEFORE_COOK":        12,
+		"WARNING_KIND_SERVINGS_UNASSIGNED":        13,
+		"WARNING_KIND_SERVINGS_OVERASSIGNED":      14,
+		"WARNING_KIND_LEFTOVER_THAW":              15,
+		"WARNING_KIND_LEFTOVER_PAST_FREEZER_DAYS": 16,
+		"WARNING_KIND_FROZEN_SERVINGS_SHORT":      17,
 	}
 )
 
@@ -236,19 +250,20 @@ func (x Severity) Number() protoreflect.EnumNumber {
 
 // A recipe made on a date, for a number of servings.
 type Cook struct {
-	state                 protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id         string                 `protobuf:"bytes,1,opt,name=id,proto3"`
-	xxx_hidden_RecipeId   string                 `protobuf:"bytes,2,opt,name=recipe_id,json=recipeId,proto3"`
-	xxx_hidden_RecipeName string                 `protobuf:"bytes,3,opt,name=recipe_name,json=recipeName,proto3"`
-	xxx_hidden_Date       string                 `protobuf:"bytes,4,opt,name=date,proto3"`
-	xxx_hidden_Servings   float64                `protobuf:"fixed64,5,opt,name=servings,proto3"`
-	xxx_hidden_Meal       v1.HouseholdMeal       `protobuf:"varint,6,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
-	xxx_hidden_Notes      string                 `protobuf:"bytes,7,opt,name=notes,proto3"`
-	xxx_hidden_Done       bool                   `protobuf:"varint,8,opt,name=done,proto3"`
-	xxx_hidden_CreateTime *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=create_time,json=createTime,proto3"`
-	xxx_hidden_UpdateTime *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=update_time,json=updateTime,proto3"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id             string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_RecipeId       string                 `protobuf:"bytes,2,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_RecipeName     string                 `protobuf:"bytes,3,opt,name=recipe_name,json=recipeName,proto3"`
+	xxx_hidden_Date           string                 `protobuf:"bytes,4,opt,name=date,proto3"`
+	xxx_hidden_Servings       float64                `protobuf:"fixed64,5,opt,name=servings,proto3"`
+	xxx_hidden_Meal           v1.HouseholdMeal       `protobuf:"varint,6,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_Notes          string                 `protobuf:"bytes,7,opt,name=notes,proto3"`
+	xxx_hidden_Done           bool                   `protobuf:"varint,8,opt,name=done,proto3"`
+	xxx_hidden_CreateTime     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=create_time,json=createTime,proto3"`
+	xxx_hidden_UpdateTime     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=update_time,json=updateTime,proto3"`
+	xxx_hidden_FrozenServings float64                `protobuf:"fixed64,11,opt,name=frozen_servings,json=frozenServings,proto3"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *Cook) Reset() {
@@ -346,6 +361,13 @@ func (x *Cook) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Cook) GetFrozenServings() float64 {
+	if x != nil {
+		return x.xxx_hidden_FrozenServings
+	}
+	return 0
+}
+
 func (x *Cook) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -384,6 +406,10 @@ func (x *Cook) SetCreateTime(v *timestamppb.Timestamp) {
 
 func (x *Cook) SetUpdateTime(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdateTime = v
+}
+
+func (x *Cook) SetFrozenServings(v float64) {
+	x.xxx_hidden_FrozenServings = v
 }
 
 func (x *Cook) HasCreateTime() bool {
@@ -435,6 +461,12 @@ type Cook_builder struct {
 	CreateTime *timestamppb.Timestamp
 	// When the cook was last changed.
 	UpdateTime *timestamppb.Timestamp
+	// How many of its servings are frozen on the day it's cooked, from 0 to
+	// servings, to keep for the recipe's freezer_days rather than its
+	// fridge_days. Its portions eaten after the fridge days come from them,
+	// and those not planned yet are in the freezer (see
+	// ListFrozenLeftovers), to plan later. 0 if none.
+	FrozenServings float64
 }
 
 func (b0 Cook_builder) Build() *Cook {
@@ -451,6 +483,7 @@ func (b0 Cook_builder) Build() *Cook {
 	x.xxx_hidden_Done = b.Done
 	x.xxx_hidden_CreateTime = b.CreateTime
 	x.xxx_hidden_UpdateTime = b.UpdateTime
+	x.xxx_hidden_FrozenServings = b.FrozenServings
 	return m0
 }
 
@@ -4730,11 +4763,266 @@ func (b0 UnskipStapleResponse_builder) Build() *UnskipStapleResponse {
 	return m0
 }
 
+type ListFrozenLeftoversRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFrozenLeftoversRequest) Reset() {
+	*x = ListFrozenLeftoversRequest{}
+	mi := &file_plans_v1_plans_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFrozenLeftoversRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFrozenLeftoversRequest) ProtoMessage() {}
+
+func (x *ListFrozenLeftoversRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plans_v1_plans_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type ListFrozenLeftoversRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 ListFrozenLeftoversRequest_builder) Build() *ListFrozenLeftoversRequest {
+	m0 := &ListFrozenLeftoversRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type ListFrozenLeftoversResponse struct {
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Leftovers *[]*FrozenLeftover     `protobuf:"bytes,1,rep,name=leftovers,proto3"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *ListFrozenLeftoversResponse) Reset() {
+	*x = ListFrozenLeftoversResponse{}
+	mi := &file_plans_v1_plans_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFrozenLeftoversResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFrozenLeftoversResponse) ProtoMessage() {}
+
+func (x *ListFrozenLeftoversResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plans_v1_plans_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ListFrozenLeftoversResponse) GetLeftovers() []*FrozenLeftover {
+	if x != nil {
+		if x.xxx_hidden_Leftovers != nil {
+			return *x.xxx_hidden_Leftovers
+		}
+	}
+	return nil
+}
+
+func (x *ListFrozenLeftoversResponse) SetLeftovers(v []*FrozenLeftover) {
+	x.xxx_hidden_Leftovers = &v
+}
+
+type ListFrozenLeftoversResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The frozen leftovers, by the date they were cooked.
+	Leftovers []*FrozenLeftover
+}
+
+func (b0 ListFrozenLeftoversResponse_builder) Build() *ListFrozenLeftoversResponse {
+	m0 := &ListFrozenLeftoversResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Leftovers = &b.Leftovers
+	return m0
+}
+
+// Frozen servings of a cook, not all planned yet.
+type FrozenLeftover struct {
+	state                        protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Cook              *Cook                  `protobuf:"bytes,1,opt,name=cook,proto3"`
+	xxx_hidden_RemainingServings float64                `protobuf:"fixed64,2,opt,name=remaining_servings,json=remainingServings,proto3"`
+	xxx_hidden_PlannedServings   float64                `protobuf:"fixed64,3,opt,name=planned_servings,json=plannedServings,proto3"`
+	xxx_hidden_KeepsUntil        string                 `protobuf:"bytes,4,opt,name=keeps_until,json=keepsUntil,proto3"`
+	xxx_hidden_Expired           bool                   `protobuf:"varint,5,opt,name=expired,proto3"`
+	xxx_hidden_FrozenFrom        string                 `protobuf:"bytes,6,opt,name=frozen_from,json=frozenFrom,proto3"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
+}
+
+func (x *FrozenLeftover) Reset() {
+	*x = FrozenLeftover{}
+	mi := &file_plans_v1_plans_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FrozenLeftover) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FrozenLeftover) ProtoMessage() {}
+
+func (x *FrozenLeftover) ProtoReflect() protoreflect.Message {
+	mi := &file_plans_v1_plans_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *FrozenLeftover) GetCook() *Cook {
+	if x != nil {
+		return x.xxx_hidden_Cook
+	}
+	return nil
+}
+
+func (x *FrozenLeftover) GetRemainingServings() float64 {
+	if x != nil {
+		return x.xxx_hidden_RemainingServings
+	}
+	return 0
+}
+
+func (x *FrozenLeftover) GetPlannedServings() float64 {
+	if x != nil {
+		return x.xxx_hidden_PlannedServings
+	}
+	return 0
+}
+
+func (x *FrozenLeftover) GetKeepsUntil() string {
+	if x != nil {
+		return x.xxx_hidden_KeepsUntil
+	}
+	return ""
+}
+
+func (x *FrozenLeftover) GetExpired() bool {
+	if x != nil {
+		return x.xxx_hidden_Expired
+	}
+	return false
+}
+
+func (x *FrozenLeftover) GetFrozenFrom() string {
+	if x != nil {
+		return x.xxx_hidden_FrozenFrom
+	}
+	return ""
+}
+
+func (x *FrozenLeftover) SetCook(v *Cook) {
+	x.xxx_hidden_Cook = v
+}
+
+func (x *FrozenLeftover) SetRemainingServings(v float64) {
+	x.xxx_hidden_RemainingServings = v
+}
+
+func (x *FrozenLeftover) SetPlannedServings(v float64) {
+	x.xxx_hidden_PlannedServings = v
+}
+
+func (x *FrozenLeftover) SetKeepsUntil(v string) {
+	x.xxx_hidden_KeepsUntil = v
+}
+
+func (x *FrozenLeftover) SetExpired(v bool) {
+	x.xxx_hidden_Expired = v
+}
+
+func (x *FrozenLeftover) SetFrozenFrom(v string) {
+	x.xxx_hidden_FrozenFrom = v
+}
+
+func (x *FrozenLeftover) HasCook() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Cook != nil
+}
+
+func (x *FrozenLeftover) ClearCook() {
+	x.xxx_hidden_Cook = nil
+}
+
+type FrozenLeftover_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The cook.
+	Cook *Cook
+	// How many of its frozen servings aren't planned yet: those in the
+	// freezer.
+	RemainingServings float64
+	// How many of its frozen servings are planned already, as portions eaten
+	// after the recipe's fridge days.
+	PlannedServings float64
+	// The last date (YYYY-MM-DD) they keep frozen: the cook's date plus the
+	// recipe's freezer_days. Empty if unknown.
+	KeepsUntil string
+	// Whether keeps_until is before today, so they should be thrown out:
+	// discard them by setting the cook's frozen_servings to
+	// planned_servings.
+	Expired bool
+	// The first date (YYYY-MM-DD) a portion of them is from the freezer: the
+	// day after the recipe's fridge days. Empty if the recipe's fridge days
+	// are unknown.
+	FrozenFrom string
+}
+
+func (b0 FrozenLeftover_builder) Build() *FrozenLeftover {
+	m0 := &FrozenLeftover{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Cook = b.Cook
+	x.xxx_hidden_RemainingServings = b.RemainingServings
+	x.xxx_hidden_PlannedServings = b.PlannedServings
+	x.xxx_hidden_KeepsUntil = b.KeepsUntil
+	x.xxx_hidden_Expired = b.Expired
+	x.xxx_hidden_FrozenFrom = b.FrozenFrom
+	return m0
+}
+
 var File_plans_v1_plans_proto protoreflect.FileDescriptor
 
 const file_plans_v1_plans_proto_rawDesc = "" +
 	"\n" +
-	"\x14plans/v1/plans.proto\x12\bplans.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\x1a\x16people/v1/people.proto\"\xee\x02\n" +
+	"\x14plans/v1/plans.proto\x12\bplans.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\x1a\x16people/v1/people.proto\"\x97\x03\n" +
 	"\x04Cook\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\trecipe_id\x18\x02 \x01(\tR\brecipeId\x12'\n" +
@@ -4749,7 +5037,8 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"createTime\x12C\n" +
 	"\vupdate_time\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
-	"updateTime\"@\n" +
+	"updateTime\x12'\n" +
+	"\x0ffrozen_servings\x18\v \x01(\x01R\x0efrozenServings\"@\n" +
 	"\tCookShare\x12\x17\n" +
 	"\acook_id\x18\x01 \x01(\tR\x06cookId\x12\x1a\n" +
 	"\bservings\x18\x02 \x01(\x01R\bservings\"I\n" +
@@ -4936,7 +5225,19 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04date\x18\x02 \x01(\tR\x04date\"@\n" +
 	"\x14UnskipStapleResponse\x12(\n" +
-	"\x06staple\x18\x01 \x01(\v2\x10.plans.v1.StapleR\x06staple*\xb6\x01\n" +
+	"\x06staple\x18\x01 \x01(\v2\x10.plans.v1.StapleR\x06staple\"\x1c\n" +
+	"\x1aListFrozenLeftoversRequest\"U\n" +
+	"\x1bListFrozenLeftoversResponse\x126\n" +
+	"\tleftovers\x18\x01 \x03(\v2\x18.plans.v1.FrozenLeftoverR\tleftovers\"\xea\x01\n" +
+	"\x0eFrozenLeftover\x12\"\n" +
+	"\x04cook\x18\x01 \x01(\v2\x0e.plans.v1.CookR\x04cook\x12-\n" +
+	"\x12remaining_servings\x18\x02 \x01(\x01R\x11remainingServings\x12)\n" +
+	"\x10planned_servings\x18\x03 \x01(\x01R\x0fplannedServings\x12\x1f\n" +
+	"\vkeeps_until\x18\x04 \x01(\tR\n" +
+	"keepsUntil\x12\x18\n" +
+	"\aexpired\x18\x05 \x01(\bR\aexpired\x12\x1f\n" +
+	"\vfrozen_from\x18\x06 \x01(\tR\n" +
+	"frozenFrom*\xb6\x01\n" +
 	"\aWeekday\x12\x17\n" +
 	"\x13WEEKDAY_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eWEEKDAY_MONDAY\x10\x01\x12\x13\n" +
@@ -4945,7 +5246,7 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x10WEEKDAY_THURSDAY\x10\x04\x12\x12\n" +
 	"\x0eWEEKDAY_FRIDAY\x10\x05\x12\x14\n" +
 	"\x10WEEKDAY_SATURDAY\x10\x06\x12\x12\n" +
-	"\x0eWEEKDAY_SUNDAY\x10\a*\x92\x04\n" +
+	"\x0eWEEKDAY_SUNDAY\x10\a*\x87\x05\n" +
 	"\vWarningKind\x12\x1c\n" +
 	"\x18WARNING_KIND_UNSPECIFIED\x10\x00\x12\"\n" +
 	"\x1eWARNING_KIND_PORTION_TOO_LARGE\x10\x01\x12\x1c\n" +
@@ -4962,11 +5263,14 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x1cWARNING_KIND_LEFTOVER_FREEZE\x10\v\x12$\n" +
 	" WARNING_KIND_PORTION_BEFORE_COOK\x10\f\x12$\n" +
 	" WARNING_KIND_SERVINGS_UNASSIGNED\x10\r\x12&\n" +
-	"\"WARNING_KIND_SERVINGS_OVERASSIGNED\x10\x0e*M\n" +
+	"\"WARNING_KIND_SERVINGS_OVERASSIGNED\x10\x0e\x12\x1e\n" +
+	"\x1aWARNING_KIND_LEFTOVER_THAW\x10\x0f\x12+\n" +
+	"'WARNING_KIND_LEFTOVER_PAST_FREEZER_DAYS\x10\x10\x12&\n" +
+	"\"WARNING_KIND_FROZEN_SERVINGS_SHORT\x10\x11*M\n" +
 	"\bSeverity\x12\x18\n" +
 	"\x14SEVERITY_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10SEVERITY_WARNING\x10\x01\x12\x11\n" +
-	"\rSEVERITY_INFO\x10\x022\xf8\b\n" +
+	"\rSEVERITY_INFO\x10\x022\xdc\t\n" +
 	"\vPlanService\x12>\n" +
 	"\aGetWeek\x12\x18.plans.v1.GetWeekRequest\x1a\x19.plans.v1.GetWeekResponse\x12A\n" +
 	"\bPlanMeal\x12\x19.plans.v1.PlanMealRequest\x1a\x1a.plans.v1.PlanMealResponse\x12D\n" +
@@ -4986,160 +5290,168 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\fDeleteStaple\x12\x1d.plans.v1.DeleteStapleRequest\x1a\x1e.plans.v1.DeleteStapleResponse\x12G\n" +
 	"\n" +
 	"SkipStaple\x12\x1b.plans.v1.SkipStapleRequest\x1a\x1c.plans.v1.SkipStapleResponse\x12M\n" +
-	"\fUnskipStaple\x12\x1d.plans.v1.UnskipStapleRequest\x1a\x1e.plans.v1.UnskipStapleResponseB\x9c\x01\n" +
+	"\fUnskipStaple\x12\x1d.plans.v1.UnskipStapleRequest\x1a\x1e.plans.v1.UnskipStapleResponse\x12b\n" +
+	"\x13ListFrozenLeftovers\x12$.plans.v1.ListFrozenLeftoversRequest\x1a%.plans.v1.ListFrozenLeftoversResponseB\x9c\x01\n" +
 	"\fcom.plans.v1B\n" +
 	"PlansProtoP\x01Z?github.com/bs-tools/mealplann.ing/internal/gen/plans/v1;plansv1\xa2\x02\x03PXX\xaa\x02\bPlans.V1\xca\x02\bPlans\\V1\xe2\x02\x14Plans\\V1\\GPBMetadata\xea\x02\tPlans::V1b\x06proto3"
 
 var file_plans_v1_plans_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_plans_v1_plans_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
+var file_plans_v1_plans_proto_msgTypes = make([]protoimpl.MessageInfo, 47)
 var file_plans_v1_plans_proto_goTypes = []any{
-	(Weekday)(0),                  // 0: plans.v1.Weekday
-	(WarningKind)(0),              // 1: plans.v1.WarningKind
-	(Severity)(0),                 // 2: plans.v1.Severity
-	(*Cook)(nil),                  // 3: plans.v1.Cook
-	(*CookShare)(nil),             // 4: plans.v1.CookShare
-	(*RecipeServings)(nil),        // 5: plans.v1.RecipeServings
-	(*FoodAmount)(nil),            // 6: plans.v1.FoodAmount
-	(*Portion)(nil),               // 7: plans.v1.Portion
-	(*Staple)(nil),                // 8: plans.v1.Staple
-	(*Warning)(nil),               // 9: plans.v1.Warning
-	(*GetWeekRequest)(nil),        // 10: plans.v1.GetWeekRequest
-	(*GetWeekResponse)(nil),       // 11: plans.v1.GetWeekResponse
-	(*PlanDay)(nil),               // 12: plans.v1.PlanDay
-	(*PersonDay)(nil),             // 13: plans.v1.PersonDay
-	(*PlannedEatingTime)(nil),     // 14: plans.v1.PlannedEatingTime
-	(*PlannedPortion)(nil),        // 15: plans.v1.PlannedPortion
-	(*PlannedCook)(nil),           // 16: plans.v1.PlannedCook
-	(*PlanMealRequest)(nil),       // 17: plans.v1.PlanMealRequest
-	(*PlanMealResponse)(nil),      // 18: plans.v1.PlanMealResponse
-	(*MealToPlan)(nil),            // 19: plans.v1.MealToPlan
-	(*PlanMealsRequest)(nil),      // 20: plans.v1.PlanMealsRequest
-	(*PlanMealsResponse)(nil),     // 21: plans.v1.PlanMealsResponse
-	(*CreateCookRequest)(nil),     // 22: plans.v1.CreateCookRequest
-	(*CreateCookResponse)(nil),    // 23: plans.v1.CreateCookResponse
-	(*PantryChange)(nil),          // 24: plans.v1.PantryChange
-	(*UpdateCookRequest)(nil),     // 25: plans.v1.UpdateCookRequest
-	(*UpdateCookResponse)(nil),    // 26: plans.v1.UpdateCookResponse
-	(*DeleteCookRequest)(nil),     // 27: plans.v1.DeleteCookRequest
-	(*DeleteCookResponse)(nil),    // 28: plans.v1.DeleteCookResponse
-	(*CreatePortionRequest)(nil),  // 29: plans.v1.CreatePortionRequest
-	(*CreatePortionResponse)(nil), // 30: plans.v1.CreatePortionResponse
-	(*UpdatePortionRequest)(nil),  // 31: plans.v1.UpdatePortionRequest
-	(*UpdatePortionResponse)(nil), // 32: plans.v1.UpdatePortionResponse
-	(*DeletePortionRequest)(nil),  // 33: plans.v1.DeletePortionRequest
-	(*DeletePortionResponse)(nil), // 34: plans.v1.DeletePortionResponse
-	(*CreateStapleRequest)(nil),   // 35: plans.v1.CreateStapleRequest
-	(*CreateStapleResponse)(nil),  // 36: plans.v1.CreateStapleResponse
-	(*ListStaplesRequest)(nil),    // 37: plans.v1.ListStaplesRequest
-	(*ListStaplesResponse)(nil),   // 38: plans.v1.ListStaplesResponse
-	(*UpdateStapleRequest)(nil),   // 39: plans.v1.UpdateStapleRequest
-	(*UpdateStapleResponse)(nil),  // 40: plans.v1.UpdateStapleResponse
-	(*DeleteStapleRequest)(nil),   // 41: plans.v1.DeleteStapleRequest
-	(*DeleteStapleResponse)(nil),  // 42: plans.v1.DeleteStapleResponse
-	(*SkipStapleRequest)(nil),     // 43: plans.v1.SkipStapleRequest
-	(*SkipStapleResponse)(nil),    // 44: plans.v1.SkipStapleResponse
-	(*UnskipStapleRequest)(nil),   // 45: plans.v1.UnskipStapleRequest
-	(*UnskipStapleResponse)(nil),  // 46: plans.v1.UnskipStapleResponse
-	(v1.HouseholdMeal)(0),         // 47: people.v1.HouseholdMeal
-	(*timestamppb.Timestamp)(nil), // 48: google.protobuf.Timestamp
-	(v11.AmountUnit)(0),           // 49: foods.v1.AmountUnit
-	(v11.Nutrient)(0),             // 50: foods.v1.Nutrient
-	(*v11.Nutrients)(nil),         // 51: foods.v1.Nutrients
-	(*v1.EatingTime)(nil),         // 52: people.v1.EatingTime
-	(*fieldmaskpb.FieldMask)(nil), // 53: google.protobuf.FieldMask
+	(Weekday)(0),                        // 0: plans.v1.Weekday
+	(WarningKind)(0),                    // 1: plans.v1.WarningKind
+	(Severity)(0),                       // 2: plans.v1.Severity
+	(*Cook)(nil),                        // 3: plans.v1.Cook
+	(*CookShare)(nil),                   // 4: plans.v1.CookShare
+	(*RecipeServings)(nil),              // 5: plans.v1.RecipeServings
+	(*FoodAmount)(nil),                  // 6: plans.v1.FoodAmount
+	(*Portion)(nil),                     // 7: plans.v1.Portion
+	(*Staple)(nil),                      // 8: plans.v1.Staple
+	(*Warning)(nil),                     // 9: plans.v1.Warning
+	(*GetWeekRequest)(nil),              // 10: plans.v1.GetWeekRequest
+	(*GetWeekResponse)(nil),             // 11: plans.v1.GetWeekResponse
+	(*PlanDay)(nil),                     // 12: plans.v1.PlanDay
+	(*PersonDay)(nil),                   // 13: plans.v1.PersonDay
+	(*PlannedEatingTime)(nil),           // 14: plans.v1.PlannedEatingTime
+	(*PlannedPortion)(nil),              // 15: plans.v1.PlannedPortion
+	(*PlannedCook)(nil),                 // 16: plans.v1.PlannedCook
+	(*PlanMealRequest)(nil),             // 17: plans.v1.PlanMealRequest
+	(*PlanMealResponse)(nil),            // 18: plans.v1.PlanMealResponse
+	(*MealToPlan)(nil),                  // 19: plans.v1.MealToPlan
+	(*PlanMealsRequest)(nil),            // 20: plans.v1.PlanMealsRequest
+	(*PlanMealsResponse)(nil),           // 21: plans.v1.PlanMealsResponse
+	(*CreateCookRequest)(nil),           // 22: plans.v1.CreateCookRequest
+	(*CreateCookResponse)(nil),          // 23: plans.v1.CreateCookResponse
+	(*PantryChange)(nil),                // 24: plans.v1.PantryChange
+	(*UpdateCookRequest)(nil),           // 25: plans.v1.UpdateCookRequest
+	(*UpdateCookResponse)(nil),          // 26: plans.v1.UpdateCookResponse
+	(*DeleteCookRequest)(nil),           // 27: plans.v1.DeleteCookRequest
+	(*DeleteCookResponse)(nil),          // 28: plans.v1.DeleteCookResponse
+	(*CreatePortionRequest)(nil),        // 29: plans.v1.CreatePortionRequest
+	(*CreatePortionResponse)(nil),       // 30: plans.v1.CreatePortionResponse
+	(*UpdatePortionRequest)(nil),        // 31: plans.v1.UpdatePortionRequest
+	(*UpdatePortionResponse)(nil),       // 32: plans.v1.UpdatePortionResponse
+	(*DeletePortionRequest)(nil),        // 33: plans.v1.DeletePortionRequest
+	(*DeletePortionResponse)(nil),       // 34: plans.v1.DeletePortionResponse
+	(*CreateStapleRequest)(nil),         // 35: plans.v1.CreateStapleRequest
+	(*CreateStapleResponse)(nil),        // 36: plans.v1.CreateStapleResponse
+	(*ListStaplesRequest)(nil),          // 37: plans.v1.ListStaplesRequest
+	(*ListStaplesResponse)(nil),         // 38: plans.v1.ListStaplesResponse
+	(*UpdateStapleRequest)(nil),         // 39: plans.v1.UpdateStapleRequest
+	(*UpdateStapleResponse)(nil),        // 40: plans.v1.UpdateStapleResponse
+	(*DeleteStapleRequest)(nil),         // 41: plans.v1.DeleteStapleRequest
+	(*DeleteStapleResponse)(nil),        // 42: plans.v1.DeleteStapleResponse
+	(*SkipStapleRequest)(nil),           // 43: plans.v1.SkipStapleRequest
+	(*SkipStapleResponse)(nil),          // 44: plans.v1.SkipStapleResponse
+	(*UnskipStapleRequest)(nil),         // 45: plans.v1.UnskipStapleRequest
+	(*UnskipStapleResponse)(nil),        // 46: plans.v1.UnskipStapleResponse
+	(*ListFrozenLeftoversRequest)(nil),  // 47: plans.v1.ListFrozenLeftoversRequest
+	(*ListFrozenLeftoversResponse)(nil), // 48: plans.v1.ListFrozenLeftoversResponse
+	(*FrozenLeftover)(nil),              // 49: plans.v1.FrozenLeftover
+	(v1.HouseholdMeal)(0),               // 50: people.v1.HouseholdMeal
+	(*timestamppb.Timestamp)(nil),       // 51: google.protobuf.Timestamp
+	(v11.AmountUnit)(0),                 // 52: foods.v1.AmountUnit
+	(v11.Nutrient)(0),                   // 53: foods.v1.Nutrient
+	(*v11.Nutrients)(nil),               // 54: foods.v1.Nutrients
+	(*v1.EatingTime)(nil),               // 55: people.v1.EatingTime
+	(*fieldmaskpb.FieldMask)(nil),       // 56: google.protobuf.FieldMask
 }
 var file_plans_v1_plans_proto_depIdxs = []int32{
-	47, // 0: plans.v1.Cook.meal:type_name -> people.v1.HouseholdMeal
-	48, // 1: plans.v1.Cook.create_time:type_name -> google.protobuf.Timestamp
-	48, // 2: plans.v1.Cook.update_time:type_name -> google.protobuf.Timestamp
-	49, // 3: plans.v1.FoodAmount.unit:type_name -> foods.v1.AmountUnit
+	50, // 0: plans.v1.Cook.meal:type_name -> people.v1.HouseholdMeal
+	51, // 1: plans.v1.Cook.create_time:type_name -> google.protobuf.Timestamp
+	51, // 2: plans.v1.Cook.update_time:type_name -> google.protobuf.Timestamp
+	52, // 3: plans.v1.FoodAmount.unit:type_name -> foods.v1.AmountUnit
 	4,  // 4: plans.v1.Portion.cook:type_name -> plans.v1.CookShare
 	6,  // 5: plans.v1.Portion.food:type_name -> plans.v1.FoodAmount
-	48, // 6: plans.v1.Portion.create_time:type_name -> google.protobuf.Timestamp
-	48, // 7: plans.v1.Portion.update_time:type_name -> google.protobuf.Timestamp
+	51, // 6: plans.v1.Portion.create_time:type_name -> google.protobuf.Timestamp
+	51, // 7: plans.v1.Portion.update_time:type_name -> google.protobuf.Timestamp
 	5,  // 8: plans.v1.Staple.recipe:type_name -> plans.v1.RecipeServings
 	6,  // 9: plans.v1.Staple.food:type_name -> plans.v1.FoodAmount
 	0,  // 10: plans.v1.Staple.weekdays:type_name -> plans.v1.Weekday
-	48, // 11: plans.v1.Staple.create_time:type_name -> google.protobuf.Timestamp
-	48, // 12: plans.v1.Staple.update_time:type_name -> google.protobuf.Timestamp
+	51, // 11: plans.v1.Staple.create_time:type_name -> google.protobuf.Timestamp
+	51, // 12: plans.v1.Staple.update_time:type_name -> google.protobuf.Timestamp
 	1,  // 13: plans.v1.Warning.kind:type_name -> plans.v1.WarningKind
 	2,  // 14: plans.v1.Warning.severity:type_name -> plans.v1.Severity
-	50, // 15: plans.v1.Warning.nutrient:type_name -> foods.v1.Nutrient
+	53, // 15: plans.v1.Warning.nutrient:type_name -> foods.v1.Nutrient
 	12, // 16: plans.v1.GetWeekResponse.days:type_name -> plans.v1.PlanDay
 	16, // 17: plans.v1.GetWeekResponse.cooks:type_name -> plans.v1.PlannedCook
 	13, // 18: plans.v1.PlanDay.people:type_name -> plans.v1.PersonDay
 	14, // 19: plans.v1.PersonDay.eating_times:type_name -> plans.v1.PlannedEatingTime
-	51, // 20: plans.v1.PersonDay.nutrients:type_name -> foods.v1.Nutrients
+	54, // 20: plans.v1.PersonDay.nutrients:type_name -> foods.v1.Nutrients
 	9,  // 21: plans.v1.PersonDay.warnings:type_name -> plans.v1.Warning
-	52, // 22: plans.v1.PlannedEatingTime.eating_time:type_name -> people.v1.EatingTime
+	55, // 22: plans.v1.PlannedEatingTime.eating_time:type_name -> people.v1.EatingTime
 	15, // 23: plans.v1.PlannedEatingTime.portions:type_name -> plans.v1.PlannedPortion
-	51, // 24: plans.v1.PlannedEatingTime.nutrients:type_name -> foods.v1.Nutrients
+	54, // 24: plans.v1.PlannedEatingTime.nutrients:type_name -> foods.v1.Nutrients
 	9,  // 25: plans.v1.PlannedEatingTime.warnings:type_name -> plans.v1.Warning
-	49, // 26: plans.v1.PlannedPortion.unit:type_name -> foods.v1.AmountUnit
+	52, // 26: plans.v1.PlannedPortion.unit:type_name -> foods.v1.AmountUnit
 	3,  // 27: plans.v1.PlannedCook.cook:type_name -> plans.v1.Cook
 	9,  // 28: plans.v1.PlannedCook.warnings:type_name -> plans.v1.Warning
-	47, // 29: plans.v1.PlanMealRequest.meal:type_name -> people.v1.HouseholdMeal
+	50, // 29: plans.v1.PlanMealRequest.meal:type_name -> people.v1.HouseholdMeal
 	3,  // 30: plans.v1.PlanMealResponse.cook:type_name -> plans.v1.Cook
 	7,  // 31: plans.v1.PlanMealResponse.portions:type_name -> plans.v1.Portion
 	9,  // 32: plans.v1.PlanMealResponse.warnings:type_name -> plans.v1.Warning
-	47, // 33: plans.v1.MealToPlan.meal:type_name -> people.v1.HouseholdMeal
+	50, // 33: plans.v1.MealToPlan.meal:type_name -> people.v1.HouseholdMeal
 	19, // 34: plans.v1.PlanMealsRequest.meals:type_name -> plans.v1.MealToPlan
 	3,  // 35: plans.v1.PlanMealsResponse.cooks:type_name -> plans.v1.Cook
 	3,  // 36: plans.v1.CreateCookRequest.cook:type_name -> plans.v1.Cook
 	3,  // 37: plans.v1.CreateCookResponse.cook:type_name -> plans.v1.Cook
 	24, // 38: plans.v1.CreateCookResponse.pantry_changes:type_name -> plans.v1.PantryChange
 	3,  // 39: plans.v1.UpdateCookRequest.cook:type_name -> plans.v1.Cook
-	53, // 40: plans.v1.UpdateCookRequest.update_mask:type_name -> google.protobuf.FieldMask
+	56, // 40: plans.v1.UpdateCookRequest.update_mask:type_name -> google.protobuf.FieldMask
 	3,  // 41: plans.v1.UpdateCookResponse.cook:type_name -> plans.v1.Cook
 	24, // 42: plans.v1.UpdateCookResponse.pantry_changes:type_name -> plans.v1.PantryChange
 	7,  // 43: plans.v1.CreatePortionRequest.portion:type_name -> plans.v1.Portion
 	7,  // 44: plans.v1.CreatePortionResponse.portion:type_name -> plans.v1.Portion
 	7,  // 45: plans.v1.UpdatePortionRequest.portion:type_name -> plans.v1.Portion
-	53, // 46: plans.v1.UpdatePortionRequest.update_mask:type_name -> google.protobuf.FieldMask
+	56, // 46: plans.v1.UpdatePortionRequest.update_mask:type_name -> google.protobuf.FieldMask
 	7,  // 47: plans.v1.UpdatePortionResponse.portion:type_name -> plans.v1.Portion
 	8,  // 48: plans.v1.CreateStapleRequest.staple:type_name -> plans.v1.Staple
 	8,  // 49: plans.v1.CreateStapleResponse.staple:type_name -> plans.v1.Staple
 	8,  // 50: plans.v1.ListStaplesResponse.staples:type_name -> plans.v1.Staple
 	8,  // 51: plans.v1.UpdateStapleRequest.staple:type_name -> plans.v1.Staple
-	53, // 52: plans.v1.UpdateStapleRequest.update_mask:type_name -> google.protobuf.FieldMask
+	56, // 52: plans.v1.UpdateStapleRequest.update_mask:type_name -> google.protobuf.FieldMask
 	8,  // 53: plans.v1.UpdateStapleResponse.staple:type_name -> plans.v1.Staple
 	8,  // 54: plans.v1.SkipStapleResponse.staple:type_name -> plans.v1.Staple
 	8,  // 55: plans.v1.UnskipStapleResponse.staple:type_name -> plans.v1.Staple
-	10, // 56: plans.v1.PlanService.GetWeek:input_type -> plans.v1.GetWeekRequest
-	17, // 57: plans.v1.PlanService.PlanMeal:input_type -> plans.v1.PlanMealRequest
-	20, // 58: plans.v1.PlanService.PlanMeals:input_type -> plans.v1.PlanMealsRequest
-	22, // 59: plans.v1.PlanService.CreateCook:input_type -> plans.v1.CreateCookRequest
-	25, // 60: plans.v1.PlanService.UpdateCook:input_type -> plans.v1.UpdateCookRequest
-	27, // 61: plans.v1.PlanService.DeleteCook:input_type -> plans.v1.DeleteCookRequest
-	29, // 62: plans.v1.PlanService.CreatePortion:input_type -> plans.v1.CreatePortionRequest
-	31, // 63: plans.v1.PlanService.UpdatePortion:input_type -> plans.v1.UpdatePortionRequest
-	33, // 64: plans.v1.PlanService.DeletePortion:input_type -> plans.v1.DeletePortionRequest
-	35, // 65: plans.v1.PlanService.CreateStaple:input_type -> plans.v1.CreateStapleRequest
-	37, // 66: plans.v1.PlanService.ListStaples:input_type -> plans.v1.ListStaplesRequest
-	39, // 67: plans.v1.PlanService.UpdateStaple:input_type -> plans.v1.UpdateStapleRequest
-	41, // 68: plans.v1.PlanService.DeleteStaple:input_type -> plans.v1.DeleteStapleRequest
-	43, // 69: plans.v1.PlanService.SkipStaple:input_type -> plans.v1.SkipStapleRequest
-	45, // 70: plans.v1.PlanService.UnskipStaple:input_type -> plans.v1.UnskipStapleRequest
-	11, // 71: plans.v1.PlanService.GetWeek:output_type -> plans.v1.GetWeekResponse
-	18, // 72: plans.v1.PlanService.PlanMeal:output_type -> plans.v1.PlanMealResponse
-	21, // 73: plans.v1.PlanService.PlanMeals:output_type -> plans.v1.PlanMealsResponse
-	23, // 74: plans.v1.PlanService.CreateCook:output_type -> plans.v1.CreateCookResponse
-	26, // 75: plans.v1.PlanService.UpdateCook:output_type -> plans.v1.UpdateCookResponse
-	28, // 76: plans.v1.PlanService.DeleteCook:output_type -> plans.v1.DeleteCookResponse
-	30, // 77: plans.v1.PlanService.CreatePortion:output_type -> plans.v1.CreatePortionResponse
-	32, // 78: plans.v1.PlanService.UpdatePortion:output_type -> plans.v1.UpdatePortionResponse
-	34, // 79: plans.v1.PlanService.DeletePortion:output_type -> plans.v1.DeletePortionResponse
-	36, // 80: plans.v1.PlanService.CreateStaple:output_type -> plans.v1.CreateStapleResponse
-	38, // 81: plans.v1.PlanService.ListStaples:output_type -> plans.v1.ListStaplesResponse
-	40, // 82: plans.v1.PlanService.UpdateStaple:output_type -> plans.v1.UpdateStapleResponse
-	42, // 83: plans.v1.PlanService.DeleteStaple:output_type -> plans.v1.DeleteStapleResponse
-	44, // 84: plans.v1.PlanService.SkipStaple:output_type -> plans.v1.SkipStapleResponse
-	46, // 85: plans.v1.PlanService.UnskipStaple:output_type -> plans.v1.UnskipStapleResponse
-	71, // [71:86] is the sub-list for method output_type
-	56, // [56:71] is the sub-list for method input_type
-	56, // [56:56] is the sub-list for extension type_name
-	56, // [56:56] is the sub-list for extension extendee
-	0,  // [0:56] is the sub-list for field type_name
+	49, // 56: plans.v1.ListFrozenLeftoversResponse.leftovers:type_name -> plans.v1.FrozenLeftover
+	3,  // 57: plans.v1.FrozenLeftover.cook:type_name -> plans.v1.Cook
+	10, // 58: plans.v1.PlanService.GetWeek:input_type -> plans.v1.GetWeekRequest
+	17, // 59: plans.v1.PlanService.PlanMeal:input_type -> plans.v1.PlanMealRequest
+	20, // 60: plans.v1.PlanService.PlanMeals:input_type -> plans.v1.PlanMealsRequest
+	22, // 61: plans.v1.PlanService.CreateCook:input_type -> plans.v1.CreateCookRequest
+	25, // 62: plans.v1.PlanService.UpdateCook:input_type -> plans.v1.UpdateCookRequest
+	27, // 63: plans.v1.PlanService.DeleteCook:input_type -> plans.v1.DeleteCookRequest
+	29, // 64: plans.v1.PlanService.CreatePortion:input_type -> plans.v1.CreatePortionRequest
+	31, // 65: plans.v1.PlanService.UpdatePortion:input_type -> plans.v1.UpdatePortionRequest
+	33, // 66: plans.v1.PlanService.DeletePortion:input_type -> plans.v1.DeletePortionRequest
+	35, // 67: plans.v1.PlanService.CreateStaple:input_type -> plans.v1.CreateStapleRequest
+	37, // 68: plans.v1.PlanService.ListStaples:input_type -> plans.v1.ListStaplesRequest
+	39, // 69: plans.v1.PlanService.UpdateStaple:input_type -> plans.v1.UpdateStapleRequest
+	41, // 70: plans.v1.PlanService.DeleteStaple:input_type -> plans.v1.DeleteStapleRequest
+	43, // 71: plans.v1.PlanService.SkipStaple:input_type -> plans.v1.SkipStapleRequest
+	45, // 72: plans.v1.PlanService.UnskipStaple:input_type -> plans.v1.UnskipStapleRequest
+	47, // 73: plans.v1.PlanService.ListFrozenLeftovers:input_type -> plans.v1.ListFrozenLeftoversRequest
+	11, // 74: plans.v1.PlanService.GetWeek:output_type -> plans.v1.GetWeekResponse
+	18, // 75: plans.v1.PlanService.PlanMeal:output_type -> plans.v1.PlanMealResponse
+	21, // 76: plans.v1.PlanService.PlanMeals:output_type -> plans.v1.PlanMealsResponse
+	23, // 77: plans.v1.PlanService.CreateCook:output_type -> plans.v1.CreateCookResponse
+	26, // 78: plans.v1.PlanService.UpdateCook:output_type -> plans.v1.UpdateCookResponse
+	28, // 79: plans.v1.PlanService.DeleteCook:output_type -> plans.v1.DeleteCookResponse
+	30, // 80: plans.v1.PlanService.CreatePortion:output_type -> plans.v1.CreatePortionResponse
+	32, // 81: plans.v1.PlanService.UpdatePortion:output_type -> plans.v1.UpdatePortionResponse
+	34, // 82: plans.v1.PlanService.DeletePortion:output_type -> plans.v1.DeletePortionResponse
+	36, // 83: plans.v1.PlanService.CreateStaple:output_type -> plans.v1.CreateStapleResponse
+	38, // 84: plans.v1.PlanService.ListStaples:output_type -> plans.v1.ListStaplesResponse
+	40, // 85: plans.v1.PlanService.UpdateStaple:output_type -> plans.v1.UpdateStapleResponse
+	42, // 86: plans.v1.PlanService.DeleteStaple:output_type -> plans.v1.DeleteStapleResponse
+	44, // 87: plans.v1.PlanService.SkipStaple:output_type -> plans.v1.SkipStapleResponse
+	46, // 88: plans.v1.PlanService.UnskipStaple:output_type -> plans.v1.UnskipStapleResponse
+	48, // 89: plans.v1.PlanService.ListFrozenLeftovers:output_type -> plans.v1.ListFrozenLeftoversResponse
+	74, // [74:90] is the sub-list for method output_type
+	58, // [58:74] is the sub-list for method input_type
+	58, // [58:58] is the sub-list for extension type_name
+	58, // [58:58] is the sub-list for extension extendee
+	0,  // [0:58] is the sub-list for field type_name
 }
 
 func init() { file_plans_v1_plans_proto_init() }
@@ -5161,7 +5473,7 @@ func file_plans_v1_plans_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plans_v1_plans_proto_rawDesc), len(file_plans_v1_plans_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   44,
+			NumMessages:   47,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

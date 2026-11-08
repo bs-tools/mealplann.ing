@@ -126,6 +126,15 @@ saying what to change.
     nowhere is left over on the cook.
   - **Batch cooking and leftovers**: portions of the same cook on later
     days. Ingredients are bought once.
+- **Freezing leftovers**: a cook can freeze some of its servings on the
+  day it's cooked (`frozen_servings`). Its portions eaten after the
+  recipe's fridge days come from them, and keep for its freezer days
+  rather than its fridge days, with a reminder to thaw them the day
+  before; a warning says when they won't keep even frozen, or when more
+  are planned late than were frozen. Frozen servings not planned yet are
+  in the freezer, not unassigned: `ListFrozenLeftovers` and the Pantry
+  page list them with how long they keep, to plan them for a later meal or
+  throw them out.
 - Portions can also be eaten without a recipe, such as a handful of nuts,
   as a food and an amount.
 - **Staples** are recurring portions, such as a person's usual breakfast or

@@ -54,6 +54,9 @@ const (
 	PlanServiceSkipStapleProcedure = "/plans.v1.PlanService/SkipStaple"
 	// PlanServiceUnskipStapleProcedure is the procedure name of the PlanService's UnskipStaple RPC.
 	PlanServiceUnskipStapleProcedure = "/plans.v1.PlanService/UnskipStaple"
+	// PlanServiceListFrozenLeftoversProcedure is the procedure name of the PlanService's
+	// ListFrozenLeftovers RPC.
+	PlanServiceListFrozenLeftoversProcedure = "/plans.v1.PlanService/ListFrozenLeftovers"
 )
 
 var (
@@ -162,6 +165,13 @@ var (
 			Procedure:  PlanServiceUnskipStapleProcedure,
 		}
 	})
+	planServiceListFrozenLeftoversSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("ListFrozenLeftovers"),
+			Procedure:  PlanServiceListFrozenLeftoversProcedure,
+		}
+	})
 )
 
 // PlanServiceClient is a client for the plans.v1.PlanService service.
@@ -228,6 +238,13 @@ type PlanServiceClient interface {
 	SkipStaple(context.Context, *v1.SkipStapleRequest) (*v1.SkipStapleResponse, error)
 	// Stop skipping a staple on a date.
 	UnskipStaple(context.Context, *v1.UnskipStapleRequest) (*v1.UnskipStapleResponse, error)
+	// List what's in the freezer: the frozen leftovers of cooks (see
+	// Cook.frozen_servings) not all planned yet, by the date they were
+	// cooked, each with the servings left to plan and the last date they
+	// keep. Plan them with CreatePortion, as shares of their cook on any
+	// later date, or discard them by setting the cook's frozen_servings to
+	// the servings planned.
+	ListFrozenLeftovers(context.Context, *v1.ListFrozenLeftoversRequest) (*v1.ListFrozenLeftoversResponse, error)
 }
 
 // NewPlanServiceClient constructs a client for the plans.v1.PlanService service. Multiple service
@@ -300,6 +317,13 @@ type PlanServiceHandler interface {
 	SkipStaple(context.Context, *v1.SkipStapleRequest) (*v1.SkipStapleResponse, error)
 	// Stop skipping a staple on a date.
 	UnskipStaple(context.Context, *v1.UnskipStapleRequest) (*v1.UnskipStapleResponse, error)
+	// List what's in the freezer: the frozen leftovers of cooks (see
+	// Cook.frozen_servings) not all planned yet, by the date they were
+	// cooked, each with the servings left to plan and the last date they
+	// keep. Plan them with CreatePortion, as shares of their cook on any
+	// later date, or discard them by setting the cook's frozen_servings to
+	// the servings planned.
+	ListFrozenLeftovers(context.Context, *v1.ListFrozenLeftoversRequest) (*v1.ListFrozenLeftoversResponse, error)
 }
 
 // RegisterPlanServiceHandler registers svc as the plans.v1.PlanService implementation on server.
@@ -321,6 +345,7 @@ func RegisterPlanServiceHandler(server *connect.Server, svc PlanServiceHandler) 
 		connect.Method{Spec: planServiceDeleteStapleSpec(), Handler: adapter.deleteStaple},
 		connect.Method{Spec: planServiceSkipStapleSpec(), Handler: adapter.skipStaple},
 		connect.Method{Spec: planServiceUnskipStapleSpec(), Handler: adapter.unskipStaple},
+		connect.Method{Spec: planServiceListFrozenLeftoversSpec(), Handler: adapter.listFrozenLeftovers},
 	)
 }
 
@@ -385,6 +410,10 @@ func (UnimplementedPlanServiceHandler) SkipStaple(context.Context, *v1.SkipStapl
 
 func (UnimplementedPlanServiceHandler) UnskipStaple(context.Context, *v1.UnskipStapleRequest) (*v1.UnskipStapleResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.UnskipStaple is not implemented")
+}
+
+func (UnimplementedPlanServiceHandler) ListFrozenLeftovers(context.Context, *v1.ListFrozenLeftoversRequest) (*v1.ListFrozenLeftoversResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.ListFrozenLeftovers is not implemented")
 }
 
 type planServiceClient struct {
@@ -506,6 +535,14 @@ func (c *planServiceClient) SkipStaple(ctx context.Context, req *v1.SkipStapleRe
 func (c *planServiceClient) UnskipStaple(ctx context.Context, req *v1.UnskipStapleRequest) (*v1.UnskipStapleResponse, error) {
 	var res v1.UnskipStapleResponse
 	if err := c.client.CallUnary(ctx, planServiceUnskipStapleSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) ListFrozenLeftovers(ctx context.Context, req *v1.ListFrozenLeftoversRequest) (*v1.ListFrozenLeftoversResponse, error) {
+	var res v1.ListFrozenLeftoversResponse
+	if err := c.client.CallUnary(ctx, planServiceListFrozenLeftoversSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -687,6 +724,18 @@ func (h planServiceHandler) unskipStaple(ctx context.Context, _ connect.Spec, st
 		return err
 	}
 	res, err := h.svc.UnskipStaple(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) listFrozenLeftovers(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListFrozenLeftoversRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListFrozenLeftovers(ctx, &req)
 	if err != nil {
 		return err
 	}

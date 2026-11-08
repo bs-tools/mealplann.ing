@@ -36,7 +36,10 @@ const (
 	maxTagLength       = 40
 	maxSourceURLLength = 2000
 	// maxFridgeDays is longer than any cooked food keeps in a fridge.
-	maxFridgeDays  = 14
+	maxFridgeDays = 14
+	// maxFreezerDays is a year, longer than cooked food keeps its quality
+	// frozen.
+	maxFreezerDays = 365
 	maxNotesLength = 5000
 	maxQueryLength = 200
 )
@@ -83,6 +86,7 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 		SourceUrl:   r.SourceURL,
 		FridgeDays:  r.FridgeDays,
 		Freezable:   r.Freezable,
+		FreezerDays: r.FreezerDays,
 		Notes:       r.Notes,
 		Favorite:    r.Favorite,
 		Nutrition:   nutritionToProto(r),
@@ -179,6 +183,9 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 	case p.HasFridgeDays() && (p.GetFridgeDays() < 0 || p.GetFridgeDays() > maxFridgeDays):
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
 			"fridge_days must be from 0 to %d; leave it unset if unknown", maxFridgeDays)
+	case p.HasFreezerDays() && (p.GetFreezerDays() < 1 || p.GetFreezerDays() > maxFreezerDays):
+		return nil, connect.Errorf(connect.CodeInvalidArgument,
+			"freezer_days must be from 1 to %d; leave it unset if unknown", maxFreezerDays)
 	}
 	ingredients, err := ingredientsFromProto(p.GetIngredients())
 	if err != nil {
@@ -196,9 +203,12 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 	if err != nil {
 		return nil, err
 	}
-	var fridgeDays *int32
+	var fridgeDays, freezerDays *int32
 	if p.HasFridgeDays() {
 		fridgeDays = new(p.GetFridgeDays())
+	}
+	if p.HasFreezerDays() {
+		freezerDays = new(p.GetFreezerDays())
 	}
 	return &recipes.Recipe{
 		Name:        name,
@@ -212,6 +222,7 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 		SourceURL:   sourceURL,
 		FridgeDays:  fridgeDays,
 		Freezable:   p.GetFreezable(),
+		FreezerDays: freezerDays,
 		Notes:       notes,
 		Favorite:    p.GetFavorite(),
 	}, nil

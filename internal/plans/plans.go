@@ -62,10 +62,16 @@ type Cook struct {
 	Meal  people.Meal
 	Notes string
 	Done  bool
-	// RecipeName and AssignedServings, the servings of all its portions,
-	// are read, and ignored when writing.
+	// FrozenServings is how many of its servings are frozen, on its date:
+	// those its portions eat after the recipe's fridge days come from, and
+	// the rest are in the freezer.
+	FrozenServings float64
+	// RecipeName, AssignedServings, the servings of all its portions, and
+	// LateServings, those of its portions eaten after the recipe's fridge
+	// days, are read, and ignored when writing.
 	RecipeName       string
 	AssignedServings float64
+	LateServings     float64
 	CreateTime       time.Time
 	UpdateTime       time.Time
 }
@@ -89,13 +95,15 @@ type Portion struct {
 	Amount float64
 	Unit   nutrition.Unit
 	Notes  string
-	// Name, the name of the recipe or food, and CookDate and CookRecipeID,
-	// of a share of a cook, are read, and ignored when writing.
-	Name         string
-	CookDate     time.Time
-	CookRecipeID pgtype.UUID
-	CreateTime   time.Time
-	UpdateTime   time.Time
+	// Name, the name of the recipe or food, and CookDate, CookRecipeID and
+	// CookFrozenServings, of a share of a cook, are read, and ignored when
+	// writing.
+	Name               string
+	CookDate           time.Time
+	CookRecipeID       pgtype.UUID
+	CookFrozenServings float64
+	CreateTime         time.Time
+	UpdateTime         time.Time
 }
 
 // Staple is a portion a person eats regularly: servings of a recipe or an
@@ -268,14 +276,15 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 		id := store.NewUUID()
 		cookIDs = append(cookIDs, id)
 		_, _ = q.CreateCook(ctx, &gen.CreateCookParams{
-			ID:          id,
-			HouseholdID: c.HouseholdID,
-			RecipeID:    c.RecipeID,
-			Date:        store.DateToPG(c.Date),
-			Servings:    c.Servings,
-			Meal:        mealToDB(c.Meal),
-			Notes:       c.Notes,
-			Done:        c.Done,
+			ID:             id,
+			HouseholdID:    c.HouseholdID,
+			RecipeID:       c.RecipeID,
+			Date:           store.DateToPG(c.Date),
+			Servings:       c.Servings,
+			Meal:           mealToDB(c.Meal),
+			Notes:          c.Notes,
+			Done:           c.Done,
+			FrozenServings: c.FrozenServings,
 		})
 		p := &gen.CreateCookPortionsParams{HouseholdID: c.HouseholdID, CookID: id}
 		for _, portion := range cp.Portions {
@@ -337,6 +346,30 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 	return cooks, portions, nil
 }
 
+// FrozenCook is a cook with frozen servings in the freezer.
+type FrozenCook struct {
+	*Cook
+	// FridgeDays and FreezerDays are how many days its recipe's leftovers
+	// keep in the fridge and frozen, nil if unknown.
+	FridgeDays  *int32
+	FreezerDays *int32
+}
+
+// ListFrozenCooks lists a household's cooks with frozen servings not all
+// planned yet, by date: what's in the freezer.
+func (r *Repository) ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) ([]*FrozenCook, error) {
+	rows, err := gen.New(r.db).ListFrozenCooks(ctx, householdID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list frozen cooks: %w", err)
+	}
+	list := make([]*FrozenCook, 0, len(rows))
+	for _, row := range rows {
+		c := cookFromDB(&gen.ListCooksRow{Cook: row.Cook, RecipeName: row.RecipeName, LateServings: row.LateServings})
+		list = append(list, &FrozenCook{Cook: c, FridgeDays: row.FridgeDays, FreezerDays: row.FreezerDays})
+	}
+	return list, nil
+}
+
 // UpdateCook replaces a household's cook, other than its times. It returns
 // store.ErrNotFound if the household has no such cook, and a
 // *ReferenceError if its recipe isn't the household's.
@@ -347,14 +380,15 @@ func (r *Repository) UpdateCook(ctx context.Context, c *Cook) (*Cook, error) {
 	b.Read(func(db store.Querier) error {
 		var err error
 		updated, err = gen.New(db).UpdateCook(ctx, &gen.UpdateCookParams{
-			ID:          c.ID,
-			HouseholdID: c.HouseholdID,
-			RecipeID:    c.RecipeID,
-			Date:        store.DateToPG(c.Date),
-			Servings:    c.Servings,
-			Meal:        mealToDB(c.Meal),
-			Notes:       c.Notes,
-			Done:        c.Done,
+			ID:             c.ID,
+			HouseholdID:    c.HouseholdID,
+			RecipeID:       c.RecipeID,
+			Date:           store.DateToPG(c.Date),
+			Servings:       c.Servings,
+			Meal:           mealToDB(c.Meal),
+			Notes:          c.Notes,
+			Done:           c.Done,
+			FrozenServings: c.FrozenServings,
 		})
 		return err
 	})
@@ -662,8 +696,10 @@ func cookFromDB(row *gen.ListCooksRow) *Cook {
 		Meal:             mealFromDB(c.Meal),
 		Notes:            c.Notes,
 		Done:             c.Done,
+		FrozenServings:   c.FrozenServings,
 		RecipeName:       row.RecipeName,
 		AssignedServings: row.AssignedServings,
+		LateServings:     row.LateServings,
 		CreateTime:       c.CreateTime.Time,
 		UpdateTime:       c.UpdateTime.Time,
 	}
@@ -672,22 +708,23 @@ func cookFromDB(row *gen.ListCooksRow) *Cook {
 func portionFromDB(row *gen.ListPortionsRow) *Portion {
 	p := &row.Portion
 	return &Portion{
-		ID:           p.ID,
-		HouseholdID:  p.HouseholdID,
-		PersonID:     p.PersonID,
-		EatingTimeID: p.EatingTimeID,
-		Date:         store.DateFromPG(p.Date),
-		CookID:       p.CookID,
-		Servings:     orZero(p.Servings),
-		FoodID:       p.FoodID,
-		Amount:       orZero(p.Amount),
-		Unit:         unitFromDB(p.Unit),
-		Notes:        p.Notes,
-		Name:         row.Name,
-		CookDate:     store.DateFromPG(row.CookDate),
-		CookRecipeID: row.CookRecipeID,
-		CreateTime:   p.CreateTime.Time,
-		UpdateTime:   p.UpdateTime.Time,
+		ID:                 p.ID,
+		HouseholdID:        p.HouseholdID,
+		PersonID:           p.PersonID,
+		EatingTimeID:       p.EatingTimeID,
+		Date:               store.DateFromPG(p.Date),
+		CookID:             p.CookID,
+		Servings:           orZero(p.Servings),
+		FoodID:             p.FoodID,
+		Amount:             orZero(p.Amount),
+		Unit:               unitFromDB(p.Unit),
+		Notes:              p.Notes,
+		Name:               row.Name,
+		CookDate:           store.DateFromPG(row.CookDate),
+		CookRecipeID:       row.CookRecipeID,
+		CookFrozenServings: orZero(row.CookFrozenServings),
+		CreateTime:         p.CreateTime.Time,
+		UpdateTime:         p.UpdateTime.Time,
 	}
 }
 

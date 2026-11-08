@@ -1,6 +1,6 @@
 -- name: CreateCook :execrows
-insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done)
-values (@id, @household_id, @recipe_id, @date, @servings, @meal, @notes, @done);
+insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done, frozen_servings)
+values (@id, @household_id, @recipe_id, @date, @servings, @meal, @notes, @done, @frozen_servings);
 
 -- name: UpdateCook :execrows
 update cooks set
@@ -10,6 +10,7 @@ update cooks set
   meal = @meal,
   notes = @notes,
   done = @done,
+  frozen_servings = @frozen_servings,
   update_time = now()
 where id = @id and household_id = @household_id;
 
@@ -18,12 +19,17 @@ delete from cooks where id = @id and household_id = @household_id;
 
 -- name: ListCooks :many
 -- The household's cooks, given by ID or cooked in a range of dates, with
--- their recipe's name, and the servings of all their portions, whatever
--- their date.
+-- their recipe's name, the servings of all their portions, whatever their
+-- date, and of those eaten after the recipe's fridge days, which come from
+-- the freezer.
 select
   sqlc.embed(cooks),
   r.name as recipe_name,
-  coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings
+  coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
+  coalesce((
+    select sum(p.servings) from portions p
+    where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
+  ), 0)::double precision as late_servings
 from cooks
 join recipes r on r.id = cooks.recipe_id
 where cooks.household_id = @household_id
@@ -77,7 +83,8 @@ select
   sqlc.embed(portions),
   coalesce(r.name, f.name, '')::text as name,
   c.date as cook_date,
-  c.recipe_id as cook_recipe_id
+  c.recipe_id as cook_recipe_id,
+  c.frozen_servings as cook_frozen_servings
 from portions
 left join cooks c on c.id = portions.cook_id
 left join recipes r on r.id = c.recipe_id
@@ -153,3 +160,22 @@ where household_id = @household_id
   and (sqlc.narg(from_date)::date is null or date >= sqlc.narg(from_date))
   and (sqlc.narg(to_date)::date is null or date <= sqlc.narg(to_date))
 order by staple_id, date;
+
+-- name: ListFrozenCooks :many
+-- The household's cooks with frozen servings not all planned yet: those in
+-- the freezer, with their recipe's name and keeping days, and the servings
+-- of their portions eaten after the recipe's fridge days, by date.
+select
+  sqlc.embed(cooks),
+  r.name as recipe_name,
+  r.fridge_days,
+  r.freezer_days,
+  late.servings::double precision as late_servings
+from cooks
+join recipes r on r.id = cooks.recipe_id
+cross join lateral (
+  select coalesce(sum(p.servings), 0) as servings from portions p
+  where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
+) late
+where cooks.household_id = @household_id and cooks.frozen_servings > late.servings + 0.01
+order by cooks.date, cooks.id;

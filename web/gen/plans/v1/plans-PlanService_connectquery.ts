@@ -140,3 +140,15 @@ export const skipStaple = PlanService.method.skipStaple;
  * @generated from rpc plans.v1.PlanService.UnskipStaple
  */
 export const unskipStaple = PlanService.method.unskipStaple;
+
+/**
+ * List what's in the freezer: the frozen leftovers of cooks (see
+ * Cook.frozen_servings) not all planned yet, by the date they were
+ * cooked, each with the servings left to plan and the last date they
+ * keep. Plan them with CreatePortion, as shares of their cook on any
+ * later date, or discard them by setting the cook's frozen_servings to
+ * the servings planned.
+ *
+ * @generated from rpc plans.v1.PlanService.ListFrozenLeftovers
+ */
+export const listFrozenLeftovers = PlanService.method.listFrozenLeftovers;
