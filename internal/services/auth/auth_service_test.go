@@ -142,7 +142,7 @@ func TestIsLocalURL(t *testing.T) {
 		"http://app.localhost:8080": true,
 		"http://127.0.0.1:8080":     true,
 		"http://[::1]:8080":         true,
-		"https://foodplann.ing":     false,
+		"https://mealplann.ing":     false,
 		"http://0.0.0.0:8080":       false,
 		"http://192.168.1.2:8080":   false,
 	} {

@@ -88,12 +88,12 @@ Tailwind CSS v4 and Leaflet. The server embeds the bundle in `dist/` and serves
 - Calendar dates are `YYYY-MM-DD` strings in local time, handled by
   `helpers/dates.ts`. Never use `toISOString` for them.
 - Store preferences with `helpers/storage.ts`, under keys starting with
-  `foodplanning.`.
+  `mealplanning.`.
 - Write text in sentence case and American spelling, for home cooks:
   "New recipe", "Delete meal plan?". Subtitles, hints and validation messages
   are full sentences. Pending labels end with an ellipsis character:
   "Saving…". Separate items with " · ".
-- The app is called "foodplann.ing", in lowercase.
+- The app is called "mealplann.ing", in lowercase.
 
 ## Charts
 

@@ -39,7 +39,7 @@ in a comment any resource that could cost money:
 ## Configuration
 
 - The server reads each flag `-foo-bar` from the environment variable
-  `FOODPLANNING_FOO_BAR`. Set plain values in the service's `env` map, and
+  `MEALPLANNING_FOO_BAR`. Set plain values in the service's `env` map, and
   secrets in the map from variable to secret ID.
 - Secrets are created here without values, which are added with `gcloud
   secrets versions add` so they never enter the Terraform state.

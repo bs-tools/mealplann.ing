@@ -30,7 +30,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
 
 resource "google_service_account" "terraform" {
   account_id   = "github-terraform"
-  display_name = "Applies foodplann.ing Terraform from GitHub Actions"
+  display_name = "Applies mealplann.ing Terraform from GitHub Actions"
 
   depends_on = [google_project_service.services]
 }
@@ -67,7 +67,7 @@ resource "google_project_iam_member" "terraform" {
 
 resource "google_service_account" "terraform_plan" {
   account_id   = "github-terraform-plan"
-  display_name = "Plans foodplann.ing Terraform changes in GitHub Actions pull requests"
+  display_name = "Plans mealplann.ing Terraform changes in GitHub Actions pull requests"
 
   depends_on = [google_project_service.services]
 }

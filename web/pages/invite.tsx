@@ -42,7 +42,7 @@ const inviteTitle = (invitation: Invitation): string => {
   if (invitation.bootstrap) {
     return "Create the administrator account";
   }
-  return `${invitation.createdByName} invited you to foodplann.ing`;
+  return `${invitation.createdByName} invited you to mealplann.ing`;
 };
 
 interface InviteFormProps {
@@ -94,7 +94,7 @@ const InviteForm: React.FC<InviteFormProps> = ({ token, invitation }) => {
       )}
       <p className="text-sm text-gray-600">
         {newUser
-          ? "foodplann.ing signs you in with a passkey instead of a password: your device's fingerprint, face or screen lock."
+          ? "mealplann.ing signs you in with a passkey instead of a password: your device's fingerprint, face or screen lock."
           : "Create a passkey on this device to sign in here with your fingerprint, face or screen lock."}
       </p>
       {passkeysSupported() ? (

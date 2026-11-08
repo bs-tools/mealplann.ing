@@ -15,7 +15,7 @@ import (
 const templateName = "index.html"
 
 // defaultTitle is the title of pages without their own.
-const defaultTitle = "foodplann.ing"
+const defaultTitle = "mealplann.ing"
 
 // defaultDescription describes pages without their own description.
 const defaultDescription = "Vegan meal planning for the whole household: recipes, weekly plans, the pantry and the shopping list."
@@ -49,7 +49,7 @@ var indexTemplate = template.Must(template.New(templateName).Parse(
     {{- end }}
     {{- if .URL }}
     <link rel="canonical" href="{{ .URL }}" />
-    <meta property="og:site_name" content="foodplann.ing" />
+    <meta property="og:site_name" content="mealplann.ing" />
     <meta property="og:type" content="{{ or .Type "website" }}" />
     <meta property="og:title" content="{{ .Title }}" />
     <meta property="og:url" content="{{ .URL }}" />
@@ -73,13 +73,13 @@ var indexTemplate = template.Must(template.New(templateName).Parse(
     <link rel="apple-touch-icon" href="/img/icon-192.png" />
     <meta name="theme-color" content="#111111" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="foodplann.ing" />
+    <meta name="apple-mobile-web-app-title" content="mealplann.ing" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <script src="{{ .JS }}" defer></script>
   </head>
   <body class="h-full">
     <div id="root" class="h-full"></div>
-    <div id="splash" class="splash" role="status" aria-label="Loading foodplann.ing">
+    <div id="splash" class="splash" role="status" aria-label="Loading mealplann.ing">
       <div class="splash-content">
         <svg class="splash-mark" aria-hidden="true" viewBox="0 0 40 26" fill="none">
           <path class="splash-bowl" pathLength="1" d="M3 13 L37 13 C 35 20, 28 23, 20 23 C 12 23, 5 20, 3 13" stroke="#4b9338" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
@@ -89,7 +89,7 @@ var indexTemplate = template.Must(template.New(templateName).Parse(
           </g>
           <path d="M15 25 L25 25" stroke="#404040" stroke-width="1.5" stroke-linecap="round" />
         </svg>
-        <div class="splash-wordmark">foodplann<span>.ing</span></div>
+        <div class="splash-wordmark">mealplann<span>.ing</span></div>
         <p class="splash-status">Setting the table…</p>
       </div>
     </div>
@@ -106,7 +106,7 @@ var indexTemplate = template.Must(template.New(templateName).Parse(
 // Page describes a page for search engines and link previews, which don't
 // run the single page application.
 type Page struct {
-	// The title of the page. Defaults to "foodplann.ing".
+	// The title of the page. Defaults to "mealplann.ing".
 	Title string
 	// A short description of the page. Defaults to a description of the
 	// app.

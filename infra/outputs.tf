@@ -19,8 +19,8 @@ output "terraform_service_account" {
 }
 
 output "domain_records" {
-  description = "The DNS records to create for the custom domain."
-  value       = local.domain != "" && var.service_enabled ? google_cloud_run_domain_mapping.domain[0].status[0].resource_records : []
+  description = "The DNS records to create for each domain mapped to the service."
+  value       = { for domain, mapping in google_cloud_run_domain_mapping.domain : domain => mapping.status[0].resource_records }
 }
 
 output "terraform_plan_service_account" {

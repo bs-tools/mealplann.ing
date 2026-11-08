@@ -158,7 +158,7 @@ const Invitations: React.FC<InvitationsProps> = ({ admin }) => {
             }}
           >
             <p className="text-sm text-gray-600">
-              foodplann.ing is invite only. Invite someone by sending them a
+              mealplann.ing is invite only. Invite someone by sending them a
               link; they create their account with a passkey.
             </p>
             <div className="flex flex-wrap items-end gap-2">

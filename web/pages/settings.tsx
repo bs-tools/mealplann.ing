@@ -106,7 +106,7 @@ const ApiTokens: React.FC = () => {
     <Card title="API tokens">
       <div className="flex flex-col gap-4">
         <p className="text-sm text-gray-600">
-          API tokens let AI agents and other clients use foodplann.ing on your
+          API tokens let AI agents and other clients use mealplann.ing on your
           behalf with an{" "}
           <code className="rounded bg-gray-100 px-1">
             Authorization: Bearer &lt;token&gt;
@@ -171,11 +171,11 @@ const ApiTokens: React.FC = () => {
 
 const McpInstructions: React.FC = () => {
   const endpoint = `${globalThis.location.origin}/mcp`;
-  const command = `claude mcp add --transport http foodplanning ${endpoint} --header "Authorization: Bearer <token>"`;
+  const command = `claude mcp add --transport http mealplanning ${endpoint} --header "Authorization: Bearer <token>"`;
   const json = JSON.stringify(
     {
       mcpServers: {
-        foodplanning: {
+        mealplanning: {
           headers: { Authorization: "Bearer <token>" },
           type: "http",
           url: endpoint,
@@ -189,7 +189,7 @@ const McpInstructions: React.FC = () => {
     <Card title="Connect your AI agent (MCP)">
       <div className="flex flex-col gap-4 text-sm text-gray-700">
         <p>
-          foodplann.ing is also an{" "}
+          mealplann.ing is also an{" "}
           <a
             href="https://modelcontextprotocol.io"
             target="_blank"
@@ -213,7 +213,7 @@ const McpInstructions: React.FC = () => {
           </span>
           <p>
             Add a custom connector with the endpoint above. You&apos;ll be asked
-            to sign in to foodplann.ing and approve the connection, and the app
+            to sign in to mealplann.ing and approve the connection, and the app
             shows up under connected apps.
           </p>
         </div>

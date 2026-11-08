@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* The foodplann.ing brand: ink, and a leafy green. */
+  /* The mealplann.ing brand: ink, and a leafy green. */
   --color-ink: #111111;
   --color-leaf: #4b9338;
   --color-leaf-dark: #3b762c;

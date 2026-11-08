@@ -1,4 +1,4 @@
-// The service worker of foodplann.ing, which lets the app be installed and
+// The service worker of mealplann.ing, which lets the app be installed and
 // open without a connection. It's written by hand, not built, as it must be
 // served from the root of the site to control all its pages.
 //
@@ -8,7 +8,7 @@
 // last page seen, which loads the app; the app's API requests always go to
 // the network, so offline it shows what it has in memory.
 
-const CACHE = "foodplann.ing";
+const CACHE = "mealplann.ing";
 // APP_SHELL is the key the last page is cached under, for any page.
 const APP_SHELL = "/__app";
 

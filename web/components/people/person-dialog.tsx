@@ -573,7 +573,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
           />
           <p>
             Enter rules and targets exactly as the person&apos;s care team gave
-            them. foodplann.ing checks the plan against them and warns; it never
+            them. mealplann.ing checks the plan against them and warns; it never
             suggests medical values. Leave a field empty for no rule.
           </p>
         </div>

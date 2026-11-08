@@ -2,10 +2,14 @@ locals {
   service_name = "foodplanning"
   # The Cloud Run URL is deterministic, so it can be used before the
   # service exists.
-  run_url    = "https://${local.service_name}-${data.google_project.this.number}.${var.region}.run.app"
-  domain     = var.domain_enabled ? var.domain : ""
-  public_url = local.domain != "" ? "https://${local.domain}" : local.run_url
-  image_repo = "${var.region}-docker.pkg.dev/${var.project}/${google_artifact_registry_repository.images.repository_id}/server"
+  run_url = "https://${local.service_name}-${data.google_project.this.number}.${var.region}.run.app"
+  domain  = var.domain_enabled ? var.domain : ""
+  # The domains mapped to the service: the custom domain, and the previous
+  # ones, which redirect to it.
+  redirect_domains = var.domain_enabled ? var.redirect_domains : []
+  domains          = local.domain != "" ? toset(concat([local.domain], local.redirect_domains)) : toset([])
+  public_url       = local.domain != "" ? "https://${local.domain}" : local.run_url
+  image_repo       = "${var.region}-docker.pkg.dev/${var.project}/${google_artifact_registry_repository.images.repository_id}/server"
   # Keep the deployed image unless a new one is given, so plans and local
   # applies don't change it.
   image = (var.image != "" ? var.image
@@ -44,7 +48,7 @@ resource "google_artifact_registry_repository" "images" {
   repository_id = "foodplanning"
   location      = var.region
   format        = "DOCKER"
-  description   = "foodplann.ing container images"
+  description   = "mealplann.ing container images"
 
   # Only keep the latest images, to stay within the free storage.
   cleanup_policy_dry_run = false
@@ -68,7 +72,7 @@ resource "google_artifact_registry_repository" "images" {
 
 resource "google_service_account" "run" {
   account_id   = "foodplanning-run"
-  display_name = "foodplann.ing Cloud Run service"
+  display_name = "mealplann.ing Cloud Run service"
 
   depends_on = [google_project_service.services]
 }
@@ -93,7 +97,7 @@ resource "google_secret_manager_secret_iam_member" "run" {
 
 resource "google_billing_budget" "budget" {
   billing_account = var.billing_account
-  display_name    = "foodplann.ing"
+  display_name    = "mealplann.ing"
 
   budget_filter {
     projects               = ["projects/${data.google_project.this.number}"]

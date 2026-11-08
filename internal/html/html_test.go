@@ -13,8 +13,8 @@ func TestRender(t *testing.T) {
 	Render(rec, false, http.StatusOK, Page{
 		Title:         `Chickpeas & "the" <stew>`,
 		Description:   "A warming stew.",
-		URL:           "https://foodplann.example/recipes/chickpea-stew",
-		Image:         "https://foodplann.example/photos/1.jpg",
+		URL:           "https://mealplann.example/recipes/chickpea-stew",
+		Image:         "https://mealplann.example/photos/1.jpg",
 		Type:          "article",
 		PublishedTime: time.Date(2026, 9, 7, 10, 0, 0, 0, time.FixedZone("CEST", 2*3600)),
 	})
@@ -22,10 +22,10 @@ func TestRender(t *testing.T) {
 	for _, want := range []string{
 		`<title>Chickpeas &amp; &#34;the&#34; &lt;stew&gt;</title>`,
 		`<meta name="description" content="A warming stew." />`,
-		`<link rel="canonical" href="https://foodplann.example/recipes/chickpea-stew" />`,
+		`<link rel="canonical" href="https://mealplann.example/recipes/chickpea-stew" />`,
 		`<meta property="og:type" content="article" />`,
 		`<meta property="og:title" content="Chickpeas &amp; &#34;the&#34; &lt;stew&gt;" />`,
-		`<meta property="og:image" content="https://foodplann.example/photos/1.jpg" />`,
+		`<meta property="og:image" content="https://mealplann.example/photos/1.jpg" />`,
 		`<meta name="twitter:card" content="summary_large_image" />`,
 		`<meta property="article:published_time" content="2026-09-07T08:00:00Z" />`,
 		`<script src="/index.js?v=`,
@@ -46,11 +46,11 @@ func TestRenderDefaultImage(t *testing.T) {
 	rec := httptest.NewRecorder()
 	Render(rec, false, http.StatusOK, Page{
 		Title: "Recipes by Jane",
-		URL:   "https://foodplann.example/u/jane",
+		URL:   "https://mealplann.example/u/jane",
 	})
 	body := rec.Body.String()
 	for _, want := range []string{
-		`<meta property="og:image" content="https://foodplann.example/img/og.png" />`,
+		`<meta property="og:image" content="https://mealplann.example/img/og.png" />`,
 		`<meta name="twitter:card" content="summary_large_image" />`,
 	} {
 		if !strings.Contains(body, want) {
@@ -63,7 +63,7 @@ func TestRenderDefault(t *testing.T) {
 	rec := httptest.NewRecorder()
 	ServeIndexHTML(false).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/anything", nil))
 	body := rec.Body.String()
-	if !strings.Contains(body, "<title>foodplann.ing</title>") {
+	if !strings.Contains(body, "<title>mealplann.ing</title>") {
 		t.Errorf("page has no default title:\n%s", body)
 	}
 	if !strings.Contains(body, `<meta name="description" content="Vegan meal planning for the whole household: recipes, weekly plans, the pantry and the shopping list." />`) {

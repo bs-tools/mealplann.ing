@@ -37,7 +37,7 @@ const PrivacyPage: React.FC = () => (
       </header>
 
       <p>
-        foodplann.ing is a small, invite-only web app for planning vegan meals
+        mealplann.ing is a small, invite-only web app for planning vegan meals
         for a household: recipes, weekly meal plans, the pantry and the shopping
         list, with nutrition checked against each person&apos;s targets. This
         policy explains what data it keeps about you, and what you can do about
@@ -194,7 +194,7 @@ const PrivacyPage: React.FC = () => (
 
       <footer className="border-t border-stone-200 pt-4 text-gray-500">
         <Link to="/" className="font-medium text-brand-600 hover:underline">
-          Back to foodplann.ing
+          Back to mealplann.ing
         </Link>
       </footer>
     </article>
