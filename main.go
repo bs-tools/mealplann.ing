@@ -558,6 +558,11 @@ const envPrefix = "FOODPLANNING_"
 // setFlagsFromEnv sets flags that weren't set on the command line from
 // environment variables named FOODPLANNING_<FLAG>, e.g. FOODPLANNING_DATABASE_URL
 // for -database-url. This allows passing secrets through the environment.
+// Values are trimmed of surrounding whitespace: secrets are usually added
+// from a command's output, like `openssl rand -hex 24 | gcloud secrets
+// versions add`, which ends with a newline that would otherwise become part
+// of the value, so the admin bootstrap token would never match an
+// invitation link.
 func setFlagsFromEnv(fs *flag.FlagSet) error {
 	set := map[string]bool{}
 	fs.Visit(func(f *flag.Flag) { set[f.Name] = true })
@@ -568,7 +573,7 @@ func setFlagsFromEnv(fs *flag.FlagSet) error {
 		}
 		name := envPrefix + strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
 		if value, ok := os.LookupEnv(name); ok {
-			if setErr := f.Value.Set(value); setErr != nil {
+			if setErr := f.Value.Set(strings.TrimSpace(value)); setErr != nil {
 				err = fmt.Errorf("invalid value for %s: %w", name, setErr)
 			}
 		}
