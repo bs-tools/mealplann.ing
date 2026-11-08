@@ -106,6 +106,8 @@ func cookToProto(c *plans.Cook) *plansv1.Cook {
 		Done:           c.Done,
 		FrozenServings: c.FrozenServings,
 		CreateTime:     timestamppb.New(c.CreateTime),
+		Supplies:       suppliesToProto(c.Supplies),
+		Supplying:      suppliesToProto(c.Supplying),
 		UpdateTime:     timestamppb.New(c.UpdateTime),
 	}.Build()
 }
@@ -338,4 +340,13 @@ func mealFromProto(m peoplev1.HouseholdMeal) (people.Meal, error) {
 			"meal is required: HOUSEHOLD_MEAL_BREAKFAST, HOUSEHOLD_MEAL_LUNCH or HOUSEHOLD_MEAL_DINNER")
 	}
 	return meal, nil
+}
+
+// suppliesToProto converts supplies.
+func suppliesToProto(list []*plans.Supply) []*plansv1.CookSupply {
+	result := make([]*plansv1.CookSupply, 0, len(list))
+	for _, s := range list {
+		result = append(result, supplyToProto(s))
+	}
+	return result
 }

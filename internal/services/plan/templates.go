@@ -331,7 +331,8 @@ func (s *Service) applyTemplate(ctx context.Context, rawID, rawStart string, raw
 	wg.Go(func() {
 		var ids []pgtype.UUID
 		for _, id := range unique(recipeIDs) {
-			for _, in := range d.recipes[id].Ingredients {
+			r := d.recipes[id]
+			for _, in := range r.IngredientsFor(float64(r.Servings)) {
 				ids = append(ids, in.FoodID)
 			}
 		}
@@ -340,10 +341,10 @@ func (s *Service) applyTemplate(ctx context.Context, rawID, rawStart string, raw
 	wg.Go(func() { lots, lotsErr = s.pantry.ListItems(ctx, user.HouseholdID()) })
 	var cooks []*plans.Cook
 	var portions [][]*plans.Portion
+	toCreate := withSuppliers(applied.Cooks, d.recipes)
 	if dryRun {
-		for _, c := range applied.Cooks {
+		for _, c := range toCreate {
 			cook := *c.Cook
-			cook.ID = store.NewUUID()
 			cook.RecipeName = d.recipes[cook.RecipeID].Name
 			var list []*plans.Portion
 			for _, p := range c.Portions {
@@ -358,8 +359,8 @@ func (s *Service) applyTemplate(ctx context.Context, rawID, rawStart string, raw
 			cooks = append(cooks, &cook)
 			portions = append(portions, list)
 		}
-	} else if len(applied.Cooks) > 0 {
-		cooks, portions, err = s.plans.CreateCooksWithPortions(ctx, applied.Cooks)
+	} else if len(toCreate) > 0 {
+		cooks, portions, err = s.plans.CreateCooksWithPortions(ctx, toCreate)
 	}
 	wg.Wait()
 	if err != nil {

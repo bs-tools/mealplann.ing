@@ -89,7 +89,8 @@ type RecipeServiceClient interface {
 	// with the update_mask "favorite".
 	UpdateRecipe(context.Context, *v1.UpdateRecipeRequest) (*v1.UpdateRecipeResponse, error)
 	// Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
-	// the plan (see PlanService) use it: delete them first.
+	// the plan (see PlanService), or other recipes as a component, use it:
+	// delete or change them first.
 	DeleteRecipe(context.Context, *v1.DeleteRecipeRequest) (*v1.DeleteRecipeResponse, error)
 }
 
@@ -114,7 +115,8 @@ type RecipeServiceHandler interface {
 	// with the update_mask "favorite".
 	UpdateRecipe(context.Context, *v1.UpdateRecipeRequest) (*v1.UpdateRecipeResponse, error)
 	// Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
-	// the plan (see PlanService) use it: delete them first.
+	// the plan (see PlanService), or other recipes as a component, use it:
+	// delete or change them first.
 	DeleteRecipe(context.Context, *v1.DeleteRecipeRequest) (*v1.DeleteRecipeResponse, error)
 }
 

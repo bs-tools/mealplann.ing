@@ -30,6 +30,7 @@ type Repository interface {
 	ListRecipes(ctx context.Context, householdID pgtype.UUID, filter recipes.ListFilter) ([]*recipes.Recipe, []string, error)
 	UpdateRecipe(ctx context.Context, recipe *recipes.Recipe) (*recipes.Recipe, error)
 	DeleteRecipe(ctx context.Context, householdID, id pgtype.UUID) error
+	ListRecipesByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*recipes.Recipe, error)
 }
 
 // Service implements the RecipeService.
@@ -42,6 +43,39 @@ type Service struct {
 // NewService returns a RecipeService storing recipes in the repository.
 func NewService(log *slog.Logger, report *errreport.Reporter, recipes Repository) *Service {
 	return &Service{log: log, report: report, recipes: recipes}
+}
+
+// checkComponents checks that a recipe's components don't use it, as
+// that would make it of itself, and don't nest deeper than
+// recipes.MaxComponentDepth. Components that aren't the household's are
+// left for the repository to refuse.
+func (s *Service) checkComponents(ctx context.Context, recipe *recipes.Recipe) error {
+	var ids []pgtype.UUID
+	for _, in := range recipe.Ingredients {
+		if in.IsComponent() {
+			ids = append(ids, in.ComponentRecipeID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	components, err := s.recipes.ListRecipesByID(ctx, recipe.HouseholdID, ids)
+	if err != nil {
+		return s.toConnectError(ctx, err, "failed to read the recipe's components")
+	}
+	for _, c := range components {
+		switch {
+		case recipe.ID.Valid && c.ID == recipe.ID:
+			return connect.NewError(connect.CodeInvalidArgument, "a recipe can't be an ingredient of itself")
+		case recipe.ID.Valid && c.UsesRecipe(recipe.ID):
+			return connect.Errorf(connect.CodeInvalidArgument,
+				"%s uses this recipe as an ingredient, so it can't be one of this recipe's", c.Name)
+		case 1+c.Depth() > recipes.MaxComponentDepth:
+			return connect.Errorf(connect.CodeInvalidArgument,
+				"%s has components with components of their own, which nests too deep: components can have components, but no deeper", c.Name)
+		}
+	}
+	return nil
 }
 
 // keepFields are the fields of a recipe updates don't change.
@@ -57,6 +91,9 @@ func (s *Service) CreateRecipe(ctx context.Context, req *recipesv1.CreateRecipeR
 		return nil, err
 	}
 	recipe.HouseholdID = user.HouseholdID()
+	if err := s.checkComponents(ctx, recipe); err != nil {
+		return nil, err
+	}
 	created, err := s.recipes.CreateRecipe(ctx, recipe)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to create recipe")
@@ -131,6 +168,9 @@ func (s *Service) UpdateRecipe(ctx context.Context, req *recipesv1.UpdateRecipeR
 	}
 	recipe.ID = existing.ID
 	recipe.HouseholdID = existing.HouseholdID
+	if err := s.checkComponents(ctx, recipe); err != nil {
+		return nil, err
+	}
 	updated, err := s.recipes.UpdateRecipe(ctx, recipe)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to update recipe")
@@ -173,6 +213,19 @@ func (s *Service) toConnectError(ctx context.Context, err error, msg string) err
 		}
 		return connect.Errorf(connect.CodeInvalidArgument,
 			"the ingredients' foods %s aren't in your household; find the household's foods with ListFoods, or create them with CreateFood",
+			strings.Join(ids, ", "))
+	}
+	if errors.Is(err, recipes.ErrUsedAsComponent) {
+		return connect.NewError(connect.CodeFailedPrecondition,
+			"other recipes use the recipe as an ingredient: remove it from them first with UpdateRecipe, or keep the recipe")
+	}
+	if unknown, ok := errors.AsType[*recipes.UnknownComponentsError](err); ok {
+		ids := make([]string, 0, len(unknown.RecipeIDs))
+		for _, id := range unknown.RecipeIDs {
+			ids = append(ids, store.UUIDToString(id))
+		}
+		return connect.Errorf(connect.CodeInvalidArgument,
+			"the ingredients' recipes %s aren't in your household; find the household's recipes with ListRecipes",
 			strings.Join(ids, ", "))
 	}
 	if errors.Is(err, recipes.ErrPlanned) {

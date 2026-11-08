@@ -26,29 +26,31 @@ const (
 
 // A recipe.
 type Recipe struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id          string                 `protobuf:"bytes,1,opt,name=id,proto3"`
-	xxx_hidden_Name        string                 `protobuf:"bytes,2,opt,name=name,proto3"`
-	xxx_hidden_Description string                 `protobuf:"bytes,3,opt,name=description,proto3"`
-	xxx_hidden_Servings    int32                  `protobuf:"varint,4,opt,name=servings,proto3"`
-	xxx_hidden_PrepSeconds int32                  `protobuf:"varint,5,opt,name=prep_seconds,json=prepSeconds,proto3"`
-	xxx_hidden_CookSeconds int32                  `protobuf:"varint,6,opt,name=cook_seconds,json=cookSeconds,proto3"`
-	xxx_hidden_Ingredients *[]*Ingredient         `protobuf:"bytes,7,rep,name=ingredients,proto3"`
-	xxx_hidden_Steps       []string               `protobuf:"bytes,8,rep,name=steps,proto3"`
-	xxx_hidden_Tags        []string               `protobuf:"bytes,9,rep,name=tags,proto3"`
-	xxx_hidden_SourceUrl   string                 `protobuf:"bytes,10,opt,name=source_url,json=sourceUrl,proto3"`
-	xxx_hidden_FridgeDays  int32                  `protobuf:"varint,11,opt,name=fridge_days,json=fridgeDays,proto3,oneof"`
-	xxx_hidden_Freezable   bool                   `protobuf:"varint,12,opt,name=freezable,proto3"`
-	xxx_hidden_Notes       string                 `protobuf:"bytes,13,opt,name=notes,proto3"`
-	xxx_hidden_Nutrition   *RecipeNutrition       `protobuf:"bytes,14,opt,name=nutrition,proto3"`
-	xxx_hidden_CreateTime  *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=create_time,json=createTime,proto3"`
-	xxx_hidden_UpdateTime  *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=update_time,json=updateTime,proto3"`
-	xxx_hidden_Favorite    bool                   `protobuf:"varint,17,opt,name=favorite,proto3"`
-	xxx_hidden_FreezerDays int32                  `protobuf:"varint,18,opt,name=freezer_days,json=freezerDays,proto3,oneof"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id            string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_Name          string                 `protobuf:"bytes,2,opt,name=name,proto3"`
+	xxx_hidden_Description   string                 `protobuf:"bytes,3,opt,name=description,proto3"`
+	xxx_hidden_Servings      int32                  `protobuf:"varint,4,opt,name=servings,proto3"`
+	xxx_hidden_PrepSeconds   int32                  `protobuf:"varint,5,opt,name=prep_seconds,json=prepSeconds,proto3"`
+	xxx_hidden_CookSeconds   int32                  `protobuf:"varint,6,opt,name=cook_seconds,json=cookSeconds,proto3"`
+	xxx_hidden_Ingredients   *[]*Ingredient         `protobuf:"bytes,7,rep,name=ingredients,proto3"`
+	xxx_hidden_Steps         []string               `protobuf:"bytes,8,rep,name=steps,proto3"`
+	xxx_hidden_Tags          []string               `protobuf:"bytes,9,rep,name=tags,proto3"`
+	xxx_hidden_SourceUrl     string                 `protobuf:"bytes,10,opt,name=source_url,json=sourceUrl,proto3"`
+	xxx_hidden_FridgeDays    int32                  `protobuf:"varint,11,opt,name=fridge_days,json=fridgeDays,proto3,oneof"`
+	xxx_hidden_Freezable     bool                   `protobuf:"varint,12,opt,name=freezable,proto3"`
+	xxx_hidden_Notes         string                 `protobuf:"bytes,13,opt,name=notes,proto3"`
+	xxx_hidden_Nutrition     *RecipeNutrition       `protobuf:"bytes,14,opt,name=nutrition,proto3"`
+	xxx_hidden_CreateTime    *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=create_time,json=createTime,proto3"`
+	xxx_hidden_UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=update_time,json=updateTime,proto3"`
+	xxx_hidden_Favorite      bool                   `protobuf:"varint,17,opt,name=favorite,proto3"`
+	xxx_hidden_FreezerDays   int32                  `protobuf:"varint,18,opt,name=freezer_days,json=freezerDays,proto3,oneof"`
+	xxx_hidden_PrepAheadDays int32                  `protobuf:"varint,19,opt,name=prep_ahead_days,json=prepAheadDays,proto3"`
+	xxx_hidden_PrepAheadNote string                 `protobuf:"bytes,20,opt,name=prep_ahead_note,json=prepAheadNote,proto3"`
+	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
+	XXX_presence             [1]uint32
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *Recipe) Reset() {
@@ -204,6 +206,20 @@ func (x *Recipe) GetFreezerDays() int32 {
 	return 0
 }
 
+func (x *Recipe) GetPrepAheadDays() int32 {
+	if x != nil {
+		return x.xxx_hidden_PrepAheadDays
+	}
+	return 0
+}
+
+func (x *Recipe) GetPrepAheadNote() string {
+	if x != nil {
+		return x.xxx_hidden_PrepAheadNote
+	}
+	return ""
+}
+
 func (x *Recipe) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -246,7 +262,7 @@ func (x *Recipe) SetSourceUrl(v string) {
 
 func (x *Recipe) SetFridgeDays(v int32) {
 	x.xxx_hidden_FridgeDays = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 20)
 }
 
 func (x *Recipe) SetFreezable(v bool) {
@@ -275,7 +291,15 @@ func (x *Recipe) SetFavorite(v bool) {
 
 func (x *Recipe) SetFreezerDays(v int32) {
 	x.xxx_hidden_FreezerDays = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 20)
+}
+
+func (x *Recipe) SetPrepAheadDays(v int32) {
+	x.xxx_hidden_PrepAheadDays = v
+}
+
+func (x *Recipe) SetPrepAheadNote(v string) {
+	x.xxx_hidden_PrepAheadNote = v
 }
 
 func (x *Recipe) HasFridgeDays() bool {
@@ -388,6 +412,13 @@ type Recipe_builder struct {
 	// 90. Unset if unknown, so frozen leftovers aren't checked against a
 	// limit. From 1 to 365.
 	FreezerDays *int32
+	// How many days before it's cooked it starts, from 0 to 7, e.g. 1 for
+	// beans soaked the night before. The plan shows prep_ahead_note on that
+	// day. 0 if it starts the day it's cooked.
+	PrepAheadDays int32
+	// What to do prep_ahead_days before, e.g. "Soak the chickpeas in plenty
+	// of water". At most 500 characters.
+	PrepAheadNote string
 }
 
 func (b0 Recipe_builder) Build() *Recipe {
@@ -405,7 +436,7 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_Tags = b.Tags
 	x.xxx_hidden_SourceUrl = b.SourceUrl
 	if b.FridgeDays != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 20)
 		x.xxx_hidden_FridgeDays = *b.FridgeDays
 	}
 	x.xxx_hidden_Freezable = b.Freezable
@@ -415,13 +446,16 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_UpdateTime = b.UpdateTime
 	x.xxx_hidden_Favorite = b.Favorite
 	if b.FreezerDays != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 20)
 		x.xxx_hidden_FreezerDays = *b.FreezerDays
 	}
+	x.xxx_hidden_PrepAheadDays = b.PrepAheadDays
+	x.xxx_hidden_PrepAheadNote = b.PrepAheadNote
 	return m0
 }
 
-// An ingredient of a recipe: an amount of a food.
+// An ingredient of a recipe: an amount of a food, or servings of another
+// recipe, a component.
 type Ingredient struct {
 	state                   protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_FoodId       string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
@@ -431,6 +465,8 @@ type Ingredient struct {
 	xxx_hidden_Note         string                 `protobuf:"bytes,5,opt,name=note,proto3"`
 	xxx_hidden_OriginalText string                 `protobuf:"bytes,6,opt,name=original_text,json=originalText,proto3"`
 	xxx_hidden_Optional     bool                   `protobuf:"varint,7,opt,name=optional,proto3"`
+	xxx_hidden_RecipeId     string                 `protobuf:"bytes,8,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_RecipeName   string                 `protobuf:"bytes,9,opt,name=recipe_name,json=recipeName,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -509,6 +545,20 @@ func (x *Ingredient) GetOptional() bool {
 	return false
 }
 
+func (x *Ingredient) GetRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeId
+	}
+	return ""
+}
+
+func (x *Ingredient) GetRecipeName() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeName
+	}
+	return ""
+}
+
 func (x *Ingredient) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -537,17 +587,27 @@ func (x *Ingredient) SetOptional(v bool) {
 	x.xxx_hidden_Optional = v
 }
 
+func (x *Ingredient) SetRecipeId(v string) {
+	x.xxx_hidden_RecipeId = v
+}
+
+func (x *Ingredient) SetRecipeName(v string) {
+	x.xxx_hidden_RecipeName = v
+}
+
 type Ingredient_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The ID of the household's food. Required.
+	// The ID of the household's food. Required, unless recipe_id is set.
 	FoodId string
 	// The name of the food.
 	FoodName string
-	// The amount, in unit. More than 0.
+	// The amount, in unit of a food, or in servings of a component. More
+	// than 0.
 	Amount float64
-	// The unit of the amount. Required. Amounts in milliliters or pieces are
-	// weighed with the food's grams_per_milliliter or grams_per_piece.
+	// The unit of a food's amount. Required for a food, and unspecified for
+	// a component. Amounts in milliliters or pieces are weighed with the
+	// food's grams_per_milliliter or grams_per_piece.
 	Unit v1.AmountUnit
 	// How the food is prepared, e.g. "finely chopped" or "drained". At most
 	// 200 characters.
@@ -559,6 +619,11 @@ type Ingredient_builder struct {
 	// Whether the ingredient is optional, like a garnish. Optional
 	// ingredients aren't counted in the nutrition.
 	Optional bool
+	// The ID of the household's recipe used as a component, instead of a
+	// food, e.g. "Cooked chickpeas". Its nutrition counts per serving.
+	RecipeId string
+	// The name of the component's recipe.
+	RecipeName string
 }
 
 func (b0 Ingredient_builder) Build() *Ingredient {
@@ -572,6 +637,8 @@ func (b0 Ingredient_builder) Build() *Ingredient {
 	x.xxx_hidden_Note = b.Note
 	x.xxx_hidden_OriginalText = b.OriginalText
 	x.xxx_hidden_Optional = b.Optional
+	x.xxx_hidden_RecipeId = b.RecipeId
+	x.xxx_hidden_RecipeName = b.RecipeName
 	return m0
 }
 
@@ -739,7 +806,8 @@ func (b0 RecipeNutrition_builder) Build() *RecipeNutrition {
 	return m0
 }
 
-// An ingredient whose food lacks data the recipe's nutrition needs.
+// An ingredient whose food, or component's recipe, lacks data the recipe's
+// nutrition needs.
 type IngredientIssue struct {
 	state                       protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_IngredientIndex  int32                  `protobuf:"varint,1,opt,name=ingredient_index,json=ingredientIndex,proto3"`
@@ -836,14 +904,15 @@ type IngredientIssue_builder struct {
 
 	// The index of the ingredient in the recipe, from 0.
 	IngredientIndex int32
-	// The ID of the ingredient's food.
+	// The ID of the ingredient's food, empty for a component: fix the
+	// component's own recipe instead.
 	FoodId string
-	// The name of the ingredient's food.
+	// The name of the ingredient's food or component.
 	FoodName string
 	// Whether the amount can't be weighed, as the food has no
 	// grams_per_piece (for pieces) or grams_per_milliliter (for
-	// milliliters). The ingredient is then left out of the nutrition
-	// entirely.
+	// milliliters), or the component's recipe can't be weighed. The
+	// ingredient is then left out of the nutrition entirely.
 	UnknownWeight bool
 	// The nutrients the food lacks, by their field name in Nutrients, e.g.
 	// "vitamin_b12_micrograms". Empty if unknown_weight.
@@ -1880,7 +1949,7 @@ var File_recipes_v1_recipes_proto protoreflect.FileDescriptor
 const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\n" +
 	"\x18recipes/v1/recipes.proto\x12\n" +
-	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xbf\x05\n" +
+	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\x8f\x06\n" +
 	"\x06Recipe\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -1904,9 +1973,11 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\vupdate_time\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"updateTime\x12\x1a\n" +
 	"\bfavorite\x18\x11 \x01(\bR\bfavorite\x12&\n" +
-	"\ffreezer_days\x18\x12 \x01(\x05H\x01R\vfreezerDays\x88\x01\x01B\x0e\n" +
+	"\ffreezer_days\x18\x12 \x01(\x05H\x01R\vfreezerDays\x88\x01\x01\x12&\n" +
+	"\x0fprep_ahead_days\x18\x13 \x01(\x05R\rprepAheadDays\x12&\n" +
+	"\x0fprep_ahead_note\x18\x14 \x01(\tR\rprepAheadNoteB\x0e\n" +
 	"\f_fridge_daysB\x0f\n" +
-	"\r_freezer_days\"\xe1\x01\n" +
+	"\r_freezer_days\"\xa7\x02\n" +
 	"\n" +
 	"Ingredient\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12#\n" +
@@ -1915,7 +1986,10 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x04unit\x18\x04 \x01(\x0e2\x14.foods.v1.AmountUnitR\x04unit\x12\x12\n" +
 	"\x04note\x18\x05 \x01(\tR\x04note\x12#\n" +
 	"\roriginal_text\x18\x06 \x01(\tR\foriginalText\x12\x1a\n" +
-	"\boptional\x18\a \x01(\bR\boptional\"\xbd\x02\n" +
+	"\boptional\x18\a \x01(\bR\boptional\x12\x1b\n" +
+	"\trecipe_id\x18\b \x01(\tR\brecipeId\x12'\n" +
+	"\vrecipe_name\x18\t \x01(\tB\x06\xaa\x9f\x19\x02\b\x01R\n" +
+	"recipeName\"\xbd\x02\n" +
 	"\x0fRecipeNutrition\x12\x1f\n" +
 	"\vtotal_grams\x18\x01 \x01(\x01R\n" +
 	"totalGrams\x12*\n" +

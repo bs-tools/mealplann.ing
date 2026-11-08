@@ -38,7 +38,8 @@ export const updateRecipe = RecipeService.method.updateRecipe;
 
 /**
  * Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
- * the plan (see PlanService) use it: delete them first.
+ * the plan (see PlanService), or other recipes as a component, use it:
+ * delete or change them first.
  *
  * @generated from rpc recipes.v1.RecipeService.DeleteRecipe
  */

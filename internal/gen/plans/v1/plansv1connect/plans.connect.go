@@ -36,6 +36,9 @@ const (
 	PlanServiceUpdateCookProcedure = "/plans.v1.PlanService/UpdateCook"
 	// PlanServiceDeleteCookProcedure is the procedure name of the PlanService's DeleteCook RPC.
 	PlanServiceDeleteCookProcedure = "/plans.v1.PlanService/DeleteCook"
+	// PlanServiceSetCookSupplierProcedure is the procedure name of the PlanService's SetCookSupplier
+	// RPC.
+	PlanServiceSetCookSupplierProcedure = "/plans.v1.PlanService/SetCookSupplier"
 	// PlanServiceCreatePortionProcedure is the procedure name of the PlanService's CreatePortion RPC.
 	PlanServiceCreatePortionProcedure = "/plans.v1.PlanService/CreatePortion"
 	// PlanServiceUpdatePortionProcedure is the procedure name of the PlanService's UpdatePortion RPC.
@@ -100,6 +103,13 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("DeleteCook"),
 			Procedure:  PlanServiceDeleteCookProcedure,
+		}
+	})
+	planServiceSetCookSupplierSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("SetCookSupplier"),
+			Procedure:  PlanServiceSetCookSupplierProcedure,
 		}
 	})
 	planServiceCreatePortionSpec = sync.OnceValue(func() connect.Spec {
@@ -211,9 +221,18 @@ type PlanServiceClient interface {
 	// was taken out. Changing a done cook's recipe or servings doesn't change
 	// the pantry: un-mark it first, then mark it done again.
 	UpdateCook(context.Context, *v1.UpdateCookRequest) (*v1.UpdateCookResponse, error)
-	// Delete a cook. Its portions are deleted too. The pantry doesn't change,
-	// even if it was done.
+	// Delete a cook. Its portions are deleted too, and the cooks planned only
+	// to supply its components, if nobody eats them and they aren't done.
+	// The pantry doesn't change, even if it was done.
 	DeleteCook(context.Context, *v1.DeleteCookRequest) (*v1.DeleteCookResponse, error)
+	// Set which cook supplies a component of a cook (see Cook.supplies), e.g.
+	// to make one pot of chickpeas on Monday for Tuesday's chili and
+	// Thursday's curry. The supplier must be a cook of the component's
+	// recipe. The cook that supplied it before is deleted if nothing uses
+	// it any more: nobody eats it, it supplies no other cook, and it isn't
+	// done. The supplier's servings are raised to make enough for the cook
+	// too, if they'd be too few.
+	SetCookSupplier(context.Context, *v1.SetCookSupplierRequest) (*v1.SetCookSupplierResponse, error)
 	// Create a portion: what a person eats at one of their eating times on a
 	// date, either a share of a cook or an amount of a food.
 	CreatePortion(context.Context, *v1.CreatePortionRequest) (*v1.CreatePortionResponse, error)
@@ -290,9 +309,18 @@ type PlanServiceHandler interface {
 	// was taken out. Changing a done cook's recipe or servings doesn't change
 	// the pantry: un-mark it first, then mark it done again.
 	UpdateCook(context.Context, *v1.UpdateCookRequest) (*v1.UpdateCookResponse, error)
-	// Delete a cook. Its portions are deleted too. The pantry doesn't change,
-	// even if it was done.
+	// Delete a cook. Its portions are deleted too, and the cooks planned only
+	// to supply its components, if nobody eats them and they aren't done.
+	// The pantry doesn't change, even if it was done.
 	DeleteCook(context.Context, *v1.DeleteCookRequest) (*v1.DeleteCookResponse, error)
+	// Set which cook supplies a component of a cook (see Cook.supplies), e.g.
+	// to make one pot of chickpeas on Monday for Tuesday's chili and
+	// Thursday's curry. The supplier must be a cook of the component's
+	// recipe. The cook that supplied it before is deleted if nothing uses
+	// it any more: nobody eats it, it supplies no other cook, and it isn't
+	// done. The supplier's servings are raised to make enough for the cook
+	// too, if they'd be too few.
+	SetCookSupplier(context.Context, *v1.SetCookSupplierRequest) (*v1.SetCookSupplierResponse, error)
 	// Create a portion: what a person eats at one of their eating times on a
 	// date, either a share of a cook or an amount of a food.
 	CreatePortion(context.Context, *v1.CreatePortionRequest) (*v1.CreatePortionResponse, error)
@@ -336,6 +364,7 @@ func RegisterPlanServiceHandler(server *connect.Server, svc PlanServiceHandler) 
 		connect.Method{Spec: planServiceCreateCookSpec(), Handler: adapter.createCook},
 		connect.Method{Spec: planServiceUpdateCookSpec(), Handler: adapter.updateCook},
 		connect.Method{Spec: planServiceDeleteCookSpec(), Handler: adapter.deleteCook},
+		connect.Method{Spec: planServiceSetCookSupplierSpec(), Handler: adapter.setCookSupplier},
 		connect.Method{Spec: planServiceCreatePortionSpec(), Handler: adapter.createPortion},
 		connect.Method{Spec: planServiceUpdatePortionSpec(), Handler: adapter.updatePortion},
 		connect.Method{Spec: planServiceDeletePortionSpec(), Handler: adapter.deletePortion},
@@ -374,6 +403,10 @@ func (UnimplementedPlanServiceHandler) UpdateCook(context.Context, *v1.UpdateCoo
 
 func (UnimplementedPlanServiceHandler) DeleteCook(context.Context, *v1.DeleteCookRequest) (*v1.DeleteCookResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.DeleteCook is not implemented")
+}
+
+func (UnimplementedPlanServiceHandler) SetCookSupplier(context.Context, *v1.SetCookSupplierRequest) (*v1.SetCookSupplierResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.SetCookSupplier is not implemented")
 }
 
 func (UnimplementedPlanServiceHandler) CreatePortion(context.Context, *v1.CreatePortionRequest) (*v1.CreatePortionResponse, error) {
@@ -463,6 +496,14 @@ func (c *planServiceClient) UpdateCook(ctx context.Context, req *v1.UpdateCookRe
 func (c *planServiceClient) DeleteCook(ctx context.Context, req *v1.DeleteCookRequest) (*v1.DeleteCookResponse, error) {
 	var res v1.DeleteCookResponse
 	if err := c.client.CallUnary(ctx, planServiceDeleteCookSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) SetCookSupplier(ctx context.Context, req *v1.SetCookSupplierRequest) (*v1.SetCookSupplierResponse, error) {
+	var res v1.SetCookSupplierResponse
+	if err := c.client.CallUnary(ctx, planServiceSetCookSupplierSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -616,6 +657,18 @@ func (h planServiceHandler) deleteCook(ctx context.Context, _ connect.Spec, stre
 		return err
 	}
 	res, err := h.svc.DeleteCook(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) setCookSupplier(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SetCookSupplierRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SetCookSupplier(ctx, &req)
 	if err != nil {
 		return err
 	}

@@ -65,12 +65,26 @@ export const createCook = PlanService.method.createCook;
 export const updateCook = PlanService.method.updateCook;
 
 /**
- * Delete a cook. Its portions are deleted too. The pantry doesn't change,
- * even if it was done.
+ * Delete a cook. Its portions are deleted too, and the cooks planned only
+ * to supply its components, if nobody eats them and they aren't done.
+ * The pantry doesn't change, even if it was done.
  *
  * @generated from rpc plans.v1.PlanService.DeleteCook
  */
 export const deleteCook = PlanService.method.deleteCook;
+
+/**
+ * Set which cook supplies a component of a cook (see Cook.supplies), e.g.
+ * to make one pot of chickpeas on Monday for Tuesday's chili and
+ * Thursday's curry. The supplier must be a cook of the component's
+ * recipe. The cook that supplied it before is deleted if nothing uses
+ * it any more: nobody eats it, it supplies no other cook, and it isn't
+ * done. The supplier's servings are raised to make enough for the cook
+ * too, if they'd be too few.
+ *
+ * @generated from rpc plans.v1.PlanService.SetCookSupplier
+ */
+export const setCookSupplier = PlanService.method.setCookSupplier;
 
 /**
  * Create a portion: what a person eats at one of their eating times on a

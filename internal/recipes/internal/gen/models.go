@@ -520,6 +520,13 @@ type CookPantryUse struct {
 	CreateTime  pgtype.Timestamptz
 }
 
+type CookSupply struct {
+	HouseholdID       pgtype.UUID
+	ConsumerCookID    pgtype.UUID
+	ComponentRecipeID pgtype.UUID
+	SupplierCookID    pgtype.UUID
+}
+
 type EatingTime struct {
 	ID          pgtype.UUID
 	HouseholdID pgtype.UUID
@@ -749,35 +756,38 @@ type Portion struct {
 }
 
 type Recipe struct {
-	ID          pgtype.UUID
-	HouseholdID pgtype.UUID
-	Name        string
-	Description string
-	Servings    int32
-	PrepSeconds int32
-	CookSeconds int32
-	Steps       []string
-	Tags        []string
-	SourceURL   string
-	FridgeDays  *int32
-	Freezable   bool
-	Notes       string
-	CreateTime  pgtype.Timestamptz
-	UpdateTime  pgtype.Timestamptz
-	Favorite    bool
-	FreezerDays *int32
+	ID            pgtype.UUID
+	HouseholdID   pgtype.UUID
+	Name          string
+	Description   string
+	Servings      int32
+	PrepSeconds   int32
+	CookSeconds   int32
+	Steps         []string
+	Tags          []string
+	SourceURL     string
+	FridgeDays    *int32
+	Freezable     bool
+	Notes         string
+	CreateTime    pgtype.Timestamptz
+	UpdateTime    pgtype.Timestamptz
+	Favorite      bool
+	FreezerDays   *int32
+	PrepAheadDays int32
+	PrepAheadNote string
 }
 
 type RecipeIngredient struct {
-	RecipeID     pgtype.UUID
-	HouseholdID  pgtype.UUID
-	Position     int32
-	FoodID       pgtype.UUID
-	Amount       float64
-	Unit         AmountUnit
-	Note         string
-	OriginalText string
-	Optional     bool
+	RecipeID          pgtype.UUID
+	HouseholdID       pgtype.UUID
+	Position          int32
+	FoodID            pgtype.UUID
+	Amount            float64
+	Unit              *AmountUnit
+	Note              string
+	OriginalText      string
+	Optional          bool
+	ComponentRecipeID pgtype.UUID
 }
 
 type ReferenceFood struct {

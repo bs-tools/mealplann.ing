@@ -104,9 +104,23 @@ func (s *Service) loadPlan(ctx context.Context, householdID pgtype.UUID, from, t
 func (d *planData) index(recipeList []*recipes.Recipe, foodList []*foods.Food) {
 	d.recipes = map[pgtype.UUID]*recipes.Recipe{}
 	d.recipeNutrition = map[pgtype.UUID]*nutrition.Recipe{}
-	for _, r := range recipeList {
+	// The recipes' components are indexed too, as cooks of them are planned
+	// with the cooks using them.
+	var add func(r *recipes.Recipe, depth int)
+	add = func(r *recipes.Recipe, depth int) {
+		if _, ok := d.recipes[r.ID]; ok || depth > recipes.MaxComponentDepth {
+			return
+		}
 		d.recipes[r.ID] = r
 		d.recipeNutrition[r.ID] = r.Nutrition()
+		for _, in := range r.Ingredients {
+			if in.Component != nil {
+				add(in.Component, depth+1)
+			}
+		}
+	}
+	for _, r := range recipeList {
+		add(r, 0)
 	}
 	d.foods = map[pgtype.UUID]*foods.Food{}
 	for _, f := range foodList {
@@ -171,8 +185,9 @@ func (d *planData) eaten(it *item) eaten {
 			return unknownEaten()
 		}
 		e.amount = n.Servings(servings)
-		for _, in := range d.recipes[recipeID].Ingredients {
-			if in.FastCarb && !in.Optional && !slices.Contains(e.fastCarbs, in.FoodName) {
+		r := d.recipes[recipeID]
+		for _, in := range r.IngredientsFor(float64(r.Servings)) {
+			if in.FastCarb && !slices.Contains(e.fastCarbs, in.FoodName) {
 				e.fastCarbs = append(e.fastCarbs, in.FoodName)
 			}
 		}
@@ -386,9 +401,44 @@ func (d *planData) days(from, to time.Time) []*plansv1.PlanDay {
 		for _, p := range d.people {
 			peopleDays = append(peopleDays, d.personDay(p, date))
 		}
-		days = append(days, plansv1.PlanDay_builder{Date: store.FormatDate(date), People: peopleDays}.Build())
+		days = append(days, plansv1.PlanDay_builder{
+			Date:      store.FormatDate(date),
+			People:    peopleDays,
+			PrepTasks: d.prepTasks(date),
+		}.Build())
 	}
 	return days
+}
+
+// prepTasks returns what to start on a date for the cooks of the plan
+// read, by their dates: those whose recipes start prep_ahead_days before
+// they're cooked, and aren't cooked yet.
+func (d *planData) prepTasks(date time.Time) []*plansv1.PrepTask {
+	var tasks []*plansv1.PrepTask
+	for _, c := range d.plan.Cooks {
+		r, ok := d.recipes[c.RecipeID]
+		if !ok || r.PrepAheadDays <= 0 || c.Done || !c.Date.AddDate(0, 0, -int(r.PrepAheadDays)).Equal(date) {
+			continue
+		}
+		note := r.PrepAheadNote
+		if note == "" {
+			note = "Start " + r.Name
+		}
+		var forNames []string
+		for _, supply := range c.Supplying {
+			if !slices.Contains(forNames, supply.ConsumerRecipeName) {
+				forNames = append(forNames, supply.ConsumerRecipeName)
+			}
+		}
+		tasks = append(tasks, plansv1.PrepTask_builder{
+			CookId:         store.UUIDToString(c.ID),
+			RecipeName:     r.Name,
+			CookDate:       store.FormatDate(c.Date),
+			Note:           note,
+			ForRecipeNames: forNames,
+		}.Build())
+	}
+	return tasks
 }
 
 // plannedCook checks a cook's servings.
@@ -401,12 +451,19 @@ func (d *planData) plannedCook(c *plans.Cook) *plansv1.PlannedCook {
 		FrozenServings: c.FrozenServings,
 		LateServings:   c.LateServings,
 	}
-	if w := rules.CheckServings(check, c.AssignedServings); w != nil {
+	// What it makes for other cooks counts as planned, like portions.
+	assigned := c.AssignedServings + c.SuppliedServings
+	if w := rules.CheckServings(check, assigned); w != nil {
 		warnings = append(warnings, warningToProto(w, warningContext{cookID: c.ID}))
+	}
+	for _, supply := range c.Supplies {
+		if w := rules.CheckSupply(c.RecipeName, c.Date, supply.SupplierRecipeName, supply.SupplierDate); w != nil {
+			warnings = append(warnings, warningToProto(w, warningContext{cookID: c.ID}))
+		}
 	}
 	return plansv1.PlannedCook_builder{
 		Cook:             cookToProto(c),
-		AssignedServings: round(c.AssignedServings),
+		AssignedServings: round(assigned),
 		Warnings:         warnings,
 	}.Build()
 }
@@ -437,6 +494,7 @@ var kindsToProto = map[rules.Kind]plansv1.WarningKind{
 	rules.LeftoverThaw:            plansv1.WarningKind_WARNING_KIND_LEFTOVER_THAW,
 	rules.LeftoverPastFreezerDays: plansv1.WarningKind_WARNING_KIND_LEFTOVER_PAST_FREEZER_DAYS,
 	rules.FrozenServingsShort:     plansv1.WarningKind_WARNING_KIND_FROZEN_SERVINGS_SHORT,
+	rules.ComponentAfterCook:      plansv1.WarningKind_WARNING_KIND_COMPONENT_AFTER_COOK,
 }
 
 func warningToProto(w *rules.Warning, c warningContext) *plansv1.Warning {

@@ -9,7 +9,13 @@ import "mcp/v1/options.proto";
 
 // RecipeService manages the household's recipes. A recipe's ingredients are
 // the household's foods (see FoodService) with an amount in grams,
-// milliliters or pieces, so create or find the foods first. Each recipe's
+// milliliters or pieces, so create or find the foods first. An ingredient
+// can also be another recipe, a component, in servings, like soaked and
+// pressure cooked chickpeas in a chili: planning the chili also plans a
+// cook of the chickpeas for it (see PlanService), and a component with
+// prep_ahead_days shows on the plan the days before, like "Soak the
+// chickpeas" the night before. Components can have components of their
+// own, but no deeper, and a recipe can't use itself. Each recipe's
 // nutrition per serving and per 100 g is computed from its ingredients'
 // foods, and lists the ingredients whose data is missing, to fix on the
 // foods with UpdateFood. Recipes are planned into meals, split into
@@ -29,7 +35,8 @@ service RecipeService {
   // with the update_mask "favorite".
   rpc UpdateRecipe(UpdateRecipeRequest) returns (UpdateRecipeResponse);
   // Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
-  // the plan (see PlanService) use it: delete them first.
+  // the plan (see PlanService), or other recipes as a component, use it:
+  // delete or change them first.
   rpc DeleteRecipe(DeleteRecipeRequest) returns (DeleteRecipeResponse);
 }
 
@@ -85,18 +92,28 @@ message Recipe {
   // 90. Unset if unknown, so frozen leftovers aren't checked against a
   // limit. From 1 to 365.
   optional int32 freezer_days = 18;
+  // How many days before it's cooked it starts, from 0 to 7, e.g. 1 for
+  // beans soaked the night before. The plan shows prep_ahead_note on that
+  // day. 0 if it starts the day it's cooked.
+  int32 prep_ahead_days = 19;
+  // What to do prep_ahead_days before, e.g. "Soak the chickpeas in plenty
+  // of water". At most 500 characters.
+  string prep_ahead_note = 20;
 }
 
-// An ingredient of a recipe: an amount of a food.
+// An ingredient of a recipe: an amount of a food, or servings of another
+// recipe, a component.
 message Ingredient {
-  // The ID of the household's food. Required.
+  // The ID of the household's food. Required, unless recipe_id is set.
   string food_id = 1;
   // The name of the food.
   string food_name = 2 [(mcp.v1.field).output_only = true];
-  // The amount, in unit. More than 0.
+  // The amount, in unit of a food, or in servings of a component. More
+  // than 0.
   double amount = 3;
-  // The unit of the amount. Required. Amounts in milliliters or pieces are
-  // weighed with the food's grams_per_milliliter or grams_per_piece.
+  // The unit of a food's amount. Required for a food, and unspecified for
+  // a component. Amounts in milliliters or pieces are weighed with the
+  // food's grams_per_milliliter or grams_per_piece.
   foods.v1.AmountUnit unit = 4;
   // How the food is prepared, e.g. "finely chopped" or "drained". At most
   // 200 characters.
@@ -108,6 +125,11 @@ message Ingredient {
   // Whether the ingredient is optional, like a garnish. Optional
   // ingredients aren't counted in the nutrition.
   bool optional = 7;
+  // The ID of the household's recipe used as a component, instead of a
+  // food, e.g. "Cooked chickpeas". Its nutrition counts per serving.
+  string recipe_id = 8;
+  // The name of the component's recipe.
+  string recipe_name = 9 [(mcp.v1.field).output_only = true];
 }
 
 // The nutrition of a recipe, computed from its ingredients' foods, as
@@ -132,18 +154,20 @@ message RecipeNutrition {
   repeated IngredientIssue issues = 6;
 }
 
-// An ingredient whose food lacks data the recipe's nutrition needs.
+// An ingredient whose food, or component's recipe, lacks data the recipe's
+// nutrition needs.
 message IngredientIssue {
   // The index of the ingredient in the recipe, from 0.
   int32 ingredient_index = 1;
-  // The ID of the ingredient's food.
+  // The ID of the ingredient's food, empty for a component: fix the
+  // component's own recipe instead.
   string food_id = 2;
-  // The name of the ingredient's food.
+  // The name of the ingredient's food or component.
   string food_name = 3;
   // Whether the amount can't be weighed, as the food has no
   // grams_per_piece (for pieces) or grams_per_milliliter (for
-  // milliliters). The ingredient is then left out of the nutrition
-  // entirely.
+  // milliliters), or the component's recipe can't be weighed. The
+  // ingredient is then left out of the nutrition entirely.
   bool unknown_weight = 4;
   // The nutrients the food lacks, by their field name in Nutrients, e.g.
   // "vitamin_b12_micrograms". Empty if unknown_weight.

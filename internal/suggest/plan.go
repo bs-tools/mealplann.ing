@@ -425,8 +425,8 @@ func (st *state) add(slot *PlanSlot, sg *Suggestion) {
 				et.UnweighedNames = append(et.UnweighedNames, r.Name)
 			}
 		}
-		for _, in := range r.Ingredients {
-			if in.FastCarb && !in.Optional && !slices.Contains(et.FastCarbFoods, in.FoodName) {
+		for _, in := range r.IngredientsFor(float64(r.Servings)) {
+			if in.FastCarb && !slices.Contains(et.FastCarbFoods, in.FoodName) {
 				et.FastCarbFoods = append(et.FastCarbFoods, in.FoodName)
 			}
 		}

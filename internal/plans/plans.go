@@ -66,14 +66,37 @@ type Cook struct {
 	// those its portions eat after the recipe's fridge days come from, and
 	// the rest are in the freezer.
 	FrozenServings float64
-	// RecipeName, AssignedServings, the servings of all its portions, and
+	// RecipeName, AssignedServings, the servings of all its portions,
 	// LateServings, those of its portions eaten after the recipe's fridge
-	// days, are read, and ignored when writing.
+	// days, and SuppliedServings, those it makes for other cooks, are read,
+	// and ignored when writing.
 	RecipeName       string
 	AssignedServings float64
 	LateServings     float64
-	CreateTime       time.Time
-	UpdateTime       time.Time
+	SuppliedServings float64
+	// Supplies are the cooks supplying its components, and Supplying the
+	// cooks it supplies. They're read with plans and cooks, and ignored
+	// when writing a cook.
+	Supplies   []*Supply
+	Supplying  []*Supply
+	CreateTime time.Time
+	UpdateTime time.Time
+}
+
+// Supply is a cook making a component of another cook: e.g. a pot of
+// chickpeas for a chili.
+type Supply struct {
+	ConsumerCookID    pgtype.UUID
+	ComponentRecipeID pgtype.UUID
+	SupplierCookID    pgtype.UUID
+	// The cooks' dates, at midnight UTC, and recipes' names, and the
+	// servings the supplier makes for the consumer, are read, and ignored
+	// when writing.
+	ConsumerDate       time.Time
+	ConsumerRecipeName string
+	SupplierDate       time.Time
+	SupplierRecipeName string
+	Servings           float64
 }
 
 // Portion is what a person eats at one of their eating times on a date:
@@ -149,6 +172,10 @@ type Plan struct {
 	// Staples are the staples on some date of the range, with the dates
 	// they're skipped on in the range, ordered by person and eating time.
 	Staples []*Staple
+	// Supplies are the links of cooks of which either is cooked in the
+	// range, by the consumer's date. They're also in the cooks' Supplies
+	// and Supplying.
+	Supplies []*Supply
 }
 
 // StapleOccurrences returns the staples on each date of the plan.
@@ -189,6 +216,14 @@ func (r *Repository) GetPlan(ctx context.Context, householdID pgtype.UUID, from,
 		})
 		return err
 	})
+	var supplies []*gen.ListCookSuppliesRow
+	b.Read(func(db store.Querier) error {
+		var err error
+		supplies, err = gen.New(db).ListCookSupplies(ctx, &gen.ListCookSuppliesParams{
+			HouseholdID: householdID, Ids: []pgtype.UUID{}, FromDate: fromDate, ToDate: toDate,
+		})
+		return err
+	})
 	b.Read(func(db store.Querier) error {
 		var err error
 		staples, err = gen.New(db).ListStaples(ctx, &gen.ListStaplesParams{
@@ -207,9 +242,13 @@ func (r *Repository) GetPlan(ctx context.Context, householdID pgtype.UUID, from,
 		return nil, fmt.Errorf("failed to get plan: %w", err)
 	}
 	plan := &Plan{From: from, To: to}
+	byID := map[pgtype.UUID]*Cook{}
 	for _, row := range cooks {
-		plan.Cooks = append(plan.Cooks, cookFromDB(row))
+		c := cookFromDB(row)
+		plan.Cooks = append(plan.Cooks, c)
+		byID[c.ID] = c
 	}
+	plan.Supplies = attachSupplies(byID, supplies)
 	for _, row := range portions {
 		plan.Portions = append(plan.Portions, portionFromDB(row))
 	}
@@ -220,14 +259,75 @@ func (r *Repository) GetPlan(ctx context.Context, householdID pgtype.UUID, from,
 // GetCook gets a household's cook. It returns store.ErrNotFound if the
 // household has no such cook.
 func (r *Repository) GetCook(ctx context.Context, householdID, id pgtype.UUID) (*Cook, error) {
-	rows, err := gen.New(r.db).ListCooks(ctx, &gen.ListCooksParams{HouseholdID: householdID, Ids: []pgtype.UUID{id}})
-	if err != nil {
+	var rows []*gen.ListCooksRow
+	var supplies []*gen.ListCookSuppliesRow
+	var b store.Batch
+	b.Read(func(db store.Querier) error {
+		var err error
+		rows, err = gen.New(db).ListCooks(ctx, &gen.ListCooksParams{HouseholdID: householdID, Ids: []pgtype.UUID{id}})
+		return err
+	})
+	b.Read(func(db store.Querier) error {
+		var err error
+		supplies, err = gen.New(db).ListCookSupplies(ctx, &gen.ListCookSuppliesParams{HouseholdID: householdID, Ids: []pgtype.UUID{id}})
+		return err
+	})
+	if err := b.Send(ctx, r.db); err != nil {
 		return nil, fmt.Errorf("failed to get cook: %w", err)
 	}
 	if len(rows) == 0 {
 		return nil, store.ErrNotFound
 	}
-	return cookFromDB(rows[0]), nil
+	c := cookFromDB(rows[0])
+	attachSupplies(map[pgtype.UUID]*Cook{c.ID: c}, supplies)
+	return c, nil
+}
+
+// SetCookSupply sets the cook supplying a component of a cook, and deletes
+// the cook that supplied it before if it's left unused: nobody eats it, it
+// supplies no other cook, and it isn't cooked yet. It returns a
+// *ReferenceError if a cook isn't the household's.
+func (r *Repository) SetCookSupply(ctx context.Context, householdID pgtype.UUID, supply *Supply, previous pgtype.UUID) error {
+	var b store.Batch
+	q := gen.New(&b)
+	_, _ = q.SetCookSupply(ctx, &gen.SetCookSupplyParams{
+		HouseholdID:       householdID,
+		ConsumerCookID:    supply.ConsumerCookID,
+		ComponentRecipeID: supply.ComponentRecipeID,
+		SupplierCookID:    supply.SupplierCookID,
+	})
+	if previous.Valid && previous != supply.SupplierCookID {
+		_, _ = q.DeleteUnusedCook(ctx, &gen.DeleteUnusedCookParams{HouseholdID: householdID, ID: previous})
+	}
+	if err := b.Send(ctx, r.db); err != nil {
+		return writeError("set cook supply", err)
+	}
+	return nil
+}
+
+// attachSupplies converts links, and adds them to the cooks among them.
+func attachSupplies(cooks map[pgtype.UUID]*Cook, rows []*gen.ListCookSuppliesRow) []*Supply {
+	supplies := make([]*Supply, 0, len(rows))
+	for _, row := range rows {
+		s := &Supply{
+			ConsumerCookID:     row.ConsumerCookID,
+			ComponentRecipeID:  row.ComponentRecipeID,
+			SupplierCookID:     row.SupplierCookID,
+			ConsumerDate:       store.DateFromPG(row.ConsumerDate),
+			ConsumerRecipeName: row.ConsumerRecipeName,
+			SupplierDate:       store.DateFromPG(row.SupplierDate),
+			SupplierRecipeName: row.SupplierRecipeName,
+			Servings:           row.Servings,
+		}
+		supplies = append(supplies, s)
+		if c, ok := cooks[s.ConsumerCookID]; ok {
+			c.Supplies = append(c.Supplies, s)
+		}
+		if c, ok := cooks[s.SupplierCookID]; ok {
+			c.Supplying = append(c.Supplying, s)
+		}
+	}
+	return supplies
 }
 
 // CreateCook creates a cook in its household, and returns it. It returns a
@@ -251,9 +351,14 @@ func (r *Repository) CreateCookWithPortions(ctx context.Context, c *Cook, portio
 
 // CookWithPortions is a cook to create with shares of it for people.
 type CookWithPortions struct {
+	// Cook is the cook, with its ID if valid, so that supplies can refer to
+	// cooks created together, or a new one.
 	Cook *Cook
 	// Portions are the shares, whose CookID is ignored.
 	Portions []*Portion
+	// Supplies are the cooks supplying its components, by their IDs, among
+	// those created or existing, whose ConsumerCookID is ignored.
+	Supplies []*Supply
 }
 
 // CreateCooksWithPortions creates cooks in their household, each with
@@ -273,7 +378,10 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 	var allPortionIDs []pgtype.UUID
 	for _, cp := range list {
 		c := cp.Cook
-		id := store.NewUUID()
+		id := c.ID
+		if !id.Valid {
+			id = store.NewUUID()
+		}
 		cookIDs = append(cookIDs, id)
 		_, _ = q.CreateCook(ctx, &gen.CreateCookParams{
 			ID:             id,
@@ -300,8 +408,21 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 		portionIDs = append(portionIDs, p.Ids)
 		allPortionIDs = append(allPortionIDs, p.Ids...)
 	}
+	// The supplies are created after all the cooks, which they refer to.
+	sp := &gen.CreateCookSuppliesParams{HouseholdID: householdID}
+	for i, cp := range list {
+		for _, supply := range cp.Supplies {
+			sp.ConsumerCookIds = append(sp.ConsumerCookIds, cookIDs[i])
+			sp.ComponentRecipeIds = append(sp.ComponentRecipeIds, supply.ComponentRecipeID)
+			sp.SupplierCookIds = append(sp.SupplierCookIds, supply.SupplierCookID)
+		}
+	}
+	if len(sp.ConsumerCookIds) > 0 {
+		_ = q.CreateCookSupplies(ctx, sp)
+	}
 	var cookRows []*gen.ListCooksRow
 	var portionRows []*gen.ListPortionsRow
+	var supplyRows []*gen.ListCookSuppliesRow
 	b.Read(func(db store.Querier) error {
 		var err error
 		cookRows, err = gen.New(db).ListCooks(ctx, &gen.ListCooksParams{HouseholdID: householdID, Ids: cookIDs})
@@ -314,6 +435,13 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 			return err
 		})
 	}
+	if len(sp.ConsumerCookIds) > 0 {
+		b.Read(func(db store.Querier) error {
+			var err error
+			supplyRows, err = gen.New(db).ListCookSupplies(ctx, &gen.ListCookSuppliesParams{HouseholdID: householdID, Ids: cookIDs})
+			return err
+		})
+	}
 	if err := b.Send(ctx, r.db); err != nil {
 		return nil, nil, writeError("create cook", err)
 	}
@@ -323,6 +451,7 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 	for _, row := range cookRows {
 		cooksByID[row.Cook.ID] = cookFromDB(row)
 	}
+	attachSupplies(cooksByID, supplyRows)
 	portionsByID := map[pgtype.UUID]*Portion{}
 	for _, row := range portionRows {
 		portionsByID[row.Portion.ID] = portionFromDB(row)
@@ -409,8 +538,16 @@ func (r *Repository) UpdateCook(ctx context.Context, c *Cook) (*Cook, error) {
 // DeleteCook deletes a household's cook, with its portions. It returns
 // store.ErrNotFound if the household has no such cook.
 func (r *Repository) DeleteCook(ctx context.Context, householdID, id pgtype.UUID) error {
-	n, err := gen.New(r.db).DeleteCook(ctx, &gen.DeleteCookParams{ID: id, HouseholdID: householdID})
-	if err != nil {
+	// The cooks only supplying it go with it, in the same round trip.
+	var n int64
+	var b store.Batch
+	_ = gen.New(&b).DeleteOrphanSuppliers(ctx, &gen.DeleteOrphanSuppliersParams{HouseholdID: householdID, ConsumerCookID: id})
+	b.Read(func(db store.Querier) error {
+		var err error
+		n, err = gen.New(db).DeleteCook(ctx, &gen.DeleteCookParams{ID: id, HouseholdID: householdID})
+		return err
+	})
+	if err := b.Send(ctx, r.db); err != nil {
 		return fmt.Errorf("failed to delete cook: %w", err)
 	}
 	if n == 0 {
@@ -700,6 +837,7 @@ func cookFromDB(row *gen.ListCooksRow) *Cook {
 		RecipeName:       row.RecipeName,
 		AssignedServings: row.AssignedServings,
 		LateServings:     row.LateServings,
+		SuppliedServings: row.SuppliedServings,
 		CreateTime:       c.CreateTime.Time,
 		UpdateTime:       c.UpdateTime.Time,
 	}

@@ -14,8 +14,68 @@ update cooks set
   update_time = now()
 where id = @id and household_id = @household_id;
 
+-- name: DeleteOrphanSuppliers :exec
+-- Deletes the cooks that only supply a cook, and are neither eaten nor
+-- cooked yet, as they were planned for it: e.g. the chickpeas of a chili
+-- deleted.
+delete from cooks
+where cooks.household_id = @household_id
+  and cooks.id in (select cs.supplier_cook_id from cook_supplies cs where cs.consumer_cook_id = @consumer_cook_id)
+  and not cooks.done
+  and not exists (select 1 from portions p where p.cook_id = cooks.id)
+  and not exists (
+    select 1 from cook_supplies s
+    where s.supplier_cook_id = cooks.id and s.consumer_cook_id <> @consumer_cook_id
+  );
+
 -- name: DeleteCook :execrows
 delete from cooks where id = @id and household_id = @household_id;
+
+-- name: CreateCookSupplies :exec
+-- Links cooks to the cooks supplying their components, given as arrays.
+insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id)
+select
+  @household_id,
+  (@consumer_cook_ids::uuid[])[i],
+  (@component_recipe_ids::uuid[])[i],
+  (@supplier_cook_ids::uuid[])[i]
+from generate_subscripts(@consumer_cook_ids::uuid[], 1) as i;
+
+-- name: SetCookSupply :execrows
+-- Sets the cook supplying a component of a cook.
+insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id)
+values (@household_id, @consumer_cook_id, @component_recipe_id, @supplier_cook_id)
+on conflict (consumer_cook_id, component_recipe_id) do update set supplier_cook_id = excluded.supplier_cook_id;
+
+-- name: ListCookSupplies :many
+-- The links between the household's cooks of which either is given by ID
+-- or cooked in a range of dates, with both cooks' dates and recipes, and
+-- the servings the supplier makes for the consumer.
+select
+  s.consumer_cook_id,
+  s.component_recipe_id,
+  s.supplier_cook_id,
+  cc.date as consumer_date,
+  cr.name as consumer_recipe_name,
+  sc.date as supplier_date,
+  sr.name as supplier_recipe_name,
+  (coalesce((
+    select sum(ri.amount) from recipe_ingredients ri
+    where ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+  ), 0) * cc.servings / cr.servings)::double precision as servings
+from cook_supplies s
+join cooks cc on cc.id = s.consumer_cook_id
+join recipes cr on cr.id = cc.recipe_id
+join cooks sc on sc.id = s.supplier_cook_id
+join recipes sr on sr.id = sc.recipe_id
+where s.household_id = @household_id
+  and (
+    s.consumer_cook_id = any(@ids::uuid[])
+    or s.supplier_cook_id = any(@ids::uuid[])
+    or cc.date between sqlc.narg(from_date)::date and sqlc.narg(to_date)::date
+    or sc.date between sqlc.narg(from_date)::date and sqlc.narg(to_date)::date
+  )
+order by cc.date, s.consumer_cook_id, s.component_recipe_id;
 
 -- name: ListCooks :many
 -- The household's cooks, given by ID or cooked in a range of dates, with
@@ -29,7 +89,15 @@ select
   coalesce((
     select sum(p.servings) from portions p
     where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
-  ), 0)::double precision as late_servings
+  ), 0)::double precision as late_servings,
+  coalesce((
+    select sum(ri.amount * cc.servings / cr.servings)
+    from cook_supplies s
+    join cooks cc on cc.id = s.consumer_cook_id
+    join recipes cr on cr.id = cc.recipe_id
+    join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+    where s.supplier_cook_id = cooks.id
+  ), 0)::double precision as supplied_servings
 from cooks
 join recipes r on r.id = cooks.recipe_id
 where cooks.household_id = @household_id
@@ -179,3 +247,13 @@ cross join lateral (
 ) late
 where cooks.household_id = @household_id and cooks.frozen_servings > late.servings + 0.01
 order by cooks.date, cooks.id;
+
+-- name: DeleteUnusedCook :execrows
+-- Deletes a cook nobody eats, that supplies no other cook and isn't cooked
+-- yet: a supplier replaced by another.
+delete from cooks
+where cooks.household_id = @household_id
+  and cooks.id = @id
+  and not cooks.done
+  and not exists (select 1 from portions p where p.cook_id = cooks.id)
+  and not exists (select 1 from cook_supplies s where s.supplier_cook_id = cooks.id);

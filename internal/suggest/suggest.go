@@ -353,7 +353,8 @@ func newScorer(in *Input) *scorer {
 		if !ok {
 			continue
 		}
-		for _, ing := range r.IngredientsFor(c.Servings) {
+		// A component another cook supplies is that cook's ingredients.
+		for _, ing := range r.IngredientsWithout(c.Servings, shopping.SuppliedComponents(c)) {
 			f, ok := in.Foods[ing.FoodID]
 			if !ok || f.AlwaysInStock || slices.ContainsFunc(s.sources[ing.FoodID], func(o source) bool { return o.recipeID == c.RecipeID }) {
 				continue
@@ -790,8 +791,8 @@ var checkedKinds = []rules.Kind{
 // already, and points for meeting a minimum of protein.
 func (s *scorer) rules(c *candidate) {
 	var fastCarbs []string
-	for _, ing := range c.recipe.Ingredients {
-		if ing.FastCarb && !ing.Optional && !slices.Contains(fastCarbs, ing.FoodName) {
+	for _, ing := range c.recipe.IngredientsFor(float64(c.recipe.Servings)) {
+		if ing.FastCarb && !slices.Contains(fastCarbs, ing.FoodName) {
 			fastCarbs = append(fastCarbs, ing.FoodName)
 		}
 	}
@@ -958,8 +959,9 @@ func (s *scorer) keeping(c *candidate) {
 
 // flavor scores the pairings of the recipe's ingredients.
 func (s *scorer) flavor(c *candidate) {
-	names := make([]string, 0, len(c.recipe.Ingredients))
-	for _, ing := range c.recipe.Ingredients {
+	ingredients := c.recipe.IngredientsFor(float64(c.recipe.Servings))
+	names := make([]string, 0, len(ingredients))
+	for _, ing := range ingredients {
 		names = append(names, ing.FoodName)
 	}
 	var total float64

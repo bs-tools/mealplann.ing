@@ -228,6 +228,7 @@ const PlanPage: React.FC = () => {
             cooks={week.data.cooks.filter(
               (planned) => planned.cook?.date === planDay.date
             )}
+            weekCooks={week.data.cooks}
             people={people.data.people}
             disabled={pending}
             shownOnPhones={planDay.date === day}
