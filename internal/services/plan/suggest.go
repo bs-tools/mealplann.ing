@@ -176,7 +176,7 @@ func (s *Service) loadSuggestionData(ctx context.Context, householdID pgtype.UUI
 	var wg sync.WaitGroup
 	wg.Go(func() { d.plan, planErr = s.plans.GetPlan(ctx, householdID, from, to) })
 	wg.Go(func() { d.people, peopleErr = s.people.ListPeople(ctx, householdID) })
-	wg.Go(func() { recipeList, _, recipesErr = s.recipes.ListRecipes(ctx, householdID, "", nil) })
+	wg.Go(func() { recipeList, _, recipesErr = s.recipes.ListRecipes(ctx, householdID, recipes.ListFilter{}) })
 	wg.Go(func() { lists, listsErr = s.shopping.ListLists(ctx, householdID, shoppingListsRead, 0) })
 	wg.Go(func() { lots, lotsErr = s.pantry.ListItems(ctx, householdID) })
 	wg.Wait()
@@ -234,6 +234,7 @@ var scoreKindsToProto = map[suggest.Kind]suggestionsv1.ScoreKind{
 	suggest.Flavor:            suggestionsv1.ScoreKind_SCORE_KIND_FLAVOR,
 	suggest.Variety:           suggestionsv1.ScoreKind_SCORE_KIND_VARIETY,
 	suggest.MealTag:           suggestionsv1.ScoreKind_SCORE_KIND_MEAL_TAG,
+	suggest.Favorite:          suggestionsv1.ScoreKind_SCORE_KIND_FAVORITE,
 }
 
 // suggestionToProto converts a suggestion to the API.

@@ -25,7 +25,8 @@ insert into recipes (
   source_url,
   fridge_days,
   freezable,
-  notes
+  notes,
+  favorite
 ) values (
   $1,
   $2,
@@ -39,9 +40,10 @@ insert into recipes (
   $10,
   $11,
   $12,
-  $13
+  $13,
+  $14
 )
-returning id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time
+returning id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite
 `
 
 type CreateRecipeParams struct {
@@ -58,6 +60,7 @@ type CreateRecipeParams struct {
 	FridgeDays  *int32
 	Freezable   bool
 	Notes       string
+	Favorite    bool
 }
 
 func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*Recipe, error) {
@@ -75,6 +78,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*R
 		arg.FridgeDays,
 		arg.Freezable,
 		arg.Notes,
+		arg.Favorite,
 	)
 	var i Recipe
 	err := row.Scan(
@@ -93,6 +97,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*R
 		&i.Notes,
 		&i.CreateTime,
 		&i.UpdateTime,
+		&i.Favorite,
 	)
 	return &i, err
 }
@@ -182,7 +187,7 @@ func (q *Queries) DeleteRecipeIngredients(ctx context.Context, arg *DeleteRecipe
 }
 
 const getRecipe = `-- name: GetRecipe :one
-select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time from recipes where id = $1 and household_id = $2
+select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite from recipes where id = $1 and household_id = $2
 `
 
 type GetRecipeParams struct {
@@ -209,6 +214,7 @@ func (q *Queries) GetRecipe(ctx context.Context, arg *GetRecipeParams) (*Recipe,
 		&i.Notes,
 		&i.CreateTime,
 		&i.UpdateTime,
+		&i.Favorite,
 	)
 	return &i, err
 }
@@ -378,7 +384,7 @@ func (q *Queries) ListRecipeTags(ctx context.Context, householdID pgtype.UUID) (
 }
 
 const listRecipes = `-- name: ListRecipes :many
-select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time from recipes
+select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite from recipes
 where household_id = $1
   and (
     $2::text = ''
@@ -386,17 +392,24 @@ where household_id = $1
     or strpos(lower(description), lower($2)) > 0
   )
   and tags @> $3::text[]
+  and (not $4::boolean or favorite)
 order by lower(name), id
 `
 
 type ListRecipesParams struct {
-	HouseholdID pgtype.UUID
-	Query       string
-	Tags        []string
+	HouseholdID   pgtype.UUID
+	Query         string
+	Tags          []string
+	FavoritesOnly bool
 }
 
 func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*Recipe, error) {
-	rows, err := q.db.Query(ctx, listRecipes, arg.HouseholdID, arg.Query, arg.Tags)
+	rows, err := q.db.Query(ctx, listRecipes,
+		arg.HouseholdID,
+		arg.Query,
+		arg.Tags,
+		arg.FavoritesOnly,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -420,6 +433,7 @@ func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*R
 			&i.Notes,
 			&i.CreateTime,
 			&i.UpdateTime,
+			&i.Favorite,
 		); err != nil {
 			return nil, err
 		}
@@ -432,7 +446,7 @@ func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*R
 }
 
 const listRecipesByID = `-- name: ListRecipesByID :many
-select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time from recipes
+select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite from recipes
 where household_id = $1 and id = any($2::uuid[])
 order by lower(name), id
 `
@@ -467,6 +481,7 @@ func (q *Queries) ListRecipesByID(ctx context.Context, arg *ListRecipesByIDParam
 			&i.Notes,
 			&i.CreateTime,
 			&i.UpdateTime,
+			&i.Favorite,
 		); err != nil {
 			return nil, err
 		}
@@ -491,9 +506,10 @@ update recipes set
   fridge_days = $9,
   freezable = $10,
   notes = $11,
+  favorite = $12,
   update_time = now()
-where id = $12 and household_id = $13
-returning id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time
+where id = $13 and household_id = $14
+returning id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite
 `
 
 type UpdateRecipeParams struct {
@@ -508,6 +524,7 @@ type UpdateRecipeParams struct {
 	FridgeDays  *int32
 	Freezable   bool
 	Notes       string
+	Favorite    bool
 	ID          pgtype.UUID
 	HouseholdID pgtype.UUID
 }
@@ -525,6 +542,7 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg *UpdateRecipeParams) (*R
 		arg.FridgeDays,
 		arg.Freezable,
 		arg.Notes,
+		arg.Favorite,
 		arg.ID,
 		arg.HouseholdID,
 	)
@@ -545,6 +563,7 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg *UpdateRecipeParams) (*R
 		&i.Notes,
 		&i.CreateTime,
 		&i.UpdateTime,
+		&i.Favorite,
 	)
 	return &i, err
 }

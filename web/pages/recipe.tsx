@@ -1,4 +1,5 @@
 import Loading from "@components/loading";
+import FavoriteButton from "@components/recipes/favorite-button";
 import NutritionPanel from "@components/recipes/nutrition-panel";
 import Card from "@components/ui/card";
 import ConfirmButton from "@components/ui/confirm-button";
@@ -95,7 +96,8 @@ const RecipePage: React.FC = () => {
         title={recipe.name}
         subtitle={recipe.description === "" ? undefined : recipe.description}
         actions={
-          <div className="flex gap-2 print:hidden">
+          <div className="flex items-start gap-2 print:hidden">
+            <FavoriteButton recipe={recipe} />
             <ConfirmButton
               title="Delete recipe?"
               message={`"${recipe.name}" will be deleted. Its foods are kept.`}

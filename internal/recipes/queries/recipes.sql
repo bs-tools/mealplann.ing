@@ -12,7 +12,8 @@ insert into recipes (
   source_url,
   fridge_days,
   freezable,
-  notes
+  notes,
+  favorite
 ) values (
   @id,
   @household_id,
@@ -26,7 +27,8 @@ insert into recipes (
   @source_url,
   @fridge_days,
   @freezable,
-  @notes
+  @notes,
+  @favorite
 )
 returning *;
 
@@ -42,6 +44,7 @@ where household_id = @household_id
     or strpos(lower(description), lower(@query)) > 0
   )
   and tags @> @tags::text[]
+  and (not @favorites_only::boolean or favorite)
 order by lower(name), id;
 
 -- name: ListRecipesByID :many
@@ -67,6 +70,7 @@ update recipes set
   fridge_days = @fridge_days,
   freezable = @freezable,
   notes = @notes,
+  favorite = @favorite,
   update_time = now()
 where id = @id and household_id = @household_id
 returning *;

@@ -751,6 +751,7 @@ type Recipe struct {
 	Notes       string
 	CreateTime  pgtype.Timestamptz
 	UpdateTime  pgtype.Timestamptz
+	Favorite    bool
 }
 
 type RecipeIngredient struct {

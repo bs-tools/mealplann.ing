@@ -82,10 +82,11 @@ type RecipeServiceClient interface {
 	// Get a recipe, with its ingredients, steps and nutrition.
 	GetRecipe(context.Context, *v1.GetRecipeRequest) (*v1.GetRecipeResponse, error)
 	// List the household's recipes, ordered by name, optionally only those
-	// matching a text or tags. Returns summaries with the main nutrients per
-	// serving; get a recipe with GetRecipe for the rest.
+	// matching a text or tags, or only favorites. Returns summaries with the
+	// main nutrients per serving; get a recipe with GetRecipe for the rest.
 	ListRecipes(context.Context, *v1.ListRecipesRequest) (*v1.ListRecipesResponse, error)
-	// Update a recipe.
+	// Update a recipe. To mark it as a favorite, or unmark it, set favorite
+	// with the update_mask "favorite".
 	UpdateRecipe(context.Context, *v1.UpdateRecipeRequest) (*v1.UpdateRecipeResponse, error)
 	// Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
 	// the plan (see PlanService) use it: delete them first.
@@ -106,10 +107,11 @@ type RecipeServiceHandler interface {
 	// Get a recipe, with its ingredients, steps and nutrition.
 	GetRecipe(context.Context, *v1.GetRecipeRequest) (*v1.GetRecipeResponse, error)
 	// List the household's recipes, ordered by name, optionally only those
-	// matching a text or tags. Returns summaries with the main nutrients per
-	// serving; get a recipe with GetRecipe for the rest.
+	// matching a text or tags, or only favorites. Returns summaries with the
+	// main nutrients per serving; get a recipe with GetRecipe for the rest.
 	ListRecipes(context.Context, *v1.ListRecipesRequest) (*v1.ListRecipesResponse, error)
-	// Update a recipe.
+	// Update a recipe. To mark it as a favorite, or unmark it, set favorite
+	// with the update_mask "favorite".
 	UpdateRecipe(context.Context, *v1.UpdateRecipeRequest) (*v1.UpdateRecipeResponse, error)
 	// Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
 	// the plan (see PlanService) use it: delete them first.

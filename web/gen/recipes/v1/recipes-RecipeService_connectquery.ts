@@ -21,15 +21,16 @@ export const getRecipe = RecipeService.method.getRecipe;
 
 /**
  * List the household's recipes, ordered by name, optionally only those
- * matching a text or tags. Returns summaries with the main nutrients per
- * serving; get a recipe with GetRecipe for the rest.
+ * matching a text or tags, or only favorites. Returns summaries with the
+ * main nutrients per serving; get a recipe with GetRecipe for the rest.
  *
  * @generated from rpc recipes.v1.RecipeService.ListRecipes
  */
 export const listRecipes = RecipeService.method.listRecipes;
 
 /**
- * Update a recipe.
+ * Update a recipe. To mark it as a favorite, or unmark it, set favorite
+ * with the update_mask "favorite".
  *
  * @generated from rpc recipes.v1.RecipeService.UpdateRecipe
  */

@@ -258,6 +258,45 @@ func TestRecipes(t *testing.T) {
 		!r.HasFridgeDays() || r.GetFridgeDays() != 0 || !near(r.GetNutrition().GetTotalGrams(), 220+250+10) {
 		t.Errorf("got %v, want the new ingredients, and fridge days 0", r)
 	}
+	// Mark the chana masala as a favorite, leaving the rest as it is.
+	updated, err = e.recipes.UpdateRecipe(ctx, recipesv1.UpdateRecipeRequest_builder{
+		Recipe:     recipesv1.Recipe_builder{Id: masala.GetId(), Favorite: true}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"favorite"}},
+	}.Build())
+	if err != nil {
+		t.Fatalf("UpdateRecipe: %v", err)
+	}
+	if r := updated.GetRecipe(); !r.GetFavorite() || r.GetName() != "Chana masala" || len(r.GetIngredients()) != 5 {
+		t.Errorf("got %v, want the same chana masala, as a favorite", r)
+	}
+	// Only it is listed among the favorites, as one.
+	favorites, err := e.recipes.ListRecipes(ctx, recipesv1.ListRecipesRequest_builder{FavoritesOnly: true}.Build())
+	if err != nil {
+		t.Fatalf("ListRecipes: %v", err)
+	}
+	if got := recipeNames(favorites.GetRecipes()); !slices.Equal(got, []string{"Chana masala"}) || !favorites.GetRecipes()[0].GetFavorite() {
+		t.Errorf("got favorites %v, want the chana masala", favorites.GetRecipes())
+	}
+	// The other household has no favorites.
+	otherFavorites, err := e.otherRecipes.ListRecipes(ctx, recipesv1.ListRecipesRequest_builder{FavoritesOnly: true}.Build())
+	if err != nil {
+		t.Fatalf("ListRecipes: %v", err)
+	}
+	if len(otherFavorites.GetRecipes()) != 0 {
+		t.Errorf("got the other household's favorites %v, want none", recipeNames(otherFavorites.GetRecipes()))
+	}
+	// Unmark it.
+	updated, err = e.recipes.UpdateRecipe(ctx, recipesv1.UpdateRecipeRequest_builder{
+		Recipe:     recipesv1.Recipe_builder{Id: masala.GetId()}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"favorite"}},
+	}.Build())
+	if err != nil {
+		t.Fatalf("UpdateRecipe: %v", err)
+	}
+	if updated.GetRecipe().GetFavorite() {
+		t.Error("got a favorite, want it unmarked")
+	}
+
 	// The output only fields and unknown fields can't be updated.
 	for _, path := range []string{"nutrition", "nutrition.total_grams", "id", "update_time", "ingredient"} {
 		_, err := e.recipes.UpdateRecipe(ctx, recipesv1.UpdateRecipeRequest_builder{
