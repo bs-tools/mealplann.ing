@@ -10,6 +10,8 @@ export interface Criteria {
   days: number;
   // The shared meals to plan.
   meals: HouseholdMeal[];
+  // Whether to plan each person's own eating times, like snacks.
+  ownEatingTimes: boolean;
   variety: Emphasis;
   favorites: Emphasis;
   pantry: Emphasis;
@@ -99,6 +101,8 @@ interface CriteriaPanelProps {
   criteria: Criteria;
   // The meals someone eats, which are the ones offered.
   meals: HouseholdMeal[];
+  // Whether someone has eating times of their own, like snacks.
+  hasOwnEatingTimes: boolean;
   // The tags of the household's recipes, to exclude some.
   tags: string[];
   onChange: (criteria: Criteria) => void;
@@ -112,6 +116,7 @@ interface CriteriaPanelProps {
 const CriteriaPanel: React.FC<CriteriaPanelProps> = ({
   criteria,
   meals,
+  hasOwnEatingTimes,
   tags,
   onChange,
 }) => {
@@ -183,6 +188,19 @@ const CriteriaPanel: React.FC<CriteriaPanelProps> = ({
                   </button>
                 );
               }
+            )}
+            {hasOwnEatingTimes && (
+              <button
+                type="button"
+                aria-pressed={criteria.ownEatingTimes}
+                title="Each person's eating times that aren't shared meals, like snacks"
+                className={`${chip(criteria.ownEatingTimes)} py-1 text-sm`}
+                onClick={() => {
+                  set({ ownEatingTimes: !criteria.ownEatingTimes });
+                }}
+              >
+                Snacks
+              </button>
             )}
           </div>
         </div>

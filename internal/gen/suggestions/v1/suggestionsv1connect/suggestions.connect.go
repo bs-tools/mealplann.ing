@@ -83,10 +83,14 @@ type SuggestionServiceClient interface {
 	// a bad date or an eating time that isn't the person's, and with
 	// FAILED_PRECONDITION if nobody eats from the shared meal.
 	SuggestRecipes(context.Context, *v1.SuggestRecipesRequest) (*v1.SuggestRecipesResponse, error)
-	// Suggest a whole plan of shared meals for the next days at once: a
-	// recipe for each open breakfast, lunch or dinner, chosen together so
-	// the days share ingredients and packs, use the pantry, vary, and meet
-	// everyone's rules and targets. It's the fastest way to plan a week:
+	// Suggest a whole plan for the household for the next days at once: a
+	// recipe for each open breakfast, lunch or dinner, and for each eating
+	// time of one person that eats from no shared meal, like a snack
+	// mid-morning, chosen together so the days share ingredients and packs,
+	// use the pantry, vary, and meet everyone's rules and targets. Breakfast
+	// only gets recipes tagged "breakfast"; the other slots take any recipe,
+	// a breakfast for lunch too, preferring those tagged for them. A slot
+	// left without one says why. It's the fastest way to plan a week:
 	//
 	//  1. Call SuggestPlan with the first date, the number of days and the
 	//     meals, and criteria from what the user wants, like more variety,
@@ -104,8 +108,11 @@ type SuggestionServiceClient interface {
 	// seconds, picking each slot's recipe among the best for it given the
 	// slots planned before, keeps the best plan, and then improves each slot
 	// given all the others. Slots that already have a cook of their meal
-	// aren't planned again. A slot only gets a recipe that breaks someone's
-	// rules if every recipe does. Nothing is changed. Fails with
+	// aren't planned again, nor are eating times with portions or staples.
+	// An eating time where the rest of a shared meal of the plan is eaten,
+	// as it's more than the person's max_portion_grams, isn't planned
+	// either. A slot only gets a recipe that breaks someone's rules if every
+	// recipe does. Nothing is changed. Fails with
 	// INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
 	// nobody eats from the meals, or no recipe meets the criteria.
 	SuggestPlan(context.Context, *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error)
@@ -151,10 +158,14 @@ type SuggestionServiceHandler interface {
 	// a bad date or an eating time that isn't the person's, and with
 	// FAILED_PRECONDITION if nobody eats from the shared meal.
 	SuggestRecipes(context.Context, *v1.SuggestRecipesRequest) (*v1.SuggestRecipesResponse, error)
-	// Suggest a whole plan of shared meals for the next days at once: a
-	// recipe for each open breakfast, lunch or dinner, chosen together so
-	// the days share ingredients and packs, use the pantry, vary, and meet
-	// everyone's rules and targets. It's the fastest way to plan a week:
+	// Suggest a whole plan for the household for the next days at once: a
+	// recipe for each open breakfast, lunch or dinner, and for each eating
+	// time of one person that eats from no shared meal, like a snack
+	// mid-morning, chosen together so the days share ingredients and packs,
+	// use the pantry, vary, and meet everyone's rules and targets. Breakfast
+	// only gets recipes tagged "breakfast"; the other slots take any recipe,
+	// a breakfast for lunch too, preferring those tagged for them. A slot
+	// left without one says why. It's the fastest way to plan a week:
 	//
 	//  1. Call SuggestPlan with the first date, the number of days and the
 	//     meals, and criteria from what the user wants, like more variety,
@@ -172,8 +183,11 @@ type SuggestionServiceHandler interface {
 	// seconds, picking each slot's recipe among the best for it given the
 	// slots planned before, keeps the best plan, and then improves each slot
 	// given all the others. Slots that already have a cook of their meal
-	// aren't planned again. A slot only gets a recipe that breaks someone's
-	// rules if every recipe does. Nothing is changed. Fails with
+	// aren't planned again, nor are eating times with portions or staples.
+	// An eating time where the rest of a shared meal of the plan is eaten,
+	// as it's more than the person's max_portion_grams, isn't planned
+	// either. A slot only gets a recipe that breaks someone's rules if every
+	// recipe does. Nothing is changed. Fails with
 	// INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
 	// nobody eats from the meals, or no recipe meets the criteria.
 	SuggestPlan(context.Context, *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error)

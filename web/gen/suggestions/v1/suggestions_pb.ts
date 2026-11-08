@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file suggestions/v1/suggestions.proto.
  */
 export const file_suggestions_v1_suggestions: GenFile = /*@__PURE__*/
-  fileDesc("CiBzdWdnZXN0aW9ucy92MS9zdWdnZXN0aW9ucy5wcm90bxIOc3VnZ2VzdGlvbnMudjEiOwoORWF0aW5nVGltZVNsb3QSEQoJcGVyc29uX2lkGAEgASgJEhYKDmVhdGluZ190aW1lX2lkGAIgASgJIrsBChVTdWdnZXN0UmVjaXBlc1JlcXVlc3QSDAoEZGF0ZRgBIAEoCRIoCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWxIABI1CgtlYXRpbmdfdGltZRgDIAEoCzIeLnN1Z2dlc3Rpb25zLnYxLkVhdGluZ1RpbWVTbG90SAASEgoKcGVyc29uX2lkcxgEIAMoCRIXCg9tYXhfc3VnZ2VzdGlvbnMYBSABKAVCBgoEc2xvdCJyChZTdWdnZXN0UmVjaXBlc1Jlc3BvbnNlEi8KC3N1Z2dlc3Rpb25zGAEgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIRCglzaG9wX2RhdGUYAiABKAkSFAoMcmVjaXBlX2NvdW50GAMgASgFIlkKDlNjb3JlQ29tcG9uZW50EicKBGtpbmQYASABKA4yGS5zdWdnZXN0aW9ucy52MS5TY29yZUtpbmQSDgoGcG9pbnRzGAIgASgBEg4KBnJlYXNvbhgDIAEoCSKbAQoQU3VnZ2VzdGVkUG9ydGlvbhIRCglwZXJzb25faWQYASABKAkSEwoLcGVyc29uX25hbWUYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSGAoQZWF0aW5nX3RpbWVfbmFtZRgEIAEoCRIMCgRkYXRlGAUgASgJEhAKCHNlcnZpbmdzGAYgASgBEg0KBWdyYW1zGAcgASgBIlwKCUl0ZW1Ub0J1eRIPCgdmb29kX2lkGAEgASgJEhEKCWZvb2RfbmFtZRgCIAEoCRITCgthbW91bnRfdGV4dBgDIAEoCRIWCg5hbHJlYWR5X2xpc3RlZBgEIAEoCCLEAgoKU3VnZ2VzdGlvbhIRCglyZWNpcGVfaWQYASABKAkSEwoLcmVjaXBlX25hbWUYAiABKAkSDQoFc2NvcmUYAyABKAESMgoKY29tcG9uZW50cxgEIAMoCzIeLnN1Z2dlc3Rpb25zLnYxLlNjb3JlQ29tcG9uZW50EhIKCmZpdHNfcnVsZXMYBSABKAgSIwoId2FybmluZ3MYBiADKAsyES5wbGFucy52MS5XYXJuaW5nEjIKCHBvcnRpb25zGAcgAygLMiAuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGVkUG9ydGlvbhIVCg1jb29rX3NlcnZpbmdzGAggASgBEhYKDm5ld19pdGVtX2NvdW50GAkgASgFEi8KDGl0ZW1zX3RvX2J1eRgKIAMoCzIZLnN1Z2dlc3Rpb25zLnYxLkl0ZW1Ub0J1eSK2AgoMUGxhbkNyaXRlcmlhEikKB3ZhcmlldHkYASABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIrCglmYXZvcml0ZXMYAiABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIoCgZwYW50cnkYAyABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIqCghzaG9wcGluZxgEIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEisKCW51dHJpdGlvbhgFIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEhkKEW1heF90b3RhbF9zZWNvbmRzGAYgASgFEhQKDGV4Y2x1ZGVfdGFncxgHIAMoCRIaChJleGNsdWRlX3JlY2lwZV9pZHMYCCADKAkiVQoKUGxhbkNob2ljZRIMCgRkYXRlGAEgASgJEiYKBG1lYWwYAiABKA4yGC5wZW9wbGUudjEuSG91c2Vob2xkTWVhbBIRCglyZWNpcGVfaWQYAyABKAkiygEKElN1Z2dlc3RQbGFuUmVxdWVzdBISCgpzdGFydF9kYXRlGAEgASgJEgwKBGRheXMYAiABKAUSJwoFbWVhbHMYAyADKA4yGC5wZW9wbGUudjEuSG91c2Vob2xkTWVhbBIuCghjcml0ZXJpYRgEIAEoCzIcLnN1Z2dlc3Rpb25zLnYxLlBsYW5Dcml0ZXJpYRIrCgdjaG9pY2VzGAUgAygLMhouc3VnZ2VzdGlvbnMudjEuUGxhbkNob2ljZRIMCgRzZWVkGAYgASgEIowCCghQbGFuU2xvdBIMCgRkYXRlGAEgASgJEiYKBG1lYWwYAiABKA4yGC5wZW9wbGUudjEuSG91c2Vob2xkTWVhbBIsCgVzdGF0ZRgDIAEoDjIdLnN1Z2dlc3Rpb25zLnYxLlBsYW5TbG90U3RhdGUSLgoKc3VnZ2VzdGlvbhgEIAEoCzIaLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3Rpb24SMAoMYWx0ZXJuYXRpdmVzGAUgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIcChRwbGFubmVkX3JlY2lwZV9uYW1lcxgGIAMoCRIcChRmaXR0aW5nX3JlY2lwZV9jb3VudBgHIAEoBSKGAQoTU3VnZ2VzdFBsYW5SZXNwb25zZRInCgVzbG90cxgBIAMoCzIYLnN1Z2dlc3Rpb25zLnYxLlBsYW5TbG90Eg0KBXNjb3JlGAIgASgBEhMKC3BsYW5zX3RyaWVkGAMgASgFEgwKBHNlZWQYBCABKAQSFAoMcmVjaXBlX2NvdW50GAUgASgFKqkCCglTY29yZUtpbmQSGgoWU0NPUkVfS0lORF9VTlNQRUNJRklFRBAAEiEKHVNDT1JFX0tJTkRfU0hBUkVEX0lOR1JFRElFTlRTEAESHQoZU0NPUkVfS0lORF9QQUNLX0xFRlRPVkVSUxACEhUKEVNDT1JFX0tJTkRfUEFOVFJZEAMSGAoUU0NPUkVfS0lORF9OVVRSSVRJT04QBBIUChBTQ09SRV9LSU5EX1JVTEVTEAUSFgoSU0NPUkVfS0lORF9LRUVQSU5HEAYSFQoRU0NPUkVfS0lORF9GTEFWT1IQBxIWChJTQ09SRV9LSU5EX1ZBUklFVFkQCBIXChNTQ09SRV9LSU5EX01FQUxfVEFHEAkSFwoTU0NPUkVfS0lORF9GQVZPUklURRAKKnAKCEVtcGhhc2lzEhgKFEVNUEhBU0lTX1VOU1BFQ0lGSUVEEAASEAoMRU1QSEFTSVNfT0ZGEAESEAoMRU1QSEFTSVNfTE9XEAISEwoPRU1QSEFTSVNfTk9STUFMEAMSEQoNRU1QSEFTSVNfSElHSBAEKsEBCg1QbGFuU2xvdFN0YXRlEh8KG1BMQU5fU0xPVF9TVEFURV9VTlNQRUNJRklFRBAAEh0KGVBMQU5fU0xPVF9TVEFURV9TVUdHRVNURUQQARIYChRQTEFOX1NMT1RfU1RBVEVfS0VQVBACEhsKF1BMQU5fU0xPVF9TVEFURV9TS0lQUEVEEAMSGwoXUExBTl9TTE9UX1NUQVRFX1BMQU5ORUQQBBIcChhQTEFOX1NMT1RfU1RBVEVfVU5GSUxMRUQQBTLMAQoRU3VnZ2VzdGlvblNlcnZpY2USXwoOU3VnZ2VzdFJlY2lwZXMSJS5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1JlcXVlc3QaJi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1Jlc3BvbnNlElYKC1N1Z2dlc3RQbGFuEiIuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXF1ZXN0GiMuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXNwb25zZULMAQoSY29tLnN1Z2dlc3Rpb25zLnYxQhBTdWdnZXN0aW9uc1Byb3RvUAFaS2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vc3VnZ2VzdGlvbnMvdjE7c3VnZ2VzdGlvbnN2MaICA1NYWKoCDlN1Z2dlc3Rpb25zLlYxygIOU3VnZ2VzdGlvbnNcVjHiAhpTdWdnZXN0aW9uc1xWMVxHUEJNZXRhZGF0YeoCD1N1Z2dlc3Rpb25zOjpWMWIGcHJvdG8z", [file_people_v1_people, file_plans_v1_plans]);
+  fileDesc("CiBzdWdnZXN0aW9ucy92MS9zdWdnZXN0aW9ucy5wcm90bxIOc3VnZ2VzdGlvbnMudjEiOwoORWF0aW5nVGltZVNsb3QSEQoJcGVyc29uX2lkGAEgASgJEhYKDmVhdGluZ190aW1lX2lkGAIgASgJIrsBChVTdWdnZXN0UmVjaXBlc1JlcXVlc3QSDAoEZGF0ZRgBIAEoCRIoCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWxIABI1CgtlYXRpbmdfdGltZRgDIAEoCzIeLnN1Z2dlc3Rpb25zLnYxLkVhdGluZ1RpbWVTbG90SAASEgoKcGVyc29uX2lkcxgEIAMoCRIXCg9tYXhfc3VnZ2VzdGlvbnMYBSABKAVCBgoEc2xvdCJyChZTdWdnZXN0UmVjaXBlc1Jlc3BvbnNlEi8KC3N1Z2dlc3Rpb25zGAEgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIRCglzaG9wX2RhdGUYAiABKAkSFAoMcmVjaXBlX2NvdW50GAMgASgFIlkKDlNjb3JlQ29tcG9uZW50EicKBGtpbmQYASABKA4yGS5zdWdnZXN0aW9ucy52MS5TY29yZUtpbmQSDgoGcG9pbnRzGAIgASgBEg4KBnJlYXNvbhgDIAEoCSKbAQoQU3VnZ2VzdGVkUG9ydGlvbhIRCglwZXJzb25faWQYASABKAkSEwoLcGVyc29uX25hbWUYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSGAoQZWF0aW5nX3RpbWVfbmFtZRgEIAEoCRIMCgRkYXRlGAUgASgJEhAKCHNlcnZpbmdzGAYgASgBEg0KBWdyYW1zGAcgASgBIlwKCUl0ZW1Ub0J1eRIPCgdmb29kX2lkGAEgASgJEhEKCWZvb2RfbmFtZRgCIAEoCRITCgthbW91bnRfdGV4dBgDIAEoCRIWCg5hbHJlYWR5X2xpc3RlZBgEIAEoCCLEAgoKU3VnZ2VzdGlvbhIRCglyZWNpcGVfaWQYASABKAkSEwoLcmVjaXBlX25hbWUYAiABKAkSDQoFc2NvcmUYAyABKAESMgoKY29tcG9uZW50cxgEIAMoCzIeLnN1Z2dlc3Rpb25zLnYxLlNjb3JlQ29tcG9uZW50EhIKCmZpdHNfcnVsZXMYBSABKAgSIwoId2FybmluZ3MYBiADKAsyES5wbGFucy52MS5XYXJuaW5nEjIKCHBvcnRpb25zGAcgAygLMiAuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGVkUG9ydGlvbhIVCg1jb29rX3NlcnZpbmdzGAggASgBEhYKDm5ld19pdGVtX2NvdW50GAkgASgFEi8KDGl0ZW1zX3RvX2J1eRgKIAMoCzIZLnN1Z2dlc3Rpb25zLnYxLkl0ZW1Ub0J1eSK2AgoMUGxhbkNyaXRlcmlhEikKB3ZhcmlldHkYASABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIrCglmYXZvcml0ZXMYAiABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIoCgZwYW50cnkYAyABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIqCghzaG9wcGluZxgEIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEisKCW51dHJpdGlvbhgFIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEhkKEW1heF90b3RhbF9zZWNvbmRzGAYgASgFEhQKDGV4Y2x1ZGVfdGFncxgHIAMoCRIaChJleGNsdWRlX3JlY2lwZV9pZHMYCCADKAkigAEKClBsYW5DaG9pY2USDAoEZGF0ZRgBIAEoCRImCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSEQoJcmVjaXBlX2lkGAMgASgJEhEKCXBlcnNvbl9pZBgEIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgFIAEoCSLuAQoSU3VnZ2VzdFBsYW5SZXF1ZXN0EhIKCnN0YXJ0X2RhdGUYASABKAkSDAoEZGF5cxgCIAEoBRInCgVtZWFscxgDIAMoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsEi4KCGNyaXRlcmlhGAQgASgLMhwuc3VnZ2VzdGlvbnMudjEuUGxhbkNyaXRlcmlhEisKB2Nob2ljZXMYBSADKAsyGi5zdWdnZXN0aW9ucy52MS5QbGFuQ2hvaWNlEgwKBHNlZWQYBiABKAQSIgoac2tpcF9wZXJzb25hbF9lYXRpbmdfdGltZXMYByABKAgi/wIKCFBsYW5TbG90EgwKBGRhdGUYASABKAkSJgoEbWVhbBgCIAEoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsEiwKBXN0YXRlGAMgASgOMh0uc3VnZ2VzdGlvbnMudjEuUGxhblNsb3RTdGF0ZRIuCgpzdWdnZXN0aW9uGAQgASgLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIwCgxhbHRlcm5hdGl2ZXMYBSADKAsyGi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0aW9uEhwKFHBsYW5uZWRfcmVjaXBlX25hbWVzGAYgAygJEhwKFGZpdHRpbmdfcmVjaXBlX2NvdW50GAcgASgFEhEKCXBlcnNvbl9pZBgIIAEoCRITCgtwZXJzb25fbmFtZRgJIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgKIAEoCRIYChBlYXRpbmdfdGltZV9uYW1lGAsgASgJEhcKD3VuZmlsbGVkX3JlYXNvbhgMIAEoCSKGAQoTU3VnZ2VzdFBsYW5SZXNwb25zZRInCgVzbG90cxgBIAMoCzIYLnN1Z2dlc3Rpb25zLnYxLlBsYW5TbG90Eg0KBXNjb3JlGAIgASgBEhMKC3BsYW5zX3RyaWVkGAMgASgFEgwKBHNlZWQYBCABKAQSFAoMcmVjaXBlX2NvdW50GAUgASgFKqkCCglTY29yZUtpbmQSGgoWU0NPUkVfS0lORF9VTlNQRUNJRklFRBAAEiEKHVNDT1JFX0tJTkRfU0hBUkVEX0lOR1JFRElFTlRTEAESHQoZU0NPUkVfS0lORF9QQUNLX0xFRlRPVkVSUxACEhUKEVNDT1JFX0tJTkRfUEFOVFJZEAMSGAoUU0NPUkVfS0lORF9OVVRSSVRJT04QBBIUChBTQ09SRV9LSU5EX1JVTEVTEAUSFgoSU0NPUkVfS0lORF9LRUVQSU5HEAYSFQoRU0NPUkVfS0lORF9GTEFWT1IQBxIWChJTQ09SRV9LSU5EX1ZBUklFVFkQCBIXChNTQ09SRV9LSU5EX01FQUxfVEFHEAkSFwoTU0NPUkVfS0lORF9GQVZPUklURRAKKnAKCEVtcGhhc2lzEhgKFEVNUEhBU0lTX1VOU1BFQ0lGSUVEEAASEAoMRU1QSEFTSVNfT0ZGEAESEAoMRU1QSEFTSVNfTE9XEAISEwoPRU1QSEFTSVNfTk9STUFMEAMSEQoNRU1QSEFTSVNfSElHSBAEKuUBCg1QbGFuU2xvdFN0YXRlEh8KG1BMQU5fU0xPVF9TVEFURV9VTlNQRUNJRklFRBAAEh0KGVBMQU5fU0xPVF9TVEFURV9TVUdHRVNURUQQARIYChRQTEFOX1NMT1RfU1RBVEVfS0VQVBACEhsKF1BMQU5fU0xPVF9TVEFURV9TS0lQUEVEEAMSGwoXUExBTl9TTE9UX1NUQVRFX1BMQU5ORUQQBBIcChhQTEFOX1NMT1RfU1RBVEVfVU5GSUxMRUQQBRIiCh5QTEFOX1NMT1RfU1RBVEVfRklMTEVEX0JZX01FQUwQBjLMAQoRU3VnZ2VzdGlvblNlcnZpY2USXwoOU3VnZ2VzdFJlY2lwZXMSJS5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1JlcXVlc3QaJi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1Jlc3BvbnNlElYKC1N1Z2dlc3RQbGFuEiIuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXF1ZXN0GiMuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXNwb25zZULMAQoSY29tLnN1Z2dlc3Rpb25zLnYxQhBTdWdnZXN0aW9uc1Byb3RvUAFaS2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vc3VnZ2VzdGlvbnMvdjE7c3VnZ2VzdGlvbnN2MaICA1NYWKoCDlN1Z2dlc3Rpb25zLlYxygIOU3VnZ2VzdGlvbnNcVjHiAhpTdWdnZXN0aW9uc1xWMVxHUEJNZXRhZGF0YeoCD1N1Z2dlc3Rpb25zOjpWMWIGcHJvdG8z", [file_people_v1_people, file_plans_v1_plans]);
 
 /**
  * An eating time of one person, to suggest a recipe for, like a small
@@ -464,7 +464,7 @@ export type PlanChoice = Message<"suggestions.v1.PlanChoice"> & {
   date: string;
 
   /**
-   * The shared meal of the slot. Required.
+   * The shared meal of the slot. Required, unless eating_time_id is set.
    *
    * @generated from field: people.v1.HouseholdMeal meal = 2;
    */
@@ -477,6 +477,21 @@ export type PlanChoice = Message<"suggestions.v1.PlanChoice"> & {
    * @generated from field: string recipe_id = 3;
    */
   recipeId: string;
+
+  /**
+   * Instead of a shared meal, the person of a slot of one person's eating
+   * time, with eating_time_id.
+   *
+   * @generated from field: string person_id = 4;
+   */
+  personId: string;
+
+  /**
+   * The person's eating time, with person_id.
+   *
+   * @generated from field: string eating_time_id = 5;
+   */
+  eatingTimeId: string;
 };
 
 /**
@@ -535,6 +550,14 @@ export type SuggestPlanRequest = Message<"suggestions.v1.SuggestPlanRequest"> & 
    * @generated from field: uint64 seed = 6;
    */
   seed: bigint;
+
+  /**
+   * Whether to leave out the eating times of one person, like snacks, and
+   * plan only the shared meals.
+   *
+   * @generated from field: bool skip_personal_eating_times = 7;
+   */
+  skipPersonalEatingTimes: boolean;
 };
 
 /**
@@ -545,7 +568,8 @@ export const SuggestPlanRequestSchema: GenMessage<SuggestPlanRequest> = /*@__PUR
   messageDesc(file_suggestions_v1_suggestions, 9);
 
 /**
- * A slot of a suggested plan: a shared meal on a date.
+ * A slot of a suggested plan: a shared meal on a date, or one person's
+ * eating time that eats from no shared meal, like a snack.
  *
  * @generated from message suggestions.v1.PlanSlot
  */
@@ -558,7 +582,8 @@ export type PlanSlot = Message<"suggestions.v1.PlanSlot"> & {
   date: string;
 
   /**
-   * The shared meal.
+   * The shared meal, HOUSEHOLD_MEAL_UNSPECIFIED for one person's eating
+   * time.
    *
    * @generated from field: people.v1.HouseholdMeal meal = 2;
    */
@@ -604,6 +629,43 @@ export type PlanSlot = Message<"suggestions.v1.PlanSlot"> & {
    * @generated from field: int32 fitting_recipe_count = 7;
    */
   fittingRecipeCount: number;
+
+  /**
+   * The person, for one person's eating time.
+   *
+   * @generated from field: string person_id = 8;
+   */
+  personId: string;
+
+  /**
+   * The person's name, for one person's eating time.
+   *
+   * @generated from field: string person_name = 9;
+   */
+  personName: string;
+
+  /**
+   * The eating time, for one person's eating time.
+   *
+   * @generated from field: string eating_time_id = 10;
+   */
+  eatingTimeId: string;
+
+  /**
+   * The eating time's name, e.g. "Mid-morning snack", for one person's
+   * eating time.
+   *
+   * @generated from field: string eating_time_name = 11;
+   */
+  eatingTimeName: string;
+
+  /**
+   * Why no recipe could be suggested, for UNFILLED, e.g. that no recipe
+   * meeting the criteria is tagged "breakfast".
+   *
+   * @generated from field: string unfilled_reason = 12;
+   */
+  unfilledReason: string;
 };
 
 /**
@@ -618,7 +680,8 @@ export const PlanSlotSchema: GenMessage<PlanSlot> = /*@__PURE__*/
  */
 export type SuggestPlanResponse = Message<"suggestions.v1.SuggestPlanResponse"> & {
   /**
-   * Every slot of the days and meals, by date and meal.
+   * Every slot of the days, by date: the shared meals, in order, then the
+   * eating times of one person, by person and in the order of their day.
    *
    * @generated from field: repeated suggestions.v1.PlanSlot slots = 1;
    */
@@ -838,11 +901,20 @@ export enum PlanSlotState {
   PLANNED = 4,
 
   /**
-   * Nothing, as no recipe could be suggested.
+   * Nothing, as no recipe could be suggested: see unfilled_reason.
    *
    * @generated from enum value: PLAN_SLOT_STATE_UNFILLED = 5;
    */
   UNFILLED = 5,
+
+  /**
+   * Nothing new, for one person's eating time: they eat the rest of a
+   * shared meal of the plan there, as it's more than their
+   * max_portion_grams.
+   *
+   * @generated from enum value: PLAN_SLOT_STATE_FILLED_BY_MEAL = 6;
+   */
+  FILLED_BY_MEAL = 6,
 }
 
 /**
@@ -929,10 +1001,14 @@ export const SuggestionService: GenService<{
     output: typeof SuggestRecipesResponseSchema;
   },
   /**
-   * Suggest a whole plan of shared meals for the next days at once: a
-   * recipe for each open breakfast, lunch or dinner, chosen together so
-   * the days share ingredients and packs, use the pantry, vary, and meet
-   * everyone's rules and targets. It's the fastest way to plan a week:
+   * Suggest a whole plan for the household for the next days at once: a
+   * recipe for each open breakfast, lunch or dinner, and for each eating
+   * time of one person that eats from no shared meal, like a snack
+   * mid-morning, chosen together so the days share ingredients and packs,
+   * use the pantry, vary, and meet everyone's rules and targets. Breakfast
+   * only gets recipes tagged "breakfast"; the other slots take any recipe,
+   * a breakfast for lunch too, preferring those tagged for them. A slot
+   * left without one says why. It's the fastest way to plan a week:
    *
    * 1. Call SuggestPlan with the first date, the number of days and the
    *    meals, and criteria from what the user wants, like more variety,
@@ -950,8 +1026,11 @@ export const SuggestionService: GenService<{
    * seconds, picking each slot's recipe among the best for it given the
    * slots planned before, keeps the best plan, and then improves each slot
    * given all the others. Slots that already have a cook of their meal
-   * aren't planned again. A slot only gets a recipe that breaks someone's
-   * rules if every recipe does. Nothing is changed. Fails with
+   * aren't planned again, nor are eating times with portions or staples.
+   * An eating time where the rest of a shared meal of the plan is eaten,
+   * as it's more than the person's max_portion_grams, isn't planned
+   * either. A slot only gets a recipe that breaks someone's rules if every
+   * recipe does. Nothing is changed. Fails with
    * INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
    * nobody eats from the meals, or no recipe meets the criteria.
    *

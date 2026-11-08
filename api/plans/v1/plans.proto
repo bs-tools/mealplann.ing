@@ -52,12 +52,15 @@ service PlanService {
   // of the eating times and cook it touched. Fails with
   // FAILED_PRECONDITION if nobody eats from the meal.
   rpc PlanMeal(PlanMealRequest) returns (PlanMealResponse);
-  // Plan several shared meals at once, like PlanMeal for each, in order of
-  // date and meal, so each splits its portions given those before it. Use
-  // it to save a plan from SuggestionService.SuggestPlan. Nothing is
-  // planned if any meal fails. Fails with INVALID_ARGUMENT if two meals
-  // are at the same date and meal, and FAILED_PRECONDITION if nobody eats
-  // from a meal.
+  // Plan several shared meals, or one person's eating times, at once, like
+  // PlanMeal for each shared meal, in order of date and meal, so each
+  // splits its portions given those before it. An eating time of one
+  // person gets a cook for their portion: a serving, or less if their
+  // max_portion_grams says so. Each date's shared meals are planned before
+  // its eating times of one person. Use it to save a plan from
+  // SuggestionService.SuggestPlan. Nothing is planned if any meal fails.
+  // Fails with INVALID_ARGUMENT if two meals are at the same date and meal
+  // or eating time, and FAILED_PRECONDITION if nobody eats from a meal.
   rpc PlanMeals(PlanMealsRequest) returns (PlanMealsResponse);
   // Create a cook: a recipe made on a date. Plan who eats it with
   // CreatePortion, or use PlanMeal to do both. A cook created done takes
@@ -541,14 +544,19 @@ message MealToPlan {
   string recipe_id = 1;
   // The date (YYYY-MM-DD). Required.
   string date = 2;
-  // The shared meal. Required.
+  // The shared meal. Required, unless eating_time_id is set.
   people.v1.HouseholdMeal meal = 3;
+  // Instead of a shared meal, the person whose eating time it is, with
+  // eating_time_id: e.g. one person's snack mid-morning.
+  string person_id = 4;
+  // The person's eating time, with person_id.
+  string eating_time_id = 5;
 }
 
 message PlanMealsRequest {
-  // The meals to plan, from 1 to 60, at most one per date and meal. Each
-  // is cooked for everyone who eats from it, with the servings planned
-  // for them.
+  // The meals to plan, from 1 to 150, at most one per date and meal or
+  // eating time. Each shared meal is cooked for everyone who eats from it,
+  // with the servings planned for them.
   repeated MealToPlan meals = 1;
 }
 

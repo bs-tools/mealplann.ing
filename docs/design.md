@@ -297,10 +297,11 @@ beyond them, like proposing a new recipe that would score well.
 
 ### Planning several days at once
 
-`SuggestPlan` suggests a whole plan of shared meals for up to 14 days, and
-the web app's "Plan for me" page shows it, for the user to keep, swap or
-clear meals, shuffle the rest, change the criteria, and add it to the plan
-with `PlanMeals` in one call. It runs on the server alone, from the same
+`SuggestPlan` suggests a whole plan for the household for up to 14 days:
+its shared meals, and each person's own eating times, like snacks. The
+web app's "Plan for me" page shows it, for the user to keep, swap or clear
+meals, shuffle the rest, change the criteria, and add it to the plan with
+`PlanMeals` in one call. It runs on the server alone, from the same
 scoring as `SuggestRecipes`.
 
 - **The search is probabilistic** (`internal/suggest/plan.go`): far too many
@@ -315,6 +316,15 @@ scoring as `SuggestRecipes`.
   is canceled. A polishing pass then scores each slot against all the
   others, swaps in a better recipe if there is one, and gives each slot its
   reasons and alternatives.
+- **Breakfast is a hard constraint**: it only takes recipes tagged
+  "breakfast", as a recipe with no meal tag is most likely a main meal.
+  The other slots take any recipe, a breakfast for lunch too, with the meal
+  tags only counting in the score. A breakfast no recipe fits says to tag
+  some.
+- **Each day's shared meals come before its personal eating times**, so a
+  shared meal's portion that's more than someone's maximum portion spills
+  into their next small eating times, as `PlanMeal` splits it, and such an
+  eating time isn't planned again.
 - **Rules come first**: a slot only draws from recipes that break no rule
   if there are any, and each slot says how many fit, so the app can say
   when too few fit everyone's rules and the plan has to repeat them.

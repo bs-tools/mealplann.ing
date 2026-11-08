@@ -157,11 +157,6 @@ const (
 )
 
 const (
-	// minShare is the smallest share of a serving worth planning, like
-	// plans.SplitMeal's.
-	minShare = 0.05
-	// minCookServings is the fewest servings a cook can have.
-	minCookServings = 0.25
 	// crumbGrams is the least amount to buy that counts, as amounts are
 	// scaled floats.
 	crumbGrams = 0.5
@@ -520,17 +515,8 @@ func (s *scorer) portion(c *candidate) {
 	}
 	p := s.in.People[0]
 	slot := plans.Slot{PersonID: p.ID, EatingTimeID: s.in.EatingTimeID, Date: s.in.Date}
-	servings := 1.0
-	if limit := p.Rules.MaxPortionGrams; limit != nil && gramsPerServing > 0 {
-		room := *limit - s.plannedGrams[slot]
-		if room < minShare*gramsPerServing {
-			// The eating time is full already: suggest a portion of the
-			// maximum, which the rules then warn about.
-			room = *limit
-		}
-		servings = max(min(1, math.Floor(room/gramsPerServing*100+1e-9)/100), minShare)
-	}
-	sg.CookServings = max(math.Ceil(servings/minCookServings-1e-9)*minCookServings, minCookServings)
+	servings, cookServings := plans.EatingTimeServings(p, gramsPerServing, s.plannedGrams[slot])
+	sg.CookServings = cookServings
 	sg.Portions = []Portion{{
 		Share:      plans.Share{Slot: slot, Servings: servings},
 		Person:     p,
@@ -1022,27 +1008,15 @@ var mealTags = []string{"breakfast", "lunch", "dinner", "snack"}
 // dinner are interchangeable, so neither counts against the other, and any
 // recipe can make a small meal.
 func (s *scorer) mealTag(c *candidate) {
-	want := string(s.in.Meal)
+	var et *people.EatingTime
 	if s.in.Meal == people.MealNone {
-		et := s.in.People[0].EatingTime(s.in.EatingTimeID)
-		switch {
-		case et == nil:
-			return
-		case et.Meal != people.MealNone:
-			want = string(et.Meal)
-		case et.Kind == people.KindSmall:
-			want = "snack"
-		default:
-			return
-		}
+		et = s.in.People[0].EatingTime(s.in.EatingTimeID)
 	}
-	var tagged []string
-	for _, tag := range c.recipe.Tags {
-		tag = strings.ToLower(strings.TrimSpace(tag))
-		if slices.Contains(mealTags, tag) {
-			tagged = append(tagged, tag)
-		}
+	want := slotTag(s.in.Meal, et)
+	if want == "" {
+		return
 	}
+	tagged := recipeMealTags(c.recipe)
 	switch {
 	case len(tagged) == 0:
 	case slices.Contains(tagged, want):
@@ -1054,6 +1028,46 @@ func (s *scorer) mealTag(c *candidate) {
 	default:
 		c.add(MealTag, -OtherMealTagPenalty, "tagged %s, not %s", list(tagged), want)
 	}
+}
+
+// slotTag returns the meal tag of a slot: its shared meal's, or for one
+// person's eating time, its meal's, or "snack" for a small one. It's ""
+// for a main eating time of no shared meal.
+func slotTag(meal people.Meal, et *people.EatingTime) string {
+	switch {
+	case meal != people.MealNone:
+		return string(meal)
+	case et == nil:
+		return ""
+	case et.Meal != people.MealNone:
+		return string(et.Meal)
+	case et.Kind == people.KindSmall:
+		return "snack"
+	default:
+		return ""
+	}
+}
+
+// recipeMealTags returns the meal tags of a recipe, in lower case.
+func recipeMealTags(r *recipes.Recipe) []string {
+	var tagged []string
+	for _, tag := range r.Tags {
+		tag = strings.ToLower(strings.TrimSpace(tag))
+		if slices.Contains(mealTags, tag) && !slices.Contains(tagged, tag) {
+			tagged = append(tagged, tag)
+		}
+	}
+	return tagged
+}
+
+// FitsMeal reports whether a plan may put a recipe at a slot of a meal
+// tag, as returned by slotTag. Breakfast is its own kind of food, so it
+// takes only recipes tagged "breakfast": a chili isn't breakfast, and a
+// recipe without meal tags is most likely a main meal. Every other slot
+// takes any recipe, a breakfast for lunch too, with the meal tags only
+// counting in its score.
+func FitsMeal(r *recipes.Recipe, tag string) bool {
+	return tag != "breakfast" || slices.Contains(recipeMealTags(r), "breakfast")
 }
 
 // isFresh reports whether a food is fresh: it keeps a week or less, or is

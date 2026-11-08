@@ -39,7 +39,15 @@ import (
 //
 // The rules of the eating times aren't hard constraints, as in
 // SuggestRecipes, but a slot only draws from recipes that break no rule if
-// it has any.
+// it has any. Breakfast is a hard constraint: it only draws from the
+// recipes FitsMeal allows, those tagged "breakfast", so it's never a
+// chili.
+//
+// The slots are shared meals, and the eating times of one person that eat
+// from no shared meal, like a snack mid-morning. A shared meal's portion
+// that's more than a person's maximum portion spills into their next small
+// eating times (see plans.SplitMeal), so such a slot that a planned meal
+// fills already isn't planned: it's eating the rest of that meal.
 const (
 	// PlanTemperature is how much a rollout's picks favor the best
 	// recipes, in points: a recipe scoring PlanTemperature less than the
@@ -63,13 +71,18 @@ const (
 	PlanPatience = 40
 )
 
-// PlanSlot is a shared meal on a date to plan.
+// PlanSlot is a shared meal, or one person's eating time, on a date to
+// plan.
 type PlanSlot struct {
 	// Date is at midnight UTC.
 	Date time.Time
+	// Meal is the shared meal, MealNone for one person's eating time.
 	Meal people.Meal
-	// People are those who eat the meal, each with an eating time for it.
+	// People are those who eat the meal, each with an eating time for it,
+	// or the one person whose eating time it is.
 	People []*people.Person
+	// EatingTimeID is the person's eating time, invalid for a shared meal.
+	EatingTimeID pgtype.UUID
 	// Fixed is the recipe the user chose for the slot, nil to pick one.
 	Fixed *recipes.Recipe
 }
@@ -125,6 +138,32 @@ type PlannedSlot struct {
 	// the rest of the plan. Fewer than the slots of its meal means the plan
 	// has to repeat them, or break a rule.
 	Fitting int
+	// Eligible is how many of the candidates its meal tag allows (see
+	// FitsMeal): with none, the slot can't be planned.
+	Eligible int
+	// FilledByMeal is whether one person's eating time isn't planned, as a
+	// shared meal of the plan spills into it.
+	FilledByMeal bool
+}
+
+// personal reports whether the slot is one person's eating time.
+func (s *PlanSlot) personal() bool {
+	return s.Meal == people.MealNone
+}
+
+// key returns the eating time slot of a personal slot.
+func (s *PlanSlot) key() plans.Slot {
+	return plans.Slot{PersonID: s.People[0].ID, EatingTimeID: s.EatingTimeID, Date: s.Date}
+}
+
+// Tag returns the slot's meal tag, like "breakfast" or "snack" (see
+// FitsMeal).
+func (s *PlanSlot) Tag() string {
+	var et *people.EatingTime
+	if s.personal() {
+		et = s.People[0].EatingTime(s.EatingTimeID)
+	}
+	return slotTag(s.Meal, et)
 }
 
 // PlanResult is a suggested plan.
@@ -146,9 +185,25 @@ func Plan(in *PlanInput) *PlanResult {
 	}
 	budget := cmp.Or(in.Budget, DefaultPlanBudget)
 	maxRollouts := cmp.Or(in.Rollouts, DefaultPlanRollouts)
-	p := &planner{in: in, nutrition: map[pgtype.UUID]*nutrition.Recipe{}}
+	p := &planner{in: in, nutrition: map[pgtype.UUID]*nutrition.Recipe{}, eligible: map[string][]*recipes.Recipe{}}
 	for _, r := range in.Recipes {
 		p.nutrition[r.ID] = r.Nutrition()
+	}
+	all := in.Candidates
+	if all == nil {
+		all = in.Recipes
+	}
+	for _, slot := range in.Slots {
+		tag := slot.Tag()
+		if _, ok := p.eligible[tag]; ok {
+			continue
+		}
+		p.eligible[tag] = []*recipes.Recipe{}
+		for _, r := range all {
+			if FitsMeal(r, tag) {
+				p.eligible[tag] = append(p.eligible[tag], r)
+			}
+		}
 	}
 
 	deadline := now().Add(budget)
@@ -188,6 +243,8 @@ type planner struct {
 	in *PlanInput
 	// nutrition is each recipe's nutrition, by ID.
 	nutrition map[pgtype.UUID]*nutrition.Recipe
+	// eligible are the candidates each meal tag allows.
+	eligible map[string][]*recipes.Recipe
 }
 
 // rollout plans the slots in order, drawing each slot's recipe if draw,
@@ -198,6 +255,9 @@ func (p *planner) rollout(draw bool) ([]*Suggestion, float64) {
 	picks := make([]*Suggestion, len(p.in.Slots))
 	var total float64
 	for i, slot := range p.in.Slots {
+		if st.filled(slot) {
+			continue
+		}
 		ranked := Suggest(st.input(slot, p.candidates(slot)))
 		sg := p.pick(ranked, draw)
 		if sg == nil {
@@ -211,15 +271,12 @@ func (p *planner) rollout(draw bool) ([]*Suggestion, float64) {
 }
 
 // candidates returns the recipes a slot picks from: its fixed recipe, or
-// the input's candidates.
+// the input's candidates that its meal tag allows.
 func (p *planner) candidates(slot *PlanSlot) []*recipes.Recipe {
 	if slot.Fixed != nil {
 		return []*recipes.Recipe{slot.Fixed}
 	}
-	if p.in.Candidates != nil {
-		return p.in.Candidates
-	}
-	return p.in.Recipes
+	return p.eligible[slot.Tag()]
 }
 
 // pick picks a slot's recipe from its suggestions, best first: one that
@@ -282,14 +339,19 @@ func (p *planner) polish(picks []*Suggestion) ([]*PlannedSlot, float64) {
 				st.add(other, picks[j])
 			}
 		}
+		planned := &PlannedSlot{Slot: slot, Eligible: len(p.candidates(slot))}
+		slots[i] = planned
+		if st.filled(slot) {
+			planned.FilledByMeal = true
+			picks[i] = nil
+			continue
+		}
 		ranked := Suggest(st.input(slot, p.candidates(slot)))
-		planned := &PlannedSlot{Slot: slot}
 		for _, sg := range ranked {
 			if sg.FitsRules {
 				planned.Fitting++
 			}
 		}
-		slots[i] = planned
 		var current *Suggestion
 		for _, sg := range ranked {
 			if picks[i] != nil && sg.Recipe == picks[i].Recipe {
@@ -358,19 +420,36 @@ func (st *state) input(slot *PlanSlot, candidates []*recipes.Recipe) *Input {
 		}
 	}
 	return &Input{
-		Date:       slot.Date,
-		Meal:       slot.Meal,
-		People:     slot.People,
-		ShopDate:   st.p.in.ShopDate(slot.Date),
-		Week:       week,
-		Cooks:      st.cooks,
-		Planned:    st.planned,
-		Recipes:    st.p.in.Recipes,
-		Candidates: candidates,
-		Foods:      st.p.in.Foods,
-		Lots:       st.p.in.Lots,
-		Weights:    st.p.in.Weights,
+		Date:         slot.Date,
+		Meal:         slot.Meal,
+		People:       slot.People,
+		EatingTimeID: slot.EatingTimeID,
+		ShopDate:     st.p.in.ShopDate(slot.Date),
+		Week:         week,
+		Cooks:        st.cooks,
+		Planned:      st.planned,
+		Recipes:      st.p.in.Recipes,
+		Candidates:   candidates,
+		Foods:        st.p.in.Foods,
+		Lots:         st.p.in.Lots,
+		Weights:      st.p.in.Weights,
 	}
+}
+
+// filled reports whether a person's eating time is filled by a shared meal
+// the state planned, which spills into it. What the plan had there before
+// doesn't count, as the slot is then planned already, and not planned
+// again.
+func (st *state) filled(slot *PlanSlot) bool {
+	if !slot.personal() || !st.owned {
+		return false
+	}
+	et, ok := st.planned[slot.key()]
+	if !ok {
+		return false
+	}
+	before, had := st.p.in.Planned[slot.key()]
+	return !had || et.Amount.Grams > before.Amount.Grams
 }
 
 // add plans a suggestion at a slot: its cook, its portions, and what they

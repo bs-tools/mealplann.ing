@@ -20,7 +20,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
-import type { HouseholdMeal } from "gen/people/v1/people_pb";
+import { HouseholdMeal } from "gen/people/v1/people_pb";
 import { planMeals } from "gen/plans/v1/plans-PlanService_connectquery";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
@@ -49,6 +49,7 @@ const defaultCriteria = (): Criteria => ({
   maxMinutes: 0,
   meals: [],
   nutrition: Emphasis.NORMAL,
+  ownEatingTimes: true,
   pantry: Emphasis.NORMAL,
   shopping: Emphasis.NORMAL,
   start: today(),
@@ -86,12 +87,23 @@ const mealName = (meal: HouseholdMeal): string =>
   MEALS.find(([other]) => other === meal)?.[1] ?? "";
 
 /**
+ * SlotName names a slot: its shared meal, e.g. "Dinner", or the person's
+ * eating time, e.g. "Cleo · Mid-morning".
+ */
+const slotName = (slot: PlanSlot): string =>
+  slot.eatingTimeId === ""
+    ? mealName(slot.meal)
+    : `${slot.personName} · ${slot.eatingTimeName}`;
+
+/**
  * Choice is the user's choice for a slot: a recipe to keep, or "" to leave
- * it empty.
+ * it empty. A slot of one person's eating time has their IDs.
  */
 interface Choice {
   date: string;
   meal: HouseholdMeal;
+  personId: string;
+  eatingTimeId: string;
   recipeId: string;
 }
 
@@ -107,23 +119,27 @@ const saveLabel = (saving: boolean, meals: number): string => {
 };
 
 /**
- * RepeatNotes say which meals have fewer recipes fitting everyone's rules
- * than days, so the plan repeats them, e.g. "Only 2 recipes fit everyone's
- * rules at breakfast, so they repeat."
+ * RepeatNotes say which meals, or people's own eating times, have fewer
+ * recipes fitting everyone's rules than days, so the plan repeats them,
+ * e.g. "Only 2 recipes fit everyone's rules at breakfast, so they repeat."
  */
-const repeatNotes = (slots: PlanSlot[], meals: HouseholdMeal[]): string[] =>
-  meals.flatMap((meal) => {
-    const mealSlots = slots.filter((slot) => slot.meal === meal);
-    if (mealSlots.length < 2) {
+const repeatNotes = (slots: PlanSlot[]): string[] => {
+  const groups = new Map<string, PlanSlot[]>();
+  for (const slot of slots) {
+    const name =
+      slot.eatingTimeId === ""
+        ? mealName(slot.meal).toLowerCase()
+        : `${slot.personName}'s ${slot.eatingTimeName.toLowerCase()}`;
+    groups.set(name, [...(groups.get(name) ?? []), slot]);
+  }
+  return [...groups.entries()].flatMap(([name, group]) => {
+    if (group.length < 2) {
       return [];
     }
-    const fitting = Math.max(
-      ...mealSlots.map((slot) => slot.fittingRecipeCount)
-    );
-    if (fitting >= mealSlots.length) {
+    const fitting = Math.max(...group.map((slot) => slot.fittingRecipeCount));
+    if (fitting >= group.length) {
       return [];
     }
-    const name = mealName(meal).toLowerCase();
     if (fitting === 0) {
       return [`No recipe fits everyone's rules at ${name}.`];
     }
@@ -134,10 +150,14 @@ const repeatNotes = (slots: PlanSlot[], meals: HouseholdMeal[]): string[] =>
       `Only ${fitting} recipes fit everyone's rules at ${name}, so they repeat.`,
     ];
   });
+};
 
-// SlotKey identifies a slot of a plan by its date and meal.
-const slotKey = (date: string, meal: HouseholdMeal): string =>
-  `${date}|${meal}`;
+/**
+ * SlotKey identifies a slot of a plan by its date and meal, or its date and
+ * the person's eating time.
+ */
+const slotKey = (slot: PlanSlot | Choice): string =>
+  `${slot.date}|${slot.meal}|${slot.eatingTimeId}`;
 
 // THINKING are what the planner says it's doing while it searches.
 const THINKING = [
@@ -213,6 +233,11 @@ const AutoPlanPage: React.FC = () => {
   );
   const meals = criteria.meals.filter((meal) => eaten.includes(meal));
   const plannedMeals = meals.length > 0 ? meals : eaten;
+  // Whether someone eats at times of their own, like snacks.
+  const hasOwnEatingTimes = (people.data?.people ?? []).some((person) =>
+    person.eatingTimes.some((et) => et.meal === HouseholdMeal.UNSPECIFIED)
+  );
+  const ownEatingTimes = hasOwnEatingTimes && criteria.ownEatingTimes;
   const end = addDays(criteria.start, criteria.days - 1);
 
   const request = useDebouncedValue(
@@ -221,7 +246,9 @@ const AutoPlanPage: React.FC = () => {
         (choice) =>
           choice.date >= criteria.start &&
           choice.date <= end &&
-          plannedMeals.includes(choice.meal)
+          (choice.eatingTimeId === ""
+            ? plannedMeals.includes(choice.meal)
+            : ownEatingTimes)
       ),
       criteria: {
         excludeTags: criteria.excludeTags,
@@ -235,13 +262,16 @@ const AutoPlanPage: React.FC = () => {
       days: criteria.days,
       meals: plannedMeals,
       seed,
+      skipPersonalEatingTimes: !ownEatingTimes,
       startDate: criteria.start,
     },
     350
   );
   const plan = useQuery(
     suggestPlan,
-    people.isSuccess && plannedMeals.length > 0 ? request : skipToken,
+    people.isSuccess && (plannedMeals.length > 0 || ownEatingTimes)
+      ? request
+      : skipToken,
     {
       placeholderData: keepPreviousData,
       refetchOnWindowFocus: false,
@@ -267,11 +297,17 @@ const AutoPlanPage: React.FC = () => {
   };
   const choose = (slot: PlanSlot, recipeId: string | undefined) => {
     const next = new Map(choices);
-    const key = slotKey(slot.date, slot.meal);
+    const key = slotKey(slot);
     if (recipeId === undefined) {
       next.delete(key);
     } else {
-      next.set(key, { date: slot.date, meal: slot.meal, recipeId });
+      next.set(key, {
+        date: slot.date,
+        eatingTimeId: slot.eatingTimeId,
+        meal: slot.meal,
+        personId: slot.personId,
+        recipeId,
+      });
     }
     setChoices(next);
     return next;
@@ -292,7 +328,7 @@ const AutoPlanPage: React.FC = () => {
     (slot) => slot.suggestion?.fitsRules === false
   ).length;
   const busy = plan.isFetching || save.isPending;
-  const repeats = repeatNotes(toSave, plannedMeals);
+  const repeats = repeatNotes(toSave);
   let content: React.ReactNode = null;
   if (people.isPending) {
     content = <Thinking slots={criteria.days} />;
@@ -305,7 +341,7 @@ const AutoPlanPage: React.FC = () => {
         }}
       />
     );
-  } else if (eaten.length === 0) {
+  } else if (eaten.length === 0 && !hasOwnEatingTimes) {
     content = (
       <EmptyState title="No shared meals to plan">
         Set which meals people eat together on the{" "}
@@ -385,7 +421,7 @@ const AutoPlanPage: React.FC = () => {
               </h2>
               <ul className="flex flex-col gap-2">
                 {daySlots.map((slot) => {
-                  const key = slotKey(slot.date, slot.meal);
+                  const key = slotKey(slot);
                   const recipeId = slot.suggestion?.recipeId ?? "";
                   const chosen = choices.get(key)?.recipeId;
                   index++;
@@ -394,7 +430,7 @@ const AutoPlanPage: React.FC = () => {
                       // A new recipe at the slot rises in again.
                       key={`${key}|${recipeId}|${slot.state}`}
                       slot={slot}
-                      mealName={mealName(slot.meal)}
+                      mealName={slotName(slot)}
                       maxScore={maxScore}
                       locked={
                         chosen !== undefined &&
@@ -494,7 +530,9 @@ const AutoPlanPage: React.FC = () => {
                 save.mutate({
                   meals: toSave.map((slot) => ({
                     date: slot.date,
+                    eatingTimeId: slot.eatingTimeId,
                     meal: slot.meal,
+                    personId: slot.personId,
                     recipeId: slot.suggestion?.recipeId ?? "",
                   })),
                 });
@@ -510,8 +548,9 @@ const AutoPlanPage: React.FC = () => {
       {showCriteria && (
         <Card title="What matters this time">
           <CriteriaPanel
-            criteria={{ ...criteria, meals: plannedMeals }}
+            criteria={{ ...criteria, meals: plannedMeals, ownEatingTimes }}
             meals={eaten}
+            hasOwnEatingTimes={hasOwnEatingTimes}
             tags={recipes.data?.tags ?? []}
             onChange={changeCriteria}
           />
