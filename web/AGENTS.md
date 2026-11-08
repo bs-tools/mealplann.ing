@@ -1,7 +1,7 @@
 # Web app
 
 A React single-page app in TypeScript, using Connect Query for the API,
-Tailwind CSS v4 and Leaflet. The server embeds the bundle in `dist/` and serves
+Tailwind CSS v4 and Headless UI. The server embeds the bundle in `dist/` and serves
 `index.html` for every page.
 
 ## Building

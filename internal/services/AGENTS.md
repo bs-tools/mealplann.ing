@@ -65,8 +65,8 @@ The integration tests in this directory (`package services_test`) run the
 real services and repositories behind the real authentication, over HTTP:
 
 - `newEnv(t)` in `services_test.go` gives typed Connect clients for a user
-  (`e.races`), a second user (`e.otherRaces`) and an anonymous one, plus fakes
-  for map data, routing, Strava and LiveTrack.
+  (`e.foods`), a user in another household (`e.otherFoods`) and an anonymous
+  one.
 - Write a test as a scenario through the API, with comments for each step.
   Check that other users can't see or change the data.
 - Check error codes with `wantCode(t, err, connect.CodeNotFound)`.

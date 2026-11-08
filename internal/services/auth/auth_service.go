@@ -339,7 +339,7 @@ func (s *Service) FinishPasskeyRegistration(ctx context.Context, req *authv1.Fin
 		return nil, connect.Errorf(connect.CodeInvalidArgument, "name must be at most %d characters", maxNameLength)
 	}
 	if userName == "" {
-		userName = "Trail runner"
+		userName = "Home cook"
 	}
 	user, err := s.repo.RegisterPasskey(ctx, &users.Registration{
 		Challenge: challenge,
