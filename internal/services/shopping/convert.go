@@ -6,10 +6,10 @@ import (
 	"unicode/utf8"
 
 	"connectrpc.com/connect/v2"
-	shoppingv1 "github.com/bs-tools/foodplann.ing/internal/gen/shopping/v1"
-	"github.com/bs-tools/foodplann.ing/internal/services/food"
-	"github.com/bs-tools/foodplann.ing/internal/shopping"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	shoppingv1 "github.com/bs-tools/mealplann.ing/internal/gen/shopping/v1"
+	"github.com/bs-tools/mealplann.ing/internal/services/food"
+	"github.com/bs-tools/mealplann.ing/internal/shopping"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

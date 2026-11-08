@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
+	usersv1 "github.com/bs-tools/mealplann.ing/internal/gen/users/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/known/timestamppb"

@@ -7,7 +7,7 @@
 package foodsv1
 
 import (
-	_ "github.com/bs-tools/foodplann.ing/internal/gen/mcp/v1"
+	_ "github.com/bs-tools/mealplann.ing/internal/gen/mcp/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -2779,7 +2779,7 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\n" +
 	"DeleteFood\x12\x1b.foods.v1.DeleteFoodRequest\x1a\x1c.foods.v1.DeleteFoodResponseB\x9c\x01\n" +
 	"\fcom.foods.v1B\n" +
-	"FoodsProtoP\x01Z?github.com/bs-tools/foodplann.ing/internal/gen/foods/v1;foodsv1\xa2\x02\x03FXX\xaa\x02\bFoods.V1\xca\x02\bFoods\\V1\xe2\x02\x14Foods\\V1\\GPBMetadata\xea\x02\tFoods::V1b\x06proto3"
+	"FoodsProtoP\x01Z?github.com/bs-tools/mealplann.ing/internal/gen/foods/v1;foodsv1\xa2\x02\x03FXX\xaa\x02\bFoods.V1\xca\x02\bFoods\\V1\xe2\x02\x14Foods\\V1\\GPBMetadata\xea\x02\tFoods::V1b\x06proto3"
 
 var file_foods_v1_foods_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
 var file_foods_v1_foods_proto_msgTypes = make([]protoimpl.MessageInfo, 16)

@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/foods/internal/gen"
-	"github.com/bs-tools/foodplann.ing/internal/nutrition"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/foods/internal/gen"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"

@@ -7,8 +7,8 @@
 package pantryv1
 
 import (
-	v1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
-	_ "github.com/bs-tools/foodplann.ing/internal/gen/mcp/v1"
+	v1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	_ "github.com/bs-tools/mealplann.ing/internal/gen/mcp/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -1048,7 +1048,7 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\vAddToPantry\x12\x1d.pantry.v1.AddToPantryRequest\x1a\x1e.pantry.v1.AddToPantryResponse\x12[\n" +
 	"\x10UpdatePantryItem\x12\".pantry.v1.UpdatePantryItemRequest\x1a#.pantry.v1.UpdatePantryItemResponse\x12[\n" +
 	"\x10RemoveFromPantry\x12\".pantry.v1.RemoveFromPantryRequest\x1a#.pantry.v1.RemoveFromPantryResponseB\xa4\x01\n" +
-	"\rcom.pantry.v1B\vPantryProtoP\x01ZAgithub.com/bs-tools/foodplann.ing/internal/gen/pantry/v1;pantryv1\xa2\x02\x03PXX\xaa\x02\tPantry.V1\xca\x02\tPantry\\V1\xe2\x02\x15Pantry\\V1\\GPBMetadata\xea\x02\n" +
+	"\rcom.pantry.v1B\vPantryProtoP\x01ZAgithub.com/bs-tools/mealplann.ing/internal/gen/pantry/v1;pantryv1\xa2\x02\x03PXX\xaa\x02\tPantry.V1\xca\x02\tPantry\\V1\xe2\x02\x15Pantry\\V1\\GPBMetadata\xea\x02\n" +
 	"Pantry::V1b\x06proto3"
 
 var file_pantry_v1_pantry_proto_msgTypes = make([]protoimpl.MessageInfo, 10)

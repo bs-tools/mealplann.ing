@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"connectrpc.com/connect/v2"
-	authv1 "github.com/bs-tools/foodplann.ing/internal/gen/auth/v1"
-	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	authv1 "github.com/bs-tools/mealplann.ing/internal/gen/auth/v1"
+	usersv1 "github.com/bs-tools/mealplann.ing/internal/gen/users/v1"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 )
 
 func (b *browser) household(t *testing.T) *usersv1.Household {

@@ -5,7 +5,7 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: github.com/bs-tools/foodplann.ing/internal/gen
+      value: github.com/bs-tools/mealplann.ing/internal/gen
 plugins:
   - local: ["go", "tool", "protoc-gen-go"]
     out: internal/gen/

@@ -7,7 +7,7 @@ package recipesv1connect
 import (
 	connect "connectrpc.com/connect/v2"
 	context "context"
-	v1 "github.com/bs-tools/foodplann.ing/internal/gen/recipes/v1"
+	v1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
 	sync "sync"
 )
 

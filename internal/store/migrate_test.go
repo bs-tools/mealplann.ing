@@ -7,8 +7,8 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/bs-tools/foodplann.ing/internal/store"
-	"github.com/bs-tools/foodplann.ing/internal/store/storetest"
+	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/store/storetest"
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/jackc/pgx/v5"
 )

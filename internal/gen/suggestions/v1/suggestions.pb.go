@@ -7,8 +7,8 @@
 package suggestionsv1
 
 import (
-	v1 "github.com/bs-tools/foodplann.ing/internal/gen/people/v1"
-	v11 "github.com/bs-tools/foodplann.ing/internal/gen/plans/v1"
+	v1 "github.com/bs-tools/mealplann.ing/internal/gen/people/v1"
+	v11 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -1114,7 +1114,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x13SCORE_KIND_MEAL_TAG\x10\t2t\n" +
 	"\x11SuggestionService\x12_\n" +
 	"\x0eSuggestRecipes\x12%.suggestions.v1.SuggestRecipesRequest\x1a&.suggestions.v1.SuggestRecipesResponseB\xcc\x01\n" +
-	"\x12com.suggestions.v1B\x10SuggestionsProtoP\x01ZKgithub.com/bs-tools/foodplann.ing/internal/gen/suggestions/v1;suggestionsv1\xa2\x02\x03SXX\xaa\x02\x0eSuggestions.V1\xca\x02\x0eSuggestions\\V1\xe2\x02\x1aSuggestions\\V1\\GPBMetadata\xea\x02\x0fSuggestions::V1b\x06proto3"
+	"\x12com.suggestions.v1B\x10SuggestionsProtoP\x01ZKgithub.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1;suggestionsv1\xa2\x02\x03SXX\xaa\x02\x0eSuggestions.V1\xca\x02\x0eSuggestions\\V1\xe2\x02\x1aSuggestions\\V1\\GPBMetadata\xea\x02\x0fSuggestions::V1b\x06proto3"
 
 var file_suggestions_v1_suggestions_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 7)

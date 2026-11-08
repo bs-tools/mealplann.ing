@@ -7,9 +7,9 @@
 package plansv1
 
 import (
-	v11 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
-	_ "github.com/bs-tools/foodplann.ing/internal/gen/mcp/v1"
-	v1 "github.com/bs-tools/foodplann.ing/internal/gen/people/v1"
+	v11 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	_ "github.com/bs-tools/mealplann.ing/internal/gen/mcp/v1"
+	v1 "github.com/bs-tools/mealplann.ing/internal/gen/people/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -4751,7 +4751,7 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"SkipStaple\x12\x1b.plans.v1.SkipStapleRequest\x1a\x1c.plans.v1.SkipStapleResponse\x12M\n" +
 	"\fUnskipStaple\x12\x1d.plans.v1.UnskipStapleRequest\x1a\x1e.plans.v1.UnskipStapleResponseB\x9c\x01\n" +
 	"\fcom.plans.v1B\n" +
-	"PlansProtoP\x01Z?github.com/bs-tools/foodplann.ing/internal/gen/plans/v1;plansv1\xa2\x02\x03PXX\xaa\x02\bPlans.V1\xca\x02\bPlans\\V1\xe2\x02\x14Plans\\V1\\GPBMetadata\xea\x02\tPlans::V1b\x06proto3"
+	"PlansProtoP\x01Z?github.com/bs-tools/mealplann.ing/internal/gen/plans/v1;plansv1\xa2\x02\x03PXX\xaa\x02\bPlans.V1\xca\x02\bPlans\\V1\xe2\x02\x14Plans\\V1\\GPBMetadata\xea\x02\tPlans::V1b\x06proto3"
 
 var file_plans_v1_plans_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_plans_v1_plans_proto_msgTypes = make([]protoimpl.MessageInfo, 41)

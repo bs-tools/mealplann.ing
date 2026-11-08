@@ -6,8 +6,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/bs-tools/foodplann.ing/internal/store"
-	"github.com/bs-tools/foodplann.ing/internal/store/storetest"
+	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/store/storetest"
 	"github.com/jackc/pgx/v5"
 )
 

@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/bs-tools/foodplann.ing/internal/people"
+	"github.com/bs-tools/mealplann.ing/internal/people"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 

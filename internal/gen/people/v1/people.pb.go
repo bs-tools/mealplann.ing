@@ -7,8 +7,8 @@
 package peoplev1
 
 import (
-	v1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
-	_ "github.com/bs-tools/foodplann.ing/internal/gen/mcp/v1"
+	v1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	_ "github.com/bs-tools/mealplann.ing/internal/gen/mcp/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -1542,7 +1542,7 @@ const file_people_v1_people_proto_rawDesc = "" +
 	"ListPeople\x12\x1c.people.v1.ListPeopleRequest\x1a\x1d.people.v1.ListPeopleResponse\x12O\n" +
 	"\fUpdatePerson\x12\x1e.people.v1.UpdatePersonRequest\x1a\x1f.people.v1.UpdatePersonResponse\x12O\n" +
 	"\fDeletePerson\x12\x1e.people.v1.DeletePersonRequest\x1a\x1f.people.v1.DeletePersonResponseB\xa4\x01\n" +
-	"\rcom.people.v1B\vPeopleProtoP\x01ZAgithub.com/bs-tools/foodplann.ing/internal/gen/people/v1;peoplev1\xa2\x02\x03PXX\xaa\x02\tPeople.V1\xca\x02\tPeople\\V1\xe2\x02\x15People\\V1\\GPBMetadata\xea\x02\n" +
+	"\rcom.people.v1B\vPeopleProtoP\x01ZAgithub.com/bs-tools/mealplann.ing/internal/gen/people/v1;peoplev1\xa2\x02\x03PXX\xaa\x02\tPeople.V1\xca\x02\tPeople\\V1\xe2\x02\x15People\\V1\\GPBMetadata\xea\x02\n" +
 	"People::V1b\x06proto3"
 
 var file_people_v1_people_proto_enumTypes = make([]protoimpl.EnumInfo, 2)

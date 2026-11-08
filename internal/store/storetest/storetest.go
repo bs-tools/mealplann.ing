@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )

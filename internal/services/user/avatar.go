@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"connectrpc.com/connect/v2"
-	"github.com/bs-tools/foodplann.ing/internal/authn"
-	"github.com/bs-tools/foodplann.ing/internal/blob"
-	usersv1 "github.com/bs-tools/foodplann.ing/internal/gen/users/v1"
-	"github.com/bs-tools/foodplann.ing/internal/images"
-	"github.com/bs-tools/foodplann.ing/internal/users"
+	"github.com/bs-tools/mealplann.ing/internal/authn"
+	"github.com/bs-tools/mealplann.ing/internal/blob"
+	usersv1 "github.com/bs-tools/mealplann.ing/internal/gen/users/v1"
+	"github.com/bs-tools/mealplann.ing/internal/images"
+	"github.com/bs-tools/mealplann.ing/internal/users"
 )
 
 const (

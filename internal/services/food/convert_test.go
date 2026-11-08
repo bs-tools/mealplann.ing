@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	foodsv1 "github.com/bs-tools/foodplann.ing/internal/gen/foods/v1"
-	"github.com/bs-tools/foodplann.ing/internal/nutrition"
+	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 )
 
 // TestNutrientEnum checks that the API's Nutrient values name the

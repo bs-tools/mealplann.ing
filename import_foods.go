@@ -11,11 +11,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/bs-tools/foodplann.ing/internal/cnf"
-	"github.com/bs-tools/foodplann.ing/internal/fdc"
-	"github.com/bs-tools/foodplann.ing/internal/foodimport"
-	"github.com/bs-tools/foodplann.ing/internal/foods"
-	"github.com/bs-tools/foodplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/cnf"
+	"github.com/bs-tools/mealplann.ing/internal/fdc"
+	"github.com/bs-tools/mealplann.ing/internal/foodimport"
+	"github.com/bs-tools/mealplann.ing/internal/foods"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 )
 
 // importCommand is a subcommand importing reference foods.
