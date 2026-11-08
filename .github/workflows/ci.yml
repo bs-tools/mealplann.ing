@@ -45,7 +45,11 @@ jobs:
         with:
           cache-name: format
       - name: Run make format
+        # The web dependencies are installed first, so oxfmt is the version
+        # in web/package.json. Without them, npx runs the latest release,
+        # which can format differently from the version used locally.
         run: |
+          make web-deps
           make format
           git diff --exit-code --name-only
       - name: Save Go caches
