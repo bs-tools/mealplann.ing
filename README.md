@@ -247,29 +247,41 @@ Once, in order:
    $ gcloud storage buckets update gs://<project>-tfstate --versioning
    ```
 
-4. Apply without the service, which needs the secrets' values first:
+4. Enable the APIs Terraform needs before it can enable the rest: the
+   provider reads the project through Cloud Resource Manager, and a newly
+   enabled IAM API can take a minute to accept requests.
+
+   ```sh
+   $ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleapis.com iam.googleapis.com --project <project>
+   ```
+
+5. Apply without the service, which needs the secrets' values first:
 
    ```sh
    $ make infra-apply ARGS="-var service_enabled=false"
    ```
 
-5. Let the Terraform service accounts manage and read the budget:
+   If it fails saying an API "has not been used in project" or "is
+   disabled" right after it was enabled, the API is still propagating:
+   wait a minute and apply again.
+
+6. Let the Terraform service accounts manage and read the budget:
 
    ```sh
    $ gcloud billing accounts add-iam-policy-binding <billing account> --member serviceAccount:github-terraform@<project>.iam.gserviceaccount.com --role roles/billing.costsManager
    $ gcloud billing accounts add-iam-policy-binding <billing account> --member serviceAccount:github-terraform-plan@<project>.iam.gserviceaccount.com --role roles/billing.viewer
    ```
 
-6. Add the secrets' values, see [Secrets](#secrets).
-7. Set the repository variables `GCP_PROJECT_ID` and `GCP_PROJECT_NUMBER`
+7. Add the secrets' values, see [Secrets](#secrets).
+8. Set the repository variables `GCP_PROJECT_ID` and `GCP_PROJECT_NUMBER`
    under Settings → Secrets and variables → Actions → Variables. They aren't
    secret: the workflows only use them to name the project and its service
    accounts.
-8. Merge to `main`, or rerun CI on it: the deploy job builds the image and
+9. Merge to `main`, or rerun CI on it: the deploy job builds the image and
    creates the service.
-9. Set up the [custom domain](#custom-domain), then create the first
+10. Set up the [custom domain](#custom-domain), then create the first
    administrator on it.
-10. [Import FoodData Central](#importing-fooddata-central).
+11. [Import FoodData Central](#importing-fooddata-central).
 
 ### Secrets
 

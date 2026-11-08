@@ -13,6 +13,11 @@ locals {
   : "${local.image_repo}:latest")
 }
 
+# The APIs the configuration uses. The Cloud Resource Manager, Service Usage
+# and IAM APIs are enabled by hand before the first apply, see the README:
+# the provider needs Cloud Resource Manager to read the project before it can
+# enable anything, and a newly enabled IAM API can take a minute to accept
+# requests. They're listed here too, so the configuration keeps them enabled.
 resource "google_project_service" "services" {
   for_each = toset([
     "artifactregistry.googleapis.com",
@@ -64,6 +69,8 @@ resource "google_artifact_registry_repository" "images" {
 resource "google_service_account" "run" {
   account_id   = "foodplanning-run"
   display_name = "foodplann.ing Cloud Run service"
+
+  depends_on = [google_project_service.services]
 }
 
 # Secrets are created here, but their values are added by hand so they
