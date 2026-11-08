@@ -17,8 +17,8 @@ type Issue struct {
 	// UnknownWeight is whether the ingredient's amount can't be weighed, so
 	// the ingredient is left out of the nutrition entirely.
 	UnknownWeight bool
-	// UnknownNutrients are the nutrients the food lacks, in order. Empty if
-	// UnknownWeight.
+	// UnknownNutrients are the nutrients the food lacks that other
+	// ingredients have, in order. Empty if UnknownWeight.
 	UnknownNutrients []Nutrient
 }
 
@@ -84,10 +84,37 @@ func ForRecipe(ingredients []Ingredient, servings int) *Recipe {
 			r.Incomplete = append(r.Incomplete, Nutrient(n))
 		}
 	}
+	r.Issues = withoutUnknownEverywhere(r.Issues, &total)
 	r.GramsPerServing = r.TotalGrams / float64(servings)
 	r.PerServing = total.Scale(1 / float64(servings))
 	if r.TotalGrams > 0 {
 		r.Per100Grams = total.Scale(100 / r.TotalGrams)
 	}
 	return r
+}
+
+// withoutUnknownEverywhere leaves out of the issues the nutrients no counted
+// ingredient has, and the issues left with nothing to fix. Most reference
+// foods lack some nutrients, like iodine, so every ingredient would
+// otherwise report them, hiding the issues worth fixing; a nutrient no
+// ingredient has is unset in the recipe's nutrition, which says as much.
+func withoutUnknownEverywhere(issues []Issue, total *Nutrients) []Issue {
+	kept := issues[:0]
+	for _, issue := range issues {
+		if issue.UnknownWeight {
+			kept = append(kept, issue)
+			continue
+		}
+		var unknown []Nutrient
+		for _, n := range issue.UnknownNutrients {
+			if total[n] != nil {
+				unknown = append(unknown, n)
+			}
+		}
+		if len(unknown) > 0 {
+			issue.UnknownNutrients = unknown
+			kept = append(kept, issue)
+		}
+	}
+	return kept
 }

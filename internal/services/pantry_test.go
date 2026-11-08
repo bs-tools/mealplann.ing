@@ -91,12 +91,20 @@ func TestPantry(t *testing.T) {
 		!addedOnions.HasDaysToExpiry() || addedOnions.GetNotes() != "red" {
 		t.Errorf("got %v, want 450 g of onions until 20 November", addedOnions)
 	}
-	// Without an expiry date, it's today plus the food's shelf life.
-	milk := addToPantry(t, e, pantryv1.AddToPantryRequest_builder{FoodId: soyMilk.GetId(), Amount: 1000, Unit: milliliters}.Build())
+	// Without an expiry date, it's today plus the food's shelf life. The
+	// response says how the amount was weighed.
+	added, err := e.pantry.AddToPantry(ctx, pantryv1.AddToPantryRequest_builder{FoodId: soyMilk.GetId(), Amount: 1000, Unit: milliliters}.Build())
+	if err != nil {
+		t.Fatalf("AddToPantry: %v", err)
+	}
+	milk := added.GetItem()
 	if milk.GetGrams() != 1030 || milk.GetDaysToExpiry() != 60 || milk.GetExpiryDate() == "" {
 		t.Errorf("got %v, want 1030 g expiring in 60 days", milk)
 	}
-	_, err := e.pantry.AddToPantry(ctx, pantryv1.AddToPantryRequest_builder{FoodId: garlic.GetId(), Amount: 3, Unit: pieces}.Build())
+	if got, want := added.GetConversion(), "1000 ml at 1.03 g/ml is 1030 g"; got != want {
+		t.Errorf("got conversion %q, want %q", got, want)
+	}
+	_, err = e.pantry.AddToPantry(ctx, pantryv1.AddToPantryRequest_builder{FoodId: garlic.GetId(), Amount: 3, Unit: pieces}.Build())
 	wantCode(t, err, connect.CodeFailedPrecondition)
 	if !strings.Contains(err.Error(), "set grams_per_piece on the food") {
 		t.Errorf("got %v, want it to say to set grams_per_piece", err)
@@ -186,6 +194,20 @@ func TestPantry(t *testing.T) {
 	}
 	_, err = e.pantry.AddToPantry(ctx, pantryv1.AddToPantryRequest_builder{FoodId: salt.GetId(), Amount: 500, Unit: grams}.Build())
 	wantCode(t, err, connect.CodeFailedPrecondition)
+	// Unless asked to track it, which clears always in stock.
+	tracked, err := e.pantry.AddToPantry(ctx, pantryv1.AddToPantryRequest_builder{FoodId: salt.GetId(), Amount: 500, Unit: grams, TrackStock: true}.Build())
+	if err != nil {
+		t.Fatalf("AddToPantry: %v", err)
+	}
+	if !tracked.GetStoppedAlwaysInStock() || tracked.GetItem().GetGrams() != 500 || tracked.GetConversion() != "" {
+		t.Errorf("got %v, want 500 g of salt, no longer always in stock", tracked)
+	}
+	if got := listPantry(t, e).GetAlwaysInStockFoods(); len(got) != 0 {
+		t.Errorf("got %v always in stock, want none", got)
+	}
+	if _, err := e.pantry.RemoveFromPantry(ctx, pantryv1.RemoveFromPantryRequest_builder{Id: tracked.GetItem().GetId()}.Build()); err != nil {
+		t.Fatalf("RemoveFromPantry: %v", err)
+	}
 
 	// Deleting a food deletes its stock.
 	if _, err := e.foods.DeleteFood(ctx, foodsv1.DeleteFoodRequest_builder{Id: onions.GetId()}.Build()); err != nil {

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -319,38 +320,82 @@ func TestInstructions(t *testing.T) {
 	if initRes.ServerInfo.Name != "mealplanning" {
 		t.Errorf("server name = %q, want mealplanning", initRes.ServerInfo.Name)
 	}
+	// The instructions summarize each service, short enough that clients
+	// don't cut them off, and give the tool list's version.
+	if n := len(initRes.Instructions); n > 4000 {
+		t.Errorf("instructions are %d characters long, want at most 4000, as clients cut them off", n)
+	}
 	for _, want := range []string{
 		"## users.v1.UserService\n\nUserService provides information about the signed in user",
 		"## auth.v1.AuthService\n\nAuthService signs users in with passkeys.",
 		"## oauth.v1.OAuthService\n\nOAuthService lets users connect OAuth clients",
 		"## foods.v1.FoodService\n\nFoodService manages the household's foods",
 		"## recipes.v1.RecipeService\n\nRecipeService manages the household's recipes.",
+		"## people.v1.PersonService\n\nPersonService manages the people the household plans meals for.",
+		// The sentence introducing the plan's parts is left out with them.
+		"## plans.v1.PlanService\n\nPlanService plans the household's meals, by week. Weeks start on Monday, and dates are local dates, \"YYYY-MM-DD\".\n\n",
+		"## pantry.v1.PantryService\n\nPantryService tracks the household's pantry",
+		"## shopping.v1.ShoppingService\n\nShoppingService makes the household's shopping lists from its meal plan",
+		"## suggestions.v1.SuggestionService\n\nSuggestionService suggests which of the household's recipes",
+		"This server's tool list is version ",
+	} {
+		if !strings.Contains(initRes.Instructions, want) {
+			t.Errorf("instructions do not contain %q:\n%s", want, initRes.Instructions)
+		}
+	}
+	if strings.Contains(initRes.Instructions, "To add an ingredient:") {
+		t.Error("instructions contain the food service's full guide, want only its summary")
+	}
+	if !strings.HasPrefix(initRes.ServerInfo.Version, "1.0.0+") {
+		t.Errorf("server version = %q, want the tool list's version after 1.0.0+", initRes.ServerInfo.Version)
+	}
+
+	// GetHelp returns the full guides, with each service's tools.
+	res, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "GetHelp", Arguments: map[string]any{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	guide := res.Content[0].(*mcp.TextContent).Text
+	if !strings.HasPrefix(guide, "Tool list version "+strings.TrimPrefix(initRes.ServerInfo.Version, "1.0.0+")) {
+		t.Errorf("guide starts %q, want the tool list's version", guide[:min(len(guide), 40)])
+	}
+	for _, want := range []string{
 		// Numbered lists keep an item per line, so they stay lists in
 		// Markdown.
 		"To add an ingredient:\n\n1. Look for it among the household's foods with ListFoods, and reuse it if it's there.\n2. Otherwise,",
-		"## people.v1.PersonService\n\nPersonService manages the people the household plans meals for.",
-		"## plans.v1.PlanService\n\nPlanService plans the household's meals, by week.",
 		"A plan is made of:\n\n1. Cooks: a recipe (see RecipeService) made on a date for a number of servings, scaling the recipe,",
 		"\n2. Portions: what a person (see PersonService) eats at one of their eating times on a date.",
 		"\n3. Staples: recurring portions,",
-		"## pantry.v1.PantryService\n\nPantryService tracks the household's pantry",
 		"The pantry changes by itself in two ways:\n\n1. Completing a shopping list (see ShoppingService.CompleteShopping) adds the checked items,",
 		"\n2. Marking a cook done (see PlanService.UpdateCook) takes its ingredients out,",
-		"## shopping.v1.ShoppingService\n\nShoppingService makes the household's shopping lists from its meal plan",
 		"To help with the weekly shop:\n\n1. Plan the week first with PlanService, and check the pantry with PantryService.ListPantry,",
 		"\n2. Create the list with CreateShoppingList, from the day of the shop.",
 		"\n3. Look at the items with top_up set:",
 		"\n4. Add anything else the user needs with AddManualItem.",
-		"## suggestions.v1.SuggestionService\n\nSuggestionService suggests which of the household's recipes",
 		"To plan a week with it:\n\n1. Read the week with PlanService.GetWeek, and find the open slots:",
 		"\n2. Call SuggestRecipes for a slot.",
 		"\n3. Read the components of the top suggestions, not just the score:",
 		"\n4. Plan the chosen recipe: with PlanService.PlanMeal for a shared meal,",
 		"\n5. When the week is planned, make the shopping list with ShoppingService.CreateShoppingList.",
 	} {
-		if !strings.Contains(initRes.Instructions, want) {
-			t.Errorf("instructions do not contain %q:\n%s", want, initRes.Instructions)
+		if !strings.Contains(guide, want) {
+			t.Errorf("guide does not contain %q", want)
 		}
+	}
+	res, err = session.CallTool(ctx, &mcp.CallToolParams{Name: "GetHelp", Arguments: map[string]any{"service": "pantryservice"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	guide = res.Content[0].(*mcp.TextContent).Text
+	if res.IsError || !strings.Contains(guide, "## pantry.v1.PantryService") || strings.Contains(guide, "FoodService manages") || !strings.Contains(guide, "Tools: ") {
+		t.Errorf("got guide %q, want only the pantry's, with its tools", guide)
+	}
+	res, err = session.CallTool(ctx, &mcp.CallToolParams{Name: "GetHelp", Arguments: map[string]any{"service": "Nope"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if text := res.Content[0].(*mcp.TextContent).Text; !res.IsError || !strings.Contains(text, "PantryService") {
+		t.Errorf("got %q, want an error listing the services", text)
 	}
 
 	var names []string
@@ -692,3 +737,37 @@ func TestClearOutputOnly(t *testing.T) {
 // mcp.v1.Image fields of results become image content, once a method
 // returns an image, like a photo of a recipe or a cooked meal. No method of
 // foods and recipes does yet.
+
+func TestCallToolFieldMaskForms(t *testing.T) {
+	recipes := &fakeRecipes{}
+	srv, err := NewServer(discardLogger(), errreport.NewLocal(discardLogger()),
+		Service{Name: recipesv1connect.RecipeServiceName, Handler: recipes},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	session := connectClient(t, srv.Handler())
+
+	// Agents write masks as the API's comments and field names show them:
+	// snake_case, and as an object of paths. protojson takes neither.
+	for _, mask := range []any{
+		"prep_ahead_days,nutrition.total_grams",
+		"prepAheadDays, nutrition.totalGrams",
+		map[string]any{"paths": []any{"prep_ahead_days", "nutrition.total_grams"}},
+	} {
+		res, err := session.CallTool(t.Context(), &mcp.CallToolParams{
+			Name:      "UpdateRecipe",
+			Arguments: map[string]any{"recipe": map[string]any{"id": "r1"}, "update_mask": mask},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res.IsError {
+			t.Fatalf("mask %v: tool error: %v", mask, res.Content)
+		}
+		got := recipes.updates[len(recipes.updates)-1].GetUpdateMask().GetPaths()
+		if want := []string{"prep_ahead_days", "nutrition.total_grams"}; !slices.Equal(got, want) {
+			t.Errorf("mask %v: got paths %v, want %v", mask, got, want)
+		}
+	}
+}

@@ -94,6 +94,7 @@ func (r *Repository) SearchReferenceFoods(ctx context.Context, householdID pgtyp
 	rows, err := r.querier.SearchReferenceFoods(ctx, &gen.SearchReferenceFoodsParams{
 		HouseholdID: householdID,
 		Query:       query,
+		TextQuery:   textQuery(query),
 		RowLimit:    limit,
 	})
 	if err != nil {

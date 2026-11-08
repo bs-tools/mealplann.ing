@@ -526,6 +526,7 @@ type AddToPantryRequest struct {
 	xxx_hidden_ExpiryDate string                 `protobuf:"bytes,4,opt,name=expiry_date,json=expiryDate,proto3"`
 	xxx_hidden_OpenedDate string                 `protobuf:"bytes,5,opt,name=opened_date,json=openedDate,proto3"`
 	xxx_hidden_Notes      string                 `protobuf:"bytes,6,opt,name=notes,proto3"`
+	xxx_hidden_TrackStock bool                   `protobuf:"varint,7,opt,name=track_stock,json=trackStock,proto3"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -597,6 +598,13 @@ func (x *AddToPantryRequest) GetNotes() string {
 	return ""
 }
 
+func (x *AddToPantryRequest) GetTrackStock() bool {
+	if x != nil {
+		return x.xxx_hidden_TrackStock
+	}
+	return false
+}
+
 func (x *AddToPantryRequest) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -621,6 +629,10 @@ func (x *AddToPantryRequest) SetNotes(v string) {
 	x.xxx_hidden_Notes = v
 }
 
+func (x *AddToPantryRequest) SetTrackStock(v bool) {
+	x.xxx_hidden_TrackStock = v
+}
+
 type AddToPantryRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -638,6 +650,11 @@ type AddToPantryRequest_builder struct {
 	OpenedDate string
 	// Notes. At most 500 characters.
 	Notes string
+	// Whether to start tracking the food in the pantry if it's always in
+	// stock (see FoodService's Food.always_in_stock), clearing that on the
+	// food, instead of failing. Set it when the user says how much they have
+	// of a food they had marked as always in stock.
+	TrackStock bool
 }
 
 func (b0 AddToPantryRequest_builder) Build() *AddToPantryRequest {
@@ -650,14 +667,17 @@ func (b0 AddToPantryRequest_builder) Build() *AddToPantryRequest {
 	x.xxx_hidden_ExpiryDate = b.ExpiryDate
 	x.xxx_hidden_OpenedDate = b.OpenedDate
 	x.xxx_hidden_Notes = b.Notes
+	x.xxx_hidden_TrackStock = b.TrackStock
 	return m0
 }
 
 type AddToPantryResponse struct {
-	state           protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Item *PantryItem            `protobuf:"bytes,1,opt,name=item,proto3"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state                           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Item                 *PantryItem            `protobuf:"bytes,1,opt,name=item,proto3"`
+	xxx_hidden_Conversion           string                 `protobuf:"bytes,2,opt,name=conversion,proto3"`
+	xxx_hidden_StoppedAlwaysInStock bool                   `protobuf:"varint,3,opt,name=stopped_always_in_stock,json=stoppedAlwaysInStock,proto3"`
+	unknownFields                   protoimpl.UnknownFields
+	sizeCache                       protoimpl.SizeCache
 }
 
 func (x *AddToPantryResponse) Reset() {
@@ -692,8 +712,30 @@ func (x *AddToPantryResponse) GetItem() *PantryItem {
 	return nil
 }
 
+func (x *AddToPantryResponse) GetConversion() string {
+	if x != nil {
+		return x.xxx_hidden_Conversion
+	}
+	return ""
+}
+
+func (x *AddToPantryResponse) GetStoppedAlwaysInStock() bool {
+	if x != nil {
+		return x.xxx_hidden_StoppedAlwaysInStock
+	}
+	return false
+}
+
 func (x *AddToPantryResponse) SetItem(v *PantryItem) {
 	x.xxx_hidden_Item = v
+}
+
+func (x *AddToPantryResponse) SetConversion(v string) {
+	x.xxx_hidden_Conversion = v
+}
+
+func (x *AddToPantryResponse) SetStoppedAlwaysInStock(v bool) {
+	x.xxx_hidden_StoppedAlwaysInStock = v
 }
 
 func (x *AddToPantryResponse) HasItem() bool {
@@ -712,6 +754,12 @@ type AddToPantryResponse_builder struct {
 
 	// The added lot.
 	Item *PantryItem
+	// How the amount was converted to grams, e.g. "148 ml at 1.17 g/ml is
+	// 173 g" or "3 pieces at 50 g each is 150 g", empty if it was given in
+	// grams.
+	Conversion string
+	// Whether the food was always in stock, and track_stock cleared that.
+	StoppedAlwaysInStock bool
 }
 
 func (b0 AddToPantryResponse_builder) Build() *AddToPantryResponse {
@@ -719,6 +767,8 @@ func (b0 AddToPantryResponse_builder) Build() *AddToPantryResponse {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Item = b.Item
+	x.xxx_hidden_Conversion = b.Conversion
+	x.xxx_hidden_StoppedAlwaysInStock = b.StoppedAlwaysInStock
 	return m0
 }
 
@@ -1021,7 +1071,7 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\x11ListPantryRequest\"\x92\x01\n" +
 	"\x12ListPantryResponse\x12+\n" +
 	"\x05items\x18\x01 \x03(\v2\x15.pantry.v1.PantryItemR\x05items\x12O\n" +
-	"\x15always_in_stock_foods\x18\x02 \x03(\v2\x1c.pantry.v1.AlwaysInStockFoodR\x12alwaysInStockFoods\"\xc7\x01\n" +
+	"\x15always_in_stock_foods\x18\x02 \x03(\v2\x1c.pantry.v1.AlwaysInStockFoodR\x12alwaysInStockFoods\"\xe8\x01\n" +
 	"\x12AddToPantryRequest\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\x01R\x06amount\x12(\n" +
@@ -1030,9 +1080,15 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"expiryDate\x12\x1f\n" +
 	"\vopened_date\x18\x05 \x01(\tR\n" +
 	"openedDate\x12\x14\n" +
-	"\x05notes\x18\x06 \x01(\tR\x05notes\"@\n" +
+	"\x05notes\x18\x06 \x01(\tR\x05notes\x12\x1f\n" +
+	"\vtrack_stock\x18\a \x01(\bR\n" +
+	"trackStock\"\x97\x01\n" +
 	"\x13AddToPantryResponse\x12)\n" +
-	"\x04item\x18\x01 \x01(\v2\x15.pantry.v1.PantryItemR\x04item\"\x81\x01\n" +
+	"\x04item\x18\x01 \x01(\v2\x15.pantry.v1.PantryItemR\x04item\x12\x1e\n" +
+	"\n" +
+	"conversion\x18\x02 \x01(\tR\n" +
+	"conversion\x125\n" +
+	"\x17stopped_always_in_stock\x18\x03 \x01(\bR\x14stoppedAlwaysInStock\"\x81\x01\n" +
 	"\x17UpdatePantryItemRequest\x12)\n" +
 	"\x04item\x18\x01 \x01(\v2\x15.pantry.v1.PantryItemR\x04item\x12;\n" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +

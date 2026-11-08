@@ -34,6 +34,8 @@ const (
 	FoodServiceListFoodsProcedure = "/foods.v1.FoodService/ListFoods"
 	// FoodServiceUpdateFoodProcedure is the procedure name of the FoodService's UpdateFood RPC.
 	FoodServiceUpdateFoodProcedure = "/foods.v1.FoodService/UpdateFood"
+	// FoodServiceListFoodUsagesProcedure is the procedure name of the FoodService's ListFoodUsages RPC.
+	FoodServiceListFoodUsagesProcedure = "/foods.v1.FoodService/ListFoodUsages"
 	// FoodServiceDeleteFoodProcedure is the procedure name of the FoodService's DeleteFood RPC.
 	FoodServiceDeleteFoodProcedure = "/foods.v1.FoodService/DeleteFood"
 )
@@ -74,6 +76,13 @@ var (
 			Procedure:  FoodServiceUpdateFoodProcedure,
 		}
 	})
+	foodServiceListFoodUsagesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_foods_v1_foods_proto.Services().ByName("FoodService").Methods().ByName("ListFoodUsages"),
+			Procedure:  FoodServiceListFoodUsagesProcedure,
+		}
+	})
 	foodServiceDeleteFoodSpec = sync.OnceValue(func() connect.Spec {
 		return connect.Spec{
 			StreamType: connect.StreamTypeUnary,
@@ -110,6 +119,11 @@ type FoodServiceClient interface {
 	// INVALID_ARGUMENT if preferred_store_id isn't one of the household's
 	// stores.
 	UpdateFood(context.Context, *v1.UpdateFoodRequest) (*v1.UpdateFoodResponse, error)
+	// List what uses one of the household's foods: the recipes with it as an
+	// ingredient, how many portions and staples of the plan eat it, and its
+	// stock in the pantry. Use it to find the recipes to change when
+	// replacing a food, or to check a food is unused before DeleteFood.
+	ListFoodUsages(context.Context, *v1.ListFoodUsagesRequest) (*v1.ListFoodUsagesResponse, error)
 	// Delete one of the household's foods. Fails with FAILED_PRECONDITION,
 	// naming the recipes, if recipes use it: remove it from them first. Also
 	// fails with FAILED_PRECONDITION if portions or staples of the plan (see
@@ -151,6 +165,11 @@ type FoodServiceHandler interface {
 	// INVALID_ARGUMENT if preferred_store_id isn't one of the household's
 	// stores.
 	UpdateFood(context.Context, *v1.UpdateFoodRequest) (*v1.UpdateFoodResponse, error)
+	// List what uses one of the household's foods: the recipes with it as an
+	// ingredient, how many portions and staples of the plan eat it, and its
+	// stock in the pantry. Use it to find the recipes to change when
+	// replacing a food, or to check a food is unused before DeleteFood.
+	ListFoodUsages(context.Context, *v1.ListFoodUsagesRequest) (*v1.ListFoodUsagesResponse, error)
 	// Delete one of the household's foods. Fails with FAILED_PRECONDITION,
 	// naming the recipes, if recipes use it: remove it from them first. Also
 	// fails with FAILED_PRECONDITION if portions or staples of the plan (see
@@ -168,6 +187,7 @@ func RegisterFoodServiceHandler(server *connect.Server, svc FoodServiceHandler) 
 		connect.Method{Spec: foodServiceGetFoodSpec(), Handler: adapter.getFood},
 		connect.Method{Spec: foodServiceListFoodsSpec(), Handler: adapter.listFoods},
 		connect.Method{Spec: foodServiceUpdateFoodSpec(), Handler: adapter.updateFood},
+		connect.Method{Spec: foodServiceListFoodUsagesSpec(), Handler: adapter.listFoodUsages},
 		connect.Method{Spec: foodServiceDeleteFoodSpec(), Handler: adapter.deleteFood},
 	)
 }
@@ -193,6 +213,10 @@ func (UnimplementedFoodServiceHandler) ListFoods(context.Context, *v1.ListFoodsR
 
 func (UnimplementedFoodServiceHandler) UpdateFood(context.Context, *v1.UpdateFoodRequest) (*v1.UpdateFoodResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "foods.v1.FoodService.UpdateFood is not implemented")
+}
+
+func (UnimplementedFoodServiceHandler) ListFoodUsages(context.Context, *v1.ListFoodUsagesRequest) (*v1.ListFoodUsagesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "foods.v1.FoodService.ListFoodUsages is not implemented")
 }
 
 func (UnimplementedFoodServiceHandler) DeleteFood(context.Context, *v1.DeleteFoodRequest) (*v1.DeleteFoodResponse, error) {
@@ -238,6 +262,14 @@ func (c *foodServiceClient) ListFoods(ctx context.Context, req *v1.ListFoodsRequ
 func (c *foodServiceClient) UpdateFood(ctx context.Context, req *v1.UpdateFoodRequest) (*v1.UpdateFoodResponse, error) {
 	var res v1.UpdateFoodResponse
 	if err := c.client.CallUnary(ctx, foodServiceUpdateFoodSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *foodServiceClient) ListFoodUsages(ctx context.Context, req *v1.ListFoodUsagesRequest) (*v1.ListFoodUsagesResponse, error) {
+	var res v1.ListFoodUsagesResponse
+	if err := c.client.CallUnary(ctx, foodServiceListFoodUsagesSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -307,6 +339,18 @@ func (h foodServiceHandler) updateFood(ctx context.Context, _ connect.Spec, stre
 		return err
 	}
 	res, err := h.svc.UpdateFood(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h foodServiceHandler) listFoodUsages(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListFoodUsagesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListFoodUsages(ctx, &req)
 	if err != nil {
 		return err
 	}

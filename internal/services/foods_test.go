@@ -2,12 +2,15 @@ package services_test
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"connectrpc.com/connect/v2"
 	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	pantryv1 "github.com/bs-tools/mealplann.ing/internal/gen/pantry/v1"
+	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
@@ -484,4 +487,57 @@ func TestReferenceFoodSources(t *testing.T) {
 	wantCode(t, err, connect.CodeNotFound)
 	_, err = e.anonFoods.SearchFoodData(ctx, foodsv1.SearchFoodDataRequest_builder{Query: "soy"}.Build())
 	wantCode(t, err, connect.CodeUnauthenticated)
+}
+
+func TestListFoodUsages(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	beans := customFood(t, e, "Black beans", 130, 9, 24, 0, 0.5, nil)
+	usages := func(id string) *foodsv1.ListFoodUsagesResponse {
+		t.Helper()
+		resp, err := e.foods.ListFoodUsages(ctx, foodsv1.ListFoodUsagesRequest_builder{FoodId: id}.Build())
+		if err != nil {
+			t.Fatalf("ListFoodUsages: %v", err)
+		}
+		return resp
+	}
+	if got := usages(beans.GetId()); len(got.GetRecipes()) != 0 || got.GetPantryLotCount() != 0 || got.GetPortionCount() != 0 {
+		t.Errorf("got %v, want nothing using the beans", got)
+	}
+
+	// Two recipes use the beans, and the pantry has two lots of them.
+	var ids []string
+	for _, name := range []string{"Tacos", "Black bean soup"} {
+		resp, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
+			Name: name, Servings: 2, Ingredients: []*recipesv1.Ingredient{ingredient(beans.GetId(), 200, grams)},
+		}.Build()}.Build())
+		if err != nil {
+			t.Fatalf("CreateRecipe: %v", err)
+		}
+		ids = append(ids, resp.GetRecipe().GetId())
+	}
+	for _, amount := range []float64{400, 250} {
+		addToPantry(t, e, pantryv1.AddToPantryRequest_builder{FoodId: beans.GetId(), Amount: amount, Unit: grams}.Build())
+	}
+	got := usages(beans.GetId())
+	var recipes []string
+	for _, r := range got.GetRecipes() {
+		recipes = append(recipes, r.GetName())
+	}
+	if want := []string{"Black bean soup", "Tacos"}; !slices.Equal(recipes, want) || got.GetRecipes()[1].GetId() != ids[0] {
+		t.Errorf("got recipes %v, want %v with their IDs", got.GetRecipes(), want)
+	}
+	if got.GetPantryLotCount() != 2 || got.GetPantryGrams() != 650 {
+		t.Errorf("got %d lots of %v g, want 2 of 650 g", got.GetPantryLotCount(), got.GetPantryGrams())
+	}
+	// Listing changes nothing, unlike DeleteFood.
+	if got := usages(beans.GetId()); len(got.GetRecipes()) != 2 {
+		t.Errorf("got %v, want the beans still used", got)
+	}
+
+	_, err := e.foods.ListFoodUsages(ctx, foodsv1.ListFoodUsagesRequest_builder{FoodId: store.UUIDToString(store.NewUUID())}.Build())
+	wantCode(t, err, connect.CodeNotFound)
+	_, err = e.otherFoods.ListFoodUsages(ctx, foodsv1.ListFoodUsagesRequest_builder{FoodId: beans.GetId()}.Build())
+	wantCode(t, err, connect.CodeNotFound)
 }

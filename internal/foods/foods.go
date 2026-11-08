@@ -262,6 +262,55 @@ func (r *Repository) UpdateFood(ctx context.Context, f *Food) (*Food, error) {
 	return foodFromDB(row), nil
 }
 
+// Usages are what uses a food.
+type Usages struct {
+	// Recipes are the recipes with the food as an ingredient, by name.
+	Recipes []RecipeRef
+	// PortionCount and StapleCount are how many portions and staples of
+	// the plan eat the food.
+	PortionCount, StapleCount int64
+	// PantryLotCount is how many lots of the food the pantry has, with
+	// PantryGrams in all.
+	PantryLotCount int64
+	PantryGrams    float64
+}
+
+// RecipeRef names a recipe.
+type RecipeRef struct {
+	ID   pgtype.UUID
+	Name string
+}
+
+// GetUsages returns what uses a household's food, in a single round trip,
+// or store.ErrNotFound if the household has no such food.
+func (r *Repository) GetUsages(ctx context.Context, householdID, id pgtype.UUID) (*Usages, error) {
+	var usages Usages
+	var b store.Batch
+	b.Read(func(db store.Querier) error {
+		row, err := gen.New(db).GetFoodUsages(ctx, &gen.GetFoodUsagesParams{ID: id, HouseholdID: householdID})
+		if err != nil {
+			return err
+		}
+		usages.PortionCount, usages.StapleCount = row.PortionCount, row.StapleCount
+		usages.PantryLotCount, usages.PantryGrams = row.PantryLotCount, row.PantryGrams
+		return nil
+	})
+	b.Read(func(db store.Querier) error {
+		rows, err := gen.New(db).ListFoodRecipes(ctx, &gen.ListFoodRecipesParams{HouseholdID: householdID, FoodID: id})
+		for _, row := range rows {
+			usages.Recipes = append(usages.Recipes, RecipeRef{ID: row.ID, Name: row.Name})
+		}
+		return err
+	})
+	if err := b.Send(ctx, r.db); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, store.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get food usages: %w", err)
+	}
+	return &usages, nil
+}
+
 // DeleteFood deletes a household's food. It returns an *InUseError if
 // recipes use it, and store.ErrNotFound if the household has no such food.
 func (r *Repository) DeleteFood(ctx context.Context, householdID, id pgtype.UUID) error {

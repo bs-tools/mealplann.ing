@@ -322,7 +322,9 @@ export type RecipeNutrition = Message<"recipes.v1.RecipeNutrition"> & {
 
   /**
    * The ingredients whose data is missing, in the recipe's order. Fix them
-   * on their foods with UpdateFood.
+   * on their foods with UpdateFood. A nutrient no ingredient has, which is
+   * unset in per_serving, isn't an issue of every ingredient: most reference
+   * foods lack some nutrients, like iodine.
    *
    * @generated from field: repeated recipes.v1.IngredientIssue issues = 6;
    */
@@ -376,8 +378,9 @@ export type IngredientIssue = Message<"recipes.v1.IngredientIssue"> & {
   unknownWeight: boolean;
 
   /**
-   * The nutrients the food lacks, by their field name in Nutrients, e.g.
-   * "vitamin_b12_micrograms". Empty if unknown_weight.
+   * The nutrients the food lacks that other ingredients have, by their
+   * field name in Nutrients, e.g. "vitamin_b12_micrograms". Empty if
+   * unknown_weight.
    *
    * @generated from field: repeated string unknown_nutrients = 5;
    */
@@ -722,19 +725,26 @@ export const DeleteRecipeResponseSchema: GenMessage<DeleteRecipeResponse> = /*@_
 
 /**
  * RecipeService manages the household's recipes. A recipe's ingredients are
- * the household's foods (see FoodService) with an amount in grams,
- * milliliters or pieces, so create or find the foods first. An ingredient
- * can also be another recipe, a component, in servings, like soaked and
- * pressure cooked chickpeas in a chili: planning the chili also plans a
- * cook of the chickpeas for it (see PlanService), and a component with
- * prep_ahead_days shows on the plan the days before, like "Soak the
+ * the household's foods (see FoodService), so create or find the foods
+ * first, and its nutrition per serving and per 100 g is computed from them.
+ *
+ * Write recipes by these conventions, which the nutrition, the shopping
+ * list and the pantry rely on:
+ *
+ * 1. Amounts are in grams, milliliters or pieces, weighed with the food's grams_per_milliliter or grams_per_piece.
+ * 2. An ingredient is weighed as it goes into the recipe, with a food that matches that form: canned chickpeas drained, with a food for drained canned chickpeas, or chickpeas cooked from dry, with a food for cooked chickpeas.
+ * 3. Optional ingredients, like a garnish, aren't counted in the nutrition.
+ * 4. Servings are what the recipe really makes. A person's portion of a meal is in servings of its recipe, scaled for each person, so a serving should be one person's meal.
+ *
+ * The nutrition lists the ingredients whose data is missing, to fix on the
+ * foods with UpdateFood.
+ *
+ * An ingredient can also be another recipe, a component, in servings, like
+ * soaked and pressure cooked chickpeas in a chili: planning the chili also
+ * plans a cook of the chickpeas for it (see PlanService), and a component
+ * with prep_ahead_days shows on the plan the days before, like "Soak the
  * chickpeas" the night before. Components can have components of their
- * own, but no deeper, and a recipe can't use itself. Each recipe's
- * nutrition per serving and per 100 g is computed from its ingredients'
- * foods, and lists the ingredients whose data is missing, to fix on the
- * foods with UpdateFood. Recipes are planned into meals, split into
- * portions for each person, so give the number of servings the recipe
- * really makes.
+ * own, but no deeper, and a recipe can't use itself.
  *
  * @generated from service recipes.v1.RecipeService
  */
