@@ -162,7 +162,7 @@ func GetSessionUser(ctx context.Context) (users.User, error) {
 		return nil, connect.NewError(connect.CodeUnauthenticated, "")
 	}
 	if info.sessionToken == "" {
-		return nil, connect.NewError(connect.CodePermissionDenied, "API tokens and OAuth access tokens can't manage passkeys, invitations, API tokens or connections; sign in to the foodplann.ing web app to do this in the settings")
+		return nil, connect.NewError(connect.CodePermissionDenied, "API tokens and OAuth access tokens can't manage passkeys, invitations, API tokens or connections; sign in to the mealplann.ing web app to do this in the settings")
 	}
 	return info.user, nil
 }
@@ -185,7 +185,7 @@ func RequireUser(resourceMetadataURL string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := GetUser(r.Context()); !ok {
 			w.Header().Set("WWW-Authenticate", bearerChallenge(resourceMetadataURL, ""))
-			http.Error(w, "authentication required: connect with OAuth, or create an API token in the foodplann.ing settings and send it in an \"Authorization: Bearer <token>\" header", http.StatusUnauthorized)
+			http.Error(w, "authentication required: connect with OAuth, or create an API token in the mealplann.ing settings and send it in an \"Authorization: Bearer <token>\" header", http.StatusUnauthorized)
 			return
 		}
 		next.ServeHTTP(w, r)

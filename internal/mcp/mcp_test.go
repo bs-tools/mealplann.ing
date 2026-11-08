@@ -316,8 +316,8 @@ func TestInstructions(t *testing.T) {
 	if initRes == nil {
 		t.Fatal("no initialize result")
 	}
-	if initRes.ServerInfo.Name != "foodplanning" {
-		t.Errorf("server name = %q, want foodplanning", initRes.ServerInfo.Name)
+	if initRes.ServerInfo.Name != "mealplanning" {
+		t.Errorf("server name = %q, want mealplanning", initRes.ServerInfo.Name)
 	}
 	for _, want := range []string{
 		"## users.v1.UserService\n\nUserService provides information about the signed in user",
@@ -398,7 +398,7 @@ func (f *fakeAuth) CreateInvitation(ctx context.Context, req *authv1.CreateInvit
 			CreatedByName: user,
 			CreateTime:    timestamppb.New(time.Date(2026, 5, 1, 7, 30, 0, 0, time.UTC)),
 		}.Build(),
-		Url: "https://foodplann.example/invite#secret",
+		Url: "https://mealplann.example/invite#secret",
 	}.Build(), nil
 }
 

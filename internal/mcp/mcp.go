@@ -30,7 +30,7 @@ import (
 )
 
 // implementationName is the name the server reports to MCP clients.
-const implementationName = "foodplanning"
+const implementationName = "mealplanning"
 
 // instructionsPreamble is the start of the server instructions, followed by
 // the description of each service.
@@ -114,7 +114,7 @@ func NewServer(log *slog.Logger, report *errreport.Reporter, services ...Service
 
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    implementationName,
-		Title:   "foodplann.ing",
+		Title:   "mealplann.ing",
 		Version: "1.0.0",
 	}, &mcp.ServerOptions{
 		Instructions: strings.Join(instructions, "\n\n"),

@@ -1,4 +1,4 @@
-# foodplann.ing
+# mealplann.ing
 
 A vegan meal planner for a household: recipes, weekly meal plans, a pantry
 and a shopping list, with nutrition checked against each person's own
@@ -54,7 +54,7 @@ http://localhost:8080/invite#local-admin, if you need the link. The first
 administrator starts a household called "Home", which you can rename under
 Settings.
 
-foodplann.ing is invite only. Invite the other people in your household, or
+mealplann.ing is invite only. Invite the other people in your household, or
 yourself to add a passkey on another device, from the settings page. People
 who accept an invitation join the household of whoever invited them, and
 share its recipes, plans, pantry and shopping list.
@@ -87,7 +87,7 @@ and import them into the local database, as the zip file or extracted, e.g.
 $ make import-cnf CNF=cnf-fcen-csv.zip
 ```
 
-That runs `foodplanning import-cnf -database-url <url> <download>`, which
+That runs `mealplanning import-cnf -database-url <url> <download>`, which
 also imports into other databases. It reads `FOOD NAME.csv`, `FOOD
 GROUP.csv`, `NUTRIENT NAME.csv`, `NUTRIENT AMOUNT.csv`, `CONVERSION
 FACTOR.csv` and `MEASURE NAME.csv`, found ignoring case, spaces and
@@ -110,7 +110,7 @@ the samples they were analyzed from. SR Legacy works as JSON or CSV.
 $ make import-fdc FDC="FoodData_Central_foundation_food_json_2026-10-29.zip FoodData_Central_sr_legacy_food_csv_2018-04.zip"
 ```
 
-That runs `foodplanning import-fdc -database-url <url> <dataset>...`, which
+That runs `mealplanning import-fdc -database-url <url> <dataset>...`, which
 also imports into other databases. It skips the categories of meat, fish,
 dairy and eggs (see `excludedCategories` in `internal/foodimport`), and importing
 again, e.g. a newer release, updates the foods. The Branded dataset is too
@@ -130,7 +130,7 @@ clients sign in with OAuth:
 1. In claude.ai, open Settings → Connectors → Add custom connector, and enter
    `https://<your domain>/mcp` as the URL. Leave the OAuth client ID and
    secret empty: clients register themselves.
-2. Connect. You're sent to foodplann.ing, where you sign in with your passkey
+2. Connect. You're sent to mealplann.ing, where you sign in with your passkey
    and approve the connection.
 3. The connector is now available in claude.ai, and in the Claude apps signed
    in to the same account.
@@ -140,7 +140,7 @@ access tokens last 30 days and are refreshed automatically; an app that isn't
 used for 90 days needs to be connected again.
 
 claude.ai connects from Anthropic's servers, so the server must be reachable
-from the internet over HTTPS, and `-public-url` (`FOODPLANNING_PUBLIC_URL`)
+from the internet over HTTPS, and `-public-url` (`MEALPLANNING_PUBLIC_URL`)
 must be the URL you enter, as it's the OAuth issuer and resource.
 
 How it works: `/mcp` answers unauthenticated requests with a
@@ -161,7 +161,7 @@ Clients that support custom headers can use an API token instead. Create one
 under Settings, then for example in Claude Code:
 
 ```sh
-$ claude mcp add --transport http foodplanning http://localhost:8080/mcp --header "Authorization: Bearer <token>"
+$ claude mcp add --transport http mealplanning http://localhost:8080/mcp --header "Authorization: Bearer <token>"
 ```
 
 Without the header, Claude Code connects with OAuth instead.
@@ -196,7 +196,7 @@ $ make help
 ```
 
 Settings can also be given as environment variables named after the flags,
-e.g. `FOODPLANNING_DATABASE_URL` for `-database-url`.
+e.g. `MEALPLANNING_DATABASE_URL` for `-database-url`.
 
 ### Tracing
 
@@ -218,8 +218,8 @@ To send traces elsewhere, set the OTLP gRPC endpoint. To turn tracing off,
 set it to nothing:
 
 ```sh
-$ FOODPLANNING_OTLP_ENDPOINT=http://collector.example:4317 make run
-$ FOODPLANNING_OTLP_ENDPOINT= make run
+$ MEALPLANNING_OTLP_ENDPOINT=http://collector.example:4317 make run
+$ MEALPLANNING_OTLP_ENDPOINT= make run
 ```
 
 `make clean` stops Grafana along with Postgres.
@@ -235,7 +235,7 @@ $ FOODPLANNING_OTLP_ENDPOINT= make run
 
 ## Deploying
 
-foodplann.ing runs on [Cloud Run](https://cloud.google.com/run) with a
+mealplann.ing runs on [Cloud Run](https://cloud.google.com/run) with a
 [Neon](https://neon.com) serverless Postgres database, sized to stay within
 the free tiers for personal use: Cloud Run scales to zero, runs at most one
 instance and only uses CPU during requests, and Neon suspends the database
@@ -374,10 +374,10 @@ saying so, set `protect_default_branch = false` in
 
 ### Custom domain
 
-The app is served on `foodplann.ing`, set as `domain` in
+The app is served on `mealplann.ing`, set as `domain` in
 [`infra/terraform.tfvars`](infra/terraform.tfvars). To set it up:
 
-1. Verify the domain with `gcloud domains verify foodplann.ing`.
+1. Verify the domain with `gcloud domains verify mealplann.ing`.
 2. Set `domain_enabled = true` in [`infra/terraform.tfvars`](infra/terraform.tfvars)
    and apply it locally with `make infra-apply`. Only a verified owner of the
    domain can map it, and the GitHub service account is not one, so the first
@@ -386,6 +386,34 @@ The app is served on `foodplann.ing`, set as `domain` in
 3. Create the DNS records from `make infra-output NAME=domain_records` at the
    domain's registrar. Cloud Run provisions and renews the TLS certificate,
    which takes up to about 15 minutes after the records resolve.
+
+`foodplann.ing`, the domain before, is in `redirect_domains`. It stays mapped
+to the service, which permanently redirects its requests to the same path on
+`mealplann.ing`.
+
+#### Moving to a new domain
+
+Passkeys are bound to the domain they were created on, so moving domains
+means everyone adds a passkey on the new one. To move:
+
+1. Verify the new domain with `gcloud domains verify <domain>`.
+2. Change `domain` to it, and add the old one to `redirect_domains`. Before
+   merging, map the new domain on its own, locally, as its verified owner:
+   `make infra-apply ARGS='-target=google_cloud_run_domain_mapping.domain[\"<domain>\"]'`,
+   with the quotes escaped, as make passes `ARGS` through a second shell.
+   This leaves the service as it is. Create its DNS records from
+   `make infra-output NAME=domain_records`, and wait for
+   `https://<domain>` to serve the app.
+3. Everyone signs in on the old domain and creates an invitation to add a
+   passkey for themselves on the settings page. Their passkeys stop working
+   once the new domain is the public URL, so they can't sign in to create one
+   afterwards. Invitations last a week.
+4. Merge. The deployment serves the app on the new domain, and the old one
+   redirects to it, invitation links too.
+5. Everyone opens their invitation link and adds a passkey on the new
+   domain, then deletes their old passkeys on the settings page. Point MCP
+   clients at the new domain's `/mcp`: API tokens keep working, and clients
+   that connected with OAuth connect again.
 
 ### Importing the reference foods
 
@@ -406,7 +434,7 @@ Avatars are stored in the `<project>-avatars` Cloud Storage bucket, as the
 file system of a Cloud Run instance doesn't outlive it. It's private, in
 `us-west1` within the free tier, and only the service account can read and
 write it. Terraform passes it to the service as
-`FOODPLANNING_AVATAR_BUCKET`.
+`MEALPLANNING_AVATAR_BUCKET`.
 
 ### Traces and errors
 

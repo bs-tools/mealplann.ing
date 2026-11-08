@@ -1,4 +1,4 @@
-# foodplann.ing
+# mealplann.ing
 
 A vegan meal planner for a household: recipes, weekly meal plans, a pantry and
 a shopping list, with nutrition checked against each person's targets. A Go

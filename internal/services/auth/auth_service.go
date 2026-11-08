@@ -103,7 +103,7 @@ func NewService(log *slog.Logger, report *errreport.Reporter, repo Repository, b
 			ID:     u.Hostname(),
 			Origin: u.Scheme + "://" + u.Host,
 		},
-		rpName:         "foodplann.ing",
+		rpName:         "mealplann.ing",
 		baseURL:        strings.TrimSuffix(baseURL, "/"),
 		bootstrapToken: bootstrapToken,
 		nowFn:          time.Now,
@@ -557,7 +557,7 @@ func (s *Service) userHandle(ctx context.Context, userID pgtype.UUID) ([]byte, s
 	case err == nil:
 		return user.UserHandle, user.Name, nil
 	case errors.Is(err, store.ErrNotFound):
-		return userID.Bytes[:], "foodplann.ing user", nil
+		return userID.Bytes[:], "mealplann.ing user", nil
 	default:
 		return nil, "", s.internalError(ctx, "failed to get user", err)
 	}

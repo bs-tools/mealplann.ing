@@ -1,4 +1,4 @@
-# foodplann.ing design
+# mealplann.ing design
 
 A vegan meal planner for a household: recipes, weekly plans, a pantry and a
 shopping list, with nutrition checked against each person's own targets.
@@ -73,14 +73,14 @@ saying what to change.
   keyed by source and ID, searched together, without the categories of
   meat, fish, dairy and eggs:
   - Health Canada's **Canadian Nutrient File** (CNF), imported by
-    `foodplanning import-cnf` from its CSV download. Its foods reflect
+    `mealplanning import-cnf` from its CSV download. Its foods reflect
     Canadian products and fortification, like vitamin D and B12 in plant
     beverages and vitamin D in margarine, so the API tells agents to prefer
     a CNF match for a Canadian household when both fit. Its nutrient IDs
     are mapped to the app's nutrients by number, and each is checked by name
     and unit on import.
   - **USDA FoodData Central** (FDC), whose Foundation Foods and SR Legacy
-    datasets `foodplanning import-fdc` imports, like trail-tools'
+    datasets `mealplanning import-fdc` imports, like trail-tools'
     `import-osm`. It has more foods. The Branded dataset is too big for the
     free tier and is left out; branded products are entered as custom
     foods.
@@ -285,7 +285,7 @@ Later: importing recipes from URLs, supplement tracking.
 - **Pantry lots**: lots rather than one amount per food, so expiry dates and
   what to use first are kept; lots used up by cooks are deleted.
 
-- **Name**: the app calls itself foodplann.ing, like trailrunn.ing.
+- **Name**: the app calls itself mealplann.ing, like trailrunn.ing.
 - **Eating patterns**: one person eats a regular breakfast, lunch and
   dinner. The other eats six times a day: small portions of the shared
   breakfast, lunch and dinner, plus mid-morning, mid-afternoon and evening

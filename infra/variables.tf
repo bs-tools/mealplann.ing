@@ -46,6 +46,12 @@ variable "domain" {
   default     = ""
 }
 
+variable "redirect_domains" {
+  description = "Domains the app was previously served on. They're mapped to the service too, which redirects their requests to the custom domain. Like the custom domain, each must be verified, and the first apply that maps it runs with a verified owner's credentials."
+  type        = list(string)
+  default     = []
+}
+
 variable "domain_enabled" {
   description = "Whether to map the custom domain and serve the app on it. The domain must be verified first, and the first apply with it enabled runs with a verified owner's credentials, see the README."
   type        = bool

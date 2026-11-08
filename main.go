@@ -184,6 +184,12 @@ var (
 		"avatars",
 		"The local directory to store users' avatars in, if -avatar-bucket is unset",
 	)
+	redirectHosts = flag.String(
+		"redirect-hosts",
+		"",
+		"Comma separated hosts, like a previous domain, whose requests are permanently redirected"+
+			" to the same path and query on -public-url",
+	)
 )
 
 func main() {
@@ -234,6 +240,7 @@ func main() {
 		*localSignIn,
 		*avatarBucket,
 		*avatarDir,
+		*redirectHosts,
 	)
 	stop()
 	if err != nil {
@@ -264,9 +271,9 @@ func newReporter(ctx context.Context, log *slog.Logger, project string) (*errrep
 }
 
 // serviceName returns the name of the Cloud Run service or job the app runs
-// as, or "foodplanning" outside of Cloud Run.
+// as, or "mealplanning" outside of Cloud Run.
 func serviceName() string {
-	return cmp.Or(os.Getenv("K_SERVICE"), os.Getenv("CLOUD_RUN_JOB"), "foodplanning")
+	return cmp.Or(os.Getenv("K_SERVICE"), os.Getenv("CLOUD_RUN_JOB"), "mealplanning")
 }
 
 // serviceVersion returns the Cloud Run revision or job execution the app
@@ -313,6 +320,7 @@ func run(
 	localSignIn bool,
 	avatarBucket string,
 	avatarDir string,
+	redirectHosts string,
 ) error {
 	switch {
 	case databaseURL == "":
@@ -496,6 +504,12 @@ func run(
 
 	// Requests are traced, and named after the routes they match.
 	srvHandler := telemetry.Routes(mux)
+	if redirectHosts != "" {
+		srvHandler, err = redirectToPublicURL(srvHandler, baseURL, strings.Split(redirectHosts, ","))
+		if err != nil {
+			return err
+		}
+	}
 	// Add auto-reloading middleware if serving from a directory
 	if serveDir != "" {
 		srvHandler, err = reload.NewMiddleware(srvHandler, serveDir, log)
@@ -554,11 +568,53 @@ func run(
 	return nil
 }
 
+// redirectToPublicURL permanently redirects requests to the hosts, like a
+// domain the app was previously served on, to the same path and query on
+// the public URL, and serves the others with next. Passkeys are bound to the
+// public URL's domain, so they can only be used there. GET and HEAD requests
+// are redirected with 301, others with 308, which keeps the method and body.
+func redirectToPublicURL(next http.Handler, publicURL string, hosts []string) (http.Handler, error) {
+	public, err := url.Parse(publicURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse the public URL: %w", err)
+	}
+	redirect := map[string]bool{}
+	for _, host := range hosts {
+		host = strings.ToLower(strings.TrimSpace(host))
+		if host == "" {
+			continue
+		}
+		if host == strings.ToLower(public.Hostname()) {
+			return nil, fmt.Errorf("redirect-hosts can't include the public URL's host %s", host)
+		}
+		redirect[host] = true
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		host := r.Host
+		if h, _, err := net.SplitHostPort(host); err == nil {
+			host = h
+		}
+		if !redirect[strings.ToLower(host)] {
+			next.ServeHTTP(w, r)
+			return
+		}
+		code := http.StatusPermanentRedirect
+		if r.Method == http.MethodGet || r.Method == http.MethodHead {
+			code = http.StatusMovedPermanently
+		}
+		target := *public
+		target.Path = r.URL.Path
+		target.RawPath = r.URL.RawPath
+		target.RawQuery = r.URL.RawQuery
+		http.Redirect(w, r, target.String(), code)
+	}), nil
+}
+
 // envPrefix is the prefix of environment variables that set flags.
-const envPrefix = "FOODPLANNING_"
+const envPrefix = "MEALPLANNING_"
 
 // setFlagsFromEnv sets flags that weren't set on the command line from
-// environment variables named FOODPLANNING_<FLAG>, e.g. FOODPLANNING_DATABASE_URL
+// environment variables named MEALPLANNING_<FLAG>, e.g. MEALPLANNING_DATABASE_URL
 // for -database-url. This allows passing secrets through the environment.
 // Values are trimmed of surrounding whitespace: secrets are usually added
 // from a command's output, like `openssl rand -hex 24 | gcloud secrets

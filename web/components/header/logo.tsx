@@ -8,7 +8,7 @@ interface LogoMarkProps {
   className?: string;
 }
 
-// LogoMark is the foodplann.ing mark: a leaf sprouting from a bowl.
+// LogoMark is the mealplann.ing mark: a leaf sprouting from a bowl.
 export const LogoMark: React.FC<LogoMarkProps> = ({
   leaf = "#ffffff",
   ground = "#111111",
@@ -41,11 +41,11 @@ export const LogoMark: React.FC<LogoMarkProps> = ({
   </svg>
 );
 
-// Wordmark is the foodplann.ing name, with .ing in the accent color.
+// Wordmark is the mealplann.ing name, with .ing in the accent color.
 export const Wordmark: React.FC<{ className?: string }> = ({
   className = "",
 }) => (
   <span className={`font-brand font-bold ${className}`}>
-    foodplann<span className="text-leaf">.ing</span>
+    mealplann<span className="text-leaf">.ing</span>
   </span>
 );

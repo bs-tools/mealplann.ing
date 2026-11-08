@@ -154,7 +154,7 @@ func (s *Server) handleProtectedResourceMetadata(w http.ResponseWriter, r *http.
 		Resource:               s.resource,
 		AuthorizationServers:   []string{s.issuer},
 		BearerMethodsSupported: []string{"header"},
-		ResourceName:           "foodplann.ing",
+		ResourceName:           "mealplann.ing",
 	})
 }
 

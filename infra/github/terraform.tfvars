@@ -1,6 +1,6 @@
 owner       = "bs-tools"
 repository  = "mealplann.ing"
-description = "Food planning software"
+description = "Meal planning software"
 visibility  = "public"
 project     = "foodplanning-514023"
 # The jobs in .github/workflows/ci.yml that check every change. The deploy

@@ -25,9 +25,9 @@ func TestValidateRedirectURI(t *testing.T) {
 		"https://chatgpt.com/connector_platform_oauth_redirect",
 		"https://vscode.dev/redirect",
 		"cursor://anysphere.cursor-mcp/oauth/callback",
-		"https://oauth-redirect.googleusercontent.com/r/user_bound_custom-mcp-12345-foodplann.ing",
-		"https://oauth-redirect-sandbox.googleusercontent.com/a/user_bound_custom-mcp-12345-foodplann_ing",
-		"https://oauth-redirect-test.googleusercontent.com/r/user_bound_custom-mcp-12345-foodplann_ing",
+		"https://oauth-redirect.googleusercontent.com/r/user_bound_custom-mcp-12345-mealplann.ing",
+		"https://oauth-redirect-sandbox.googleusercontent.com/a/user_bound_custom-mcp-12345-mealplann_ing",
+		"https://oauth-redirect-test.googleusercontent.com/r/user_bound_custom-mcp-12345-mealplann_ing",
 	} {
 		if err := validateRedirectURI(uri); err != nil {
 			t.Errorf("validateRedirectURI(%q) = %v, want nil", uri, err)
@@ -136,7 +136,7 @@ func TestRegister(t *testing.T) {
 	var gemini []string
 	for _, host := range []string{"oauth-redirect-sandbox", "oauth-redirect-test", "oauth-redirect"} {
 		for _, path := range []string{"r", "a"} {
-			gemini = append(gemini, `"https://`+host+`.googleusercontent.com/`+path+`/user_bound_custom-mcp-116425298551065020144-foodplann_ing"`)
+			gemini = append(gemini, `"https://`+host+`.googleusercontent.com/`+path+`/user_bound_custom-mcp-116425298551065020144-mealplann_ing"`)
 		}
 	}
 	status, res = register(t, ts, `{"client_name":"Google","redirect_uris":[`+strings.Join(gemini, ",")+`],"grant_types":["authorization_code","refresh_token"],"response_types":["code"]}`)
@@ -145,7 +145,7 @@ func TestRegister(t *testing.T) {
 	}
 
 	// Clients asking for more than is supported get what is.
-	status, res = register(t, ts, `{"client_name":"Gemini","redirect_uris":["https://oauth-redirect.googleusercontent.com/r/user_bound_custom-mcp-1-foodplann.ing"],"grant_types":["authorization_code","refresh_token","client_credentials"],"response_types":["code","token"],"scope":"offline_access"}`)
+	status, res = register(t, ts, `{"client_name":"Gemini","redirect_uris":["https://oauth-redirect.googleusercontent.com/r/user_bound_custom-mcp-1-mealplann.ing"],"grant_types":["authorization_code","refresh_token","client_credentials"],"response_types":["code","token"],"scope":"offline_access"}`)
 	if status != http.StatusCreated {
 		t.Fatalf("got status %d: %v", status, res)
 	}

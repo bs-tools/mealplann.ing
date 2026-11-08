@@ -1,4 +1,4 @@
-# The repository's settings, the same in foodplann.ing and trail-tools.
+# The repository's settings, the same in mealplann.ing and trailrunn.ing.
 resource "github_repository" "this" {
   name        = var.repository
   description = var.description

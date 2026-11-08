@@ -41,7 +41,7 @@ const SignInForm: React.FC = () => {
            * be used alike, so say both.
            */
           setError(
-            "Signing in didn't finish: it was cancelled, or this device has no passkey for foodplann.ing. Try again, or use a device with your passkey."
+            "Signing in didn't finish: it was cancelled, or this device has no passkey for mealplann.ing. Try again, or use a device with your passkey."
           );
         } else if (!isCancelled(error_)) {
           setError(errorMessage(error_));
@@ -77,7 +77,7 @@ const SignInForm: React.FC = () => {
       )}
       {error !== "" && <p className="text-[13px] text-brand-700">{error}</p>}
       <p className="border-t border-stone-200 pt-3 text-[13px] leading-normal text-stone-500">
-        foodplann.ing is invite only. To create an account, ask for an
+        mealplann.ing is invite only. To create an account, ask for an
         invitation link.
       </p>
     </div>
