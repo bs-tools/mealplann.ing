@@ -196,9 +196,16 @@ type Input struct {
 	// date and the next, by slot, for the day's totals and the eating
 	// times' rules. A slot that's missing has nothing planned.
 	Planned map[plans.Slot]*rules.EatingTime
-	// Recipes are the household's recipes: the candidates, which include
-	// those the week's plan uses.
+	// Recipes are the household's recipes, which include those the week's
+	// plan uses.
 	Recipes []*recipes.Recipe
+	// Candidates are the recipes to score, nil for all of Recipes. They're
+	// separate so that a recipe left out of the candidates, like one the
+	// user excluded, still counts in the week's shopping if it's planned.
+	Candidates []*recipes.Recipe
+	// Weights scale the components' points by kind, 1 for a kind missing,
+	// so the user can say what matters most, like variety or the pantry.
+	Weights map[Kind]float64
 	// Foods are the foods of the recipes and of the week's plan, by ID.
 	Foods map[pgtype.UUID]*foods.Food
 	// Lots are the household's pantry.
@@ -270,8 +277,12 @@ type Suggestion struct {
 // highest score first, then by name.
 func Suggest(in *Input) []*Suggestion {
 	s := newScorer(in)
-	suggestions := make([]*Suggestion, 0, len(in.Recipes))
-	for _, r := range in.Recipes {
+	candidates := in.Candidates
+	if candidates == nil {
+		candidates = in.Recipes
+	}
+	suggestions := make([]*Suggestion, 0, len(candidates))
+	for _, r := range candidates {
 		suggestions = append(suggestions, s.score(r))
 	}
 	slices.SortStableFunc(suggestions, func(a, b *Suggestion) int {
@@ -453,6 +464,19 @@ func (s *scorer) score(r *recipes.Recipe) *Suggestion {
 	}
 
 	sg := c.suggestion
+	if s.in.Weights != nil {
+		weighted := sg.Components[:0]
+		for _, comp := range sg.Components {
+			if w, ok := s.in.Weights[comp.Kind]; ok {
+				comp.Points = math.Round(comp.Points*w*10) / 10
+			}
+			// A kind weighted to nothing doesn't count, so it isn't shown.
+			if comp.Points != 0 {
+				weighted = append(weighted, comp)
+			}
+		}
+		sg.Components = weighted
+	}
 	slices.SortStableFunc(sg.Components, func(a, b Component) int { return cmp.Compare(b.Points, a.Points) })
 	for _, comp := range sg.Components {
 		sg.Score += comp.Points

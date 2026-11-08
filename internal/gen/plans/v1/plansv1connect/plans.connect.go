@@ -28,6 +28,8 @@ const (
 	PlanServiceGetWeekProcedure = "/plans.v1.PlanService/GetWeek"
 	// PlanServicePlanMealProcedure is the procedure name of the PlanService's PlanMeal RPC.
 	PlanServicePlanMealProcedure = "/plans.v1.PlanService/PlanMeal"
+	// PlanServicePlanMealsProcedure is the procedure name of the PlanService's PlanMeals RPC.
+	PlanServicePlanMealsProcedure = "/plans.v1.PlanService/PlanMeals"
 	// PlanServiceCreateCookProcedure is the procedure name of the PlanService's CreateCook RPC.
 	PlanServiceCreateCookProcedure = "/plans.v1.PlanService/CreateCook"
 	// PlanServiceUpdateCookProcedure is the procedure name of the PlanService's UpdateCook RPC.
@@ -67,6 +69,13 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("PlanMeal"),
 			Procedure:  PlanServicePlanMealProcedure,
+		}
+	})
+	planServicePlanMealsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("PlanMeals"),
+			Procedure:  PlanServicePlanMealsProcedure,
 		}
 	})
 	planServiceCreateCookSpec = sync.OnceValue(func() connect.Spec {
@@ -173,6 +182,13 @@ type PlanServiceClient interface {
 	// of the eating times and cook it touched. Fails with
 	// FAILED_PRECONDITION if nobody eats from the meal.
 	PlanMeal(context.Context, *v1.PlanMealRequest) (*v1.PlanMealResponse, error)
+	// Plan several shared meals at once, like PlanMeal for each, in order of
+	// date and meal, so each splits its portions given those before it. Use
+	// it to save a plan from SuggestionService.SuggestPlan. Nothing is
+	// planned if any meal fails. Fails with INVALID_ARGUMENT if two meals
+	// are at the same date and meal, and FAILED_PRECONDITION if nobody eats
+	// from a meal.
+	PlanMeals(context.Context, *v1.PlanMealsRequest) (*v1.PlanMealsResponse, error)
 	// Create a cook: a recipe made on a date. Plan who eats it with
 	// CreatePortion, or use PlanMeal to do both. A cook created done takes
 	// its ingredients out of the pantry, like UpdateCook.
@@ -238,6 +254,13 @@ type PlanServiceHandler interface {
 	// of the eating times and cook it touched. Fails with
 	// FAILED_PRECONDITION if nobody eats from the meal.
 	PlanMeal(context.Context, *v1.PlanMealRequest) (*v1.PlanMealResponse, error)
+	// Plan several shared meals at once, like PlanMeal for each, in order of
+	// date and meal, so each splits its portions given those before it. Use
+	// it to save a plan from SuggestionService.SuggestPlan. Nothing is
+	// planned if any meal fails. Fails with INVALID_ARGUMENT if two meals
+	// are at the same date and meal, and FAILED_PRECONDITION if nobody eats
+	// from a meal.
+	PlanMeals(context.Context, *v1.PlanMealsRequest) (*v1.PlanMealsResponse, error)
 	// Create a cook: a recipe made on a date. Plan who eats it with
 	// CreatePortion, or use PlanMeal to do both. A cook created done takes
 	// its ingredients out of the pantry, like UpdateCook.
@@ -285,6 +308,7 @@ func RegisterPlanServiceHandler(server *connect.Server, svc PlanServiceHandler) 
 	server.Register(
 		connect.Method{Spec: planServiceGetWeekSpec(), Handler: adapter.getWeek},
 		connect.Method{Spec: planServicePlanMealSpec(), Handler: adapter.planMeal},
+		connect.Method{Spec: planServicePlanMealsSpec(), Handler: adapter.planMeals},
 		connect.Method{Spec: planServiceCreateCookSpec(), Handler: adapter.createCook},
 		connect.Method{Spec: planServiceUpdateCookSpec(), Handler: adapter.updateCook},
 		connect.Method{Spec: planServiceDeleteCookSpec(), Handler: adapter.deleteCook},
@@ -309,6 +333,10 @@ func (UnimplementedPlanServiceHandler) GetWeek(context.Context, *v1.GetWeekReque
 
 func (UnimplementedPlanServiceHandler) PlanMeal(context.Context, *v1.PlanMealRequest) (*v1.PlanMealResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.PlanMeal is not implemented")
+}
+
+func (UnimplementedPlanServiceHandler) PlanMeals(context.Context, *v1.PlanMealsRequest) (*v1.PlanMealsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.PlanMeals is not implemented")
 }
 
 func (UnimplementedPlanServiceHandler) CreateCook(context.Context, *v1.CreateCookRequest) (*v1.CreateCookResponse, error) {
@@ -374,6 +402,14 @@ func (c *planServiceClient) GetWeek(ctx context.Context, req *v1.GetWeekRequest)
 func (c *planServiceClient) PlanMeal(ctx context.Context, req *v1.PlanMealRequest) (*v1.PlanMealResponse, error) {
 	var res v1.PlanMealResponse
 	if err := c.client.CallUnary(ctx, planServicePlanMealSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) PlanMeals(ctx context.Context, req *v1.PlanMealsRequest) (*v1.PlanMealsResponse, error) {
+	var res v1.PlanMealsResponse
+	if err := c.client.CallUnary(ctx, planServicePlanMealsSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -495,6 +531,18 @@ func (h planServiceHandler) planMeal(ctx context.Context, _ connect.Spec, stream
 		return err
 	}
 	res, err := h.svc.PlanMeal(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) planMeals(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.PlanMealsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.PlanMeals(ctx, &req)
 	if err != nil {
 		return err
 	}

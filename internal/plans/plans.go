@@ -234,63 +234,107 @@ func (r *Repository) CreateCook(ctx context.Context, c *Cook) (*Cook, error) {
 // portions in their order, and a *ReferenceError if they refer to something
 // that isn't the household's.
 func (r *Repository) CreateCookWithPortions(ctx context.Context, c *Cook, portions []*Portion) (*Cook, []*Portion, error) {
-	id := store.NewUUID()
-	p := &gen.CreateCookPortionsParams{HouseholdID: c.HouseholdID, CookID: id}
-	for _, portion := range portions {
-		p.Ids = append(p.Ids, store.NewUUID())
-		p.PersonIds = append(p.PersonIds, portion.PersonID)
-		p.EatingTimeIds = append(p.EatingTimeIds, portion.EatingTimeID)
-		p.Dates = append(p.Dates, store.DateToPG(portion.Date))
-		p.Servings = append(p.Servings, portion.Servings)
+	cooks, created, err := r.CreateCooksWithPortions(ctx, []*CookWithPortions{{Cook: c, Portions: portions}})
+	if err != nil {
+		return nil, nil, err
 	}
-	var cooks []*gen.ListCooksRow
-	var rows []*gen.ListPortionsRow
+	return cooks[0], created[0], nil
+}
+
+// CookWithPortions is a cook to create with shares of it for people.
+type CookWithPortions struct {
+	Cook *Cook
+	// Portions are the shares, whose CookID is ignored.
+	Portions []*Portion
+}
+
+// CreateCooksWithPortions creates cooks in their household, each with
+// shares of it for people, all or nothing, in a single round trip. It
+// returns the cooks in their order, and the portions of each in theirs,
+// and a *ReferenceError if they refer to something that isn't the
+// household's.
+func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWithPortions) ([]*Cook, [][]*Portion, error) {
+	if len(list) == 0 {
+		return nil, nil, nil
+	}
+	householdID := list[0].Cook.HouseholdID
 	var b store.Batch
 	q := gen.New(&b)
-	_, _ = q.CreateCook(ctx, &gen.CreateCookParams{
-		ID:          id,
-		HouseholdID: c.HouseholdID,
-		RecipeID:    c.RecipeID,
-		Date:        store.DateToPG(c.Date),
-		Servings:    c.Servings,
-		Meal:        mealToDB(c.Meal),
-		Notes:       c.Notes,
-		Done:        c.Done,
-	})
-	if len(portions) > 0 {
-		_, _ = q.CreateCookPortions(ctx, p)
+	cookIDs := make([]pgtype.UUID, 0, len(list))
+	portionIDs := make([][]pgtype.UUID, 0, len(list))
+	var allPortionIDs []pgtype.UUID
+	for _, cp := range list {
+		c := cp.Cook
+		id := store.NewUUID()
+		cookIDs = append(cookIDs, id)
+		_, _ = q.CreateCook(ctx, &gen.CreateCookParams{
+			ID:          id,
+			HouseholdID: c.HouseholdID,
+			RecipeID:    c.RecipeID,
+			Date:        store.DateToPG(c.Date),
+			Servings:    c.Servings,
+			Meal:        mealToDB(c.Meal),
+			Notes:       c.Notes,
+			Done:        c.Done,
+		})
+		p := &gen.CreateCookPortionsParams{HouseholdID: c.HouseholdID, CookID: id}
+		for _, portion := range cp.Portions {
+			p.Ids = append(p.Ids, store.NewUUID())
+			p.PersonIds = append(p.PersonIds, portion.PersonID)
+			p.EatingTimeIds = append(p.EatingTimeIds, portion.EatingTimeID)
+			p.Dates = append(p.Dates, store.DateToPG(portion.Date))
+			p.Servings = append(p.Servings, portion.Servings)
+		}
+		if len(cp.Portions) > 0 {
+			_, _ = q.CreateCookPortions(ctx, p)
+		}
+		portionIDs = append(portionIDs, p.Ids)
+		allPortionIDs = append(allPortionIDs, p.Ids...)
 	}
+	var cookRows []*gen.ListCooksRow
+	var portionRows []*gen.ListPortionsRow
 	b.Read(func(db store.Querier) error {
 		var err error
-		cooks, err = gen.New(db).ListCooks(ctx, &gen.ListCooksParams{HouseholdID: c.HouseholdID, Ids: []pgtype.UUID{id}})
+		cookRows, err = gen.New(db).ListCooks(ctx, &gen.ListCooksParams{HouseholdID: householdID, Ids: cookIDs})
 		return err
 	})
-	if len(portions) > 0 {
+	if len(allPortionIDs) > 0 {
 		b.Read(func(db store.Querier) error {
 			var err error
-			rows, err = gen.New(db).ListPortions(ctx, &gen.ListPortionsParams{HouseholdID: c.HouseholdID, Ids: p.Ids})
+			portionRows, err = gen.New(db).ListPortions(ctx, &gen.ListPortionsParams{HouseholdID: householdID, Ids: allPortionIDs})
 			return err
 		})
 	}
 	if err := b.Send(ctx, r.db); err != nil {
 		return nil, nil, writeError("create cook", err)
 	}
-	if len(cooks) == 0 {
-		return nil, nil, errors.New("failed to read the created cook")
+	// The cooks and portions are returned in the order they were given,
+	// rather than the queries'.
+	cooksByID := map[pgtype.UUID]*Cook{}
+	for _, row := range cookRows {
+		cooksByID[row.Cook.ID] = cookFromDB(row)
 	}
-	// The portions are returned in the order they were given, rather than
-	// the query's.
-	byID := map[pgtype.UUID]*Portion{}
-	for _, row := range rows {
-		byID[row.Portion.ID] = portionFromDB(row)
+	portionsByID := map[pgtype.UUID]*Portion{}
+	for _, row := range portionRows {
+		portionsByID[row.Portion.ID] = portionFromDB(row)
 	}
-	created := make([]*Portion, 0, len(rows))
-	for _, id := range p.Ids {
-		if portion, ok := byID[id]; ok {
-			created = append(created, portion)
+	cooks := make([]*Cook, 0, len(list))
+	portions := make([][]*Portion, 0, len(list))
+	for i, id := range cookIDs {
+		c, ok := cooksByID[id]
+		if !ok {
+			return nil, nil, errors.New("failed to read a created cook")
 		}
+		cooks = append(cooks, c)
+		created := make([]*Portion, 0, len(portionIDs[i]))
+		for _, pid := range portionIDs[i] {
+			if portion, ok := portionsByID[pid]; ok {
+				created = append(created, portion)
+			}
+		}
+		portions = append(portions, created)
 	}
-	return cookFromDB(cooks[0]), created, nil
+	return cooks, portions, nil
 }
 
 // UpdateCook replaces a household's cook, other than its times. It returns

@@ -259,6 +259,41 @@ this", which calls `PlanMeal`, or `CreateCook` and `CreatePortion` for a
 small meal. The AI agent uses the same scores through MCP, and can reason
 beyond them, like proposing a new recipe that would score well.
 
+### Planning several days at once
+
+`SuggestPlan` suggests a whole plan of shared meals for up to 14 days, and
+the web app's "Plan for me" page shows it, for the user to keep, swap or
+clear meals, shuffle the rest, change the criteria, and add it to the plan
+with `PlanMeals` in one call. It runs on the server alone, from the same
+scoring as `SuggestRecipes`.
+
+- **The search is probabilistic** (`internal/suggest/plan.go`): far too many
+  plans exist to score them all, so it runs rollouts, each filling the open
+  slots in order with a recipe drawn from the best 5 for the slot given what
+  the rollout planned before it (more likely the higher it scores), and
+  adding its cook and portions to the rollout's plan, so later slots share
+  its ingredients and packs and avoid repeating it. The first rollout takes
+  the best each time, so the result is never worse than planning greedily.
+- **It keeps the best plan** found within about 1.5 seconds, 200 rollouts,
+  or 40 rollouts in a row without a better one, and stops when the request
+  is canceled. A polishing pass then scores each slot against all the
+  others, swaps in a better recipe if there is one, and gives each slot its
+  reasons and alternatives.
+- **Rules come first**: a slot only draws from recipes that break no rule
+  if there are any, and each slot says how many fit, so the app can say
+  when too few fit everyone's rules and the plan has to repeat them.
+- **Criteria** weigh the score's components: variety, favorites, the
+  pantry and packs, a short shop, and nutrition, each off, less, normal or
+  more. The rules, flavor and meal tags always count. Recipes can be left
+  out by time, tag or name.
+- **Reproducible**: the request's seed fixes the draws, so the same request
+  gives the same plan, and "Shuffle" is a new seed. Kept and cleared meals
+  are choices the search plans around.
+- **Cost**: a rollout of a week of dinners for two people from 40 recipes
+  takes a few milliseconds per slot on one CPU, so a week gets about a
+  hundred rollouts; two weeks of three meals gets about a dozen, and relies
+  more on the polishing pass.
+
 ## Milestones
 
 Version 1 is the first usable version, with suggestions. All five

@@ -4,6 +4,7 @@ import { useQuery } from "@connectrpc/connect-query";
 import { getCurrentUser } from "gen/users/v1/users-UserService_connectquery";
 import type { User } from "gen/users/v1/users_pb";
 import { hideSplash } from "helpers/splash";
+import AutoPlanPage from "pages/auto-plan";
 import FoodPage from "pages/food";
 import FoodsPage from "pages/foods";
 import HomePage from "pages/home";
@@ -108,6 +109,7 @@ const App: React.FC = () => {
           <>
             <Route path="/" element={<HomePage user={user} />} />
             <Route path="/plan" element={<PlanPage />} />
+            <Route path="/plan/auto" element={<AutoPlanPage />} />
             <Route path="/people" element={<PeoplePage />} />
             <Route path="/shopping" element={<ShoppingPage />} />
             <Route path="/pantry" element={<PantryPage />} />

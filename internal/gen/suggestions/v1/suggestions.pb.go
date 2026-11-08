@@ -103,6 +103,121 @@ func (x ScoreKind) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
+// Emphasis is how much a criterion of a plan counts.
+type Emphasis int32
+
+const (
+	// Normal.
+	Emphasis_EMPHASIS_UNSPECIFIED Emphasis = 0
+	// Not at all: its score components are left out.
+	Emphasis_EMPHASIS_OFF Emphasis = 1
+	// Half as much as normal.
+	Emphasis_EMPHASIS_LOW Emphasis = 2
+	// As SuggestRecipes counts it.
+	Emphasis_EMPHASIS_NORMAL Emphasis = 3
+	// Twice as much as normal.
+	Emphasis_EMPHASIS_HIGH Emphasis = 4
+)
+
+// Enum value maps for Emphasis.
+var (
+	Emphasis_name = map[int32]string{
+		0: "EMPHASIS_UNSPECIFIED",
+		1: "EMPHASIS_OFF",
+		2: "EMPHASIS_LOW",
+		3: "EMPHASIS_NORMAL",
+		4: "EMPHASIS_HIGH",
+	}
+	Emphasis_value = map[string]int32{
+		"EMPHASIS_UNSPECIFIED": 0,
+		"EMPHASIS_OFF":         1,
+		"EMPHASIS_LOW":         2,
+		"EMPHASIS_NORMAL":      3,
+		"EMPHASIS_HIGH":        4,
+	}
+)
+
+func (x Emphasis) Enum() *Emphasis {
+	p := new(Emphasis)
+	*p = x
+	return p
+}
+
+func (x Emphasis) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Emphasis) Descriptor() protoreflect.EnumDescriptor {
+	return file_suggestions_v1_suggestions_proto_enumTypes[1].Descriptor()
+}
+
+func (Emphasis) Type() protoreflect.EnumType {
+	return &file_suggestions_v1_suggestions_proto_enumTypes[1]
+}
+
+func (x Emphasis) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// PlanSlotState is what a slot of a suggested plan holds.
+type PlanSlotState int32
+
+const (
+	PlanSlotState_PLAN_SLOT_STATE_UNSPECIFIED PlanSlotState = 0
+	// A suggested recipe.
+	PlanSlotState_PLAN_SLOT_STATE_SUGGESTED PlanSlotState = 1
+	// The recipe the user chose to keep.
+	PlanSlotState_PLAN_SLOT_STATE_KEPT PlanSlotState = 2
+	// Nothing, as the user chose to leave it empty.
+	PlanSlotState_PLAN_SLOT_STATE_SKIPPED PlanSlotState = 3
+	// Nothing new, as it's planned already: see planned_recipe_names.
+	PlanSlotState_PLAN_SLOT_STATE_PLANNED PlanSlotState = 4
+	// Nothing, as no recipe could be suggested.
+	PlanSlotState_PLAN_SLOT_STATE_UNFILLED PlanSlotState = 5
+)
+
+// Enum value maps for PlanSlotState.
+var (
+	PlanSlotState_name = map[int32]string{
+		0: "PLAN_SLOT_STATE_UNSPECIFIED",
+		1: "PLAN_SLOT_STATE_SUGGESTED",
+		2: "PLAN_SLOT_STATE_KEPT",
+		3: "PLAN_SLOT_STATE_SKIPPED",
+		4: "PLAN_SLOT_STATE_PLANNED",
+		5: "PLAN_SLOT_STATE_UNFILLED",
+	}
+	PlanSlotState_value = map[string]int32{
+		"PLAN_SLOT_STATE_UNSPECIFIED": 0,
+		"PLAN_SLOT_STATE_SUGGESTED":   1,
+		"PLAN_SLOT_STATE_KEPT":        2,
+		"PLAN_SLOT_STATE_SKIPPED":     3,
+		"PLAN_SLOT_STATE_PLANNED":     4,
+		"PLAN_SLOT_STATE_UNFILLED":    5,
+	}
+)
+
+func (x PlanSlotState) Enum() *PlanSlotState {
+	p := new(PlanSlotState)
+	*p = x
+	return p
+}
+
+func (x PlanSlotState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PlanSlotState) Descriptor() protoreflect.EnumDescriptor {
+	return file_suggestions_v1_suggestions_proto_enumTypes[2].Descriptor()
+}
+
+func (PlanSlotState) Type() protoreflect.EnumType {
+	return &file_suggestions_v1_suggestions_proto_enumTypes[2]
+}
+
+func (x PlanSlotState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
 // An eating time of one person, to suggest a recipe for, like a small
 // meal.
 type EatingTimeSlot struct {
@@ -1047,6 +1162,704 @@ func (b0 Suggestion_builder) Build() *Suggestion {
 	return m0
 }
 
+// What the user wants of a suggested plan. Someone's rules always count
+// fully, as they come from their care team.
+type PlanCriteria struct {
+	state                       protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Variety          Emphasis               `protobuf:"varint,1,opt,name=variety,proto3,enum=suggestions.v1.Emphasis"`
+	xxx_hidden_Favorites        Emphasis               `protobuf:"varint,2,opt,name=favorites,proto3,enum=suggestions.v1.Emphasis"`
+	xxx_hidden_Pantry           Emphasis               `protobuf:"varint,3,opt,name=pantry,proto3,enum=suggestions.v1.Emphasis"`
+	xxx_hidden_Shopping         Emphasis               `protobuf:"varint,4,opt,name=shopping,proto3,enum=suggestions.v1.Emphasis"`
+	xxx_hidden_Nutrition        Emphasis               `protobuf:"varint,5,opt,name=nutrition,proto3,enum=suggestions.v1.Emphasis"`
+	xxx_hidden_MaxTotalSeconds  int32                  `protobuf:"varint,6,opt,name=max_total_seconds,json=maxTotalSeconds,proto3"`
+	xxx_hidden_ExcludeTags      []string               `protobuf:"bytes,7,rep,name=exclude_tags,json=excludeTags,proto3"`
+	xxx_hidden_ExcludeRecipeIds []string               `protobuf:"bytes,8,rep,name=exclude_recipe_ids,json=excludeRecipeIds,proto3"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
+}
+
+func (x *PlanCriteria) Reset() {
+	*x = PlanCriteria{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlanCriteria) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlanCriteria) ProtoMessage() {}
+
+func (x *PlanCriteria) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *PlanCriteria) GetVariety() Emphasis {
+	if x != nil {
+		return x.xxx_hidden_Variety
+	}
+	return Emphasis_EMPHASIS_UNSPECIFIED
+}
+
+func (x *PlanCriteria) GetFavorites() Emphasis {
+	if x != nil {
+		return x.xxx_hidden_Favorites
+	}
+	return Emphasis_EMPHASIS_UNSPECIFIED
+}
+
+func (x *PlanCriteria) GetPantry() Emphasis {
+	if x != nil {
+		return x.xxx_hidden_Pantry
+	}
+	return Emphasis_EMPHASIS_UNSPECIFIED
+}
+
+func (x *PlanCriteria) GetShopping() Emphasis {
+	if x != nil {
+		return x.xxx_hidden_Shopping
+	}
+	return Emphasis_EMPHASIS_UNSPECIFIED
+}
+
+func (x *PlanCriteria) GetNutrition() Emphasis {
+	if x != nil {
+		return x.xxx_hidden_Nutrition
+	}
+	return Emphasis_EMPHASIS_UNSPECIFIED
+}
+
+func (x *PlanCriteria) GetMaxTotalSeconds() int32 {
+	if x != nil {
+		return x.xxx_hidden_MaxTotalSeconds
+	}
+	return 0
+}
+
+func (x *PlanCriteria) GetExcludeTags() []string {
+	if x != nil {
+		return x.xxx_hidden_ExcludeTags
+	}
+	return nil
+}
+
+func (x *PlanCriteria) GetExcludeRecipeIds() []string {
+	if x != nil {
+		return x.xxx_hidden_ExcludeRecipeIds
+	}
+	return nil
+}
+
+func (x *PlanCriteria) SetVariety(v Emphasis) {
+	x.xxx_hidden_Variety = v
+}
+
+func (x *PlanCriteria) SetFavorites(v Emphasis) {
+	x.xxx_hidden_Favorites = v
+}
+
+func (x *PlanCriteria) SetPantry(v Emphasis) {
+	x.xxx_hidden_Pantry = v
+}
+
+func (x *PlanCriteria) SetShopping(v Emphasis) {
+	x.xxx_hidden_Shopping = v
+}
+
+func (x *PlanCriteria) SetNutrition(v Emphasis) {
+	x.xxx_hidden_Nutrition = v
+}
+
+func (x *PlanCriteria) SetMaxTotalSeconds(v int32) {
+	x.xxx_hidden_MaxTotalSeconds = v
+}
+
+func (x *PlanCriteria) SetExcludeTags(v []string) {
+	x.xxx_hidden_ExcludeTags = v
+}
+
+func (x *PlanCriteria) SetExcludeRecipeIds(v []string) {
+	x.xxx_hidden_ExcludeRecipeIds = v
+}
+
+type PlanCriteria_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// How much to avoid repeating recipes on nearby days (VARIETY).
+	Variety Emphasis
+	// How much to prefer the household's favorites (FAVORITE).
+	Favorites Emphasis
+	// How much to use up the pantry and the rest of packs (PANTRY and
+	// PACK_LEFTOVERS).
+	Pantry Emphasis
+	// How much to keep the shop short, with ingredients shared between
+	// meals and fresh food that keeps until it's cooked
+	// (SHARED_INGREDIENTS and KEEPING).
+	Shopping Emphasis
+	// How much to meet everyone's daily nutrient targets (NUTRITION).
+	Nutrition Emphasis
+	// Only plan recipes whose preparation and cooking take at most this
+	// long in all, in seconds. 0 for any time. Recipes of unknown times
+	// count as quick enough.
+	MaxTotalSeconds int32
+	// Don't plan recipes with any of these tags, e.g. "slow-cooker".
+	ExcludeTags []string
+	// Don't plan these recipes, e.g. ones the user doesn't want this week.
+	ExcludeRecipeIds []string
+}
+
+func (b0 PlanCriteria_builder) Build() *PlanCriteria {
+	m0 := &PlanCriteria{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Variety = b.Variety
+	x.xxx_hidden_Favorites = b.Favorites
+	x.xxx_hidden_Pantry = b.Pantry
+	x.xxx_hidden_Shopping = b.Shopping
+	x.xxx_hidden_Nutrition = b.Nutrition
+	x.xxx_hidden_MaxTotalSeconds = b.MaxTotalSeconds
+	x.xxx_hidden_ExcludeTags = b.ExcludeTags
+	x.xxx_hidden_ExcludeRecipeIds = b.ExcludeRecipeIds
+	return m0
+}
+
+// The user's choice for a slot of a suggested plan.
+type PlanChoice struct {
+	state               protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Date     string                 `protobuf:"bytes,1,opt,name=date,proto3"`
+	xxx_hidden_Meal     v1.HouseholdMeal       `protobuf:"varint,2,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_RecipeId string                 `protobuf:"bytes,3,opt,name=recipe_id,json=recipeId,proto3"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *PlanChoice) Reset() {
+	*x = PlanChoice{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlanChoice) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlanChoice) ProtoMessage() {}
+
+func (x *PlanChoice) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *PlanChoice) GetDate() string {
+	if x != nil {
+		return x.xxx_hidden_Date
+	}
+	return ""
+}
+
+func (x *PlanChoice) GetMeal() v1.HouseholdMeal {
+	if x != nil {
+		return x.xxx_hidden_Meal
+	}
+	return v1.HouseholdMeal(0)
+}
+
+func (x *PlanChoice) GetRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeId
+	}
+	return ""
+}
+
+func (x *PlanChoice) SetDate(v string) {
+	x.xxx_hidden_Date = v
+}
+
+func (x *PlanChoice) SetMeal(v v1.HouseholdMeal) {
+	x.xxx_hidden_Meal = v
+}
+
+func (x *PlanChoice) SetRecipeId(v string) {
+	x.xxx_hidden_RecipeId = v
+}
+
+type PlanChoice_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The date of the slot (YYYY-MM-DD). Required.
+	Date string
+	// The shared meal of the slot. Required.
+	Meal v1.HouseholdMeal
+	// The ID of the recipe to keep at the slot, whatever the criteria, or
+	// empty to leave the slot empty.
+	RecipeId string
+}
+
+func (b0 PlanChoice_builder) Build() *PlanChoice {
+	m0 := &PlanChoice{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Date = b.Date
+	x.xxx_hidden_Meal = b.Meal
+	x.xxx_hidden_RecipeId = b.RecipeId
+	return m0
+}
+
+type SuggestPlanRequest struct {
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_StartDate string                 `protobuf:"bytes,1,opt,name=start_date,json=startDate,proto3"`
+	xxx_hidden_Days      int32                  `protobuf:"varint,2,opt,name=days,proto3"`
+	xxx_hidden_Meals     []v1.HouseholdMeal     `protobuf:"varint,3,rep,packed,name=meals,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_Criteria  *PlanCriteria          `protobuf:"bytes,4,opt,name=criteria,proto3"`
+	xxx_hidden_Choices   *[]*PlanChoice         `protobuf:"bytes,5,rep,name=choices,proto3"`
+	xxx_hidden_Seed      uint64                 `protobuf:"varint,6,opt,name=seed,proto3"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *SuggestPlanRequest) Reset() {
+	*x = SuggestPlanRequest{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestPlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestPlanRequest) ProtoMessage() {}
+
+func (x *SuggestPlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SuggestPlanRequest) GetStartDate() string {
+	if x != nil {
+		return x.xxx_hidden_StartDate
+	}
+	return ""
+}
+
+func (x *SuggestPlanRequest) GetDays() int32 {
+	if x != nil {
+		return x.xxx_hidden_Days
+	}
+	return 0
+}
+
+func (x *SuggestPlanRequest) GetMeals() []v1.HouseholdMeal {
+	if x != nil {
+		return x.xxx_hidden_Meals
+	}
+	return nil
+}
+
+func (x *SuggestPlanRequest) GetCriteria() *PlanCriteria {
+	if x != nil {
+		return x.xxx_hidden_Criteria
+	}
+	return nil
+}
+
+func (x *SuggestPlanRequest) GetChoices() []*PlanChoice {
+	if x != nil {
+		if x.xxx_hidden_Choices != nil {
+			return *x.xxx_hidden_Choices
+		}
+	}
+	return nil
+}
+
+func (x *SuggestPlanRequest) GetSeed() uint64 {
+	if x != nil {
+		return x.xxx_hidden_Seed
+	}
+	return 0
+}
+
+func (x *SuggestPlanRequest) SetStartDate(v string) {
+	x.xxx_hidden_StartDate = v
+}
+
+func (x *SuggestPlanRequest) SetDays(v int32) {
+	x.xxx_hidden_Days = v
+}
+
+func (x *SuggestPlanRequest) SetMeals(v []v1.HouseholdMeal) {
+	x.xxx_hidden_Meals = v
+}
+
+func (x *SuggestPlanRequest) SetCriteria(v *PlanCriteria) {
+	x.xxx_hidden_Criteria = v
+}
+
+func (x *SuggestPlanRequest) SetChoices(v []*PlanChoice) {
+	x.xxx_hidden_Choices = &v
+}
+
+func (x *SuggestPlanRequest) SetSeed(v uint64) {
+	x.xxx_hidden_Seed = v
+}
+
+func (x *SuggestPlanRequest) HasCriteria() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Criteria != nil
+}
+
+func (x *SuggestPlanRequest) ClearCriteria() {
+	x.xxx_hidden_Criteria = nil
+}
+
+type SuggestPlanRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The first date to plan (YYYY-MM-DD). Required.
+	StartDate string
+	// How many days to plan, from 1 to 14.
+	Days int32
+	// The shared meals to plan each day. Empty for every meal someone eats
+	// from.
+	Meals []v1.HouseholdMeal
+	// What the user wants of the plan.
+	Criteria *PlanCriteria
+	// The slots the user chose a recipe for, or to leave empty. At most one
+	// per slot.
+	Choices []*PlanChoice
+	// The seed of the search's random draws: the same request with the same
+	// seed suggests the same plan, if the household's data hasn't changed.
+	// 0 for a new one, which the response returns.
+	Seed uint64
+}
+
+func (b0 SuggestPlanRequest_builder) Build() *SuggestPlanRequest {
+	m0 := &SuggestPlanRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_StartDate = b.StartDate
+	x.xxx_hidden_Days = b.Days
+	x.xxx_hidden_Meals = b.Meals
+	x.xxx_hidden_Criteria = b.Criteria
+	x.xxx_hidden_Choices = &b.Choices
+	x.xxx_hidden_Seed = b.Seed
+	return m0
+}
+
+// A slot of a suggested plan: a shared meal on a date.
+type PlanSlot struct {
+	state                         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Date               string                 `protobuf:"bytes,1,opt,name=date,proto3"`
+	xxx_hidden_Meal               v1.HouseholdMeal       `protobuf:"varint,2,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_State              PlanSlotState          `protobuf:"varint,3,opt,name=state,proto3,enum=suggestions.v1.PlanSlotState"`
+	xxx_hidden_Suggestion         *Suggestion            `protobuf:"bytes,4,opt,name=suggestion,proto3"`
+	xxx_hidden_Alternatives       *[]*Suggestion         `protobuf:"bytes,5,rep,name=alternatives,proto3"`
+	xxx_hidden_PlannedRecipeNames []string               `protobuf:"bytes,6,rep,name=planned_recipe_names,json=plannedRecipeNames,proto3"`
+	xxx_hidden_FittingRecipeCount int32                  `protobuf:"varint,7,opt,name=fitting_recipe_count,json=fittingRecipeCount,proto3"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
+}
+
+func (x *PlanSlot) Reset() {
+	*x = PlanSlot{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlanSlot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlanSlot) ProtoMessage() {}
+
+func (x *PlanSlot) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *PlanSlot) GetDate() string {
+	if x != nil {
+		return x.xxx_hidden_Date
+	}
+	return ""
+}
+
+func (x *PlanSlot) GetMeal() v1.HouseholdMeal {
+	if x != nil {
+		return x.xxx_hidden_Meal
+	}
+	return v1.HouseholdMeal(0)
+}
+
+func (x *PlanSlot) GetState() PlanSlotState {
+	if x != nil {
+		return x.xxx_hidden_State
+	}
+	return PlanSlotState_PLAN_SLOT_STATE_UNSPECIFIED
+}
+
+func (x *PlanSlot) GetSuggestion() *Suggestion {
+	if x != nil {
+		return x.xxx_hidden_Suggestion
+	}
+	return nil
+}
+
+func (x *PlanSlot) GetAlternatives() []*Suggestion {
+	if x != nil {
+		if x.xxx_hidden_Alternatives != nil {
+			return *x.xxx_hidden_Alternatives
+		}
+	}
+	return nil
+}
+
+func (x *PlanSlot) GetPlannedRecipeNames() []string {
+	if x != nil {
+		return x.xxx_hidden_PlannedRecipeNames
+	}
+	return nil
+}
+
+func (x *PlanSlot) GetFittingRecipeCount() int32 {
+	if x != nil {
+		return x.xxx_hidden_FittingRecipeCount
+	}
+	return 0
+}
+
+func (x *PlanSlot) SetDate(v string) {
+	x.xxx_hidden_Date = v
+}
+
+func (x *PlanSlot) SetMeal(v v1.HouseholdMeal) {
+	x.xxx_hidden_Meal = v
+}
+
+func (x *PlanSlot) SetState(v PlanSlotState) {
+	x.xxx_hidden_State = v
+}
+
+func (x *PlanSlot) SetSuggestion(v *Suggestion) {
+	x.xxx_hidden_Suggestion = v
+}
+
+func (x *PlanSlot) SetAlternatives(v []*Suggestion) {
+	x.xxx_hidden_Alternatives = &v
+}
+
+func (x *PlanSlot) SetPlannedRecipeNames(v []string) {
+	x.xxx_hidden_PlannedRecipeNames = v
+}
+
+func (x *PlanSlot) SetFittingRecipeCount(v int32) {
+	x.xxx_hidden_FittingRecipeCount = v
+}
+
+func (x *PlanSlot) HasSuggestion() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Suggestion != nil
+}
+
+func (x *PlanSlot) ClearSuggestion() {
+	x.xxx_hidden_Suggestion = nil
+}
+
+type PlanSlot_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The date (YYYY-MM-DD).
+	Date string
+	// The shared meal.
+	Meal v1.HouseholdMeal
+	// What it holds.
+	State PlanSlotState
+	// The recipe suggested or kept, scored against the rest of the plan,
+	// for SUGGESTED and KEPT.
+	Suggestion *Suggestion
+	// The next best recipes for the slot, given the rest of the plan, best
+	// first, for SUGGESTED.
+	Alternatives []*Suggestion
+	// The recipes of the cooks already planned at the slot, for PLANNED.
+	PlannedRecipeNames []string
+	// How many of the recipes meeting the criteria break nobody's rules at
+	// the slot, given the rest of the plan, for SUGGESTED and KEPT. If it's
+	// fewer than the days planned, the plan repeats them, or breaks a rule:
+	// suggest adding recipes that fit, or checking that the rules are the
+	// care team's.
+	FittingRecipeCount int32
+}
+
+func (b0 PlanSlot_builder) Build() *PlanSlot {
+	m0 := &PlanSlot{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Date = b.Date
+	x.xxx_hidden_Meal = b.Meal
+	x.xxx_hidden_State = b.State
+	x.xxx_hidden_Suggestion = b.Suggestion
+	x.xxx_hidden_Alternatives = &b.Alternatives
+	x.xxx_hidden_PlannedRecipeNames = b.PlannedRecipeNames
+	x.xxx_hidden_FittingRecipeCount = b.FittingRecipeCount
+	return m0
+}
+
+type SuggestPlanResponse struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Slots       *[]*PlanSlot           `protobuf:"bytes,1,rep,name=slots,proto3"`
+	xxx_hidden_Score       float64                `protobuf:"fixed64,2,opt,name=score,proto3"`
+	xxx_hidden_PlansTried  int32                  `protobuf:"varint,3,opt,name=plans_tried,json=plansTried,proto3"`
+	xxx_hidden_Seed        uint64                 `protobuf:"varint,4,opt,name=seed,proto3"`
+	xxx_hidden_RecipeCount int32                  `protobuf:"varint,5,opt,name=recipe_count,json=recipeCount,proto3"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *SuggestPlanResponse) Reset() {
+	*x = SuggestPlanResponse{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestPlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestPlanResponse) ProtoMessage() {}
+
+func (x *SuggestPlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SuggestPlanResponse) GetSlots() []*PlanSlot {
+	if x != nil {
+		if x.xxx_hidden_Slots != nil {
+			return *x.xxx_hidden_Slots
+		}
+	}
+	return nil
+}
+
+func (x *SuggestPlanResponse) GetScore() float64 {
+	if x != nil {
+		return x.xxx_hidden_Score
+	}
+	return 0
+}
+
+func (x *SuggestPlanResponse) GetPlansTried() int32 {
+	if x != nil {
+		return x.xxx_hidden_PlansTried
+	}
+	return 0
+}
+
+func (x *SuggestPlanResponse) GetSeed() uint64 {
+	if x != nil {
+		return x.xxx_hidden_Seed
+	}
+	return 0
+}
+
+func (x *SuggestPlanResponse) GetRecipeCount() int32 {
+	if x != nil {
+		return x.xxx_hidden_RecipeCount
+	}
+	return 0
+}
+
+func (x *SuggestPlanResponse) SetSlots(v []*PlanSlot) {
+	x.xxx_hidden_Slots = &v
+}
+
+func (x *SuggestPlanResponse) SetScore(v float64) {
+	x.xxx_hidden_Score = v
+}
+
+func (x *SuggestPlanResponse) SetPlansTried(v int32) {
+	x.xxx_hidden_PlansTried = v
+}
+
+func (x *SuggestPlanResponse) SetSeed(v uint64) {
+	x.xxx_hidden_Seed = v
+}
+
+func (x *SuggestPlanResponse) SetRecipeCount(v int32) {
+	x.xxx_hidden_RecipeCount = v
+}
+
+type SuggestPlanResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// Every slot of the days and meals, by date and meal.
+	Slots []*PlanSlot
+	// The plan's score: the sum of its slots'.
+	Score float64
+	// How many plans the search tried.
+	PlansTried int32
+	// The seed of the search, to suggest the same plan again.
+	Seed uint64
+	// How many recipes meet the criteria.
+	RecipeCount int32
+}
+
+func (b0 SuggestPlanResponse_builder) Build() *SuggestPlanResponse {
+	m0 := &SuggestPlanResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Slots = &b.Slots
+	x.xxx_hidden_Score = b.Score
+	x.xxx_hidden_PlansTried = b.PlansTried
+	x.xxx_hidden_Seed = b.Seed
+	x.xxx_hidden_RecipeCount = b.RecipeCount
+	return m0
+}
+
 var File_suggestions_v1_suggestions_proto protoreflect.FileDescriptor
 
 const file_suggestions_v1_suggestions_proto_rawDesc = "" +
@@ -1104,7 +1917,46 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x0enew_item_count\x18\t \x01(\x05R\fnewItemCount\x12;\n" +
 	"\fitems_to_buy\x18\n" +
 	" \x03(\v2\x19.suggestions.v1.ItemToBuyR\n" +
-	"itemsToBuy*\xa9\x02\n" +
+	"itemsToBuy\"\x97\x03\n" +
+	"\fPlanCriteria\x122\n" +
+	"\avariety\x18\x01 \x01(\x0e2\x18.suggestions.v1.EmphasisR\avariety\x126\n" +
+	"\tfavorites\x18\x02 \x01(\x0e2\x18.suggestions.v1.EmphasisR\tfavorites\x120\n" +
+	"\x06pantry\x18\x03 \x01(\x0e2\x18.suggestions.v1.EmphasisR\x06pantry\x124\n" +
+	"\bshopping\x18\x04 \x01(\x0e2\x18.suggestions.v1.EmphasisR\bshopping\x126\n" +
+	"\tnutrition\x18\x05 \x01(\x0e2\x18.suggestions.v1.EmphasisR\tnutrition\x12*\n" +
+	"\x11max_total_seconds\x18\x06 \x01(\x05R\x0fmaxTotalSeconds\x12!\n" +
+	"\fexclude_tags\x18\a \x03(\tR\vexcludeTags\x12,\n" +
+	"\x12exclude_recipe_ids\x18\b \x03(\tR\x10excludeRecipeIds\"k\n" +
+	"\n" +
+	"PlanChoice\x12\x12\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +
+	"\x04meal\x18\x02 \x01(\x0e2\x18.people.v1.HouseholdMealR\x04meal\x12\x1b\n" +
+	"\trecipe_id\x18\x03 \x01(\tR\brecipeId\"\xfb\x01\n" +
+	"\x12SuggestPlanRequest\x12\x1d\n" +
+	"\n" +
+	"start_date\x18\x01 \x01(\tR\tstartDate\x12\x12\n" +
+	"\x04days\x18\x02 \x01(\x05R\x04days\x12.\n" +
+	"\x05meals\x18\x03 \x03(\x0e2\x18.people.v1.HouseholdMealR\x05meals\x128\n" +
+	"\bcriteria\x18\x04 \x01(\v2\x1c.suggestions.v1.PlanCriteriaR\bcriteria\x124\n" +
+	"\achoices\x18\x05 \x03(\v2\x1a.suggestions.v1.PlanChoiceR\achoices\x12\x12\n" +
+	"\x04seed\x18\x06 \x01(\x04R\x04seed\"\xe1\x02\n" +
+	"\bPlanSlot\x12\x12\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +
+	"\x04meal\x18\x02 \x01(\x0e2\x18.people.v1.HouseholdMealR\x04meal\x123\n" +
+	"\x05state\x18\x03 \x01(\x0e2\x1d.suggestions.v1.PlanSlotStateR\x05state\x12:\n" +
+	"\n" +
+	"suggestion\x18\x04 \x01(\v2\x1a.suggestions.v1.SuggestionR\n" +
+	"suggestion\x12>\n" +
+	"\falternatives\x18\x05 \x03(\v2\x1a.suggestions.v1.SuggestionR\falternatives\x120\n" +
+	"\x14planned_recipe_names\x18\x06 \x03(\tR\x12plannedRecipeNames\x120\n" +
+	"\x14fitting_recipe_count\x18\a \x01(\x05R\x12fittingRecipeCount\"\xb3\x01\n" +
+	"\x13SuggestPlanResponse\x12.\n" +
+	"\x05slots\x18\x01 \x03(\v2\x18.suggestions.v1.PlanSlotR\x05slots\x12\x14\n" +
+	"\x05score\x18\x02 \x01(\x01R\x05score\x12\x1f\n" +
+	"\vplans_tried\x18\x03 \x01(\x05R\n" +
+	"plansTried\x12\x12\n" +
+	"\x04seed\x18\x04 \x01(\x04R\x04seed\x12!\n" +
+	"\frecipe_count\x18\x05 \x01(\x05R\vrecipeCount*\xa9\x02\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
@@ -1117,41 +1969,78 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x12SCORE_KIND_VARIETY\x10\b\x12\x17\n" +
 	"\x13SCORE_KIND_MEAL_TAG\x10\t\x12\x17\n" +
 	"\x13SCORE_KIND_FAVORITE\x10\n" +
-	"2t\n" +
+	"*p\n" +
+	"\bEmphasis\x12\x18\n" +
+	"\x14EMPHASIS_UNSPECIFIED\x10\x00\x12\x10\n" +
+	"\fEMPHASIS_OFF\x10\x01\x12\x10\n" +
+	"\fEMPHASIS_LOW\x10\x02\x12\x13\n" +
+	"\x0fEMPHASIS_NORMAL\x10\x03\x12\x11\n" +
+	"\rEMPHASIS_HIGH\x10\x04*\xc1\x01\n" +
+	"\rPlanSlotState\x12\x1f\n" +
+	"\x1bPLAN_SLOT_STATE_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19PLAN_SLOT_STATE_SUGGESTED\x10\x01\x12\x18\n" +
+	"\x14PLAN_SLOT_STATE_KEPT\x10\x02\x12\x1b\n" +
+	"\x17PLAN_SLOT_STATE_SKIPPED\x10\x03\x12\x1b\n" +
+	"\x17PLAN_SLOT_STATE_PLANNED\x10\x04\x12\x1c\n" +
+	"\x18PLAN_SLOT_STATE_UNFILLED\x10\x052\xcc\x01\n" +
 	"\x11SuggestionService\x12_\n" +
-	"\x0eSuggestRecipes\x12%.suggestions.v1.SuggestRecipesRequest\x1a&.suggestions.v1.SuggestRecipesResponseB\xcc\x01\n" +
+	"\x0eSuggestRecipes\x12%.suggestions.v1.SuggestRecipesRequest\x1a&.suggestions.v1.SuggestRecipesResponse\x12V\n" +
+	"\vSuggestPlan\x12\".suggestions.v1.SuggestPlanRequest\x1a#.suggestions.v1.SuggestPlanResponseB\xcc\x01\n" +
 	"\x12com.suggestions.v1B\x10SuggestionsProtoP\x01ZKgithub.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1;suggestionsv1\xa2\x02\x03SXX\xaa\x02\x0eSuggestions.V1\xca\x02\x0eSuggestions\\V1\xe2\x02\x1aSuggestions\\V1\\GPBMetadata\xea\x02\x0fSuggestions::V1b\x06proto3"
 
-var file_suggestions_v1_suggestions_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_suggestions_v1_suggestions_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_suggestions_v1_suggestions_proto_goTypes = []any{
 	(ScoreKind)(0),                 // 0: suggestions.v1.ScoreKind
-	(*EatingTimeSlot)(nil),         // 1: suggestions.v1.EatingTimeSlot
-	(*SuggestRecipesRequest)(nil),  // 2: suggestions.v1.SuggestRecipesRequest
-	(*SuggestRecipesResponse)(nil), // 3: suggestions.v1.SuggestRecipesResponse
-	(*ScoreComponent)(nil),         // 4: suggestions.v1.ScoreComponent
-	(*SuggestedPortion)(nil),       // 5: suggestions.v1.SuggestedPortion
-	(*ItemToBuy)(nil),              // 6: suggestions.v1.ItemToBuy
-	(*Suggestion)(nil),             // 7: suggestions.v1.Suggestion
-	(v1.HouseholdMeal)(0),          // 8: people.v1.HouseholdMeal
-	(*v11.Warning)(nil),            // 9: plans.v1.Warning
+	(Emphasis)(0),                  // 1: suggestions.v1.Emphasis
+	(PlanSlotState)(0),             // 2: suggestions.v1.PlanSlotState
+	(*EatingTimeSlot)(nil),         // 3: suggestions.v1.EatingTimeSlot
+	(*SuggestRecipesRequest)(nil),  // 4: suggestions.v1.SuggestRecipesRequest
+	(*SuggestRecipesResponse)(nil), // 5: suggestions.v1.SuggestRecipesResponse
+	(*ScoreComponent)(nil),         // 6: suggestions.v1.ScoreComponent
+	(*SuggestedPortion)(nil),       // 7: suggestions.v1.SuggestedPortion
+	(*ItemToBuy)(nil),              // 8: suggestions.v1.ItemToBuy
+	(*Suggestion)(nil),             // 9: suggestions.v1.Suggestion
+	(*PlanCriteria)(nil),           // 10: suggestions.v1.PlanCriteria
+	(*PlanChoice)(nil),             // 11: suggestions.v1.PlanChoice
+	(*SuggestPlanRequest)(nil),     // 12: suggestions.v1.SuggestPlanRequest
+	(*PlanSlot)(nil),               // 13: suggestions.v1.PlanSlot
+	(*SuggestPlanResponse)(nil),    // 14: suggestions.v1.SuggestPlanResponse
+	(v1.HouseholdMeal)(0),          // 15: people.v1.HouseholdMeal
+	(*v11.Warning)(nil),            // 16: plans.v1.Warning
 }
 var file_suggestions_v1_suggestions_proto_depIdxs = []int32{
-	8, // 0: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
-	1, // 1: suggestions.v1.SuggestRecipesRequest.eating_time:type_name -> suggestions.v1.EatingTimeSlot
-	7, // 2: suggestions.v1.SuggestRecipesResponse.suggestions:type_name -> suggestions.v1.Suggestion
-	0, // 3: suggestions.v1.ScoreComponent.kind:type_name -> suggestions.v1.ScoreKind
-	4, // 4: suggestions.v1.Suggestion.components:type_name -> suggestions.v1.ScoreComponent
-	9, // 5: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
-	5, // 6: suggestions.v1.Suggestion.portions:type_name -> suggestions.v1.SuggestedPortion
-	6, // 7: suggestions.v1.Suggestion.items_to_buy:type_name -> suggestions.v1.ItemToBuy
-	2, // 8: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
-	3, // 9: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
-	9, // [9:10] is the sub-list for method output_type
-	8, // [8:9] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	15, // 0: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
+	3,  // 1: suggestions.v1.SuggestRecipesRequest.eating_time:type_name -> suggestions.v1.EatingTimeSlot
+	9,  // 2: suggestions.v1.SuggestRecipesResponse.suggestions:type_name -> suggestions.v1.Suggestion
+	0,  // 3: suggestions.v1.ScoreComponent.kind:type_name -> suggestions.v1.ScoreKind
+	6,  // 4: suggestions.v1.Suggestion.components:type_name -> suggestions.v1.ScoreComponent
+	16, // 5: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
+	7,  // 6: suggestions.v1.Suggestion.portions:type_name -> suggestions.v1.SuggestedPortion
+	8,  // 7: suggestions.v1.Suggestion.items_to_buy:type_name -> suggestions.v1.ItemToBuy
+	1,  // 8: suggestions.v1.PlanCriteria.variety:type_name -> suggestions.v1.Emphasis
+	1,  // 9: suggestions.v1.PlanCriteria.favorites:type_name -> suggestions.v1.Emphasis
+	1,  // 10: suggestions.v1.PlanCriteria.pantry:type_name -> suggestions.v1.Emphasis
+	1,  // 11: suggestions.v1.PlanCriteria.shopping:type_name -> suggestions.v1.Emphasis
+	1,  // 12: suggestions.v1.PlanCriteria.nutrition:type_name -> suggestions.v1.Emphasis
+	15, // 13: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
+	15, // 14: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
+	10, // 15: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
+	11, // 16: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
+	15, // 17: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
+	2,  // 18: suggestions.v1.PlanSlot.state:type_name -> suggestions.v1.PlanSlotState
+	9,  // 19: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
+	9,  // 20: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
+	13, // 21: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
+	4,  // 22: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
+	12, // 23: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
+	5,  // 24: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
+	14, // 25: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
+	24, // [24:26] is the sub-list for method output_type
+	22, // [22:24] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_suggestions_v1_suggestions_proto_init() }
@@ -1168,8 +2057,8 @@ func file_suggestions_v1_suggestions_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_suggestions_v1_suggestions_proto_rawDesc), len(file_suggestions_v1_suggestions_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   7,
+			NumEnums:      3,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -27,6 +27,9 @@ const (
 	// SuggestionServiceSuggestRecipesProcedure is the procedure name of the SuggestionService's
 	// SuggestRecipes RPC.
 	SuggestionServiceSuggestRecipesProcedure = "/suggestions.v1.SuggestionService/SuggestRecipes"
+	// SuggestionServiceSuggestPlanProcedure is the procedure name of the SuggestionService's
+	// SuggestPlan RPC.
+	SuggestionServiceSuggestPlanProcedure = "/suggestions.v1.SuggestionService/SuggestPlan"
 )
 
 var (
@@ -35,6 +38,13 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestRecipes"),
 			Procedure:  SuggestionServiceSuggestRecipesProcedure,
+		}
+	})
+	suggestionServiceSuggestPlanSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestPlan"),
+			Procedure:  SuggestionServiceSuggestPlanProcedure,
 		}
 	})
 )
@@ -73,6 +83,32 @@ type SuggestionServiceClient interface {
 	// a bad date or an eating time that isn't the person's, and with
 	// FAILED_PRECONDITION if nobody eats from the shared meal.
 	SuggestRecipes(context.Context, *v1.SuggestRecipesRequest) (*v1.SuggestRecipesResponse, error)
+	// Suggest a whole plan of shared meals for the next days at once: a
+	// recipe for each open breakfast, lunch or dinner, chosen together so
+	// the days share ingredients and packs, use the pantry, vary, and meet
+	// everyone's rules and targets. It's the fastest way to plan a week:
+	//
+	//  1. Call SuggestPlan with the first date, the number of days and the
+	//     meals, and criteria from what the user wants, like more variety,
+	//     their favorites, or quick recipes only.
+	//  2. Show the user the plan. Each slot has its suggestion, with the
+	//     reasons, and alternatives.
+	//  3. To change it, call SuggestPlan again with choices: the slots to
+	//     keep, with their recipe (e.g. an alternative the user picked), and
+	//     those to leave empty. The other slots are planned again around
+	//     them, with a new seed for something different, or the same seed
+	//     for the same plan.
+	//  4. Save it with PlanService.PlanMeals, with the recipe of each slot.
+	//
+	// The search is probabilistic: it tries many plans for about two
+	// seconds, picking each slot's recipe among the best for it given the
+	// slots planned before, keeps the best plan, and then improves each slot
+	// given all the others. Slots that already have a cook of their meal
+	// aren't planned again. A slot only gets a recipe that breaks someone's
+	// rules if every recipe does. Nothing is changed. Fails with
+	// INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
+	// nobody eats from the meals, or no recipe meets the criteria.
+	SuggestPlan(context.Context, *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error)
 }
 
 // NewSuggestionServiceClient constructs a client for the suggestions.v1.SuggestionService service.
@@ -115,6 +151,32 @@ type SuggestionServiceHandler interface {
 	// a bad date or an eating time that isn't the person's, and with
 	// FAILED_PRECONDITION if nobody eats from the shared meal.
 	SuggestRecipes(context.Context, *v1.SuggestRecipesRequest) (*v1.SuggestRecipesResponse, error)
+	// Suggest a whole plan of shared meals for the next days at once: a
+	// recipe for each open breakfast, lunch or dinner, chosen together so
+	// the days share ingredients and packs, use the pantry, vary, and meet
+	// everyone's rules and targets. It's the fastest way to plan a week:
+	//
+	//  1. Call SuggestPlan with the first date, the number of days and the
+	//     meals, and criteria from what the user wants, like more variety,
+	//     their favorites, or quick recipes only.
+	//  2. Show the user the plan. Each slot has its suggestion, with the
+	//     reasons, and alternatives.
+	//  3. To change it, call SuggestPlan again with choices: the slots to
+	//     keep, with their recipe (e.g. an alternative the user picked), and
+	//     those to leave empty. The other slots are planned again around
+	//     them, with a new seed for something different, or the same seed
+	//     for the same plan.
+	//  4. Save it with PlanService.PlanMeals, with the recipe of each slot.
+	//
+	// The search is probabilistic: it tries many plans for about two
+	// seconds, picking each slot's recipe among the best for it given the
+	// slots planned before, keeps the best plan, and then improves each slot
+	// given all the others. Slots that already have a cook of their meal
+	// aren't planned again. A slot only gets a recipe that breaks someone's
+	// rules if every recipe does. Nothing is changed. Fails with
+	// INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
+	// nobody eats from the meals, or no recipe meets the criteria.
+	SuggestPlan(context.Context, *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error)
 }
 
 // RegisterSuggestionServiceHandler registers svc as the suggestions.v1.SuggestionService
@@ -123,6 +185,7 @@ func RegisterSuggestionServiceHandler(server *connect.Server, svc SuggestionServ
 	adapter := suggestionServiceHandler{svc: svc}
 	server.Register(
 		connect.Method{Spec: suggestionServiceSuggestRecipesSpec(), Handler: adapter.suggestRecipes},
+		connect.Method{Spec: suggestionServiceSuggestPlanSpec(), Handler: adapter.suggestPlan},
 	)
 }
 
@@ -131,6 +194,10 @@ type UnimplementedSuggestionServiceHandler struct{}
 
 func (UnimplementedSuggestionServiceHandler) SuggestRecipes(context.Context, *v1.SuggestRecipesRequest) (*v1.SuggestRecipesResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestRecipes is not implemented")
+}
+
+func (UnimplementedSuggestionServiceHandler) SuggestPlan(context.Context, *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestPlan is not implemented")
 }
 
 type suggestionServiceClient struct {
@@ -145,6 +212,14 @@ func (c *suggestionServiceClient) SuggestRecipes(ctx context.Context, req *v1.Su
 	return &res, nil
 }
 
+func (c *suggestionServiceClient) SuggestPlan(ctx context.Context, req *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error) {
+	var res v1.SuggestPlanResponse
+	if err := c.client.CallUnary(ctx, suggestionServiceSuggestPlanSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
 type suggestionServiceHandler struct{ svc SuggestionServiceHandler }
 
 func (h suggestionServiceHandler) suggestRecipes(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
@@ -153,6 +228,18 @@ func (h suggestionServiceHandler) suggestRecipes(ctx context.Context, _ connect.
 		return err
 	}
 	res, err := h.svc.SuggestRecipes(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h suggestionServiceHandler) suggestPlan(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SuggestPlanRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SuggestPlan(ctx, &req)
 	if err != nil {
 		return err
 	}

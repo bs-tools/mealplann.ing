@@ -18,6 +18,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
+  SparklesIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
@@ -309,6 +310,10 @@ const PlanPage: React.FC = () => {
                 <ChevronRightIcon className="size-5" />
               </button>
             </div>
+            <Link to="/plan/auto" className={secondaryButton}>
+              <SparklesIcon className="size-4" aria-hidden="true" />
+              Plan for me
+            </Link>
             <button
               type="button"
               className={primaryButton}

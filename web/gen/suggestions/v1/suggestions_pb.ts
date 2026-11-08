@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file suggestions/v1/suggestions.proto.
  */
 export const file_suggestions_v1_suggestions: GenFile = /*@__PURE__*/
-  fileDesc("CiBzdWdnZXN0aW9ucy92MS9zdWdnZXN0aW9ucy5wcm90bxIOc3VnZ2VzdGlvbnMudjEiOwoORWF0aW5nVGltZVNsb3QSEQoJcGVyc29uX2lkGAEgASgJEhYKDmVhdGluZ190aW1lX2lkGAIgASgJIrsBChVTdWdnZXN0UmVjaXBlc1JlcXVlc3QSDAoEZGF0ZRgBIAEoCRIoCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWxIABI1CgtlYXRpbmdfdGltZRgDIAEoCzIeLnN1Z2dlc3Rpb25zLnYxLkVhdGluZ1RpbWVTbG90SAASEgoKcGVyc29uX2lkcxgEIAMoCRIXCg9tYXhfc3VnZ2VzdGlvbnMYBSABKAVCBgoEc2xvdCJyChZTdWdnZXN0UmVjaXBlc1Jlc3BvbnNlEi8KC3N1Z2dlc3Rpb25zGAEgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIRCglzaG9wX2RhdGUYAiABKAkSFAoMcmVjaXBlX2NvdW50GAMgASgFIlkKDlNjb3JlQ29tcG9uZW50EicKBGtpbmQYASABKA4yGS5zdWdnZXN0aW9ucy52MS5TY29yZUtpbmQSDgoGcG9pbnRzGAIgASgBEg4KBnJlYXNvbhgDIAEoCSKbAQoQU3VnZ2VzdGVkUG9ydGlvbhIRCglwZXJzb25faWQYASABKAkSEwoLcGVyc29uX25hbWUYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSGAoQZWF0aW5nX3RpbWVfbmFtZRgEIAEoCRIMCgRkYXRlGAUgASgJEhAKCHNlcnZpbmdzGAYgASgBEg0KBWdyYW1zGAcgASgBIlwKCUl0ZW1Ub0J1eRIPCgdmb29kX2lkGAEgASgJEhEKCWZvb2RfbmFtZRgCIAEoCRITCgthbW91bnRfdGV4dBgDIAEoCRIWCg5hbHJlYWR5X2xpc3RlZBgEIAEoCCLEAgoKU3VnZ2VzdGlvbhIRCglyZWNpcGVfaWQYASABKAkSEwoLcmVjaXBlX25hbWUYAiABKAkSDQoFc2NvcmUYAyABKAESMgoKY29tcG9uZW50cxgEIAMoCzIeLnN1Z2dlc3Rpb25zLnYxLlNjb3JlQ29tcG9uZW50EhIKCmZpdHNfcnVsZXMYBSABKAgSIwoId2FybmluZ3MYBiADKAsyES5wbGFucy52MS5XYXJuaW5nEjIKCHBvcnRpb25zGAcgAygLMiAuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGVkUG9ydGlvbhIVCg1jb29rX3NlcnZpbmdzGAggASgBEhYKDm5ld19pdGVtX2NvdW50GAkgASgFEi8KDGl0ZW1zX3RvX2J1eRgKIAMoCzIZLnN1Z2dlc3Rpb25zLnYxLkl0ZW1Ub0J1eSqpAgoJU2NvcmVLaW5kEhoKFlNDT1JFX0tJTkRfVU5TUEVDSUZJRUQQABIhCh1TQ09SRV9LSU5EX1NIQVJFRF9JTkdSRURJRU5UUxABEh0KGVNDT1JFX0tJTkRfUEFDS19MRUZUT1ZFUlMQAhIVChFTQ09SRV9LSU5EX1BBTlRSWRADEhgKFFNDT1JFX0tJTkRfTlVUUklUSU9OEAQSFAoQU0NPUkVfS0lORF9SVUxFUxAFEhYKElNDT1JFX0tJTkRfS0VFUElORxAGEhUKEVNDT1JFX0tJTkRfRkxBVk9SEAcSFgoSU0NPUkVfS0lORF9WQVJJRVRZEAgSFwoTU0NPUkVfS0lORF9NRUFMX1RBRxAJEhcKE1NDT1JFX0tJTkRfRkFWT1JJVEUQCjJ0ChFTdWdnZXN0aW9uU2VydmljZRJfCg5TdWdnZXN0UmVjaXBlcxIlLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RSZWNpcGVzUmVxdWVzdBomLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RSZWNpcGVzUmVzcG9uc2VCzAEKEmNvbS5zdWdnZXN0aW9ucy52MUIQU3VnZ2VzdGlvbnNQcm90b1ABWktnaXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3N1Z2dlc3Rpb25zL3YxO3N1Z2dlc3Rpb25zdjGiAgNTWFiqAg5TdWdnZXN0aW9ucy5WMcoCDlN1Z2dlc3Rpb25zXFYx4gIaU3VnZ2VzdGlvbnNcVjFcR1BCTWV0YWRhdGHqAg9TdWdnZXN0aW9uczo6VjFiBnByb3RvMw", [file_people_v1_people, file_plans_v1_plans]);
+  fileDesc("CiBzdWdnZXN0aW9ucy92MS9zdWdnZXN0aW9ucy5wcm90bxIOc3VnZ2VzdGlvbnMudjEiOwoORWF0aW5nVGltZVNsb3QSEQoJcGVyc29uX2lkGAEgASgJEhYKDmVhdGluZ190aW1lX2lkGAIgASgJIrsBChVTdWdnZXN0UmVjaXBlc1JlcXVlc3QSDAoEZGF0ZRgBIAEoCRIoCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWxIABI1CgtlYXRpbmdfdGltZRgDIAEoCzIeLnN1Z2dlc3Rpb25zLnYxLkVhdGluZ1RpbWVTbG90SAASEgoKcGVyc29uX2lkcxgEIAMoCRIXCg9tYXhfc3VnZ2VzdGlvbnMYBSABKAVCBgoEc2xvdCJyChZTdWdnZXN0UmVjaXBlc1Jlc3BvbnNlEi8KC3N1Z2dlc3Rpb25zGAEgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIRCglzaG9wX2RhdGUYAiABKAkSFAoMcmVjaXBlX2NvdW50GAMgASgFIlkKDlNjb3JlQ29tcG9uZW50EicKBGtpbmQYASABKA4yGS5zdWdnZXN0aW9ucy52MS5TY29yZUtpbmQSDgoGcG9pbnRzGAIgASgBEg4KBnJlYXNvbhgDIAEoCSKbAQoQU3VnZ2VzdGVkUG9ydGlvbhIRCglwZXJzb25faWQYASABKAkSEwoLcGVyc29uX25hbWUYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSGAoQZWF0aW5nX3RpbWVfbmFtZRgEIAEoCRIMCgRkYXRlGAUgASgJEhAKCHNlcnZpbmdzGAYgASgBEg0KBWdyYW1zGAcgASgBIlwKCUl0ZW1Ub0J1eRIPCgdmb29kX2lkGAEgASgJEhEKCWZvb2RfbmFtZRgCIAEoCRITCgthbW91bnRfdGV4dBgDIAEoCRIWCg5hbHJlYWR5X2xpc3RlZBgEIAEoCCLEAgoKU3VnZ2VzdGlvbhIRCglyZWNpcGVfaWQYASABKAkSEwoLcmVjaXBlX25hbWUYAiABKAkSDQoFc2NvcmUYAyABKAESMgoKY29tcG9uZW50cxgEIAMoCzIeLnN1Z2dlc3Rpb25zLnYxLlNjb3JlQ29tcG9uZW50EhIKCmZpdHNfcnVsZXMYBSABKAgSIwoId2FybmluZ3MYBiADKAsyES5wbGFucy52MS5XYXJuaW5nEjIKCHBvcnRpb25zGAcgAygLMiAuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGVkUG9ydGlvbhIVCg1jb29rX3NlcnZpbmdzGAggASgBEhYKDm5ld19pdGVtX2NvdW50GAkgASgFEi8KDGl0ZW1zX3RvX2J1eRgKIAMoCzIZLnN1Z2dlc3Rpb25zLnYxLkl0ZW1Ub0J1eSK2AgoMUGxhbkNyaXRlcmlhEikKB3ZhcmlldHkYASABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIrCglmYXZvcml0ZXMYAiABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIoCgZwYW50cnkYAyABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIqCghzaG9wcGluZxgEIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEisKCW51dHJpdGlvbhgFIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEhkKEW1heF90b3RhbF9zZWNvbmRzGAYgASgFEhQKDGV4Y2x1ZGVfdGFncxgHIAMoCRIaChJleGNsdWRlX3JlY2lwZV9pZHMYCCADKAkiVQoKUGxhbkNob2ljZRIMCgRkYXRlGAEgASgJEiYKBG1lYWwYAiABKA4yGC5wZW9wbGUudjEuSG91c2Vob2xkTWVhbBIRCglyZWNpcGVfaWQYAyABKAkiygEKElN1Z2dlc3RQbGFuUmVxdWVzdBISCgpzdGFydF9kYXRlGAEgASgJEgwKBGRheXMYAiABKAUSJwoFbWVhbHMYAyADKA4yGC5wZW9wbGUudjEuSG91c2Vob2xkTWVhbBIuCghjcml0ZXJpYRgEIAEoCzIcLnN1Z2dlc3Rpb25zLnYxLlBsYW5Dcml0ZXJpYRIrCgdjaG9pY2VzGAUgAygLMhouc3VnZ2VzdGlvbnMudjEuUGxhbkNob2ljZRIMCgRzZWVkGAYgASgEIowCCghQbGFuU2xvdBIMCgRkYXRlGAEgASgJEiYKBG1lYWwYAiABKA4yGC5wZW9wbGUudjEuSG91c2Vob2xkTWVhbBIsCgVzdGF0ZRgDIAEoDjIdLnN1Z2dlc3Rpb25zLnYxLlBsYW5TbG90U3RhdGUSLgoKc3VnZ2VzdGlvbhgEIAEoCzIaLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3Rpb24SMAoMYWx0ZXJuYXRpdmVzGAUgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIcChRwbGFubmVkX3JlY2lwZV9uYW1lcxgGIAMoCRIcChRmaXR0aW5nX3JlY2lwZV9jb3VudBgHIAEoBSKGAQoTU3VnZ2VzdFBsYW5SZXNwb25zZRInCgVzbG90cxgBIAMoCzIYLnN1Z2dlc3Rpb25zLnYxLlBsYW5TbG90Eg0KBXNjb3JlGAIgASgBEhMKC3BsYW5zX3RyaWVkGAMgASgFEgwKBHNlZWQYBCABKAQSFAoMcmVjaXBlX2NvdW50GAUgASgFKqkCCglTY29yZUtpbmQSGgoWU0NPUkVfS0lORF9VTlNQRUNJRklFRBAAEiEKHVNDT1JFX0tJTkRfU0hBUkVEX0lOR1JFRElFTlRTEAESHQoZU0NPUkVfS0lORF9QQUNLX0xFRlRPVkVSUxACEhUKEVNDT1JFX0tJTkRfUEFOVFJZEAMSGAoUU0NPUkVfS0lORF9OVVRSSVRJT04QBBIUChBTQ09SRV9LSU5EX1JVTEVTEAUSFgoSU0NPUkVfS0lORF9LRUVQSU5HEAYSFQoRU0NPUkVfS0lORF9GTEFWT1IQBxIWChJTQ09SRV9LSU5EX1ZBUklFVFkQCBIXChNTQ09SRV9LSU5EX01FQUxfVEFHEAkSFwoTU0NPUkVfS0lORF9GQVZPUklURRAKKnAKCEVtcGhhc2lzEhgKFEVNUEhBU0lTX1VOU1BFQ0lGSUVEEAASEAoMRU1QSEFTSVNfT0ZGEAESEAoMRU1QSEFTSVNfTE9XEAISEwoPRU1QSEFTSVNfTk9STUFMEAMSEQoNRU1QSEFTSVNfSElHSBAEKsEBCg1QbGFuU2xvdFN0YXRlEh8KG1BMQU5fU0xPVF9TVEFURV9VTlNQRUNJRklFRBAAEh0KGVBMQU5fU0xPVF9TVEFURV9TVUdHRVNURUQQARIYChRQTEFOX1NMT1RfU1RBVEVfS0VQVBACEhsKF1BMQU5fU0xPVF9TVEFURV9TS0lQUEVEEAMSGwoXUExBTl9TTE9UX1NUQVRFX1BMQU5ORUQQBBIcChhQTEFOX1NMT1RfU1RBVEVfVU5GSUxMRUQQBTLMAQoRU3VnZ2VzdGlvblNlcnZpY2USXwoOU3VnZ2VzdFJlY2lwZXMSJS5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1JlcXVlc3QaJi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1Jlc3BvbnNlElYKC1N1Z2dlc3RQbGFuEiIuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXF1ZXN0GiMuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXNwb25zZULMAQoSY29tLnN1Z2dlc3Rpb25zLnYxQhBTdWdnZXN0aW9uc1Byb3RvUAFaS2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vc3VnZ2VzdGlvbnMvdjE7c3VnZ2VzdGlvbnN2MaICA1NYWKoCDlN1Z2dlc3Rpb25zLlYxygIOU3VnZ2VzdGlvbnNcVjHiAhpTdWdnZXN0aW9uc1xWMVxHUEJNZXRhZGF0YeoCD1N1Z2dlc3Rpb25zOjpWMWIGcHJvdG8z", [file_people_v1_people, file_plans_v1_plans]);
 
 /**
  * An eating time of one person, to suggest a recipe for, like a small
@@ -375,6 +375,292 @@ export const SuggestionSchema: GenMessage<Suggestion> = /*@__PURE__*/
   messageDesc(file_suggestions_v1_suggestions, 6);
 
 /**
+ * What the user wants of a suggested plan. Someone's rules always count
+ * fully, as they come from their care team.
+ *
+ * @generated from message suggestions.v1.PlanCriteria
+ */
+export type PlanCriteria = Message<"suggestions.v1.PlanCriteria"> & {
+  /**
+   * How much to avoid repeating recipes on nearby days (VARIETY).
+   *
+   * @generated from field: suggestions.v1.Emphasis variety = 1;
+   */
+  variety: Emphasis;
+
+  /**
+   * How much to prefer the household's favorites (FAVORITE).
+   *
+   * @generated from field: suggestions.v1.Emphasis favorites = 2;
+   */
+  favorites: Emphasis;
+
+  /**
+   * How much to use up the pantry and the rest of packs (PANTRY and
+   * PACK_LEFTOVERS).
+   *
+   * @generated from field: suggestions.v1.Emphasis pantry = 3;
+   */
+  pantry: Emphasis;
+
+  /**
+   * How much to keep the shop short, with ingredients shared between
+   * meals and fresh food that keeps until it's cooked
+   * (SHARED_INGREDIENTS and KEEPING).
+   *
+   * @generated from field: suggestions.v1.Emphasis shopping = 4;
+   */
+  shopping: Emphasis;
+
+  /**
+   * How much to meet everyone's daily nutrient targets (NUTRITION).
+   *
+   * @generated from field: suggestions.v1.Emphasis nutrition = 5;
+   */
+  nutrition: Emphasis;
+
+  /**
+   * Only plan recipes whose preparation and cooking take at most this
+   * long in all, in seconds. 0 for any time. Recipes of unknown times
+   * count as quick enough.
+   *
+   * @generated from field: int32 max_total_seconds = 6;
+   */
+  maxTotalSeconds: number;
+
+  /**
+   * Don't plan recipes with any of these tags, e.g. "slow-cooker".
+   *
+   * @generated from field: repeated string exclude_tags = 7;
+   */
+  excludeTags: string[];
+
+  /**
+   * Don't plan these recipes, e.g. ones the user doesn't want this week.
+   *
+   * @generated from field: repeated string exclude_recipe_ids = 8;
+   */
+  excludeRecipeIds: string[];
+};
+
+/**
+ * Describes the message suggestions.v1.PlanCriteria.
+ * Use `create(PlanCriteriaSchema)` to create a new message.
+ */
+export const PlanCriteriaSchema: GenMessage<PlanCriteria> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 7);
+
+/**
+ * The user's choice for a slot of a suggested plan.
+ *
+ * @generated from message suggestions.v1.PlanChoice
+ */
+export type PlanChoice = Message<"suggestions.v1.PlanChoice"> & {
+  /**
+   * The date of the slot (YYYY-MM-DD). Required.
+   *
+   * @generated from field: string date = 1;
+   */
+  date: string;
+
+  /**
+   * The shared meal of the slot. Required.
+   *
+   * @generated from field: people.v1.HouseholdMeal meal = 2;
+   */
+  meal: HouseholdMeal;
+
+  /**
+   * The ID of the recipe to keep at the slot, whatever the criteria, or
+   * empty to leave the slot empty.
+   *
+   * @generated from field: string recipe_id = 3;
+   */
+  recipeId: string;
+};
+
+/**
+ * Describes the message suggestions.v1.PlanChoice.
+ * Use `create(PlanChoiceSchema)` to create a new message.
+ */
+export const PlanChoiceSchema: GenMessage<PlanChoice> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 8);
+
+/**
+ * @generated from message suggestions.v1.SuggestPlanRequest
+ */
+export type SuggestPlanRequest = Message<"suggestions.v1.SuggestPlanRequest"> & {
+  /**
+   * The first date to plan (YYYY-MM-DD). Required.
+   *
+   * @generated from field: string start_date = 1;
+   */
+  startDate: string;
+
+  /**
+   * How many days to plan, from 1 to 14.
+   *
+   * @generated from field: int32 days = 2;
+   */
+  days: number;
+
+  /**
+   * The shared meals to plan each day. Empty for every meal someone eats
+   * from.
+   *
+   * @generated from field: repeated people.v1.HouseholdMeal meals = 3;
+   */
+  meals: HouseholdMeal[];
+
+  /**
+   * What the user wants of the plan.
+   *
+   * @generated from field: suggestions.v1.PlanCriteria criteria = 4;
+   */
+  criteria?: PlanCriteria | undefined;
+
+  /**
+   * The slots the user chose a recipe for, or to leave empty. At most one
+   * per slot.
+   *
+   * @generated from field: repeated suggestions.v1.PlanChoice choices = 5;
+   */
+  choices: PlanChoice[];
+
+  /**
+   * The seed of the search's random draws: the same request with the same
+   * seed suggests the same plan, if the household's data hasn't changed.
+   * 0 for a new one, which the response returns.
+   *
+   * @generated from field: uint64 seed = 6;
+   */
+  seed: bigint;
+};
+
+/**
+ * Describes the message suggestions.v1.SuggestPlanRequest.
+ * Use `create(SuggestPlanRequestSchema)` to create a new message.
+ */
+export const SuggestPlanRequestSchema: GenMessage<SuggestPlanRequest> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 9);
+
+/**
+ * A slot of a suggested plan: a shared meal on a date.
+ *
+ * @generated from message suggestions.v1.PlanSlot
+ */
+export type PlanSlot = Message<"suggestions.v1.PlanSlot"> & {
+  /**
+   * The date (YYYY-MM-DD).
+   *
+   * @generated from field: string date = 1;
+   */
+  date: string;
+
+  /**
+   * The shared meal.
+   *
+   * @generated from field: people.v1.HouseholdMeal meal = 2;
+   */
+  meal: HouseholdMeal;
+
+  /**
+   * What it holds.
+   *
+   * @generated from field: suggestions.v1.PlanSlotState state = 3;
+   */
+  state: PlanSlotState;
+
+  /**
+   * The recipe suggested or kept, scored against the rest of the plan,
+   * for SUGGESTED and KEPT.
+   *
+   * @generated from field: suggestions.v1.Suggestion suggestion = 4;
+   */
+  suggestion?: Suggestion | undefined;
+
+  /**
+   * The next best recipes for the slot, given the rest of the plan, best
+   * first, for SUGGESTED.
+   *
+   * @generated from field: repeated suggestions.v1.Suggestion alternatives = 5;
+   */
+  alternatives: Suggestion[];
+
+  /**
+   * The recipes of the cooks already planned at the slot, for PLANNED.
+   *
+   * @generated from field: repeated string planned_recipe_names = 6;
+   */
+  plannedRecipeNames: string[];
+
+  /**
+   * How many of the recipes meeting the criteria break nobody's rules at
+   * the slot, given the rest of the plan, for SUGGESTED and KEPT. If it's
+   * fewer than the days planned, the plan repeats them, or breaks a rule:
+   * suggest adding recipes that fit, or checking that the rules are the
+   * care team's.
+   *
+   * @generated from field: int32 fitting_recipe_count = 7;
+   */
+  fittingRecipeCount: number;
+};
+
+/**
+ * Describes the message suggestions.v1.PlanSlot.
+ * Use `create(PlanSlotSchema)` to create a new message.
+ */
+export const PlanSlotSchema: GenMessage<PlanSlot> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 10);
+
+/**
+ * @generated from message suggestions.v1.SuggestPlanResponse
+ */
+export type SuggestPlanResponse = Message<"suggestions.v1.SuggestPlanResponse"> & {
+  /**
+   * Every slot of the days and meals, by date and meal.
+   *
+   * @generated from field: repeated suggestions.v1.PlanSlot slots = 1;
+   */
+  slots: PlanSlot[];
+
+  /**
+   * The plan's score: the sum of its slots'.
+   *
+   * @generated from field: double score = 2;
+   */
+  score: number;
+
+  /**
+   * How many plans the search tried.
+   *
+   * @generated from field: int32 plans_tried = 3;
+   */
+  plansTried: number;
+
+  /**
+   * The seed of the search, to suggest the same plan again.
+   *
+   * @generated from field: uint64 seed = 4;
+   */
+  seed: bigint;
+
+  /**
+   * How many recipes meet the criteria.
+   *
+   * @generated from field: int32 recipe_count = 5;
+   */
+  recipeCount: number;
+};
+
+/**
+ * Describes the message suggestions.v1.SuggestPlanResponse.
+ * Use `create(SuggestPlanResponseSchema)` to create a new message.
+ */
+export const SuggestPlanResponseSchema: GenMessage<SuggestPlanResponse> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 11);
+
+/**
  * ScoreKind is what a component of a suggestion's score is about.
  *
  * @generated from enum suggestions.v1.ScoreKind
@@ -465,6 +751,107 @@ export const ScoreKindSchema: GenEnum<ScoreKind> = /*@__PURE__*/
   enumDesc(file_suggestions_v1_suggestions, 0);
 
 /**
+ * Emphasis is how much a criterion of a plan counts.
+ *
+ * @generated from enum suggestions.v1.Emphasis
+ */
+export enum Emphasis {
+  /**
+   * Normal.
+   *
+   * @generated from enum value: EMPHASIS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Not at all: its score components are left out.
+   *
+   * @generated from enum value: EMPHASIS_OFF = 1;
+   */
+  OFF = 1,
+
+  /**
+   * Half as much as normal.
+   *
+   * @generated from enum value: EMPHASIS_LOW = 2;
+   */
+  LOW = 2,
+
+  /**
+   * As SuggestRecipes counts it.
+   *
+   * @generated from enum value: EMPHASIS_NORMAL = 3;
+   */
+  NORMAL = 3,
+
+  /**
+   * Twice as much as normal.
+   *
+   * @generated from enum value: EMPHASIS_HIGH = 4;
+   */
+  HIGH = 4,
+}
+
+/**
+ * Describes the enum suggestions.v1.Emphasis.
+ */
+export const EmphasisSchema: GenEnum<Emphasis> = /*@__PURE__*/
+  enumDesc(file_suggestions_v1_suggestions, 1);
+
+/**
+ * PlanSlotState is what a slot of a suggested plan holds.
+ *
+ * @generated from enum suggestions.v1.PlanSlotState
+ */
+export enum PlanSlotState {
+  /**
+   * @generated from enum value: PLAN_SLOT_STATE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * A suggested recipe.
+   *
+   * @generated from enum value: PLAN_SLOT_STATE_SUGGESTED = 1;
+   */
+  SUGGESTED = 1,
+
+  /**
+   * The recipe the user chose to keep.
+   *
+   * @generated from enum value: PLAN_SLOT_STATE_KEPT = 2;
+   */
+  KEPT = 2,
+
+  /**
+   * Nothing, as the user chose to leave it empty.
+   *
+   * @generated from enum value: PLAN_SLOT_STATE_SKIPPED = 3;
+   */
+  SKIPPED = 3,
+
+  /**
+   * Nothing new, as it's planned already: see planned_recipe_names.
+   *
+   * @generated from enum value: PLAN_SLOT_STATE_PLANNED = 4;
+   */
+  PLANNED = 4,
+
+  /**
+   * Nothing, as no recipe could be suggested.
+   *
+   * @generated from enum value: PLAN_SLOT_STATE_UNFILLED = 5;
+   */
+  UNFILLED = 5,
+}
+
+/**
+ * Describes the enum suggestions.v1.PlanSlotState.
+ */
+export const PlanSlotStateSchema: GenEnum<PlanSlotState> = /*@__PURE__*/
+  enumDesc(file_suggestions_v1_suggestions, 2);
+
+/**
  * SuggestionService suggests which of the household's recipes (see
  * RecipeService) to cook for an open slot of the plan (see PlanService):
  * a shared meal on a date, or one person's eating time, like a small meal.
@@ -540,6 +927,40 @@ export const SuggestionService: GenService<{
     methodKind: "unary";
     input: typeof SuggestRecipesRequestSchema;
     output: typeof SuggestRecipesResponseSchema;
+  },
+  /**
+   * Suggest a whole plan of shared meals for the next days at once: a
+   * recipe for each open breakfast, lunch or dinner, chosen together so
+   * the days share ingredients and packs, use the pantry, vary, and meet
+   * everyone's rules and targets. It's the fastest way to plan a week:
+   *
+   * 1. Call SuggestPlan with the first date, the number of days and the
+   *    meals, and criteria from what the user wants, like more variety,
+   *    their favorites, or quick recipes only.
+   * 2. Show the user the plan. Each slot has its suggestion, with the
+   *    reasons, and alternatives.
+   * 3. To change it, call SuggestPlan again with choices: the slots to
+   *    keep, with their recipe (e.g. an alternative the user picked), and
+   *    those to leave empty. The other slots are planned again around
+   *    them, with a new seed for something different, or the same seed
+   *    for the same plan.
+   * 4. Save it with PlanService.PlanMeals, with the recipe of each slot.
+   *
+   * The search is probabilistic: it tries many plans for about two
+   * seconds, picking each slot's recipe among the best for it given the
+   * slots planned before, keeps the best plan, and then improves each slot
+   * given all the others. Slots that already have a cook of their meal
+   * aren't planned again. A slot only gets a recipe that breaks someone's
+   * rules if every recipe does. Nothing is changed. Fails with
+   * INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
+   * nobody eats from the meals, or no recipe meets the criteria.
+   *
+   * @generated from rpc suggestions.v1.SuggestionService.SuggestPlan
+   */
+  suggestPlan: {
+    methodKind: "unary";
+    input: typeof SuggestPlanRequestSchema;
+    output: typeof SuggestPlanResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_suggestions_v1_suggestions, 0);

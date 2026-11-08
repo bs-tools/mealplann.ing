@@ -80,7 +80,7 @@ func (s *Service) SuggestRecipes(ctx context.Context, req *suggestionsv1.Suggest
 			"set meal, for a shared meal, or eating_time, for one person's eating time")
 	}
 
-	d, lists, lots, err := s.loadSuggestionData(ctx, user.HouseholdID(), date)
+	d, lists, lots, err := s.loadSuggestionData(ctx, user.HouseholdID(), date, date)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to read plan", "")
 	}
@@ -153,19 +153,21 @@ func (s *Service) SuggestRecipes(ctx context.Context, req *suggestionsv1.Suggest
 	}.Build(), nil
 }
 
-// loadSuggestionData reads what suggesting recipes for a date needs: the
-// plan from suggest.VarietyDays before the date to the end of its week, and
+// loadSuggestionData reads what suggesting recipes for the dates from
+// first to last needs: the plan from suggest.VarietyDays before the first
+// date, or the start of its week, to the end of the last date's week, and
 // the next day, with the people, all the household's recipes, and the
 // foods they use; and the shopping lists and the pantry. It reads the
 // plan, people, recipes, shopping lists and pantry together, and then the
 // foods: two round trips.
-func (s *Service) loadSuggestionData(ctx context.Context, householdID pgtype.UUID, date time.Time) (*planData, []*shopping.List, []*pantry.Item, error) {
-	monday := date.AddDate(0, 0, -int(date.Weekday()+6)%7)
-	from, to := monday, monday.AddDate(0, 0, 6)
-	if earliest := date.AddDate(0, 0, -suggest.VarietyDays); earliest.Before(from) {
+func (s *Service) loadSuggestionData(ctx context.Context, householdID pgtype.UUID, first, last time.Time) (*planData, []*shopping.List, []*pantry.Item, error) {
+	from := first.AddDate(0, 0, -int(first.Weekday()+6)%7)
+	lastMonday := last.AddDate(0, 0, -int(last.Weekday()+6)%7)
+	to := lastMonday.AddDate(0, 0, 6)
+	if earliest := first.AddDate(0, 0, -suggest.VarietyDays); earliest.Before(from) {
 		from = earliest
 	}
-	if next := date.AddDate(0, 0, 1); next.After(to) {
+	if next := last.AddDate(0, 0, 1); next.After(to) {
 		to = next
 	}
 	d := &planData{}

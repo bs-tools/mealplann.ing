@@ -51,6 +51,13 @@ service PlanService {
   // of the eating times and cook it touched. Fails with
   // FAILED_PRECONDITION if nobody eats from the meal.
   rpc PlanMeal(PlanMealRequest) returns (PlanMealResponse);
+  // Plan several shared meals at once, like PlanMeal for each, in order of
+  // date and meal, so each splits its portions given those before it. Use
+  // it to save a plan from SuggestionService.SuggestPlan. Nothing is
+  // planned if any meal fails. Fails with INVALID_ARGUMENT if two meals
+  // are at the same date and meal, and FAILED_PRECONDITION if nobody eats
+  // from a meal.
+  rpc PlanMeals(PlanMealsRequest) returns (PlanMealsResponse);
   // Create a cook: a recipe made on a date. Plan who eats it with
   // CreatePortion, or use PlanMeal to do both. A cook created done takes
   // its ingredients out of the pantry, like UpdateCook.
@@ -433,6 +440,30 @@ message PlanMealResponse {
   double unassigned_servings = 3;
   // The warnings of the eating times the portions are at, and of the cook.
   repeated Warning warnings = 4;
+}
+
+// A shared meal to plan with PlanMeals.
+message MealToPlan {
+  // The ID of the household's recipe to cook. Required.
+  string recipe_id = 1;
+  // The date (YYYY-MM-DD). Required.
+  string date = 2;
+  // The shared meal. Required.
+  people.v1.HouseholdMeal meal = 3;
+}
+
+message PlanMealsRequest {
+  // The meals to plan, from 1 to 60, at most one per date and meal. Each
+  // is cooked for everyone who eats from it, with the servings planned
+  // for them.
+  repeated MealToPlan meals = 1;
+}
+
+message PlanMealsResponse {
+  // The created cooks, by date and meal.
+  repeated Cook cooks = 1;
+  // How many portions were created for people.
+  int32 portion_count = 2;
 }
 
 message CreateCookRequest {
