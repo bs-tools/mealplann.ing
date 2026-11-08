@@ -86,6 +86,34 @@ func (q *Queries) CreateCookPortions(ctx context.Context, arg *CreateCookPortion
 	return result.RowsAffected(), nil
 }
 
+const createCookSupplies = `-- name: CreateCookSupplies :exec
+insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id)
+select
+  $1,
+  ($2::uuid[])[i],
+  ($3::uuid[])[i],
+  ($4::uuid[])[i]
+from generate_subscripts($2::uuid[], 1) as i
+`
+
+type CreateCookSuppliesParams struct {
+	HouseholdID        pgtype.UUID
+	ConsumerCookIds    []pgtype.UUID
+	ComponentRecipeIds []pgtype.UUID
+	SupplierCookIds    []pgtype.UUID
+}
+
+// Links cooks to the cooks supplying their components, given as arrays.
+func (q *Queries) CreateCookSupplies(ctx context.Context, arg *CreateCookSuppliesParams) error {
+	_, err := q.db.Exec(ctx, createCookSupplies,
+		arg.HouseholdID,
+		arg.ConsumerCookIds,
+		arg.ComponentRecipeIds,
+		arg.SupplierCookIds,
+	)
+	return err
+}
+
 const createPortion = `-- name: CreatePortion :execrows
 insert into portions (
   id, household_id, person_id, eating_time_id, date, cook_id, servings, food_id, amount, unit, notes
@@ -191,6 +219,31 @@ func (q *Queries) DeleteCook(ctx context.Context, arg *DeleteCookParams) (int64,
 	return result.RowsAffected(), nil
 }
 
+const deleteOrphanSuppliers = `-- name: DeleteOrphanSuppliers :exec
+delete from cooks
+where cooks.household_id = $1
+  and cooks.id in (select cs.supplier_cook_id from cook_supplies cs where cs.consumer_cook_id = $2)
+  and not cooks.done
+  and not exists (select 1 from portions p where p.cook_id = cooks.id)
+  and not exists (
+    select 1 from cook_supplies s
+    where s.supplier_cook_id = cooks.id and s.consumer_cook_id <> $2
+  )
+`
+
+type DeleteOrphanSuppliersParams struct {
+	HouseholdID    pgtype.UUID
+	ConsumerCookID pgtype.UUID
+}
+
+// Deletes the cooks that only supply a cook, and are neither eaten nor
+// cooked yet, as they were planned for it: e.g. the chickpeas of a chili
+// deleted.
+func (q *Queries) DeleteOrphanSuppliers(ctx context.Context, arg *DeleteOrphanSuppliersParams) error {
+	_, err := q.db.Exec(ctx, deleteOrphanSuppliers, arg.HouseholdID, arg.ConsumerCookID)
+	return err
+}
+
 const deletePortion = `-- name: DeletePortion :execrows
 delete from portions where id = $1 and household_id = $2
 `
@@ -225,6 +278,113 @@ func (q *Queries) DeleteStaple(ctx context.Context, arg *DeleteStapleParams) (in
 	return result.RowsAffected(), nil
 }
 
+const deleteUnusedCook = `-- name: DeleteUnusedCook :execrows
+delete from cooks
+where cooks.household_id = $1
+  and cooks.id = $2
+  and not cooks.done
+  and not exists (select 1 from portions p where p.cook_id = cooks.id)
+  and not exists (select 1 from cook_supplies s where s.supplier_cook_id = cooks.id)
+`
+
+type DeleteUnusedCookParams struct {
+	HouseholdID pgtype.UUID
+	ID          pgtype.UUID
+}
+
+// Deletes a cook nobody eats, that supplies no other cook and isn't cooked
+// yet: a supplier replaced by another.
+func (q *Queries) DeleteUnusedCook(ctx context.Context, arg *DeleteUnusedCookParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteUnusedCook, arg.HouseholdID, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const listCookSupplies = `-- name: ListCookSupplies :many
+select
+  s.consumer_cook_id,
+  s.component_recipe_id,
+  s.supplier_cook_id,
+  cc.date as consumer_date,
+  cr.name as consumer_recipe_name,
+  sc.date as supplier_date,
+  sr.name as supplier_recipe_name,
+  (coalesce((
+    select sum(ri.amount) from recipe_ingredients ri
+    where ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+  ), 0) * cc.servings / cr.servings)::double precision as servings
+from cook_supplies s
+join cooks cc on cc.id = s.consumer_cook_id
+join recipes cr on cr.id = cc.recipe_id
+join cooks sc on sc.id = s.supplier_cook_id
+join recipes sr on sr.id = sc.recipe_id
+where s.household_id = $1
+  and (
+    s.consumer_cook_id = any($2::uuid[])
+    or s.supplier_cook_id = any($2::uuid[])
+    or cc.date between $3::date and $4::date
+    or sc.date between $3::date and $4::date
+  )
+order by cc.date, s.consumer_cook_id, s.component_recipe_id
+`
+
+type ListCookSuppliesParams struct {
+	HouseholdID pgtype.UUID
+	Ids         []pgtype.UUID
+	FromDate    pgtype.Date
+	ToDate      pgtype.Date
+}
+
+type ListCookSuppliesRow struct {
+	ConsumerCookID     pgtype.UUID
+	ComponentRecipeID  pgtype.UUID
+	SupplierCookID     pgtype.UUID
+	ConsumerDate       pgtype.Date
+	ConsumerRecipeName string
+	SupplierDate       pgtype.Date
+	SupplierRecipeName string
+	Servings           float64
+}
+
+// The links between the household's cooks of which either is given by ID
+// or cooked in a range of dates, with both cooks' dates and recipes, and
+// the servings the supplier makes for the consumer.
+func (q *Queries) ListCookSupplies(ctx context.Context, arg *ListCookSuppliesParams) ([]*ListCookSuppliesRow, error) {
+	rows, err := q.db.Query(ctx, listCookSupplies,
+		arg.HouseholdID,
+		arg.Ids,
+		arg.FromDate,
+		arg.ToDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListCookSuppliesRow
+	for rows.Next() {
+		var i ListCookSuppliesRow
+		if err := rows.Scan(
+			&i.ConsumerCookID,
+			&i.ComponentRecipeID,
+			&i.SupplierCookID,
+			&i.ConsumerDate,
+			&i.ConsumerRecipeName,
+			&i.SupplierDate,
+			&i.SupplierRecipeName,
+			&i.Servings,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCooks = `-- name: ListCooks :many
 select
   cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings,
@@ -233,7 +393,15 @@ select
   coalesce((
     select sum(p.servings) from portions p
     where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
-  ), 0)::double precision as late_servings
+  ), 0)::double precision as late_servings,
+  coalesce((
+    select sum(ri.amount * cc.servings / cr.servings)
+    from cook_supplies s
+    join cooks cc on cc.id = s.consumer_cook_id
+    join recipes cr on cr.id = cc.recipe_id
+    join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+    where s.supplier_cook_id = cooks.id
+  ), 0)::double precision as supplied_servings
 from cooks
 join recipes r on r.id = cooks.recipe_id
 where cooks.household_id = $1
@@ -256,6 +424,7 @@ type ListCooksRow struct {
 	RecipeName       string
 	AssignedServings float64
 	LateServings     float64
+	SuppliedServings float64
 }
 
 // The household's cooks, given by ID or cooked in a range of dates, with
@@ -291,6 +460,7 @@ func (q *Queries) ListCooks(ctx context.Context, arg *ListCooksParams) ([]*ListC
 			&i.RecipeName,
 			&i.AssignedServings,
 			&i.LateServings,
+			&i.SuppliedServings,
 		); err != nil {
 			return nil, err
 		}
@@ -562,6 +732,33 @@ func (q *Queries) ListStaples(ctx context.Context, arg *ListStaplesParams) ([]*L
 		return nil, err
 	}
 	return items, nil
+}
+
+const setCookSupply = `-- name: SetCookSupply :execrows
+insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id)
+values ($1, $2, $3, $4)
+on conflict (consumer_cook_id, component_recipe_id) do update set supplier_cook_id = excluded.supplier_cook_id
+`
+
+type SetCookSupplyParams struct {
+	HouseholdID       pgtype.UUID
+	ConsumerCookID    pgtype.UUID
+	ComponentRecipeID pgtype.UUID
+	SupplierCookID    pgtype.UUID
+}
+
+// Sets the cook supplying a component of a cook.
+func (q *Queries) SetCookSupply(ctx context.Context, arg *SetCookSupplyParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setCookSupply,
+		arg.HouseholdID,
+		arg.ConsumerCookID,
+		arg.ComponentRecipeID,
+		arg.SupplierCookID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const skipStaple = `-- name: SkipStaple :exec

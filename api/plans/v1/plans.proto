@@ -70,9 +70,18 @@ service PlanService {
   // was taken out. Changing a done cook's recipe or servings doesn't change
   // the pantry: un-mark it first, then mark it done again.
   rpc UpdateCook(UpdateCookRequest) returns (UpdateCookResponse);
-  // Delete a cook. Its portions are deleted too. The pantry doesn't change,
-  // even if it was done.
+  // Delete a cook. Its portions are deleted too, and the cooks planned only
+  // to supply its components, if nobody eats them and they aren't done.
+  // The pantry doesn't change, even if it was done.
   rpc DeleteCook(DeleteCookRequest) returns (DeleteCookResponse);
+  // Set which cook supplies a component of a cook (see Cook.supplies), e.g.
+  // to make one pot of chickpeas on Monday for Tuesday's chili and
+  // Thursday's curry. The supplier must be a cook of the component's
+  // recipe. The cook that supplied it before is deleted if nothing uses
+  // it any more: nobody eats it, it supplies no other cook, and it isn't
+  // done. The supplier's servings are raised to make enough for the cook
+  // too, if they'd be too few.
+  rpc SetCookSupplier(SetCookSupplierRequest) returns (SetCookSupplierResponse);
   // Create a portion: what a person eats at one of their eating times on a
   // date, either a share of a cook or an amount of a food.
   rpc CreatePortion(CreatePortionRequest) returns (CreatePortionResponse);
@@ -138,6 +147,36 @@ message Cook {
   // and those not planned yet are in the freezer (see
   // ListFrozenLeftovers), to plan later. 0 if none.
   double frozen_servings = 11;
+  // The cooks making its recipe's components, e.g. the pot of chickpeas
+  // for a chili. Creating a cook of a recipe with components also creates
+  // a cook of each, on the same date, for the servings it needs, unless
+  // the components are made in it: change the supplier with
+  // SetCookSupplier.
+  repeated CookSupply supplies = 12 [(mcp.v1.field).output_only = true];
+  // The cooks it makes a component of.
+  repeated CookSupply supplying = 13 [(mcp.v1.field).output_only = true];
+}
+
+// A cook making a component of another cook: e.g. a pot of chickpeas for
+// a chili.
+message CookSupply {
+  // The ID of the cook using the component.
+  string consumer_cook_id = 1;
+  // The name of its recipe.
+  string consumer_recipe_name = 2;
+  // Its date (YYYY-MM-DD).
+  string consumer_date = 3;
+  // The ID of the component's recipe.
+  string component_recipe_id = 4;
+  // The ID of the cook making the component.
+  string supplier_cook_id = 5;
+  // The name of its recipe.
+  string supplier_recipe_name = 6;
+  // Its date (YYYY-MM-DD).
+  string supplier_date = 7;
+  // The servings of the component the consumer uses, from its servings
+  // and its recipe's amount of the component.
+  double servings = 8;
 }
 
 // A share of a cook, in servings.
@@ -288,6 +327,8 @@ enum WarningKind {
   WARNING_KIND_LEFTOVER_THAW = 15;
   // A leftover from the freezer is eaten after it stops keeping frozen.
   WARNING_KIND_LEFTOVER_PAST_FREEZER_DAYS = 16;
+  // A cook's component is cooked after it, by the cook supplying it.
+  WARNING_KIND_COMPONENT_AFTER_COOK = 18;
   // More of a cook's servings are planned after they stop keeping in the
   // fridge than are frozen: freeze more, or eat them sooner.
   WARNING_KIND_FROZEN_SERVINGS_SHORT = 17;
@@ -353,6 +394,26 @@ message PlanDay {
   string date = 1;
   // Each person's day, ordered by name.
   repeated PersonDay people = 2;
+  // What to start on the day for cooks on later days, like soaking beans
+  // the night before.
+  repeated PrepTask prep_tasks = 3;
+}
+
+// Something to start ahead of a cook: its recipe's prep_ahead_note,
+// prep_ahead_days before it.
+message PrepTask {
+  // The ID of the cook.
+  string cook_id = 1;
+  // The name of its recipe.
+  string recipe_name = 2;
+  // The date of the cook (YYYY-MM-DD).
+  string cook_date = 3;
+  // What to do, e.g. "Soak the chickpeas". The recipe's prep_ahead_note,
+  // or "Start <recipe>" if it has none.
+  string note = 4;
+  // The recipes of the cooks it makes a component of, e.g. "Chili", by
+  // date.
+  repeated string for_recipe_names = 5;
 }
 
 // A person's day of the plan.
@@ -428,7 +489,8 @@ message PlannedPortion {
 message PlannedCook {
   // The cook.
   Cook cook = 1;
-  // The servings planned for people, in all its portions, of any week.
+  // The servings planned for people, in all its portions, of any week, and
+  // for the cooks it supplies.
   double assigned_servings = 2;
   // The warnings about its servings.
   repeated Warning warnings = 3;
@@ -660,4 +722,20 @@ message FrozenLeftover {
   // day after the recipe's fridge days. Empty if the recipe's fridge days
   // are unknown.
   string frozen_from = 6;
+}
+
+message SetCookSupplierRequest {
+  // The ID of the cook using the component. Required.
+  string cook_id = 1;
+  // The ID of the component's recipe, one of the cook's recipe's
+  // components. Required.
+  string component_recipe_id = 2;
+  // The ID of the cook to supply it, a cook of the component's recipe.
+  // Required.
+  string supplier_cook_id = 3;
+}
+
+message SetCookSupplierResponse {
+  // The cook using the component, with its supplies.
+  Cook cook = 1;
 }

@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file recipes/v1/recipes.proto.
  */
 export const file_recipes_v1_recipes: GenFile = /*@__PURE__*/
-  fileDesc("ChhyZWNpcGVzL3YxL3JlY2lwZXMucHJvdG8SCnJlY2lwZXMudjEihwQKBlJlY2lwZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhAKCHNlcnZpbmdzGAQgASgFEhQKDHByZXBfc2Vjb25kcxgFIAEoBRIUCgxjb29rX3NlY29uZHMYBiABKAUSKwoLaW5ncmVkaWVudHMYByADKAsyFi5yZWNpcGVzLnYxLkluZ3JlZGllbnQSDQoFc3RlcHMYCCADKAkSDAoEdGFncxgJIAMoCRISCgpzb3VyY2VfdXJsGAogASgJEhgKC2ZyaWRnZV9kYXlzGAsgASgFSACIAQESEQoJZnJlZXphYmxlGAwgASgIEg0KBW5vdGVzGA0gASgJEjYKCW51dHJpdGlvbhgOIAEoCzIbLnJlY2lwZXMudjEuUmVjaXBlTnV0cml0aW9uQgaqnxkCCAESNwoLY3JlYXRlX3RpbWUYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESEAoIZmF2b3JpdGUYESABKAgSGQoMZnJlZXplcl9kYXlzGBIgASgFSAGIAQFCDgoMX2ZyaWRnZV9kYXlzQg8KDV9mcmVlemVyX2RheXMiowEKCkluZ3JlZGllbnQSDwoHZm9vZF9pZBgBIAEoCRIZCglmb29kX25hbWUYAiABKAlCBqqfGQIIARIOCgZhbW91bnQYAyABKAESIgoEdW5pdBgEIAEoDjIULmZvb2RzLnYxLkFtb3VudFVuaXQSDAoEbm90ZRgFIAEoCRIVCg1vcmlnaW5hbF90ZXh0GAYgASgJEhAKCG9wdGlvbmFsGAcgASgIIuYBCg9SZWNpcGVOdXRyaXRpb24SEwoLdG90YWxfZ3JhbXMYASABKAESGQoRZ3JhbXNfcGVyX3NlcnZpbmcYAiABKAESKAoLcGVyX3NlcnZpbmcYAyABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSLgoRcGVyX2h1bmRyZWRfZ3JhbXMYBCABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSHAoUaW5jb21wbGV0ZV9udXRyaWVudHMYBSADKAkSKwoGaXNzdWVzGAYgAygLMhsucmVjaXBlcy52MS5JbmdyZWRpZW50SXNzdWUiggEKD0luZ3JlZGllbnRJc3N1ZRIYChBpbmdyZWRpZW50X2luZGV4GAEgASgFEg8KB2Zvb2RfaWQYAiABKAkSEQoJZm9vZF9uYW1lGAMgASgJEhYKDnVua25vd25fd2VpZ2h0GAQgASgIEhkKEXVua25vd25fbnV0cmllbnRzGAUgAygJItQDCg1SZWNpcGVTdW1tYXJ5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEAoIc2VydmluZ3MYBCABKAUSFAoMcHJlcF9zZWNvbmRzGAUgASgFEhQKDGNvb2tfc2Vjb25kcxgGIAEoBRIMCgR0YWdzGAcgAygJEiQKF2VuZXJneV9rY2FsX3Blcl9zZXJ2aW5nGAggASgBSACIAQESJgoZcHJvdGVpbl9ncmFtc19wZXJfc2VydmluZxgJIAEoAUgBiAEBEisKHmNhcmJvaHlkcmF0ZV9ncmFtc19wZXJfc2VydmluZxgKIAEoAUgCiAEBEhkKEWdyYW1zX3Blcl9zZXJ2aW5nGAsgASgBEhIKCmhhc19pc3N1ZXMYDCABKAgSLwoLdXBkYXRlX3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhAKCGZhdm9yaXRlGA4gASgIQhoKGF9lbmVyZ3lfa2NhbF9wZXJfc2VydmluZ0IcChpfcHJvdGVpbl9ncmFtc19wZXJfc2VydmluZ0IhCh9fY2FyYm9oeWRyYXRlX2dyYW1zX3Blcl9zZXJ2aW5nIjkKE0NyZWF0ZVJlY2lwZVJlcXVlc3QSIgoGcmVjaXBlGAEgASgLMhIucmVjaXBlcy52MS5SZWNpcGUiOgoUQ3JlYXRlUmVjaXBlUmVzcG9uc2USIgoGcmVjaXBlGAEgASgLMhIucmVjaXBlcy52MS5SZWNpcGUiHgoQR2V0UmVjaXBlUmVxdWVzdBIKCgJpZBgBIAEoCSI3ChFHZXRSZWNpcGVSZXNwb25zZRIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZSJJChJMaXN0UmVjaXBlc1JlcXVlc3QSDQoFcXVlcnkYASABKAkSDAoEdGFncxgCIAMoCRIWCg5mYXZvcml0ZXNfb25seRgDIAEoCCJPChNMaXN0UmVjaXBlc1Jlc3BvbnNlEioKB3JlY2lwZXMYASADKAsyGS5yZWNpcGVzLnYxLlJlY2lwZVN1bW1hcnkSDAoEdGFncxgCIAMoCSJqChNVcGRhdGVSZWNpcGVSZXF1ZXN0EiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayI6ChRVcGRhdGVSZWNpcGVSZXNwb25zZRIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZSIhChNEZWxldGVSZWNpcGVSZXF1ZXN0EgoKAmlkGAEgASgJIhYKFERlbGV0ZVJlY2lwZVJlc3BvbnNlMqIDCg1SZWNpcGVTZXJ2aWNlElEKDENyZWF0ZVJlY2lwZRIfLnJlY2lwZXMudjEuQ3JlYXRlUmVjaXBlUmVxdWVzdBogLnJlY2lwZXMudjEuQ3JlYXRlUmVjaXBlUmVzcG9uc2USSAoJR2V0UmVjaXBlEhwucmVjaXBlcy52MS5HZXRSZWNpcGVSZXF1ZXN0Gh0ucmVjaXBlcy52MS5HZXRSZWNpcGVSZXNwb25zZRJOCgtMaXN0UmVjaXBlcxIeLnJlY2lwZXMudjEuTGlzdFJlY2lwZXNSZXF1ZXN0Gh8ucmVjaXBlcy52MS5MaXN0UmVjaXBlc1Jlc3BvbnNlElEKDFVwZGF0ZVJlY2lwZRIfLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlUmVxdWVzdBogLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlUmVzcG9uc2USUQoMRGVsZXRlUmVjaXBlEh8ucmVjaXBlcy52MS5EZWxldGVSZWNpcGVSZXF1ZXN0GiAucmVjaXBlcy52MS5EZWxldGVSZWNpcGVSZXNwb25zZUKsAQoOY29tLnJlY2lwZXMudjFCDFJlY2lwZXNQcm90b1ABWkNnaXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3JlY2lwZXMvdjE7cmVjaXBlc3YxogIDUlhYqgIKUmVjaXBlcy5WMcoCClJlY2lwZXNcVjHiAhZSZWNpcGVzXFYxXEdQQk1ldGFkYXRh6gILUmVjaXBlczo6VjFiBnByb3RvMw", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChhyZWNpcGVzL3YxL3JlY2lwZXMucHJvdG8SCnJlY2lwZXMudjEiuQQKBlJlY2lwZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhAKCHNlcnZpbmdzGAQgASgFEhQKDHByZXBfc2Vjb25kcxgFIAEoBRIUCgxjb29rX3NlY29uZHMYBiABKAUSKwoLaW5ncmVkaWVudHMYByADKAsyFi5yZWNpcGVzLnYxLkluZ3JlZGllbnQSDQoFc3RlcHMYCCADKAkSDAoEdGFncxgJIAMoCRISCgpzb3VyY2VfdXJsGAogASgJEhgKC2ZyaWRnZV9kYXlzGAsgASgFSACIAQESEQoJZnJlZXphYmxlGAwgASgIEg0KBW5vdGVzGA0gASgJEjYKCW51dHJpdGlvbhgOIAEoCzIbLnJlY2lwZXMudjEuUmVjaXBlTnV0cml0aW9uQgaqnxkCCAESNwoLY3JlYXRlX3RpbWUYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESEAoIZmF2b3JpdGUYESABKAgSGQoMZnJlZXplcl9kYXlzGBIgASgFSAGIAQESFwoPcHJlcF9haGVhZF9kYXlzGBMgASgFEhcKD3ByZXBfYWhlYWRfbm90ZRgUIAEoCUIOCgxfZnJpZGdlX2RheXNCDwoNX2ZyZWV6ZXJfZGF5cyLTAQoKSW5ncmVkaWVudBIPCgdmb29kX2lkGAEgASgJEhkKCWZvb2RfbmFtZRgCIAEoCUIGqp8ZAggBEg4KBmFtb3VudBgDIAEoARIiCgR1bml0GAQgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdBIMCgRub3RlGAUgASgJEhUKDW9yaWdpbmFsX3RleHQYBiABKAkSEAoIb3B0aW9uYWwYByABKAgSEQoJcmVjaXBlX2lkGAggASgJEhsKC3JlY2lwZV9uYW1lGAkgASgJQgaqnxkCCAEi5gEKD1JlY2lwZU51dHJpdGlvbhITCgt0b3RhbF9ncmFtcxgBIAEoARIZChFncmFtc19wZXJfc2VydmluZxgCIAEoARIoCgtwZXJfc2VydmluZxgDIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIuChFwZXJfaHVuZHJlZF9ncmFtcxgEIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIcChRpbmNvbXBsZXRlX251dHJpZW50cxgFIAMoCRIrCgZpc3N1ZXMYBiADKAsyGy5yZWNpcGVzLnYxLkluZ3JlZGllbnRJc3N1ZSKCAQoPSW5ncmVkaWVudElzc3VlEhgKEGluZ3JlZGllbnRfaW5kZXgYASABKAUSDwoHZm9vZF9pZBgCIAEoCRIRCglmb29kX25hbWUYAyABKAkSFgoOdW5rbm93bl93ZWlnaHQYBCABKAgSGQoRdW5rbm93bl9udXRyaWVudHMYBSADKAki1AMKDVJlY2lwZVN1bW1hcnkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIQCghzZXJ2aW5ncxgEIAEoBRIUCgxwcmVwX3NlY29uZHMYBSABKAUSFAoMY29va19zZWNvbmRzGAYgASgFEgwKBHRhZ3MYByADKAkSJAoXZW5lcmd5X2tjYWxfcGVyX3NlcnZpbmcYCCABKAFIAIgBARImChlwcm90ZWluX2dyYW1zX3Blcl9zZXJ2aW5nGAkgASgBSAGIAQESKwoeY2FyYm9oeWRyYXRlX2dyYW1zX3Blcl9zZXJ2aW5nGAogASgBSAKIAQESGQoRZ3JhbXNfcGVyX3NlcnZpbmcYCyABKAESEgoKaGFzX2lzc3VlcxgMIAEoCBIvCgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEAoIZmF2b3JpdGUYDiABKAhCGgoYX2VuZXJneV9rY2FsX3Blcl9zZXJ2aW5nQhwKGl9wcm90ZWluX2dyYW1zX3Blcl9zZXJ2aW5nQiEKH19jYXJib2h5ZHJhdGVfZ3JhbXNfcGVyX3NlcnZpbmciOQoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZSI6ChRDcmVhdGVSZWNpcGVSZXNwb25zZRIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZSIeChBHZXRSZWNpcGVSZXF1ZXN0EgoKAmlkGAEgASgJIjcKEUdldFJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIkkKEkxpc3RSZWNpcGVzUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIMCgR0YWdzGAIgAygJEhYKDmZhdm9yaXRlc19vbmx5GAMgASgIIk8KE0xpc3RSZWNpcGVzUmVzcG9uc2USKgoHcmVjaXBlcxgBIAMoCzIZLnJlY2lwZXMudjEuUmVjaXBlU3VtbWFyeRIMCgR0YWdzGAIgAygJImoKE1VwZGF0ZVJlY2lwZVJlcXVlc3QSIgoGcmVjaXBlGAEgASgLMhIucmVjaXBlcy52MS5SZWNpcGUSLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIjoKFFVwZGF0ZVJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIiEKE0RlbGV0ZVJlY2lwZVJlcXVlc3QSCgoCaWQYASABKAkiFgoURGVsZXRlUmVjaXBlUmVzcG9uc2UyogMKDVJlY2lwZVNlcnZpY2USUQoMQ3JlYXRlUmVjaXBlEh8ucmVjaXBlcy52MS5DcmVhdGVSZWNpcGVSZXF1ZXN0GiAucmVjaXBlcy52MS5DcmVhdGVSZWNpcGVSZXNwb25zZRJICglHZXRSZWNpcGUSHC5yZWNpcGVzLnYxLkdldFJlY2lwZVJlcXVlc3QaHS5yZWNpcGVzLnYxLkdldFJlY2lwZVJlc3BvbnNlEk4KC0xpc3RSZWNpcGVzEh4ucmVjaXBlcy52MS5MaXN0UmVjaXBlc1JlcXVlc3QaHy5yZWNpcGVzLnYxLkxpc3RSZWNpcGVzUmVzcG9uc2USUQoMVXBkYXRlUmVjaXBlEh8ucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVSZXF1ZXN0GiAucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVSZXNwb25zZRJRCgxEZWxldGVSZWNpcGUSHy5yZWNpcGVzLnYxLkRlbGV0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLkRlbGV0ZVJlY2lwZVJlc3BvbnNlQqwBCg5jb20ucmVjaXBlcy52MUIMUmVjaXBlc1Byb3RvUAFaQ2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vcmVjaXBlcy92MTtyZWNpcGVzdjGiAgNSWFiqAgpSZWNpcGVzLlYxygIKUmVjaXBlc1xWMeICFlJlY2lwZXNcVjFcR1BCTWV0YWRhdGHqAgtSZWNpcGVzOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A recipe.
@@ -162,6 +162,23 @@ export type Recipe = Message<"recipes.v1.Recipe"> & {
    * @generated from field: optional int32 freezer_days = 18;
    */
   freezerDays?: number | undefined;
+
+  /**
+   * How many days before it's cooked it starts, from 0 to 7, e.g. 1 for
+   * beans soaked the night before. The plan shows prep_ahead_note on that
+   * day. 0 if it starts the day it's cooked.
+   *
+   * @generated from field: int32 prep_ahead_days = 19;
+   */
+  prepAheadDays: number;
+
+  /**
+   * What to do prep_ahead_days before, e.g. "Soak the chickpeas in plenty
+   * of water". At most 500 characters.
+   *
+   * @generated from field: string prep_ahead_note = 20;
+   */
+  prepAheadNote: string;
 };
 
 /**
@@ -172,13 +189,14 @@ export const RecipeSchema: GenMessage<Recipe> = /*@__PURE__*/
   messageDesc(file_recipes_v1_recipes, 0);
 
 /**
- * An ingredient of a recipe: an amount of a food.
+ * An ingredient of a recipe: an amount of a food, or servings of another
+ * recipe, a component.
  *
  * @generated from message recipes.v1.Ingredient
  */
 export type Ingredient = Message<"recipes.v1.Ingredient"> & {
   /**
-   * The ID of the household's food. Required.
+   * The ID of the household's food. Required, unless recipe_id is set.
    *
    * @generated from field: string food_id = 1;
    */
@@ -192,15 +210,17 @@ export type Ingredient = Message<"recipes.v1.Ingredient"> & {
   foodName: string;
 
   /**
-   * The amount, in unit. More than 0.
+   * The amount, in unit of a food, or in servings of a component. More
+   * than 0.
    *
    * @generated from field: double amount = 3;
    */
   amount: number;
 
   /**
-   * The unit of the amount. Required. Amounts in milliliters or pieces are
-   * weighed with the food's grams_per_milliliter or grams_per_piece.
+   * The unit of a food's amount. Required for a food, and unspecified for
+   * a component. Amounts in milliliters or pieces are weighed with the
+   * food's grams_per_milliliter or grams_per_piece.
    *
    * @generated from field: foods.v1.AmountUnit unit = 4;
    */
@@ -230,6 +250,21 @@ export type Ingredient = Message<"recipes.v1.Ingredient"> & {
    * @generated from field: bool optional = 7;
    */
   optional: boolean;
+
+  /**
+   * The ID of the household's recipe used as a component, instead of a
+   * food, e.g. "Cooked chickpeas". Its nutrition counts per serving.
+   *
+   * @generated from field: string recipe_id = 8;
+   */
+  recipeId: string;
+
+  /**
+   * The name of the component's recipe.
+   *
+   * @generated from field: string recipe_name = 9;
+   */
+  recipeName: string;
 };
 
 /**
@@ -302,7 +337,8 @@ export const RecipeNutritionSchema: GenMessage<RecipeNutrition> = /*@__PURE__*/
   messageDesc(file_recipes_v1_recipes, 2);
 
 /**
- * An ingredient whose food lacks data the recipe's nutrition needs.
+ * An ingredient whose food, or component's recipe, lacks data the recipe's
+ * nutrition needs.
  *
  * @generated from message recipes.v1.IngredientIssue
  */
@@ -315,14 +351,15 @@ export type IngredientIssue = Message<"recipes.v1.IngredientIssue"> & {
   ingredientIndex: number;
 
   /**
-   * The ID of the ingredient's food.
+   * The ID of the ingredient's food, empty for a component: fix the
+   * component's own recipe instead.
    *
    * @generated from field: string food_id = 2;
    */
   foodId: string;
 
   /**
-   * The name of the ingredient's food.
+   * The name of the ingredient's food or component.
    *
    * @generated from field: string food_name = 3;
    */
@@ -331,8 +368,8 @@ export type IngredientIssue = Message<"recipes.v1.IngredientIssue"> & {
   /**
    * Whether the amount can't be weighed, as the food has no
    * grams_per_piece (for pieces) or grams_per_milliliter (for
-   * milliliters). The ingredient is then left out of the nutrition
-   * entirely.
+   * milliliters), or the component's recipe can't be weighed. The
+   * ingredient is then left out of the nutrition entirely.
    *
    * @generated from field: bool unknown_weight = 4;
    */
@@ -686,7 +723,13 @@ export const DeleteRecipeResponseSchema: GenMessage<DeleteRecipeResponse> = /*@_
 /**
  * RecipeService manages the household's recipes. A recipe's ingredients are
  * the household's foods (see FoodService) with an amount in grams,
- * milliliters or pieces, so create or find the foods first. Each recipe's
+ * milliliters or pieces, so create or find the foods first. An ingredient
+ * can also be another recipe, a component, in servings, like soaked and
+ * pressure cooked chickpeas in a chili: planning the chili also plans a
+ * cook of the chickpeas for it (see PlanService), and a component with
+ * prep_ahead_days shows on the plan the days before, like "Soak the
+ * chickpeas" the night before. Components can have components of their
+ * own, but no deeper, and a recipe can't use itself. Each recipe's
  * nutrition per serving and per 100 g is computed from its ingredients'
  * foods, and lists the ingredients whose data is missing, to fix on the
  * foods with UpdateFood. Recipes are planned into meals, split into
@@ -742,7 +785,8 @@ export const RecipeService: GenService<{
   },
   /**
    * Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
-   * the plan (see PlanService) use it: delete them first.
+   * the plan (see PlanService), or other recipes as a component, use it:
+   * delete or change them first.
    *
    * @generated from rpc recipes.v1.RecipeService.DeleteRecipe
    */

@@ -46,6 +46,7 @@ type PlanRepository interface {
 	CreateCooksWithPortions(ctx context.Context, list []*plans.CookWithPortions) ([]*plans.Cook, [][]*plans.Portion, error)
 	UpdateCook(ctx context.Context, c *plans.Cook) (*plans.Cook, error)
 	ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) ([]*plans.FrozenCook, error)
+	SetCookSupply(ctx context.Context, householdID pgtype.UUID, supply *plans.Supply, previous pgtype.UUID) error
 	DeleteCook(ctx context.Context, householdID, id pgtype.UUID) error
 	GetPortion(ctx context.Context, householdID, id pgtype.UUID) (*plans.Portion, error)
 	CreatePortion(ctx context.Context, p *plans.Portion) (*plans.Portion, error)
@@ -133,6 +134,10 @@ var (
 	stapleKeepFields  = []protoreflect.Name{"id", "name", "skipped_dates", "create_time", "update_time"}
 )
 
+// maxPrepAheadDays is the most days a recipe starts before it's cooked,
+// as recipes allow.
+const maxPrepAheadDays = 7
+
 // What NotFound errors say is missing, and how to find it.
 const (
 	cookNotFound    = "the cook doesn't exist in your household's plan; find cooks with GetWeek"
@@ -156,13 +161,17 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 			"monday must be a Monday: the week of %s starts on %s", store.FormatDate(monday), store.FormatDate(previous))
 	}
 	sunday := monday.AddDate(0, 0, 6)
-	d, err := s.loadPlan(ctx, user.HouseholdID(), monday, sunday)
+	// The week after is read too, as its cooks can start this week, like
+	// beans soaked the night before.
+	d, err := s.loadPlan(ctx, user.HouseholdID(), monday, sunday.AddDate(0, 0, maxPrepAheadDays))
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to get week", "")
 	}
 	cooks := make([]*plansv1.PlannedCook, 0, len(d.plan.Cooks))
 	for _, c := range d.plan.Cooks {
-		cooks = append(cooks, d.plannedCook(c))
+		if !c.Date.After(sunday) {
+			cooks = append(cooks, d.plannedCook(c))
+		}
 	}
 	return plansv1.GetWeekResponse_builder{
 		Monday: store.FormatDate(monday),
@@ -243,17 +252,22 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 			Servings:     share.Servings,
 		})
 	}
-	cook, created, err := s.plans.CreateCookWithPortions(ctx, &plans.Cook{
-		HouseholdID: user.HouseholdID(),
-		RecipeID:    recipe.ID,
-		Date:        date,
-		Servings:    split.Servings,
-		Meal:        meal,
-		Notes:       notes,
-	}, portions)
+	// The cooks of the recipe's components are planned with it.
+	cooks, createdPortions, err := s.plans.CreateCooksWithPortions(ctx, withSuppliers([]*plans.CookWithPortions{{
+		Cook: &plans.Cook{
+			HouseholdID: user.HouseholdID(),
+			RecipeID:    recipe.ID,
+			Date:        date,
+			Servings:    split.Servings,
+			Meal:        meal,
+			Notes:       notes,
+		},
+		Portions: portions,
+	}}, d.recipes))
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to plan meal", recipeNotFound)
 	}
+	cook, created := cooks[0], createdPortions[0]
 
 	// The warnings are those of the eating times the portions are at, with
 	// what was planned there already, and of the cook.
@@ -343,10 +357,21 @@ func (s *Service) CreateCook(ctx context.Context, req *plansv1.CreateCookRequest
 		return nil, err
 	}
 	c.HouseholdID = user.HouseholdID()
-	created, err := s.plans.CreateCook(ctx, c)
+	// The cooks of the recipe's components are created with it, so its
+	// recipe is read first, with them.
+	list, err := s.recipes.ListRecipesByID(ctx, c.HouseholdID, []pgtype.UUID{c.RecipeID})
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to read recipe", "")
+	}
+	if len(list) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, referenceMessages["recipe_id"])
+	}
+	cooks, _, err := s.plans.CreateCooksWithPortions(ctx,
+		withSuppliers([]*plans.CookWithPortions{{Cook: c}}, map[pgtype.UUID]*recipes.Recipe{list[0].ID: list[0]}))
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to create cook", "")
 	}
+	created := cooks[0]
 	var changes []*plansv1.PantryChange
 	if created.Done {
 		changes, err = s.useForCook(ctx, created)
@@ -371,7 +396,8 @@ func (s *Service) useForCook(ctx context.Context, c *plans.Cook) ([]*plansv1.Pan
 	}
 	names := map[pgtype.UUID]string{}
 	var uses []pantry.Use
-	for _, in := range list[0].IngredientsFor(c.Servings) {
+	// Components other cooks supply are taken out by those cooks.
+	for _, in := range list[0].IngredientsWithout(c.Servings, shopping.SuppliedComponents(c)) {
 		grams, ok := in.Food.Grams(in.Amount, in.Unit)
 		if !ok {
 			continue
@@ -463,6 +489,8 @@ func (s *Service) UpdateCook(ctx context.Context, req *plansv1.UpdateCookRequest
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to update cook", cookNotFound)
 	}
+	// Updating a cook doesn't change what supplies it, or what it supplies.
+	updated.Supplies, updated.Supplying = existing.Supplies, existing.Supplying
 	// Only a change of done changes the pantry, so cooks marked done before
 	// the pantry existed don't take their ingredients out when edited. The
 	// pantry's own records make taking out and putting back happen once

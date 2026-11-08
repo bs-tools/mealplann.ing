@@ -192,7 +192,7 @@ func (s *Service) loadSuggestionData(ctx context.Context, householdID pgtype.UUI
 	// pack sizes and shelf lives, which the shopping needs.
 	var foodIDs []pgtype.UUID
 	for _, r := range recipeList {
-		for _, in := range r.Ingredients {
+		for _, in := range r.IngredientsFor(float64(r.Servings)) {
 			foodIDs = append(foodIDs, in.FoodID)
 		}
 	}

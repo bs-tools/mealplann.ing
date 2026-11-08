@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/bs-tools/mealplann.ing/internal/nutrition"
@@ -20,6 +21,22 @@ import (
 // ErrPlanned is returned when deleting a recipe that cooks or staples of
 // the plan use.
 var ErrPlanned = errors.New("the recipe is planned")
+
+// ErrUsedAsComponent is returned when deleting a recipe that other recipes
+// use as a component.
+var ErrUsedAsComponent = errors.New("other recipes use the recipe")
+
+// UnknownComponentsError is returned when a recipe's ingredients use
+// recipes that aren't the household's as components.
+type UnknownComponentsError struct {
+	// RecipeIDs are the IDs of the unknown recipes, in the order of the
+	// ingredients.
+	RecipeIDs []pgtype.UUID
+}
+
+func (e *UnknownComponentsError) Error() string {
+	return fmt.Sprintf("%d of the recipe's components aren't the household's recipes", len(e.RecipeIDs))
+}
 
 // UnknownFoodsError is returned when a recipe's ingredients use foods that
 // aren't the household's.
@@ -55,7 +72,11 @@ type Recipe struct {
 	Freezable  bool
 	// FreezerDays is how many days frozen leftovers keep, nil if unknown.
 	FreezerDays *int32
-	Notes       string
+	// PrepAheadDays is how many days before it's cooked it starts, e.g. 1
+	// to soak beans the night before, and PrepAheadNote what to do then.
+	PrepAheadDays int32
+	PrepAheadNote string
+	Notes         string
 	// Favorite is whether the household marked the recipe as a favorite,
 	// which suggestions score higher.
 	Favorite   bool
@@ -63,10 +84,22 @@ type Recipe struct {
 	UpdateTime time.Time
 }
 
-// Ingredient is an amount of a food in a recipe.
+// MaxComponentDepth is how deep components can nest: a recipe's component
+// can have components of its own, which can't. It keeps reading and
+// expanding recipes bounded, and is deep enough for beans in a chili in a
+// burrito.
+const MaxComponentDepth = 2
+
+// Ingredient is an amount of a food in a recipe, or servings of another
+// recipe, a component, like cooked chickpeas.
 type Ingredient struct {
-	FoodID       pgtype.UUID
-	Amount       float64
+	// FoodID is the food, invalid for a component.
+	FoodID pgtype.UUID
+	// ComponentRecipeID is the component's recipe, invalid for a food.
+	ComponentRecipeID pgtype.UUID
+	// Amount is in Unit of a food, or in servings of a component.
+	Amount float64
+	// Unit is the unit of a food's amount, unused for a component.
 	Unit         nutrition.Unit
 	Note         string
 	OriginalText string
@@ -76,38 +109,179 @@ type Ingredient struct {
 	FoodName string
 	Food     nutrition.Food
 	FastCarb bool
+	// Component is the component's recipe, read with it, nil for a food or
+	// a component nested deeper than MaxComponentDepth.
+	Component *Recipe
 }
 
-// Nutrition computes the recipe's nutrition from its ingredients.
+// IsComponent reports whether the ingredient is another recipe.
+func (in *Ingredient) IsComponent() bool {
+	return in.ComponentRecipeID.Valid
+}
+
+// Name returns the name of the ingredient's food or component, "" if a
+// component wasn't read.
+func (in *Ingredient) Name() string {
+	if in.IsComponent() {
+		if in.Component != nil {
+			return in.Component.Name
+		}
+		return ""
+	}
+	return in.FoodName
+}
+
+// Nutrition computes the recipe's nutrition from its ingredients. A
+// component counts as a food with its own recipe's nutrition, weighed by
+// its servings, and its incomplete nutrients are incomplete here too.
 func (r *Recipe) Nutrition() *nutrition.Recipe {
+	return r.nutrition(0)
+}
+
+// nutrition is Nutrition at a depth of components, which leaves out
+// components deeper than MaxComponentDepth, so recipes using each other by
+// mistake can't recurse forever.
+func (r *Recipe) nutrition(depth int) *nutrition.Recipe {
 	ingredients := make([]nutrition.Ingredient, 0, len(r.Ingredients))
+	var componentIncomplete []nutrition.Nutrient
 	for _, in := range r.Ingredients {
+		if !in.IsComponent() {
+			ingredients = append(ingredients, nutrition.Ingredient{
+				Food:     &in.Food,
+				Amount:   in.Amount,
+				Unit:     in.Unit,
+				Optional: in.Optional,
+			})
+			continue
+		}
+		// A component is weighed in servings, as pieces of its serving's
+		// weight, so one that can't be weighed is an unknown weight.
+		food := &nutrition.Food{}
+		if in.Component != nil && depth < MaxComponentDepth {
+			n := in.Component.nutrition(depth + 1)
+			food.Per100Grams = n.Per100Grams
+			food.GramsPerPiece = n.GramsPerServing
+			if !in.Optional {
+				componentIncomplete = append(componentIncomplete, n.Incomplete...)
+			}
+		}
 		ingredients = append(ingredients, nutrition.Ingredient{
-			Food:     &in.Food,
+			Food:     food,
 			Amount:   in.Amount,
-			Unit:     in.Unit,
+			Unit:     nutrition.Pieces,
 			Optional: in.Optional,
 		})
 	}
-	return nutrition.ForRecipe(ingredients, int(r.Servings))
+	n := nutrition.ForRecipe(ingredients, int(r.Servings))
+	for _, nutrient := range componentIncomplete {
+		if !slices.Contains(n.Incomplete, nutrient) {
+			n.Incomplete = append(n.Incomplete, nutrient)
+		}
+	}
+	slices.Sort(n.Incomplete)
+	return n
 }
 
-// IngredientsFor returns the ingredients used to make a number of servings
-// of the recipe: copies of the ingredients scaled by servings divided by
-// the recipe's servings, without the optional ones, which the shopping list
-// and the pantry leave out like the nutrition does.
+// IngredientsFor returns the foods used to make a number of servings of
+// the recipe, with its components made of their own ingredients: copies of
+// the ingredients scaled by servings divided by the recipe's servings,
+// without the optional ones, which the shopping list and the pantry leave
+// out like the nutrition does.
 func (r *Recipe) IngredientsFor(servings float64) []*Ingredient {
+	return r.IngredientsWithout(servings, nil)
+}
+
+// IngredientsWithout is IngredientsFor without the components in supplied,
+// by recipe ID, which another cook makes. Components it doesn't supply
+// are made of their own ingredients, like IngredientsFor's.
+func (r *Recipe) IngredientsWithout(servings float64, supplied map[pgtype.UUID]bool) []*Ingredient {
+	return r.ingredientsWithout(servings, supplied, 0)
+}
+
+// ingredientsWithout is IngredientsWithout at a depth of components,
+// leaving out those deeper than MaxComponentDepth.
+func (r *Recipe) ingredientsWithout(servings float64, supplied map[pgtype.UUID]bool, depth int) []*Ingredient {
 	scale := servings / float64(max(r.Servings, 1))
 	scaled := make([]*Ingredient, 0, len(r.Ingredients))
 	for _, in := range r.Ingredients {
-		if in.Optional {
-			continue
+		switch {
+		case in.Optional:
+		case in.IsComponent():
+			if !supplied[in.ComponentRecipeID] && in.Component != nil && depth < MaxComponentDepth {
+				scaled = append(scaled, in.Component.ingredientsWithout(in.Amount*scale, nil, depth+1)...)
+			}
+		default:
+			c := *in
+			c.Amount *= scale
+			scaled = append(scaled, &c)
 		}
-		c := *in
-		c.Amount *= scale
-		scaled = append(scaled, &c)
 	}
 	return scaled
+}
+
+// ComponentNeed is servings of a component a cook needs.
+type ComponentNeed struct {
+	Recipe   *Recipe
+	Servings float64
+}
+
+// ComponentsFor returns the components used to make a number of servings
+// of the recipe, with their servings, without the optional ones. A
+// component used twice is needed once, in the servings of both.
+func (r *Recipe) ComponentsFor(servings float64) []ComponentNeed {
+	scale := servings / float64(max(r.Servings, 1))
+	var needs []ComponentNeed
+	for _, in := range r.Ingredients {
+		if in.Optional || !in.IsComponent() || in.Component == nil {
+			continue
+		}
+		if i := slices.IndexFunc(needs, func(n ComponentNeed) bool { return n.Recipe.ID == in.ComponentRecipeID }); i >= 0 {
+			needs[i].Servings += in.Amount * scale
+			continue
+		}
+		needs = append(needs, ComponentNeed{Recipe: in.Component, Servings: in.Amount * scale})
+	}
+	return needs
+}
+
+// UsesRecipe reports whether the recipe uses another as a component, at
+// any depth read.
+func (r *Recipe) UsesRecipe(id pgtype.UUID) bool {
+	return r.usesRecipe(id, 0)
+}
+
+func (r *Recipe) usesRecipe(id pgtype.UUID, depth int) bool {
+	for _, in := range r.Ingredients {
+		if in.ComponentRecipeID == id {
+			return true
+		}
+		if in.Component != nil && depth <= MaxComponentDepth && in.Component.usesRecipe(id, depth+1) {
+			return true
+		}
+	}
+	return false
+}
+
+// Depth returns how deep the recipe's components nest: 0 without
+// components, 1 with components without their own, and so on.
+func (r *Recipe) Depth() int {
+	return r.depth(0)
+}
+
+// depth is Depth, stopping past MaxComponentDepth, as deeper is too deep
+// anyway.
+func (r *Recipe) depth(level int) int {
+	deepest := 0
+	for _, in := range r.Ingredients {
+		if in.IsComponent() {
+			d := 1
+			if in.Component != nil && level <= MaxComponentDepth {
+				d += in.Component.depth(level + 1)
+			}
+			deepest = max(deepest, d)
+		}
+	}
+	return deepest
 }
 
 // Repository stores recipes.
@@ -134,24 +308,27 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 	// and nothing is created.
 	var b store.Batch
 	checkFoods(ctx, &b, recipe)
+	checkComponents(ctx, &b, recipe)
 	b.Read(func(db store.Querier) error {
 		var err error
 		row, err = gen.New(db).CreateRecipe(ctx, &gen.CreateRecipeParams{
-			ID:          id,
-			HouseholdID: recipe.HouseholdID,
-			Name:        recipe.Name,
-			Description: recipe.Description,
-			Servings:    recipe.Servings,
-			PrepSeconds: recipe.PrepSeconds,
-			CookSeconds: recipe.CookSeconds,
-			Steps:       nonNil(recipe.Steps),
-			Tags:        nonNil(recipe.Tags),
-			SourceURL:   recipe.SourceURL,
-			FridgeDays:  recipe.FridgeDays,
-			Freezable:   recipe.Freezable,
-			FreezerDays: recipe.FreezerDays,
-			Notes:       recipe.Notes,
-			Favorite:    recipe.Favorite,
+			ID:            id,
+			HouseholdID:   recipe.HouseholdID,
+			Name:          recipe.Name,
+			Description:   recipe.Description,
+			Servings:      recipe.Servings,
+			PrepSeconds:   recipe.PrepSeconds,
+			CookSeconds:   recipe.CookSeconds,
+			Steps:         nonNil(recipe.Steps),
+			Tags:          nonNil(recipe.Tags),
+			SourceURL:     recipe.SourceURL,
+			FridgeDays:    recipe.FridgeDays,
+			Freezable:     recipe.Freezable,
+			FreezerDays:   recipe.FreezerDays,
+			PrepAheadDays: recipe.PrepAheadDays,
+			PrepAheadNote: recipe.PrepAheadNote,
+			Notes:         recipe.Notes,
+			Favorite:      recipe.Favorite,
 		})
 		return err
 	})
@@ -161,9 +338,12 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 		if _, ok := errors.AsType[*UnknownFoodsError](err); ok {
 			return nil, err
 		}
+		if _, ok := errors.AsType[*UnknownComponentsError](err); ok {
+			return nil, err
+		}
 		return nil, fmt.Errorf("failed to create recipe: %w", err)
 	}
-	return recipeFromDB(row, ingredients), nil
+	return r.resolved(ctx, recipeFromDB(row, ingredients))
 }
 
 // GetRecipe gets a household's recipe with its ingredients' foods. It
@@ -187,7 +367,7 @@ func (r *Repository) GetRecipe(ctx context.Context, householdID, id pgtype.UUID)
 		}
 		return nil, fmt.Errorf("failed to get recipe: %w", err)
 	}
-	return recipeFromDB(row, ingredients), nil
+	return r.resolved(ctx, recipeFromDB(row, ingredients))
 }
 
 // ListFilter selects the recipes to list. Its zero value selects all.
@@ -245,6 +425,11 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, f
 	for _, row := range rows {
 		recipes = append(recipes, recipeFromDB(row, byRecipe[row.ID]))
 	}
+	// The ingredients of all recipes are read, so components among the
+	// recipes listed resolve without reading them again.
+	if err := r.resolve(ctx, householdID, recipes); err != nil {
+		return nil, nil, fmt.Errorf("failed to read components: %w", err)
+	}
 	return recipes, allTags, nil
 }
 
@@ -252,6 +437,26 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, f
 // their ingredients' foods, ordered by name. IDs of recipes the household
 // doesn't have are left out.
 func (r *Repository) ListRecipesByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*Recipe, error) {
+	list, err := r.listRecipesByID(ctx, householdID, ids)
+	if err != nil {
+		return nil, err
+	}
+	if err := r.resolve(ctx, householdID, list); err != nil {
+		return nil, fmt.Errorf("failed to read components: %w", err)
+	}
+	return list, nil
+}
+
+// resolved returns a recipe with its components resolved.
+func (r *Repository) resolved(ctx context.Context, recipe *Recipe) (*Recipe, error) {
+	if err := r.resolve(ctx, recipe.HouseholdID, []*Recipe{recipe}); err != nil {
+		return nil, fmt.Errorf("failed to read components: %w", err)
+	}
+	return recipe, nil
+}
+
+// listRecipesByID is ListRecipesByID without resolving components.
+func (r *Repository) listRecipesByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*Recipe, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -295,24 +500,27 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 	// As in CreateRecipe, a failed statement leaves the recipe as it was.
 	var b store.Batch
 	checkFoods(ctx, &b, recipe)
+	checkComponents(ctx, &b, recipe)
 	b.Read(func(db store.Querier) error {
 		var err error
 		row, err = gen.New(db).UpdateRecipe(ctx, &gen.UpdateRecipeParams{
-			ID:          recipe.ID,
-			HouseholdID: recipe.HouseholdID,
-			Name:        recipe.Name,
-			Description: recipe.Description,
-			Servings:    recipe.Servings,
-			PrepSeconds: recipe.PrepSeconds,
-			CookSeconds: recipe.CookSeconds,
-			Steps:       nonNil(recipe.Steps),
-			Tags:        nonNil(recipe.Tags),
-			SourceURL:   recipe.SourceURL,
-			FridgeDays:  recipe.FridgeDays,
-			Freezable:   recipe.Freezable,
-			FreezerDays: recipe.FreezerDays,
-			Notes:       recipe.Notes,
-			Favorite:    recipe.Favorite,
+			ID:            recipe.ID,
+			HouseholdID:   recipe.HouseholdID,
+			Name:          recipe.Name,
+			Description:   recipe.Description,
+			Servings:      recipe.Servings,
+			PrepSeconds:   recipe.PrepSeconds,
+			CookSeconds:   recipe.CookSeconds,
+			Steps:         nonNil(recipe.Steps),
+			Tags:          nonNil(recipe.Tags),
+			SourceURL:     recipe.SourceURL,
+			FridgeDays:    recipe.FridgeDays,
+			Freezable:     recipe.Freezable,
+			FreezerDays:   recipe.FreezerDays,
+			PrepAheadDays: recipe.PrepAheadDays,
+			PrepAheadNote: recipe.PrepAheadNote,
+			Notes:         recipe.Notes,
+			Favorite:      recipe.Favorite,
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return store.ErrNotFound
@@ -327,19 +535,26 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 		if _, ok := errors.AsType[*UnknownFoodsError](err); ok || errors.Is(err, store.ErrNotFound) {
 			return nil, err
 		}
+		if _, ok := errors.AsType[*UnknownComponentsError](err); ok {
+			return nil, err
+		}
 		return nil, fmt.Errorf("failed to update recipe: %w", err)
 	}
-	return recipeFromDB(row, ingredients), nil
+	return r.resolved(ctx, recipeFromDB(row, ingredients))
 }
 
 // DeleteRecipe deletes a household's recipe. It returns store.ErrNotFound
-// if the household has no such recipe, and ErrPlanned if cooks or staples
-// use it.
+// if the household has no such recipe, ErrUsedAsComponent if other recipes
+// use it, and ErrPlanned if cooks or staples do.
 func (r *Repository) DeleteRecipe(ctx context.Context, householdID, id pgtype.UUID) error {
 	n, err := r.querier.DeleteRecipe(ctx, &gen.DeleteRecipeParams{ID: id, HouseholdID: householdID})
 	if err != nil {
-		// The plan's foreign keys keep planned recipes.
+		// The plan's foreign keys keep planned recipes, and the
+		// ingredients' those used as components.
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == pgerrcode.ForeignKeyViolation {
+			if pgErr.ConstraintName == "recipe_ingredients_component_recipe_id_fkey" {
+				return ErrUsedAsComponent
+			}
 			return ErrPlanned
 		}
 		return fmt.Errorf("failed to delete recipe: %w", err)
@@ -356,7 +571,9 @@ func (r *Repository) DeleteRecipe(ctx context.Context, householdID, id pgtype.UU
 func checkFoods(ctx context.Context, b *store.Batch, recipe *Recipe) {
 	ids := make([]pgtype.UUID, 0, len(recipe.Ingredients))
 	for _, in := range recipe.Ingredients {
-		ids = append(ids, in.FoodID)
+		if !in.IsComponent() {
+			ids = append(ids, in.FoodID)
+		}
 	}
 	b.Read(func(db store.Querier) error {
 		known, err := gen.New(db).ListHouseholdFoodIDs(ctx, &gen.ListHouseholdFoodIDsParams{
@@ -385,6 +602,81 @@ func checkFoods(ctx context.Context, b *store.Batch, recipe *Recipe) {
 	})
 }
 
+// checkComponents queues reading which of the recipe's components are the
+// household's recipes, failing with an *UnknownComponentsError if any
+// aren't, as checkFoods does for foods.
+func checkComponents(ctx context.Context, b *store.Batch, recipe *Recipe) {
+	var ids []pgtype.UUID
+	for _, in := range recipe.Ingredients {
+		if in.IsComponent() {
+			ids = append(ids, in.ComponentRecipeID)
+		}
+	}
+	if len(ids) == 0 {
+		return
+	}
+	b.Read(func(db store.Querier) error {
+		known, err := gen.New(db).ListHouseholdRecipeIDs(ctx, &gen.ListHouseholdRecipeIDsParams{
+			HouseholdID: recipe.HouseholdID,
+			Ids:         ids,
+		})
+		if err != nil {
+			return err
+		}
+		var unknown []pgtype.UUID
+		for _, id := range ids {
+			if !slices.Contains(known, id) && !slices.Contains(unknown, id) {
+				unknown = append(unknown, id)
+			}
+		}
+		if len(unknown) > 0 {
+			return &UnknownComponentsError{RecipeIDs: unknown}
+		}
+		return nil
+	})
+}
+
+// resolve sets the Component of the recipes' component ingredients, to
+// MaxComponentDepth levels, reading those not among the recipes in one
+// round trip per level, and none if all are.
+func (r *Repository) resolve(ctx context.Context, householdID pgtype.UUID, list []*Recipe) error {
+	known := map[pgtype.UUID]*Recipe{}
+	for _, rc := range list {
+		known[rc.ID] = rc
+	}
+	level := list
+	for depth := 1; depth <= MaxComponentDepth && len(level) > 0; depth++ {
+		var missing []pgtype.UUID
+		for _, rc := range level {
+			for _, in := range rc.Ingredients {
+				if _, ok := known[in.ComponentRecipeID]; in.IsComponent() && !ok && !slices.Contains(missing, in.ComponentRecipeID) {
+					missing = append(missing, in.ComponentRecipeID)
+				}
+			}
+		}
+		if len(missing) > 0 {
+			read, err := r.listRecipesByID(ctx, householdID, missing)
+			if err != nil {
+				return err
+			}
+			for _, rc := range read {
+				known[rc.ID] = rc
+			}
+		}
+		var next []*Recipe
+		for _, rc := range level {
+			for _, in := range rc.Ingredients {
+				if c, ok := known[in.ComponentRecipeID]; in.IsComponent() && ok {
+					in.Component = c
+					next = append(next, c)
+				}
+			}
+		}
+		level = next
+	}
+	return nil
+}
+
 // readIngredients queues reading a recipe's ingredients into rows.
 func readIngredients(ctx context.Context, b *store.Batch, householdID, recipeID pgtype.UUID, rows *[]*gen.ListRecipeIngredientsRow) {
 	b.Read(func(db store.Querier) error {
@@ -399,19 +691,25 @@ func readIngredients(ctx context.Context, b *store.Batch, householdID, recipeID 
 
 func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredient) *gen.CreateRecipeIngredientsParams {
 	p := &gen.CreateRecipeIngredientsParams{
-		RecipeID:      recipeID,
-		HouseholdID:   householdID,
-		FoodIds:       make([]pgtype.UUID, 0, len(ingredients)),
-		Amounts:       make([]float64, 0, len(ingredients)),
-		Units:         make([]string, 0, len(ingredients)),
-		Notes:         make([]string, 0, len(ingredients)),
-		OriginalTexts: make([]string, 0, len(ingredients)),
-		Optionals:     make([]bool, 0, len(ingredients)),
+		RecipeID:           recipeID,
+		HouseholdID:        householdID,
+		FoodIds:            make([]pgtype.UUID, 0, len(ingredients)),
+		ComponentRecipeIds: make([]pgtype.UUID, 0, len(ingredients)),
+		Amounts:            make([]float64, 0, len(ingredients)),
+		Units:              make([]string, 0, len(ingredients)),
+		Notes:              make([]string, 0, len(ingredients)),
+		OriginalTexts:      make([]string, 0, len(ingredients)),
+		Optionals:          make([]bool, 0, len(ingredients)),
 	}
 	for _, in := range ingredients {
 		p.FoodIds = append(p.FoodIds, in.FoodID)
+		p.ComponentRecipeIds = append(p.ComponentRecipeIds, in.ComponentRecipeID)
 		p.Amounts = append(p.Amounts, in.Amount)
-		p.Units = append(p.Units, string(unitToDB(in.Unit)))
+		unit := ""
+		if !in.IsComponent() {
+			unit = string(unitToDB(in.Unit))
+		}
+		p.Units = append(p.Units, unit)
 		p.Notes = append(p.Notes, in.Note)
 		p.OriginalTexts = append(p.OriginalTexts, in.OriginalText)
 		p.Optionals = append(p.Optionals, in.Optional)
@@ -421,24 +719,26 @@ func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredien
 
 func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) *Recipe {
 	r := &Recipe{
-		ID:          row.ID,
-		HouseholdID: row.HouseholdID,
-		Name:        row.Name,
-		Description: row.Description,
-		Servings:    row.Servings,
-		PrepSeconds: row.PrepSeconds,
-		CookSeconds: row.CookSeconds,
-		Steps:       row.Steps,
-		Tags:        row.Tags,
-		SourceURL:   row.SourceURL,
-		FridgeDays:  row.FridgeDays,
-		Freezable:   row.Freezable,
-		FreezerDays: row.FreezerDays,
-		Notes:       row.Notes,
-		Favorite:    row.Favorite,
-		CreateTime:  row.CreateTime.Time,
-		UpdateTime:  row.UpdateTime.Time,
-		Ingredients: make([]*Ingredient, 0, len(ingredients)),
+		ID:            row.ID,
+		HouseholdID:   row.HouseholdID,
+		Name:          row.Name,
+		Description:   row.Description,
+		Servings:      row.Servings,
+		PrepSeconds:   row.PrepSeconds,
+		CookSeconds:   row.CookSeconds,
+		Steps:         row.Steps,
+		Tags:          row.Tags,
+		SourceURL:     row.SourceURL,
+		FridgeDays:    row.FridgeDays,
+		Freezable:     row.Freezable,
+		FreezerDays:   row.FreezerDays,
+		PrepAheadDays: row.PrepAheadDays,
+		PrepAheadNote: row.PrepAheadNote,
+		Notes:         row.Notes,
+		Favorite:      row.Favorite,
+		CreateTime:    row.CreateTime.Time,
+		UpdateTime:    row.UpdateTime.Time,
+		Ingredients:   make([]*Ingredient, 0, len(ingredients)),
 	}
 	for _, in := range ingredients {
 		r.Ingredients = append(r.Ingredients, ingredientFromDB(in))
@@ -448,14 +748,19 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) 
 
 func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 	in := &row.RecipeIngredient
+	unit := nutrition.Grams
+	if in.Unit != nil {
+		unit = unitFromDB(*in.Unit)
+	}
 	return &Ingredient{
-		FoodID:       in.FoodID,
-		Amount:       in.Amount,
-		Unit:         unitFromDB(in.Unit),
-		Note:         in.Note,
-		OriginalText: in.OriginalText,
-		Optional:     in.Optional,
-		FoodName:     row.FoodName,
+		FoodID:            in.FoodID,
+		ComponentRecipeID: in.ComponentRecipeID,
+		Amount:            in.Amount,
+		Unit:              unit,
+		Note:              in.Note,
+		OriginalText:      in.OriginalText,
+		Optional:          in.Optional,
+		FoodName:          row.FoodName,
 		Food: nutrition.Food{
 			Per100Grams: nutrition.Nutrients{
 				nutrition.EnergyKcal:           row.EnergyKcalPer100Grams,

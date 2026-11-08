@@ -64,6 +64,8 @@ const (
 	// FrozenServingsShort is a cook with more servings eaten after its
 	// fridge days than it has frozen.
 	FrozenServingsShort
+	// ComponentAfterCook is a cook whose component is cooked after it.
+	ComponentAfterCook
 )
 
 // Warning is a problem with a plan.
@@ -346,6 +348,21 @@ func CheckPortion(c *Cook, date time.Time) *Warning {
 	}
 }
 
+// CheckSupply checks that a cook's component is cooked on or before the
+// cook, by the cook supplying it. Dates are at midnight UTC. It returns nil
+// if it is.
+func CheckSupply(recipeName string, date time.Time, componentName string, supplierDate time.Time) *Warning {
+	if !supplierDate.After(date) {
+		return nil
+	}
+	return &Warning{
+		Kind:  ComponentAfterCook,
+		Value: math.Round(supplierDate.Sub(date).Hours() / 24),
+		Message: fmt.Sprintf("The %s for %s on %s is cooked on %s, after it: move its cook earlier, or have another cook make it.",
+			componentName, recipeName, formatDate(date), formatDate(supplierDate)),
+	}
+}
+
 // CheckServings checks that a cook's servings match the servings of its
 // portions, assigned, and that it has frozen enough servings for those
 // eaten after its fridge days. Frozen servings not planned yet are in the
@@ -366,8 +383,8 @@ func CheckServings(c *Cook, assigned float64) *Warning {
 			Kind:  ServingsOverassigned,
 			Value: assigned,
 			Limit: c.Servings,
-			Message: fmt.Sprintf("The portions of %s add up to %s servings, more than the %s cooked: cook more servings, or plan smaller portions.",
-				c.RecipeName, format(assigned), format(c.Servings)),
+			Message: fmt.Sprintf("%s servings of %s are planned, in portions or for other cooks, more than the %s cooked: cook more servings, or plan less of it.",
+				format(assigned), c.RecipeName, format(c.Servings)),
 		}
 	case assigned+inFreezer < c.Servings-servingsSlack:
 		left := c.Servings - assigned - inFreezer

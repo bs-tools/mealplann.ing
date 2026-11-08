@@ -6,24 +6,34 @@ import {
 } from "@components/plan/plan-bits";
 import type { Slot } from "@components/plan/portion-dialog";
 import ConfirmButton from "@components/ui/confirm-button";
+import { ErrorText } from "@components/ui/query-error";
 import { cardClass, iconButton } from "@components/ui/styles";
+import { useMutation } from "@connectrpc/connect-query";
 import {
   ArchiveBoxArrowDownIcon,
+  ClockIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
+import { useQueryClient } from "@tanstack/react-query";
 import type { EatingTime, Person } from "gen/people/v1/people_pb";
+import { setCookSupplier } from "gen/plans/v1/plans-PlanService_connectquery";
+import { PlanService } from "gen/plans/v1/plans_pb";
 import type {
+  CookSupply,
   PlanDay,
   PlannedCook,
   PlannedPortion,
 } from "gen/plans/v1/plans_pb";
-import { formatDate } from "helpers/format";
+import { formatDate, formatShortDate } from "helpers/format";
 import { formatServings, householdMealLabel } from "helpers/labels";
+import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
 interface CookRowProps {
   planned: PlannedCook;
+  // The week's cooks, which can supply its components.
+  weekCooks: PlannedCook[];
   disabled: boolean;
   onDone: (done: boolean) => void;
   onDelete: () => void;
@@ -32,6 +42,7 @@ interface CookRowProps {
 // CookRow shows a cook of the day, to mark done or delete.
 const CookRow: React.FC<CookRowProps> = ({
   planned,
+  weekCooks,
   disabled,
   onDone,
   onDelete,
@@ -102,6 +113,26 @@ const CookRow: React.FC<CookRowProps> = ({
           />
         </ConfirmButton>
       </div>
+      {cook.supplying.length > 0 && (
+        <p className="text-xs text-gray-600">
+          For{" "}
+          {cook.supplying
+            .map(
+              (supply) =>
+                `${supply.consumerRecipeName} on ${formatShortDate(supply.consumerDate)}`
+            )
+            .join(", ")}
+        </p>
+      )}
+      {cook.supplies.map((supply) => (
+        <SupplyPicker
+          key={supply.componentRecipeId}
+          cookId={cook.id}
+          supply={supply}
+          weekCooks={weekCooks}
+          disabled={disabled}
+        />
+      ))}
       <WarningList warnings={planned.warnings} />
       {freezing && (
         <FreezeDialog
@@ -112,6 +143,72 @@ const CookRow: React.FC<CookRowProps> = ({
         />
       )}
     </li>
+  );
+};
+
+interface SupplyPickerProps {
+  cookId: string;
+  supply: CookSupply;
+  weekCooks: PlannedCook[];
+  disabled: boolean;
+}
+
+/**
+ * SupplyPicker says which cook makes a component of a cook, e.g. "Cooked
+ * chickpeas from Fri 6 Nov", to choose another of the week's cooks of it,
+ * like one pot for two meals.
+ */
+const SupplyPicker: React.FC<SupplyPickerProps> = ({
+  cookId,
+  supply,
+  weekCooks,
+  disabled,
+}) => {
+  const queryClient = useQueryClient();
+  const set = useMutation(setCookSupplier, {
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [PlanService]);
+    },
+  });
+  const options = weekCooks.filter(
+    (other) =>
+      other.cook !== undefined &&
+      other.cook.recipeId === supply.componentRecipeId
+  );
+  return (
+    <div className="flex flex-col gap-0.5">
+      <label className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600">
+        <span>{supply.supplierRecipeName} from</span>
+        <select
+          className="rounded border border-gray-300 bg-white px-1 py-0.5 text-xs text-gray-800"
+          value={supply.supplierCookId}
+          disabled={disabled || set.isPending || options.length < 2}
+          title="The cook that makes it: choose another to share one pot between meals"
+          onChange={(event) => {
+            set.mutate({
+              componentRecipeId: supply.componentRecipeId,
+              cookId,
+              supplierCookId: event.target.value,
+            });
+          }}
+        >
+          {!options.some(
+            (other) => other.cook?.id === supply.supplierCookId
+          ) && (
+            <option value={supply.supplierCookId}>
+              {formatShortDate(supply.supplierDate)}
+            </option>
+          )}
+          {options.map((other) => (
+            <option key={other.cook?.id} value={other.cook?.id}>
+              {formatShortDate(other.cook?.date ?? "")}
+              {other.cook?.id === supply.supplierCookId ? "" : " (share)"}
+            </option>
+          ))}
+        </select>
+      </label>
+      <ErrorText error={set.error} />
+    </div>
   );
 };
 
@@ -131,6 +228,8 @@ interface DayCardProps {
   day: PlanDay;
   // The cooks cooked on the day.
   cooks: PlannedCook[];
+  // The week's cooks, which can supply the day's cooks' components.
+  weekCooks: PlannedCook[];
   people: Person[];
   // Whether a mutation is running, which disables the buttons.
   disabled: boolean;
@@ -154,6 +253,7 @@ interface DayCardProps {
 const DayCard: React.FC<DayCardProps> = ({
   day,
   cooks,
+  weekCooks,
   people,
   disabled,
   shownOnPhones,
@@ -173,12 +273,39 @@ const DayCard: React.FC<DayCardProps> = ({
       <h2 className="text-base font-semibold text-gray-900">
         {formatDate(day.date)}
       </h2>
+      {day.prepTasks.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {day.prepTasks.map((task) => (
+            <li
+              key={task.cookId}
+              className="flex items-start gap-1.5 rounded-md border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-sm text-sky-950"
+            >
+              <ClockIcon
+                className="mt-0.5 size-4 shrink-0 text-sky-700"
+                aria-label="Start ahead"
+              />
+              <span>
+                <span className="font-medium">{task.note}</span>
+                <span className="text-sky-800">
+                  {" "}
+                  · for{" "}
+                  {task.forRecipeNames.length > 0
+                    ? task.forRecipeNames.join(", ")
+                    : task.recipeName}{" "}
+                  on {formatShortDate(task.cookDate)}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
       {cooks.length > 0 && (
         <ul className="flex flex-col gap-1.5 lg:flex-row lg:flex-wrap">
           {cooks.map((planned) => (
             <CookRow
               key={planned.cook?.id}
               planned={planned}
+              weekCooks={weekCooks}
               disabled={disabled}
               onDone={(done) => {
                 onCookDone(planned, done);

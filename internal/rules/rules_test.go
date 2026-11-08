@@ -299,3 +299,19 @@ func TestCheckServings(t *testing.T) {
 		t.Errorf("got %+v, want too few frozen", got)
 	}
 }
+
+func TestCheckSupply(t *testing.T) {
+	t.Parallel()
+	friday := time.Date(2026, 11, 6, 0, 0, 0, 0, time.UTC)
+	if got := CheckSupply("Chili", friday, "Cooked chickpeas", friday.AddDate(0, 0, -1)); got != nil {
+		t.Errorf("got %v for chickpeas cooked the day before, want none", got)
+	}
+	if got := CheckSupply("Chili", friday, "Cooked chickpeas", friday); got != nil {
+		t.Errorf("got %v for chickpeas cooked the same day, want none", got)
+	}
+	got := CheckSupply("Chili", friday, "Cooked chickpeas", friday.AddDate(0, 0, 1))
+	if got == nil || got.Kind != ComponentAfterCook || got.Info ||
+		got.Message != "The Cooked chickpeas for Chili on Fri 6 Nov is cooked on Sat 7 Nov, after it: move its cook earlier, or have another cook make it." {
+		t.Errorf("got %+v, want the chickpeas cooked too late", got)
+	}
+}

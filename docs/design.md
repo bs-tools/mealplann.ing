@@ -110,6 +110,33 @@ saying what to change.
 - Recipes are entered in the web app or by an AI agent through MCP.
   Importing from URLs is left for later.
 
+### Components
+
+A recipe can use another as an ingredient, a component, in servings: soaked
+and pressure cooked chickpeas in a chili. Components can have components,
+but no deeper (`recipes.MaxComponentDepth`), and a recipe can't use itself,
+which saving checks; reads stop at the depth anyway, in case two
+concurrent edits make a cycle.
+
+- **Nutrition** counts a component as a food with its recipe's nutrition,
+  weighed by its servings, and its incomplete nutrients stay incomplete.
+- **Starting ahead**: a recipe can start `prep_ahead_days` before it's
+  cooked, with a `prep_ahead_note`, like "Soak the chickpeas" the night
+  before, which the plan shows as a task on that day.
+- **Linked cooks**: planning a cook of a recipe with components, by any
+  route (a cook, a meal, several meals, a template), also plans a cook of
+  each component on the same date for the servings it needs, linked to it
+  in `cook_supplies`. `SetCookSupplier` points a component at another cook
+  of it, like one pot of chickpeas for two meals, raising that pot's
+  servings, and deletes the replaced cook if nothing uses it any more;
+  deleting a cook deletes the cooks only it needed. The servings a link
+  supplies aren't stored, but computed from the consumer's servings and
+  its recipe, so they follow edits to either, and count as planned for the
+  supplier, like portions.
+- **Shopping and the pantry** leave out a cook's components another cook
+  supplies, which buys and takes its own ingredients; a component without
+  a supplier is made of its own ingredients as part of the cook.
+
 ## Planning
 
 - Plans are by week, starting on Monday.

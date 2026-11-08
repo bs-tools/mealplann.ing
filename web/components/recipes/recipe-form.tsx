@@ -14,7 +14,7 @@ import {
 import UnsavedChangesGuard, {
   leaveUnsaved,
 } from "@components/ui/unsaved-changes-guard";
-import { useMutation } from "@connectrpc/connect-query";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -25,6 +25,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import {
   createRecipe,
+  listRecipes,
   updateRecipe,
 } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import type { Recipe } from "gen/recipes/v1/recipes_pb";
@@ -43,7 +44,10 @@ import { Link, useNavigate } from "react-router";
 interface IngredientInput {
   // A key for React, as ingredients move.
   key: number;
+  // Whether it's a component: another recipe, in servings.
+  isRecipe: boolean;
   food: PickedFood | null;
+  recipe: PickedFood | null;
   amount: string;
   unit: AmountUnit;
   note: string;
@@ -67,10 +71,12 @@ const newKey = (): number => {
 const emptyIngredient = (): IngredientInput => ({
   amount: "",
   food: null,
+  isRecipe: false,
   key: newKey(),
   note: "",
   optional: false,
   originalText: "",
+  recipe: null,
   unit: AmountUnit.GRAMS,
 });
 
@@ -78,15 +84,24 @@ const ingredientInputs = (recipe: Recipe | undefined): IngredientInput[] => {
   if (recipe === undefined) {
     return [emptyIngredient()];
   }
-  return recipe.ingredients.map((ingredient) => ({
-    amount: String(ingredient.amount),
-    food: { id: ingredient.foodId, name: ingredient.foodName },
-    key: newKey(),
-    note: ingredient.note,
-    optional: ingredient.optional,
-    originalText: ingredient.originalText,
-    unit: ingredient.unit,
-  }));
+  return recipe.ingredients.map((ingredient) => {
+    const isRecipe = ingredient.recipeId !== "";
+    return {
+      amount: String(ingredient.amount),
+      food: isRecipe
+        ? null
+        : { id: ingredient.foodId, name: ingredient.foodName },
+      isRecipe,
+      key: newKey(),
+      note: ingredient.note,
+      optional: ingredient.optional,
+      originalText: ingredient.originalText,
+      recipe: isRecipe
+        ? { id: ingredient.recipeId, name: ingredient.recipeName }
+        : null,
+      unit: isRecipe ? AmountUnit.GRAMS : ingredient.unit,
+    };
+  });
 };
 
 const stepInputs = (recipe: Recipe | undefined): StepInput[] => {
@@ -112,7 +127,9 @@ const parseTags = (text: string): string[] => {
 const ingredientsKey = (ingredients: IngredientInput[]): string =>
   JSON.stringify(
     ingredients.map((ingredient) => [
+      ingredient.isRecipe,
       ingredient.food?.id ?? "",
+      ingredient.recipe?.id ?? "",
       ingredient.amount.trim(),
       ingredient.unit,
       ingredient.note.trim(),
@@ -175,8 +192,21 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
   const [freezerDays, setFreezerDays] = useState(
     recipe?.freezerDays === undefined ? "" : String(recipe.freezerDays)
   );
+  const [prepAheadDays, setPrepAheadDays] = useState(
+    recipe === undefined || recipe.prepAheadDays === 0
+      ? ""
+      : String(recipe.prepAheadDays)
+  );
+  const [prepAheadNote, setPrepAheadNote] = useState(
+    recipe?.prepAheadNote ?? ""
+  );
   const [notes, setNotes] = useState(recipe?.notes ?? "");
   const [invalid, setInvalid] = useState("");
+  // The household's recipes, to use as components, but this one.
+  const recipeList = useQuery(listRecipes, {});
+  const components = (recipeList.data?.recipes ?? []).filter(
+    (other) => other.id !== recipe?.id
+  );
 
   const onSaved = async (id: string) => {
     await invalidateServices(queryClient, [RecipeService]);
@@ -222,6 +252,14 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
         (recipe?.freezerDays === undefined ? "" : String(recipe.freezerDays)),
     ],
     ["notes", notes !== (recipe?.notes ?? "")],
+    [
+      "prep_ahead_days",
+      prepAheadDays !==
+        (recipe === undefined || recipe.prepAheadDays === 0
+          ? ""
+          : String(recipe.prepAheadDays)),
+    ],
+    ["prep_ahead_note", prepAheadNote !== (recipe?.prepAheadNote ?? "")],
   ];
   const paths = changed
     .filter(([, isChanged]) => isChanged)
@@ -261,13 +299,40 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
       );
       return;
     }
+    const aheadDays = parseOptionalNumber(prepAheadDays) ?? 0;
+    if (aheadDays === null || !Number.isInteger(aheadDays) || aheadDays > 7) {
+      setInvalid(
+        "Days to start ahead must be a whole number up to 7, or empty if it starts the day it's cooked."
+      );
+      return;
+    }
     const kept = ingredients.filter(
       (ingredient) =>
-        ingredient.food !== null || ingredient.amount.trim() !== ""
+        ingredient.food !== null ||
+        ingredient.recipe !== null ||
+        ingredient.amount.trim() !== ""
     );
     const parsedIngredients = [];
     for (const [index, ingredient] of kept.entries()) {
       const amount = parseOptionalNumber(ingredient.amount);
+      if (ingredient.isRecipe) {
+        if (ingredient.recipe === null) {
+          setInvalid(`Choose the recipe of ingredient ${index + 1}.`);
+          return;
+        }
+        if (amount === null || amount === undefined || amount <= 0) {
+          setInvalid(`Give the servings of ${ingredient.recipe.name}.`);
+          return;
+        }
+        parsedIngredients.push({
+          amount,
+          note: ingredient.note,
+          optional: ingredient.optional,
+          originalText: ingredient.originalText,
+          recipeId: ingredient.recipe.id,
+        });
+        continue;
+      }
       if (ingredient.food === null) {
         setInvalid(`Choose the food of ingredient ${index + 1}.`);
         return;
@@ -294,6 +359,8 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
       ingredients: parsedIngredients,
       name,
       notes,
+      prepAheadDays: aheadDays,
+      prepAheadNote,
       prepSeconds,
       servings: servingCount,
       sourceUrl,
@@ -438,6 +505,22 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
                 />
               )}
             </div>
+            <div className="grid grid-cols-2 items-start gap-3">
+              <TextField
+                label="Starts ahead (days)"
+                value={prepAheadDays}
+                inputMode="numeric"
+                placeholder="0"
+                hint="E.g. 1 for beans soaked the night before."
+                onChange={setPrepAheadDays}
+              />
+              <TextField
+                label="What to do ahead"
+                value={prepAheadNote}
+                placeholder="Soak the chickpeas"
+                onChange={setPrepAheadNote}
+              />
+            </div>
             <TextField
               label="Source"
               value={sourceUrl}
@@ -457,14 +540,76 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
                   className="flex flex-col gap-2 rounded-md border border-gray-200 p-2 sm:p-3"
                 >
                   <div className="flex flex-wrap items-center gap-2">
+                    <div
+                      className="flex"
+                      role="group"
+                      aria-label={`Kind of ingredient ${index + 1}`}
+                    >
+                      {[false, true].map((isRecipe) => (
+                        <button
+                          key={String(isRecipe)}
+                          type="button"
+                          aria-pressed={ingredient.isRecipe === isRecipe}
+                          title={
+                            isRecipe
+                              ? "Another recipe, in servings, like cooked chickpeas: planning this recipe plans a cook of it too"
+                              : "A food, like tomatoes"
+                          }
+                          className={`-ml-px px-2 py-1.5 text-xs font-medium ring-1 ring-inset first:ml-0 first:rounded-l-md last:rounded-r-md ${
+                            ingredient.isRecipe === isRecipe
+                              ? "relative z-10 bg-ink text-white ring-ink"
+                              : "bg-white text-gray-700 ring-gray-300 hover:bg-gray-50"
+                          }`}
+                          onClick={() => {
+                            setIngredient(index, { isRecipe });
+                          }}
+                        >
+                          {isRecipe ? "Recipe" : "Food"}
+                        </button>
+                      ))}
+                    </div>
                     <div className="min-w-48 grow basis-60">
-                      <FoodPicker
-                        label={`Food of ingredient ${index + 1}`}
-                        value={ingredient.food}
-                        onChange={(food) => {
-                          setIngredient(index, { food });
-                        }}
-                      />
+                      {ingredient.isRecipe ? (
+                        <select
+                          aria-label={`Recipe of ingredient ${index + 1}`}
+                          className={inputClass}
+                          value={ingredient.recipe?.id ?? ""}
+                          onChange={(event) => {
+                            const picked = components.find(
+                              (other) => other.id === event.target.value
+                            );
+                            setIngredient(index, {
+                              recipe:
+                                picked === undefined
+                                  ? null
+                                  : { id: picked.id, name: picked.name },
+                            });
+                          }}
+                        >
+                          <option value="">Choose a recipe</option>
+                          {ingredient.recipe !== null &&
+                            !components.some(
+                              (other) => other.id === ingredient.recipe?.id
+                            ) && (
+                              <option value={ingredient.recipe.id}>
+                                {ingredient.recipe.name}
+                              </option>
+                            )}
+                          {components.map((other) => (
+                            <option key={other.id} value={other.id}>
+                              {other.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <FoodPicker
+                          label={`Food of ingredient ${index + 1}`}
+                          value={ingredient.food}
+                          onChange={(food) => {
+                            setIngredient(index, { food });
+                          }}
+                        />
+                      )}
                     </div>
                     <div className="flex grow items-center gap-2 sm:grow-0">
                       <input
@@ -477,26 +622,33 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
                           setIngredient(index, { amount: event.target.value });
                         }}
                       />
-                      <select
-                        aria-label={`Unit of ingredient ${index + 1}`}
-                        className={`${inputClass} w-28`}
-                        value={ingredient.unit}
-                        onChange={(event) => {
-                          // The option's own value keeps the enum's type.
-                          const option = AMOUNT_UNITS.find(
-                            ({ value }) => String(value) === event.target.value
-                          );
-                          if (option !== undefined) {
-                            setIngredient(index, { unit: option.value });
-                          }
-                        }}
-                      >
-                        {AMOUNT_UNITS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                      {ingredient.isRecipe ? (
+                        <span className="w-28 text-sm text-gray-600">
+                          servings
+                        </span>
+                      ) : (
+                        <select
+                          aria-label={`Unit of ingredient ${index + 1}`}
+                          className={`${inputClass} w-28`}
+                          value={ingredient.unit}
+                          onChange={(event) => {
+                            // The option's own value keeps the enum's type.
+                            const option = AMOUNT_UNITS.find(
+                              ({ value }) =>
+                                String(value) === event.target.value
+                            );
+                            if (option !== undefined) {
+                              setIngredient(index, { unit: option.value });
+                            }
+                          }}
+                        >
+                          {AMOUNT_UNITS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">

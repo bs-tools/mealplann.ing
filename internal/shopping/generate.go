@@ -31,7 +31,9 @@ type Need struct {
 }
 
 // NeedsOf returns what a plan needs bought, in the order of its dates: the
-// ingredients of the cooks not yet done, scaled to their servings, the
+// ingredients of the cooks not yet done, scaled to their servings, with
+// their components made of their own ingredients unless another cook
+// supplies them, which buys its own, the
 // portions of foods, and the staples on each date, with recipe staples
 // contributing their scaled ingredients. Optional ingredients are left
 // out. Shares of cooks aren't counted, as the cook is bought for once.
@@ -39,18 +41,18 @@ type Need struct {
 // out.
 func NeedsOf(plan *plans.Plan, byID map[pgtype.UUID]*recipes.Recipe) []Need {
 	var needs []Need
-	addRecipe := func(recipeID pgtype.UUID, servings float64, date time.Time) {
+	addRecipe := func(recipeID pgtype.UUID, servings float64, date time.Time, supplied map[pgtype.UUID]bool) {
 		r, ok := byID[recipeID]
 		if !ok {
 			return
 		}
-		for _, in := range r.IngredientsFor(servings) {
+		for _, in := range r.IngredientsWithout(servings, supplied) {
 			needs = append(needs, Need{FoodID: in.FoodID, Date: date, Amount: in.Amount, Unit: in.Unit})
 		}
 	}
 	for _, c := range plan.Cooks {
 		if !c.Done {
-			addRecipe(c.RecipeID, c.Servings, c.Date)
+			addRecipe(c.RecipeID, c.Servings, c.Date, SuppliedComponents(c))
 		}
 	}
 	for _, p := range plan.Portions {
@@ -61,13 +63,26 @@ func NeedsOf(plan *plans.Plan, byID map[pgtype.UUID]*recipes.Recipe) []Need {
 	for _, o := range plan.StapleOccurrences() {
 		s := o.Staple
 		if s.RecipeID.Valid {
-			addRecipe(s.RecipeID, s.Servings, o.Date)
+			addRecipe(s.RecipeID, s.Servings, o.Date, nil)
 		} else {
 			needs = append(needs, Need{FoodID: s.FoodID, Date: o.Date, Amount: s.Amount, Unit: s.Unit})
 		}
 	}
 	slices.SortStableFunc(needs, func(a, b Need) int { return a.Date.Compare(b.Date) })
 	return needs
+}
+
+// SuppliedComponents returns the components of a cook that other cooks
+// supply, by recipe ID, nil if none.
+func SuppliedComponents(c *plans.Cook) map[pgtype.UUID]bool {
+	if len(c.Supplies) == 0 {
+		return nil
+	}
+	supplied := map[pgtype.UUID]bool{}
+	for _, s := range c.Supplies {
+		supplied[s.ComponentRecipeID] = true
+	}
+	return supplied
 }
 
 // Input is what generating a shopping list needs.

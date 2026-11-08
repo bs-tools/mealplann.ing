@@ -441,7 +441,8 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			Portions: portions,
 		})
 	}
-	cooks, created, err := s.plans.CreateCooksWithPortions(ctx, toCreate)
+	// The cooks of the recipes' components are planned with them.
+	cooks, created, err := s.plans.CreateCooksWithPortions(ctx, withSuppliers(toCreate, d.recipes))
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to plan meals", recipeNotFound)
 	}

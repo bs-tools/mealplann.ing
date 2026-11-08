@@ -22,7 +22,7 @@ import {
 import type { Recipe } from "gen/recipes/v1/recipes_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
 import { formatHoursMinutes, formatRedirectTarget } from "helpers/format";
-import { formatIngredientAmount } from "helpers/labels";
+import { formatIngredientAmount, formatServings } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router";
@@ -35,6 +35,17 @@ const fridgeNote = (recipe: Recipe): string => {
       recipe.fridgeDays === 0
         ? "Doesn't keep"
         : `Keeps ${recipe.fridgeDays} ${recipe.fridgeDays === 1 ? "day" : "days"} in the fridge`
+    );
+  }
+  if (recipe.prepAheadDays > 0) {
+    const days =
+      recipe.prepAheadDays === 1
+        ? "the day before"
+        : `${recipe.prepAheadDays} days ahead`;
+    notes.push(
+      recipe.prepAheadNote === ""
+        ? `Starts ${days}`
+        : `${recipe.prepAheadNote} ${days}`
     );
   }
   if (recipe.freezable) {
@@ -175,17 +186,32 @@ const RecipePage: React.FC = () => {
                     className="flex flex-wrap items-baseline gap-x-1.5"
                   >
                     <span className="font-medium text-gray-900 tabular-nums">
-                      {formatIngredientAmount(
-                        ingredient.amount,
-                        ingredient.unit
-                      )}
+                      {ingredient.recipeId === ""
+                        ? formatIngredientAmount(
+                            ingredient.amount,
+                            ingredient.unit
+                          )
+                        : formatServings(ingredient.amount)}
                     </span>
-                    <Link
-                      to={`/foods/${ingredient.foodId}`}
-                      className="text-gray-900 hover:underline"
-                    >
-                      {ingredient.foodName}
-                    </Link>
+                    {ingredient.recipeId === "" ? (
+                      <Link
+                        to={`/foods/${ingredient.foodId}`}
+                        className="text-gray-900 hover:underline"
+                      >
+                        {ingredient.foodName}
+                      </Link>
+                    ) : (
+                      <>
+                        <span className="text-gray-500">of</span>
+                        <Link
+                          to={`/recipes/${ingredient.recipeId}`}
+                          className="font-medium text-brand-700 hover:underline"
+                        >
+                          {ingredient.recipeName}
+                        </Link>
+                        <Badge>Recipe</Badge>
+                      </>
+                    )}
                     {ingredient.note !== "" && (
                       <span className="text-gray-500">{ingredient.note}</span>
                     )}

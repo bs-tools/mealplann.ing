@@ -15,6 +15,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
 	"github.com/bs-tools/mealplann.ing/internal/services/food"
 	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -40,8 +41,12 @@ const (
 	// maxFreezerDays is a year, longer than cooked food keeps its quality
 	// frozen.
 	maxFreezerDays = 365
-	maxNotesLength = 5000
-	maxQueryLength = 200
+	// maxPrepAheadDays is a week: longer than any soaking, sprouting or
+	// marinating ahead.
+	maxPrepAheadDays       = 7
+	maxPrepAheadNoteLength = 500
+	maxNotesLength         = 5000
+	maxQueryLength         = 200
 )
 
 // nutritionDigits are the decimals computed nutrients are rounded to, which
@@ -63,35 +68,43 @@ var unitsFromProto = map[foodsv1.AmountUnit]nutrition.Unit{
 func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 	ingredients := make([]*recipesv1.Ingredient, 0, len(r.Ingredients))
 	for _, in := range r.Ingredients {
-		ingredients = append(ingredients, recipesv1.Ingredient_builder{
-			FoodId:       store.UUIDToString(in.FoodID),
-			FoodName:     in.FoodName,
+		b := recipesv1.Ingredient_builder{
 			Amount:       in.Amount,
-			Unit:         unitsToProto[in.Unit],
 			Note:         in.Note,
 			OriginalText: in.OriginalText,
 			Optional:     in.Optional,
-		}.Build())
+		}
+		if in.IsComponent() {
+			b.RecipeId = store.UUIDToString(in.ComponentRecipeID)
+			b.RecipeName = in.Name()
+		} else {
+			b.FoodId = store.UUIDToString(in.FoodID)
+			b.FoodName = in.FoodName
+			b.Unit = unitsToProto[in.Unit]
+		}
+		ingredients = append(ingredients, b.Build())
 	}
 	return recipesv1.Recipe_builder{
-		Id:          store.UUIDToString(r.ID),
-		Name:        r.Name,
-		Description: r.Description,
-		Servings:    r.Servings,
-		PrepSeconds: r.PrepSeconds,
-		CookSeconds: r.CookSeconds,
-		Ingredients: ingredients,
-		Steps:       r.Steps,
-		Tags:        r.Tags,
-		SourceUrl:   r.SourceURL,
-		FridgeDays:  r.FridgeDays,
-		Freezable:   r.Freezable,
-		FreezerDays: r.FreezerDays,
-		Notes:       r.Notes,
-		Favorite:    r.Favorite,
-		Nutrition:   nutritionToProto(r),
-		CreateTime:  timestamppb.New(r.CreateTime),
-		UpdateTime:  timestamppb.New(r.UpdateTime),
+		Id:            store.UUIDToString(r.ID),
+		Name:          r.Name,
+		Description:   r.Description,
+		Servings:      r.Servings,
+		PrepSeconds:   r.PrepSeconds,
+		CookSeconds:   r.CookSeconds,
+		Ingredients:   ingredients,
+		Steps:         r.Steps,
+		Tags:          r.Tags,
+		SourceUrl:     r.SourceURL,
+		FridgeDays:    r.FridgeDays,
+		Freezable:     r.Freezable,
+		FreezerDays:   r.FreezerDays,
+		PrepAheadDays: r.PrepAheadDays,
+		PrepAheadNote: r.PrepAheadNote,
+		Notes:         r.Notes,
+		Favorite:      r.Favorite,
+		Nutrition:     nutritionToProto(r),
+		CreateTime:    timestamppb.New(r.CreateTime),
+		UpdateTime:    timestamppb.New(r.UpdateTime),
 	}.Build()
 }
 
@@ -111,7 +124,7 @@ func nutritionToProto(r *recipes.Recipe) *recipesv1.RecipeNutrition {
 		issues = append(issues, recipesv1.IngredientIssue_builder{
 			IngredientIndex:  int32(issue.Index),
 			FoodId:           store.UUIDToString(in.FoodID),
-			FoodName:         in.FoodName,
+			FoodName:         in.Name(),
 			UnknownWeight:    issue.UnknownWeight,
 			UnknownNutrients: unknown,
 		}.Build())
@@ -164,6 +177,7 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 	name := strings.TrimSpace(p.GetName())
 	description := strings.TrimSpace(p.GetDescription())
 	notes := strings.TrimSpace(p.GetNotes())
+	prepNote := strings.TrimSpace(p.GetPrepAheadNote())
 	switch {
 	case name == "":
 		return nil, connect.NewError(connect.CodeInvalidArgument, `name is required: give the recipe a name, e.g. "Chana masala"`)
@@ -186,6 +200,11 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 	case p.HasFreezerDays() && (p.GetFreezerDays() < 1 || p.GetFreezerDays() > maxFreezerDays):
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
 			"freezer_days must be from 1 to %d; leave it unset if unknown", maxFreezerDays)
+	case p.GetPrepAheadDays() < 0 || p.GetPrepAheadDays() > maxPrepAheadDays:
+		return nil, connect.Errorf(connect.CodeInvalidArgument,
+			"prep_ahead_days must be from 0 to %d, with 0 for a recipe started the day it's cooked", maxPrepAheadDays)
+	case utf8.RuneCountInString(prepNote) > maxPrepAheadNoteLength:
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "prep_ahead_note must be at most %d characters", maxPrepAheadNoteLength)
 	}
 	ingredients, err := ingredientsFromProto(p.GetIngredients())
 	if err != nil {
@@ -211,20 +230,22 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 		freezerDays = new(p.GetFreezerDays())
 	}
 	return &recipes.Recipe{
-		Name:        name,
-		Description: description,
-		Servings:    p.GetServings(),
-		PrepSeconds: p.GetPrepSeconds(),
-		CookSeconds: p.GetCookSeconds(),
-		Ingredients: ingredients,
-		Steps:       steps,
-		Tags:        tags,
-		SourceURL:   sourceURL,
-		FridgeDays:  fridgeDays,
-		Freezable:   p.GetFreezable(),
-		FreezerDays: freezerDays,
-		Notes:       notes,
-		Favorite:    p.GetFavorite(),
+		Name:          name,
+		Description:   description,
+		Servings:      p.GetServings(),
+		PrepSeconds:   p.GetPrepSeconds(),
+		CookSeconds:   p.GetCookSeconds(),
+		Ingredients:   ingredients,
+		Steps:         steps,
+		Tags:          tags,
+		SourceURL:     sourceURL,
+		FridgeDays:    fridgeDays,
+		Freezable:     p.GetFreezable(),
+		FreezerDays:   freezerDays,
+		PrepAheadDays: p.GetPrepAheadDays(),
+		PrepAheadNote: prepNote,
+		Notes:         notes,
+		Favorite:      p.GetFavorite(),
 	}, nil
 }
 
@@ -235,15 +256,35 @@ func ingredientsFromProto(list []*recipesv1.Ingredient) ([]*recipes.Ingredient, 
 	ingredients := make([]*recipes.Ingredient, 0, len(list))
 	for i, p := range list {
 		field := fmt.Sprintf("ingredients[%d]", i)
-		foodID, err := store.StringToUUID(p.GetFoodId())
-		if err != nil {
+		var foodID, componentID pgtype.UUID
+		var unit nutrition.Unit
+		var err error
+		switch {
+		case p.GetRecipeId() != "" && p.GetFoodId() != "":
 			return nil, connect.Errorf(connect.CodeInvalidArgument,
-				"%s.food_id is invalid: %v; find the household's foods with ListFoods", field, err).WithCause(err)
-		}
-		unit, ok := unitsFromProto[p.GetUnit()]
-		if !ok {
-			return nil, connect.Errorf(connect.CodeInvalidArgument,
-				"%s.unit is required: AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES", field)
+				"%s has both food_id and recipe_id: set food_id for a food, or recipe_id for a component", field)
+		case p.GetRecipeId() != "":
+			componentID, err = store.StringToUUID(p.GetRecipeId())
+			if err != nil {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.recipe_id is invalid: %v; find the household's recipes with ListRecipes", field, err).WithCause(err)
+			}
+			if p.GetUnit() != foodsv1.AmountUnit_AMOUNT_UNIT_UNSPECIFIED {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.unit must be unspecified for a component, whose amount is in servings of its recipe", field)
+			}
+		default:
+			foodID, err = store.StringToUUID(p.GetFoodId())
+			if err != nil {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.food_id is invalid: %v; find the household's foods with ListFoods, or set recipe_id for a component", field, err).WithCause(err)
+			}
+			var ok bool
+			unit, ok = unitsFromProto[p.GetUnit()]
+			if !ok {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.unit is required: AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES", field)
+			}
 		}
 		amount := p.GetAmount()
 		if math.IsNaN(amount) || amount <= 0 || amount > maxAmount {
@@ -258,12 +299,13 @@ func ingredientsFromProto(list []*recipesv1.Ingredient) ([]*recipes.Ingredient, 
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.original_text must be at most %d characters", field, maxOriginalLength)
 		}
 		ingredients = append(ingredients, &recipes.Ingredient{
-			FoodID:       foodID,
-			Amount:       amount,
-			Unit:         unit,
-			Note:         note,
-			OriginalText: original,
-			Optional:     p.GetOptional(),
+			FoodID:            foodID,
+			ComponentRecipeID: componentID,
+			Amount:            amount,
+			Unit:              unit,
+			Note:              note,
+			OriginalText:      original,
+			Optional:          p.GetOptional(),
 		})
 	}
 	return ingredients, nil
