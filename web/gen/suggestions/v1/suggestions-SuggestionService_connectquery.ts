@@ -40,3 +40,34 @@ import { SuggestionService } from "./suggestions_pb";
  * @generated from rpc suggestions.v1.SuggestionService.SuggestRecipes
  */
 export const suggestRecipes = SuggestionService.method.suggestRecipes;
+
+/**
+ * Suggest a whole plan of shared meals for the next days at once: a
+ * recipe for each open breakfast, lunch or dinner, chosen together so
+ * the days share ingredients and packs, use the pantry, vary, and meet
+ * everyone's rules and targets. It's the fastest way to plan a week:
+ *
+ * 1. Call SuggestPlan with the first date, the number of days and the
+ *    meals, and criteria from what the user wants, like more variety,
+ *    their favorites, or quick recipes only.
+ * 2. Show the user the plan. Each slot has its suggestion, with the
+ *    reasons, and alternatives.
+ * 3. To change it, call SuggestPlan again with choices: the slots to
+ *    keep, with their recipe (e.g. an alternative the user picked), and
+ *    those to leave empty. The other slots are planned again around
+ *    them, with a new seed for something different, or the same seed
+ *    for the same plan.
+ * 4. Save it with PlanService.PlanMeals, with the recipe of each slot.
+ *
+ * The search is probabilistic: it tries many plans for about two
+ * seconds, picking each slot's recipe among the best for it given the
+ * slots planned before, keeps the best plan, and then improves each slot
+ * given all the others. Slots that already have a cook of their meal
+ * aren't planned again. A slot only gets a recipe that breaks someone's
+ * rules if every recipe does. Nothing is changed. Fails with
+ * INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
+ * nobody eats from the meals, or no recipe meets the criteria.
+ *
+ * @generated from rpc suggestions.v1.SuggestionService.SuggestPlan
+ */
+export const suggestPlan = SuggestionService.method.suggestPlan;

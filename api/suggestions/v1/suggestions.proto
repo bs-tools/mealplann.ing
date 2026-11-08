@@ -70,6 +70,32 @@ service SuggestionService {
   // a bad date or an eating time that isn't the person's, and with
   // FAILED_PRECONDITION if nobody eats from the shared meal.
   rpc SuggestRecipes(SuggestRecipesRequest) returns (SuggestRecipesResponse);
+  // Suggest a whole plan of shared meals for the next days at once: a
+  // recipe for each open breakfast, lunch or dinner, chosen together so
+  // the days share ingredients and packs, use the pantry, vary, and meet
+  // everyone's rules and targets. It's the fastest way to plan a week:
+  //
+  // 1. Call SuggestPlan with the first date, the number of days and the
+  //    meals, and criteria from what the user wants, like more variety,
+  //    their favorites, or quick recipes only.
+  // 2. Show the user the plan. Each slot has its suggestion, with the
+  //    reasons, and alternatives.
+  // 3. To change it, call SuggestPlan again with choices: the slots to
+  //    keep, with their recipe (e.g. an alternative the user picked), and
+  //    those to leave empty. The other slots are planned again around
+  //    them, with a new seed for something different, or the same seed
+  //    for the same plan.
+  // 4. Save it with PlanService.PlanMeals, with the recipe of each slot.
+  //
+  // The search is probabilistic: it tries many plans for about two
+  // seconds, picking each slot's recipe among the best for it given the
+  // slots planned before, keeps the best plan, and then improves each slot
+  // given all the others. Slots that already have a cook of their meal
+  // aren't planned again. A slot only gets a recipe that breaks someone's
+  // rules if every recipe does. Nothing is changed. Fails with
+  // INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
+  // nobody eats from the meals, or no recipe meets the criteria.
+  rpc SuggestPlan(SuggestPlanRequest) returns (SuggestPlanResponse);
 }
 
 // An eating time of one person, to suggest a recipe for, like a small
@@ -211,4 +237,126 @@ message Suggestion {
   // What it needs bought beyond the pantry and the week's shopping,
   // rounded to whole packs, by name.
   repeated ItemToBuy items_to_buy = 10;
+}
+
+// Emphasis is how much a criterion of a plan counts.
+enum Emphasis {
+  // Normal.
+  EMPHASIS_UNSPECIFIED = 0;
+  // Not at all: its score components are left out.
+  EMPHASIS_OFF = 1;
+  // Half as much as normal.
+  EMPHASIS_LOW = 2;
+  // As SuggestRecipes counts it.
+  EMPHASIS_NORMAL = 3;
+  // Twice as much as normal.
+  EMPHASIS_HIGH = 4;
+}
+
+// What the user wants of a suggested plan. Someone's rules always count
+// fully, as they come from their care team.
+message PlanCriteria {
+  // How much to avoid repeating recipes on nearby days (VARIETY).
+  Emphasis variety = 1;
+  // How much to prefer the household's favorites (FAVORITE).
+  Emphasis favorites = 2;
+  // How much to use up the pantry and the rest of packs (PANTRY and
+  // PACK_LEFTOVERS).
+  Emphasis pantry = 3;
+  // How much to keep the shop short, with ingredients shared between
+  // meals and fresh food that keeps until it's cooked
+  // (SHARED_INGREDIENTS and KEEPING).
+  Emphasis shopping = 4;
+  // How much to meet everyone's daily nutrient targets (NUTRITION).
+  Emphasis nutrition = 5;
+  // Only plan recipes whose preparation and cooking take at most this
+  // long in all, in seconds. 0 for any time. Recipes of unknown times
+  // count as quick enough.
+  int32 max_total_seconds = 6;
+  // Don't plan recipes with any of these tags, e.g. "slow-cooker".
+  repeated string exclude_tags = 7;
+  // Don't plan these recipes, e.g. ones the user doesn't want this week.
+  repeated string exclude_recipe_ids = 8;
+}
+
+// The user's choice for a slot of a suggested plan.
+message PlanChoice {
+  // The date of the slot (YYYY-MM-DD). Required.
+  string date = 1;
+  // The shared meal of the slot. Required.
+  people.v1.HouseholdMeal meal = 2;
+  // The ID of the recipe to keep at the slot, whatever the criteria, or
+  // empty to leave the slot empty.
+  string recipe_id = 3;
+}
+
+message SuggestPlanRequest {
+  // The first date to plan (YYYY-MM-DD). Required.
+  string start_date = 1;
+  // How many days to plan, from 1 to 14.
+  int32 days = 2;
+  // The shared meals to plan each day. Empty for every meal someone eats
+  // from.
+  repeated people.v1.HouseholdMeal meals = 3;
+  // What the user wants of the plan.
+  PlanCriteria criteria = 4;
+  // The slots the user chose a recipe for, or to leave empty. At most one
+  // per slot.
+  repeated PlanChoice choices = 5;
+  // The seed of the search's random draws: the same request with the same
+  // seed suggests the same plan, if the household's data hasn't changed.
+  // 0 for a new one, which the response returns.
+  uint64 seed = 6;
+}
+
+// PlanSlotState is what a slot of a suggested plan holds.
+enum PlanSlotState {
+  PLAN_SLOT_STATE_UNSPECIFIED = 0;
+  // A suggested recipe.
+  PLAN_SLOT_STATE_SUGGESTED = 1;
+  // The recipe the user chose to keep.
+  PLAN_SLOT_STATE_KEPT = 2;
+  // Nothing, as the user chose to leave it empty.
+  PLAN_SLOT_STATE_SKIPPED = 3;
+  // Nothing new, as it's planned already: see planned_recipe_names.
+  PLAN_SLOT_STATE_PLANNED = 4;
+  // Nothing, as no recipe could be suggested.
+  PLAN_SLOT_STATE_UNFILLED = 5;
+}
+
+// A slot of a suggested plan: a shared meal on a date.
+message PlanSlot {
+  // The date (YYYY-MM-DD).
+  string date = 1;
+  // The shared meal.
+  people.v1.HouseholdMeal meal = 2;
+  // What it holds.
+  PlanSlotState state = 3;
+  // The recipe suggested or kept, scored against the rest of the plan,
+  // for SUGGESTED and KEPT.
+  Suggestion suggestion = 4;
+  // The next best recipes for the slot, given the rest of the plan, best
+  // first, for SUGGESTED.
+  repeated Suggestion alternatives = 5;
+  // The recipes of the cooks already planned at the slot, for PLANNED.
+  repeated string planned_recipe_names = 6;
+  // How many of the recipes meeting the criteria break nobody's rules at
+  // the slot, given the rest of the plan, for SUGGESTED and KEPT. If it's
+  // fewer than the days planned, the plan repeats them, or breaks a rule:
+  // suggest adding recipes that fit, or checking that the rules are the
+  // care team's.
+  int32 fitting_recipe_count = 7;
+}
+
+message SuggestPlanResponse {
+  // Every slot of the days and meals, by date and meal.
+  repeated PlanSlot slots = 1;
+  // The plan's score: the sum of its slots'.
+  double score = 2;
+  // How many plans the search tried.
+  int32 plans_tried = 3;
+  // The seed of the search, to suggest the same plan again.
+  uint64 seed = 4;
+  // How many recipes meet the criteria.
+  int32 recipe_count = 5;
 }

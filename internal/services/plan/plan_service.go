@@ -43,6 +43,7 @@ type PlanRepository interface {
 	GetCook(ctx context.Context, householdID, id pgtype.UUID) (*plans.Cook, error)
 	CreateCook(ctx context.Context, c *plans.Cook) (*plans.Cook, error)
 	CreateCookWithPortions(ctx context.Context, c *plans.Cook, portions []*plans.Portion) (*plans.Cook, []*plans.Portion, error)
+	CreateCooksWithPortions(ctx context.Context, list []*plans.CookWithPortions) ([]*plans.Cook, [][]*plans.Portion, error)
 	UpdateCook(ctx context.Context, c *plans.Cook) (*plans.Cook, error)
 	DeleteCook(ctx context.Context, householdID, id pgtype.UUID) error
 	GetPortion(ctx context.Context, householdID, id pgtype.UUID) (*plans.Portion, error)
