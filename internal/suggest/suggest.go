@@ -1061,19 +1061,13 @@ func recipeMealTags(r *recipes.Recipe) []string {
 }
 
 // FitsMeal reports whether a plan may put a recipe at a slot of a meal
-// tag, as returned by slotTag. Breakfast and snacks are their own kinds of
-// food, so they take only recipes tagged for them: a chili isn't
-// breakfast, and a recipe without meal tags is most likely a main meal.
-// Lunch and dinner, and main eating times of no shared meal, take recipes
-// tagged for either, or with no meal tag.
+// tag, as returned by slotTag. Breakfast is its own kind of food, so it
+// takes only recipes tagged "breakfast": a chili isn't breakfast, and a
+// recipe without meal tags is most likely a main meal. Every other slot
+// takes any recipe, a breakfast for lunch too, with the meal tags only
+// counting in its score.
 func FitsMeal(r *recipes.Recipe, tag string) bool {
-	tagged := recipeMealTags(r)
-	switch tag {
-	case "breakfast", "snack":
-		return slices.Contains(tagged, tag)
-	default:
-		return len(tagged) == 0 || slices.Contains(tagged, "lunch") || slices.Contains(tagged, "dinner")
-	}
+	return tag != "breakfast" || slices.Contains(recipeMealTags(r), "breakfast")
 }
 
 // isFresh reports whether a food is fresh: it keeps a week or less, or is

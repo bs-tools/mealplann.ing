@@ -216,17 +216,17 @@ func TestPlanDone(t *testing.T) {
 
 func TestFitsMeal(t *testing.T) {
 	t.Parallel()
+	// Only breakfast needs its tag; the other slots take anything, a
+	// breakfast for lunch too.
 	for _, tt := range []struct {
 		tags []string
 		want map[string]bool
 	}{
-		// No meal tag is a main meal.
-		{nil, map[string]bool{"breakfast": false, "lunch": true, "dinner": true, "": true, "snack": false}},
-		{[]string{"quick"}, map[string]bool{"breakfast": false, "lunch": true, "dinner": true, "": true, "snack": false}},
-		{[]string{" Breakfast "}, map[string]bool{"breakfast": true, "lunch": false, "dinner": false, "": false, "snack": false}},
-		{[]string{"dinner"}, map[string]bool{"breakfast": false, "lunch": true, "dinner": true, "": true, "snack": false}},
-		{[]string{"snack"}, map[string]bool{"breakfast": false, "lunch": false, "dinner": false, "": false, "snack": true}},
-		{[]string{"breakfast", "dinner"}, map[string]bool{"breakfast": true, "lunch": true, "dinner": true, "": true, "snack": false}},
+		{nil, map[string]bool{"breakfast": false, "lunch": true, "dinner": true, "": true, "snack": true}},
+		{[]string{"quick"}, map[string]bool{"breakfast": false, "lunch": true, "dinner": true, "": true, "snack": true}},
+		{[]string{" Breakfast "}, map[string]bool{"breakfast": true, "lunch": true, "dinner": true, "": true, "snack": true}},
+		{[]string{"dinner"}, map[string]bool{"breakfast": false, "lunch": true, "dinner": true, "": true, "snack": true}},
+		{[]string{"snack"}, map[string]bool{"breakfast": false, "lunch": true, "dinner": true, "": true, "snack": true}},
 	} {
 		r := &recipes.Recipe{Name: "R", Tags: tt.tags}
 		for tag, want := range tt.want {

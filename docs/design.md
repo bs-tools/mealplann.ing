@@ -316,11 +316,11 @@ scoring as `SuggestRecipes`.
   is canceled. A polishing pass then scores each slot against all the
   others, swaps in a better recipe if there is one, and gives each slot its
   reasons and alternatives.
-- **Meal tags are hard constraints**: breakfast and snacks only take
-  recipes tagged "breakfast" or "snack", and lunch, dinner and other main
-  eating times only recipes tagged "lunch" or "dinner", or with no meal tag,
-  which are most likely main meals. A slot no recipe fits says which tag
-  it's missing.
+- **Breakfast is a hard constraint**: it only takes recipes tagged
+  "breakfast", as a recipe with no meal tag is most likely a main meal.
+  The other slots take any recipe, a breakfast for lunch too, with the meal
+  tags only counting in the score. A breakfast no recipe fits says to tag
+  some.
 - **Each day's shared meals come before its personal eating times**, so a
   shared meal's portion that's more than someone's maximum portion spills
   into their next small eating times, as `PlanMeal` splits it, and such an

@@ -87,10 +87,9 @@ type SuggestionServiceClient interface {
 	// recipe for each open breakfast, lunch or dinner, and for each eating
 	// time of one person that eats from no shared meal, like a snack
 	// mid-morning, chosen together so the days share ingredients and packs,
-	// use the pantry, vary, and meet everyone's rules and targets. Slots only
-	// get recipes tagged for them: breakfast and snacks need recipes tagged
-	// "breakfast" or "snack", and lunch, dinner and other main eating times
-	// take recipes tagged "lunch" or "dinner", or with no meal tag. A slot
+	// use the pantry, vary, and meet everyone's rules and targets. Breakfast
+	// only gets recipes tagged "breakfast"; the other slots take any recipe,
+	// a breakfast for lunch too, preferring those tagged for them. A slot
 	// left without one says why. It's the fastest way to plan a week:
 	//
 	//  1. Call SuggestPlan with the first date, the number of days and the
@@ -163,10 +162,9 @@ type SuggestionServiceHandler interface {
 	// recipe for each open breakfast, lunch or dinner, and for each eating
 	// time of one person that eats from no shared meal, like a snack
 	// mid-morning, chosen together so the days share ingredients and packs,
-	// use the pantry, vary, and meet everyone's rules and targets. Slots only
-	// get recipes tagged for them: breakfast and snacks need recipes tagged
-	// "breakfast" or "snack", and lunch, dinner and other main eating times
-	// take recipes tagged "lunch" or "dinner", or with no meal tag. A slot
+	// use the pantry, vary, and meet everyone's rules and targets. Breakfast
+	// only gets recipes tagged "breakfast"; the other slots take any recipe,
+	// a breakfast for lunch too, preferring those tagged for them. A slot
 	// left without one says why. It's the fastest way to plan a week:
 	//
 	//  1. Call SuggestPlan with the first date, the number of days and the

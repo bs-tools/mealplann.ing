@@ -237,7 +237,7 @@ func personalSlotSummary(s *suggestionsv1.PlanSlot) string {
 
 // TestSuggestPlanPersonalEatingTimes checks that a plan covers each
 // person's own eating times, like snacks, with the shared meals, and only
-// puts recipes at slots their meal tags allow.
+// puts breakfasts at breakfast.
 func TestSuggestPlanPersonalEatingTimes(t *testing.T) {
 	t.Parallel()
 	e := newEnv(t)
@@ -266,8 +266,8 @@ func TestSuggestPlanPersonalEatingTimes(t *testing.T) {
 		{"Granola", []string{"Breakfast"}, oats},
 		{"Hummus plate", []string{"snack"}, chickpeas},
 		{"Roasted chickpeas", []string{"snack"}, chickpeas},
-		// The chili has no meal tag, so it's a main meal, never breakfast
-		// or a snack, however well it scores there.
+		// The chili has no meal tag, so it's a main meal, never breakfast,
+		// however well it scores there.
 		{"Chili", nil, beans},
 		{"Bean curry", []string{"dinner"}, beans},
 		{"Bean salad", []string{"lunch"}, beans},
@@ -281,16 +281,21 @@ func TestSuggestPlanPersonalEatingTimes(t *testing.T) {
 		}
 		recipeIDs[r.name] = resp.GetRecipe().GetId()
 	}
+	// Breakfast only takes breakfasts; the other slots take anything.
+	var everything []string
+	for name := range recipeIDs {
+		everything = append(everything, name)
+	}
 	allowed := map[string][]string{
 		breakfast.String(): {"Porridge", "Granola"},
-		lunch.String():     {"Chili", "Bean curry", "Bean salad"},
-		dinner.String():    {"Chili", "Bean curry", "Bean salad"},
-		"Mid-morning":      {"Hummus plate", "Roasted chickpeas"},
-		"Evening":          {"Hummus plate", "Roasted chickpeas"},
+		lunch.String():     everything,
+		dinner.String():    everything,
+		"Mid-morning":      everything,
+		"Evening":          everything,
 	}
 
 	// Two days of the whole household: each day's three shared meals, then
-	// Cleo's two snacks, each with a recipe tagged for it.
+	// Cleo's two snacks.
 	resp, err := e.suggestions.SuggestPlan(ctx, suggestionsv1.SuggestPlanRequest_builder{StartDate: monday, Days: 2, Seed: 7}.Build())
 	if err != nil {
 		t.Fatalf("SuggestPlan: %v", err)
@@ -372,15 +377,19 @@ func TestSuggestPlanPersonalEatingTimes(t *testing.T) {
 	}.Build())
 	wantCode(t, err, connect.CodeInvalidArgument)
 
-	// Without snack recipes, the snacks can't be planned, and say why.
+	// Without breakfast recipes, breakfast can't be planned, and says why,
+	// but the snacks still can.
 	unfilled, err := e.suggestions.SuggestPlan(ctx, suggestionsv1.SuggestPlanRequest_builder{
-		StartDate: monday, Days: 1, Criteria: suggestionsv1.PlanCriteria_builder{ExcludeTags: []string{"snack"}}.Build(),
+		StartDate: monday, Days: 1, Criteria: suggestionsv1.PlanCriteria_builder{ExcludeTags: []string{"breakfast"}}.Build(),
 	}.Build())
 	if err != nil {
 		t.Fatalf("SuggestPlan: %v", err)
 	}
-	if s := unfilled.GetSlots()[3]; s.GetState() != suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_UNFILLED || !strings.Contains(s.GetUnfilledReason(), `"snack"`) {
-		t.Errorf("got %v (%q), want it unfilled, as no recipe is tagged snack", personalSlotSummary(s), s.GetUnfilledReason())
+	if s := unfilled.GetSlots()[0]; s.GetState() != suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_UNFILLED || !strings.Contains(s.GetUnfilledReason(), `"breakfast"`) {
+		t.Errorf("got %v (%q), want it unfilled, as no recipe is tagged breakfast", slotSummary(s), s.GetUnfilledReason())
+	}
+	if s := unfilled.GetSlots()[3]; !s.HasSuggestion() {
+		t.Errorf("got %v, want a snack", personalSlotSummary(s))
 	}
 
 	// Saving the plan plans Cleo's snacks as her own portions, and planned

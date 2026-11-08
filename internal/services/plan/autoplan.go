@@ -404,12 +404,7 @@ func unfilledReason(ps *suggest.PlannedSlot) string {
 	if ps.Eligible > 0 {
 		return "No recipe could be planned here."
 	}
-	switch tag := ps.Slot.Tag(); tag {
-	case "breakfast", "snack":
-		return fmt.Sprintf("No recipe meeting the criteria is tagged %q: tag the recipes that make a good %s.", tag, tag)
-	default:
-		return `No recipe meeting the criteria is for a main meal: those have no meal tag, or are tagged "lunch" or "dinner".`
-	}
+	return `No recipe meeting the criteria is tagged "breakfast": tag the recipes that make a good breakfast.`
 }
 
 // boolInt returns 1 for true and 0 for false, to sort by.

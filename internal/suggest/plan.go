@@ -39,8 +39,9 @@ import (
 //
 // The rules of the eating times aren't hard constraints, as in
 // SuggestRecipes, but a slot only draws from recipes that break no rule if
-// it has any. Meal tags are hard constraints: a slot only draws from the
-// recipes that FitsMeal allows at it, so breakfast is never a chili.
+// it has any. Breakfast is a hard constraint: it only draws from the
+// recipes FitsMeal allows, those tagged "breakfast", so it's never a
+// chili.
 //
 // The slots are shared meals, and the eating times of one person that eat
 // from no shared meal, like a snack mid-morning. A shared meal's portion
