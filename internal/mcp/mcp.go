@@ -44,6 +44,10 @@ var (
 	// modify any state.
 	readOnlyPrefixes = []string{"Get", "List", "Search", "Find", "Summarize", "Preview", "Suggest"}
 
+	// nonIdempotentPrefixes are the method name prefixes of methods that
+	// create something each time they're called.
+	nonIdempotentPrefixes = []string{"Create", "Add", "Plan", "Apply"}
+
 	contextType = reflect.TypeFor[context.Context]()
 	errorType   = reflect.TypeFor[error]()
 )
@@ -178,8 +182,11 @@ func newTool(md protoreflect.MethodDescriptor) *mcp.Tool {
 			DestructiveHint: new(hasPrefix(name, "Delete")),
 			// Most methods are declarative (get, update, delete, set), and
 			// repeating them has no further effect, but creating twice
-			// creates two resources.
-			IdempotentHint: !hasPrefix(name, "Create"),
+			// creates two resources, as do adding to the pantry and
+			// planning meals or applying a template, which create cooks.
+			// Creates with a request_id are safe to retry, but only with
+			// it.
+			IdempotentHint: !hasPrefix(name, nonIdempotentPrefixes...),
 			// The tools only operate on the user's own data.
 			OpenWorldHint: new(false),
 		},

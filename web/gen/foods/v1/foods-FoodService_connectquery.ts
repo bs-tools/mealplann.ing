@@ -30,6 +30,16 @@ export const searchFoodData = FoodService.method.searchFoodData;
 export const createFood = FoodService.method.createFood;
 
 /**
+ * Create several foods at once, like the foods of a shelf or a receipt.
+ * Each is created on its own, like CreateFood, in parallel: the response
+ * has a result per request, in order, with what was created or the error.
+ * At most 100 requests.
+ *
+ * @generated from rpc foods.v1.FoodService.CreateFoods
+ */
+export const createFoods = FoodService.method.createFoods;
+
+/**
  * Get one of the household's foods, by its ID or its name. Fails with
  * NOT_FOUND naming the foods with similar names if no food has the name.
  *

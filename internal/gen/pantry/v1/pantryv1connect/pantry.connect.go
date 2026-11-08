@@ -28,6 +28,9 @@ const (
 	PantryServiceListPantryProcedure = "/pantry.v1.PantryService/ListPantry"
 	// PantryServiceAddToPantryProcedure is the procedure name of the PantryService's AddToPantry RPC.
 	PantryServiceAddToPantryProcedure = "/pantry.v1.PantryService/AddToPantry"
+	// PantryServiceAddLotsToPantryProcedure is the procedure name of the PantryService's
+	// AddLotsToPantry RPC.
+	PantryServiceAddLotsToPantryProcedure = "/pantry.v1.PantryService/AddLotsToPantry"
 	// PantryServiceUpdatePantryItemProcedure is the procedure name of the PantryService's
 	// UpdatePantryItem RPC.
 	PantryServiceUpdatePantryItemProcedure = "/pantry.v1.PantryService/UpdatePantryItem"
@@ -49,6 +52,13 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_pantry_v1_pantry_proto.Services().ByName("PantryService").Methods().ByName("AddToPantry"),
 			Procedure:  PantryServiceAddToPantryProcedure,
+		}
+	})
+	pantryServiceAddLotsToPantrySpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_pantry_v1_pantry_proto.Services().ByName("PantryService").Methods().ByName("AddLotsToPantry"),
+			Procedure:  PantryServiceAddLotsToPantryProcedure,
 		}
 	})
 	pantryServiceUpdatePantryItemSpec = sync.OnceValue(func() connect.Spec {
@@ -83,6 +93,11 @@ type PantryServiceClient interface {
 	// stock, as those aren't tracked, unless track_stock is set. The response
 	// says how the amount was converted, e.g. "148 ml at 1.17 g/ml is 173 g".
 	AddToPantry(context.Context, *v1.AddToPantryRequest) (*v1.AddToPantryResponse, error)
+	// Add several lots at once, like a shelf from a photo or a shop's
+	// receipt. Each lot is added on its own, like AddToPantry, in parallel: the response
+	// has a result per request, in order, with what was added or the error.
+	// At most 100 requests.
+	AddLotsToPantry(context.Context, *v1.AddLotsToPantryRequest) (*v1.AddLotsToPantryResponse, error)
 	// Update a lot of the pantry, e.g. its grams after using some, or its
 	// opened_date when opening it.
 	UpdatePantryItem(context.Context, *v1.UpdatePantryItemRequest) (*v1.UpdatePantryItemResponse, error)
@@ -112,6 +127,11 @@ type PantryServiceHandler interface {
 	// stock, as those aren't tracked, unless track_stock is set. The response
 	// says how the amount was converted, e.g. "148 ml at 1.17 g/ml is 173 g".
 	AddToPantry(context.Context, *v1.AddToPantryRequest) (*v1.AddToPantryResponse, error)
+	// Add several lots at once, like a shelf from a photo or a shop's
+	// receipt. Each lot is added on its own, like AddToPantry, in parallel: the response
+	// has a result per request, in order, with what was added or the error.
+	// At most 100 requests.
+	AddLotsToPantry(context.Context, *v1.AddLotsToPantryRequest) (*v1.AddLotsToPantryResponse, error)
 	// Update a lot of the pantry, e.g. its grams after using some, or its
 	// opened_date when opening it.
 	UpdatePantryItem(context.Context, *v1.UpdatePantryItemRequest) (*v1.UpdatePantryItemResponse, error)
@@ -126,6 +146,7 @@ func RegisterPantryServiceHandler(server *connect.Server, svc PantryServiceHandl
 	server.Register(
 		connect.Method{Spec: pantryServiceListPantrySpec(), Handler: adapter.listPantry},
 		connect.Method{Spec: pantryServiceAddToPantrySpec(), Handler: adapter.addToPantry},
+		connect.Method{Spec: pantryServiceAddLotsToPantrySpec(), Handler: adapter.addLotsToPantry},
 		connect.Method{Spec: pantryServiceUpdatePantryItemSpec(), Handler: adapter.updatePantryItem},
 		connect.Method{Spec: pantryServiceRemoveFromPantrySpec(), Handler: adapter.removeFromPantry},
 	)
@@ -140,6 +161,10 @@ func (UnimplementedPantryServiceHandler) ListPantry(context.Context, *v1.ListPan
 
 func (UnimplementedPantryServiceHandler) AddToPantry(context.Context, *v1.AddToPantryRequest) (*v1.AddToPantryResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "pantry.v1.PantryService.AddToPantry is not implemented")
+}
+
+func (UnimplementedPantryServiceHandler) AddLotsToPantry(context.Context, *v1.AddLotsToPantryRequest) (*v1.AddLotsToPantryResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "pantry.v1.PantryService.AddLotsToPantry is not implemented")
 }
 
 func (UnimplementedPantryServiceHandler) UpdatePantryItem(context.Context, *v1.UpdatePantryItemRequest) (*v1.UpdatePantryItemResponse, error) {
@@ -165,6 +190,14 @@ func (c *pantryServiceClient) ListPantry(ctx context.Context, req *v1.ListPantry
 func (c *pantryServiceClient) AddToPantry(ctx context.Context, req *v1.AddToPantryRequest) (*v1.AddToPantryResponse, error) {
 	var res v1.AddToPantryResponse
 	if err := c.client.CallUnary(ctx, pantryServiceAddToPantrySpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *pantryServiceClient) AddLotsToPantry(ctx context.Context, req *v1.AddLotsToPantryRequest) (*v1.AddLotsToPantryResponse, error) {
+	var res v1.AddLotsToPantryResponse
+	if err := c.client.CallUnary(ctx, pantryServiceAddLotsToPantrySpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -206,6 +239,18 @@ func (h pantryServiceHandler) addToPantry(ctx context.Context, _ connect.Spec, s
 		return err
 	}
 	res, err := h.svc.AddToPantry(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h pantryServiceHandler) addLotsToPantry(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.AddLotsToPantryRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.AddLotsToPantry(ctx, &req)
 	if err != nil {
 		return err
 	}

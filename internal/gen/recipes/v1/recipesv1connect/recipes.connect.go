@@ -32,6 +32,11 @@ const (
 	RecipeServiceListRecipesProcedure = "/recipes.v1.RecipeService/ListRecipes"
 	// RecipeServiceUpdateRecipeProcedure is the procedure name of the RecipeService's UpdateRecipe RPC.
 	RecipeServiceUpdateRecipeProcedure = "/recipes.v1.RecipeService/UpdateRecipe"
+	// RecipeServiceUpdateRecipesProcedure is the procedure name of the RecipeService's UpdateRecipes
+	// RPC.
+	RecipeServiceUpdateRecipesProcedure = "/recipes.v1.RecipeService/UpdateRecipes"
+	// RecipeServiceReplaceFoodProcedure is the procedure name of the RecipeService's ReplaceFood RPC.
+	RecipeServiceReplaceFoodProcedure = "/recipes.v1.RecipeService/ReplaceFood"
 	// RecipeServiceDeleteRecipeProcedure is the procedure name of the RecipeService's DeleteRecipe RPC.
 	RecipeServiceDeleteRecipeProcedure = "/recipes.v1.RecipeService/DeleteRecipe"
 )
@@ -65,6 +70,20 @@ var (
 			Procedure:  RecipeServiceUpdateRecipeProcedure,
 		}
 	})
+	recipeServiceUpdateRecipesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_recipes_v1_recipes_proto.Services().ByName("RecipeService").Methods().ByName("UpdateRecipes"),
+			Procedure:  RecipeServiceUpdateRecipesProcedure,
+		}
+	})
+	recipeServiceReplaceFoodSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_recipes_v1_recipes_proto.Services().ByName("RecipeService").Methods().ByName("ReplaceFood"),
+			Procedure:  RecipeServiceReplaceFoodProcedure,
+		}
+	})
 	recipeServiceDeleteRecipeSpec = sync.OnceValue(func() connect.Spec {
 		return connect.Spec{
 			StreamType: connect.StreamTypeUnary,
@@ -90,6 +109,19 @@ type RecipeServiceClient interface {
 	// Update a recipe. To mark it as a favorite, or unmark it, set favorite
 	// with the update_mask "favorite".
 	UpdateRecipe(context.Context, *v1.UpdateRecipeRequest) (*v1.UpdateRecipeResponse, error)
+	// Update several recipes at once. Each is updated on its own, like UpdateRecipe, in parallel: the response
+	// has a result per request, in order, with what was updated or the error.
+	// At most 100 requests.
+	UpdateRecipes(context.Context, *v1.UpdateRecipesRequest) (*v1.UpdateRecipesResponse, error)
+	// Replace a food with another in the household's recipes, keeping each
+	// ingredient's amount, unit, note and place, or scaling the amount: e.g.
+	// replace canned black beans with black beans cooked from dry in every
+	// recipe at once. Recipes using the food only through a component recipe
+	// change through the component. Fails with INVALID_ARGUMENT if a recipe
+	// measures the food in pieces or milliliters the new food can't be
+	// weighed in, changing none: set grams_per_piece or grams_per_milliliter
+	// on the new food first.
+	ReplaceFood(context.Context, *v1.ReplaceFoodRequest) (*v1.ReplaceFoodResponse, error)
 	// Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
 	// the plan (see PlanService), or other recipes as a component, use it:
 	// delete or change them first.
@@ -118,6 +150,19 @@ type RecipeServiceHandler interface {
 	// Update a recipe. To mark it as a favorite, or unmark it, set favorite
 	// with the update_mask "favorite".
 	UpdateRecipe(context.Context, *v1.UpdateRecipeRequest) (*v1.UpdateRecipeResponse, error)
+	// Update several recipes at once. Each is updated on its own, like UpdateRecipe, in parallel: the response
+	// has a result per request, in order, with what was updated or the error.
+	// At most 100 requests.
+	UpdateRecipes(context.Context, *v1.UpdateRecipesRequest) (*v1.UpdateRecipesResponse, error)
+	// Replace a food with another in the household's recipes, keeping each
+	// ingredient's amount, unit, note and place, or scaling the amount: e.g.
+	// replace canned black beans with black beans cooked from dry in every
+	// recipe at once. Recipes using the food only through a component recipe
+	// change through the component. Fails with INVALID_ARGUMENT if a recipe
+	// measures the food in pieces or milliliters the new food can't be
+	// weighed in, changing none: set grams_per_piece or grams_per_milliliter
+	// on the new food first.
+	ReplaceFood(context.Context, *v1.ReplaceFoodRequest) (*v1.ReplaceFoodResponse, error)
 	// Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
 	// the plan (see PlanService), or other recipes as a component, use it:
 	// delete or change them first.
@@ -133,6 +178,8 @@ func RegisterRecipeServiceHandler(server *connect.Server, svc RecipeServiceHandl
 		connect.Method{Spec: recipeServiceGetRecipeSpec(), Handler: adapter.getRecipe},
 		connect.Method{Spec: recipeServiceListRecipesSpec(), Handler: adapter.listRecipes},
 		connect.Method{Spec: recipeServiceUpdateRecipeSpec(), Handler: adapter.updateRecipe},
+		connect.Method{Spec: recipeServiceUpdateRecipesSpec(), Handler: adapter.updateRecipes},
+		connect.Method{Spec: recipeServiceReplaceFoodSpec(), Handler: adapter.replaceFood},
 		connect.Method{Spec: recipeServiceDeleteRecipeSpec(), Handler: adapter.deleteRecipe},
 	)
 }
@@ -154,6 +201,14 @@ func (UnimplementedRecipeServiceHandler) ListRecipes(context.Context, *v1.ListRe
 
 func (UnimplementedRecipeServiceHandler) UpdateRecipe(context.Context, *v1.UpdateRecipeRequest) (*v1.UpdateRecipeResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "recipes.v1.RecipeService.UpdateRecipe is not implemented")
+}
+
+func (UnimplementedRecipeServiceHandler) UpdateRecipes(context.Context, *v1.UpdateRecipesRequest) (*v1.UpdateRecipesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "recipes.v1.RecipeService.UpdateRecipes is not implemented")
+}
+
+func (UnimplementedRecipeServiceHandler) ReplaceFood(context.Context, *v1.ReplaceFoodRequest) (*v1.ReplaceFoodResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "recipes.v1.RecipeService.ReplaceFood is not implemented")
 }
 
 func (UnimplementedRecipeServiceHandler) DeleteRecipe(context.Context, *v1.DeleteRecipeRequest) (*v1.DeleteRecipeResponse, error) {
@@ -191,6 +246,22 @@ func (c *recipeServiceClient) ListRecipes(ctx context.Context, req *v1.ListRecip
 func (c *recipeServiceClient) UpdateRecipe(ctx context.Context, req *v1.UpdateRecipeRequest) (*v1.UpdateRecipeResponse, error) {
 	var res v1.UpdateRecipeResponse
 	if err := c.client.CallUnary(ctx, recipeServiceUpdateRecipeSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *recipeServiceClient) UpdateRecipes(ctx context.Context, req *v1.UpdateRecipesRequest) (*v1.UpdateRecipesResponse, error) {
+	var res v1.UpdateRecipesResponse
+	if err := c.client.CallUnary(ctx, recipeServiceUpdateRecipesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *recipeServiceClient) ReplaceFood(ctx context.Context, req *v1.ReplaceFoodRequest) (*v1.ReplaceFoodResponse, error) {
+	var res v1.ReplaceFoodResponse
+	if err := c.client.CallUnary(ctx, recipeServiceReplaceFoodSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -248,6 +319,30 @@ func (h recipeServiceHandler) updateRecipe(ctx context.Context, _ connect.Spec, 
 		return err
 	}
 	res, err := h.svc.UpdateRecipe(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h recipeServiceHandler) updateRecipes(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.UpdateRecipesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.UpdateRecipes(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h recipeServiceHandler) replaceFood(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ReplaceFoodRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ReplaceFood(ctx, &req)
 	if err != nil {
 		return err
 	}

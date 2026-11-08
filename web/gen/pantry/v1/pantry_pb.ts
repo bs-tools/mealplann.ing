@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file pantry/v1/pantry.proto.
  */
 export const file_pantry_v1_pantry: GenFile = /*@__PURE__*/
-  fileDesc("ChZwYW50cnkvdjEvcGFudHJ5LnByb3RvEglwYW50cnkudjEiswMKClBhbnRyeUl0ZW0SCgoCaWQYASABKAkSFwoHZm9vZF9pZBgCIAEoCUIGqp8ZAggBEhkKCWZvb2RfbmFtZRgDIAEoCUIGqp8ZAggBEjUKDXN0b3JlX3NlY3Rpb24YBCABKA4yFi5mb29kcy52MS5TdG9yZVNlY3Rpb25CBqqfGQIIARINCgVncmFtcxgFIAEoARIfCg9ncmFtc19wZXJfcGllY2UYBiABKAFCBqqfGQIIARITCgtleHBpcnlfZGF0ZRgHIAEoCRITCgtvcGVuZWRfZGF0ZRgIIAEoCRIbCgt1c2VfYnlfZGF0ZRgJIAEoCUIGqp8ZAggBEiMKDmRheXNfdG9fZXhwaXJ5GAogASgFQgaqnxkCCAFIAIgBARINCgVub3RlcxgLIAEoCRI3CgtjcmVhdGVfdGltZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIAUIRCg9fZGF5c190b19leHBpcnkiZgoRQWx3YXlzSW5TdG9ja0Zvb2QSDwoHZm9vZF9pZBgBIAEoCRIRCglmb29kX25hbWUYAiABKAkSLQoNc3RvcmVfc2VjdGlvbhgDIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbiKhAQoRTGlzdFBhbnRyeVJlcXVlc3QSEAoIZm9vZF9pZHMYASADKAkSLQoNc3RvcmVfc2VjdGlvbhgCIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbhIhChRleHBpcmluZ193aXRoaW5fZGF5cxgDIAEoBUgAiAEBEg8KB3N1bW1hcnkYBCABKAhCFwoVX2V4cGlyaW5nX3dpdGhpbl9kYXlzIncKEkxpc3RQYW50cnlSZXNwb25zZRIkCgVpdGVtcxgBIAMoCzIVLnBhbnRyeS52MS5QYW50cnlJdGVtEjsKFWFsd2F5c19pbl9zdG9ja19mb29kcxgCIAMoCzIcLnBhbnRyeS52MS5BbHdheXNJblN0b2NrRm9vZCKnAQoSQWRkVG9QYW50cnlSZXF1ZXN0Eg8KB2Zvb2RfaWQYASABKAkSDgoGYW1vdW50GAIgASgBEiIKBHVuaXQYAyABKA4yFC5mb29kcy52MS5BbW91bnRVbml0EhMKC2V4cGlyeV9kYXRlGAQgASgJEhMKC29wZW5lZF9kYXRlGAUgASgJEg0KBW5vdGVzGAYgASgJEhMKC3RyYWNrX3N0b2NrGAcgASgIIm8KE0FkZFRvUGFudHJ5UmVzcG9uc2USIwoEaXRlbRgBIAEoCzIVLnBhbnRyeS52MS5QYW50cnlJdGVtEhIKCmNvbnZlcnNpb24YAiABKAkSHwoXc3RvcHBlZF9hbHdheXNfaW5fc3RvY2sYAyABKAgibwoXVXBkYXRlUGFudHJ5SXRlbVJlcXVlc3QSIwoEaXRlbRgBIAEoCzIVLnBhbnRyeS52MS5QYW50cnlJdGVtEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayI/ChhVcGRhdGVQYW50cnlJdGVtUmVzcG9uc2USIwoEaXRlbRgBIAEoCzIVLnBhbnRyeS52MS5QYW50cnlJdGVtIiUKF1JlbW92ZUZyb21QYW50cnlSZXF1ZXN0EgoKAmlkGAEgASgJIhoKGFJlbW92ZUZyb21QYW50cnlSZXNwb25zZTLiAgoNUGFudHJ5U2VydmljZRJJCgpMaXN0UGFudHJ5EhwucGFudHJ5LnYxLkxpc3RQYW50cnlSZXF1ZXN0Gh0ucGFudHJ5LnYxLkxpc3RQYW50cnlSZXNwb25zZRJMCgtBZGRUb1BhbnRyeRIdLnBhbnRyeS52MS5BZGRUb1BhbnRyeVJlcXVlc3QaHi5wYW50cnkudjEuQWRkVG9QYW50cnlSZXNwb25zZRJbChBVcGRhdGVQYW50cnlJdGVtEiIucGFudHJ5LnYxLlVwZGF0ZVBhbnRyeUl0ZW1SZXF1ZXN0GiMucGFudHJ5LnYxLlVwZGF0ZVBhbnRyeUl0ZW1SZXNwb25zZRJbChBSZW1vdmVGcm9tUGFudHJ5EiIucGFudHJ5LnYxLlJlbW92ZUZyb21QYW50cnlSZXF1ZXN0GiMucGFudHJ5LnYxLlJlbW92ZUZyb21QYW50cnlSZXNwb25zZUKkAQoNY29tLnBhbnRyeS52MUILUGFudHJ5UHJvdG9QAVpBZ2l0aHViLmNvbS9icy10b29scy9tZWFscGxhbm4uaW5nL2ludGVybmFsL2dlbi9wYW50cnkvdjE7cGFudHJ5djGiAgNQWFiqAglQYW50cnkuVjHKAglQYW50cnlcVjHiAhVQYW50cnlcVjFcR1BCTWV0YWRhdGHqAgpQYW50cnk6OlYxYgZwcm90bzM", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChZwYW50cnkvdjEvcGFudHJ5LnByb3RvEglwYW50cnkudjEiswMKClBhbnRyeUl0ZW0SCgoCaWQYASABKAkSFwoHZm9vZF9pZBgCIAEoCUIGqp8ZAggBEhkKCWZvb2RfbmFtZRgDIAEoCUIGqp8ZAggBEjUKDXN0b3JlX3NlY3Rpb24YBCABKA4yFi5mb29kcy52MS5TdG9yZVNlY3Rpb25CBqqfGQIIARINCgVncmFtcxgFIAEoARIfCg9ncmFtc19wZXJfcGllY2UYBiABKAFCBqqfGQIIARITCgtleHBpcnlfZGF0ZRgHIAEoCRITCgtvcGVuZWRfZGF0ZRgIIAEoCRIbCgt1c2VfYnlfZGF0ZRgJIAEoCUIGqp8ZAggBEiMKDmRheXNfdG9fZXhwaXJ5GAogASgFQgaqnxkCCAFIAIgBARINCgVub3RlcxgLIAEoCRI3CgtjcmVhdGVfdGltZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIAUIRCg9fZGF5c190b19leHBpcnkiZgoRQWx3YXlzSW5TdG9ja0Zvb2QSDwoHZm9vZF9pZBgBIAEoCRIRCglmb29kX25hbWUYAiABKAkSLQoNc3RvcmVfc2VjdGlvbhgDIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbiKhAQoRTGlzdFBhbnRyeVJlcXVlc3QSEAoIZm9vZF9pZHMYASADKAkSLQoNc3RvcmVfc2VjdGlvbhgCIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbhIhChRleHBpcmluZ193aXRoaW5fZGF5cxgDIAEoBUgAiAEBEg8KB3N1bW1hcnkYBCABKAhCFwoVX2V4cGlyaW5nX3dpdGhpbl9kYXlzIncKEkxpc3RQYW50cnlSZXNwb25zZRIkCgVpdGVtcxgBIAMoCzIVLnBhbnRyeS52MS5QYW50cnlJdGVtEjsKFWFsd2F5c19pbl9zdG9ja19mb29kcxgCIAMoCzIcLnBhbnRyeS52MS5BbHdheXNJblN0b2NrRm9vZCK7AQoSQWRkVG9QYW50cnlSZXF1ZXN0Eg8KB2Zvb2RfaWQYASABKAkSDgoGYW1vdW50GAIgASgBEiIKBHVuaXQYAyABKA4yFC5mb29kcy52MS5BbW91bnRVbml0EhMKC2V4cGlyeV9kYXRlGAQgASgJEhMKC29wZW5lZF9kYXRlGAUgASgJEg0KBW5vdGVzGAYgASgJEhMKC3RyYWNrX3N0b2NrGAcgASgIEhIKCnJlcXVlc3RfaWQYCCABKAkiXQoWQWRkTG90c1RvUGFudHJ5UmVxdWVzdBIvCghyZXF1ZXN0cxgBIAMoCzIdLnBhbnRyeS52MS5BZGRUb1BhbnRyeVJlcXVlc3QSEgoKcmVxdWVzdF9pZBgCIAEoCSJDChdBZGRMb3RzVG9QYW50cnlSZXNwb25zZRIoCgdyZXN1bHRzGAEgAygLMhcucGFudHJ5LnYxLkFkZExvdFJlc3VsdCJoCgxBZGRMb3RSZXN1bHQSLQoFYWRkZWQYASABKAsyHi5wYW50cnkudjEuQWRkVG9QYW50cnlSZXNwb25zZRISCgplcnJvcl9jb2RlGAIgASgJEhUKDWVycm9yX21lc3NhZ2UYAyABKAkibwoTQWRkVG9QYW50cnlSZXNwb25zZRIjCgRpdGVtGAEgASgLMhUucGFudHJ5LnYxLlBhbnRyeUl0ZW0SEgoKY29udmVyc2lvbhgCIAEoCRIfChdzdG9wcGVkX2Fsd2F5c19pbl9zdG9jaxgDIAEoCCJvChdVcGRhdGVQYW50cnlJdGVtUmVxdWVzdBIjCgRpdGVtGAEgASgLMhUucGFudHJ5LnYxLlBhbnRyeUl0ZW0SLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIj8KGFVwZGF0ZVBhbnRyeUl0ZW1SZXNwb25zZRIjCgRpdGVtGAEgASgLMhUucGFudHJ5LnYxLlBhbnRyeUl0ZW0iJQoXUmVtb3ZlRnJvbVBhbnRyeVJlcXVlc3QSCgoCaWQYASABKAkiGgoYUmVtb3ZlRnJvbVBhbnRyeVJlc3BvbnNlMrwDCg1QYW50cnlTZXJ2aWNlEkkKCkxpc3RQYW50cnkSHC5wYW50cnkudjEuTGlzdFBhbnRyeVJlcXVlc3QaHS5wYW50cnkudjEuTGlzdFBhbnRyeVJlc3BvbnNlEkwKC0FkZFRvUGFudHJ5Eh0ucGFudHJ5LnYxLkFkZFRvUGFudHJ5UmVxdWVzdBoeLnBhbnRyeS52MS5BZGRUb1BhbnRyeVJlc3BvbnNlElgKD0FkZExvdHNUb1BhbnRyeRIhLnBhbnRyeS52MS5BZGRMb3RzVG9QYW50cnlSZXF1ZXN0GiIucGFudHJ5LnYxLkFkZExvdHNUb1BhbnRyeVJlc3BvbnNlElsKEFVwZGF0ZVBhbnRyeUl0ZW0SIi5wYW50cnkudjEuVXBkYXRlUGFudHJ5SXRlbVJlcXVlc3QaIy5wYW50cnkudjEuVXBkYXRlUGFudHJ5SXRlbVJlc3BvbnNlElsKEFJlbW92ZUZyb21QYW50cnkSIi5wYW50cnkudjEuUmVtb3ZlRnJvbVBhbnRyeVJlcXVlc3QaIy5wYW50cnkudjEuUmVtb3ZlRnJvbVBhbnRyeVJlc3BvbnNlQqQBCg1jb20ucGFudHJ5LnYxQgtQYW50cnlQcm90b1ABWkFnaXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3BhbnRyeS92MTtwYW50cnl2MaICA1BYWKoCCVBhbnRyeS5WMcoCCVBhbnRyeVxWMeICFVBhbnRyeVxWMVxHUEJNZXRhZGF0YeoCClBhbnRyeTo6VjFiBnByb3RvMw", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A lot of a food in stock.
@@ -289,6 +289,16 @@ export type AddToPantryRequest = Message<"pantry.v1.AddToPantryRequest"> & {
    * @generated from field: bool track_stock = 7;
    */
   trackStock: boolean;
+
+  /**
+   * An ID the caller chooses for this request, like a UUID, to retry it
+   * safely: a retry with the same request_id within a day returns the
+   * first response instead of creating again. Empty to not deduplicate. At
+   * most 100 characters.
+   *
+   * @generated from field: string request_id = 8;
+   */
+  requestId: string;
 };
 
 /**
@@ -297,6 +307,91 @@ export type AddToPantryRequest = Message<"pantry.v1.AddToPantryRequest"> & {
  */
 export const AddToPantryRequestSchema: GenMessage<AddToPantryRequest> = /*@__PURE__*/
   messageDesc(file_pantry_v1_pantry, 4);
+
+/**
+ * @generated from message pantry.v1.AddLotsToPantryRequest
+ */
+export type AddLotsToPantryRequest = Message<"pantry.v1.AddLotsToPantryRequest"> & {
+  /**
+   * The lots to add, each as AddToPantry takes it, without a request_id.
+   * At most 100.
+   *
+   * @generated from field: repeated pantry.v1.AddToPantryRequest requests = 1;
+   */
+  requests: AddToPantryRequest[];
+
+  /**
+   * An ID the caller chooses for this request, like a UUID, to retry it
+   * safely: a retry with the same request_id within a day returns the
+   * first response instead of creating again. Empty to not deduplicate. At
+   * most 100 characters.
+   *
+   * @generated from field: string request_id = 2;
+   */
+  requestId: string;
+};
+
+/**
+ * Describes the message pantry.v1.AddLotsToPantryRequest.
+ * Use `create(AddLotsToPantryRequestSchema)` to create a new message.
+ */
+export const AddLotsToPantryRequestSchema: GenMessage<AddLotsToPantryRequest> = /*@__PURE__*/
+  messageDesc(file_pantry_v1_pantry, 5);
+
+/**
+ * @generated from message pantry.v1.AddLotsToPantryResponse
+ */
+export type AddLotsToPantryResponse = Message<"pantry.v1.AddLotsToPantryResponse"> & {
+  /**
+   * A result per request, in order.
+   *
+   * @generated from field: repeated pantry.v1.AddLotResult results = 1;
+   */
+  results: AddLotResult[];
+};
+
+/**
+ * Describes the message pantry.v1.AddLotsToPantryResponse.
+ * Use `create(AddLotsToPantryResponseSchema)` to create a new message.
+ */
+export const AddLotsToPantryResponseSchema: GenMessage<AddLotsToPantryResponse> = /*@__PURE__*/
+  messageDesc(file_pantry_v1_pantry, 6);
+
+/**
+ * The result of adding one of several lots.
+ *
+ * @generated from message pantry.v1.AddLotResult
+ */
+export type AddLotResult = Message<"pantry.v1.AddLotResult"> & {
+  /**
+   * The lot added, with how its amount was converted, unset if it failed.
+   *
+   * @generated from field: pantry.v1.AddToPantryResponse added = 1;
+   */
+  added?: AddToPantryResponse | undefined;
+
+  /**
+   * The code of the error, like "invalid_argument" or
+   * "failed_precondition", empty if the lot was added.
+   *
+   * @generated from field: string error_code = 2;
+   */
+  errorCode: string;
+
+  /**
+   * What went wrong and what to do, empty if the lot was added.
+   *
+   * @generated from field: string error_message = 3;
+   */
+  errorMessage: string;
+};
+
+/**
+ * Describes the message pantry.v1.AddLotResult.
+ * Use `create(AddLotResultSchema)` to create a new message.
+ */
+export const AddLotResultSchema: GenMessage<AddLotResult> = /*@__PURE__*/
+  messageDesc(file_pantry_v1_pantry, 7);
 
 /**
  * @generated from message pantry.v1.AddToPantryResponse
@@ -331,7 +426,7 @@ export type AddToPantryResponse = Message<"pantry.v1.AddToPantryResponse"> & {
  * Use `create(AddToPantryResponseSchema)` to create a new message.
  */
 export const AddToPantryResponseSchema: GenMessage<AddToPantryResponse> = /*@__PURE__*/
-  messageDesc(file_pantry_v1_pantry, 5);
+  messageDesc(file_pantry_v1_pantry, 8);
 
 /**
  * @generated from message pantry.v1.UpdatePantryItemRequest
@@ -358,7 +453,7 @@ export type UpdatePantryItemRequest = Message<"pantry.v1.UpdatePantryItemRequest
  * Use `create(UpdatePantryItemRequestSchema)` to create a new message.
  */
 export const UpdatePantryItemRequestSchema: GenMessage<UpdatePantryItemRequest> = /*@__PURE__*/
-  messageDesc(file_pantry_v1_pantry, 6);
+  messageDesc(file_pantry_v1_pantry, 9);
 
 /**
  * @generated from message pantry.v1.UpdatePantryItemResponse
@@ -377,7 +472,7 @@ export type UpdatePantryItemResponse = Message<"pantry.v1.UpdatePantryItemRespon
  * Use `create(UpdatePantryItemResponseSchema)` to create a new message.
  */
 export const UpdatePantryItemResponseSchema: GenMessage<UpdatePantryItemResponse> = /*@__PURE__*/
-  messageDesc(file_pantry_v1_pantry, 7);
+  messageDesc(file_pantry_v1_pantry, 10);
 
 /**
  * @generated from message pantry.v1.RemoveFromPantryRequest
@@ -396,7 +491,7 @@ export type RemoveFromPantryRequest = Message<"pantry.v1.RemoveFromPantryRequest
  * Use `create(RemoveFromPantryRequestSchema)` to create a new message.
  */
 export const RemoveFromPantryRequestSchema: GenMessage<RemoveFromPantryRequest> = /*@__PURE__*/
-  messageDesc(file_pantry_v1_pantry, 8);
+  messageDesc(file_pantry_v1_pantry, 11);
 
 /**
  * @generated from message pantry.v1.RemoveFromPantryResponse
@@ -409,7 +504,7 @@ export type RemoveFromPantryResponse = Message<"pantry.v1.RemoveFromPantryRespon
  * Use `create(RemoveFromPantryResponseSchema)` to create a new message.
  */
 export const RemoveFromPantryResponseSchema: GenMessage<RemoveFromPantryResponse> = /*@__PURE__*/
-  messageDesc(file_pantry_v1_pantry, 9);
+  messageDesc(file_pantry_v1_pantry, 12);
 
 /**
  * PantryService tracks the household's pantry: how much of each food (see
@@ -464,6 +559,19 @@ export const PantryService: GenService<{
     methodKind: "unary";
     input: typeof AddToPantryRequestSchema;
     output: typeof AddToPantryResponseSchema;
+  },
+  /**
+   * Add several lots at once, like a shelf from a photo or a shop's
+   * receipt. Each lot is added on its own, like AddToPantry, in parallel: the response
+   * has a result per request, in order, with what was added or the error.
+   * At most 100 requests.
+   *
+   * @generated from rpc pantry.v1.PantryService.AddLotsToPantry
+   */
+  addLotsToPantry: {
+    methodKind: "unary";
+    input: typeof AddLotsToPantryRequestSchema;
+    output: typeof AddLotsToPantryResponseSchema;
   },
   /**
    * Update a lot of the pantry, e.g. its grams after using some, or its

@@ -608,6 +608,7 @@ type AddToPantryRequest struct {
 	xxx_hidden_OpenedDate string                 `protobuf:"bytes,5,opt,name=opened_date,json=openedDate,proto3"`
 	xxx_hidden_Notes      string                 `protobuf:"bytes,6,opt,name=notes,proto3"`
 	xxx_hidden_TrackStock bool                   `protobuf:"varint,7,opt,name=track_stock,json=trackStock,proto3"`
+	xxx_hidden_RequestId  string                 `protobuf:"bytes,8,opt,name=request_id,json=requestId,proto3"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -686,6 +687,13 @@ func (x *AddToPantryRequest) GetTrackStock() bool {
 	return false
 }
 
+func (x *AddToPantryRequest) GetRequestId() string {
+	if x != nil {
+		return x.xxx_hidden_RequestId
+	}
+	return ""
+}
+
 func (x *AddToPantryRequest) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -714,6 +722,10 @@ func (x *AddToPantryRequest) SetTrackStock(v bool) {
 	x.xxx_hidden_TrackStock = v
 }
 
+func (x *AddToPantryRequest) SetRequestId(v string) {
+	x.xxx_hidden_RequestId = v
+}
+
 type AddToPantryRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -736,6 +748,11 @@ type AddToPantryRequest_builder struct {
 	// food, instead of failing. Set it when the user says how much they have
 	// of a food they had marked as always in stock.
 	TrackStock bool
+	// An ID the caller chooses for this request, like a UUID, to retry it
+	// safely: a retry with the same request_id within a day returns the
+	// first response instead of creating again. Empty to not deduplicate. At
+	// most 100 characters.
+	RequestId string
 }
 
 func (b0 AddToPantryRequest_builder) Build() *AddToPantryRequest {
@@ -749,6 +766,247 @@ func (b0 AddToPantryRequest_builder) Build() *AddToPantryRequest {
 	x.xxx_hidden_OpenedDate = b.OpenedDate
 	x.xxx_hidden_Notes = b.Notes
 	x.xxx_hidden_TrackStock = b.TrackStock
+	x.xxx_hidden_RequestId = b.RequestId
+	return m0
+}
+
+type AddLotsToPantryRequest struct {
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Requests  *[]*AddToPantryRequest `protobuf:"bytes,1,rep,name=requests,proto3"`
+	xxx_hidden_RequestId string                 `protobuf:"bytes,2,opt,name=request_id,json=requestId,proto3"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *AddLotsToPantryRequest) Reset() {
+	*x = AddLotsToPantryRequest{}
+	mi := &file_pantry_v1_pantry_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddLotsToPantryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddLotsToPantryRequest) ProtoMessage() {}
+
+func (x *AddLotsToPantryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pantry_v1_pantry_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *AddLotsToPantryRequest) GetRequests() []*AddToPantryRequest {
+	if x != nil {
+		if x.xxx_hidden_Requests != nil {
+			return *x.xxx_hidden_Requests
+		}
+	}
+	return nil
+}
+
+func (x *AddLotsToPantryRequest) GetRequestId() string {
+	if x != nil {
+		return x.xxx_hidden_RequestId
+	}
+	return ""
+}
+
+func (x *AddLotsToPantryRequest) SetRequests(v []*AddToPantryRequest) {
+	x.xxx_hidden_Requests = &v
+}
+
+func (x *AddLotsToPantryRequest) SetRequestId(v string) {
+	x.xxx_hidden_RequestId = v
+}
+
+type AddLotsToPantryRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The lots to add, each as AddToPantry takes it, without a request_id.
+	// At most 100.
+	Requests []*AddToPantryRequest
+	// An ID the caller chooses for this request, like a UUID, to retry it
+	// safely: a retry with the same request_id within a day returns the
+	// first response instead of creating again. Empty to not deduplicate. At
+	// most 100 characters.
+	RequestId string
+}
+
+func (b0 AddLotsToPantryRequest_builder) Build() *AddLotsToPantryRequest {
+	m0 := &AddLotsToPantryRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Requests = &b.Requests
+	x.xxx_hidden_RequestId = b.RequestId
+	return m0
+}
+
+type AddLotsToPantryResponse struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Results *[]*AddLotResult       `protobuf:"bytes,1,rep,name=results,proto3"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *AddLotsToPantryResponse) Reset() {
+	*x = AddLotsToPantryResponse{}
+	mi := &file_pantry_v1_pantry_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddLotsToPantryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddLotsToPantryResponse) ProtoMessage() {}
+
+func (x *AddLotsToPantryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pantry_v1_pantry_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *AddLotsToPantryResponse) GetResults() []*AddLotResult {
+	if x != nil {
+		if x.xxx_hidden_Results != nil {
+			return *x.xxx_hidden_Results
+		}
+	}
+	return nil
+}
+
+func (x *AddLotsToPantryResponse) SetResults(v []*AddLotResult) {
+	x.xxx_hidden_Results = &v
+}
+
+type AddLotsToPantryResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// A result per request, in order.
+	Results []*AddLotResult
+}
+
+func (b0 AddLotsToPantryResponse_builder) Build() *AddLotsToPantryResponse {
+	m0 := &AddLotsToPantryResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Results = &b.Results
+	return m0
+}
+
+// The result of adding one of several lots.
+type AddLotResult struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Added        *AddToPantryResponse   `protobuf:"bytes,1,opt,name=added,proto3"`
+	xxx_hidden_ErrorCode    string                 `protobuf:"bytes,2,opt,name=error_code,json=errorCode,proto3"`
+	xxx_hidden_ErrorMessage string                 `protobuf:"bytes,3,opt,name=error_message,json=errorMessage,proto3"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *AddLotResult) Reset() {
+	*x = AddLotResult{}
+	mi := &file_pantry_v1_pantry_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddLotResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddLotResult) ProtoMessage() {}
+
+func (x *AddLotResult) ProtoReflect() protoreflect.Message {
+	mi := &file_pantry_v1_pantry_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *AddLotResult) GetAdded() *AddToPantryResponse {
+	if x != nil {
+		return x.xxx_hidden_Added
+	}
+	return nil
+}
+
+func (x *AddLotResult) GetErrorCode() string {
+	if x != nil {
+		return x.xxx_hidden_ErrorCode
+	}
+	return ""
+}
+
+func (x *AddLotResult) GetErrorMessage() string {
+	if x != nil {
+		return x.xxx_hidden_ErrorMessage
+	}
+	return ""
+}
+
+func (x *AddLotResult) SetAdded(v *AddToPantryResponse) {
+	x.xxx_hidden_Added = v
+}
+
+func (x *AddLotResult) SetErrorCode(v string) {
+	x.xxx_hidden_ErrorCode = v
+}
+
+func (x *AddLotResult) SetErrorMessage(v string) {
+	x.xxx_hidden_ErrorMessage = v
+}
+
+func (x *AddLotResult) HasAdded() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Added != nil
+}
+
+func (x *AddLotResult) ClearAdded() {
+	x.xxx_hidden_Added = nil
+}
+
+type AddLotResult_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The lot added, with how its amount was converted, unset if it failed.
+	Added *AddToPantryResponse
+	// The code of the error, like "invalid_argument" or
+	// "failed_precondition", empty if the lot was added.
+	ErrorCode string
+	// What went wrong and what to do, empty if the lot was added.
+	ErrorMessage string
+}
+
+func (b0 AddLotResult_builder) Build() *AddLotResult {
+	m0 := &AddLotResult{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Added = b.Added
+	x.xxx_hidden_ErrorCode = b.ErrorCode
+	x.xxx_hidden_ErrorMessage = b.ErrorMessage
 	return m0
 }
 
@@ -763,7 +1021,7 @@ type AddToPantryResponse struct {
 
 func (x *AddToPantryResponse) Reset() {
 	*x = AddToPantryResponse{}
-	mi := &file_pantry_v1_pantry_proto_msgTypes[5]
+	mi := &file_pantry_v1_pantry_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -775,7 +1033,7 @@ func (x *AddToPantryResponse) String() string {
 func (*AddToPantryResponse) ProtoMessage() {}
 
 func (x *AddToPantryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pantry_v1_pantry_proto_msgTypes[5]
+	mi := &file_pantry_v1_pantry_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -863,7 +1121,7 @@ type UpdatePantryItemRequest struct {
 
 func (x *UpdatePantryItemRequest) Reset() {
 	*x = UpdatePantryItemRequest{}
-	mi := &file_pantry_v1_pantry_proto_msgTypes[6]
+	mi := &file_pantry_v1_pantry_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -875,7 +1133,7 @@ func (x *UpdatePantryItemRequest) String() string {
 func (*UpdatePantryItemRequest) ProtoMessage() {}
 
 func (x *UpdatePantryItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pantry_v1_pantry_proto_msgTypes[6]
+	mi := &file_pantry_v1_pantry_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -958,7 +1216,7 @@ type UpdatePantryItemResponse struct {
 
 func (x *UpdatePantryItemResponse) Reset() {
 	*x = UpdatePantryItemResponse{}
-	mi := &file_pantry_v1_pantry_proto_msgTypes[7]
+	mi := &file_pantry_v1_pantry_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -970,7 +1228,7 @@ func (x *UpdatePantryItemResponse) String() string {
 func (*UpdatePantryItemResponse) ProtoMessage() {}
 
 func (x *UpdatePantryItemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pantry_v1_pantry_proto_msgTypes[7]
+	mi := &file_pantry_v1_pantry_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1027,7 +1285,7 @@ type RemoveFromPantryRequest struct {
 
 func (x *RemoveFromPantryRequest) Reset() {
 	*x = RemoveFromPantryRequest{}
-	mi := &file_pantry_v1_pantry_proto_msgTypes[8]
+	mi := &file_pantry_v1_pantry_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1039,7 +1297,7 @@ func (x *RemoveFromPantryRequest) String() string {
 func (*RemoveFromPantryRequest) ProtoMessage() {}
 
 func (x *RemoveFromPantryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pantry_v1_pantry_proto_msgTypes[8]
+	mi := &file_pantry_v1_pantry_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1084,7 +1342,7 @@ type RemoveFromPantryResponse struct {
 
 func (x *RemoveFromPantryResponse) Reset() {
 	*x = RemoveFromPantryResponse{}
-	mi := &file_pantry_v1_pantry_proto_msgTypes[9]
+	mi := &file_pantry_v1_pantry_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1096,7 +1354,7 @@ func (x *RemoveFromPantryResponse) String() string {
 func (*RemoveFromPantryResponse) ProtoMessage() {}
 
 func (x *RemoveFromPantryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pantry_v1_pantry_proto_msgTypes[9]
+	mi := &file_pantry_v1_pantry_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1157,7 +1415,7 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\x15_expiring_within_days\"\x92\x01\n" +
 	"\x12ListPantryResponse\x12+\n" +
 	"\x05items\x18\x01 \x03(\v2\x15.pantry.v1.PantryItemR\x05items\x12O\n" +
-	"\x15always_in_stock_foods\x18\x02 \x03(\v2\x1c.pantry.v1.AlwaysInStockFoodR\x12alwaysInStockFoods\"\xe8\x01\n" +
+	"\x15always_in_stock_foods\x18\x02 \x03(\v2\x1c.pantry.v1.AlwaysInStockFoodR\x12alwaysInStockFoods\"\x87\x02\n" +
 	"\x12AddToPantryRequest\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\x01R\x06amount\x12(\n" +
@@ -1168,7 +1426,20 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"openedDate\x12\x14\n" +
 	"\x05notes\x18\x06 \x01(\tR\x05notes\x12\x1f\n" +
 	"\vtrack_stock\x18\a \x01(\bR\n" +
-	"trackStock\"\x97\x01\n" +
+	"trackStock\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\b \x01(\tR\trequestId\"r\n" +
+	"\x16AddLotsToPantryRequest\x129\n" +
+	"\brequests\x18\x01 \x03(\v2\x1d.pantry.v1.AddToPantryRequestR\brequests\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x02 \x01(\tR\trequestId\"L\n" +
+	"\x17AddLotsToPantryResponse\x121\n" +
+	"\aresults\x18\x01 \x03(\v2\x17.pantry.v1.AddLotResultR\aresults\"\x88\x01\n" +
+	"\fAddLotResult\x124\n" +
+	"\x05added\x18\x01 \x01(\v2\x1e.pantry.v1.AddToPantryResponseR\x05added\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x02 \x01(\tR\terrorCode\x12#\n" +
+	"\rerror_message\x18\x03 \x01(\tR\ferrorMessage\"\x97\x01\n" +
 	"\x13AddToPantryResponse\x12)\n" +
 	"\x04item\x18\x01 \x01(\v2\x15.pantry.v1.PantryItemR\x04item\x12\x1e\n" +
 	"\n" +
@@ -1183,59 +1454,68 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\x04item\x18\x01 \x01(\v2\x15.pantry.v1.PantryItemR\x04item\")\n" +
 	"\x17RemoveFromPantryRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x1a\n" +
-	"\x18RemoveFromPantryResponse2\xe2\x02\n" +
+	"\x18RemoveFromPantryResponse2\xbc\x03\n" +
 	"\rPantryService\x12I\n" +
 	"\n" +
 	"ListPantry\x12\x1c.pantry.v1.ListPantryRequest\x1a\x1d.pantry.v1.ListPantryResponse\x12L\n" +
-	"\vAddToPantry\x12\x1d.pantry.v1.AddToPantryRequest\x1a\x1e.pantry.v1.AddToPantryResponse\x12[\n" +
+	"\vAddToPantry\x12\x1d.pantry.v1.AddToPantryRequest\x1a\x1e.pantry.v1.AddToPantryResponse\x12X\n" +
+	"\x0fAddLotsToPantry\x12!.pantry.v1.AddLotsToPantryRequest\x1a\".pantry.v1.AddLotsToPantryResponse\x12[\n" +
 	"\x10UpdatePantryItem\x12\".pantry.v1.UpdatePantryItemRequest\x1a#.pantry.v1.UpdatePantryItemResponse\x12[\n" +
 	"\x10RemoveFromPantry\x12\".pantry.v1.RemoveFromPantryRequest\x1a#.pantry.v1.RemoveFromPantryResponseB\xa4\x01\n" +
 	"\rcom.pantry.v1B\vPantryProtoP\x01ZAgithub.com/bs-tools/mealplann.ing/internal/gen/pantry/v1;pantryv1\xa2\x02\x03PXX\xaa\x02\tPantry.V1\xca\x02\tPantry\\V1\xe2\x02\x15Pantry\\V1\\GPBMetadata\xea\x02\n" +
 	"Pantry::V1b\x06proto3"
 
-var file_pantry_v1_pantry_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_pantry_v1_pantry_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_pantry_v1_pantry_proto_goTypes = []any{
 	(*PantryItem)(nil),               // 0: pantry.v1.PantryItem
 	(*AlwaysInStockFood)(nil),        // 1: pantry.v1.AlwaysInStockFood
 	(*ListPantryRequest)(nil),        // 2: pantry.v1.ListPantryRequest
 	(*ListPantryResponse)(nil),       // 3: pantry.v1.ListPantryResponse
 	(*AddToPantryRequest)(nil),       // 4: pantry.v1.AddToPantryRequest
-	(*AddToPantryResponse)(nil),      // 5: pantry.v1.AddToPantryResponse
-	(*UpdatePantryItemRequest)(nil),  // 6: pantry.v1.UpdatePantryItemRequest
-	(*UpdatePantryItemResponse)(nil), // 7: pantry.v1.UpdatePantryItemResponse
-	(*RemoveFromPantryRequest)(nil),  // 8: pantry.v1.RemoveFromPantryRequest
-	(*RemoveFromPantryResponse)(nil), // 9: pantry.v1.RemoveFromPantryResponse
-	(v1.StoreSection)(0),             // 10: foods.v1.StoreSection
-	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
-	(v1.AmountUnit)(0),               // 12: foods.v1.AmountUnit
-	(*fieldmaskpb.FieldMask)(nil),    // 13: google.protobuf.FieldMask
+	(*AddLotsToPantryRequest)(nil),   // 5: pantry.v1.AddLotsToPantryRequest
+	(*AddLotsToPantryResponse)(nil),  // 6: pantry.v1.AddLotsToPantryResponse
+	(*AddLotResult)(nil),             // 7: pantry.v1.AddLotResult
+	(*AddToPantryResponse)(nil),      // 8: pantry.v1.AddToPantryResponse
+	(*UpdatePantryItemRequest)(nil),  // 9: pantry.v1.UpdatePantryItemRequest
+	(*UpdatePantryItemResponse)(nil), // 10: pantry.v1.UpdatePantryItemResponse
+	(*RemoveFromPantryRequest)(nil),  // 11: pantry.v1.RemoveFromPantryRequest
+	(*RemoveFromPantryResponse)(nil), // 12: pantry.v1.RemoveFromPantryResponse
+	(v1.StoreSection)(0),             // 13: foods.v1.StoreSection
+	(*timestamppb.Timestamp)(nil),    // 14: google.protobuf.Timestamp
+	(v1.AmountUnit)(0),               // 15: foods.v1.AmountUnit
+	(*fieldmaskpb.FieldMask)(nil),    // 16: google.protobuf.FieldMask
 }
 var file_pantry_v1_pantry_proto_depIdxs = []int32{
-	10, // 0: pantry.v1.PantryItem.store_section:type_name -> foods.v1.StoreSection
-	11, // 1: pantry.v1.PantryItem.create_time:type_name -> google.protobuf.Timestamp
-	11, // 2: pantry.v1.PantryItem.update_time:type_name -> google.protobuf.Timestamp
-	10, // 3: pantry.v1.AlwaysInStockFood.store_section:type_name -> foods.v1.StoreSection
-	10, // 4: pantry.v1.ListPantryRequest.store_section:type_name -> foods.v1.StoreSection
+	13, // 0: pantry.v1.PantryItem.store_section:type_name -> foods.v1.StoreSection
+	14, // 1: pantry.v1.PantryItem.create_time:type_name -> google.protobuf.Timestamp
+	14, // 2: pantry.v1.PantryItem.update_time:type_name -> google.protobuf.Timestamp
+	13, // 3: pantry.v1.AlwaysInStockFood.store_section:type_name -> foods.v1.StoreSection
+	13, // 4: pantry.v1.ListPantryRequest.store_section:type_name -> foods.v1.StoreSection
 	0,  // 5: pantry.v1.ListPantryResponse.items:type_name -> pantry.v1.PantryItem
 	1,  // 6: pantry.v1.ListPantryResponse.always_in_stock_foods:type_name -> pantry.v1.AlwaysInStockFood
-	12, // 7: pantry.v1.AddToPantryRequest.unit:type_name -> foods.v1.AmountUnit
-	0,  // 8: pantry.v1.AddToPantryResponse.item:type_name -> pantry.v1.PantryItem
-	0,  // 9: pantry.v1.UpdatePantryItemRequest.item:type_name -> pantry.v1.PantryItem
-	13, // 10: pantry.v1.UpdatePantryItemRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 11: pantry.v1.UpdatePantryItemResponse.item:type_name -> pantry.v1.PantryItem
-	2,  // 12: pantry.v1.PantryService.ListPantry:input_type -> pantry.v1.ListPantryRequest
-	4,  // 13: pantry.v1.PantryService.AddToPantry:input_type -> pantry.v1.AddToPantryRequest
-	6,  // 14: pantry.v1.PantryService.UpdatePantryItem:input_type -> pantry.v1.UpdatePantryItemRequest
-	8,  // 15: pantry.v1.PantryService.RemoveFromPantry:input_type -> pantry.v1.RemoveFromPantryRequest
-	3,  // 16: pantry.v1.PantryService.ListPantry:output_type -> pantry.v1.ListPantryResponse
-	5,  // 17: pantry.v1.PantryService.AddToPantry:output_type -> pantry.v1.AddToPantryResponse
-	7,  // 18: pantry.v1.PantryService.UpdatePantryItem:output_type -> pantry.v1.UpdatePantryItemResponse
-	9,  // 19: pantry.v1.PantryService.RemoveFromPantry:output_type -> pantry.v1.RemoveFromPantryResponse
-	16, // [16:20] is the sub-list for method output_type
-	12, // [12:16] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	15, // 7: pantry.v1.AddToPantryRequest.unit:type_name -> foods.v1.AmountUnit
+	4,  // 8: pantry.v1.AddLotsToPantryRequest.requests:type_name -> pantry.v1.AddToPantryRequest
+	7,  // 9: pantry.v1.AddLotsToPantryResponse.results:type_name -> pantry.v1.AddLotResult
+	8,  // 10: pantry.v1.AddLotResult.added:type_name -> pantry.v1.AddToPantryResponse
+	0,  // 11: pantry.v1.AddToPantryResponse.item:type_name -> pantry.v1.PantryItem
+	0,  // 12: pantry.v1.UpdatePantryItemRequest.item:type_name -> pantry.v1.PantryItem
+	16, // 13: pantry.v1.UpdatePantryItemRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 14: pantry.v1.UpdatePantryItemResponse.item:type_name -> pantry.v1.PantryItem
+	2,  // 15: pantry.v1.PantryService.ListPantry:input_type -> pantry.v1.ListPantryRequest
+	4,  // 16: pantry.v1.PantryService.AddToPantry:input_type -> pantry.v1.AddToPantryRequest
+	5,  // 17: pantry.v1.PantryService.AddLotsToPantry:input_type -> pantry.v1.AddLotsToPantryRequest
+	9,  // 18: pantry.v1.PantryService.UpdatePantryItem:input_type -> pantry.v1.UpdatePantryItemRequest
+	11, // 19: pantry.v1.PantryService.RemoveFromPantry:input_type -> pantry.v1.RemoveFromPantryRequest
+	3,  // 20: pantry.v1.PantryService.ListPantry:output_type -> pantry.v1.ListPantryResponse
+	8,  // 21: pantry.v1.PantryService.AddToPantry:output_type -> pantry.v1.AddToPantryResponse
+	6,  // 22: pantry.v1.PantryService.AddLotsToPantry:output_type -> pantry.v1.AddLotsToPantryResponse
+	10, // 23: pantry.v1.PantryService.UpdatePantryItem:output_type -> pantry.v1.UpdatePantryItemResponse
+	12, // 24: pantry.v1.PantryService.RemoveFromPantry:output_type -> pantry.v1.RemoveFromPantryResponse
+	20, // [20:25] is the sub-list for method output_type
+	15, // [15:20] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_pantry_v1_pantry_proto_init() }
@@ -1251,7 +1531,7 @@ func file_pantry_v1_pantry_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pantry_v1_pantry_proto_rawDesc), len(file_pantry_v1_pantry_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

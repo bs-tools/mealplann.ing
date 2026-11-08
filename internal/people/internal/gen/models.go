@@ -823,6 +823,14 @@ type ReferenceFood struct {
 	UpdateTime                      pgtype.Timestamptz
 }
 
+type RequestID struct {
+	HouseholdID pgtype.UUID
+	RequestID   string
+	Method      string
+	Response    []byte
+	CreateTime  pgtype.Timestamptz
+}
+
 type Session struct {
 	ID          pgtype.UUID
 	UserID      pgtype.UUID

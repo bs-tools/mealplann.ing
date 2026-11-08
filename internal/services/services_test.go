@@ -31,6 +31,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/gen/shopping/v1/shoppingv1connect"
 	"github.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1/suggestionsv1connect"
 	"github.com/bs-tools/mealplann.ing/internal/gen/users/v1/usersv1connect"
+	"github.com/bs-tools/mealplann.ing/internal/idempotency"
 	"github.com/bs-tools/mealplann.ing/internal/mcp"
 	"github.com/bs-tools/mealplann.ing/internal/oauth"
 	"github.com/bs-tools/mealplann.ing/internal/pantry"
@@ -156,16 +157,17 @@ func newEnv(t *testing.T) *env {
 	}
 	userService := user.NewService(log, report, userRepo, userRepo, userRepo, avatars)
 	e.foodRepo = foods.NewRepository(log, db)
-	foodService := food.NewService(log, report, e.foodRepo)
+	requests := idempotency.NewStore(log, report, db)
+	foodService := food.NewService(log, report, e.foodRepo, requests)
 	recipeRepo := recipes.NewRepository(log, db)
-	recipeService := recipe.NewService(log, report, recipeRepo)
+	recipeService := recipe.NewService(log, report, recipeRepo, requests)
 	peopleRepo := people.NewRepository(log, db)
 	personService := person.NewService(log, report, peopleRepo)
 	planRepo := plans.NewRepository(log, db)
 	pantryRepo := pantry.NewRepository(log, db)
 	shoppingRepo := shopping.NewRepository(log, db)
 	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, e.foodRepo, pantryRepo, shoppingRepo, templates.NewRepository(log, db))
-	pantryService := pantrysvc.NewService(log, report, pantryRepo, e.foodRepo)
+	pantryService := pantrysvc.NewService(log, report, pantryRepo, e.foodRepo, requests)
 	shoppingService := shoppingsvc.NewService(log, report, shoppingRepo, planRepo, recipeRepo, e.foodRepo, pantryRepo)
 
 	// Start listening before creating the handler, as the OAuth server needs

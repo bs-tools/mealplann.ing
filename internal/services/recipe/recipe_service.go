@@ -5,7 +5,10 @@ package recipe
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -15,8 +18,10 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/errreport"
 	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
 	"github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1/recipesv1connect"
+	"github.com/bs-tools/mealplann.ing/internal/idempotency"
 	"github.com/bs-tools/mealplann.ing/internal/protomask"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
+	"github.com/bs-tools/mealplann.ing/internal/services/batch"
 	"github.com/bs-tools/mealplann.ing/internal/services/summary"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -38,14 +43,16 @@ type Repository interface {
 
 // Service implements the RecipeService.
 type Service struct {
-	log     *slog.Logger
-	report  *errreport.Reporter
-	recipes Repository
+	log      *slog.Logger
+	report   *errreport.Reporter
+	recipes  Repository
+	requests *idempotency.Store
 }
 
-// NewService returns a RecipeService storing recipes in the repository.
-func NewService(log *slog.Logger, report *errreport.Reporter, recipes Repository) *Service {
-	return &Service{log: log, report: report, recipes: recipes}
+// NewService returns a RecipeService storing recipes in the repository,
+// and the responses of requests with request IDs in requests.
+func NewService(log *slog.Logger, report *errreport.Reporter, recipes Repository, requests *idempotency.Store) *Service {
+	return &Service{log: log, report: report, recipes: recipes, requests: requests}
 }
 
 // checkComponents checks that a recipe's components don't use it, as
@@ -89,11 +96,18 @@ func (s *Service) CreateRecipe(ctx context.Context, req *recipesv1.CreateRecipeR
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, "")
 	}
+	return idempotency.Do(ctx, s.requests, user.HouseholdID(), "CreateRecipe", req.GetRequestId(), func() (*recipesv1.CreateRecipeResponse, error) {
+		return s.createRecipe(ctx, user.HouseholdID(), req)
+	})
+}
+
+// createRecipe creates a recipe, without a request ID.
+func (s *Service) createRecipe(ctx context.Context, householdID pgtype.UUID, req *recipesv1.CreateRecipeRequest) (*recipesv1.CreateRecipeResponse, error) {
 	recipe, err := recipeFromProto(req.GetRecipe())
 	if err != nil {
 		return nil, err
 	}
-	recipe.HouseholdID = user.HouseholdID()
+	recipe.HouseholdID = householdID
 	if err := s.checkComponents(ctx, recipe); err != nil {
 		return nil, err
 	}
@@ -194,6 +208,25 @@ func (s *Service) ListRecipes(ctx context.Context, req *recipesv1.ListRecipesReq
 	return recipesv1.ListRecipesResponse_builder{Recipes: summaries, Tags: allTags}.Build(), nil
 }
 
+func (s *Service) UpdateRecipes(ctx context.Context, req *recipesv1.UpdateRecipesRequest) (*recipesv1.UpdateRecipesResponse, error) {
+	if _, ok := authn.GetUser(ctx); !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+	}
+	if err := batch.Check(len(req.GetRequests())); err != nil {
+		return nil, err
+	}
+	results := batch.Run(ctx, req.GetRequests(), s.UpdateRecipe)
+	out := make([]*recipesv1.UpdateRecipeResult, 0, len(results))
+	for _, r := range results {
+		out = append(out, recipesv1.UpdateRecipeResult_builder{
+			Recipe:       r.Value.GetRecipe(),
+			ErrorCode:    r.ErrorCode,
+			ErrorMessage: r.ErrorMessage,
+		}.Build())
+	}
+	return recipesv1.UpdateRecipesResponse_builder{Results: out}.Build(), nil
+}
+
 func (s *Service) UpdateRecipe(ctx context.Context, req *recipesv1.UpdateRecipeRequest) (*recipesv1.UpdateRecipeResponse, error) {
 	user, ok := authn.GetUser(ctx)
 	if !ok {
@@ -225,6 +258,102 @@ func (s *Service) UpdateRecipe(ctx context.Context, req *recipesv1.UpdateRecipeR
 		return nil, s.toConnectError(ctx, err, "failed to update recipe")
 	}
 	return recipesv1.UpdateRecipeResponse_builder{Recipe: recipeToProto(updated)}.Build(), nil
+}
+
+// maxAmountRatio is the most ReplaceFood can multiply amounts by, or
+// divide them by: more is a mistake, like grams for kilograms.
+const maxAmountRatio = 100
+
+func (s *Service) ReplaceFood(ctx context.Context, req *recipesv1.ReplaceFoodRequest) (*recipesv1.ReplaceFoodResponse, error) {
+	user, ok := authn.GetUser(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+	}
+	oldID, err := store.StringToUUID(req.GetFoodId())
+	if err != nil {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "invalid food_id: %v; find foods with FoodService.ListFoods", err)
+	}
+	newID, err := store.StringToUUID(req.GetNewFoodId())
+	if err != nil {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "invalid new_food_id: %v; find foods with FoodService.ListFoods", err)
+	}
+	if oldID == newID {
+		return nil, connect.NewError(connect.CodeInvalidArgument, "new_food_id is food_id: give the food to use instead")
+	}
+	ratio := req.GetAmountRatio()
+	switch {
+	case ratio == 0:
+		ratio = 1
+	case math.IsNaN(ratio) || ratio < 1.0/maxAmountRatio || ratio > maxAmountRatio:
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "amount_ratio must be from 1/%d to %d, or 0 to keep the amounts", maxAmountRatio, maxAmountRatio)
+	}
+	if len(req.GetRecipeIds()) > maxFilterIDs {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "recipe_ids must have at most %d recipes", maxFilterIDs)
+	}
+	only := map[pgtype.UUID]bool{}
+	for _, id := range req.GetRecipeIds() {
+		parsed, err := parseRecipeID(id)
+		if err != nil {
+			return nil, err
+		}
+		only[parsed] = true
+	}
+	using, _, err := s.recipes.ListRecipes(ctx, user.HouseholdID(), recipes.ListFilter{FoodIDs: []pgtype.UUID{oldID}})
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to list recipes")
+	}
+	var ids []pgtype.UUID
+	for _, r := range using {
+		if len(only) == 0 || only[r.ID] {
+			ids = append(ids, r.ID)
+		}
+	}
+	oldFoodID, newFoodID := store.UUIDToString(oldID), store.UUIDToString(newID)
+	results := batch.Run(ctx, ids, func(ctx context.Context, id pgtype.UUID) (*recipes.Recipe, error) {
+		existing, err := s.recipes.GetRecipe(ctx, user.HouseholdID(), id)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to get recipe")
+		}
+		// The recipe goes through its API form, so the new amounts are
+		// checked like any update's.
+		p := recipeToProto(existing)
+		for _, in := range p.GetIngredients() {
+			if in.GetFoodId() == oldFoodID {
+				in.SetFoodId(newFoodID)
+				in.SetAmount(in.GetAmount() * ratio)
+			}
+		}
+		recipe, err := recipeFromProto(p)
+		if err != nil {
+			return nil, err
+		}
+		recipe.ID, recipe.HouseholdID = existing.ID, existing.HouseholdID
+		updated, err := s.recipes.UpdateRecipe(ctx, recipe)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to update recipe")
+		}
+		return updated, nil
+	})
+	changed := make([]*recipesv1.RecipeSummary, 0, len(results))
+	var failed []string
+	var code connect.Code
+	for i, r := range results {
+		if r.ErrorCode != "" {
+			if code == 0 {
+				_ = code.UnmarshalText([]byte(r.ErrorCode))
+			}
+			failed = append(failed, fmt.Sprintf("%s: %s", using[slices.IndexFunc(using, func(u *recipes.Recipe) bool { return u.ID == ids[i] })].Name, r.ErrorMessage))
+			continue
+		}
+		changed = append(changed, summaryToProto(r.Value))
+	}
+	if len(failed) > 0 {
+		return nil, connect.Errorf(code, "replaced the food in %d recipes, but not in %d: %s", len(changed), len(failed), strings.Join(failed, "; "))
+	}
+	slices.SortFunc(changed, func(a, b *recipesv1.RecipeSummary) int {
+		return strings.Compare(strings.ToLower(a.GetName()), strings.ToLower(b.GetName()))
+	})
+	return recipesv1.ReplaceFoodResponse_builder{Recipes: changed}.Build(), nil
 }
 
 func (s *Service) DeleteRecipe(ctx context.Context, req *recipesv1.DeleteRecipeRequest) (*recipesv1.DeleteRecipeResponse, error) {

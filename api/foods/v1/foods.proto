@@ -58,6 +58,11 @@ service FoodService {
   // household has a food with the same name, which should then be reused
   // instead, and with INVALID_ARGUMENT if the reference food doesn't exist.
   rpc CreateFood(CreateFoodRequest) returns (CreateFoodResponse);
+  // Create several foods at once, like the foods of a shelf or a receipt.
+  // Each is created on its own, like CreateFood, in parallel: the response
+  // has a result per request, in order, with what was created or the error.
+  // At most 100 requests.
+  rpc CreateFoods(CreateFoodsRequest) returns (CreateFoodsResponse);
   // Get one of the household's foods, by its ID or its name. Fails with
   // NOT_FOUND naming the foods with similar names if no food has the name.
   rpc GetFood(GetFoodRequest) returns (GetFoodResponse);
@@ -383,11 +388,43 @@ message CreateFoodRequest {
   // The ID of the reference food in source, the source_id of
   // SearchFoodData's result. Required with source.
   int32 source_id = 4;
+  // An ID the caller chooses for this request, like a UUID, to retry it
+  // safely: a retry with the same request_id within a day returns the
+  // first response instead of creating again. Empty to not deduplicate. At
+  // most 100 characters.
+  string request_id = 5;
 }
 
 message CreateFoodResponse {
   // The created food.
   Food food = 1;
+}
+
+message CreateFoodsRequest {
+  // The foods to create, each as CreateFood takes it, without a
+  // request_id. At most 100.
+  repeated CreateFoodRequest requests = 1;
+  // An ID the caller chooses for this request, like a UUID, to retry it
+  // safely: a retry with the same request_id within a day returns the
+  // first response instead of creating again. Empty to not deduplicate. At
+  // most 100 characters.
+  string request_id = 2;
+}
+
+message CreateFoodsResponse {
+  // A result per request, in order.
+  repeated CreateFoodResult results = 1;
+}
+
+// The result of creating one of several foods.
+message CreateFoodResult {
+  // The created food, unset if it failed.
+  Food food = 1;
+  // The code of the error, like "invalid_argument" or "already_exists",
+  // empty if the food was created.
+  string error_code = 2;
+  // What went wrong and what to do, empty if the food was created.
+  string error_message = 3;
 }
 
 message GetFoodRequest {

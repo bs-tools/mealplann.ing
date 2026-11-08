@@ -41,6 +41,11 @@ service PantryService {
   // stock, as those aren't tracked, unless track_stock is set. The response
   // says how the amount was converted, e.g. "148 ml at 1.17 g/ml is 173 g".
   rpc AddToPantry(AddToPantryRequest) returns (AddToPantryResponse);
+  // Add several lots at once, like a shelf from a photo or a shop's
+  // receipt. Each lot is added on its own, like AddToPantry, in parallel: the response
+  // has a result per request, in order, with what was added or the error.
+  // At most 100 requests.
+  rpc AddLotsToPantry(AddLotsToPantryRequest) returns (AddLotsToPantryResponse);
   // Update a lot of the pantry, e.g. its grams after using some, or its
   // opened_date when opening it.
   rpc UpdatePantryItem(UpdatePantryItemRequest) returns (UpdatePantryItemResponse);
@@ -135,6 +140,38 @@ message AddToPantryRequest {
   // food, instead of failing. Set it when the user says how much they have
   // of a food they had marked as always in stock.
   bool track_stock = 7;
+  // An ID the caller chooses for this request, like a UUID, to retry it
+  // safely: a retry with the same request_id within a day returns the
+  // first response instead of creating again. Empty to not deduplicate. At
+  // most 100 characters.
+  string request_id = 8;
+}
+
+message AddLotsToPantryRequest {
+  // The lots to add, each as AddToPantry takes it, without a request_id.
+  // At most 100.
+  repeated AddToPantryRequest requests = 1;
+  // An ID the caller chooses for this request, like a UUID, to retry it
+  // safely: a retry with the same request_id within a day returns the
+  // first response instead of creating again. Empty to not deduplicate. At
+  // most 100 characters.
+  string request_id = 2;
+}
+
+message AddLotsToPantryResponse {
+  // A result per request, in order.
+  repeated AddLotResult results = 1;
+}
+
+// The result of adding one of several lots.
+message AddLotResult {
+  // The lot added, with how its amount was converted, unset if it failed.
+  AddToPantryResponse added = 1;
+  // The code of the error, like "invalid_argument" or
+  // "failed_precondition", empty if the lot was added.
+  string error_code = 2;
+  // What went wrong and what to do, empty if the lot was added.
+  string error_message = 3;
 }
 
 message AddToPantryResponse {

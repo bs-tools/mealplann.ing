@@ -29,6 +29,16 @@ export const listPantry = PantryService.method.listPantry;
 export const addToPantry = PantryService.method.addToPantry;
 
 /**
+ * Add several lots at once, like a shelf from a photo or a shop's
+ * receipt. Each lot is added on its own, like AddToPantry, in parallel: the response
+ * has a result per request, in order, with what was added or the error.
+ * At most 100 requests.
+ *
+ * @generated from rpc pantry.v1.PantryService.AddLotsToPantry
+ */
+export const addLotsToPantry = PantryService.method.addLotsToPantry;
+
+/**
  * Update a lot of the pantry, e.g. its grams after using some, or its
  * opened_date when opening it.
  *

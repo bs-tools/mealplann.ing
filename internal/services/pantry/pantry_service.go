@@ -21,9 +21,11 @@ import (
 	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
 	pantryv1 "github.com/bs-tools/mealplann.ing/internal/gen/pantry/v1"
 	"github.com/bs-tools/mealplann.ing/internal/gen/pantry/v1/pantryv1connect"
+	"github.com/bs-tools/mealplann.ing/internal/idempotency"
 	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 	"github.com/bs-tools/mealplann.ing/internal/pantry"
 	"github.com/bs-tools/mealplann.ing/internal/protomask"
+	"github.com/bs-tools/mealplann.ing/internal/services/batch"
 	"github.com/bs-tools/mealplann.ing/internal/services/food"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -51,18 +53,20 @@ type FoodRepository interface {
 
 // Service implements the PantryService.
 type Service struct {
-	log    *slog.Logger
-	report *errreport.Reporter
-	pantry Repository
-	foods  FoodRepository
+	log      *slog.Logger
+	report   *errreport.Reporter
+	pantry   Repository
+	foods    FoodRepository
+	requests *idempotency.Store
 	// nowFn returns the current time, which today's date is taken from.
 	nowFn func() time.Time
 }
 
 // NewService returns a PantryService storing the pantry in the repository,
-// of the foods in theirs.
-func NewService(log *slog.Logger, report *errreport.Reporter, pantry Repository, foods FoodRepository) *Service {
-	return &Service{log: log, report: report, pantry: pantry, foods: foods, nowFn: time.Now}
+// of the foods in theirs, and the responses of requests with request IDs
+// in requests.
+func NewService(log *slog.Logger, report *errreport.Reporter, pantry Repository, foods FoodRepository, requests *idempotency.Store) *Service {
+	return &Service{log: log, report: report, pantry: pantry, foods: foods, requests: requests, nowFn: time.Now}
 }
 
 // Limits of a lot's fields.
@@ -169,6 +173,13 @@ func (s *Service) AddToPantry(ctx context.Context, req *pantryv1.AddToPantryRequ
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, "")
 	}
+	return idempotency.Do(ctx, s.requests, user.HouseholdID(), "AddToPantry", req.GetRequestId(), func() (*pantryv1.AddToPantryResponse, error) {
+		return s.addToPantry(ctx, user.HouseholdID(), req)
+	})
+}
+
+// addToPantry adds a lot, without a request ID.
+func (s *Service) addToPantry(ctx context.Context, householdID pgtype.UUID, req *pantryv1.AddToPantryRequest) (*pantryv1.AddToPantryResponse, error) {
 	foodID, err := parseID("food_id", req.GetFoodId(), "find foods with ListFoods")
 	if err != nil {
 		return nil, err
@@ -193,7 +204,7 @@ func (s *Service) AddToPantry(ctx context.Context, req *pantryv1.AddToPantryRequ
 	if err != nil {
 		return nil, err
 	}
-	f, err := s.foods.GetFood(ctx, user.HouseholdID(), foodID)
+	f, err := s.foods.GetFood(ctx, householdID, foodID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, foodNotFound)
@@ -222,7 +233,7 @@ func (s *Service) AddToPantry(ctx context.Context, req *pantryv1.AddToPantryRequ
 	if expiry.IsZero() && f.ShelfLifeDays > 0 {
 		expiry = Today(s.nowFn()).AddDate(0, 0, int(f.ShelfLifeDays))
 	}
-	created, err := s.pantry.CreateItems(ctx, user.HouseholdID(), []*pantry.Item{{
+	created, err := s.pantry.CreateItems(ctx, householdID, []*pantry.Item{{
 		FoodID:     foodID,
 		Grams:      grams,
 		ExpiryDate: expiry,
@@ -263,6 +274,35 @@ func Conversion(f *foods.Food, amount float64, unit nutrition.Unit, grams float6
 // number formats a number with at most 2 decimals, without trailing zeros.
 func number(v float64) string {
 	return strconv.FormatFloat(math.Round(v*100)/100, 'f', -1, 64)
+}
+
+func (s *Service) AddLotsToPantry(ctx context.Context, req *pantryv1.AddLotsToPantryRequest) (*pantryv1.AddLotsToPantryResponse, error) {
+	user, ok := authn.GetUser(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+	}
+	if err := batch.Check(len(req.GetRequests())); err != nil {
+		return nil, err
+	}
+	return idempotency.Do(ctx, s.requests, user.HouseholdID(), "AddLotsToPantry", req.GetRequestId(), func() (*pantryv1.AddLotsToPantryResponse, error) {
+		return s.addLotsToPantry(ctx, user.HouseholdID(), req)
+	})
+}
+
+// addLotsToPantry adds lots, ignoring their requests' request IDs.
+func (s *Service) addLotsToPantry(ctx context.Context, householdID pgtype.UUID, req *pantryv1.AddLotsToPantryRequest) (*pantryv1.AddLotsToPantryResponse, error) {
+	results := batch.Run(ctx, req.GetRequests(), func(ctx context.Context, req *pantryv1.AddToPantryRequest) (*pantryv1.AddToPantryResponse, error) {
+		return s.addToPantry(ctx, householdID, req)
+	})
+	out := make([]*pantryv1.AddLotResult, 0, len(results))
+	for _, r := range results {
+		out = append(out, pantryv1.AddLotResult_builder{
+			Added:        r.Value,
+			ErrorCode:    r.ErrorCode,
+			ErrorMessage: r.ErrorMessage,
+		}.Build())
+	}
+	return pantryv1.AddLotsToPantryResponse_builder{Results: out}.Build(), nil
 }
 
 // Grams converts an amount of a food to grams, failing with a message
