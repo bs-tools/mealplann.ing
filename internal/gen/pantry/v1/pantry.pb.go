@@ -398,9 +398,15 @@ func (b0 AlwaysInStockFood_builder) Build() *AlwaysInStockFood {
 }
 
 type ListPantryRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FoodIds            []string               `protobuf:"bytes,1,rep,name=food_ids,json=foodIds,proto3"`
+	xxx_hidden_StoreSection       v1.StoreSection        `protobuf:"varint,2,opt,name=store_section,json=storeSection,proto3,enum=foods.v1.StoreSection"`
+	xxx_hidden_ExpiringWithinDays int32                  `protobuf:"varint,3,opt,name=expiring_within_days,json=expiringWithinDays,proto3,oneof"`
+	xxx_hidden_Summary            bool                   `protobuf:"varint,4,opt,name=summary,proto3"`
+	XXX_raceDetectHookData        protoimpl.RaceDetectHookData
+	XXX_presence                  [1]uint32
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *ListPantryRequest) Reset() {
@@ -428,15 +434,90 @@ func (x *ListPantryRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
+func (x *ListPantryRequest) GetFoodIds() []string {
+	if x != nil {
+		return x.xxx_hidden_FoodIds
+	}
+	return nil
+}
+
+func (x *ListPantryRequest) GetStoreSection() v1.StoreSection {
+	if x != nil {
+		return x.xxx_hidden_StoreSection
+	}
+	return v1.StoreSection(0)
+}
+
+func (x *ListPantryRequest) GetExpiringWithinDays() int32 {
+	if x != nil {
+		return x.xxx_hidden_ExpiringWithinDays
+	}
+	return 0
+}
+
+func (x *ListPantryRequest) GetSummary() bool {
+	if x != nil {
+		return x.xxx_hidden_Summary
+	}
+	return false
+}
+
+func (x *ListPantryRequest) SetFoodIds(v []string) {
+	x.xxx_hidden_FoodIds = v
+}
+
+func (x *ListPantryRequest) SetStoreSection(v v1.StoreSection) {
+	x.xxx_hidden_StoreSection = v
+}
+
+func (x *ListPantryRequest) SetExpiringWithinDays(v int32) {
+	x.xxx_hidden_ExpiringWithinDays = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *ListPantryRequest) SetSummary(v bool) {
+	x.xxx_hidden_Summary = v
+}
+
+func (x *ListPantryRequest) HasExpiringWithinDays() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *ListPantryRequest) ClearExpiringWithinDays() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_ExpiringWithinDays = 0
+}
+
 type ListPantryRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
+	// Only list lots of these foods. Empty to list all. At most 100.
+	FoodIds []string
+	// Only list lots of foods in this part of the store.
+	// STORE_SECTION_UNSPECIFIED to list all.
+	StoreSection v1.StoreSection
+	// Only list lots to use within this many days from today (UTC),
+	// including those already past their use-by date. Unset to list all.
+	ExpiringWithinDays *int32
+	// Whether to leave out the lots' create and update times, to keep a
+	// large pantry's response small.
+	Summary bool
 }
 
 func (b0 ListPantryRequest_builder) Build() *ListPantryRequest {
 	m0 := &ListPantryRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
+	x.xxx_hidden_FoodIds = b.FoodIds
+	x.xxx_hidden_StoreSection = b.StoreSection
+	if b.ExpiringWithinDays != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		x.xxx_hidden_ExpiringWithinDays = *b.ExpiringWithinDays
+	}
+	x.xxx_hidden_Summary = b.Summary
 	return m0
 }
 
@@ -1067,8 +1148,13 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\x11AlwaysInStockFood\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x1b\n" +
 	"\tfood_name\x18\x02 \x01(\tR\bfoodName\x12;\n" +
-	"\rstore_section\x18\x03 \x01(\x0e2\x16.foods.v1.StoreSectionR\fstoreSection\"\x13\n" +
-	"\x11ListPantryRequest\"\x92\x01\n" +
+	"\rstore_section\x18\x03 \x01(\x0e2\x16.foods.v1.StoreSectionR\fstoreSection\"\xd5\x01\n" +
+	"\x11ListPantryRequest\x12\x19\n" +
+	"\bfood_ids\x18\x01 \x03(\tR\afoodIds\x12;\n" +
+	"\rstore_section\x18\x02 \x01(\x0e2\x16.foods.v1.StoreSectionR\fstoreSection\x125\n" +
+	"\x14expiring_within_days\x18\x03 \x01(\x05H\x00R\x12expiringWithinDays\x88\x01\x01\x12\x18\n" +
+	"\asummary\x18\x04 \x01(\bR\asummaryB\x17\n" +
+	"\x15_expiring_within_days\"\x92\x01\n" +
 	"\x12ListPantryResponse\x12+\n" +
 	"\x05items\x18\x01 \x03(\v2\x15.pantry.v1.PantryItemR\x05items\x12O\n" +
 	"\x15always_in_stock_foods\x18\x02 \x03(\v2\x1c.pantry.v1.AlwaysInStockFoodR\x12alwaysInStockFoods\"\xe8\x01\n" +
@@ -1129,26 +1215,27 @@ var file_pantry_v1_pantry_proto_depIdxs = []int32{
 	11, // 1: pantry.v1.PantryItem.create_time:type_name -> google.protobuf.Timestamp
 	11, // 2: pantry.v1.PantryItem.update_time:type_name -> google.protobuf.Timestamp
 	10, // 3: pantry.v1.AlwaysInStockFood.store_section:type_name -> foods.v1.StoreSection
-	0,  // 4: pantry.v1.ListPantryResponse.items:type_name -> pantry.v1.PantryItem
-	1,  // 5: pantry.v1.ListPantryResponse.always_in_stock_foods:type_name -> pantry.v1.AlwaysInStockFood
-	12, // 6: pantry.v1.AddToPantryRequest.unit:type_name -> foods.v1.AmountUnit
-	0,  // 7: pantry.v1.AddToPantryResponse.item:type_name -> pantry.v1.PantryItem
-	0,  // 8: pantry.v1.UpdatePantryItemRequest.item:type_name -> pantry.v1.PantryItem
-	13, // 9: pantry.v1.UpdatePantryItemRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 10: pantry.v1.UpdatePantryItemResponse.item:type_name -> pantry.v1.PantryItem
-	2,  // 11: pantry.v1.PantryService.ListPantry:input_type -> pantry.v1.ListPantryRequest
-	4,  // 12: pantry.v1.PantryService.AddToPantry:input_type -> pantry.v1.AddToPantryRequest
-	6,  // 13: pantry.v1.PantryService.UpdatePantryItem:input_type -> pantry.v1.UpdatePantryItemRequest
-	8,  // 14: pantry.v1.PantryService.RemoveFromPantry:input_type -> pantry.v1.RemoveFromPantryRequest
-	3,  // 15: pantry.v1.PantryService.ListPantry:output_type -> pantry.v1.ListPantryResponse
-	5,  // 16: pantry.v1.PantryService.AddToPantry:output_type -> pantry.v1.AddToPantryResponse
-	7,  // 17: pantry.v1.PantryService.UpdatePantryItem:output_type -> pantry.v1.UpdatePantryItemResponse
-	9,  // 18: pantry.v1.PantryService.RemoveFromPantry:output_type -> pantry.v1.RemoveFromPantryResponse
-	15, // [15:19] is the sub-list for method output_type
-	11, // [11:15] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	10, // 4: pantry.v1.ListPantryRequest.store_section:type_name -> foods.v1.StoreSection
+	0,  // 5: pantry.v1.ListPantryResponse.items:type_name -> pantry.v1.PantryItem
+	1,  // 6: pantry.v1.ListPantryResponse.always_in_stock_foods:type_name -> pantry.v1.AlwaysInStockFood
+	12, // 7: pantry.v1.AddToPantryRequest.unit:type_name -> foods.v1.AmountUnit
+	0,  // 8: pantry.v1.AddToPantryResponse.item:type_name -> pantry.v1.PantryItem
+	0,  // 9: pantry.v1.UpdatePantryItemRequest.item:type_name -> pantry.v1.PantryItem
+	13, // 10: pantry.v1.UpdatePantryItemRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 11: pantry.v1.UpdatePantryItemResponse.item:type_name -> pantry.v1.PantryItem
+	2,  // 12: pantry.v1.PantryService.ListPantry:input_type -> pantry.v1.ListPantryRequest
+	4,  // 13: pantry.v1.PantryService.AddToPantry:input_type -> pantry.v1.AddToPantryRequest
+	6,  // 14: pantry.v1.PantryService.UpdatePantryItem:input_type -> pantry.v1.UpdatePantryItemRequest
+	8,  // 15: pantry.v1.PantryService.RemoveFromPantry:input_type -> pantry.v1.RemoveFromPantryRequest
+	3,  // 16: pantry.v1.PantryService.ListPantry:output_type -> pantry.v1.ListPantryResponse
+	5,  // 17: pantry.v1.PantryService.AddToPantry:output_type -> pantry.v1.AddToPantryResponse
+	7,  // 18: pantry.v1.PantryService.UpdatePantryItem:output_type -> pantry.v1.UpdatePantryItemResponse
+	9,  // 19: pantry.v1.PantryService.RemoveFromPantry:output_type -> pantry.v1.RemoveFromPantryResponse
+	16, // [16:20] is the sub-list for method output_type
+	12, // [12:16] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_pantry_v1_pantry_proto_init() }
@@ -1157,6 +1244,7 @@ func file_pantry_v1_pantry_proto_init() {
 		return
 	}
 	file_pantry_v1_pantry_proto_msgTypes[0].OneofWrappers = []any{}
+	file_pantry_v1_pantry_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

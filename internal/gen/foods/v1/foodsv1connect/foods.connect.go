@@ -109,7 +109,8 @@ type FoodServiceClient interface {
 	// household has a food with the same name, which should then be reused
 	// instead, and with INVALID_ARGUMENT if the reference food doesn't exist.
 	CreateFood(context.Context, *v1.CreateFoodRequest) (*v1.CreateFoodResponse, error)
-	// Get one of the household's foods.
+	// Get one of the household's foods, by its ID or its name. Fails with
+	// NOT_FOUND naming the foods with similar names if no food has the name.
 	GetFood(context.Context, *v1.GetFoodRequest) (*v1.GetFoodResponse, error)
 	// List the household's foods, optionally only those whose name contains a
 	// text, ordered by name.
@@ -155,7 +156,8 @@ type FoodServiceHandler interface {
 	// household has a food with the same name, which should then be reused
 	// instead, and with INVALID_ARGUMENT if the reference food doesn't exist.
 	CreateFood(context.Context, *v1.CreateFoodRequest) (*v1.CreateFoodResponse, error)
-	// Get one of the household's foods.
+	// Get one of the household's foods, by its ID or its name. Fails with
+	// NOT_FOUND naming the foods with similar names if no food has the name.
 	GetFood(context.Context, *v1.GetFoodRequest) (*v1.GetFoodResponse, error)
 	// List the household's foods, optionally only those whose name contains a
 	// text, ordered by name.

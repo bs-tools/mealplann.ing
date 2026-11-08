@@ -13,7 +13,9 @@ import { RecipeService } from "./recipes_pb";
 export const createRecipe = RecipeService.method.createRecipe;
 
 /**
- * Get a recipe, with its ingredients, steps and nutrition.
+ * Get a recipe, with its ingredients, steps and nutrition, by its ID or
+ * its name. Fails with NOT_FOUND naming the recipes with similar names if
+ * no recipe has the name.
  *
  * @generated from rpc recipes.v1.RecipeService.GetRecipe
  */
@@ -21,7 +23,7 @@ export const getRecipe = RecipeService.method.getRecipe;
 
 /**
  * List the household's recipes, ordered by name, optionally only those
- * matching a text or tags, or only favorites. Returns summaries with the
+ * matching a text or tags, using some foods, or only favorites. Returns summaries with the
  * main nutrients per serving; get a recipe with GetRecipe for the rest.
  *
  * @generated from rpc recipes.v1.RecipeService.ListRecipes

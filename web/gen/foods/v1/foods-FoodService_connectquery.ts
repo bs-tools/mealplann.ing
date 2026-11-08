@@ -30,7 +30,8 @@ export const searchFoodData = FoodService.method.searchFoodData;
 export const createFood = FoodService.method.createFood;
 
 /**
- * Get one of the household's foods.
+ * Get one of the household's foods, by its ID or its name. Fails with
+ * NOT_FOUND naming the foods with similar names if no food has the name.
  *
  * @generated from rpc foods.v1.FoodService.GetFood
  */

@@ -8,7 +8,8 @@ import { PlanService } from "./plans_pb";
  * Get a week of the plan: for each day and person, their eating times
  * with the portions and staples planned, with weights and nutrients; the
  * day's totals; and every warning. Also the cooks of the week. Read it
- * after changing the plan, to check the warnings.
+ * after changing the plan, to check the warnings. A full week runs to
+ * tens of kilobytes: set summary to read only the main nutrients.
  *
  * @generated from rpc plans.v1.PlanService.GetWeek
  */

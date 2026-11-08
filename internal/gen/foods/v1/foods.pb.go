@@ -2037,10 +2037,11 @@ func (b0 CreateFoodResponse_builder) Build() *CreateFoodResponse {
 }
 
 type GetFoodRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id,proto3"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id   string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_Name string                 `protobuf:"bytes,2,opt,name=name,proto3"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *GetFoodRequest) Reset() {
@@ -2075,15 +2076,29 @@ func (x *GetFoodRequest) GetId() string {
 	return ""
 }
 
+func (x *GetFoodRequest) GetName() string {
+	if x != nil {
+		return x.xxx_hidden_Name
+	}
+	return ""
+}
+
 func (x *GetFoodRequest) SetId(v string) {
 	x.xxx_hidden_Id = v
+}
+
+func (x *GetFoodRequest) SetName(v string) {
+	x.xxx_hidden_Name = v
 }
 
 type GetFoodRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The ID of the food.
+	// The ID of the food. Required, unless name is set.
 	Id string
+	// The name of the food, ignoring case, instead of its ID, e.g. "Black
+	// beans, cooked from dry".
+	Name string
 }
 
 func (b0 GetFoodRequest_builder) Build() *GetFoodRequest {
@@ -2091,6 +2106,7 @@ func (b0 GetFoodRequest_builder) Build() *GetFoodRequest {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_Name = b.Name
 	return m0
 }
 
@@ -2950,9 +2966,10 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x06source\x18\x03 \x01(\x0e2\x14.foods.v1.FoodSourceR\x06source\x12\x1b\n" +
 	"\tsource_id\x18\x04 \x01(\x05R\bsourceId\"8\n" +
 	"\x12CreateFoodResponse\x12\"\n" +
-	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\" \n" +
+	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\"4\n" +
 	"\x0eGetFoodRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"5\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"5\n" +
 	"\x0fGetFoodResponse\x12\"\n" +
 	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\"d\n" +
 	"\x10ListFoodsRequest\x12\x14\n" +

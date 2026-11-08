@@ -32,10 +32,12 @@ service RecipeService {
   // Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
   // isn't one of the household's foods.
   rpc CreateRecipe(CreateRecipeRequest) returns (CreateRecipeResponse);
-  // Get a recipe, with its ingredients, steps and nutrition.
+  // Get a recipe, with its ingredients, steps and nutrition, by its ID or
+  // its name. Fails with NOT_FOUND naming the recipes with similar names if
+  // no recipe has the name.
   rpc GetRecipe(GetRecipeRequest) returns (GetRecipeResponse);
   // List the household's recipes, ordered by name, optionally only those
-  // matching a text or tags, or only favorites. Returns summaries with the
+  // matching a text or tags, using some foods, or only favorites. Returns summaries with the
   // main nutrients per serving; get a recipe with GetRecipe for the rest.
   rpc ListRecipes(ListRecipesRequest) returns (ListRecipesResponse);
   // Update a recipe. To mark it as a favorite, or unmark it, set favorite
@@ -228,8 +230,16 @@ message CreateRecipeResponse {
 }
 
 message GetRecipeRequest {
-  // The ID of the recipe.
+  // The ID of the recipe. Required, unless name is set.
   string id = 1;
+  // The name of the recipe, ignoring case, instead of its ID.
+  string name = 2;
+  // Whether to return a summary: only the main nutrients (energy_kcal,
+  // protein_grams and carbohydrate_grams), and none of the steps, original
+  // ingredient texts, nutrition per 100 g, incomplete nutrients, ingredient
+  // issues, or create and update times. Use it to scan, and read the full
+  // response only for what needs a closer look.
+  bool summary = 3;
 }
 
 message GetRecipeResponse {
@@ -245,6 +255,11 @@ message ListRecipesRequest {
   repeated string tags = 2;
   // Only list the household's favorite recipes.
   bool favorites_only = 3;
+  // Only list recipes with any of these foods as an ingredient, e.g. to
+  // find the recipes to change when replacing a food. Recipes using a food
+  // only through a component recipe aren't listed: the component is. Empty
+  // to list all. At most 100.
+  repeated string food_ids = 4;
 }
 
 message ListRecipesResponse {

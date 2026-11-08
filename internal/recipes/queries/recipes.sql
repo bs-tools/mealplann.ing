@@ -42,16 +42,32 @@ returning *;
 select * from recipes where id = @id and household_id = @household_id;
 
 -- name: ListRecipes :many
-select * from recipes
-where household_id = @household_id
+select r.* from recipes r
+where r.household_id = @household_id
   and (
     @query::text = ''
-    or strpos(lower(name), lower(@query)) > 0
-    or strpos(lower(description), lower(@query)) > 0
+    or strpos(lower(r.name), lower(@query)) > 0
+    or strpos(lower(r.description), lower(@query)) > 0
   )
-  and tags @> @tags::text[]
-  and (not @favorites_only::boolean or favorite)
-order by lower(name), id;
+  and r.tags @> @tags::text[]
+  and (not @favorites_only::boolean or r.favorite)
+  and (
+    cardinality(@food_ids::uuid[]) = 0
+    or r.id in (
+      select ri.recipe_id from recipe_ingredients ri
+      where ri.household_id = @household_id and ri.food_id = any(@food_ids::uuid[])
+    )
+  )
+order by lower(r.name), r.id;
+
+-- name: FindRecipesByName :many
+-- The recipe with the name, ignoring case, first, then up to the limit of
+-- the recipes with similar names, most similar first.
+select id, name from recipes
+where household_id = @household_id
+  and (lower(name) = lower(@name) or name % @name or strpos(lower(name), lower(@name)) > 0)
+order by lower(name) = lower(@name) desc, similarity(name, @name) desc, lower(name), id
+limit @row_limit;
 
 -- name: ListRecipesByID :many
 select * from recipes

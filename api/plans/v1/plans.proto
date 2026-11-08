@@ -38,7 +38,8 @@ service PlanService {
   // Get a week of the plan: for each day and person, their eating times
   // with the portions and staples planned, with weights and nutrients; the
   // day's totals; and every warning. Also the cooks of the week. Read it
-  // after changing the plan, to check the warnings.
+  // after changing the plan, to check the warnings. A full week runs to
+  // tens of kilobytes: set summary to read only the main nutrients.
   rpc GetWeek(GetWeekRequest) returns (GetWeekResponse);
   // Plan a shared household meal: create a cook of a recipe on a date for a
   // meal, and a portion of it for each person whose eating pattern eats
@@ -377,6 +378,12 @@ message Warning {
 message GetWeekRequest {
   // The Monday the week starts on (YYYY-MM-DD). Required.
   string monday = 1;
+  // Whether to return a summary: only the main nutrients (energy_kcal,
+  // protein_grams and carbohydrate_grams), and none of the steps, original
+  // ingredient texts, nutrition per 100 g, incomplete nutrients, ingredient
+  // issues, or create and update times. Use it to scan, and read the full
+  // response only for what needs a closer look.
+  bool summary = 2;
 }
 
 message GetWeekResponse {

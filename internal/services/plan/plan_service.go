@@ -26,6 +26,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/plans"
 	"github.com/bs-tools/mealplann.ing/internal/protomask"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
+	"github.com/bs-tools/mealplann.ing/internal/services/summary"
 	"github.com/bs-tools/mealplann.ing/internal/shopping"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -173,11 +174,15 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 			cooks = append(cooks, d.plannedCook(c))
 		}
 	}
-	return plansv1.GetWeekResponse_builder{
+	resp := plansv1.GetWeekResponse_builder{
 		Monday: store.FormatDate(monday),
 		Days:   d.days(monday, sunday),
 		Cooks:  cooks,
-	}.Build(), nil
+	}.Build()
+	if req.GetSummary() {
+		summary.Summarize(resp)
+	}
+	return resp, nil
 }
 
 func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*plansv1.PlanMealResponse, error) {
