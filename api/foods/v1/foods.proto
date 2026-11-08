@@ -290,6 +290,10 @@ message Food {
   // How many days the food keeps once opened, e.g. 4 for an opened carton of
   // soy milk. 0 if unknown or the same as shelf_life_days.
   int32 opened_shelf_life_days = 12;
+  // How many days the food keeps frozen, from the day it's frozen, e.g. 90
+  // for bread or 180 for cooked beans. A pantry lot in the freezer is used
+  // by then, however soon its pack expires. 0 if unknown.
+  int32 freezer_shelf_life_days = 19;
   // Notes about the food, e.g. the brand or where to buy it. At most 2000
   // characters.
   string notes = 13;

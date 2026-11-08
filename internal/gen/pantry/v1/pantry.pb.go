@@ -24,6 +24,57 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Where a lot is kept.
+type Storage int32
+
+const (
+	Storage_STORAGE_UNSPECIFIED Storage = 0
+	// A cupboard or shelf at room temperature.
+	Storage_STORAGE_PANTRY Storage = 1
+	// The fridge.
+	Storage_STORAGE_FRIDGE Storage = 2
+	// The freezer, which keeps food for its freezer_shelf_life_days.
+	Storage_STORAGE_FREEZER Storage = 3
+)
+
+// Enum value maps for Storage.
+var (
+	Storage_name = map[int32]string{
+		0: "STORAGE_UNSPECIFIED",
+		1: "STORAGE_PANTRY",
+		2: "STORAGE_FRIDGE",
+		3: "STORAGE_FREEZER",
+	}
+	Storage_value = map[string]int32{
+		"STORAGE_UNSPECIFIED": 0,
+		"STORAGE_PANTRY":      1,
+		"STORAGE_FRIDGE":      2,
+		"STORAGE_FREEZER":     3,
+	}
+)
+
+func (x Storage) Enum() *Storage {
+	p := new(Storage)
+	*p = x
+	return p
+}
+
+func (x Storage) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Storage) Descriptor() protoreflect.EnumDescriptor {
+	return file_pantry_v1_pantry_proto_enumTypes[0].Descriptor()
+}
+
+func (Storage) Type() protoreflect.EnumType {
+	return &file_pantry_v1_pantry_proto_enumTypes[0]
+}
+
+func (x Storage) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
 // A lot of a food in stock.
 type PantryItem struct {
 	state                    protoimpl.MessageState `protogen:"opaque.v1"`
@@ -40,6 +91,12 @@ type PantryItem struct {
 	xxx_hidden_Notes         string                 `protobuf:"bytes,11,opt,name=notes,proto3"`
 	xxx_hidden_CreateTime    *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=create_time,json=createTime,proto3"`
 	xxx_hidden_UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=update_time,json=updateTime,proto3"`
+	xxx_hidden_Storage       Storage                `protobuf:"varint,14,opt,name=storage,proto3,enum=pantry.v1.Storage"`
+	xxx_hidden_Location      string                 `protobuf:"bytes,15,opt,name=location,proto3"`
+	xxx_hidden_FrozenDate    string                 `protobuf:"bytes,16,opt,name=frozen_date,json=frozenDate,proto3"`
+	xxx_hidden_Opened        bool                   `protobuf:"varint,17,opt,name=opened,proto3"`
+	xxx_hidden_Estimated     bool                   `protobuf:"varint,18,opt,name=estimated,proto3"`
+	xxx_hidden_Label         string                 `protobuf:"bytes,19,opt,name=label,proto3"`
 	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
 	XXX_presence             [1]uint32
 	unknownFields            protoimpl.UnknownFields
@@ -162,6 +219,48 @@ func (x *PantryItem) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *PantryItem) GetStorage() Storage {
+	if x != nil {
+		return x.xxx_hidden_Storage
+	}
+	return Storage_STORAGE_UNSPECIFIED
+}
+
+func (x *PantryItem) GetLocation() string {
+	if x != nil {
+		return x.xxx_hidden_Location
+	}
+	return ""
+}
+
+func (x *PantryItem) GetFrozenDate() string {
+	if x != nil {
+		return x.xxx_hidden_FrozenDate
+	}
+	return ""
+}
+
+func (x *PantryItem) GetOpened() bool {
+	if x != nil {
+		return x.xxx_hidden_Opened
+	}
+	return false
+}
+
+func (x *PantryItem) GetEstimated() bool {
+	if x != nil {
+		return x.xxx_hidden_Estimated
+	}
+	return false
+}
+
+func (x *PantryItem) GetLabel() string {
+	if x != nil {
+		return x.xxx_hidden_Label
+	}
+	return ""
+}
+
 func (x *PantryItem) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -200,7 +299,7 @@ func (x *PantryItem) SetUseByDate(v string) {
 
 func (x *PantryItem) SetDaysToExpiry(v int32) {
 	x.xxx_hidden_DaysToExpiry = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 13)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 19)
 }
 
 func (x *PantryItem) SetNotes(v string) {
@@ -213,6 +312,30 @@ func (x *PantryItem) SetCreateTime(v *timestamppb.Timestamp) {
 
 func (x *PantryItem) SetUpdateTime(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdateTime = v
+}
+
+func (x *PantryItem) SetStorage(v Storage) {
+	x.xxx_hidden_Storage = v
+}
+
+func (x *PantryItem) SetLocation(v string) {
+	x.xxx_hidden_Location = v
+}
+
+func (x *PantryItem) SetFrozenDate(v string) {
+	x.xxx_hidden_FrozenDate = v
+}
+
+func (x *PantryItem) SetOpened(v bool) {
+	x.xxx_hidden_Opened = v
+}
+
+func (x *PantryItem) SetEstimated(v bool) {
+	x.xxx_hidden_Estimated = v
+}
+
+func (x *PantryItem) SetLabel(v string) {
+	x.xxx_hidden_Label = v
 }
 
 func (x *PantryItem) HasDaysToExpiry() bool {
@@ -268,11 +391,14 @@ type PantryItem_builder struct {
 	// The date it expires unopened (YYYY-MM-DD), from its pack. Empty if it
 	// doesn't or isn't known.
 	ExpiryDate string
-	// The date it was opened (YYYY-MM-DD), empty if it's unopened. Once
-	// opened, it keeps for the food's opened_shelf_life_days.
+	// The date it was opened (YYYY-MM-DD), empty if it's unopened or the day
+	// isn't known (see opened). Once opened, it keeps for the food's
+	// opened_shelf_life_days.
 	OpenedDate string
-	// The date to use it by (YYYY-MM-DD): the earlier of expiry_date and the
-	// end of its opened shelf life. Empty if neither is known.
+	// The date to use it by (YYYY-MM-DD). In the freezer, frozen_date plus
+	// the food's freezer_shelf_life_days, if known. Otherwise the earlier of
+	// expiry_date and the end of its opened shelf life. Empty if none is
+	// known.
 	UseByDate string
 	// The days from today (UTC) to use_by_date: 0 for today, negative once
 	// it's past. Unset if use_by_date is empty.
@@ -283,6 +409,27 @@ type PantryItem_builder struct {
 	CreateTime *timestamppb.Timestamp
 	// When the lot was last changed.
 	UpdateTime *timestamppb.Timestamp
+	// Where it's kept, which sets how long it keeps: STORAGE_FREEZER keeps
+	// it for the food's freezer_shelf_life_days from frozen_date.
+	// STORAGE_UNSPECIFIED if not said, which keeps like the pantry or fridge.
+	Storage Storage
+	// Where in the home it is, e.g. "chest freezer" or "garage shelf", to
+	// find it and tell lots apart. At most 100 characters.
+	Location string
+	// The date it was frozen (YYYY-MM-DD), for a lot in the freezer. Moving
+	// a lot into the freezer sets it to today unless it's given; moving it
+	// out clears it.
+	FrozenDate string
+	// Whether it's been opened, even if the day isn't known: then its use-by
+	// date can't count the opened shelf life, and is only its expiry_date.
+	// Setting opened_date sets it.
+	Opened bool
+	// Whether the amount is a guess, like a partly used bag seen in a photo,
+	// for the user to check. Clear it once they confirm the amount.
+	Estimated bool
+	// The brand or label of the lot, e.g. "Sriracha" for one of several hot
+	// sauces sharing a food. At most 100 characters.
+	Label string
 }
 
 func (b0 PantryItem_builder) Build() *PantryItem {
@@ -299,12 +446,18 @@ func (b0 PantryItem_builder) Build() *PantryItem {
 	x.xxx_hidden_OpenedDate = b.OpenedDate
 	x.xxx_hidden_UseByDate = b.UseByDate
 	if b.DaysToExpiry != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 13)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 19)
 		x.xxx_hidden_DaysToExpiry = *b.DaysToExpiry
 	}
 	x.xxx_hidden_Notes = b.Notes
 	x.xxx_hidden_CreateTime = b.CreateTime
 	x.xxx_hidden_UpdateTime = b.UpdateTime
+	x.xxx_hidden_Storage = b.Storage
+	x.xxx_hidden_Location = b.Location
+	x.xxx_hidden_FrozenDate = b.FrozenDate
+	x.xxx_hidden_Opened = b.Opened
+	x.xxx_hidden_Estimated = b.Estimated
+	x.xxx_hidden_Label = b.Label
 	return m0
 }
 
@@ -403,6 +556,8 @@ type ListPantryRequest struct {
 	xxx_hidden_StoreSection       v1.StoreSection        `protobuf:"varint,2,opt,name=store_section,json=storeSection,proto3,enum=foods.v1.StoreSection"`
 	xxx_hidden_ExpiringWithinDays int32                  `protobuf:"varint,3,opt,name=expiring_within_days,json=expiringWithinDays,proto3,oneof"`
 	xxx_hidden_Summary            bool                   `protobuf:"varint,4,opt,name=summary,proto3"`
+	xxx_hidden_Storage            Storage                `protobuf:"varint,5,opt,name=storage,proto3,enum=pantry.v1.Storage"`
+	xxx_hidden_EstimatedOnly      bool                   `protobuf:"varint,6,opt,name=estimated_only,json=estimatedOnly,proto3"`
 	XXX_raceDetectHookData        protoimpl.RaceDetectHookData
 	XXX_presence                  [1]uint32
 	unknownFields                 protoimpl.UnknownFields
@@ -462,6 +617,20 @@ func (x *ListPantryRequest) GetSummary() bool {
 	return false
 }
 
+func (x *ListPantryRequest) GetStorage() Storage {
+	if x != nil {
+		return x.xxx_hidden_Storage
+	}
+	return Storage_STORAGE_UNSPECIFIED
+}
+
+func (x *ListPantryRequest) GetEstimatedOnly() bool {
+	if x != nil {
+		return x.xxx_hidden_EstimatedOnly
+	}
+	return false
+}
+
 func (x *ListPantryRequest) SetFoodIds(v []string) {
 	x.xxx_hidden_FoodIds = v
 }
@@ -472,11 +641,19 @@ func (x *ListPantryRequest) SetStoreSection(v v1.StoreSection) {
 
 func (x *ListPantryRequest) SetExpiringWithinDays(v int32) {
 	x.xxx_hidden_ExpiringWithinDays = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 6)
 }
 
 func (x *ListPantryRequest) SetSummary(v bool) {
 	x.xxx_hidden_Summary = v
+}
+
+func (x *ListPantryRequest) SetStorage(v Storage) {
+	x.xxx_hidden_Storage = v
+}
+
+func (x *ListPantryRequest) SetEstimatedOnly(v bool) {
+	x.xxx_hidden_EstimatedOnly = v
 }
 
 func (x *ListPantryRequest) HasExpiringWithinDays() bool {
@@ -505,6 +682,10 @@ type ListPantryRequest_builder struct {
 	// Whether to leave out the lots' create and update times, to keep a
 	// large pantry's response small.
 	Summary bool
+	// Only list lots kept there. STORAGE_UNSPECIFIED to list all.
+	Storage Storage
+	// Only list lots whose amounts are guesses, for the user to check.
+	EstimatedOnly bool
 }
 
 func (b0 ListPantryRequest_builder) Build() *ListPantryRequest {
@@ -514,10 +695,12 @@ func (b0 ListPantryRequest_builder) Build() *ListPantryRequest {
 	x.xxx_hidden_FoodIds = b.FoodIds
 	x.xxx_hidden_StoreSection = b.StoreSection
 	if b.ExpiringWithinDays != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 6)
 		x.xxx_hidden_ExpiringWithinDays = *b.ExpiringWithinDays
 	}
 	x.xxx_hidden_Summary = b.Summary
+	x.xxx_hidden_Storage = b.Storage
+	x.xxx_hidden_EstimatedOnly = b.EstimatedOnly
 	return m0
 }
 
@@ -609,6 +792,13 @@ type AddToPantryRequest struct {
 	xxx_hidden_Notes      string                 `protobuf:"bytes,6,opt,name=notes,proto3"`
 	xxx_hidden_TrackStock bool                   `protobuf:"varint,7,opt,name=track_stock,json=trackStock,proto3"`
 	xxx_hidden_RequestId  string                 `protobuf:"bytes,8,opt,name=request_id,json=requestId,proto3"`
+	xxx_hidden_Packages   float64                `protobuf:"fixed64,9,opt,name=packages,proto3"`
+	xxx_hidden_Storage    Storage                `protobuf:"varint,10,opt,name=storage,proto3,enum=pantry.v1.Storage"`
+	xxx_hidden_Location   string                 `protobuf:"bytes,11,opt,name=location,proto3"`
+	xxx_hidden_FrozenDate string                 `protobuf:"bytes,12,opt,name=frozen_date,json=frozenDate,proto3"`
+	xxx_hidden_Opened     bool                   `protobuf:"varint,13,opt,name=opened,proto3"`
+	xxx_hidden_Estimated  bool                   `protobuf:"varint,14,opt,name=estimated,proto3"`
+	xxx_hidden_Label      string                 `protobuf:"bytes,15,opt,name=label,proto3"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -694,6 +884,55 @@ func (x *AddToPantryRequest) GetRequestId() string {
 	return ""
 }
 
+func (x *AddToPantryRequest) GetPackages() float64 {
+	if x != nil {
+		return x.xxx_hidden_Packages
+	}
+	return 0
+}
+
+func (x *AddToPantryRequest) GetStorage() Storage {
+	if x != nil {
+		return x.xxx_hidden_Storage
+	}
+	return Storage_STORAGE_UNSPECIFIED
+}
+
+func (x *AddToPantryRequest) GetLocation() string {
+	if x != nil {
+		return x.xxx_hidden_Location
+	}
+	return ""
+}
+
+func (x *AddToPantryRequest) GetFrozenDate() string {
+	if x != nil {
+		return x.xxx_hidden_FrozenDate
+	}
+	return ""
+}
+
+func (x *AddToPantryRequest) GetOpened() bool {
+	if x != nil {
+		return x.xxx_hidden_Opened
+	}
+	return false
+}
+
+func (x *AddToPantryRequest) GetEstimated() bool {
+	if x != nil {
+		return x.xxx_hidden_Estimated
+	}
+	return false
+}
+
+func (x *AddToPantryRequest) GetLabel() string {
+	if x != nil {
+		return x.xxx_hidden_Label
+	}
+	return ""
+}
+
 func (x *AddToPantryRequest) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -726,20 +965,51 @@ func (x *AddToPantryRequest) SetRequestId(v string) {
 	x.xxx_hidden_RequestId = v
 }
 
+func (x *AddToPantryRequest) SetPackages(v float64) {
+	x.xxx_hidden_Packages = v
+}
+
+func (x *AddToPantryRequest) SetStorage(v Storage) {
+	x.xxx_hidden_Storage = v
+}
+
+func (x *AddToPantryRequest) SetLocation(v string) {
+	x.xxx_hidden_Location = v
+}
+
+func (x *AddToPantryRequest) SetFrozenDate(v string) {
+	x.xxx_hidden_FrozenDate = v
+}
+
+func (x *AddToPantryRequest) SetOpened(v bool) {
+	x.xxx_hidden_Opened = v
+}
+
+func (x *AddToPantryRequest) SetEstimated(v bool) {
+	x.xxx_hidden_Estimated = v
+}
+
+func (x *AddToPantryRequest) SetLabel(v string) {
+	x.xxx_hidden_Label = v
+}
+
 type AddToPantryRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	// The ID of the household's food. Required.
 	FoodId string
-	// The amount, in unit. More than 0.
+	// The amount, in unit. More than 0, unless packages is set.
 	Amount float64
-	// The unit of the amount. Required. Milliliters and pieces are converted
-	// to grams with the food's grams_per_milliliter and grams_per_piece.
+	// The unit of the amount. Required with amount. Milliliters and pieces
+	// are converted to grams with the food's grams_per_milliliter and
+	// grams_per_piece.
 	Unit v1.AmountUnit
 	// The date it expires unopened (YYYY-MM-DD). Empty for today (UTC) plus
-	// the food's shelf_life_days, or no expiry date if that's unknown.
+	// the food's shelf_life_days, or no expiry date if that's unknown or
+	// it's going in the freezer.
 	ExpiryDate string
-	// The date it was opened (YYYY-MM-DD), empty if it's unopened.
+	// The date it was opened (YYYY-MM-DD), empty if it's unopened or the day
+	// isn't known (see opened).
 	OpenedDate string
 	// Notes. At most 500 characters.
 	Notes string
@@ -753,6 +1023,26 @@ type AddToPantryRequest_builder struct {
 	// first response instead of creating again. Empty to not deduplicate. At
 	// most 100 characters.
 	RequestId string
+	// Instead of amount and unit, how many of the food's packages (its
+	// package_grams), e.g. 0.33 for a third of a jug, or 2.5 for two full
+	// bags and a half-full one. Fails with FAILED_PRECONDITION if the food
+	// has no package_grams.
+	Packages float64
+	// Where it's kept (see PantryItem.storage).
+	Storage Storage
+	// Where in the home it is (see PantryItem.location).
+	Location string
+	// The date it was frozen (YYYY-MM-DD), for STORAGE_FREEZER. Empty for
+	// today.
+	FrozenDate string
+	// Whether it's been opened, on a day that isn't known (see
+	// PantryItem.opened). Don't set opened_date to today for a lot opened on
+	// an unknown day: that shortens its use-by date.
+	Opened bool
+	// Whether the amount is a guess (see PantryItem.estimated).
+	Estimated bool
+	// The brand or label of the lot (see PantryItem.label).
+	Label string
 }
 
 func (b0 AddToPantryRequest_builder) Build() *AddToPantryRequest {
@@ -767,6 +1057,13 @@ func (b0 AddToPantryRequest_builder) Build() *AddToPantryRequest {
 	x.xxx_hidden_Notes = b.Notes
 	x.xxx_hidden_TrackStock = b.TrackStock
 	x.xxx_hidden_RequestId = b.RequestId
+	x.xxx_hidden_Packages = b.Packages
+	x.xxx_hidden_Storage = b.Storage
+	x.xxx_hidden_Location = b.Location
+	x.xxx_hidden_FrozenDate = b.FrozenDate
+	x.xxx_hidden_Opened = b.Opened
+	x.xxx_hidden_Estimated = b.Estimated
+	x.xxx_hidden_Label = b.Label
 	return m0
 }
 
@@ -1381,7 +1678,7 @@ var File_pantry_v1_pantry_proto protoreflect.FileDescriptor
 
 const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\n" +
-	"\x16pantry/v1/pantry.proto\x12\tpantry.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xbd\x04\n" +
+	"\x16pantry/v1/pantry.proto\x12\tpantry.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xf4\x05\n" +
 	"\n" +
 	"PantryItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
@@ -1401,21 +1698,30 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\vcreate_time\x18\f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"createTime\x12C\n" +
 	"\vupdate_time\x18\r \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
-	"updateTimeB\x11\n" +
+	"updateTime\x12,\n" +
+	"\astorage\x18\x0e \x01(\x0e2\x12.pantry.v1.StorageR\astorage\x12\x1a\n" +
+	"\blocation\x18\x0f \x01(\tR\blocation\x12\x1f\n" +
+	"\vfrozen_date\x18\x10 \x01(\tR\n" +
+	"frozenDate\x12\x16\n" +
+	"\x06opened\x18\x11 \x01(\bR\x06opened\x12\x1c\n" +
+	"\testimated\x18\x12 \x01(\bR\testimated\x12\x14\n" +
+	"\x05label\x18\x13 \x01(\tR\x05labelB\x11\n" +
 	"\x0f_days_to_expiry\"\x86\x01\n" +
 	"\x11AlwaysInStockFood\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x1b\n" +
 	"\tfood_name\x18\x02 \x01(\tR\bfoodName\x12;\n" +
-	"\rstore_section\x18\x03 \x01(\x0e2\x16.foods.v1.StoreSectionR\fstoreSection\"\xd5\x01\n" +
+	"\rstore_section\x18\x03 \x01(\x0e2\x16.foods.v1.StoreSectionR\fstoreSection\"\xaa\x02\n" +
 	"\x11ListPantryRequest\x12\x19\n" +
 	"\bfood_ids\x18\x01 \x03(\tR\afoodIds\x12;\n" +
 	"\rstore_section\x18\x02 \x01(\x0e2\x16.foods.v1.StoreSectionR\fstoreSection\x125\n" +
 	"\x14expiring_within_days\x18\x03 \x01(\x05H\x00R\x12expiringWithinDays\x88\x01\x01\x12\x18\n" +
-	"\asummary\x18\x04 \x01(\bR\asummaryB\x17\n" +
+	"\asummary\x18\x04 \x01(\bR\asummary\x12,\n" +
+	"\astorage\x18\x05 \x01(\x0e2\x12.pantry.v1.StorageR\astorage\x12%\n" +
+	"\x0eestimated_only\x18\x06 \x01(\bR\restimatedOnlyB\x17\n" +
 	"\x15_expiring_within_days\"\x92\x01\n" +
 	"\x12ListPantryResponse\x12+\n" +
 	"\x05items\x18\x01 \x03(\v2\x15.pantry.v1.PantryItemR\x05items\x12O\n" +
-	"\x15always_in_stock_foods\x18\x02 \x03(\v2\x1c.pantry.v1.AlwaysInStockFoodR\x12alwaysInStockFoods\"\x87\x02\n" +
+	"\x15always_in_stock_foods\x18\x02 \x03(\v2\x1c.pantry.v1.AlwaysInStockFoodR\x12alwaysInStockFoods\"\xda\x03\n" +
 	"\x12AddToPantryRequest\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\x01R\x06amount\x12(\n" +
@@ -1428,7 +1734,16 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\vtrack_stock\x18\a \x01(\bR\n" +
 	"trackStock\x12\x1d\n" +
 	"\n" +
-	"request_id\x18\b \x01(\tR\trequestId\"r\n" +
+	"request_id\x18\b \x01(\tR\trequestId\x12\x1a\n" +
+	"\bpackages\x18\t \x01(\x01R\bpackages\x12,\n" +
+	"\astorage\x18\n" +
+	" \x01(\x0e2\x12.pantry.v1.StorageR\astorage\x12\x1a\n" +
+	"\blocation\x18\v \x01(\tR\blocation\x12\x1f\n" +
+	"\vfrozen_date\x18\f \x01(\tR\n" +
+	"frozenDate\x12\x16\n" +
+	"\x06opened\x18\r \x01(\bR\x06opened\x12\x1c\n" +
+	"\testimated\x18\x0e \x01(\bR\testimated\x12\x14\n" +
+	"\x05label\x18\x0f \x01(\tR\x05label\"r\n" +
 	"\x16AddLotsToPantryRequest\x129\n" +
 	"\brequests\x18\x01 \x03(\v2\x1d.pantry.v1.AddToPantryRequestR\brequests\x12\x1d\n" +
 	"\n" +
@@ -1454,7 +1769,12 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\x04item\x18\x01 \x01(\v2\x15.pantry.v1.PantryItemR\x04item\")\n" +
 	"\x17RemoveFromPantryRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x1a\n" +
-	"\x18RemoveFromPantryResponse2\xbc\x03\n" +
+	"\x18RemoveFromPantryResponse*_\n" +
+	"\aStorage\x12\x17\n" +
+	"\x13STORAGE_UNSPECIFIED\x10\x00\x12\x12\n" +
+	"\x0eSTORAGE_PANTRY\x10\x01\x12\x12\n" +
+	"\x0eSTORAGE_FRIDGE\x10\x02\x12\x13\n" +
+	"\x0fSTORAGE_FREEZER\x10\x032\xbc\x03\n" +
 	"\rPantryService\x12I\n" +
 	"\n" +
 	"ListPantry\x12\x1c.pantry.v1.ListPantryRequest\x1a\x1d.pantry.v1.ListPantryResponse\x12L\n" +
@@ -1465,57 +1785,62 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\rcom.pantry.v1B\vPantryProtoP\x01ZAgithub.com/bs-tools/mealplann.ing/internal/gen/pantry/v1;pantryv1\xa2\x02\x03PXX\xaa\x02\tPantry.V1\xca\x02\tPantry\\V1\xe2\x02\x15Pantry\\V1\\GPBMetadata\xea\x02\n" +
 	"Pantry::V1b\x06proto3"
 
+var file_pantry_v1_pantry_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_pantry_v1_pantry_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_pantry_v1_pantry_proto_goTypes = []any{
-	(*PantryItem)(nil),               // 0: pantry.v1.PantryItem
-	(*AlwaysInStockFood)(nil),        // 1: pantry.v1.AlwaysInStockFood
-	(*ListPantryRequest)(nil),        // 2: pantry.v1.ListPantryRequest
-	(*ListPantryResponse)(nil),       // 3: pantry.v1.ListPantryResponse
-	(*AddToPantryRequest)(nil),       // 4: pantry.v1.AddToPantryRequest
-	(*AddLotsToPantryRequest)(nil),   // 5: pantry.v1.AddLotsToPantryRequest
-	(*AddLotsToPantryResponse)(nil),  // 6: pantry.v1.AddLotsToPantryResponse
-	(*AddLotResult)(nil),             // 7: pantry.v1.AddLotResult
-	(*AddToPantryResponse)(nil),      // 8: pantry.v1.AddToPantryResponse
-	(*UpdatePantryItemRequest)(nil),  // 9: pantry.v1.UpdatePantryItemRequest
-	(*UpdatePantryItemResponse)(nil), // 10: pantry.v1.UpdatePantryItemResponse
-	(*RemoveFromPantryRequest)(nil),  // 11: pantry.v1.RemoveFromPantryRequest
-	(*RemoveFromPantryResponse)(nil), // 12: pantry.v1.RemoveFromPantryResponse
-	(v1.StoreSection)(0),             // 13: foods.v1.StoreSection
-	(*timestamppb.Timestamp)(nil),    // 14: google.protobuf.Timestamp
-	(v1.AmountUnit)(0),               // 15: foods.v1.AmountUnit
-	(*fieldmaskpb.FieldMask)(nil),    // 16: google.protobuf.FieldMask
+	(Storage)(0),                     // 0: pantry.v1.Storage
+	(*PantryItem)(nil),               // 1: pantry.v1.PantryItem
+	(*AlwaysInStockFood)(nil),        // 2: pantry.v1.AlwaysInStockFood
+	(*ListPantryRequest)(nil),        // 3: pantry.v1.ListPantryRequest
+	(*ListPantryResponse)(nil),       // 4: pantry.v1.ListPantryResponse
+	(*AddToPantryRequest)(nil),       // 5: pantry.v1.AddToPantryRequest
+	(*AddLotsToPantryRequest)(nil),   // 6: pantry.v1.AddLotsToPantryRequest
+	(*AddLotsToPantryResponse)(nil),  // 7: pantry.v1.AddLotsToPantryResponse
+	(*AddLotResult)(nil),             // 8: pantry.v1.AddLotResult
+	(*AddToPantryResponse)(nil),      // 9: pantry.v1.AddToPantryResponse
+	(*UpdatePantryItemRequest)(nil),  // 10: pantry.v1.UpdatePantryItemRequest
+	(*UpdatePantryItemResponse)(nil), // 11: pantry.v1.UpdatePantryItemResponse
+	(*RemoveFromPantryRequest)(nil),  // 12: pantry.v1.RemoveFromPantryRequest
+	(*RemoveFromPantryResponse)(nil), // 13: pantry.v1.RemoveFromPantryResponse
+	(v1.StoreSection)(0),             // 14: foods.v1.StoreSection
+	(*timestamppb.Timestamp)(nil),    // 15: google.protobuf.Timestamp
+	(v1.AmountUnit)(0),               // 16: foods.v1.AmountUnit
+	(*fieldmaskpb.FieldMask)(nil),    // 17: google.protobuf.FieldMask
 }
 var file_pantry_v1_pantry_proto_depIdxs = []int32{
-	13, // 0: pantry.v1.PantryItem.store_section:type_name -> foods.v1.StoreSection
-	14, // 1: pantry.v1.PantryItem.create_time:type_name -> google.protobuf.Timestamp
-	14, // 2: pantry.v1.PantryItem.update_time:type_name -> google.protobuf.Timestamp
-	13, // 3: pantry.v1.AlwaysInStockFood.store_section:type_name -> foods.v1.StoreSection
-	13, // 4: pantry.v1.ListPantryRequest.store_section:type_name -> foods.v1.StoreSection
-	0,  // 5: pantry.v1.ListPantryResponse.items:type_name -> pantry.v1.PantryItem
-	1,  // 6: pantry.v1.ListPantryResponse.always_in_stock_foods:type_name -> pantry.v1.AlwaysInStockFood
-	15, // 7: pantry.v1.AddToPantryRequest.unit:type_name -> foods.v1.AmountUnit
-	4,  // 8: pantry.v1.AddLotsToPantryRequest.requests:type_name -> pantry.v1.AddToPantryRequest
-	7,  // 9: pantry.v1.AddLotsToPantryResponse.results:type_name -> pantry.v1.AddLotResult
-	8,  // 10: pantry.v1.AddLotResult.added:type_name -> pantry.v1.AddToPantryResponse
-	0,  // 11: pantry.v1.AddToPantryResponse.item:type_name -> pantry.v1.PantryItem
-	0,  // 12: pantry.v1.UpdatePantryItemRequest.item:type_name -> pantry.v1.PantryItem
-	16, // 13: pantry.v1.UpdatePantryItemRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 14: pantry.v1.UpdatePantryItemResponse.item:type_name -> pantry.v1.PantryItem
-	2,  // 15: pantry.v1.PantryService.ListPantry:input_type -> pantry.v1.ListPantryRequest
-	4,  // 16: pantry.v1.PantryService.AddToPantry:input_type -> pantry.v1.AddToPantryRequest
-	5,  // 17: pantry.v1.PantryService.AddLotsToPantry:input_type -> pantry.v1.AddLotsToPantryRequest
-	9,  // 18: pantry.v1.PantryService.UpdatePantryItem:input_type -> pantry.v1.UpdatePantryItemRequest
-	11, // 19: pantry.v1.PantryService.RemoveFromPantry:input_type -> pantry.v1.RemoveFromPantryRequest
-	3,  // 20: pantry.v1.PantryService.ListPantry:output_type -> pantry.v1.ListPantryResponse
-	8,  // 21: pantry.v1.PantryService.AddToPantry:output_type -> pantry.v1.AddToPantryResponse
-	6,  // 22: pantry.v1.PantryService.AddLotsToPantry:output_type -> pantry.v1.AddLotsToPantryResponse
-	10, // 23: pantry.v1.PantryService.UpdatePantryItem:output_type -> pantry.v1.UpdatePantryItemResponse
-	12, // 24: pantry.v1.PantryService.RemoveFromPantry:output_type -> pantry.v1.RemoveFromPantryResponse
-	20, // [20:25] is the sub-list for method output_type
-	15, // [15:20] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	14, // 0: pantry.v1.PantryItem.store_section:type_name -> foods.v1.StoreSection
+	15, // 1: pantry.v1.PantryItem.create_time:type_name -> google.protobuf.Timestamp
+	15, // 2: pantry.v1.PantryItem.update_time:type_name -> google.protobuf.Timestamp
+	0,  // 3: pantry.v1.PantryItem.storage:type_name -> pantry.v1.Storage
+	14, // 4: pantry.v1.AlwaysInStockFood.store_section:type_name -> foods.v1.StoreSection
+	14, // 5: pantry.v1.ListPantryRequest.store_section:type_name -> foods.v1.StoreSection
+	0,  // 6: pantry.v1.ListPantryRequest.storage:type_name -> pantry.v1.Storage
+	1,  // 7: pantry.v1.ListPantryResponse.items:type_name -> pantry.v1.PantryItem
+	2,  // 8: pantry.v1.ListPantryResponse.always_in_stock_foods:type_name -> pantry.v1.AlwaysInStockFood
+	16, // 9: pantry.v1.AddToPantryRequest.unit:type_name -> foods.v1.AmountUnit
+	0,  // 10: pantry.v1.AddToPantryRequest.storage:type_name -> pantry.v1.Storage
+	5,  // 11: pantry.v1.AddLotsToPantryRequest.requests:type_name -> pantry.v1.AddToPantryRequest
+	8,  // 12: pantry.v1.AddLotsToPantryResponse.results:type_name -> pantry.v1.AddLotResult
+	9,  // 13: pantry.v1.AddLotResult.added:type_name -> pantry.v1.AddToPantryResponse
+	1,  // 14: pantry.v1.AddToPantryResponse.item:type_name -> pantry.v1.PantryItem
+	1,  // 15: pantry.v1.UpdatePantryItemRequest.item:type_name -> pantry.v1.PantryItem
+	17, // 16: pantry.v1.UpdatePantryItemRequest.update_mask:type_name -> google.protobuf.FieldMask
+	1,  // 17: pantry.v1.UpdatePantryItemResponse.item:type_name -> pantry.v1.PantryItem
+	3,  // 18: pantry.v1.PantryService.ListPantry:input_type -> pantry.v1.ListPantryRequest
+	5,  // 19: pantry.v1.PantryService.AddToPantry:input_type -> pantry.v1.AddToPantryRequest
+	6,  // 20: pantry.v1.PantryService.AddLotsToPantry:input_type -> pantry.v1.AddLotsToPantryRequest
+	10, // 21: pantry.v1.PantryService.UpdatePantryItem:input_type -> pantry.v1.UpdatePantryItemRequest
+	12, // 22: pantry.v1.PantryService.RemoveFromPantry:input_type -> pantry.v1.RemoveFromPantryRequest
+	4,  // 23: pantry.v1.PantryService.ListPantry:output_type -> pantry.v1.ListPantryResponse
+	9,  // 24: pantry.v1.PantryService.AddToPantry:output_type -> pantry.v1.AddToPantryResponse
+	7,  // 25: pantry.v1.PantryService.AddLotsToPantry:output_type -> pantry.v1.AddLotsToPantryResponse
+	11, // 26: pantry.v1.PantryService.UpdatePantryItem:output_type -> pantry.v1.UpdatePantryItemResponse
+	13, // 27: pantry.v1.PantryService.RemoveFromPantry:output_type -> pantry.v1.RemoveFromPantryResponse
+	23, // [23:28] is the sub-list for method output_type
+	18, // [18:23] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_pantry_v1_pantry_proto_init() }
@@ -1530,13 +1855,14 @@ func file_pantry_v1_pantry_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pantry_v1_pantry_proto_rawDesc), len(file_pantry_v1_pantry_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_pantry_v1_pantry_proto_goTypes,
 		DependencyIndexes: file_pantry_v1_pantry_proto_depIdxs,
+		EnumInfos:         file_pantry_v1_pantry_proto_enumTypes,
 		MessageInfos:      file_pantry_v1_pantry_proto_msgTypes,
 	}.Build()
 	File_pantry_v1_pantry_proto = out.File

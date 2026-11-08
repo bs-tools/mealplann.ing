@@ -75,6 +75,10 @@ const (
 	// several times over.
 	MaxGrams      = 100_000
 	maxNotesChars = 500
+	// maxLabelChars is the longest location or label.
+	maxLabelChars = 100
+	// maxPackages is the most packages in one lot.
+	maxPackages = 1000
 	// minYear and maxYear bound dates, to catch typos like "0226".
 	minYear = 2000
 	maxYear = 2100
@@ -143,6 +147,10 @@ func (s *Service) ListPantry(ctx context.Context, req *pantryv1.ListPantryReques
 		if req.HasExpiringWithinDays() && (!item.HasDaysToExpiry() || item.GetDaysToExpiry() > req.GetExpiringWithinDays()) {
 			continue
 		}
+		if req.GetStorage() != pantryv1.Storage_STORAGE_UNSPECIFIED && item.GetStorage() != req.GetStorage() ||
+			req.GetEstimatedOnly() && !item.GetEstimated() {
+			continue
+		}
 		if req.GetSummary() {
 			item.ClearCreateTime()
 			item.ClearUpdateTime()
@@ -154,9 +162,11 @@ func (s *Service) ListPantry(ctx context.Context, req *pantryv1.ListPantryReques
 	foodsInStock := make([]*pantryv1.AlwaysInStockFood, 0, len(stocked))
 	for _, f := range stocked {
 		section := food.StoreSectionToProto(f.StoreSection)
-		// Foods always in stock never expire, so they aren't listed with
-		// what to use soon.
-		if !keep(store.UUIDToString(f.ID), section) || req.HasExpiringWithinDays() {
+		// Foods always in stock never expire, nor have a storage or an
+		// estimated amount, so they aren't listed with lots filtered by
+		// those.
+		if !keep(store.UUIDToString(f.ID), section) || req.HasExpiringWithinDays() ||
+			req.GetStorage() != pantryv1.Storage_STORAGE_UNSPECIFIED || req.GetEstimatedOnly() {
 			continue
 		}
 		foodsInStock = append(foodsInStock, pantryv1.AlwaysInStockFood_builder{
@@ -184,13 +194,28 @@ func (s *Service) addToPantry(ctx context.Context, householdID pgtype.UUID, req 
 	if err != nil {
 		return nil, err
 	}
-	amount := req.GetAmount()
-	if math.IsNaN(amount) || amount <= 0 || amount > MaxGrams {
-		return nil, connect.Errorf(connect.CodeInvalidArgument, "amount must be more than 0 and at most %d", MaxGrams)
+	amount, packages := req.GetAmount(), req.GetPackages()
+	var unit nutrition.Unit
+	switch {
+	case packages != 0 && (amount != 0 || req.GetUnit() != foodsv1.AmountUnit_AMOUNT_UNIT_UNSPECIFIED):
+		return nil, connect.NewError(connect.CodeInvalidArgument, "give amount and unit, or packages, not both")
+	case packages != 0:
+		if math.IsNaN(packages) || packages < 0 || packages > maxPackages {
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "packages must be more than 0 and at most %d", maxPackages)
+		}
+	default:
+		if math.IsNaN(amount) || amount <= 0 || amount > MaxGrams {
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "amount must be more than 0 and at most %d", MaxGrams)
+		}
+		var ok bool
+		unit, ok = unitsFromProto[req.GetUnit()]
+		if !ok {
+			return nil, connect.NewError(connect.CodeInvalidArgument, "unit is required: AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES")
+		}
 	}
-	unit, ok := unitsFromProto[req.GetUnit()]
-	if !ok {
-		return nil, connect.NewError(connect.CodeInvalidArgument, "unit is required: AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES")
+	details, err := lotDetailsFromProto(req.GetStorage(), req.GetLocation(), req.GetLabel(), req.GetFrozenDate(), Today(s.nowFn()))
+	if err != nil {
+		return nil, err
 	}
 	expiry, err := parseOptionalDate("expiry_date", req.GetExpiryDate())
 	if err != nil {
@@ -215,9 +240,24 @@ func (s *Service) addToPantry(ctx context.Context, householdID pgtype.UUID, req 
 		return nil, connect.Errorf(connect.CodeFailedPrecondition,
 			"%s is always in stock, so the pantry doesn't track it; to track it, add it again with track_stock set, which clears always_in_stock on the food", f.Name)
 	}
-	grams, err := Grams(f, amount, unit)
-	if err != nil {
-		return nil, err
+	var grams float64
+	var conversion string
+	if packages != 0 {
+		if f.PackageGrams <= 0 {
+			return nil, connect.Errorf(connect.CodeFailedPrecondition,
+				"%s has no package size, so packages can't be weighed: set package_grams on the food with UpdateFood, or give the amount and unit", f.Name)
+		}
+		grams = packages * f.PackageGrams
+		if grams > MaxGrams {
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s packages of %s g is more than %d g", number(packages), number(f.PackageGrams), MaxGrams)
+		}
+		conversion = fmt.Sprintf("%s packages of %s g is %s g", number(packages), number(f.PackageGrams), number(grams))
+	} else {
+		grams, err = Grams(f, amount, unit)
+		if err != nil {
+			return nil, err
+		}
+		conversion = Conversion(f, amount, unit, grams)
 	}
 	stopped := false
 	if f.AlwaysInStock {
@@ -230,7 +270,9 @@ func (s *Service) addToPantry(ctx context.Context, householdID pgtype.UUID, req 
 		}
 		stopped = true
 	}
-	if expiry.IsZero() && f.ShelfLifeDays > 0 {
+	// A lot going into the freezer keeps for the food's freezer shelf life
+	// instead, so it gets no expiry date from its fridge or pantry one.
+	if expiry.IsZero() && f.ShelfLifeDays > 0 && details.Storage != pantry.StorageFreezer {
 		expiry = Today(s.nowFn()).AddDate(0, 0, int(f.ShelfLifeDays))
 	}
 	created, err := s.pantry.CreateItems(ctx, householdID, []*pantry.Item{{
@@ -239,6 +281,12 @@ func (s *Service) addToPantry(ctx context.Context, householdID pgtype.UUID, req 
 		ExpiryDate: expiry,
 		OpenedDate: opened,
 		Notes:      notes,
+		Storage:    details.Storage,
+		Location:   details.Location,
+		FrozenDate: details.FrozenDate,
+		Opened:     req.GetOpened() || !opened.IsZero(),
+		Estimated:  req.GetEstimated(),
+		Label:      details.Label,
 	}})
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to add to pantry")
@@ -248,7 +296,7 @@ func (s *Service) addToPantry(ctx context.Context, householdID pgtype.UUID, req 
 	}
 	return pantryv1.AddToPantryResponse_builder{
 		Item:                 ItemToProto(created[0], Today(s.nowFn())),
-		Conversion:           Conversion(f, amount, unit, grams),
+		Conversion:           conversion,
 		StoppedAlwaysInStock: stopped,
 	}.Build(), nil
 }
@@ -355,6 +403,17 @@ func (s *Service) UpdatePantryItem(ctx context.Context, req *pantryv1.UpdatePant
 	if err != nil {
 		return nil, err
 	}
+	// A lot moved into the freezer was frozen today, unless the update
+	// says when, as it had no frozen date; one moved out isn't frozen any
+	// more.
+	frozenDate := merged.GetFrozenDate()
+	if merged.GetStorage() != pantryv1.Storage_STORAGE_FREEZER {
+		frozenDate = ""
+	}
+	details, err := lotDetailsFromProto(merged.GetStorage(), merged.GetLocation(), merged.GetLabel(), frozenDate, today)
+	if err != nil {
+		return nil, err
+	}
 	updated, err := s.pantry.UpdateItem(ctx, &pantry.Item{
 		ID:          existing.ID,
 		HouseholdID: existing.HouseholdID,
@@ -362,6 +421,12 @@ func (s *Service) UpdatePantryItem(ctx context.Context, req *pantryv1.UpdatePant
 		ExpiryDate:  expiry,
 		OpenedDate:  opened,
 		Notes:       notes,
+		Storage:     details.Storage,
+		Location:    details.Location,
+		FrozenDate:  details.FrozenDate,
+		Opened:      merged.GetOpened() || !opened.IsZero(),
+		Estimated:   merged.GetEstimated(),
+		Label:       details.Label,
 	})
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to update pantry item")
@@ -398,6 +463,12 @@ func ItemToProto(it *pantry.Item, today time.Time) *pantryv1.PantryItem {
 		Notes:         it.Notes,
 		CreateTime:    timestamppb.New(it.CreateTime),
 		UpdateTime:    timestamppb.New(it.UpdateTime),
+		Storage:       storagesToProto[it.Storage],
+		Location:      it.Location,
+		FrozenDate:    store.FormatDate(it.FrozenDate),
+		Opened:        it.Opened,
+		Estimated:     it.Estimated,
+		Label:         it.Label,
 	}
 	if useBy := it.UseBy(); !useBy.IsZero() {
 		b.UseByDate = store.FormatDate(useBy)
@@ -445,6 +516,59 @@ func parseOptionalDate(field, s string) (time.Time, error) {
 		return time.Time{}, connect.Errorf(connect.CodeInvalidArgument, "%s must be from %d to %d", field, minYear, maxYear)
 	}
 	return date, nil
+}
+
+// lotDetails are a lot's storage, location, label and frozen date.
+type lotDetails struct {
+	Storage    pantry.Storage
+	Location   string
+	Label      string
+	FrozenDate time.Time
+}
+
+var storagesToProto = map[pantry.Storage]pantryv1.Storage{
+	pantry.StorageUnspecified: pantryv1.Storage_STORAGE_UNSPECIFIED,
+	pantry.StoragePantry:      pantryv1.Storage_STORAGE_PANTRY,
+	pantry.StorageFridge:      pantryv1.Storage_STORAGE_FRIDGE,
+	pantry.StorageFreezer:     pantryv1.Storage_STORAGE_FREEZER,
+}
+
+// lotDetailsFromProto checks a lot's details. A lot in the freezer was
+// frozen today unless frozenDate says when, and only lots in the freezer
+// have a frozen date.
+func lotDetailsFromProto(storage pantryv1.Storage, location, label, frozenDate string, today time.Time) (lotDetails, error) {
+	var d lotDetails
+	found := false
+	for s, p := range storagesToProto {
+		if p == storage {
+			d.Storage, found = s, true
+		}
+	}
+	if !found {
+		return d, connect.NewError(connect.CodeInvalidArgument, "storage must be STORAGE_PANTRY, STORAGE_FRIDGE, STORAGE_FREEZER or STORAGE_UNSPECIFIED")
+	}
+	for _, f := range []struct {
+		name  string
+		value *string
+	}{{"location", &location}, {"label", &label}} {
+		*f.value = strings.TrimSpace(*f.value)
+		if utf8.RuneCountInString(*f.value) > maxLabelChars {
+			return d, connect.Errorf(connect.CodeInvalidArgument, "%s must be at most %d characters", f.name, maxLabelChars)
+		}
+	}
+	d.Location, d.Label = location, label
+	frozen, err := parseOptionalDate("frozen_date", frozenDate)
+	if err != nil {
+		return d, err
+	}
+	switch {
+	case !frozen.IsZero() && d.Storage != pantry.StorageFreezer:
+		return d, connect.NewError(connect.CodeInvalidArgument, "frozen_date is only for lots in the freezer: set storage to STORAGE_FREEZER, or leave frozen_date empty")
+	case d.Storage == pantry.StorageFreezer && frozen.IsZero():
+		frozen = today
+	}
+	d.FrozenDate = frozen
+	return d, nil
 }
 
 func checkNotes(notes string) (string, error) {

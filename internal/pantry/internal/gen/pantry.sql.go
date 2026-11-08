@@ -13,7 +13,8 @@ import (
 
 const createCookPantryDeductions = `-- name: CreateCookPantryDeductions :exec
 insert into cook_pantry_deductions (
-  cook_id, household_id, pantry_item_id, food_id, grams, expiry_date, opened_date, notes
+  cook_id, household_id, pantry_item_id, food_id, grams, expiry_date, opened_date, notes,
+  storage, location, frozen_date, opened, estimated, label
 )
 select
   $1,
@@ -23,7 +24,13 @@ select
   ($5::double precision[])[i],
   ($6::date[])[i],
   ($7::date[])[i],
-  ($8::text[])[i]
+  ($8::text[])[i],
+  nullif(($9::text[])[i], '')::pantry_storage,
+  ($10::text[])[i],
+  ($11::date[])[i],
+  ($12::boolean[])[i],
+  ($13::boolean[])[i],
+  ($14::text[])[i]
 from generate_subscripts($3::uuid[], 1) as i
 `
 
@@ -36,6 +43,12 @@ type CreateCookPantryDeductionsParams struct {
 	ExpiryDates   []pgtype.Date
 	OpenedDates   []pgtype.Date
 	Notes         []string
+	Storages      []string
+	Locations     []string
+	FrozenDates   []pgtype.Date
+	Opened        []bool
+	Estimated     []bool
+	Labels        []string
 }
 
 // Records what a cook took out of each lot, given as arrays.
@@ -49,6 +62,12 @@ func (q *Queries) CreateCookPantryDeductions(ctx context.Context, arg *CreateCoo
 		arg.ExpiryDates,
 		arg.OpenedDates,
 		arg.Notes,
+		arg.Storages,
+		arg.Locations,
+		arg.FrozenDates,
+		arg.Opened,
+		arg.Estimated,
+		arg.Labels,
 	)
 	return err
 }
@@ -75,7 +94,10 @@ func (q *Queries) CreateCookPantryUse(ctx context.Context, arg *CreateCookPantry
 }
 
 const createPantryItems = `-- name: CreatePantryItems :execrows
-insert into pantry_items (id, household_id, food_id, grams, expiry_date, opened_date, notes)
+insert into pantry_items (
+  id, household_id, food_id, grams, expiry_date, opened_date, notes,
+  storage, location, frozen_date, opened, estimated, label
+)
 select
   ($1::uuid[])[i],
   $2,
@@ -83,7 +105,15 @@ select
   ($4::double precision[])[i],
   ($5::date[])[i],
   ($6::date[])[i],
-  ($7::text[])[i]
+  ($7::text[])[i],
+  -- Storages are text, as an array of a nullable enum, with null for
+  -- unspecified, doesn't pass as a parameter.
+  nullif(($8::text[])[i], '')::pantry_storage,
+  ($9::text[])[i],
+  ($10::date[])[i],
+  ($11::boolean[])[i],
+  ($12::boolean[])[i],
+  ($13::text[])[i]
 from generate_subscripts($1::uuid[], 1) as i
 `
 
@@ -95,6 +125,12 @@ type CreatePantryItemsParams struct {
 	ExpiryDates []pgtype.Date
 	OpenedDates []pgtype.Date
 	Notes       []string
+	Storages    []string
+	Locations   []string
+	FrozenDates []pgtype.Date
+	Opened      []bool
+	Estimated   []bool
+	Labels      []string
 }
 
 // Creates lots, given as arrays of their fields.
@@ -107,6 +143,12 @@ func (q *Queries) CreatePantryItems(ctx context.Context, arg *CreatePantryItemsP
 		arg.ExpiryDates,
 		arg.OpenedDates,
 		arg.Notes,
+		arg.Storages,
+		arg.Locations,
+		arg.FrozenDates,
+		arg.Opened,
+		arg.Estimated,
+		arg.Labels,
 	)
 	if err != nil {
 		return 0, err
@@ -147,11 +189,12 @@ func (q *Queries) DeletePantryItems(ctx context.Context, arg *DeletePantryItemsP
 
 const listPantryItems = `-- name: ListPantryItems :many
 select
-  pantry_items.id, pantry_items.household_id, pantry_items.food_id, pantry_items.grams, pantry_items.expiry_date, pantry_items.opened_date, pantry_items.notes, pantry_items.create_time, pantry_items.update_time,
+  pantry_items.id, pantry_items.household_id, pantry_items.food_id, pantry_items.grams, pantry_items.expiry_date, pantry_items.opened_date, pantry_items.notes, pantry_items.create_time, pantry_items.update_time, pantry_items.storage, pantry_items.location, pantry_items.frozen_date, pantry_items.opened, pantry_items.estimated, pantry_items.label,
   f.name as food_name,
   f.store_section,
   f.grams_per_piece,
-  f.opened_shelf_life_days
+  f.opened_shelf_life_days,
+  f.freezer_shelf_life_days
 from pantry_items
 join foods f on f.id = pantry_items.food_id
 where pantry_items.household_id = $1
@@ -167,11 +210,12 @@ type ListPantryItemsParams struct {
 }
 
 type ListPantryItemsRow struct {
-	PantryItem          PantryItem
-	FoodName            string
-	StoreSection        *StoreSection
-	GramsPerPiece       *float64
-	OpenedShelfLifeDays *int32
+	PantryItem           PantryItem
+	FoodName             string
+	StoreSection         *StoreSection
+	GramsPerPiece        *float64
+	OpenedShelfLifeDays  *int32
+	FreezerShelfLifeDays *int32
 }
 
 // The household's lots, all, or given by ID or food, with what the pantry
@@ -195,10 +239,17 @@ func (q *Queries) ListPantryItems(ctx context.Context, arg *ListPantryItemsParam
 			&i.PantryItem.Notes,
 			&i.PantryItem.CreateTime,
 			&i.PantryItem.UpdateTime,
+			&i.PantryItem.Storage,
+			&i.PantryItem.Location,
+			&i.PantryItem.FrozenDate,
+			&i.PantryItem.Opened,
+			&i.PantryItem.Estimated,
+			&i.PantryItem.Label,
 			&i.FoodName,
 			&i.StoreSection,
 			&i.GramsPerPiece,
 			&i.OpenedShelfLifeDays,
+			&i.FreezerShelfLifeDays,
 		); err != nil {
 			return nil, err
 		}
@@ -212,11 +263,12 @@ func (q *Queries) ListPantryItems(ctx context.Context, arg *ListPantryItemsParam
 
 const lockPantryItems = `-- name: LockPantryItems :many
 select
-  pantry_items.id, pantry_items.household_id, pantry_items.food_id, pantry_items.grams, pantry_items.expiry_date, pantry_items.opened_date, pantry_items.notes, pantry_items.create_time, pantry_items.update_time,
+  pantry_items.id, pantry_items.household_id, pantry_items.food_id, pantry_items.grams, pantry_items.expiry_date, pantry_items.opened_date, pantry_items.notes, pantry_items.create_time, pantry_items.update_time, pantry_items.storage, pantry_items.location, pantry_items.frozen_date, pantry_items.opened, pantry_items.estimated, pantry_items.label,
   f.name as food_name,
   f.store_section,
   f.grams_per_piece,
-  f.opened_shelf_life_days
+  f.opened_shelf_life_days,
+  f.freezer_shelf_life_days
 from pantry_items
 join foods f on f.id = pantry_items.food_id
 where pantry_items.household_id = $1
@@ -231,11 +283,12 @@ type LockPantryItemsParams struct {
 }
 
 type LockPantryItemsRow struct {
-	PantryItem          PantryItem
-	FoodName            string
-	StoreSection        *StoreSection
-	GramsPerPiece       *float64
-	OpenedShelfLifeDays *int32
+	PantryItem           PantryItem
+	FoodName             string
+	StoreSection         *StoreSection
+	GramsPerPiece        *float64
+	OpenedShelfLifeDays  *int32
+	FreezerShelfLifeDays *int32
 }
 
 // The household's lots of some foods, locked until the end of the
@@ -259,10 +312,17 @@ func (q *Queries) LockPantryItems(ctx context.Context, arg *LockPantryItemsParam
 			&i.PantryItem.Notes,
 			&i.PantryItem.CreateTime,
 			&i.PantryItem.UpdateTime,
+			&i.PantryItem.Storage,
+			&i.PantryItem.Location,
+			&i.PantryItem.FrozenDate,
+			&i.PantryItem.Opened,
+			&i.PantryItem.Estimated,
+			&i.PantryItem.Label,
 			&i.FoodName,
 			&i.StoreSection,
 			&i.GramsPerPiece,
 			&i.OpenedShelfLifeDays,
+			&i.FreezerShelfLifeDays,
 		); err != nil {
 			return nil, err
 		}
@@ -280,11 +340,16 @@ with used as (
   where u.cook_id = $1 and u.household_id = $2
   returning u.cook_id
 ), restored as (
-  select d.cook_id, d.household_id, d.pantry_item_id, d.food_id, d.grams, d.expiry_date, d.opened_date, d.notes from cook_pantry_deductions d
+  select d.cook_id, d.household_id, d.pantry_item_id, d.food_id, d.grams, d.expiry_date, d.opened_date, d.notes, d.storage, d.location, d.frozen_date, d.opened, d.estimated, d.label from cook_pantry_deductions d
   join used on used.cook_id = d.cook_id
 ), put_back as (
-  insert into pantry_items (id, household_id, food_id, grams, expiry_date, opened_date, notes)
-  select r.pantry_item_id, r.household_id, r.food_id, r.grams, r.expiry_date, r.opened_date, r.notes
+  insert into pantry_items (
+    id, household_id, food_id, grams, expiry_date, opened_date, notes,
+    storage, location, frozen_date, opened, estimated, label
+  )
+  select
+    r.pantry_item_id, r.household_id, r.food_id, r.grams, r.expiry_date, r.opened_date, r.notes,
+    r.storage, r.location, r.frozen_date, r.opened, r.estimated, r.label
   from restored r
   on conflict (id) do update set
     grams = pantry_items.grams + excluded.grams,
@@ -356,8 +421,14 @@ update pantry_items set
   expiry_date = $2,
   opened_date = $3,
   notes = $4,
+  storage = $5,
+  location = $6,
+  frozen_date = $7,
+  opened = $8,
+  estimated = $9,
+  label = $10,
   update_time = now()
-where id = $5 and household_id = $6
+where id = $11 and household_id = $12
 `
 
 type UpdatePantryItemParams struct {
@@ -365,6 +436,12 @@ type UpdatePantryItemParams struct {
 	ExpiryDate  pgtype.Date
 	OpenedDate  pgtype.Date
 	Notes       string
+	Storage     *PantryStorage
+	Location    string
+	FrozenDate  pgtype.Date
+	Opened      bool
+	Estimated   bool
+	Label       string
 	ID          pgtype.UUID
 	HouseholdID pgtype.UUID
 }
@@ -375,6 +452,12 @@ func (q *Queries) UpdatePantryItem(ctx context.Context, arg *UpdatePantryItemPar
 		arg.ExpiryDate,
 		arg.OpenedDate,
 		arg.Notes,
+		arg.Storage,
+		arg.Location,
+		arg.FrozenDate,
+		arg.Opened,
+		arg.Estimated,
+		arg.Label,
 		arg.ID,
 		arg.HouseholdID,
 	)

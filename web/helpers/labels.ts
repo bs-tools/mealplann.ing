@@ -1,4 +1,5 @@
 import { AmountUnit, FoodSource, StoreSection } from "gen/foods/v1/foods_pb";
+import { Storage } from "gen/pantry/v1/pantry_pb";
 import { EatingTimeKind, HouseholdMeal } from "gen/people/v1/people_pb";
 import { Weekday } from "gen/plans/v1/plans_pb";
 
@@ -19,6 +20,14 @@ export const STORE_SECTIONS: { value: StoreSection; label: string }[] = [
 // StoreSectionLabel names a store section, "" if it's unspecified.
 export const storeSectionLabel = (section: StoreSection): string =>
   STORE_SECTIONS.find((option) => option.value === section)?.label ?? "";
+
+// STORAGES are where pantry lots are kept, with "Not said" first.
+export const STORAGES: { value: Storage; label: string }[] = [
+  { label: "Not said", value: Storage.UNSPECIFIED },
+  { label: "Pantry", value: Storage.PANTRY },
+  { label: "Fridge", value: Storage.FRIDGE },
+  { label: "Freezer", value: Storage.FREEZER },
+];
 
 // AMOUNT_UNITS are the units of ingredients' amounts.
 export const AMOUNT_UNITS: { value: AmountUnit; label: string }[] = [

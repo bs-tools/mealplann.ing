@@ -212,7 +212,10 @@ type PlanServiceClient interface {
 	PlanMeals(context.Context, *v1.PlanMealsRequest) (*v1.PlanMealsResponse, error)
 	// Create a cook: a recipe made on a date. Plan who eats it with
 	// CreatePortion, or use PlanMeal to do both. A cook created done takes
-	// its ingredients out of the pantry, like UpdateCook.
+	// its ingredients out of the pantry, like UpdateCook, unless it's
+	// from_stock: food already made, like a tray of lasagne ragù in the
+	// freezer, entered with frozen_servings to show in ListFrozenLeftovers
+	// and plan from.
 	CreateCook(context.Context, *v1.CreateCookRequest) (*v1.CreateCookResponse, error)
 	// Update a cook. Its portions stay, so moving a cook to a later date can
 	// leave portions before it, which GetWeek warns about. Marking it done
@@ -301,7 +304,10 @@ type PlanServiceHandler interface {
 	PlanMeals(context.Context, *v1.PlanMealsRequest) (*v1.PlanMealsResponse, error)
 	// Create a cook: a recipe made on a date. Plan who eats it with
 	// CreatePortion, or use PlanMeal to do both. A cook created done takes
-	// its ingredients out of the pantry, like UpdateCook.
+	// its ingredients out of the pantry, like UpdateCook, unless it's
+	// from_stock: food already made, like a tray of lasagne ragù in the
+	// freezer, entered with frozen_servings to show in ListFrozenLeftovers
+	// and plan from.
 	CreateCook(context.Context, *v1.CreateCookRequest) (*v1.CreateCookResponse, error)
 	// Update a cook. Its portions stay, so moving a cook to a later date can
 	// leave portions before it, which GetWeek warns about. Marking it done

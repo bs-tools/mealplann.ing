@@ -221,24 +221,25 @@ func foodToProto(f *foods.Food) *foodsv1.Food {
 		source = foodsv1.FoodSource_FOOD_SOURCE_CUSTOM
 	}
 	return foodsv1.Food_builder{
-		Id:                  store.UUIDToString(f.ID),
-		Name:                f.Name,
-		Source:              source,
-		SourceId:            f.SourceID,
-		FdcId:               fdcID(f.Source, f.SourceID),
-		Nutrients:           NutrientsToProto(&f.Per100Grams, -1),
-		GramsPerPiece:       f.GramsPerPiece,
-		GramsPerMilliliter:  f.GramsPerMilliliter,
-		FastCarb:            f.FastCarb,
-		StoreSection:        storeSectionsToProto[f.StoreSection],
-		PackageGrams:        f.PackageGrams,
-		ShelfLifeDays:       f.ShelfLifeDays,
-		OpenedShelfLifeDays: f.OpenedShelfLifeDays,
-		Notes:               f.Notes,
-		PreferredStoreId:    optionalID(f.PreferredStoreID),
-		AlwaysInStock:       f.AlwaysInStock,
-		CreateTime:          timestamppb.New(f.CreateTime),
-		UpdateTime:          timestamppb.New(f.UpdateTime),
+		Id:                   store.UUIDToString(f.ID),
+		Name:                 f.Name,
+		Source:               source,
+		SourceId:             f.SourceID,
+		FdcId:                fdcID(f.Source, f.SourceID),
+		Nutrients:            NutrientsToProto(&f.Per100Grams, -1),
+		GramsPerPiece:        f.GramsPerPiece,
+		GramsPerMilliliter:   f.GramsPerMilliliter,
+		FastCarb:             f.FastCarb,
+		StoreSection:         storeSectionsToProto[f.StoreSection],
+		PackageGrams:         f.PackageGrams,
+		ShelfLifeDays:        f.ShelfLifeDays,
+		OpenedShelfLifeDays:  f.OpenedShelfLifeDays,
+		FreezerShelfLifeDays: f.FreezerShelfLifeDays,
+		Notes:                f.Notes,
+		PreferredStoreId:     optionalID(f.PreferredStoreID),
+		AlwaysInStock:        f.AlwaysInStock,
+		CreateTime:           timestamppb.New(f.CreateTime),
+		UpdateTime:           timestamppb.New(f.UpdateTime),
 	}.Build()
 }
 
@@ -274,6 +275,7 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 		{"package_grams", p.GetPackageGrams(), maxPackageGrams},
 		{"shelf_life_days", float64(p.GetShelfLifeDays()), maxShelfLifeDays},
 		{"opened_shelf_life_days", float64(p.GetOpenedShelfLifeDays()), maxShelfLifeDays},
+		{"freezer_shelf_life_days", float64(p.GetFreezerShelfLifeDays()), maxShelfLifeDays},
 	} {
 		if math.IsNaN(check.value) || check.value < 0 || check.value > check.most {
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s must be from 0 to %v, with 0 for unknown", check.field, check.most)
@@ -289,18 +291,19 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 		}
 	}
 	return &foods.Food{
-		Name:                name,
-		Per100Grams:         per100,
-		GramsPerPiece:       p.GetGramsPerPiece(),
-		GramsPerMilliliter:  p.GetGramsPerMilliliter(),
-		FastCarb:            p.GetFastCarb(),
-		StoreSection:        section,
-		PackageGrams:        p.GetPackageGrams(),
-		ShelfLifeDays:       p.GetShelfLifeDays(),
-		OpenedShelfLifeDays: p.GetOpenedShelfLifeDays(),
-		Notes:               notes,
-		PreferredStoreID:    storeID,
-		AlwaysInStock:       p.GetAlwaysInStock(),
+		Name:                 name,
+		Per100Grams:          per100,
+		GramsPerPiece:        p.GetGramsPerPiece(),
+		GramsPerMilliliter:   p.GetGramsPerMilliliter(),
+		FastCarb:             p.GetFastCarb(),
+		StoreSection:         section,
+		PackageGrams:         p.GetPackageGrams(),
+		ShelfLifeDays:        p.GetShelfLifeDays(),
+		OpenedShelfLifeDays:  p.GetOpenedShelfLifeDays(),
+		FreezerShelfLifeDays: p.GetFreezerShelfLifeDays(),
+		Notes:                notes,
+		PreferredStoreID:     storeID,
+		AlwaysInStock:        p.GetAlwaysInStock(),
 	}, nil
 }
 
@@ -336,6 +339,7 @@ func foodFromReference(ref *foods.ReferenceFood, in *foodsv1.Food) (*foods.Food,
 	base.SetPackageGrams(in.GetPackageGrams())
 	base.SetShelfLifeDays(in.GetShelfLifeDays())
 	base.SetOpenedShelfLifeDays(in.GetOpenedShelfLifeDays())
+	base.SetFreezerShelfLifeDays(in.GetFreezerShelfLifeDays())
 	base.SetNotes(in.GetNotes())
 	base.SetPreferredStoreId(in.GetPreferredStoreId())
 	base.SetAlwaysInStock(in.GetAlwaysInStock())

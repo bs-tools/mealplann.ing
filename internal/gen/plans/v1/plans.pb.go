@@ -3375,10 +3375,11 @@ func (b0 PlanMealsResponse_builder) Build() *PlanMealsResponse {
 }
 
 type CreateCookRequest struct {
-	state           protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Cook *Cook                  `protobuf:"bytes,1,opt,name=cook,proto3"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Cook      *Cook                  `protobuf:"bytes,1,opt,name=cook,proto3"`
+	xxx_hidden_FromStock bool                   `protobuf:"varint,2,opt,name=from_stock,json=fromStock,proto3"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *CreateCookRequest) Reset() {
@@ -3413,8 +3414,19 @@ func (x *CreateCookRequest) GetCook() *Cook {
 	return nil
 }
 
+func (x *CreateCookRequest) GetFromStock() bool {
+	if x != nil {
+		return x.xxx_hidden_FromStock
+	}
+	return false
+}
+
 func (x *CreateCookRequest) SetCook(v *Cook) {
 	x.xxx_hidden_Cook = v
+}
+
+func (x *CreateCookRequest) SetFromStock(v bool) {
+	x.xxx_hidden_FromStock = v
 }
 
 func (x *CreateCookRequest) HasCook() bool {
@@ -3433,6 +3445,14 @@ type CreateCookRequest_builder struct {
 
 	// The cook.
 	Cook *Cook
+	// Whether it's food already made before the household tracked it, like
+	// leftovers in the freezer or a batch of cooked rice: the cook is created
+	// done, on the date it was made, without taking its ingredients out of
+	// the pantry, which no longer has them, or planning cooks of its
+	// components, which it already has. Set the cook's frozen_servings to
+	// what's frozen. Use it instead of a custom food for cooked food in
+	// stock, so it keeps its recipe's nutrition.
+	FromStock bool
 }
 
 func (b0 CreateCookRequest_builder) Build() *CreateCookRequest {
@@ -3440,6 +3460,7 @@ func (b0 CreateCookRequest_builder) Build() *CreateCookRequest {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Cook = b.Cook
+	x.xxx_hidden_FromStock = b.FromStock
 	return m0
 }
 
@@ -5714,9 +5735,11 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x05meals\x18\x01 \x03(\v2\x14.plans.v1.MealToPlanR\x05meals\"^\n" +
 	"\x11PlanMealsResponse\x12$\n" +
 	"\x05cooks\x18\x01 \x03(\v2\x0e.plans.v1.CookR\x05cooks\x12#\n" +
-	"\rportion_count\x18\x02 \x01(\x05R\fportionCount\"7\n" +
+	"\rportion_count\x18\x02 \x01(\x05R\fportionCount\"V\n" +
 	"\x11CreateCookRequest\x12\"\n" +
-	"\x04cook\x18\x01 \x01(\v2\x0e.plans.v1.CookR\x04cook\"w\n" +
+	"\x04cook\x18\x01 \x01(\v2\x0e.plans.v1.CookR\x04cook\x12\x1d\n" +
+	"\n" +
+	"from_stock\x18\x02 \x01(\bR\tfromStock\"w\n" +
 	"\x12CreateCookResponse\x12\"\n" +
 	"\x04cook\x18\x01 \x01(\v2\x0e.plans.v1.CookR\x04cook\x12=\n" +
 	"\x0epantry_changes\x18\x02 \x03(\v2\x16.plans.v1.PantryChangeR\rpantryChanges\"Z\n" +

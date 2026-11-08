@@ -61,7 +61,10 @@ service PlanService {
   rpc PlanMeals(PlanMealsRequest) returns (PlanMealsResponse);
   // Create a cook: a recipe made on a date. Plan who eats it with
   // CreatePortion, or use PlanMeal to do both. A cook created done takes
-  // its ingredients out of the pantry, like UpdateCook.
+  // its ingredients out of the pantry, like UpdateCook, unless it's
+  // from_stock: food already made, like a tray of lasagne ragù in the
+  // freezer, entered with frozen_servings to show in ListFrozenLeftovers
+  // and plan from.
   rpc CreateCook(CreateCookRequest) returns (CreateCookResponse);
   // Update a cook. Its portions stay, so moving a cook to a later date can
   // leave portions before it, which GetWeek warns about. Marking it done
@@ -559,6 +562,14 @@ message PlanMealsResponse {
 message CreateCookRequest {
   // The cook.
   Cook cook = 1;
+  // Whether it's food already made before the household tracked it, like
+  // leftovers in the freezer or a batch of cooked rice: the cook is created
+  // done, on the date it was made, without taking its ingredients out of
+  // the pantry, which no longer has them, or planning cooks of its
+  // components, which it already has. Set the cook's frozen_servings to
+  // what's frozen. Use it instead of a custom food for cooked food in
+  // stock, so it keeps its recipe's nutrition.
+  bool from_stock = 2;
 }
 
 message CreateCookResponse {

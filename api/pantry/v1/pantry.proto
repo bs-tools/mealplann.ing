@@ -26,6 +26,10 @@ import "mcp/v1/options.proto";
 // always_in_stock on the food with FoodService.UpdateFood instead of adding
 // them. Check the pantry before generating a shopping list, so the list
 // only has what's missing, and ask the user about stock that looks wrong.
+//
+// Cooked food in stock, like frozen leftovers or a batch of cooked rice, is
+// a cook of its recipe (see PlanService.CreateCook's from_stock), not a
+// lot, so it keeps its recipe's nutrition and can be planned.
 service PantryService {
   // List the household's pantry: every lot in stock, with its food's name
   // and store section, and how many days it has left, ordered by food
@@ -71,11 +75,14 @@ message PantryItem {
   // The date it expires unopened (YYYY-MM-DD), from its pack. Empty if it
   // doesn't or isn't known.
   string expiry_date = 7;
-  // The date it was opened (YYYY-MM-DD), empty if it's unopened. Once
-  // opened, it keeps for the food's opened_shelf_life_days.
+  // The date it was opened (YYYY-MM-DD), empty if it's unopened or the day
+  // isn't known (see opened). Once opened, it keeps for the food's
+  // opened_shelf_life_days.
   string opened_date = 8;
-  // The date to use it by (YYYY-MM-DD): the earlier of expiry_date and the
-  // end of its opened shelf life. Empty if neither is known.
+  // The date to use it by (YYYY-MM-DD). In the freezer, frozen_date plus
+  // the food's freezer_shelf_life_days, if known. Otherwise the earlier of
+  // expiry_date and the end of its opened shelf life. Empty if none is
+  // known.
   string use_by_date = 9 [(mcp.v1.field).output_only = true];
   // The days from today (UTC) to use_by_date: 0 for today, negative once
   // it's past. Unset if use_by_date is empty.
@@ -86,6 +93,38 @@ message PantryItem {
   google.protobuf.Timestamp create_time = 12 [(mcp.v1.field).output_only = true];
   // When the lot was last changed.
   google.protobuf.Timestamp update_time = 13 [(mcp.v1.field).output_only = true];
+  // Where it's kept, which sets how long it keeps: STORAGE_FREEZER keeps
+  // it for the food's freezer_shelf_life_days from frozen_date.
+  // STORAGE_UNSPECIFIED if not said, which keeps like the pantry or fridge.
+  Storage storage = 14;
+  // Where in the home it is, e.g. "chest freezer" or "garage shelf", to
+  // find it and tell lots apart. At most 100 characters.
+  string location = 15;
+  // The date it was frozen (YYYY-MM-DD), for a lot in the freezer. Moving
+  // a lot into the freezer sets it to today unless it's given; moving it
+  // out clears it.
+  string frozen_date = 16;
+  // Whether it's been opened, even if the day isn't known: then its use-by
+  // date can't count the opened shelf life, and is only its expiry_date.
+  // Setting opened_date sets it.
+  bool opened = 17;
+  // Whether the amount is a guess, like a partly used bag seen in a photo,
+  // for the user to check. Clear it once they confirm the amount.
+  bool estimated = 18;
+  // The brand or label of the lot, e.g. "Sriracha" for one of several hot
+  // sauces sharing a food. At most 100 characters.
+  string label = 19;
+}
+
+// Where a lot is kept.
+enum Storage {
+  STORAGE_UNSPECIFIED = 0;
+  // A cupboard or shelf at room temperature.
+  STORAGE_PANTRY = 1;
+  // The fridge.
+  STORAGE_FRIDGE = 2;
+  // The freezer, which keeps food for its freezer_shelf_life_days.
+  STORAGE_FREEZER = 3;
 }
 
 // A food the household always has, which the pantry doesn't track.
@@ -110,6 +149,10 @@ message ListPantryRequest {
   // Whether to leave out the lots' create and update times, to keep a
   // large pantry's response small.
   bool summary = 4;
+  // Only list lots kept there. STORAGE_UNSPECIFIED to list all.
+  Storage storage = 5;
+  // Only list lots whose amounts are guesses, for the user to check.
+  bool estimated_only = 6;
 }
 
 message ListPantryResponse {
@@ -123,15 +166,18 @@ message ListPantryResponse {
 message AddToPantryRequest {
   // The ID of the household's food. Required.
   string food_id = 1;
-  // The amount, in unit. More than 0.
+  // The amount, in unit. More than 0, unless packages is set.
   double amount = 2;
-  // The unit of the amount. Required. Milliliters and pieces are converted
-  // to grams with the food's grams_per_milliliter and grams_per_piece.
+  // The unit of the amount. Required with amount. Milliliters and pieces
+  // are converted to grams with the food's grams_per_milliliter and
+  // grams_per_piece.
   foods.v1.AmountUnit unit = 3;
   // The date it expires unopened (YYYY-MM-DD). Empty for today (UTC) plus
-  // the food's shelf_life_days, or no expiry date if that's unknown.
+  // the food's shelf_life_days, or no expiry date if that's unknown or
+  // it's going in the freezer.
   string expiry_date = 4;
-  // The date it was opened (YYYY-MM-DD), empty if it's unopened.
+  // The date it was opened (YYYY-MM-DD), empty if it's unopened or the day
+  // isn't known (see opened).
   string opened_date = 5;
   // Notes. At most 500 characters.
   string notes = 6;
@@ -145,6 +191,26 @@ message AddToPantryRequest {
   // first response instead of creating again. Empty to not deduplicate. At
   // most 100 characters.
   string request_id = 8;
+  // Instead of amount and unit, how many of the food's packages (its
+  // package_grams), e.g. 0.33 for a third of a jug, or 2.5 for two full
+  // bags and a half-full one. Fails with FAILED_PRECONDITION if the food
+  // has no package_grams.
+  double packages = 9;
+  // Where it's kept (see PantryItem.storage).
+  Storage storage = 10;
+  // Where in the home it is (see PantryItem.location).
+  string location = 11;
+  // The date it was frozen (YYYY-MM-DD), for STORAGE_FREEZER. Empty for
+  // today.
+  string frozen_date = 12;
+  // Whether it's been opened, on a day that isn't known (see
+  // PantryItem.opened). Don't set opened_date to today for a lot opened on
+  // an unknown day: that shortens its use-by date.
+  bool opened = 13;
+  // Whether the amount is a guess (see PantryItem.estimated).
+  bool estimated = 14;
+  // The brand or label of the lot (see PantryItem.label).
+  string label = 15;
 }
 
 message AddLotsToPantryRequest {

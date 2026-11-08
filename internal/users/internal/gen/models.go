@@ -309,6 +309,59 @@ func (e Nutrient) Valid() bool {
 	return false
 }
 
+type PantryStorage string
+
+const (
+	PantryStoragePantry  PantryStorage = "pantry"
+	PantryStorageFridge  PantryStorage = "fridge"
+	PantryStorageFreezer PantryStorage = "freezer"
+)
+
+func (e *PantryStorage) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PantryStorage(s)
+	case string:
+		*e = PantryStorage(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PantryStorage: %T", src)
+	}
+	return nil
+}
+
+type NullPantryStorage struct {
+	PantryStorage PantryStorage
+	Valid         bool // Valid is true if PantryStorage is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPantryStorage) Scan(value interface{}) error {
+	if value == nil {
+		ns.PantryStorage, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PantryStorage.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPantryStorage) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PantryStorage), nil
+}
+
+func (e PantryStorage) Valid() bool {
+	switch e {
+	case PantryStoragePantry,
+		PantryStorageFridge,
+		PantryStorageFreezer:
+		return true
+	}
+	return false
+}
+
 type PasskeyCeremony string
 
 const (
@@ -512,6 +565,12 @@ type CookPantryDeduction struct {
 	ExpiryDate   pgtype.Date
 	OpenedDate   pgtype.Date
 	Notes        string
+	Storage      NullPantryStorage
+	Location     string
+	FrozenDate   pgtype.Date
+	Opened       bool
+	Estimated    bool
+	Label        string
 }
 
 type CookPantryUse struct {
@@ -609,6 +668,7 @@ type Food struct {
 	AlwaysInStock                   bool
 	ReferenceSource                 NullReferenceFoodSource
 	ReferenceID                     pgtype.Int4
+	FreezerShelfLifeDays            pgtype.Int4
 }
 
 type Household struct {
@@ -669,6 +729,12 @@ type PantryItem struct {
 	Notes       string
 	CreateTime  pgtype.Timestamptz
 	UpdateTime  pgtype.Timestamptz
+	Storage     NullPantryStorage
+	Location    string
+	FrozenDate  pgtype.Date
+	Opened      bool
+	Estimated   bool
+	Label       string
 }
 
 type Passkey struct {
