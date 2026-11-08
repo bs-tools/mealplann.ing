@@ -1,9 +1,9 @@
 # Replace the placeholders once the Google Cloud project exists, see
 # "Bootstrapping the project" in the README. The project ID is also in the
 # state bucket's name in versions.tf.
-project         = "REPLACE-WITH-PROJECT-ID"
+project         = "foodplanning-514023"
 region          = "us-west1"
-billing_account = "REPLACE-WITH-BILLING-ACCOUNT-ID"
+billing_account = "011594-64C1DB-C0AD77"
 budget_amount   = 1
 budget_currency = "CAD"
 domain          = "foodplann.ing"
@@ -12,4 +12,4 @@ domain          = "foodplann.ing"
 github_repository_id = "1449424396"
 # Enable once the domain is verified, applying locally as a verified owner.
 # See the README.
-domain_enabled = false
+domain_enabled = true
