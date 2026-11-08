@@ -33,8 +33,11 @@ import (
 const implementationName = "mealplanning"
 
 // instructionsPreamble is the start of the server instructions, followed by
-// the description of each service.
-const instructionsPreamble = `Tools for planning vegan meals for a household: its recipes, weekly meal plans, pantry and shopping list, checked against the nutrition targets of the people in it. Each tool is an RPC of one of the services described below.`
+// a summary of each service. The full description of each service is too
+// long to send to every client: clients cut the instructions off after a
+// few thousand characters, losing the services at the end. GetHelp returns
+// them instead.
+const instructionsPreamble = `Tools for planning vegan meals for a household: its recipes, weekly meal plans, pantry and shopping list, checked against the nutrition targets of the people in it. Each tool is an RPC of one of the services summarized below. Before you first use a service, read its full guide with GetHelp: it says how its tools fit together, like how to add a food or plan a week.`
 
 var (
 	// readOnlyPrefixes are the method name prefixes of methods that don't
@@ -77,7 +80,7 @@ func NewServer(log *slog.Logger, report *errreport.Reporter, services ...Service
 	var (
 		tools        []tool
 		toolServices = map[string]protoreflect.FullName{}
-		instructions = []string{instructionsPreamble}
+		guides       []serviceGuide
 	)
 	for _, svc := range services {
 		sd, err := apidesc.Service(svc.Name)
@@ -87,7 +90,7 @@ func NewServer(log *slog.Logger, report *errreport.Reporter, services ...Service
 		if svc.Handler == nil {
 			return nil, fmt.Errorf("service %s has no handler", svc.Name)
 		}
-		exposed := 0
+		guide := serviceGuide{name: sd.FullName(), description: apidesc.Comment(sd)}
 		methods := sd.Methods()
 		for i := range methods.Len() {
 			md := methods.Get(i)
@@ -105,19 +108,28 @@ func NewServer(log *slog.Logger, report *errreport.Reporter, services ...Service
 				return nil, fmt.Errorf("creating tool handler for %s: %w", md.FullName(), err)
 			}
 			tools = append(tools, tool{tool: newTool(md), handler: handler})
-			exposed++
+			guide.tools = append(guide.tools, name)
 		}
-		if comment := apidesc.Comment(sd); exposed > 0 && comment != "" {
-			instructions = append(instructions, fmt.Sprintf("## %s\n\n%s", sd.FullName(), comment))
+		if len(guide.tools) > 0 {
+			guides = append(guides, guide)
 		}
 	}
+	if _, ok := toolServices[helpToolName]; ok {
+		return nil, fmt.Errorf("tool name %q is reserved for the server's help", helpToolName)
+	}
+	var defs []*mcp.Tool
+	for _, t := range tools {
+		defs = append(defs, t.tool)
+	}
+	help := newHelp(guides, defs)
+	tools = append(tools, tool{tool: help.tool(), handler: help.handle})
 
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    implementationName,
 		Title:   "mealplann.ing",
-		Version: "1.0.0",
+		Version: "1.0.0+" + help.version,
 	}, &mcp.ServerOptions{
-		Instructions: strings.Join(instructions, "\n\n"),
+		Instructions: help.instructions(),
 		Logger:       log,
 	})
 	s := &Server{server: server}
@@ -211,6 +223,7 @@ func newToolHandler(log *slog.Logger, report *errreport.Reporter, impl any, md p
 			if err := checkRemovedFields(args, inType.Descriptor()); err != nil {
 				return errorResult(connect.NewError(connect.CodeInvalidArgument, err.Error())), nil
 			}
+			args = normalizeFieldMasks(args, inType.Descriptor())
 			if err := protojson.Unmarshal(args, in); err != nil {
 				return errorResult(connect.Errorf(connect.CodeInvalidArgument,
 					"invalid arguments, check them against the tool input schema: %v", err)), nil

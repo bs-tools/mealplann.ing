@@ -55,6 +55,16 @@ export const listFoods = FoodService.method.listFoods;
 export const updateFood = FoodService.method.updateFood;
 
 /**
+ * List what uses one of the household's foods: the recipes with it as an
+ * ingredient, how many portions and staples of the plan eat it, and its
+ * stock in the pantry. Use it to find the recipes to change when
+ * replacing a food, or to check a food is unused before DeleteFood.
+ *
+ * @generated from rpc foods.v1.FoodService.ListFoodUsages
+ */
+export const listFoodUsages = FoodService.method.listFoodUsages;
+
+/**
  * Delete one of the household's foods. Fails with FAILED_PRECONDITION,
  * naming the recipes, if recipes use it: remove it from them first. Also
  * fails with FAILED_PRECONDITION if portions or staples of the plan (see

@@ -79,7 +79,8 @@ type PantryServiceClient interface {
 	// grams_per_milliliter, and fails with FAILED_PRECONDITION if the food
 	// lacks it: set it with FoodService.UpdateFood, or give the amount in
 	// grams. Also fails with FAILED_PRECONDITION if the food is always in
-	// stock, as those aren't tracked.
+	// stock, as those aren't tracked, unless track_stock is set. The response
+	// says how the amount was converted, e.g. "148 ml at 1.17 g/ml is 173 g".
 	AddToPantry(context.Context, *v1.AddToPantryRequest) (*v1.AddToPantryResponse, error)
 	// Update a lot of the pantry, e.g. its grams after using some, or its
 	// opened_date when opening it.
@@ -106,7 +107,8 @@ type PantryServiceHandler interface {
 	// grams_per_milliliter, and fails with FAILED_PRECONDITION if the food
 	// lacks it: set it with FoodService.UpdateFood, or give the amount in
 	// grams. Also fails with FAILED_PRECONDITION if the food is always in
-	// stock, as those aren't tracked.
+	// stock, as those aren't tracked, unless track_stock is set. The response
+	// says how the amount was converted, e.g. "148 ml at 1.17 g/ml is 173 g".
 	AddToPantry(context.Context, *v1.AddToPantryRequest) (*v1.AddToPantryResponse, error)
 	// Update a lot of the pantry, e.g. its grams after using some, or its
 	// opened_date when opening it.

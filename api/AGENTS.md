@@ -61,7 +61,11 @@ Comments are the MCP tool and schema descriptions AI agents read, so write them
 for an agent that knows nothing about the app:
 
 - Service comments explain the domain and how it relates to other services
-  ("See RecipeService").
+  ("See RecipeService"). Their first paragraph is the service's summary in
+  the MCP server instructions, which clients cut off after a few thousand
+  characters, so keep it to a few sentences and put workflows and
+  conventions in later paragraphs. Agents read those with the `GetHelp`
+  tool.
 - Method comments say what the method does, its side effects ("Its portions
   are deleted too"), and its errors ("fails with FAILED_PRECONDITION if ...").
 - Field comments give the meaning, unit, format, defaults and limits, with

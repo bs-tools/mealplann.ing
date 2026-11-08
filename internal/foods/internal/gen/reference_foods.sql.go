@@ -75,20 +75,22 @@ select
     limit 1
   )::uuid as food_id
 from reference_foods
-where to_tsvector('english', description) @@ websearch_to_tsquery('english', $2)
-  or $2 <% description
+where to_tsvector('english', description) @@ to_tsquery('english', $2)
+  or $3 <% description
 order by
-  word_similarity($2, description)
-    + similarity($2, split_part(description, ',', 1))
-    + ts_rank(to_tsvector('english', description), websearch_to_tsquery('english', $2)) desc,
+  to_tsvector('english', description) @@ to_tsquery('english', $2) desc,
+  word_similarity($3, description)
+    + similarity($3, split_part(description, ',', 1))
+    + ts_rank(to_tsvector('english', description), to_tsquery('english', $2)) desc,
   length(description),
   source,
   source_id
-limit $3
+limit $4
 `
 
 type SearchReferenceFoodsParams struct {
 	HouseholdID pgtype.UUID
+	TextQuery   string
 	Query       string
 	RowLimit    int32
 }
@@ -98,15 +100,22 @@ type SearchReferenceFoodsRow struct {
 	FoodID        pgtype.UUID
 }
 
-// Foods of all sources match all the query's words, stemmed, or, for
-// misspelled and partial words, enough of its trigrams. The best matches
-// are those whose words are most like the query, especially at the start of
-// the description, where FDC and CNF name the food ("Lentils, raw"), then
-// the shortest, which are the plainest ("Spinach, raw" before "Spinach,
-// cooked, boiled, drained, with salt"). Neither source is preferred, so
-// foods both have are side by side.
+// Foods of all sources match all the words of the text query, stemmed,
+// with synonyms, or, for misspelled and partial words, enough of the
+// query's trigrams. Foods matching the words come first, so a trigram
+// match of a longer word ("Mission" for "miso") never hides the food
+// itself. Then the best matches are those whose words are most like the
+// query, especially at the start of the description, where FDC and CNF name
+// the food ("Lentils, raw"), then the shortest, which are the plainest
+// ("Spinach, raw" before "Spinach, cooked, boiled, drained, with salt").
+// Neither source is preferred, so foods both have are side by side.
 func (q *Queries) SearchReferenceFoods(ctx context.Context, arg *SearchReferenceFoodsParams) ([]*SearchReferenceFoodsRow, error) {
-	rows, err := q.db.Query(ctx, searchReferenceFoods, arg.HouseholdID, arg.Query, arg.RowLimit)
+	rows, err := q.db.Query(ctx, searchReferenceFoods,
+		arg.HouseholdID,
+		arg.TextQuery,
+		arg.Query,
+		arg.RowLimit,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -168,3 +168,24 @@ order by lower(name);
 select * from foods
 where household_id = @household_id and always_in_stock
 order by lower(name);
+
+-- name: GetFoodUsages :one
+-- What uses a food: how many portions and staples of the plan eat it, and
+-- its lots and grams in the pantry. Null if the household has no such food.
+select
+  (select count(*) from portions p where p.household_id = f.household_id and p.food_id = f.id)::bigint as portion_count,
+  (select count(*) from staples s where s.household_id = f.household_id and s.food_id = f.id)::bigint as staple_count,
+  (select count(*) from pantry_items pi where pi.household_id = f.household_id and pi.food_id = f.id)::bigint as pantry_lot_count,
+  (select coalesce(sum(pi.grams), 0) from pantry_items pi where pi.household_id = f.household_id and pi.food_id = f.id)::double precision as pantry_grams
+from foods f
+where f.id = @id and f.household_id = @household_id;
+
+-- name: ListFoodRecipes :many
+-- The recipes with the food as an ingredient, by name.
+select r.id, r.name from recipes r
+where r.household_id = @household_id
+  and r.id in (
+    select ri.recipe_id from recipe_ingredients ri
+    where ri.household_id = @household_id and ri.food_id = @food_id
+  )
+order by lower(r.name), r.id;

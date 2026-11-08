@@ -5,9 +5,11 @@ package pantry
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"math"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -44,6 +46,7 @@ type Repository interface {
 type FoodRepository interface {
 	GetFood(ctx context.Context, householdID, id pgtype.UUID) (*foods.Food, error)
 	ListAlwaysInStockFoods(ctx context.Context, householdID pgtype.UUID) ([]*foods.Food, error)
+	UpdateFood(ctx context.Context, f *foods.Food) (*foods.Food, error)
 }
 
 // Service implements the PantryService.
@@ -157,13 +160,24 @@ func (s *Service) AddToPantry(ctx context.Context, req *pantryv1.AddToPantryRequ
 		}
 		return nil, s.toConnectError(ctx, err, "failed to get food")
 	}
-	if f.AlwaysInStock {
+	if f.AlwaysInStock && !req.GetTrackStock() {
 		return nil, connect.Errorf(connect.CodeFailedPrecondition,
-			"%s is always in stock, so the pantry doesn't track it; set always_in_stock to false on the food with UpdateFood to track it", f.Name)
+			"%s is always in stock, so the pantry doesn't track it; to track it, add it again with track_stock set, which clears always_in_stock on the food", f.Name)
 	}
 	grams, err := Grams(f, amount, unit)
 	if err != nil {
 		return nil, err
+	}
+	stopped := false
+	if f.AlwaysInStock {
+		// Clearing the flag first means a failure to add the lot leaves the
+		// food tracked with nothing in stock, which the shopping list then
+		// buys, rather than a lot of a food the pantry ignores.
+		f.AlwaysInStock = false
+		if _, err := s.foods.UpdateFood(ctx, f); err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to track the food in the pantry")
+		}
+		stopped = true
 	}
 	if expiry.IsZero() && f.ShelfLifeDays > 0 {
 		expiry = Today(s.nowFn()).AddDate(0, 0, int(f.ShelfLifeDays))
@@ -181,7 +195,34 @@ func (s *Service) AddToPantry(ctx context.Context, req *pantryv1.AddToPantryRequ
 	if len(created) == 0 {
 		return nil, s.toConnectError(ctx, errors.New("no item created"), "failed to add to pantry")
 	}
-	return pantryv1.AddToPantryResponse_builder{Item: ItemToProto(created[0], Today(s.nowFn()))}.Build(), nil
+	return pantryv1.AddToPantryResponse_builder{
+		Item:                 ItemToProto(created[0], Today(s.nowFn())),
+		Conversion:           Conversion(f, amount, unit, grams),
+		StoppedAlwaysInStock: stopped,
+	}.Build(), nil
+}
+
+// Conversion describes how an amount was converted to grams, e.g. "148 ml
+// at 1.17 g/ml is 173 g", so the caller can check it without doing the
+// arithmetic. It's empty for an amount in grams.
+func Conversion(f *foods.Food, amount float64, unit nutrition.Unit, grams float64) string {
+	switch unit {
+	case nutrition.Milliliters:
+		return fmt.Sprintf("%s ml at %s g/ml is %s g", number(amount), number(f.GramsPerMilliliter), number(grams))
+	case nutrition.Pieces:
+		piece := "pieces"
+		if amount == 1 {
+			piece = "piece"
+		}
+		return fmt.Sprintf("%s %s at %s g each is %s g", number(amount), piece, number(f.GramsPerPiece), number(grams))
+	default:
+		return ""
+	}
+}
+
+// number formats a number with at most 2 decimals, without trailing zeros.
+func number(v float64) string {
+	return strconv.FormatFloat(math.Round(v*100)/100, 'f', -1, 64)
 }
 
 // Grams converts an amount of a food to grams, failing with a message

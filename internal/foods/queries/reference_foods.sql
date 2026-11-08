@@ -94,13 +94,15 @@ on conflict (source, source_id) do update set
 select * from reference_foods where source = @source and source_id = @source_id;
 
 -- name: SearchReferenceFoods :many
--- Foods of all sources match all the query's words, stemmed, or, for
--- misspelled and partial words, enough of its trigrams. The best matches
--- are those whose words are most like the query, especially at the start of
--- the description, where FDC and CNF name the food ("Lentils, raw"), then
--- the shortest, which are the plainest ("Spinach, raw" before "Spinach,
--- cooked, boiled, drained, with salt"). Neither source is preferred, so
--- foods both have are side by side.
+-- Foods of all sources match all the words of the text query, stemmed,
+-- with synonyms, or, for misspelled and partial words, enough of the
+-- query's trigrams. Foods matching the words come first, so a trigram
+-- match of a longer word ("Mission" for "miso") never hides the food
+-- itself. Then the best matches are those whose words are most like the
+-- query, especially at the start of the description, where FDC and CNF name
+-- the food ("Lentils, raw"), then the shortest, which are the plainest
+-- ("Spinach, raw" before "Spinach, cooked, boiled, drained, with salt").
+-- Neither source is preferred, so foods both have are side by side.
 select
   sqlc.embed(reference_foods),
   (
@@ -116,12 +118,13 @@ select
     limit 1
   )::uuid as food_id
 from reference_foods
-where to_tsvector('english', description) @@ websearch_to_tsquery('english', @query)
+where to_tsvector('english', description) @@ to_tsquery('english', @text_query)
   or @query <% description
 order by
+  to_tsvector('english', description) @@ to_tsquery('english', @text_query) desc,
   word_similarity(@query, description)
     + similarity(@query, split_part(description, ',', 1))
-    + ts_rank(to_tsvector('english', description), websearch_to_tsquery('english', @query)) desc,
+    + ts_rank(to_tsvector('english', description), to_tsquery('english', @text_query)) desc,
   length(description),
   source,
   source_id

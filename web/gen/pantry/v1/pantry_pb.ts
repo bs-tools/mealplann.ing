@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file pantry/v1/pantry.proto.
  */
 export const file_pantry_v1_pantry: GenFile = /*@__PURE__*/
-  fileDesc("ChZwYW50cnkvdjEvcGFudHJ5LnByb3RvEglwYW50cnkudjEiswMKClBhbnRyeUl0ZW0SCgoCaWQYASABKAkSFwoHZm9vZF9pZBgCIAEoCUIGqp8ZAggBEhkKCWZvb2RfbmFtZRgDIAEoCUIGqp8ZAggBEjUKDXN0b3JlX3NlY3Rpb24YBCABKA4yFi5mb29kcy52MS5TdG9yZVNlY3Rpb25CBqqfGQIIARINCgVncmFtcxgFIAEoARIfCg9ncmFtc19wZXJfcGllY2UYBiABKAFCBqqfGQIIARITCgtleHBpcnlfZGF0ZRgHIAEoCRITCgtvcGVuZWRfZGF0ZRgIIAEoCRIbCgt1c2VfYnlfZGF0ZRgJIAEoCUIGqp8ZAggBEiMKDmRheXNfdG9fZXhwaXJ5GAogASgFQgaqnxkCCAFIAIgBARINCgVub3RlcxgLIAEoCRI3CgtjcmVhdGVfdGltZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIAUIRCg9fZGF5c190b19leHBpcnkiZgoRQWx3YXlzSW5TdG9ja0Zvb2QSDwoHZm9vZF9pZBgBIAEoCRIRCglmb29kX25hbWUYAiABKAkSLQoNc3RvcmVfc2VjdGlvbhgDIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbiITChFMaXN0UGFudHJ5UmVxdWVzdCJ3ChJMaXN0UGFudHJ5UmVzcG9uc2USJAoFaXRlbXMYASADKAsyFS5wYW50cnkudjEuUGFudHJ5SXRlbRI7ChVhbHdheXNfaW5fc3RvY2tfZm9vZHMYAiADKAsyHC5wYW50cnkudjEuQWx3YXlzSW5TdG9ja0Zvb2QikgEKEkFkZFRvUGFudHJ5UmVxdWVzdBIPCgdmb29kX2lkGAEgASgJEg4KBmFtb3VudBgCIAEoARIiCgR1bml0GAMgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdBITCgtleHBpcnlfZGF0ZRgEIAEoCRITCgtvcGVuZWRfZGF0ZRgFIAEoCRINCgVub3RlcxgGIAEoCSI6ChNBZGRUb1BhbnRyeVJlc3BvbnNlEiMKBGl0ZW0YASABKAsyFS5wYW50cnkudjEuUGFudHJ5SXRlbSJvChdVcGRhdGVQYW50cnlJdGVtUmVxdWVzdBIjCgRpdGVtGAEgASgLMhUucGFudHJ5LnYxLlBhbnRyeUl0ZW0SLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIj8KGFVwZGF0ZVBhbnRyeUl0ZW1SZXNwb25zZRIjCgRpdGVtGAEgASgLMhUucGFudHJ5LnYxLlBhbnRyeUl0ZW0iJQoXUmVtb3ZlRnJvbVBhbnRyeVJlcXVlc3QSCgoCaWQYASABKAkiGgoYUmVtb3ZlRnJvbVBhbnRyeVJlc3BvbnNlMuICCg1QYW50cnlTZXJ2aWNlEkkKCkxpc3RQYW50cnkSHC5wYW50cnkudjEuTGlzdFBhbnRyeVJlcXVlc3QaHS5wYW50cnkudjEuTGlzdFBhbnRyeVJlc3BvbnNlEkwKC0FkZFRvUGFudHJ5Eh0ucGFudHJ5LnYxLkFkZFRvUGFudHJ5UmVxdWVzdBoeLnBhbnRyeS52MS5BZGRUb1BhbnRyeVJlc3BvbnNlElsKEFVwZGF0ZVBhbnRyeUl0ZW0SIi5wYW50cnkudjEuVXBkYXRlUGFudHJ5SXRlbVJlcXVlc3QaIy5wYW50cnkudjEuVXBkYXRlUGFudHJ5SXRlbVJlc3BvbnNlElsKEFJlbW92ZUZyb21QYW50cnkSIi5wYW50cnkudjEuUmVtb3ZlRnJvbVBhbnRyeVJlcXVlc3QaIy5wYW50cnkudjEuUmVtb3ZlRnJvbVBhbnRyeVJlc3BvbnNlQqQBCg1jb20ucGFudHJ5LnYxQgtQYW50cnlQcm90b1ABWkFnaXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3BhbnRyeS92MTtwYW50cnl2MaICA1BYWKoCCVBhbnRyeS5WMcoCCVBhbnRyeVxWMeICFVBhbnRyeVxWMVxHUEJNZXRhZGF0YeoCClBhbnRyeTo6VjFiBnByb3RvMw", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChZwYW50cnkvdjEvcGFudHJ5LnByb3RvEglwYW50cnkudjEiswMKClBhbnRyeUl0ZW0SCgoCaWQYASABKAkSFwoHZm9vZF9pZBgCIAEoCUIGqp8ZAggBEhkKCWZvb2RfbmFtZRgDIAEoCUIGqp8ZAggBEjUKDXN0b3JlX3NlY3Rpb24YBCABKA4yFi5mb29kcy52MS5TdG9yZVNlY3Rpb25CBqqfGQIIARINCgVncmFtcxgFIAEoARIfCg9ncmFtc19wZXJfcGllY2UYBiABKAFCBqqfGQIIARITCgtleHBpcnlfZGF0ZRgHIAEoCRITCgtvcGVuZWRfZGF0ZRgIIAEoCRIbCgt1c2VfYnlfZGF0ZRgJIAEoCUIGqp8ZAggBEiMKDmRheXNfdG9fZXhwaXJ5GAogASgFQgaqnxkCCAFIAIgBARINCgVub3RlcxgLIAEoCRI3CgtjcmVhdGVfdGltZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIAUIRCg9fZGF5c190b19leHBpcnkiZgoRQWx3YXlzSW5TdG9ja0Zvb2QSDwoHZm9vZF9pZBgBIAEoCRIRCglmb29kX25hbWUYAiABKAkSLQoNc3RvcmVfc2VjdGlvbhgDIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbiITChFMaXN0UGFudHJ5UmVxdWVzdCJ3ChJMaXN0UGFudHJ5UmVzcG9uc2USJAoFaXRlbXMYASADKAsyFS5wYW50cnkudjEuUGFudHJ5SXRlbRI7ChVhbHdheXNfaW5fc3RvY2tfZm9vZHMYAiADKAsyHC5wYW50cnkudjEuQWx3YXlzSW5TdG9ja0Zvb2QipwEKEkFkZFRvUGFudHJ5UmVxdWVzdBIPCgdmb29kX2lkGAEgASgJEg4KBmFtb3VudBgCIAEoARIiCgR1bml0GAMgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdBITCgtleHBpcnlfZGF0ZRgEIAEoCRITCgtvcGVuZWRfZGF0ZRgFIAEoCRINCgVub3RlcxgGIAEoCRITCgt0cmFja19zdG9jaxgHIAEoCCJvChNBZGRUb1BhbnRyeVJlc3BvbnNlEiMKBGl0ZW0YASABKAsyFS5wYW50cnkudjEuUGFudHJ5SXRlbRISCgpjb252ZXJzaW9uGAIgASgJEh8KF3N0b3BwZWRfYWx3YXlzX2luX3N0b2NrGAMgASgIIm8KF1VwZGF0ZVBhbnRyeUl0ZW1SZXF1ZXN0EiMKBGl0ZW0YASABKAsyFS5wYW50cnkudjEuUGFudHJ5SXRlbRIvCgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2siPwoYVXBkYXRlUGFudHJ5SXRlbVJlc3BvbnNlEiMKBGl0ZW0YASABKAsyFS5wYW50cnkudjEuUGFudHJ5SXRlbSIlChdSZW1vdmVGcm9tUGFudHJ5UmVxdWVzdBIKCgJpZBgBIAEoCSIaChhSZW1vdmVGcm9tUGFudHJ5UmVzcG9uc2Uy4gIKDVBhbnRyeVNlcnZpY2USSQoKTGlzdFBhbnRyeRIcLnBhbnRyeS52MS5MaXN0UGFudHJ5UmVxdWVzdBodLnBhbnRyeS52MS5MaXN0UGFudHJ5UmVzcG9uc2USTAoLQWRkVG9QYW50cnkSHS5wYW50cnkudjEuQWRkVG9QYW50cnlSZXF1ZXN0Gh4ucGFudHJ5LnYxLkFkZFRvUGFudHJ5UmVzcG9uc2USWwoQVXBkYXRlUGFudHJ5SXRlbRIiLnBhbnRyeS52MS5VcGRhdGVQYW50cnlJdGVtUmVxdWVzdBojLnBhbnRyeS52MS5VcGRhdGVQYW50cnlJdGVtUmVzcG9uc2USWwoQUmVtb3ZlRnJvbVBhbnRyeRIiLnBhbnRyeS52MS5SZW1vdmVGcm9tUGFudHJ5UmVxdWVzdBojLnBhbnRyeS52MS5SZW1vdmVGcm9tUGFudHJ5UmVzcG9uc2VCpAEKDWNvbS5wYW50cnkudjFCC1BhbnRyeVByb3RvUAFaQWdpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vcGFudHJ5L3YxO3BhbnRyeXYxogIDUFhYqgIJUGFudHJ5LlYxygIJUGFudHJ5XFYx4gIVUGFudHJ5XFYxXEdQQk1ldGFkYXRh6gIKUGFudHJ5OjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A lot of a food in stock.
@@ -249,6 +249,16 @@ export type AddToPantryRequest = Message<"pantry.v1.AddToPantryRequest"> & {
    * @generated from field: string notes = 6;
    */
   notes: string;
+
+  /**
+   * Whether to start tracking the food in the pantry if it's always in
+   * stock (see FoodService's Food.always_in_stock), clearing that on the
+   * food, instead of failing. Set it when the user says how much they have
+   * of a food they had marked as always in stock.
+   *
+   * @generated from field: bool track_stock = 7;
+   */
+  trackStock: boolean;
 };
 
 /**
@@ -268,6 +278,22 @@ export type AddToPantryResponse = Message<"pantry.v1.AddToPantryResponse"> & {
    * @generated from field: pantry.v1.PantryItem item = 1;
    */
   item?: PantryItem | undefined;
+
+  /**
+   * How the amount was converted to grams, e.g. "148 ml at 1.17 g/ml is
+   * 173 g" or "3 pieces at 50 g each is 150 g", empty if it was given in
+   * grams.
+   *
+   * @generated from field: string conversion = 2;
+   */
+  conversion: string;
+
+  /**
+   * Whether the food was always in stock, and track_stock cleared that.
+   *
+   * @generated from field: bool stopped_always_in_stock = 3;
+   */
+  stoppedAlwaysInStock: boolean;
 };
 
 /**
@@ -398,7 +424,8 @@ export const PantryService: GenService<{
    * grams_per_milliliter, and fails with FAILED_PRECONDITION if the food
    * lacks it: set it with FoodService.UpdateFood, or give the amount in
    * grams. Also fails with FAILED_PRECONDITION if the food is always in
-   * stock, as those aren't tracked.
+   * stock, as those aren't tracked, unless track_stock is set. The response
+   * says how the amount was converted, e.g. "148 ml at 1.17 g/ml is 173 g".
    *
    * @generated from rpc pantry.v1.PantryService.AddToPantry
    */

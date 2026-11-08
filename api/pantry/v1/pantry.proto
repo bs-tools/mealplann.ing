@@ -37,7 +37,8 @@ service PantryService {
   // grams_per_milliliter, and fails with FAILED_PRECONDITION if the food
   // lacks it: set it with FoodService.UpdateFood, or give the amount in
   // grams. Also fails with FAILED_PRECONDITION if the food is always in
-  // stock, as those aren't tracked.
+  // stock, as those aren't tracked, unless track_stock is set. The response
+  // says how the amount was converted, e.g. "148 ml at 1.17 g/ml is 173 g".
   rpc AddToPantry(AddToPantryRequest) returns (AddToPantryResponse);
   // Update a lot of the pantry, e.g. its grams after using some, or its
   // opened_date when opening it.
@@ -116,11 +117,22 @@ message AddToPantryRequest {
   string opened_date = 5;
   // Notes. At most 500 characters.
   string notes = 6;
+  // Whether to start tracking the food in the pantry if it's always in
+  // stock (see FoodService's Food.always_in_stock), clearing that on the
+  // food, instead of failing. Set it when the user says how much they have
+  // of a food they had marked as always in stock.
+  bool track_stock = 7;
 }
 
 message AddToPantryResponse {
   // The added lot.
   PantryItem item = 1;
+  // How the amount was converted to grams, e.g. "148 ml at 1.17 g/ml is
+  // 173 g" or "3 pieces at 50 g each is 150 g", empty if it was given in
+  // grams.
+  string conversion = 2;
+  // Whether the food was always in stock, and track_stock cleared that.
+  bool stopped_always_in_stock = 3;
 }
 
 message UpdatePantryItemRequest {

@@ -68,6 +68,11 @@ service FoodService {
   // INVALID_ARGUMENT if preferred_store_id isn't one of the household's
   // stores.
   rpc UpdateFood(UpdateFoodRequest) returns (UpdateFoodResponse);
+  // List what uses one of the household's foods: the recipes with it as an
+  // ingredient, how many portions and staples of the plan eat it, and its
+  // stock in the pantry. Use it to find the recipes to change when
+  // replacing a food, or to check a food is unused before DeleteFood.
+  rpc ListFoodUsages(ListFoodUsagesRequest) returns (ListFoodUsagesResponse);
   // Delete one of the household's foods. Fails with FAILED_PRECONDITION,
   // naming the recipes, if recipes use it: remove it from them first. Also
   // fails with FAILED_PRECONDITION if portions or staples of the plan (see
@@ -425,6 +430,33 @@ message UpdateFoodRequest {
 message UpdateFoodResponse {
   // The updated food.
   Food food = 1;
+}
+
+message ListFoodUsagesRequest {
+  // The ID of the household's food.
+  string food_id = 1;
+}
+
+message ListFoodUsagesResponse {
+  // The recipes with the food as an ingredient, by name. Recipes using it
+  // only through a component recipe aren't listed: the component is.
+  repeated FoodUsageRecipe recipes = 1;
+  // How many portions of the plan eat the food without a recipe.
+  int32 portion_count = 2;
+  // How many staples of the plan eat the food.
+  int32 staple_count = 3;
+  // How many lots of the food the pantry has.
+  int32 pantry_lot_count = 4;
+  // The grams of the food in the pantry, in all its lots.
+  double pantry_grams = 5;
+}
+
+// A recipe using a food.
+message FoodUsageRecipe {
+  // The ID of the recipe.
+  string id = 1;
+  // The name of the recipe.
+  string name = 2;
 }
 
 message DeleteFoodRequest {

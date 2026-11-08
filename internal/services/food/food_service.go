@@ -32,6 +32,7 @@ type Repository interface {
 	ListFoods(ctx context.Context, householdID pgtype.UUID, query string, limit, offset int32) ([]*foods.Food, error)
 	UpdateFood(ctx context.Context, f *foods.Food) (*foods.Food, error)
 	DeleteFood(ctx context.Context, householdID, id pgtype.UUID) error
+	GetUsages(ctx context.Context, householdID, id pgtype.UUID) (*foods.Usages, error)
 	GetReferenceFood(ctx context.Context, source foods.Source, id int32) (*foods.ReferenceFood, error)
 	SearchReferenceFoods(ctx context.Context, householdID pgtype.UUID, query string, limit int32) ([]*foods.ReferenceMatch, error)
 }
@@ -218,6 +219,32 @@ func (s *Service) UpdateFood(ctx context.Context, req *foodsv1.UpdateFoodRequest
 		return nil, s.toConnectError(ctx, err, "failed to update food")
 	}
 	return foodsv1.UpdateFoodResponse_builder{Food: foodToProto(updated)}.Build(), nil
+}
+
+func (s *Service) ListFoodUsages(ctx context.Context, req *foodsv1.ListFoodUsagesRequest) (*foodsv1.ListFoodUsagesResponse, error) {
+	user, ok := authn.GetUser(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+	}
+	id, err := parseFoodID(req.GetFoodId())
+	if err != nil {
+		return nil, err
+	}
+	usages, err := s.foods.GetUsages(ctx, user.HouseholdID(), id)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to list food usages")
+	}
+	recipes := make([]*foodsv1.FoodUsageRecipe, 0, len(usages.Recipes))
+	for _, r := range usages.Recipes {
+		recipes = append(recipes, foodsv1.FoodUsageRecipe_builder{Id: store.UUIDToString(r.ID), Name: r.Name}.Build())
+	}
+	return foodsv1.ListFoodUsagesResponse_builder{
+		Recipes:        recipes,
+		PortionCount:   int32(usages.PortionCount),
+		StapleCount:    int32(usages.StapleCount),
+		PantryLotCount: int32(usages.PantryLotCount),
+		PantryGrams:    usages.PantryGrams,
+	}.Build(), nil
 }
 
 func (s *Service) DeleteFood(ctx context.Context, req *foodsv1.DeleteFoodRequest) (*foodsv1.DeleteFoodResponse, error) {

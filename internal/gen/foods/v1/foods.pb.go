@@ -2495,6 +2495,259 @@ func (b0 UpdateFoodResponse_builder) Build() *UpdateFoodResponse {
 	return m0
 }
 
+type ListFoodUsagesRequest struct {
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FoodId string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ListFoodUsagesRequest) Reset() {
+	*x = ListFoodUsagesRequest{}
+	mi := &file_foods_v1_foods_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFoodUsagesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFoodUsagesRequest) ProtoMessage() {}
+
+func (x *ListFoodUsagesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_foods_v1_foods_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ListFoodUsagesRequest) GetFoodId() string {
+	if x != nil {
+		return x.xxx_hidden_FoodId
+	}
+	return ""
+}
+
+func (x *ListFoodUsagesRequest) SetFoodId(v string) {
+	x.xxx_hidden_FoodId = v
+}
+
+type ListFoodUsagesRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The ID of the household's food.
+	FoodId string
+}
+
+func (b0 ListFoodUsagesRequest_builder) Build() *ListFoodUsagesRequest {
+	m0 := &ListFoodUsagesRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_FoodId = b.FoodId
+	return m0
+}
+
+type ListFoodUsagesResponse struct {
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Recipes        *[]*FoodUsageRecipe    `protobuf:"bytes,1,rep,name=recipes,proto3"`
+	xxx_hidden_PortionCount   int32                  `protobuf:"varint,2,opt,name=portion_count,json=portionCount,proto3"`
+	xxx_hidden_StapleCount    int32                  `protobuf:"varint,3,opt,name=staple_count,json=stapleCount,proto3"`
+	xxx_hidden_PantryLotCount int32                  `protobuf:"varint,4,opt,name=pantry_lot_count,json=pantryLotCount,proto3"`
+	xxx_hidden_PantryGrams    float64                `protobuf:"fixed64,5,opt,name=pantry_grams,json=pantryGrams,proto3"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *ListFoodUsagesResponse) Reset() {
+	*x = ListFoodUsagesResponse{}
+	mi := &file_foods_v1_foods_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFoodUsagesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFoodUsagesResponse) ProtoMessage() {}
+
+func (x *ListFoodUsagesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_foods_v1_foods_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ListFoodUsagesResponse) GetRecipes() []*FoodUsageRecipe {
+	if x != nil {
+		if x.xxx_hidden_Recipes != nil {
+			return *x.xxx_hidden_Recipes
+		}
+	}
+	return nil
+}
+
+func (x *ListFoodUsagesResponse) GetPortionCount() int32 {
+	if x != nil {
+		return x.xxx_hidden_PortionCount
+	}
+	return 0
+}
+
+func (x *ListFoodUsagesResponse) GetStapleCount() int32 {
+	if x != nil {
+		return x.xxx_hidden_StapleCount
+	}
+	return 0
+}
+
+func (x *ListFoodUsagesResponse) GetPantryLotCount() int32 {
+	if x != nil {
+		return x.xxx_hidden_PantryLotCount
+	}
+	return 0
+}
+
+func (x *ListFoodUsagesResponse) GetPantryGrams() float64 {
+	if x != nil {
+		return x.xxx_hidden_PantryGrams
+	}
+	return 0
+}
+
+func (x *ListFoodUsagesResponse) SetRecipes(v []*FoodUsageRecipe) {
+	x.xxx_hidden_Recipes = &v
+}
+
+func (x *ListFoodUsagesResponse) SetPortionCount(v int32) {
+	x.xxx_hidden_PortionCount = v
+}
+
+func (x *ListFoodUsagesResponse) SetStapleCount(v int32) {
+	x.xxx_hidden_StapleCount = v
+}
+
+func (x *ListFoodUsagesResponse) SetPantryLotCount(v int32) {
+	x.xxx_hidden_PantryLotCount = v
+}
+
+func (x *ListFoodUsagesResponse) SetPantryGrams(v float64) {
+	x.xxx_hidden_PantryGrams = v
+}
+
+type ListFoodUsagesResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The recipes with the food as an ingredient, by name. Recipes using it
+	// only through a component recipe aren't listed: the component is.
+	Recipes []*FoodUsageRecipe
+	// How many portions of the plan eat the food without a recipe.
+	PortionCount int32
+	// How many staples of the plan eat the food.
+	StapleCount int32
+	// How many lots of the food the pantry has.
+	PantryLotCount int32
+	// The grams of the food in the pantry, in all its lots.
+	PantryGrams float64
+}
+
+func (b0 ListFoodUsagesResponse_builder) Build() *ListFoodUsagesResponse {
+	m0 := &ListFoodUsagesResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Recipes = &b.Recipes
+	x.xxx_hidden_PortionCount = b.PortionCount
+	x.xxx_hidden_StapleCount = b.StapleCount
+	x.xxx_hidden_PantryLotCount = b.PantryLotCount
+	x.xxx_hidden_PantryGrams = b.PantryGrams
+	return m0
+}
+
+// A recipe using a food.
+type FoodUsageRecipe struct {
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id   string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_Name string                 `protobuf:"bytes,2,opt,name=name,proto3"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *FoodUsageRecipe) Reset() {
+	*x = FoodUsageRecipe{}
+	mi := &file_foods_v1_foods_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FoodUsageRecipe) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FoodUsageRecipe) ProtoMessage() {}
+
+func (x *FoodUsageRecipe) ProtoReflect() protoreflect.Message {
+	mi := &file_foods_v1_foods_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *FoodUsageRecipe) GetId() string {
+	if x != nil {
+		return x.xxx_hidden_Id
+	}
+	return ""
+}
+
+func (x *FoodUsageRecipe) GetName() string {
+	if x != nil {
+		return x.xxx_hidden_Name
+	}
+	return ""
+}
+
+func (x *FoodUsageRecipe) SetId(v string) {
+	x.xxx_hidden_Id = v
+}
+
+func (x *FoodUsageRecipe) SetName(v string) {
+	x.xxx_hidden_Name = v
+}
+
+type FoodUsageRecipe_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The ID of the recipe.
+	Id string
+	// The name of the recipe.
+	Name string
+}
+
+func (b0 FoodUsageRecipe_builder) Build() *FoodUsageRecipe {
+	m0 := &FoodUsageRecipe{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_Name = b.Name
+	return m0
+}
+
 type DeleteFoodRequest struct {
 	state         protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id,proto3"`
@@ -2504,7 +2757,7 @@ type DeleteFoodRequest struct {
 
 func (x *DeleteFoodRequest) Reset() {
 	*x = DeleteFoodRequest{}
-	mi := &file_foods_v1_foods_proto_msgTypes[14]
+	mi := &file_foods_v1_foods_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2516,7 +2769,7 @@ func (x *DeleteFoodRequest) String() string {
 func (*DeleteFoodRequest) ProtoMessage() {}
 
 func (x *DeleteFoodRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_foods_v1_foods_proto_msgTypes[14]
+	mi := &file_foods_v1_foods_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2561,7 +2814,7 @@ type DeleteFoodResponse struct {
 
 func (x *DeleteFoodResponse) Reset() {
 	*x = DeleteFoodResponse{}
-	mi := &file_foods_v1_foods_proto_msgTypes[15]
+	mi := &file_foods_v1_foods_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2573,7 +2826,7 @@ func (x *DeleteFoodResponse) String() string {
 func (*DeleteFoodResponse) ProtoMessage() {}
 
 func (x *DeleteFoodResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_foods_v1_foods_proto_msgTypes[15]
+	mi := &file_foods_v1_foods_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2715,7 +2968,18 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"8\n" +
 	"\x12UpdateFoodResponse\x12\"\n" +
-	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\"#\n" +
+	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\"0\n" +
+	"\x15ListFoodUsagesRequest\x12\x17\n" +
+	"\afood_id\x18\x01 \x01(\tR\x06foodId\"\xe2\x01\n" +
+	"\x16ListFoodUsagesResponse\x123\n" +
+	"\arecipes\x18\x01 \x03(\v2\x19.foods.v1.FoodUsageRecipeR\arecipes\x12#\n" +
+	"\rportion_count\x18\x02 \x01(\x05R\fportionCount\x12!\n" +
+	"\fstaple_count\x18\x03 \x01(\x05R\vstapleCount\x12(\n" +
+	"\x10pantry_lot_count\x18\x04 \x01(\x05R\x0epantryLotCount\x12!\n" +
+	"\fpantry_grams\x18\x05 \x01(\x01R\vpantryGrams\"5\n" +
+	"\x0fFoodUsageRecipe\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"#\n" +
 	"\x11DeleteFoodRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
 	"\x12DeleteFoodResponse*\xbb\x05\n" +
@@ -2767,7 +3031,7 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x17AMOUNT_UNIT_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11AMOUNT_UNIT_GRAMS\x10\x01\x12\x1b\n" +
 	"\x17AMOUNT_UNIT_MILLILITERS\x10\x02\x12\x16\n" +
-	"\x12AMOUNT_UNIT_PIECES\x10\x032\xc3\x03\n" +
+	"\x12AMOUNT_UNIT_PIECES\x10\x032\x98\x04\n" +
 	"\vFoodService\x12S\n" +
 	"\x0eSearchFoodData\x12\x1f.foods.v1.SearchFoodDataRequest\x1a .foods.v1.SearchFoodDataResponse\x12G\n" +
 	"\n" +
@@ -2775,14 +3039,15 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\aGetFood\x12\x18.foods.v1.GetFoodRequest\x1a\x19.foods.v1.GetFoodResponse\x12D\n" +
 	"\tListFoods\x12\x1a.foods.v1.ListFoodsRequest\x1a\x1b.foods.v1.ListFoodsResponse\x12G\n" +
 	"\n" +
-	"UpdateFood\x12\x1b.foods.v1.UpdateFoodRequest\x1a\x1c.foods.v1.UpdateFoodResponse\x12G\n" +
+	"UpdateFood\x12\x1b.foods.v1.UpdateFoodRequest\x1a\x1c.foods.v1.UpdateFoodResponse\x12S\n" +
+	"\x0eListFoodUsages\x12\x1f.foods.v1.ListFoodUsagesRequest\x1a .foods.v1.ListFoodUsagesResponse\x12G\n" +
 	"\n" +
 	"DeleteFood\x12\x1b.foods.v1.DeleteFoodRequest\x1a\x1c.foods.v1.DeleteFoodResponseB\x9c\x01\n" +
 	"\fcom.foods.v1B\n" +
 	"FoodsProtoP\x01Z?github.com/bs-tools/mealplann.ing/internal/gen/foods/v1;foodsv1\xa2\x02\x03FXX\xaa\x02\bFoods.V1\xca\x02\bFoods\\V1\xe2\x02\x14Foods\\V1\\GPBMetadata\xea\x02\tFoods::V1b\x06proto3"
 
 var file_foods_v1_foods_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_foods_v1_foods_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_foods_v1_foods_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_foods_v1_foods_proto_goTypes = []any{
 	(Nutrient)(0),                  // 0: foods.v1.Nutrient
 	(FoodSource)(0),                // 1: foods.v1.FoodSource
@@ -2802,17 +3067,20 @@ var file_foods_v1_foods_proto_goTypes = []any{
 	(*ListFoodsResponse)(nil),      // 15: foods.v1.ListFoodsResponse
 	(*UpdateFoodRequest)(nil),      // 16: foods.v1.UpdateFoodRequest
 	(*UpdateFoodResponse)(nil),     // 17: foods.v1.UpdateFoodResponse
-	(*DeleteFoodRequest)(nil),      // 18: foods.v1.DeleteFoodRequest
-	(*DeleteFoodResponse)(nil),     // 19: foods.v1.DeleteFoodResponse
-	(*timestamppb.Timestamp)(nil),  // 20: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),  // 21: google.protobuf.FieldMask
+	(*ListFoodUsagesRequest)(nil),  // 18: foods.v1.ListFoodUsagesRequest
+	(*ListFoodUsagesResponse)(nil), // 19: foods.v1.ListFoodUsagesResponse
+	(*FoodUsageRecipe)(nil),        // 20: foods.v1.FoodUsageRecipe
+	(*DeleteFoodRequest)(nil),      // 21: foods.v1.DeleteFoodRequest
+	(*DeleteFoodResponse)(nil),     // 22: foods.v1.DeleteFoodResponse
+	(*timestamppb.Timestamp)(nil),  // 23: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),  // 24: google.protobuf.FieldMask
 }
 var file_foods_v1_foods_proto_depIdxs = []int32{
 	1,  // 0: foods.v1.Food.source:type_name -> foods.v1.FoodSource
 	4,  // 1: foods.v1.Food.nutrients:type_name -> foods.v1.Nutrients
 	2,  // 2: foods.v1.Food.store_section:type_name -> foods.v1.StoreSection
-	20, // 3: foods.v1.Food.create_time:type_name -> google.protobuf.Timestamp
-	20, // 4: foods.v1.Food.update_time:type_name -> google.protobuf.Timestamp
+	23, // 3: foods.v1.Food.create_time:type_name -> google.protobuf.Timestamp
+	23, // 4: foods.v1.Food.update_time:type_name -> google.protobuf.Timestamp
 	4,  // 5: foods.v1.FoodData.nutrients:type_name -> foods.v1.Nutrients
 	7,  // 6: foods.v1.FoodData.portions:type_name -> foods.v1.FoodDataPortion
 	1,  // 7: foods.v1.FoodData.source:type_name -> foods.v1.FoodSource
@@ -2823,25 +3091,28 @@ var file_foods_v1_foods_proto_depIdxs = []int32{
 	5,  // 12: foods.v1.GetFoodResponse.food:type_name -> foods.v1.Food
 	5,  // 13: foods.v1.ListFoodsResponse.foods:type_name -> foods.v1.Food
 	5,  // 14: foods.v1.UpdateFoodRequest.food:type_name -> foods.v1.Food
-	21, // 15: foods.v1.UpdateFoodRequest.update_mask:type_name -> google.protobuf.FieldMask
+	24, // 15: foods.v1.UpdateFoodRequest.update_mask:type_name -> google.protobuf.FieldMask
 	5,  // 16: foods.v1.UpdateFoodResponse.food:type_name -> foods.v1.Food
-	8,  // 17: foods.v1.FoodService.SearchFoodData:input_type -> foods.v1.SearchFoodDataRequest
-	10, // 18: foods.v1.FoodService.CreateFood:input_type -> foods.v1.CreateFoodRequest
-	12, // 19: foods.v1.FoodService.GetFood:input_type -> foods.v1.GetFoodRequest
-	14, // 20: foods.v1.FoodService.ListFoods:input_type -> foods.v1.ListFoodsRequest
-	16, // 21: foods.v1.FoodService.UpdateFood:input_type -> foods.v1.UpdateFoodRequest
-	18, // 22: foods.v1.FoodService.DeleteFood:input_type -> foods.v1.DeleteFoodRequest
-	9,  // 23: foods.v1.FoodService.SearchFoodData:output_type -> foods.v1.SearchFoodDataResponse
-	11, // 24: foods.v1.FoodService.CreateFood:output_type -> foods.v1.CreateFoodResponse
-	13, // 25: foods.v1.FoodService.GetFood:output_type -> foods.v1.GetFoodResponse
-	15, // 26: foods.v1.FoodService.ListFoods:output_type -> foods.v1.ListFoodsResponse
-	17, // 27: foods.v1.FoodService.UpdateFood:output_type -> foods.v1.UpdateFoodResponse
-	19, // 28: foods.v1.FoodService.DeleteFood:output_type -> foods.v1.DeleteFoodResponse
-	23, // [23:29] is the sub-list for method output_type
-	17, // [17:23] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	20, // 17: foods.v1.ListFoodUsagesResponse.recipes:type_name -> foods.v1.FoodUsageRecipe
+	8,  // 18: foods.v1.FoodService.SearchFoodData:input_type -> foods.v1.SearchFoodDataRequest
+	10, // 19: foods.v1.FoodService.CreateFood:input_type -> foods.v1.CreateFoodRequest
+	12, // 20: foods.v1.FoodService.GetFood:input_type -> foods.v1.GetFoodRequest
+	14, // 21: foods.v1.FoodService.ListFoods:input_type -> foods.v1.ListFoodsRequest
+	16, // 22: foods.v1.FoodService.UpdateFood:input_type -> foods.v1.UpdateFoodRequest
+	18, // 23: foods.v1.FoodService.ListFoodUsages:input_type -> foods.v1.ListFoodUsagesRequest
+	21, // 24: foods.v1.FoodService.DeleteFood:input_type -> foods.v1.DeleteFoodRequest
+	9,  // 25: foods.v1.FoodService.SearchFoodData:output_type -> foods.v1.SearchFoodDataResponse
+	11, // 26: foods.v1.FoodService.CreateFood:output_type -> foods.v1.CreateFoodResponse
+	13, // 27: foods.v1.FoodService.GetFood:output_type -> foods.v1.GetFoodResponse
+	15, // 28: foods.v1.FoodService.ListFoods:output_type -> foods.v1.ListFoodsResponse
+	17, // 29: foods.v1.FoodService.UpdateFood:output_type -> foods.v1.UpdateFoodResponse
+	19, // 30: foods.v1.FoodService.ListFoodUsages:output_type -> foods.v1.ListFoodUsagesResponse
+	22, // 31: foods.v1.FoodService.DeleteFood:output_type -> foods.v1.DeleteFoodResponse
+	25, // [25:32] is the sub-list for method output_type
+	18, // [18:25] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_foods_v1_foods_proto_init() }
@@ -2856,7 +3127,7 @@ func file_foods_v1_foods_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_foods_v1_foods_proto_rawDesc), len(file_foods_v1_foods_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   16,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

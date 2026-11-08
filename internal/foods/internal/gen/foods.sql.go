@@ -320,6 +320,42 @@ func (q *Queries) GetFood(ctx context.Context, arg *GetFoodParams) (*Food, error
 	return &i, err
 }
 
+const getFoodUsages = `-- name: GetFoodUsages :one
+select
+  (select count(*) from portions p where p.household_id = f.household_id and p.food_id = f.id)::bigint as portion_count,
+  (select count(*) from staples s where s.household_id = f.household_id and s.food_id = f.id)::bigint as staple_count,
+  (select count(*) from pantry_items pi where pi.household_id = f.household_id and pi.food_id = f.id)::bigint as pantry_lot_count,
+  (select coalesce(sum(pi.grams), 0) from pantry_items pi where pi.household_id = f.household_id and pi.food_id = f.id)::double precision as pantry_grams
+from foods f
+where f.id = $1 and f.household_id = $2
+`
+
+type GetFoodUsagesParams struct {
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+}
+
+type GetFoodUsagesRow struct {
+	PortionCount   int64
+	StapleCount    int64
+	PantryLotCount int64
+	PantryGrams    float64
+}
+
+// What uses a food: how many portions and staples of the plan eat it, and
+// its lots and grams in the pantry. Null if the household has no such food.
+func (q *Queries) GetFoodUsages(ctx context.Context, arg *GetFoodUsagesParams) (*GetFoodUsagesRow, error) {
+	row := q.db.QueryRow(ctx, getFoodUsages, arg.ID, arg.HouseholdID)
+	var i GetFoodUsagesRow
+	err := row.Scan(
+		&i.PortionCount,
+		&i.StapleCount,
+		&i.PantryLotCount,
+		&i.PantryGrams,
+	)
+	return &i, err
+}
+
 const listAlwaysInStockFoods = `-- name: ListAlwaysInStockFoods :many
 select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id from foods
 where household_id = $1 and always_in_stock
@@ -376,6 +412,47 @@ func (q *Queries) ListAlwaysInStockFoods(ctx context.Context, householdID pgtype
 			&i.ReferenceSource,
 			&i.ReferenceID,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFoodRecipes = `-- name: ListFoodRecipes :many
+select r.id, r.name from recipes r
+where r.household_id = $1
+  and r.id in (
+    select ri.recipe_id from recipe_ingredients ri
+    where ri.household_id = $1 and ri.food_id = $2
+  )
+order by lower(r.name), r.id
+`
+
+type ListFoodRecipesParams struct {
+	HouseholdID pgtype.UUID
+	FoodID      pgtype.UUID
+}
+
+type ListFoodRecipesRow struct {
+	ID   pgtype.UUID
+	Name string
+}
+
+// The recipes with the food as an ingredient, by name.
+func (q *Queries) ListFoodRecipes(ctx context.Context, arg *ListFoodRecipesParams) ([]*ListFoodRecipesRow, error) {
+	rows, err := q.db.Query(ctx, listFoodRecipes, arg.HouseholdID, arg.FoodID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListFoodRecipesRow
+	for rows.Next() {
+		var i ListFoodRecipesRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

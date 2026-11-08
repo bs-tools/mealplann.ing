@@ -410,6 +410,7 @@ func TestImport(t *testing.T) {
 		want  []int32
 	}{
 		"stemmed":   {query: "chickpea", want: []int32{chickpeasID}},
+		"synonym":   {query: "garbanzos", want: []int32{chickpeasID}},
 		"fortified": {query: "soy beverage", want: []int32{soyID}},
 		"excluded":  {query: "beef", want: nil},
 	}

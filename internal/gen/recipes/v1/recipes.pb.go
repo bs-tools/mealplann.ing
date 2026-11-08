@@ -789,7 +789,9 @@ type RecipeNutrition_builder struct {
 	// nutrient is complete.
 	IncompleteNutrients []string
 	// The ingredients whose data is missing, in the recipe's order. Fix them
-	// on their foods with UpdateFood.
+	// on their foods with UpdateFood. A nutrient no ingredient has, which is
+	// unset in per_serving, isn't an issue of every ingredient: most reference
+	// foods lack some nutrients, like iodine.
 	Issues []*IngredientIssue
 }
 
@@ -914,8 +916,9 @@ type IngredientIssue_builder struct {
 	// milliliters), or the component's recipe can't be weighed. The
 	// ingredient is then left out of the nutrition entirely.
 	UnknownWeight bool
-	// The nutrients the food lacks, by their field name in Nutrients, e.g.
-	// "vitamin_b12_micrograms". Empty if unknown_weight.
+	// The nutrients the food lacks that other ingredients have, by their
+	// field name in Nutrients, e.g. "vitamin_b12_micrograms". Empty if
+	// unknown_weight.
 	UnknownNutrients []string
 }
 

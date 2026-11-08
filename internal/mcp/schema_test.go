@@ -225,7 +225,7 @@ func TestInputSchemaOptional(t *testing.T) {
 func TestInputSchemaOutputOnly(t *testing.T) {
 	s := newInputSchema(fixture(t, "UpdateRequest"))
 	mask := s.Properties["updateMask"]
-	if mask.Type != "string" || !strings.Contains(mask.Description, "comma-separated list of lowerCamelCase field paths") {
+	if mask.Type != "string" || !strings.Contains(mask.Description, "comma-separated list of field paths") {
 		t.Errorf("updateMask = %+v, want comma-separated string", mask)
 	}
 	item := s.Properties["item"]

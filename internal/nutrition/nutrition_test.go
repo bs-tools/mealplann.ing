@@ -186,6 +186,25 @@ func TestForRecipe(t *testing.T) {
 		if got := *r.PerServing[EnergyKcal]; !near(got, 50) {
 			t.Errorf("energy = %v, want 50", got)
 		}
+		// It isn't the ingredient's issue: fixing it would take every
+		// ingredient's, and the recipe already has it unset.
+		if len(r.Issues) != 0 {
+			t.Errorf("got issues %+v, want none", r.Issues)
+		}
+		// Of two ingredients lacking iodine and one lacking only fiber,
+		// which the other has, only the fiber is an issue.
+		noFiber := all(1)
+		noFiber[FiberGrams], noFiber[IodineMicrograms] = nil, nil
+		r = ForRecipe([]Ingredient{
+			{Food: &Food{Per100Grams: noFiber}, Amount: 50, Unit: Grams},
+			{Food: onion, Amount: 1, Unit: Pieces},
+		}, 1)
+		if len(r.Issues) != 1 || r.Issues[0].Index != 0 || !slices.Equal(r.Issues[0].UnknownNutrients, []Nutrient{FiberGrams}) {
+			t.Errorf("got issues %+v, want only the first ingredient's fiber", r.Issues)
+		}
+		if !slices.Contains(r.Incomplete, FiberGrams) || !slices.Contains(r.Incomplete, IodineMicrograms) {
+			t.Errorf("got incomplete %v, want fiber and iodine", r.Incomplete)
+		}
 	})
 
 	t.Run("empty", func(t *testing.T) {

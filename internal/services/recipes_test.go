@@ -142,11 +142,15 @@ func TestRecipes(t *testing.T) {
 		garlicIssue.GetFoodName() != "Garlic" || len(garlicIssue.GetUnknownNutrients()) != 0 {
 		t.Errorf("got issue %v, want the garlic's unknown weight", garlicIssue)
 	}
-	chickpeaIssue := n.GetIssues()[0]
-	if chickpeaIssue.GetIngredientIndex() != 0 || chickpeaIssue.GetUnknownWeight() ||
-		!slices.Contains(chickpeaIssue.GetUnknownNutrients(), "iodine_micrograms") ||
-		slices.Contains(chickpeaIssue.GetUnknownNutrients(), "protein_grams") {
-		t.Errorf("got issue %v, want the chickpeas lacking iodine", chickpeaIssue)
+	// No food has iodine, so it's no ingredient's issue, but the soy milk
+	// lacks nutrients the others have.
+	for _, issue := range n.GetIssues() {
+		if slices.Contains(issue.GetUnknownNutrients(), "iodine_micrograms") || slices.Contains(issue.GetUnknownNutrients(), "protein_grams") {
+			t.Errorf("got issue %v, want iodine left out, as no food has it", issue)
+		}
+	}
+	if soyIssue := n.GetIssues()[0]; soyIssue.GetIngredientIndex() != 2 || !slices.Contains(soyIssue.GetUnknownNutrients(), "fiber_grams") {
+		t.Errorf("got issue %v, want the soy milk lacking fiber", soyIssue)
 	}
 
 	// Weighing the garlic fixes its issue: the recipe's nutrition follows
@@ -204,8 +208,8 @@ func TestRecipes(t *testing.T) {
 	soupEnergy := (352*200 + 40*110) / 100.0 / 2
 	if !near(summary.GetEnergyKcalPerServing(), soupEnergy) || !near(summary.GetProteinGramsPerServing(), (24.63*200+1.1*110)/100/2) ||
 		!near(summary.GetCarbohydrateGramsPerServing(), (63.35*200+9.34*110)/100/2) || !near(summary.GetGramsPerServing(), 155) ||
-		!summary.GetHasIssues() || summary.GetServings() != 2 || !slices.Equal(summary.GetTags(), []string{"lunch"}) {
-		t.Errorf("got summary %v, want the soup's %v kcal per serving", summary, soupEnergy)
+		summary.GetHasIssues() || summary.GetServings() != 2 || !slices.Equal(summary.GetTags(), []string{"lunch"}) {
+		t.Errorf("got summary %v, want the soup's %v kcal per serving, with no issues, as only iodine is missing, from every food", summary, soupEnergy)
 	}
 	for name, tt := range map[string]struct {
 		query string
