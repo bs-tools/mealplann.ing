@@ -39,8 +39,7 @@ func Transport(base http.RoundTripper) http.RoundTripper {
 }
 
 // secretQueryParameters are the query parameters whose values are secret,
-// like the client secret Strava's push subscriptions take in the query, and
-// the ones OpenTelemetry's semantic conventions redact by default.
+// like the API keys some APIs take in the query, and the ones OpenTelemetry's semantic conventions redact by default.
 var secretQueryParameters = []string{
 	"access_token", "api_key", "client_secret", "code", "hub.verify_token", "key",
 	"refresh_token", "token", "verify_token",
@@ -94,9 +93,8 @@ func redactQuery(u *url.URL) (string, bool) {
 }
 
 // clientSpanName names a request after its method and host, e.g. "GET
-// api.open-meteo.com". Many paths have IDs or names, like Strava's
-// activities, elevation tiles and stored objects, which would make a span
-// name for each. The span's url.full attribute has the whole URL.
+// storage.googleapis.com". Many paths have IDs or names, like stored
+// objects, which would make a span name for each. The span's url.full attribute has the whole URL.
 func clientSpanName(_ string, r *http.Request) string {
 	if r.URL == nil || r.URL.Host == "" {
 		return r.Method
@@ -143,8 +141,8 @@ func (t reportingTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 // Handler traces the requests to an HTTP server, except for static
 // assets, which would only add noise. The rest of the paths starting with
-// one of secretPathPrefixes, like the secret in the Strava webhook's path,
-// are redacted from the url.path attribute.
+// one of secretPathPrefixes, like a secret in a webhook's path, are
+// redacted from the url.path attribute.
 //
 // The server is on the public internet, so it doesn't trust the trace
 // context of requests: each request starts a new trace, linked to the trace

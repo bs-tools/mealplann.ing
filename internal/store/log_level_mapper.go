@@ -13,7 +13,7 @@ import (
 // too.
 //
 // It also drops the queries' arguments. They include secrets, like session
-// tokens and Strava's OAuth tokens, and the logs are readable by everyone
+// tokens and OAuth tokens, and the logs are readable by everyone
 // with viewer access to the project. The SQL and the error are enough to
 // tell which query failed and why.
 type logLevelMapper struct {

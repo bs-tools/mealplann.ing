@@ -129,9 +129,9 @@ type Page struct {
 // contentSecurityPolicy allows the app to load only its own scripts, and to
 // connect only to its own server, so that markup injected into a page, such
 // as through a bug rendering a user's text, can't run scripts or send data
-// elsewhere. Images come from anywhere over HTTPS: the map tiles from the
-// tile servers the user picks, and activity photos from Strava. Styles may
-// be inline, as Leaflet and the charts set them on elements. Other sites
+// elsewhere. Images may come from anywhere over HTTPS, which is harmless: an
+// image can't run scripts. Styles may be inline, as the charts and Headless
+// UI's menus set them on elements. Other sites
 // can't frame the pages, so they can't trick users into clicking in them,
 // like on the OAuth consent page.
 const contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
