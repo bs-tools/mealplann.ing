@@ -92,10 +92,33 @@ func Today(now time.Time) time.Time {
 	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 }
 
-func (s *Service) ListPantry(ctx context.Context, _ *pantryv1.ListPantryRequest) (*pantryv1.ListPantryResponse, error) {
+// maxFilterFoods is how many foods the pantry can be listed for.
+const maxFilterFoods = 100
+
+func (s *Service) ListPantry(ctx context.Context, req *pantryv1.ListPantryRequest) (*pantryv1.ListPantryResponse, error) {
 	user, ok := authn.GetUser(ctx)
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+	}
+	if len(req.GetFoodIds()) > maxFilterFoods {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "food_ids must have at most %d foods", maxFilterFoods)
+	}
+	foodIDs := map[string]bool{}
+	for _, id := range req.GetFoodIds() {
+		parsed, err := parseID("food_ids", id, "find foods with FoodService.ListFoods")
+		if err != nil {
+			return nil, err
+		}
+		foodIDs[store.UUIDToString(parsed)] = true
+	}
+	if req.HasExpiringWithinDays() && req.GetExpiringWithinDays() < 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, "expiring_within_days must be 0 or more: 0 lists what to use today or is past its use-by date")
+	}
+	// keep reports whether a food is listed. The pantry is read whole and
+	// filtered here: it's a few hundred lots at most, in one round trip.
+	keep := func(foodID string, section foodsv1.StoreSection) bool {
+		return (len(foodIDs) == 0 || foodIDs[foodID]) &&
+			(req.GetStoreSection() == foodsv1.StoreSection_STORE_SECTION_UNSPECIFIED || section == req.GetStoreSection())
 	}
 	items, err := s.pantry.ListItems(ctx, user.HouseholdID())
 	if err != nil {
@@ -109,12 +132,29 @@ func (s *Service) ListPantry(ctx context.Context, _ *pantryv1.ListPantryRequest)
 	pantry.SortByUseBy(items)
 	result := make([]*pantryv1.PantryItem, 0, len(items))
 	for _, it := range items {
-		result = append(result, ItemToProto(it, today))
+		item := ItemToProto(it, today)
+		if !keep(item.GetFoodId(), item.GetStoreSection()) {
+			continue
+		}
+		if req.HasExpiringWithinDays() && (!item.HasDaysToExpiry() || item.GetDaysToExpiry() > req.GetExpiringWithinDays()) {
+			continue
+		}
+		if req.GetSummary() {
+			item.ClearCreateTime()
+			item.ClearUpdateTime()
+		}
+		result = append(result, item)
 	}
 	// Lots are sorted by food name, and each food's by use-by date.
 	sortByFoodName(result)
 	foodsInStock := make([]*pantryv1.AlwaysInStockFood, 0, len(stocked))
 	for _, f := range stocked {
+		section := food.StoreSectionToProto(f.StoreSection)
+		// Foods always in stock never expire, so they aren't listed with
+		// what to use soon.
+		if !keep(store.UUIDToString(f.ID), section) || req.HasExpiringWithinDays() {
+			continue
+		}
 		foodsInStock = append(foodsInStock, pantryv1.AlwaysInStockFood_builder{
 			FoodId:       store.UUIDToString(f.ID),
 			FoodName:     f.Name,

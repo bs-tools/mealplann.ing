@@ -33,6 +33,7 @@ type Repository interface {
 	UpdateFood(ctx context.Context, f *foods.Food) (*foods.Food, error)
 	DeleteFood(ctx context.Context, householdID, id pgtype.UUID) error
 	GetUsages(ctx context.Context, householdID, id pgtype.UUID) (*foods.Usages, error)
+	FindFoodsByName(ctx context.Context, householdID pgtype.UUID, name string, limit int32) ([]foods.NameMatch, error)
 	GetReferenceFood(ctx context.Context, source foods.Source, id int32) (*foods.ReferenceFood, error)
 	SearchReferenceFoods(ctx context.Context, householdID pgtype.UUID, query string, limit int32) ([]*foods.ReferenceMatch, error)
 }
@@ -140,7 +141,13 @@ func (s *Service) GetFood(ctx context.Context, req *foodsv1.GetFoodRequest) (*fo
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, "")
 	}
-	id, err := parseFoodID(req.GetId())
+	var id pgtype.UUID
+	var err error
+	if name := strings.TrimSpace(req.GetName()); name != "" && req.GetId() == "" {
+		id, err = s.foodIDByName(ctx, user.HouseholdID(), name)
+	} else {
+		id, err = parseFoodID(req.GetId())
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -149,6 +156,35 @@ func (s *Service) GetFood(ctx context.Context, req *foodsv1.GetFoodRequest) (*fo
 		return nil, s.toConnectError(ctx, err, "failed to get food")
 	}
 	return foodsv1.GetFoodResponse_builder{Food: foodToProto(f)}.Build(), nil
+}
+
+// maxSimilarNames is how many similar names a failed lookup by name
+// suggests.
+const maxSimilarNames = 5
+
+// foodIDByName returns the ID of the household's food with the name,
+// ignoring case, or NOT_FOUND naming the foods with similar names.
+func (s *Service) foodIDByName(ctx context.Context, householdID pgtype.UUID, name string) (pgtype.UUID, error) {
+	if utf8.RuneCountInString(name) > maxNameLength {
+		return pgtype.UUID{}, connect.Errorf(connect.CodeInvalidArgument, "name must be at most %d characters", maxNameLength)
+	}
+	matches, err := s.foods.FindFoodsByName(ctx, householdID, name, maxSimilarNames)
+	if err != nil {
+		return pgtype.UUID{}, s.toConnectError(ctx, err, "failed to find food")
+	}
+	if len(matches) > 0 && strings.EqualFold(matches[0].Name, name) {
+		return matches[0].ID, nil
+	}
+	if len(matches) == 0 {
+		return pgtype.UUID{}, connect.Errorf(connect.CodeNotFound,
+			"no food is named %q, nor anything like it; find foods with ListFoods, or create it from SearchFoodData", name)
+	}
+	names := make([]string, 0, len(matches))
+	for _, m := range matches {
+		names = append(names, m.Name)
+	}
+	return pgtype.UUID{}, connect.Errorf(connect.CodeNotFound,
+		"no food is named %q; similar names are %s: use one of them, or find foods with ListFoods", name, quoteList(names))
 }
 
 func (s *Service) ListFoods(ctx context.Context, req *foodsv1.ListFoodsRequest) (*foodsv1.ListFoodsResponse, error) {

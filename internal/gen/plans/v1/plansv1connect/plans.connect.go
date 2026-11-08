@@ -189,7 +189,8 @@ type PlanServiceClient interface {
 	// Get a week of the plan: for each day and person, their eating times
 	// with the portions and staples planned, with weights and nutrients; the
 	// day's totals; and every warning. Also the cooks of the week. Read it
-	// after changing the plan, to check the warnings.
+	// after changing the plan, to check the warnings. A full week runs to
+	// tens of kilobytes: set summary to read only the main nutrients.
 	GetWeek(context.Context, *v1.GetWeekRequest) (*v1.GetWeekResponse, error)
 	// Plan a shared household meal: create a cook of a recipe on a date for a
 	// meal, and a portion of it for each person whose eating pattern eats
@@ -277,7 +278,8 @@ type PlanServiceHandler interface {
 	// Get a week of the plan: for each day and person, their eating times
 	// with the portions and staples planned, with weights and nutrients; the
 	// day's totals; and every warning. Also the cooks of the week. Read it
-	// after changing the plan, to check the warnings.
+	// after changing the plan, to check the warnings. A full week runs to
+	// tens of kilobytes: set summary to read only the main nutrients.
 	GetWeek(context.Context, *v1.GetWeekRequest) (*v1.GetWeekResponse, error)
 	// Plan a shared household meal: create a cook of a recipe on a date for a
 	// meal, and a portion of it for each person whose eating pattern eats

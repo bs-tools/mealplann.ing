@@ -379,6 +379,29 @@ type ListFilter struct {
 	Tags []string
 	// FavoritesOnly is whether to list only favorites.
 	FavoritesOnly bool
+	// FoodIDs are foods the recipes have any of as an ingredient, empty
+	// for any.
+	FoodIDs []pgtype.UUID
+}
+
+// NameMatch is a recipe found by name.
+type NameMatch struct {
+	ID   pgtype.UUID
+	Name string
+}
+
+// FindRecipesByName returns the household's recipe with the name, ignoring
+// case, first, then up to limit recipes with similar names.
+func (r *Repository) FindRecipesByName(ctx context.Context, householdID pgtype.UUID, name string, limit int32) ([]NameMatch, error) {
+	rows, err := r.querier.FindRecipesByName(ctx, &gen.FindRecipesByNameParams{HouseholdID: householdID, Name: name, RowLimit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("failed to find recipes by name: %w", err)
+	}
+	matches := make([]NameMatch, 0, len(rows))
+	for _, row := range rows {
+		matches = append(matches, NameMatch{ID: row.ID, Name: row.Name})
+	}
+	return matches, nil
 }
 
 // ListRecipes lists a household's recipes that match the filter, with
@@ -396,6 +419,7 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, f
 			Query:         filter.Query,
 			Tags:          nonNil(filter.Tags),
 			FavoritesOnly: filter.FavoritesOnly,
+			FoodIds:       nonNil(filter.FoodIDs),
 		})
 		return err
 	})
@@ -814,11 +838,11 @@ func unitFromDB(u gen.AmountUnit) nutrition.Unit {
 	}
 }
 
-// nonNil returns s, or an empty slice for nil, as text[] columns aren't
-// null.
-func nonNil(s []string) []string {
+// nonNil returns s, or an empty slice for nil, as array columns and
+// parameters aren't null.
+func nonNil[T any](s []T) []T {
 	if s == nil {
-		return []string{}
+		return []T{}
 	}
 	return s
 }

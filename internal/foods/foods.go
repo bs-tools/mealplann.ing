@@ -262,6 +262,26 @@ func (r *Repository) UpdateFood(ctx context.Context, f *Food) (*Food, error) {
 	return foodFromDB(row), nil
 }
 
+// NameMatch is a food found by name.
+type NameMatch struct {
+	ID   pgtype.UUID
+	Name string
+}
+
+// FindFoodsByName returns the household's food with the name, ignoring
+// case, first, then up to limit foods with similar names.
+func (r *Repository) FindFoodsByName(ctx context.Context, householdID pgtype.UUID, name string, limit int32) ([]NameMatch, error) {
+	rows, err := r.querier.FindFoodsByName(ctx, &gen.FindFoodsByNameParams{HouseholdID: householdID, Name: name, RowLimit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("failed to find foods by name: %w", err)
+	}
+	matches := make([]NameMatch, 0, len(rows))
+	for _, row := range rows {
+		matches = append(matches, NameMatch{ID: row.ID, Name: row.Name})
+	}
+	return matches, nil
+}
+
 // Usages are what uses a food.
 type Usages struct {
 	// Recipes are the recipes with the food as an ingredient, by name.

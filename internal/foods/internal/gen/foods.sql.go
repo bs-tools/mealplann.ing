@@ -264,6 +264,47 @@ func (q *Queries) DeleteUnusedFood(ctx context.Context, arg *DeleteUnusedFoodPar
 	return result.RowsAffected(), nil
 }
 
+const findFoodsByName = `-- name: FindFoodsByName :many
+select id, name from foods
+where household_id = $1
+  and (lower(name) = lower($2) or name % $2 or strpos(lower(name), lower($2)) > 0)
+order by lower(name) = lower($2) desc, similarity(name, $2) desc, lower(name), id
+limit $3
+`
+
+type FindFoodsByNameParams struct {
+	HouseholdID pgtype.UUID
+	Name        string
+	RowLimit    int32
+}
+
+type FindFoodsByNameRow struct {
+	ID   pgtype.UUID
+	Name string
+}
+
+// The food with the name, ignoring case, first, then up to the limit of the
+// foods with similar names, most similar first.
+func (q *Queries) FindFoodsByName(ctx context.Context, arg *FindFoodsByNameParams) ([]*FindFoodsByNameRow, error) {
+	rows, err := q.db.Query(ctx, findFoodsByName, arg.HouseholdID, arg.Name, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*FindFoodsByNameRow
+	for rows.Next() {
+		var i FindFoodsByNameRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFood = `-- name: GetFood :one
 select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id from foods where id = $1 and household_id = $2
 `

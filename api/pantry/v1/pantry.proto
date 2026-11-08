@@ -30,7 +30,8 @@ service PantryService {
   // List the household's pantry: every lot in stock, with its food's name
   // and store section, and how many days it has left, ordered by food
   // name and then by expiry, soonest first. Also the foods always in
-  // stock.
+  // stock. It can list only some foods, a part of the store, or what to use
+  // soon, and leave out the times with summary.
   rpc ListPantry(ListPantryRequest) returns (ListPantryResponse);
   // Add an amount of a food to the pantry, as a new lot. The amount is
   // converted to grams with the food's grams_per_piece or
@@ -92,7 +93,19 @@ message AlwaysInStockFood {
   foods.v1.StoreSection store_section = 3;
 }
 
-message ListPantryRequest {}
+message ListPantryRequest {
+  // Only list lots of these foods. Empty to list all. At most 100.
+  repeated string food_ids = 1;
+  // Only list lots of foods in this part of the store.
+  // STORE_SECTION_UNSPECIFIED to list all.
+  foods.v1.StoreSection store_section = 2;
+  // Only list lots to use within this many days from today (UTC),
+  // including those already past their use-by date. Unset to list all.
+  optional int32 expiring_within_days = 3;
+  // Whether to leave out the lots' create and update times, to keep a
+  // large pantry's response small.
+  bool summary = 4;
+}
 
 message ListPantryResponse {
   // The lots in stock, ordered by food name and then use_by_date, soonest

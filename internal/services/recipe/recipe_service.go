@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1/recipesv1connect"
 	"github.com/bs-tools/mealplann.ing/internal/protomask"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
+	"github.com/bs-tools/mealplann.ing/internal/services/summary"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -31,6 +33,7 @@ type Repository interface {
 	UpdateRecipe(ctx context.Context, recipe *recipes.Recipe) (*recipes.Recipe, error)
 	DeleteRecipe(ctx context.Context, householdID, id pgtype.UUID) error
 	ListRecipesByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*recipes.Recipe, error)
+	FindRecipesByName(ctx context.Context, householdID pgtype.UUID, name string, limit int32) ([]recipes.NameMatch, error)
 }
 
 // Service implements the RecipeService.
@@ -106,7 +109,13 @@ func (s *Service) GetRecipe(ctx context.Context, req *recipesv1.GetRecipeRequest
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, "")
 	}
-	id, err := parseRecipeID(req.GetId())
+	var id pgtype.UUID
+	var err error
+	if name := strings.TrimSpace(req.GetName()); name != "" && req.GetId() == "" {
+		id, err = s.recipeIDByName(ctx, user.HouseholdID(), name)
+	} else {
+		id, err = parseRecipeID(req.GetId())
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +123,39 @@ func (s *Service) GetRecipe(ctx context.Context, req *recipesv1.GetRecipeRequest
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to get recipe")
 	}
-	return recipesv1.GetRecipeResponse_builder{Recipe: recipeToProto(recipe)}.Build(), nil
+	resp := recipesv1.GetRecipeResponse_builder{Recipe: recipeToProto(recipe)}.Build()
+	if req.GetSummary() {
+		summary.Summarize(resp)
+	}
+	return resp, nil
+}
+
+// maxSimilarNames is how many similar names a failed lookup by name
+// suggests.
+const maxSimilarNames = 5
+
+// recipeIDByName returns the ID of the household's recipe with the name,
+// ignoring case, or NOT_FOUND naming the recipes with similar names.
+func (s *Service) recipeIDByName(ctx context.Context, householdID pgtype.UUID, name string) (pgtype.UUID, error) {
+	if utf8.RuneCountInString(name) > maxNameLength {
+		return pgtype.UUID{}, connect.Errorf(connect.CodeInvalidArgument, "name must be at most %d characters", maxNameLength)
+	}
+	matches, err := s.recipes.FindRecipesByName(ctx, householdID, name, maxSimilarNames)
+	if err != nil {
+		return pgtype.UUID{}, s.toConnectError(ctx, err, "failed to find recipe")
+	}
+	if len(matches) > 0 && strings.EqualFold(matches[0].Name, name) {
+		return matches[0].ID, nil
+	}
+	if len(matches) == 0 {
+		return pgtype.UUID{}, connect.Errorf(connect.CodeNotFound, "no recipe is named %q, nor anything like it; find recipes with ListRecipes", name)
+	}
+	names := make([]string, 0, len(matches))
+	for _, m := range matches {
+		names = append(names, strconv.Quote(m.Name))
+	}
+	return pgtype.UUID{}, connect.Errorf(connect.CodeNotFound,
+		"no recipe is named %q; similar names are %s: use one of them, or find recipes with ListRecipes", name, strings.Join(names, ", "))
 }
 
 func (s *Service) ListRecipes(ctx context.Context, req *recipesv1.ListRecipesRequest) (*recipesv1.ListRecipesResponse, error) {
@@ -130,10 +171,18 @@ func (s *Service) ListRecipes(ctx context.Context, req *recipesv1.ListRecipesReq
 	if err != nil {
 		return nil, err
 	}
+	if len(req.GetFoodIds()) > maxFilterIDs {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "food_ids must have at most %d foods", maxFilterIDs)
+	}
+	foodIDs, err := store.UUIDsToPG(req.GetFoodIds())
+	if err != nil {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "invalid food ID in food_ids: %v; find foods with FoodService.ListFoods", err)
+	}
 	list, allTags, err := s.recipes.ListRecipes(ctx, user.HouseholdID(), recipes.ListFilter{
 		Query:         query,
 		Tags:          tags,
 		FavoritesOnly: req.GetFavoritesOnly(),
+		FoodIDs:       foodIDs,
 	})
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to list recipes")

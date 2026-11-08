@@ -47,6 +47,8 @@ const (
 	maxPrepAheadNoteLength = 500
 	maxNotesLength         = 5000
 	maxQueryLength         = 200
+	// maxFilterIDs is how many IDs a list can be filtered by.
+	maxFilterIDs = 100
 )
 
 // nutritionDigits are the decimals computed nutrients are rounded to, which

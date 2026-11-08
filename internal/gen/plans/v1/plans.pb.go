@@ -1839,10 +1839,11 @@ func (b0 Warning_builder) Build() *Warning {
 }
 
 type GetWeekRequest struct {
-	state             protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Monday string                 `protobuf:"bytes,1,opt,name=monday,proto3"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Monday  string                 `protobuf:"bytes,1,opt,name=monday,proto3"`
+	xxx_hidden_Summary bool                   `protobuf:"varint,2,opt,name=summary,proto3"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *GetWeekRequest) Reset() {
@@ -1877,8 +1878,19 @@ func (x *GetWeekRequest) GetMonday() string {
 	return ""
 }
 
+func (x *GetWeekRequest) GetSummary() bool {
+	if x != nil {
+		return x.xxx_hidden_Summary
+	}
+	return false
+}
+
 func (x *GetWeekRequest) SetMonday(v string) {
 	x.xxx_hidden_Monday = v
+}
+
+func (x *GetWeekRequest) SetSummary(v bool) {
+	x.xxx_hidden_Summary = v
 }
 
 type GetWeekRequest_builder struct {
@@ -1886,6 +1898,12 @@ type GetWeekRequest_builder struct {
 
 	// The Monday the week starts on (YYYY-MM-DD). Required.
 	Monday string
+	// Whether to return a summary: only the main nutrients (energy_kcal,
+	// protein_grams and carbohydrate_grams), and none of the steps, original
+	// ingredient texts, nutrition per 100 g, incomplete nutrients, ingredient
+	// issues, or create and update times. Use it to scan, and read the full
+	// response only for what needs a closer look.
+	Summary bool
 }
 
 func (b0 GetWeekRequest_builder) Build() *GetWeekRequest {
@@ -1893,6 +1911,7 @@ func (b0 GetWeekRequest_builder) Build() *GetWeekRequest {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Monday = b.Monday
+	x.xxx_hidden_Summary = b.Summary
 	return m0
 }
 
@@ -5616,9 +5635,10 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\bnutrient\x18\t \x01(\x0e2\x12.foods.v1.NutrientR\bnutrient\x12\x14\n" +
 	"\x05value\x18\n" +
 	" \x01(\x01R\x05value\x12\x14\n" +
-	"\x05limit\x18\v \x01(\x01R\x05limit\"(\n" +
+	"\x05limit\x18\v \x01(\x01R\x05limit\"B\n" +
 	"\x0eGetWeekRequest\x12\x16\n" +
-	"\x06monday\x18\x01 \x01(\tR\x06monday\"}\n" +
+	"\x06monday\x18\x01 \x01(\tR\x06monday\x12\x18\n" +
+	"\asummary\x18\x02 \x01(\bR\asummary\"}\n" +
 	"\x0fGetWeekResponse\x12\x16\n" +
 	"\x06monday\x18\x01 \x01(\tR\x06monday\x12%\n" +
 	"\x04days\x18\x02 \x03(\v2\x11.plans.v1.PlanDayR\x04days\x12+\n" +

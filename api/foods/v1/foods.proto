@@ -58,7 +58,8 @@ service FoodService {
   // household has a food with the same name, which should then be reused
   // instead, and with INVALID_ARGUMENT if the reference food doesn't exist.
   rpc CreateFood(CreateFoodRequest) returns (CreateFoodResponse);
-  // Get one of the household's foods.
+  // Get one of the household's foods, by its ID or its name. Fails with
+  // NOT_FOUND naming the foods with similar names if no food has the name.
   rpc GetFood(GetFoodRequest) returns (GetFoodResponse);
   // List the household's foods, optionally only those whose name contains a
   // text, ordered by name.
@@ -390,8 +391,11 @@ message CreateFoodResponse {
 }
 
 message GetFoodRequest {
-  // The ID of the food.
+  // The ID of the food. Required, unless name is set.
   string id = 1;
+  // The name of the food, ignoring case, instead of its ID, e.g. "Black
+  // beans, cooked from dry".
+  string name = 2;
 }
 
 message GetFoodResponse {

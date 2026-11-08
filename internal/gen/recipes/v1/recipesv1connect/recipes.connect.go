@@ -79,10 +79,12 @@ type RecipeServiceClient interface {
 	// Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
 	// isn't one of the household's foods.
 	CreateRecipe(context.Context, *v1.CreateRecipeRequest) (*v1.CreateRecipeResponse, error)
-	// Get a recipe, with its ingredients, steps and nutrition.
+	// Get a recipe, with its ingredients, steps and nutrition, by its ID or
+	// its name. Fails with NOT_FOUND naming the recipes with similar names if
+	// no recipe has the name.
 	GetRecipe(context.Context, *v1.GetRecipeRequest) (*v1.GetRecipeResponse, error)
 	// List the household's recipes, ordered by name, optionally only those
-	// matching a text or tags, or only favorites. Returns summaries with the
+	// matching a text or tags, using some foods, or only favorites. Returns summaries with the
 	// main nutrients per serving; get a recipe with GetRecipe for the rest.
 	ListRecipes(context.Context, *v1.ListRecipesRequest) (*v1.ListRecipesResponse, error)
 	// Update a recipe. To mark it as a favorite, or unmark it, set favorite
@@ -105,10 +107,12 @@ type RecipeServiceHandler interface {
 	// Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
 	// isn't one of the household's foods.
 	CreateRecipe(context.Context, *v1.CreateRecipeRequest) (*v1.CreateRecipeResponse, error)
-	// Get a recipe, with its ingredients, steps and nutrition.
+	// Get a recipe, with its ingredients, steps and nutrition, by its ID or
+	// its name. Fails with NOT_FOUND naming the recipes with similar names if
+	// no recipe has the name.
 	GetRecipe(context.Context, *v1.GetRecipeRequest) (*v1.GetRecipeResponse, error)
 	// List the household's recipes, ordered by name, optionally only those
-	// matching a text or tags, or only favorites. Returns summaries with the
+	// matching a text or tags, using some foods, or only favorites. Returns summaries with the
 	// main nutrients per serving; get a recipe with GetRecipe for the rest.
 	ListRecipes(context.Context, *v1.ListRecipesRequest) (*v1.ListRecipesResponse, error)
 	// Update a recipe. To mark it as a favorite, or unmark it, set favorite

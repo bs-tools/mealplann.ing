@@ -189,3 +189,12 @@ where r.household_id = @household_id
     where ri.household_id = @household_id and ri.food_id = @food_id
   )
 order by lower(r.name), r.id;
+
+-- name: FindFoodsByName :many
+-- The food with the name, ignoring case, first, then up to the limit of the
+-- foods with similar names, most similar first.
+select id, name from foods
+where household_id = @household_id
+  and (lower(name) = lower(@name) or name % @name or strpos(lower(name), lower(@name)) > 0)
+order by lower(name) = lower(@name) desc, similarity(name, @name) desc, lower(name), id
+limit @row_limit;

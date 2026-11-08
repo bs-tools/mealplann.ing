@@ -206,6 +206,47 @@ func (q *Queries) DeleteRecipeIngredients(ctx context.Context, arg *DeleteRecipe
 	return err
 }
 
+const findRecipesByName = `-- name: FindRecipesByName :many
+select id, name from recipes
+where household_id = $1
+  and (lower(name) = lower($2) or name % $2 or strpos(lower(name), lower($2)) > 0)
+order by lower(name) = lower($2) desc, similarity(name, $2) desc, lower(name), id
+limit $3
+`
+
+type FindRecipesByNameParams struct {
+	HouseholdID pgtype.UUID
+	Name        string
+	RowLimit    int32
+}
+
+type FindRecipesByNameRow struct {
+	ID   pgtype.UUID
+	Name string
+}
+
+// The recipe with the name, ignoring case, first, then up to the limit of
+// the recipes with similar names, most similar first.
+func (q *Queries) FindRecipesByName(ctx context.Context, arg *FindRecipesByNameParams) ([]*FindRecipesByNameRow, error) {
+	rows, err := q.db.Query(ctx, findRecipesByName, arg.HouseholdID, arg.Name, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*FindRecipesByNameRow
+	for rows.Next() {
+		var i FindRecipesByNameRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRecipe = `-- name: GetRecipe :one
 select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note from recipes where id = $1 and household_id = $2
 `
@@ -439,16 +480,23 @@ func (q *Queries) ListRecipeTags(ctx context.Context, householdID pgtype.UUID) (
 }
 
 const listRecipes = `-- name: ListRecipes :many
-select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note from recipes
-where household_id = $1
+select r.id, r.household_id, r.name, r.description, r.servings, r.prep_seconds, r.cook_seconds, r.steps, r.tags, r.source_url, r.fridge_days, r.freezable, r.notes, r.create_time, r.update_time, r.favorite, r.freezer_days, r.prep_ahead_days, r.prep_ahead_note from recipes r
+where r.household_id = $1
   and (
     $2::text = ''
-    or strpos(lower(name), lower($2)) > 0
-    or strpos(lower(description), lower($2)) > 0
+    or strpos(lower(r.name), lower($2)) > 0
+    or strpos(lower(r.description), lower($2)) > 0
   )
-  and tags @> $3::text[]
-  and (not $4::boolean or favorite)
-order by lower(name), id
+  and r.tags @> $3::text[]
+  and (not $4::boolean or r.favorite)
+  and (
+    cardinality($5::uuid[]) = 0
+    or r.id in (
+      select ri.recipe_id from recipe_ingredients ri
+      where ri.household_id = $1 and ri.food_id = any($5::uuid[])
+    )
+  )
+order by lower(r.name), r.id
 `
 
 type ListRecipesParams struct {
@@ -456,6 +504,7 @@ type ListRecipesParams struct {
 	Query         string
 	Tags          []string
 	FavoritesOnly bool
+	FoodIds       []pgtype.UUID
 }
 
 func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*Recipe, error) {
@@ -464,6 +513,7 @@ func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*R
 		arg.Query,
 		arg.Tags,
 		arg.FavoritesOnly,
+		arg.FoodIds,
 	)
 	if err != nil {
 		return nil, err
