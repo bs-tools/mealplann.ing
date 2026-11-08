@@ -130,7 +130,7 @@ run: db ## Run the backend (starts db)
 .PHONY: import-fdc
 import-fdc: db ## Import USDA FoodData Central into the local database: make import-fdc FDC="<zip or dir> ..."
 	@$(WAIT_DB)
-	@if [ -z "$(FDC)" ]; then echo 'Set FDC to the Foundation Foods and SR Legacy CSV downloads, e.g. make import-fdc FDC="FoodData_Central_foundation_food_csv_2025-04-24.zip FoodData_Central_sr_legacy_food_csv_2018-04.zip"' >&2; exit 1; fi
+	@if [ -z "$(FDC)" ]; then echo 'Set FDC to the Foundation Foods and SR Legacy downloads, e.g. make import-fdc FDC="FoodData_Central_foundation_food_json_2026-10-29.zip FoodData_Central_sr_legacy_food_csv_2018-04.zip"' >&2; exit 1; fi
 	go run . import-fdc -database-url '$(DATABASE_URL)' $(FDC)
 
 .PHONY: admin-invitation
