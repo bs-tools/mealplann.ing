@@ -719,6 +719,18 @@ type PersonTarget struct {
 	MaxPerDay   *float64
 }
 
+type PlanTemplate struct {
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+	Name        string
+	Source      string
+	Notes       string
+	Days        int32
+	Body        json.RawMessage
+	CreateTime  pgtype.Timestamptz
+	UpdateTime  pgtype.Timestamptz
+}
+
 type Portion struct {
 	ID           pgtype.UUID
 	HouseholdID  pgtype.UUID

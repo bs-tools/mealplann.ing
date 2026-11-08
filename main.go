@@ -53,6 +53,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/shopping"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/bs-tools/mealplann.ing/internal/telemetry"
+	"github.com/bs-tools/mealplann.ing/internal/templates"
 	"github.com/bs-tools/mealplann.ing/internal/timeouts"
 	"github.com/bs-tools/mealplann.ing/internal/users"
 	"github.com/johanbrandhorst/reload"
@@ -393,9 +394,10 @@ func run(
 	planRepo := plans.NewRepository(log, db)
 	pantryRepo := pantry.NewRepository(log, db)
 	shoppingRepo := shopping.NewRepository(log, db)
-	// The plan service also serves suggestions, as they read the plan and
-	// compute its nutrition the same way.
-	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, foodRepo, pantryRepo, shoppingRepo)
+	// The plan service also serves suggestions and plan templates, as they
+	// read the plan and compute its nutrition the same way.
+	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, foodRepo, pantryRepo, shoppingRepo,
+		templates.NewRepository(log, db))
 	pantryService := pantrysvc.NewService(log, report, pantryRepo, foodRepo)
 	shoppingService := shoppingsvc.NewService(log, report, shoppingRepo, planRepo, recipeRepo, foodRepo, pantryRepo)
 
@@ -408,6 +410,7 @@ func run(
 	recipesv1connect.RegisterRecipeServiceHandler(server, recipeService)
 	peoplev1connect.RegisterPersonServiceHandler(server, personService)
 	plansv1connect.RegisterPlanServiceHandler(server, planService)
+	plansv1connect.RegisterPlanTemplateServiceHandler(server, planService)
 	pantryv1connect.RegisterPantryServiceHandler(server, pantryService)
 	shoppingv1connect.RegisterShoppingServiceHandler(server, shoppingService)
 	suggestionsv1connect.RegisterSuggestionServiceHandler(server, planService)
@@ -438,6 +441,7 @@ func run(
 		mcp.Service{Name: recipesv1connect.RecipeServiceName, Handler: recipeService},
 		mcp.Service{Name: peoplev1connect.PersonServiceName, Handler: personService},
 		mcp.Service{Name: plansv1connect.PlanServiceName, Handler: planService},
+		mcp.Service{Name: plansv1connect.PlanTemplateServiceName, Handler: planService},
 		mcp.Service{Name: pantryv1connect.PantryServiceName, Handler: pantryService},
 		mcp.Service{Name: shoppingv1connect.ShoppingServiceName, Handler: shoppingService},
 		mcp.Service{Name: suggestionsv1connect.SuggestionServiceName, Handler: planService},

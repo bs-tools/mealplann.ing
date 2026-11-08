@@ -15,6 +15,7 @@ import {
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
   ArchiveBoxIcon,
+  BookmarkSquareIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
@@ -310,6 +311,13 @@ const PlanPage: React.FC = () => {
                 <ChevronRightIcon className="size-5" />
               </button>
             </div>
+            <Link
+              to={`/plan/templates?week=${monday}`}
+              className={secondaryButton}
+            >
+              <BookmarkSquareIcon className="size-4" aria-hidden="true" />
+              Templates
+            </Link>
             <Link to="/plan/auto" className={secondaryButton}>
               <SparklesIcon className="size-4" aria-hidden="true" />
               Plan for me
