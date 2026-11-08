@@ -2,8 +2,8 @@
 // @generated from file pantry/v1/pantry.proto (package pantry.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { AmountUnit, StoreSection } from "../../foods/v1/foods_pb";
 import { file_foods_v1_foods } from "../../foods/v1/foods_pb";
 import type { FieldMask, Timestamp } from "@bufbuild/protobuf/wkt";
@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file pantry/v1/pantry.proto.
  */
 export const file_pantry_v1_pantry: GenFile = /*@__PURE__*/
-  fileDesc("ChZwYW50cnkvdjEvcGFudHJ5LnByb3RvEglwYW50cnkudjEiswMKClBhbnRyeUl0ZW0SCgoCaWQYASABKAkSFwoHZm9vZF9pZBgCIAEoCUIGqp8ZAggBEhkKCWZvb2RfbmFtZRgDIAEoCUIGqp8ZAggBEjUKDXN0b3JlX3NlY3Rpb24YBCABKA4yFi5mb29kcy52MS5TdG9yZVNlY3Rpb25CBqqfGQIIARINCgVncmFtcxgFIAEoARIfCg9ncmFtc19wZXJfcGllY2UYBiABKAFCBqqfGQIIARITCgtleHBpcnlfZGF0ZRgHIAEoCRITCgtvcGVuZWRfZGF0ZRgIIAEoCRIbCgt1c2VfYnlfZGF0ZRgJIAEoCUIGqp8ZAggBEiMKDmRheXNfdG9fZXhwaXJ5GAogASgFQgaqnxkCCAFIAIgBARINCgVub3RlcxgLIAEoCRI3CgtjcmVhdGVfdGltZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIAUIRCg9fZGF5c190b19leHBpcnkiZgoRQWx3YXlzSW5TdG9ja0Zvb2QSDwoHZm9vZF9pZBgBIAEoCRIRCglmb29kX25hbWUYAiABKAkSLQoNc3RvcmVfc2VjdGlvbhgDIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbiKhAQoRTGlzdFBhbnRyeVJlcXVlc3QSEAoIZm9vZF9pZHMYASADKAkSLQoNc3RvcmVfc2VjdGlvbhgCIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbhIhChRleHBpcmluZ193aXRoaW5fZGF5cxgDIAEoBUgAiAEBEg8KB3N1bW1hcnkYBCABKAhCFwoVX2V4cGlyaW5nX3dpdGhpbl9kYXlzIncKEkxpc3RQYW50cnlSZXNwb25zZRIkCgVpdGVtcxgBIAMoCzIVLnBhbnRyeS52MS5QYW50cnlJdGVtEjsKFWFsd2F5c19pbl9zdG9ja19mb29kcxgCIAMoCzIcLnBhbnRyeS52MS5BbHdheXNJblN0b2NrRm9vZCK7AQoSQWRkVG9QYW50cnlSZXF1ZXN0Eg8KB2Zvb2RfaWQYASABKAkSDgoGYW1vdW50GAIgASgBEiIKBHVuaXQYAyABKA4yFC5mb29kcy52MS5BbW91bnRVbml0EhMKC2V4cGlyeV9kYXRlGAQgASgJEhMKC29wZW5lZF9kYXRlGAUgASgJEg0KBW5vdGVzGAYgASgJEhMKC3RyYWNrX3N0b2NrGAcgASgIEhIKCnJlcXVlc3RfaWQYCCABKAkiXQoWQWRkTG90c1RvUGFudHJ5UmVxdWVzdBIvCghyZXF1ZXN0cxgBIAMoCzIdLnBhbnRyeS52MS5BZGRUb1BhbnRyeVJlcXVlc3QSEgoKcmVxdWVzdF9pZBgCIAEoCSJDChdBZGRMb3RzVG9QYW50cnlSZXNwb25zZRIoCgdyZXN1bHRzGAEgAygLMhcucGFudHJ5LnYxLkFkZExvdFJlc3VsdCJoCgxBZGRMb3RSZXN1bHQSLQoFYWRkZWQYASABKAsyHi5wYW50cnkudjEuQWRkVG9QYW50cnlSZXNwb25zZRISCgplcnJvcl9jb2RlGAIgASgJEhUKDWVycm9yX21lc3NhZ2UYAyABKAkibwoTQWRkVG9QYW50cnlSZXNwb25zZRIjCgRpdGVtGAEgASgLMhUucGFudHJ5LnYxLlBhbnRyeUl0ZW0SEgoKY29udmVyc2lvbhgCIAEoCRIfChdzdG9wcGVkX2Fsd2F5c19pbl9zdG9jaxgDIAEoCCJvChdVcGRhdGVQYW50cnlJdGVtUmVxdWVzdBIjCgRpdGVtGAEgASgLMhUucGFudHJ5LnYxLlBhbnRyeUl0ZW0SLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIj8KGFVwZGF0ZVBhbnRyeUl0ZW1SZXNwb25zZRIjCgRpdGVtGAEgASgLMhUucGFudHJ5LnYxLlBhbnRyeUl0ZW0iJQoXUmVtb3ZlRnJvbVBhbnRyeVJlcXVlc3QSCgoCaWQYASABKAkiGgoYUmVtb3ZlRnJvbVBhbnRyeVJlc3BvbnNlMrwDCg1QYW50cnlTZXJ2aWNlEkkKCkxpc3RQYW50cnkSHC5wYW50cnkudjEuTGlzdFBhbnRyeVJlcXVlc3QaHS5wYW50cnkudjEuTGlzdFBhbnRyeVJlc3BvbnNlEkwKC0FkZFRvUGFudHJ5Eh0ucGFudHJ5LnYxLkFkZFRvUGFudHJ5UmVxdWVzdBoeLnBhbnRyeS52MS5BZGRUb1BhbnRyeVJlc3BvbnNlElgKD0FkZExvdHNUb1BhbnRyeRIhLnBhbnRyeS52MS5BZGRMb3RzVG9QYW50cnlSZXF1ZXN0GiIucGFudHJ5LnYxLkFkZExvdHNUb1BhbnRyeVJlc3BvbnNlElsKEFVwZGF0ZVBhbnRyeUl0ZW0SIi5wYW50cnkudjEuVXBkYXRlUGFudHJ5SXRlbVJlcXVlc3QaIy5wYW50cnkudjEuVXBkYXRlUGFudHJ5SXRlbVJlc3BvbnNlElsKEFJlbW92ZUZyb21QYW50cnkSIi5wYW50cnkudjEuUmVtb3ZlRnJvbVBhbnRyeVJlcXVlc3QaIy5wYW50cnkudjEuUmVtb3ZlRnJvbVBhbnRyeVJlc3BvbnNlQqQBCg1jb20ucGFudHJ5LnYxQgtQYW50cnlQcm90b1ABWkFnaXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3BhbnRyeS92MTtwYW50cnl2MaICA1BYWKoCCVBhbnRyeS5WMcoCCVBhbnRyeVxWMeICFVBhbnRyeVxWMVxHUEJNZXRhZGF0YeoCClBhbnRyeTo6VjFiBnByb3RvMw", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChZwYW50cnkvdjEvcGFudHJ5LnByb3RvEglwYW50cnkudjEisQQKClBhbnRyeUl0ZW0SCgoCaWQYASABKAkSFwoHZm9vZF9pZBgCIAEoCUIGqp8ZAggBEhkKCWZvb2RfbmFtZRgDIAEoCUIGqp8ZAggBEjUKDXN0b3JlX3NlY3Rpb24YBCABKA4yFi5mb29kcy52MS5TdG9yZVNlY3Rpb25CBqqfGQIIARINCgVncmFtcxgFIAEoARIfCg9ncmFtc19wZXJfcGllY2UYBiABKAFCBqqfGQIIARITCgtleHBpcnlfZGF0ZRgHIAEoCRITCgtvcGVuZWRfZGF0ZRgIIAEoCRIbCgt1c2VfYnlfZGF0ZRgJIAEoCUIGqp8ZAggBEiMKDmRheXNfdG9fZXhwaXJ5GAogASgFQgaqnxkCCAFIAIgBARINCgVub3RlcxgLIAEoCRI3CgtjcmVhdGVfdGltZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARIjCgdzdG9yYWdlGA4gASgOMhIucGFudHJ5LnYxLlN0b3JhZ2USEAoIbG9jYXRpb24YDyABKAkSEwoLZnJvemVuX2RhdGUYECABKAkSDgoGb3BlbmVkGBEgASgIEhEKCWVzdGltYXRlZBgSIAEoCBINCgVsYWJlbBgTIAEoCUIRCg9fZGF5c190b19leHBpcnkiZgoRQWx3YXlzSW5TdG9ja0Zvb2QSDwoHZm9vZF9pZBgBIAEoCRIRCglmb29kX25hbWUYAiABKAkSLQoNc3RvcmVfc2VjdGlvbhgDIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbiLeAQoRTGlzdFBhbnRyeVJlcXVlc3QSEAoIZm9vZF9pZHMYASADKAkSLQoNc3RvcmVfc2VjdGlvbhgCIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbhIhChRleHBpcmluZ193aXRoaW5fZGF5cxgDIAEoBUgAiAEBEg8KB3N1bW1hcnkYBCABKAgSIwoHc3RvcmFnZRgFIAEoDjISLnBhbnRyeS52MS5TdG9yYWdlEhYKDmVzdGltYXRlZF9vbmx5GAYgASgIQhcKFV9leHBpcmluZ193aXRoaW5fZGF5cyJ3ChJMaXN0UGFudHJ5UmVzcG9uc2USJAoFaXRlbXMYASADKAsyFS5wYW50cnkudjEuUGFudHJ5SXRlbRI7ChVhbHdheXNfaW5fc3RvY2tfZm9vZHMYAiADKAsyHC5wYW50cnkudjEuQWx3YXlzSW5TdG9ja0Zvb2QiywIKEkFkZFRvUGFudHJ5UmVxdWVzdBIPCgdmb29kX2lkGAEgASgJEg4KBmFtb3VudBgCIAEoARIiCgR1bml0GAMgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdBITCgtleHBpcnlfZGF0ZRgEIAEoCRITCgtvcGVuZWRfZGF0ZRgFIAEoCRINCgVub3RlcxgGIAEoCRITCgt0cmFja19zdG9jaxgHIAEoCBISCgpyZXF1ZXN0X2lkGAggASgJEhAKCHBhY2thZ2VzGAkgASgBEiMKB3N0b3JhZ2UYCiABKA4yEi5wYW50cnkudjEuU3RvcmFnZRIQCghsb2NhdGlvbhgLIAEoCRITCgtmcm96ZW5fZGF0ZRgMIAEoCRIOCgZvcGVuZWQYDSABKAgSEQoJZXN0aW1hdGVkGA4gASgIEg0KBWxhYmVsGA8gASgJIl0KFkFkZExvdHNUb1BhbnRyeVJlcXVlc3QSLwoIcmVxdWVzdHMYASADKAsyHS5wYW50cnkudjEuQWRkVG9QYW50cnlSZXF1ZXN0EhIKCnJlcXVlc3RfaWQYAiABKAkiQwoXQWRkTG90c1RvUGFudHJ5UmVzcG9uc2USKAoHcmVzdWx0cxgBIAMoCzIXLnBhbnRyeS52MS5BZGRMb3RSZXN1bHQiaAoMQWRkTG90UmVzdWx0Ei0KBWFkZGVkGAEgASgLMh4ucGFudHJ5LnYxLkFkZFRvUGFudHJ5UmVzcG9uc2USEgoKZXJyb3JfY29kZRgCIAEoCRIVCg1lcnJvcl9tZXNzYWdlGAMgASgJIm8KE0FkZFRvUGFudHJ5UmVzcG9uc2USIwoEaXRlbRgBIAEoCzIVLnBhbnRyeS52MS5QYW50cnlJdGVtEhIKCmNvbnZlcnNpb24YAiABKAkSHwoXc3RvcHBlZF9hbHdheXNfaW5fc3RvY2sYAyABKAgibwoXVXBkYXRlUGFudHJ5SXRlbVJlcXVlc3QSIwoEaXRlbRgBIAEoCzIVLnBhbnRyeS52MS5QYW50cnlJdGVtEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayI/ChhVcGRhdGVQYW50cnlJdGVtUmVzcG9uc2USIwoEaXRlbRgBIAEoCzIVLnBhbnRyeS52MS5QYW50cnlJdGVtIiUKF1JlbW92ZUZyb21QYW50cnlSZXF1ZXN0EgoKAmlkGAEgASgJIhoKGFJlbW92ZUZyb21QYW50cnlSZXNwb25zZSpfCgdTdG9yYWdlEhcKE1NUT1JBR0VfVU5TUEVDSUZJRUQQABISCg5TVE9SQUdFX1BBTlRSWRABEhIKDlNUT1JBR0VfRlJJREdFEAISEwoPU1RPUkFHRV9GUkVFWkVSEAMyvAMKDVBhbnRyeVNlcnZpY2USSQoKTGlzdFBhbnRyeRIcLnBhbnRyeS52MS5MaXN0UGFudHJ5UmVxdWVzdBodLnBhbnRyeS52MS5MaXN0UGFudHJ5UmVzcG9uc2USTAoLQWRkVG9QYW50cnkSHS5wYW50cnkudjEuQWRkVG9QYW50cnlSZXF1ZXN0Gh4ucGFudHJ5LnYxLkFkZFRvUGFudHJ5UmVzcG9uc2USWAoPQWRkTG90c1RvUGFudHJ5EiEucGFudHJ5LnYxLkFkZExvdHNUb1BhbnRyeVJlcXVlc3QaIi5wYW50cnkudjEuQWRkTG90c1RvUGFudHJ5UmVzcG9uc2USWwoQVXBkYXRlUGFudHJ5SXRlbRIiLnBhbnRyeS52MS5VcGRhdGVQYW50cnlJdGVtUmVxdWVzdBojLnBhbnRyeS52MS5VcGRhdGVQYW50cnlJdGVtUmVzcG9uc2USWwoQUmVtb3ZlRnJvbVBhbnRyeRIiLnBhbnRyeS52MS5SZW1vdmVGcm9tUGFudHJ5UmVxdWVzdBojLnBhbnRyeS52MS5SZW1vdmVGcm9tUGFudHJ5UmVzcG9uc2VCpAEKDWNvbS5wYW50cnkudjFCC1BhbnRyeVByb3RvUAFaQWdpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vcGFudHJ5L3YxO3BhbnRyeXYxogIDUFhYqgIJUGFudHJ5LlYxygIJUGFudHJ5XFYx4gIVUGFudHJ5XFYxXEdQQk1ldGFkYXRh6gIKUGFudHJ5OjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A lot of a food in stock.
@@ -75,16 +75,19 @@ export type PantryItem = Message<"pantry.v1.PantryItem"> & {
   expiryDate: string;
 
   /**
-   * The date it was opened (YYYY-MM-DD), empty if it's unopened. Once
-   * opened, it keeps for the food's opened_shelf_life_days.
+   * The date it was opened (YYYY-MM-DD), empty if it's unopened or the day
+   * isn't known (see opened). Once opened, it keeps for the food's
+   * opened_shelf_life_days.
    *
    * @generated from field: string opened_date = 8;
    */
   openedDate: string;
 
   /**
-   * The date to use it by (YYYY-MM-DD): the earlier of expiry_date and the
-   * end of its opened shelf life. Empty if neither is known.
+   * The date to use it by (YYYY-MM-DD). In the freezer, frozen_date plus
+   * the food's freezer_shelf_life_days, if known. Otherwise the earlier of
+   * expiry_date and the end of its opened shelf life. Empty if none is
+   * known.
    *
    * @generated from field: string use_by_date = 9;
    */
@@ -118,6 +121,57 @@ export type PantryItem = Message<"pantry.v1.PantryItem"> & {
    * @generated from field: google.protobuf.Timestamp update_time = 13;
    */
   updateTime?: Timestamp | undefined;
+
+  /**
+   * Where it's kept, which sets how long it keeps: STORAGE_FREEZER keeps
+   * it for the food's freezer_shelf_life_days from frozen_date.
+   * STORAGE_UNSPECIFIED if not said, which keeps like the pantry or fridge.
+   *
+   * @generated from field: pantry.v1.Storage storage = 14;
+   */
+  storage: Storage;
+
+  /**
+   * Where in the home it is, e.g. "chest freezer" or "garage shelf", to
+   * find it and tell lots apart. At most 100 characters.
+   *
+   * @generated from field: string location = 15;
+   */
+  location: string;
+
+  /**
+   * The date it was frozen (YYYY-MM-DD), for a lot in the freezer. Moving
+   * a lot into the freezer sets it to today unless it's given; moving it
+   * out clears it.
+   *
+   * @generated from field: string frozen_date = 16;
+   */
+  frozenDate: string;
+
+  /**
+   * Whether it's been opened, even if the day isn't known: then its use-by
+   * date can't count the opened shelf life, and is only its expiry_date.
+   * Setting opened_date sets it.
+   *
+   * @generated from field: bool opened = 17;
+   */
+  opened: boolean;
+
+  /**
+   * Whether the amount is a guess, like a partly used bag seen in a photo,
+   * for the user to check. Clear it once they confirm the amount.
+   *
+   * @generated from field: bool estimated = 18;
+   */
+  estimated: boolean;
+
+  /**
+   * The brand or label of the lot, e.g. "Sriracha" for one of several hot
+   * sauces sharing a food. At most 100 characters.
+   *
+   * @generated from field: string label = 19;
+   */
+  label: string;
 };
 
 /**
@@ -196,6 +250,20 @@ export type ListPantryRequest = Message<"pantry.v1.ListPantryRequest"> & {
    * @generated from field: bool summary = 4;
    */
   summary: boolean;
+
+  /**
+   * Only list lots kept there. STORAGE_UNSPECIFIED to list all.
+   *
+   * @generated from field: pantry.v1.Storage storage = 5;
+   */
+  storage: Storage;
+
+  /**
+   * Only list lots whose amounts are guesses, for the user to check.
+   *
+   * @generated from field: bool estimated_only = 6;
+   */
+  estimatedOnly: boolean;
 };
 
 /**
@@ -244,15 +312,16 @@ export type AddToPantryRequest = Message<"pantry.v1.AddToPantryRequest"> & {
   foodId: string;
 
   /**
-   * The amount, in unit. More than 0.
+   * The amount, in unit. More than 0, unless packages is set.
    *
    * @generated from field: double amount = 2;
    */
   amount: number;
 
   /**
-   * The unit of the amount. Required. Milliliters and pieces are converted
-   * to grams with the food's grams_per_milliliter and grams_per_piece.
+   * The unit of the amount. Required with amount. Milliliters and pieces
+   * are converted to grams with the food's grams_per_milliliter and
+   * grams_per_piece.
    *
    * @generated from field: foods.v1.AmountUnit unit = 3;
    */
@@ -260,14 +329,16 @@ export type AddToPantryRequest = Message<"pantry.v1.AddToPantryRequest"> & {
 
   /**
    * The date it expires unopened (YYYY-MM-DD). Empty for today (UTC) plus
-   * the food's shelf_life_days, or no expiry date if that's unknown.
+   * the food's shelf_life_days, or no expiry date if that's unknown or
+   * it's going in the freezer.
    *
    * @generated from field: string expiry_date = 4;
    */
   expiryDate: string;
 
   /**
-   * The date it was opened (YYYY-MM-DD), empty if it's unopened.
+   * The date it was opened (YYYY-MM-DD), empty if it's unopened or the day
+   * isn't known (see opened).
    *
    * @generated from field: string opened_date = 5;
    */
@@ -299,6 +370,61 @@ export type AddToPantryRequest = Message<"pantry.v1.AddToPantryRequest"> & {
    * @generated from field: string request_id = 8;
    */
   requestId: string;
+
+  /**
+   * Instead of amount and unit, how many of the food's packages (its
+   * package_grams), e.g. 0.33 for a third of a jug, or 2.5 for two full
+   * bags and a half-full one. Fails with FAILED_PRECONDITION if the food
+   * has no package_grams.
+   *
+   * @generated from field: double packages = 9;
+   */
+  packages: number;
+
+  /**
+   * Where it's kept (see PantryItem.storage).
+   *
+   * @generated from field: pantry.v1.Storage storage = 10;
+   */
+  storage: Storage;
+
+  /**
+   * Where in the home it is (see PantryItem.location).
+   *
+   * @generated from field: string location = 11;
+   */
+  location: string;
+
+  /**
+   * The date it was frozen (YYYY-MM-DD), for STORAGE_FREEZER. Empty for
+   * today.
+   *
+   * @generated from field: string frozen_date = 12;
+   */
+  frozenDate: string;
+
+  /**
+   * Whether it's been opened, on a day that isn't known (see
+   * PantryItem.opened). Don't set opened_date to today for a lot opened on
+   * an unknown day: that shortens its use-by date.
+   *
+   * @generated from field: bool opened = 13;
+   */
+  opened: boolean;
+
+  /**
+   * Whether the amount is a guess (see PantryItem.estimated).
+   *
+   * @generated from field: bool estimated = 14;
+   */
+  estimated: boolean;
+
+  /**
+   * The brand or label of the lot (see PantryItem.label).
+   *
+   * @generated from field: string label = 15;
+   */
+  label: string;
 };
 
 /**
@@ -507,6 +633,45 @@ export const RemoveFromPantryResponseSchema: GenMessage<RemoveFromPantryResponse
   messageDesc(file_pantry_v1_pantry, 12);
 
 /**
+ * Where a lot is kept.
+ *
+ * @generated from enum pantry.v1.Storage
+ */
+export enum Storage {
+  /**
+   * @generated from enum value: STORAGE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * A cupboard or shelf at room temperature.
+   *
+   * @generated from enum value: STORAGE_PANTRY = 1;
+   */
+  PANTRY = 1,
+
+  /**
+   * The fridge.
+   *
+   * @generated from enum value: STORAGE_FRIDGE = 2;
+   */
+  FRIDGE = 2,
+
+  /**
+   * The freezer, which keeps food for its freezer_shelf_life_days.
+   *
+   * @generated from enum value: STORAGE_FREEZER = 3;
+   */
+  FREEZER = 3,
+}
+
+/**
+ * Describes the enum pantry.v1.Storage.
+ */
+export const StorageSchema: GenEnum<Storage> = /*@__PURE__*/
+  enumDesc(file_pantry_v1_pantry, 0);
+
+/**
  * PantryService tracks the household's pantry: how much of each food (see
  * FoodService) it has in stock, in grams, with when it expires. A food can
  * have several lots, like an opened bag and a new one, each with its own
@@ -526,6 +691,10 @@ export const RemoveFromPantryResponseSchema: GenMessage<RemoveFromPantryResponse
  * always_in_stock on the food with FoodService.UpdateFood instead of adding
  * them. Check the pantry before generating a shopping list, so the list
  * only has what's missing, and ask the user about stock that looks wrong.
+ *
+ * Cooked food in stock, like frozen leftovers or a batch of cooked rice, is
+ * a cook of its recipe (see PlanService.CreateCook's from_stock), not a
+ * lot, so it keeps its recipe's nutrition and can be planned.
  *
  * @generated from service pantry.v1.PantryService
  */

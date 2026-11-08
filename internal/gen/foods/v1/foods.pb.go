@@ -1044,27 +1044,28 @@ func (b0 Nutrients_builder) Build() *Nutrients {
 
 // A food: an ingredient, such as chickpeas, a brand of tofu or soy milk.
 type Food struct {
-	state                          protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3"`
-	xxx_hidden_Name                string                 `protobuf:"bytes,2,opt,name=name,proto3"`
-	xxx_hidden_Source              FoodSource             `protobuf:"varint,3,opt,name=source,proto3,enum=foods.v1.FoodSource"`
-	xxx_hidden_FdcId               int32                  `protobuf:"varint,4,opt,name=fdc_id,json=fdcId,proto3"`
-	xxx_hidden_Nutrients           *Nutrients             `protobuf:"bytes,5,opt,name=nutrients,proto3"`
-	xxx_hidden_GramsPerPiece       float64                `protobuf:"fixed64,6,opt,name=grams_per_piece,json=gramsPerPiece,proto3"`
-	xxx_hidden_GramsPerMilliliter  float64                `protobuf:"fixed64,7,opt,name=grams_per_milliliter,json=gramsPerMilliliter,proto3"`
-	xxx_hidden_FastCarb            bool                   `protobuf:"varint,8,opt,name=fast_carb,json=fastCarb,proto3"`
-	xxx_hidden_StoreSection        StoreSection           `protobuf:"varint,9,opt,name=store_section,json=storeSection,proto3,enum=foods.v1.StoreSection"`
-	xxx_hidden_PackageGrams        float64                `protobuf:"fixed64,10,opt,name=package_grams,json=packageGrams,proto3"`
-	xxx_hidden_ShelfLifeDays       int32                  `protobuf:"varint,11,opt,name=shelf_life_days,json=shelfLifeDays,proto3"`
-	xxx_hidden_OpenedShelfLifeDays int32                  `protobuf:"varint,12,opt,name=opened_shelf_life_days,json=openedShelfLifeDays,proto3"`
-	xxx_hidden_Notes               string                 `protobuf:"bytes,13,opt,name=notes,proto3"`
-	xxx_hidden_CreateTime          *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=create_time,json=createTime,proto3"`
-	xxx_hidden_UpdateTime          *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=update_time,json=updateTime,proto3"`
-	xxx_hidden_PreferredStoreId    string                 `protobuf:"bytes,16,opt,name=preferred_store_id,json=preferredStoreId,proto3"`
-	xxx_hidden_AlwaysInStock       bool                   `protobuf:"varint,17,opt,name=always_in_stock,json=alwaysInStock,proto3"`
-	xxx_hidden_SourceId            int32                  `protobuf:"varint,18,opt,name=source_id,json=sourceId,proto3"`
-	unknownFields                  protoimpl.UnknownFields
-	sizeCache                      protoimpl.SizeCache
+	state                           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id                   string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_Name                 string                 `protobuf:"bytes,2,opt,name=name,proto3"`
+	xxx_hidden_Source               FoodSource             `protobuf:"varint,3,opt,name=source,proto3,enum=foods.v1.FoodSource"`
+	xxx_hidden_FdcId                int32                  `protobuf:"varint,4,opt,name=fdc_id,json=fdcId,proto3"`
+	xxx_hidden_Nutrients            *Nutrients             `protobuf:"bytes,5,opt,name=nutrients,proto3"`
+	xxx_hidden_GramsPerPiece        float64                `protobuf:"fixed64,6,opt,name=grams_per_piece,json=gramsPerPiece,proto3"`
+	xxx_hidden_GramsPerMilliliter   float64                `protobuf:"fixed64,7,opt,name=grams_per_milliliter,json=gramsPerMilliliter,proto3"`
+	xxx_hidden_FastCarb             bool                   `protobuf:"varint,8,opt,name=fast_carb,json=fastCarb,proto3"`
+	xxx_hidden_StoreSection         StoreSection           `protobuf:"varint,9,opt,name=store_section,json=storeSection,proto3,enum=foods.v1.StoreSection"`
+	xxx_hidden_PackageGrams         float64                `protobuf:"fixed64,10,opt,name=package_grams,json=packageGrams,proto3"`
+	xxx_hidden_ShelfLifeDays        int32                  `protobuf:"varint,11,opt,name=shelf_life_days,json=shelfLifeDays,proto3"`
+	xxx_hidden_OpenedShelfLifeDays  int32                  `protobuf:"varint,12,opt,name=opened_shelf_life_days,json=openedShelfLifeDays,proto3"`
+	xxx_hidden_FreezerShelfLifeDays int32                  `protobuf:"varint,19,opt,name=freezer_shelf_life_days,json=freezerShelfLifeDays,proto3"`
+	xxx_hidden_Notes                string                 `protobuf:"bytes,13,opt,name=notes,proto3"`
+	xxx_hidden_CreateTime           *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=create_time,json=createTime,proto3"`
+	xxx_hidden_UpdateTime           *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=update_time,json=updateTime,proto3"`
+	xxx_hidden_PreferredStoreId     string                 `protobuf:"bytes,16,opt,name=preferred_store_id,json=preferredStoreId,proto3"`
+	xxx_hidden_AlwaysInStock        bool                   `protobuf:"varint,17,opt,name=always_in_stock,json=alwaysInStock,proto3"`
+	xxx_hidden_SourceId             int32                  `protobuf:"varint,18,opt,name=source_id,json=sourceId,proto3"`
+	unknownFields                   protoimpl.UnknownFields
+	sizeCache                       protoimpl.SizeCache
 }
 
 func (x *Food) Reset() {
@@ -1176,6 +1177,13 @@ func (x *Food) GetOpenedShelfLifeDays() int32 {
 	return 0
 }
 
+func (x *Food) GetFreezerShelfLifeDays() int32 {
+	if x != nil {
+		return x.xxx_hidden_FreezerShelfLifeDays
+	}
+	return 0
+}
+
 func (x *Food) GetNotes() string {
 	if x != nil {
 		return x.xxx_hidden_Notes
@@ -1264,6 +1272,10 @@ func (x *Food) SetShelfLifeDays(v int32) {
 
 func (x *Food) SetOpenedShelfLifeDays(v int32) {
 	x.xxx_hidden_OpenedShelfLifeDays = v
+}
+
+func (x *Food) SetFreezerShelfLifeDays(v int32) {
+	x.xxx_hidden_FreezerShelfLifeDays = v
 }
 
 func (x *Food) SetNotes(v string) {
@@ -1369,6 +1381,10 @@ type Food_builder struct {
 	// How many days the food keeps once opened, e.g. 4 for an opened carton of
 	// soy milk. 0 if unknown or the same as shelf_life_days.
 	OpenedShelfLifeDays int32
+	// How many days the food keeps frozen, from the day it's frozen, e.g. 90
+	// for bread or 180 for cooked beans. A pantry lot in the freezer is used
+	// by then, however soon its pack expires. 0 if unknown.
+	FreezerShelfLifeDays int32
 	// Notes about the food, e.g. the brand or where to buy it. At most 2000
 	// characters.
 	Notes string
@@ -1409,6 +1425,7 @@ func (b0 Food_builder) Build() *Food {
 	x.xxx_hidden_PackageGrams = b.PackageGrams
 	x.xxx_hidden_ShelfLifeDays = b.ShelfLifeDays
 	x.xxx_hidden_OpenedShelfLifeDays = b.OpenedShelfLifeDays
+	x.xxx_hidden_FreezerShelfLifeDays = b.FreezerShelfLifeDays
 	x.xxx_hidden_Notes = b.Notes
 	x.xxx_hidden_CreateTime = b.CreateTime
 	x.xxx_hidden_UpdateTime = b.UpdateTime
@@ -3175,7 +3192,7 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x12_copper_milligramsB\x17\n" +
 	"\x15_magnesium_milligramsB\x14\n" +
 	"\x12_sodium_milligramsB\x17\n" +
-	"\x15_potassium_milligrams\"\x83\x06\n" +
+	"\x15_potassium_milligrams\"\xba\x06\n" +
 	"\x04Food\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x124\n" +
@@ -3189,7 +3206,8 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\rpackage_grams\x18\n" +
 	" \x01(\x01R\fpackageGrams\x12&\n" +
 	"\x0fshelf_life_days\x18\v \x01(\x05R\rshelfLifeDays\x123\n" +
-	"\x16opened_shelf_life_days\x18\f \x01(\x05R\x13openedShelfLifeDays\x12\x14\n" +
+	"\x16opened_shelf_life_days\x18\f \x01(\x05R\x13openedShelfLifeDays\x125\n" +
+	"\x17freezer_shelf_life_days\x18\x13 \x01(\x05R\x14freezerShelfLifeDays\x12\x14\n" +
 	"\x05notes\x18\r \x01(\tR\x05notes\x12C\n" +
 	"\vcreate_time\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"createTime\x12C\n" +

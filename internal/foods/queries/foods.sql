@@ -33,6 +33,7 @@ insert into foods (
   package_grams,
   shelf_life_days,
   opened_shelf_life_days,
+  freezer_shelf_life_days,
   notes,
   preferred_store_id,
   always_in_stock
@@ -70,6 +71,7 @@ insert into foods (
   @package_grams,
   @shelf_life_days,
   @opened_shelf_life_days,
+  @freezer_shelf_life_days,
   @notes,
   @preferred_store_id,
   @always_in_stock
@@ -119,6 +121,7 @@ update foods set
   package_grams = @package_grams,
   shelf_life_days = @shelf_life_days,
   opened_shelf_life_days = @opened_shelf_life_days,
+  freezer_shelf_life_days = @freezer_shelf_life_days,
   notes = @notes,
   preferred_store_id = @preferred_store_id,
   always_in_stock = @always_in_stock,

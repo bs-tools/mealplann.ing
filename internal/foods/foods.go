@@ -88,7 +88,9 @@ type Food struct {
 	// unopened and opened, 0 if unknown.
 	ShelfLifeDays       int32
 	OpenedShelfLifeDays int32
-	Notes               string
+	// FreezerShelfLifeDays is how long the food keeps frozen, 0 if unknown.
+	FreezerShelfLifeDays int32
+	Notes                string
 	// PreferredStoreID is the store the food is always bought at, invalid
 	// for the household's main store.
 	PreferredStoreID pgtype.UUID
@@ -159,6 +161,7 @@ func (r *Repository) CreateFood(ctx context.Context, f *Food) (*Food, error) {
 		PackageGrams:                    positive(f.PackageGrams),
 		ShelfLifeDays:                   positive(f.ShelfLifeDays),
 		OpenedShelfLifeDays:             positive(f.OpenedShelfLifeDays),
+		FreezerShelfLifeDays:            positive(f.FreezerShelfLifeDays),
 		Notes:                           f.Notes,
 		PreferredStoreID:                f.PreferredStoreID,
 		AlwaysInStock:                   f.AlwaysInStock,
@@ -244,6 +247,7 @@ func (r *Repository) UpdateFood(ctx context.Context, f *Food) (*Food, error) {
 		PackageGrams:                    positive(f.PackageGrams),
 		ShelfLifeDays:                   positive(f.ShelfLifeDays),
 		OpenedShelfLifeDays:             positive(f.OpenedShelfLifeDays),
+		FreezerShelfLifeDays:            positive(f.FreezerShelfLifeDays),
 		Notes:                           f.Notes,
 		PreferredStoreID:                f.PreferredStoreID,
 		AlwaysInStock:                   f.AlwaysInStock,
@@ -457,18 +461,19 @@ func foodFromDB(row *gen.Food) *Food {
 			nutrition.SodiumMilligrams:     row.SodiumMilligramsPer100Grams,
 			nutrition.PotassiumMilligrams:  row.PotassiumMilligramsPer100Grams,
 		},
-		GramsPerPiece:       orZero(row.GramsPerPiece),
-		GramsPerMilliliter:  orZero(row.GramsPerMilliliter),
-		FastCarb:            row.FastCarb,
-		StoreSection:        storeSectionFromDB(row.StoreSection),
-		PackageGrams:        orZero(row.PackageGrams),
-		ShelfLifeDays:       orZero(row.ShelfLifeDays),
-		OpenedShelfLifeDays: orZero(row.OpenedShelfLifeDays),
-		Notes:               row.Notes,
-		PreferredStoreID:    row.PreferredStoreID,
-		AlwaysInStock:       row.AlwaysInStock,
-		CreateTime:          row.CreateTime.Time,
-		UpdateTime:          row.UpdateTime.Time,
+		GramsPerPiece:        orZero(row.GramsPerPiece),
+		GramsPerMilliliter:   orZero(row.GramsPerMilliliter),
+		FastCarb:             row.FastCarb,
+		StoreSection:         storeSectionFromDB(row.StoreSection),
+		PackageGrams:         orZero(row.PackageGrams),
+		ShelfLifeDays:        orZero(row.ShelfLifeDays),
+		OpenedShelfLifeDays:  orZero(row.OpenedShelfLifeDays),
+		FreezerShelfLifeDays: orZero(row.FreezerShelfLifeDays),
+		Notes:                row.Notes,
+		PreferredStoreID:     row.PreferredStoreID,
+		AlwaysInStock:        row.AlwaysInStock,
+		CreateTime:           row.CreateTime.Time,
+		UpdateTime:           row.UpdateTime.Time,
 	}
 }
 

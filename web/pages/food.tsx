@@ -119,6 +119,9 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
   const [openedShelfLifeDays, setOpenedShelfLifeDays] = useState(
     zeroAsEmpty(food.openedShelfLifeDays)
   );
+  const [freezerShelfLifeDays, setFreezerShelfLifeDays] = useState(
+    zeroAsEmpty(food.freezerShelfLifeDays)
+  );
   const [storeSection, setStoreSection] = useState(food.storeSection);
   const [fastCarb, setFastCarb] = useState(food.fastCarb);
   const [preferredStoreId, setPreferredStoreId] = useState(
@@ -181,6 +184,12 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
       path: "opened_shelf_life_days",
       text: openedShelfLifeDays,
     },
+    {
+      initial: food.freezerShelfLifeDays,
+      label: "Keeps frozen for",
+      path: "freezer_shelf_life_days",
+      text: freezerShelfLifeDays,
+    },
   ];
   const paths: string[] = [];
   if (name !== food.name) {
@@ -239,6 +248,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
       food: {
         alwaysInStock,
         fastCarb,
+        freezerShelfLifeDays: Math.round(parsed.freezer_shelf_life_days ?? 0),
         gramsPerMilliliter: parsed.grams_per_milliliter ?? 0,
         gramsPerPiece: parsed.grams_per_piece ?? 0,
         id: food.id,
@@ -402,6 +412,12 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
                 value={openedShelfLifeDays}
                 inputMode="numeric"
                 onChange={setOpenedShelfLifeDays}
+              />
+              <TextField
+                label="Frozen (days)"
+                value={freezerShelfLifeDays}
+                inputMode="numeric"
+                onChange={setFreezerShelfLifeDays}
               />
             </div>
           </Card>

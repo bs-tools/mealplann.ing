@@ -23,10 +23,10 @@ import {
   removeFromPantry,
 } from "gen/pantry/v1/pantry-PantryService_connectquery";
 import type { PantryItem } from "gen/pantry/v1/pantry_pb";
-import { PantryService } from "gen/pantry/v1/pantry_pb";
+import { PantryService, Storage } from "gen/pantry/v1/pantry_pb";
 import { daysBetween, today } from "helpers/dates";
 import { formatNearDate, formatStock } from "helpers/format";
-import { STORE_SECTIONS } from "helpers/labels";
+import { STORAGES, STORE_SECTIONS } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 import { Link } from "react-router";
@@ -43,6 +43,19 @@ const SECTIONS = [
   { label: "Other foods", value: StoreSection.UNSPECIFIED },
 ];
 
+/**
+ * StoragePlace says where a lot is kept, e.g. "Freezer · chest freezer",
+ * or "" if that isn't said.
+ */
+const storagePlace = (item: PantryItem): string => {
+  const kept =
+    STORAGES.find(
+      (option) =>
+        option.value === item.storage && option.value !== Storage.UNSPECIFIED
+    )?.label ?? "";
+  return [kept, item.location].filter((part) => part !== "").join(" · ");
+};
+
 interface ExpiryBadgeProps {
   item: PantryItem;
   now: string;
@@ -54,7 +67,7 @@ const ExpiryBadge: React.FC<ExpiryBadgeProps> = ({ item, now }) => {
     return null;
   }
   const days = daysBetween(now, item.useByDate);
-  const opened = item.openedDate === "" ? "" : "Opened · ";
+  const opened = item.opened ? "Opened · " : "";
   if (days < 0) {
     return (
       <Badge className="bg-red-50 text-red-800 ring-red-200">
@@ -169,11 +182,30 @@ const PantryPage: React.FC = () => {
                         <div className="flex min-w-0 grow flex-col">
                           <span className="font-medium text-gray-900">
                             {item.foodName}
+                            {item.label !== "" && (
+                              <span className="font-normal text-gray-600">
+                                {" "}
+                                · {item.label}
+                              </span>
+                            )}
                           </span>
                           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <span className="text-gray-600 tabular-nums">
+                            <span
+                              className="text-gray-600 tabular-nums"
+                              title={
+                                item.estimated
+                                  ? "The amount is a guess: check it"
+                                  : undefined
+                              }
+                            >
+                              {item.estimated ? "≈ " : ""}
                               {formatStock(item.grams, item.gramsPerPiece)}
                             </span>
+                            {storagePlace(item) !== "" && (
+                              <span className="text-xs text-gray-500">
+                                {storagePlace(item)}
+                              </span>
+                            )}
                             <ExpiryBadge item={item} now={now} />
                             {item.notes !== "" && (
                               <span className="text-xs text-gray-500 italic">

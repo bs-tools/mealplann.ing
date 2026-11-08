@@ -46,7 +46,10 @@ export const planMeals = PlanService.method.planMeals;
 /**
  * Create a cook: a recipe made on a date. Plan who eats it with
  * CreatePortion, or use PlanMeal to do both. A cook created done takes
- * its ingredients out of the pantry, like UpdateCook.
+ * its ingredients out of the pantry, like UpdateCook, unless it's
+ * from_stock: food already made, like a tray of lasagne ragù in the
+ * freezer, entered with frozen_servings to show in ListFrozenLeftovers
+ * and plan from.
  *
  * @generated from rpc plans.v1.PlanService.CreateCook
  */

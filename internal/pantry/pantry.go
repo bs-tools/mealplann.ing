@@ -23,6 +23,17 @@ import (
 // household's.
 var ErrUnknownFood = errors.New("the food isn't one of the household's foods")
 
+// Storage is where a lot is kept. The zero value is unspecified.
+type Storage string
+
+// The storages, as stored.
+const (
+	StorageUnspecified Storage = ""
+	StoragePantry      Storage = "pantry"
+	StorageFridge      Storage = "fridge"
+	StorageFreezer     Storage = "freezer"
+)
+
 // Item is a lot of a food in stock.
 type Item struct {
 	ID          pgtype.UUID
@@ -35,19 +46,38 @@ type Item struct {
 	ExpiryDate time.Time
 	OpenedDate time.Time
 	Notes      string
-	// FoodName, StoreSection, GramsPerPiece and OpenedShelfLifeDays are
-	// read from the food, and ignored when writing.
-	FoodName            string
-	StoreSection        foods.StoreSection
-	GramsPerPiece       float64
-	OpenedShelfLifeDays int32
-	CreateTime          time.Time
-	UpdateTime          time.Time
+	// Storage is where it's kept, and Location where in the home.
+	Storage  Storage
+	Location string
+	// FrozenDate is when it was frozen, zero unless it's in the freezer.
+	FrozenDate time.Time
+	// Opened is whether it's been opened, on OpenedDate if that's known.
+	Opened bool
+	// Estimated is whether Grams is a guess.
+	Estimated bool
+	// Label is its brand or label.
+	Label string
+	// FoodName, StoreSection, GramsPerPiece, OpenedShelfLifeDays and
+	// FreezerShelfLifeDays are read from the food, and ignored when
+	// writing.
+	FoodName             string
+	StoreSection         foods.StoreSection
+	GramsPerPiece        float64
+	OpenedShelfLifeDays  int32
+	FreezerShelfLifeDays int32
+	CreateTime           time.Time
+	UpdateTime           time.Time
 }
 
-// UseBy returns the date to use the lot by: the earlier of its expiry date
-// and the end of its opened shelf life, or zero if neither is known.
+// UseBy returns the date to use the lot by. In the freezer, it's the day
+// it was frozen plus the food's freezer shelf life, if both are known, as
+// freezing stops the clock its pack's expiry date counts on. Otherwise
+// it's the earlier of its expiry date and the end of its opened shelf
+// life, or zero if neither is known.
 func (it *Item) UseBy() time.Time {
+	if it.Storage == StorageFreezer && !it.FrozenDate.IsZero() && it.FreezerShelfLifeDays > 0 {
+		return it.FrozenDate.AddDate(0, 0, int(it.FreezerShelfLifeDays))
+	}
 	useBy := it.ExpiryDate
 	if !it.OpenedDate.IsZero() && it.OpenedShelfLifeDays > 0 {
 		opened := it.OpenedDate.AddDate(0, 0, int(it.OpenedShelfLifeDays))
@@ -122,6 +152,12 @@ func (r *Repository) CreateItems(ctx context.Context, householdID pgtype.UUID, i
 		p.ExpiryDates = append(p.ExpiryDates, store.DateToPG(it.ExpiryDate))
 		p.OpenedDates = append(p.OpenedDates, store.DateToPG(it.OpenedDate))
 		p.Notes = append(p.Notes, it.Notes)
+		p.Storages = append(p.Storages, string(it.Storage))
+		p.Locations = append(p.Locations, it.Location)
+		p.FrozenDates = append(p.FrozenDates, store.DateToPG(it.FrozenDate))
+		p.Opened = append(p.Opened, it.Opened || !it.OpenedDate.IsZero())
+		p.Estimated = append(p.Estimated, it.Estimated)
+		p.Labels = append(p.Labels, it.Label)
 	}
 	var rows []*gen.ListPantryItemsRow
 	var b store.Batch
@@ -147,7 +183,7 @@ func (r *Repository) CreateItems(ctx context.Context, householdID pgtype.UUID, i
 	return created, nil
 }
 
-// UpdateItem replaces a household's lot's grams, dates and notes. It
+// UpdateItem replaces a household's lot's grams, dates, notes and details. It
 // returns store.ErrNotFound if the household has no such lot.
 func (r *Repository) UpdateItem(ctx context.Context, it *Item) (*Item, error) {
 	var updated int64
@@ -162,6 +198,12 @@ func (r *Repository) UpdateItem(ctx context.Context, it *Item) (*Item, error) {
 			ExpiryDate:  store.DateToPG(it.ExpiryDate),
 			OpenedDate:  store.DateToPG(it.OpenedDate),
 			Notes:       it.Notes,
+			Storage:     storageToDB(it.Storage),
+			Location:    it.Location,
+			FrozenDate:  store.DateToPG(it.FrozenDate),
+			Opened:      it.Opened || !it.OpenedDate.IsZero(),
+			Estimated:   it.Estimated,
+			Label:       it.Label,
 		})
 		return err
 	})
@@ -255,6 +297,12 @@ func (r *Repository) UseForCook(ctx context.Context, householdID, cookID pgtype.
 				record.ExpiryDates = append(record.ExpiryDates, store.DateToPG(d.Item.ExpiryDate))
 				record.OpenedDates = append(record.OpenedDates, store.DateToPG(d.Item.OpenedDate))
 				record.Notes = append(record.Notes, d.Item.Notes)
+				record.Storages = append(record.Storages, string(d.Item.Storage))
+				record.Locations = append(record.Locations, d.Item.Location)
+				record.FrozenDates = append(record.FrozenDates, store.DateToPG(d.Item.FrozenDate))
+				record.Opened = append(record.Opened, d.Item.Opened)
+				record.Estimated = append(record.Estimated, d.Item.Estimated)
+				record.Labels = append(record.Labels, d.Item.Label)
 			}
 			if len(set.Ids) > 0 {
 				_ = q.SetPantryItemGrams(ctx, set)
@@ -315,6 +363,11 @@ func itemFromDB(row *gen.ListPantryItemsRow) *Item {
 		ExpiryDate:  store.DateFromPG(p.ExpiryDate),
 		OpenedDate:  store.DateFromPG(p.OpenedDate),
 		Notes:       p.Notes,
+		Location:    p.Location,
+		FrozenDate:  store.DateFromPG(p.FrozenDate),
+		Opened:      p.Opened,
+		Estimated:   p.Estimated,
+		Label:       p.Label,
 		FoodName:    row.FoodName,
 		CreateTime:  p.CreateTime.Time,
 		UpdateTime:  p.UpdateTime.Time,
@@ -328,5 +381,20 @@ func itemFromDB(row *gen.ListPantryItemsRow) *Item {
 	if row.OpenedShelfLifeDays != nil {
 		it.OpenedShelfLifeDays = *row.OpenedShelfLifeDays
 	}
+	if row.FreezerShelfLifeDays != nil {
+		it.FreezerShelfLifeDays = *row.FreezerShelfLifeDays
+	}
+	if p.Storage != nil {
+		it.Storage = Storage(*p.Storage)
+	}
 	return it
+}
+
+// storageToDB returns a storage as stored, nil for unspecified.
+func storageToDB(s Storage) *gen.PantryStorage {
+	if s == StorageUnspecified {
+		return nil
+	}
+	v := gen.PantryStorage(s)
+	return &v
 }

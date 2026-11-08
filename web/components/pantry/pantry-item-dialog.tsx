@@ -1,6 +1,6 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
-import { SelectField, TextField } from "@components/ui/fields";
+import { CheckboxField, SelectField, TextField } from "@components/ui/fields";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
 import {
@@ -16,8 +16,8 @@ import {
   updatePantryItem,
 } from "gen/pantry/v1/pantry-PantryService_connectquery";
 import type { PantryItem } from "gen/pantry/v1/pantry_pb";
-import { PantryService } from "gen/pantry/v1/pantry_pb";
-import { AMOUNT_UNITS, optionValue } from "helpers/labels";
+import { PantryService, Storage } from "gen/pantry/v1/pantry_pb";
+import { AMOUNT_UNITS, STORAGES, optionValue } from "helpers/labels";
 import { parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
@@ -30,7 +30,8 @@ interface PantryItemDialogProps {
 
 /**
  * PantryItemDialog adds an amount of a food to the pantry, in grams,
- * milliliters or pieces, or edits a lot: its grams, dates and notes.
+ * milliliters or pieces, or edits a lot: its grams, dates, where it's kept,
+ * its label and notes.
  */
 const PantryItemDialog: React.FC<PantryItemDialogProps> = ({
   item,
@@ -47,6 +48,13 @@ const PantryItemDialog: React.FC<PantryItemDialogProps> = ({
   const [expiryDate, setExpiryDate] = useState(item?.expiryDate ?? "");
   const [openedDate, setOpenedDate] = useState(item?.openedDate ?? "");
   const [notes, setNotes] = useState(item?.notes ?? "");
+  const [storage, setStorage] = useState(item?.storage ?? Storage.UNSPECIFIED);
+  const [location, setLocation] = useState(item?.location ?? "");
+  const [frozenDate, setFrozenDate] = useState(item?.frozenDate ?? "");
+  const [label, setLabel] = useState(item?.label ?? "");
+  const [opened, setOpened] = useState(item?.opened ?? false);
+  const [estimated, setEstimated] = useState(item?.estimated ?? false);
+  const frozen = storage === Storage.FREEZER;
   const [invalid, setInvalid] = useState("");
   const onSuccess = async () => {
     await invalidateServices(queryClient, [PantryService]);
@@ -60,7 +68,13 @@ const PantryItemDialog: React.FC<PantryItemDialogProps> = ({
       : amount !== String(Math.round(item.grams * 10) / 10) ||
         expiryDate !== item.expiryDate ||
         openedDate !== item.openedDate ||
-        notes !== item.notes;
+        notes !== item.notes ||
+        storage !== item.storage ||
+        location !== item.location ||
+        frozenDate !== item.frozenDate ||
+        label !== item.label ||
+        opened !== item.opened ||
+        estimated !== item.estimated;
 
   const save = () => {
     setInvalid("");
@@ -72,14 +86,31 @@ const PantryItemDialog: React.FC<PantryItemDialogProps> = ({
     if (item !== undefined) {
       update.mutate({
         item: {
+          estimated,
           expiryDate,
+          frozenDate: frozen ? frozenDate : "",
           grams: value,
           id: item.id,
+          label,
+          location,
           notes,
+          opened: opened || openedDate !== "",
           openedDate,
+          storage,
         },
         updateMask: {
-          paths: ["grams", "expiry_date", "opened_date", "notes"],
+          paths: [
+            "grams",
+            "expiry_date",
+            "opened_date",
+            "notes",
+            "storage",
+            "location",
+            "frozen_date",
+            "label",
+            "opened",
+            "estimated",
+          ],
         },
       });
       return;
@@ -90,10 +121,16 @@ const PantryItemDialog: React.FC<PantryItemDialogProps> = ({
     }
     add.mutate({
       amount: value,
+      estimated,
       expiryDate,
       foodId: food.id,
+      frozenDate: frozen ? frozenDate : "",
+      label,
+      location,
       notes,
+      opened,
       openedDate,
+      storage,
       unit,
     });
   };
@@ -154,11 +191,59 @@ const PantryItemDialog: React.FC<PantryItemDialogProps> = ({
             value={openedDate}
             onChange={setOpenedDate}
           />
+          <SelectField
+            label="Kept in"
+            value={String(storage)}
+            options={STORAGES.map((option) => ({
+              label: option.label,
+              value: String(option.value),
+            }))}
+            onChange={(value) => {
+              setStorage(optionValue(STORAGES, value, Storage.UNSPECIFIED));
+            }}
+          />
+          {frozen ? (
+            <TextField
+              label="Frozen on"
+              type="date"
+              value={frozenDate}
+              hint="Empty for today."
+              onChange={setFrozenDate}
+            />
+          ) : (
+            <span />
+          )}
+          <TextField
+            label="Where"
+            value={location}
+            placeholder="Chest freezer"
+            onChange={setLocation}
+          />
+          <TextField
+            label="Brand or label"
+            value={label}
+            placeholder="Sriracha"
+            onChange={setLabel}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          {openedDate === "" && (
+            <CheckboxField
+              label="Opened, on a day I don't know"
+              checked={opened}
+              onChange={setOpened}
+            />
+          )}
+          <CheckboxField
+            label="The amount is a guess"
+            checked={estimated}
+            onChange={setEstimated}
+          />
         </div>
         <TextField
           label="Notes"
           value={notes}
-          placeholder="In the freezer"
+          placeholder="Half used"
           onChange={setNotes}
         />
         {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}

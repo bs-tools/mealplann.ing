@@ -362,6 +362,9 @@ func (s *Service) CreateCook(ctx context.Context, req *plansv1.CreateCookRequest
 		return nil, err
 	}
 	c.HouseholdID = user.HouseholdID()
+	if req.GetFromStock() {
+		c.Done = true
+	}
 	// The cooks of the recipe's components are created with it, so its
 	// recipe is read first, with them.
 	list, err := s.recipes.ListRecipesByID(ctx, c.HouseholdID, []pgtype.UUID{c.RecipeID})
@@ -371,14 +374,17 @@ func (s *Service) CreateCook(ctx context.Context, req *plansv1.CreateCookRequest
 	if len(list) == 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, referenceMessages["recipe_id"])
 	}
-	cooks, _, err := s.plans.CreateCooksWithPortions(ctx,
-		withSuppliers([]*plans.CookWithPortions{{Cook: c}}, map[pgtype.UUID]*recipes.Recipe{list[0].ID: list[0]}))
+	toCreate := []*plans.CookWithPortions{{Cook: c}}
+	if !req.GetFromStock() {
+		toCreate = withSuppliers(toCreate, map[pgtype.UUID]*recipes.Recipe{list[0].ID: list[0]})
+	}
+	cooks, _, err := s.plans.CreateCooksWithPortions(ctx, toCreate)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to create cook", "")
 	}
 	created := cooks[0]
 	var changes []*plansv1.PantryChange
-	if created.Done {
+	if created.Done && !req.GetFromStock() {
 		changes, err = s.useForCook(ctx, created)
 		if err != nil {
 			return nil, s.toConnectError(ctx, err, "failed to take the cook's ingredients out of the pantry", cookNotFound)

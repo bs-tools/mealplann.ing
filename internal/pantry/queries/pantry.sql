@@ -6,7 +6,8 @@ select
   f.name as food_name,
   f.store_section,
   f.grams_per_piece,
-  f.opened_shelf_life_days
+  f.opened_shelf_life_days,
+  f.freezer_shelf_life_days
 from pantry_items
 join foods f on f.id = pantry_items.food_id
 where pantry_items.household_id = @household_id
@@ -22,7 +23,8 @@ select
   f.name as food_name,
   f.store_section,
   f.grams_per_piece,
-  f.opened_shelf_life_days
+  f.opened_shelf_life_days,
+  f.freezer_shelf_life_days
 from pantry_items
 join foods f on f.id = pantry_items.food_id
 where pantry_items.household_id = @household_id
@@ -32,7 +34,10 @@ for update of pantry_items;
 
 -- name: CreatePantryItems :execrows
 -- Creates lots, given as arrays of their fields.
-insert into pantry_items (id, household_id, food_id, grams, expiry_date, opened_date, notes)
+insert into pantry_items (
+  id, household_id, food_id, grams, expiry_date, opened_date, notes,
+  storage, location, frozen_date, opened, estimated, label
+)
 select
   (@ids::uuid[])[i],
   @household_id,
@@ -40,7 +45,15 @@ select
   (@grams::double precision[])[i],
   (@expiry_dates::date[])[i],
   (@opened_dates::date[])[i],
-  (@notes::text[])[i]
+  (@notes::text[])[i],
+  -- Storages are text, as an array of a nullable enum, with null for
+  -- unspecified, doesn't pass as a parameter.
+  nullif((@storages::text[])[i], '')::pantry_storage,
+  (@locations::text[])[i],
+  (@frozen_dates::date[])[i],
+  (@opened::boolean[])[i],
+  (@estimated::boolean[])[i],
+  (@labels::text[])[i]
 from generate_subscripts(@ids::uuid[], 1) as i;
 
 -- name: UpdatePantryItem :execrows
@@ -49,6 +62,12 @@ update pantry_items set
   expiry_date = @expiry_date,
   opened_date = @opened_date,
   notes = @notes,
+  storage = sqlc.narg(storage),
+  location = @location,
+  frozen_date = @frozen_date,
+  opened = @opened,
+  estimated = @estimated,
+  label = @label,
   update_time = now()
 where id = @id and household_id = @household_id;
 
@@ -76,7 +95,8 @@ on conflict do nothing;
 -- name: CreateCookPantryDeductions :exec
 -- Records what a cook took out of each lot, given as arrays.
 insert into cook_pantry_deductions (
-  cook_id, household_id, pantry_item_id, food_id, grams, expiry_date, opened_date, notes
+  cook_id, household_id, pantry_item_id, food_id, grams, expiry_date, opened_date, notes,
+  storage, location, frozen_date, opened, estimated, label
 )
 select
   @cook_id,
@@ -86,7 +106,13 @@ select
   (@grams::double precision[])[i],
   (@expiry_dates::date[])[i],
   (@opened_dates::date[])[i],
-  (@notes::text[])[i]
+  (@notes::text[])[i],
+  nullif((@storages::text[])[i], '')::pantry_storage,
+  (@locations::text[])[i],
+  (@frozen_dates::date[])[i],
+  (@opened::boolean[])[i],
+  (@estimated::boolean[])[i],
+  (@labels::text[])[i]
 from generate_subscripts(@pantry_item_ids::uuid[], 1) as i;
 
 -- name: RestoreCookPantryUse :many
@@ -103,8 +129,13 @@ with used as (
   select d.* from cook_pantry_deductions d
   join used on used.cook_id = d.cook_id
 ), put_back as (
-  insert into pantry_items (id, household_id, food_id, grams, expiry_date, opened_date, notes)
-  select r.pantry_item_id, r.household_id, r.food_id, r.grams, r.expiry_date, r.opened_date, r.notes
+  insert into pantry_items (
+    id, household_id, food_id, grams, expiry_date, opened_date, notes,
+    storage, location, frozen_date, opened, estimated, label
+  )
+  select
+    r.pantry_item_id, r.household_id, r.food_id, r.grams, r.expiry_date, r.opened_date, r.notes,
+    r.storage, r.location, r.frozen_date, r.opened, r.estimated, r.label
   from restored r
   on conflict (id) do update set
     grams = pantry_items.grams + excluded.grams,
