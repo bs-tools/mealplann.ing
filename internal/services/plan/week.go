@@ -345,6 +345,7 @@ func (d *planData) plannedPortion(it *item, e *eaten) *plansv1.PlannedPortion {
 	} else {
 		st := it.staple
 		b.StapleId = store.UUIDToString(st.ID)
+		b.Eaten = st.EatenOn(it.date)
 		b.Notes = st.Notes
 		if st.RecipeID.Valid {
 			b.RecipeId = store.UUIDToString(st.RecipeID)

@@ -156,6 +156,93 @@ func (q *Queries) CreatePantryItems(ctx context.Context, arg *CreatePantryItemsP
 	return result.RowsAffected(), nil
 }
 
+const createStaplePantryDeductions = `-- name: CreateStaplePantryDeductions :exec
+insert into staple_pantry_deductions (
+  staple_id, date, household_id, pantry_item_id, food_id, grams, expiry_date, opened_date, notes,
+  storage, location, frozen_date, opened, estimated, label
+)
+select
+  $1,
+  $2,
+  $3,
+  ($4::uuid[])[i],
+  ($5::uuid[])[i],
+  ($6::double precision[])[i],
+  ($7::date[])[i],
+  ($8::date[])[i],
+  ($9::text[])[i],
+  nullif(($10::text[])[i], '')::pantry_storage,
+  ($11::text[])[i],
+  ($12::date[])[i],
+  ($13::boolean[])[i],
+  ($14::boolean[])[i],
+  ($15::text[])[i]
+from generate_subscripts($4::uuid[], 1) as i
+`
+
+type CreateStaplePantryDeductionsParams struct {
+	StapleID      pgtype.UUID
+	Date          pgtype.Date
+	HouseholdID   pgtype.UUID
+	PantryItemIds []pgtype.UUID
+	FoodIds       []pgtype.UUID
+	Grams         []float64
+	ExpiryDates   []pgtype.Date
+	OpenedDates   []pgtype.Date
+	Notes         []string
+	Storages      []string
+	Locations     []string
+	FrozenDates   []pgtype.Date
+	Opened        []bool
+	Estimated     []bool
+	Labels        []string
+}
+
+// Records what a staple eaten on a date took out of each lot, given as
+// arrays.
+func (q *Queries) CreateStaplePantryDeductions(ctx context.Context, arg *CreateStaplePantryDeductionsParams) error {
+	_, err := q.db.Exec(ctx, createStaplePantryDeductions,
+		arg.StapleID,
+		arg.Date,
+		arg.HouseholdID,
+		arg.PantryItemIds,
+		arg.FoodIds,
+		arg.Grams,
+		arg.ExpiryDates,
+		arg.OpenedDates,
+		arg.Notes,
+		arg.Storages,
+		arg.Locations,
+		arg.FrozenDates,
+		arg.Opened,
+		arg.Estimated,
+		arg.Labels,
+	)
+	return err
+}
+
+const createStaplePantryUse = `-- name: CreateStaplePantryUse :execrows
+insert into staple_pantry_uses (staple_id, date, household_id)
+values ($1, $2, $3)
+on conflict do nothing
+`
+
+type CreateStaplePantryUseParams struct {
+	StapleID    pgtype.UUID
+	Date        pgtype.Date
+	HouseholdID pgtype.UUID
+}
+
+// Records that a staple eaten on a date took its food out of the pantry,
+// unless it already did, which affects no rows.
+func (q *Queries) CreateStaplePantryUse(ctx context.Context, arg *CreateStaplePantryUseParams) (int64, error) {
+	result, err := q.db.Exec(ctx, createStaplePantryUse, arg.StapleID, arg.Date, arg.HouseholdID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deletePantryItem = `-- name: DeletePantryItem :execrows
 delete from pantry_items where id = $1 and household_id = $2
 `
@@ -384,6 +471,66 @@ func (q *Queries) RestoreCookPantryUse(ctx context.Context, arg *RestoreCookPant
 	var items []*RestoreCookPantryUseRow
 	for rows.Next() {
 		var i RestoreCookPantryUseRow
+		if err := rows.Scan(&i.FoodID, &i.Grams); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const restoreStaplePantryUse = `-- name: RestoreStaplePantryUse :many
+with used as (
+  delete from staple_pantry_uses u
+  where u.staple_id = $1 and u.date = $2 and u.household_id = $3
+  returning u.staple_id, u.date
+), restored as (
+  select d.staple_id, d.date, d.household_id, d.pantry_item_id, d.food_id, d.grams, d.expiry_date, d.opened_date, d.notes, d.storage, d.location, d.frozen_date, d.opened, d.estimated, d.label from staple_pantry_deductions d
+  join used on used.staple_id = d.staple_id and used.date = d.date
+), put_back as (
+  insert into pantry_items (
+    id, household_id, food_id, grams, expiry_date, opened_date, notes,
+    storage, location, frozen_date, opened, estimated, label
+  )
+  select
+    r.pantry_item_id, r.household_id, r.food_id, r.grams, r.expiry_date, r.opened_date, r.notes,
+    r.storage, r.location, r.frozen_date, r.opened, r.estimated, r.label
+  from restored r
+  on conflict (id) do update set
+    grams = pantry_items.grams + excluded.grams,
+    update_time = now()
+  returning pantry_items.id
+)
+select r.food_id, r.grams from restored r
+order by r.food_id, r.pantry_item_id
+`
+
+type RestoreStaplePantryUseParams struct {
+	StapleID    pgtype.UUID
+	Date        pgtype.Date
+	HouseholdID pgtype.UUID
+}
+
+type RestoreStaplePantryUseRow struct {
+	FoodID pgtype.UUID
+	Grams  float64
+}
+
+// Puts back what a staple eaten on a date took out of the pantry, like
+// RestoreCookPantryUse, and forgets that it was eaten. Returns the
+// deductions put back, none if it took nothing out.
+func (q *Queries) RestoreStaplePantryUse(ctx context.Context, arg *RestoreStaplePantryUseParams) ([]*RestoreStaplePantryUseRow, error) {
+	rows, err := q.db.Query(ctx, restoreStaplePantryUse, arg.StapleID, arg.Date, arg.HouseholdID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*RestoreStaplePantryUseRow
+	for rows.Next() {
+		var i RestoreStaplePantryUseRow
 		if err := rows.Scan(&i.FoodID, &i.Grams); err != nil {
 			return nil, err
 		}

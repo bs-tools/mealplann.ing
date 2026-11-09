@@ -643,6 +643,54 @@ func (q *Queries) ListPortions(ctx context.Context, arg *ListPortionsParams) ([]
 	return items, nil
 }
 
+const listStapleEatenDates = `-- name: ListStapleEatenDates :many
+select staple_id, date from staple_pantry_uses
+where household_id = $1
+  and ($2::uuid is null or staple_id = $2)
+  and ($3::date is null or date >= $3)
+  and ($4::date is null or date <= $4)
+order by staple_id, date
+`
+
+type ListStapleEatenDatesParams struct {
+	HouseholdID pgtype.UUID
+	StapleID    pgtype.UUID
+	FromDate    pgtype.Date
+	ToDate      pgtype.Date
+}
+
+type ListStapleEatenDatesRow struct {
+	StapleID pgtype.UUID
+	Date     pgtype.Date
+}
+
+// The dates the household's staples, or one of them, were marked eaten on,
+// in a range of dates or all.
+func (q *Queries) ListStapleEatenDates(ctx context.Context, arg *ListStapleEatenDatesParams) ([]*ListStapleEatenDatesRow, error) {
+	rows, err := q.db.Query(ctx, listStapleEatenDates,
+		arg.HouseholdID,
+		arg.StapleID,
+		arg.FromDate,
+		arg.ToDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListStapleEatenDatesRow
+	for rows.Next() {
+		var i ListStapleEatenDatesRow
+		if err := rows.Scan(&i.StapleID, &i.Date); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listStapleSkips = `-- name: ListStapleSkips :many
 select household_id, staple_id, date from staple_skips
 where household_id = $1

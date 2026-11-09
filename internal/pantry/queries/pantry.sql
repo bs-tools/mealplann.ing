@@ -144,3 +144,63 @@ with used as (
 )
 select r.food_id, r.grams from restored r
 order by r.food_id, r.pantry_item_id;
+
+-- name: CreateStaplePantryUse :execrows
+-- Records that a staple eaten on a date took its food out of the pantry,
+-- unless it already did, which affects no rows.
+insert into staple_pantry_uses (staple_id, date, household_id)
+values (@staple_id, @date, @household_id)
+on conflict do nothing;
+
+-- name: CreateStaplePantryDeductions :exec
+-- Records what a staple eaten on a date took out of each lot, given as
+-- arrays.
+insert into staple_pantry_deductions (
+  staple_id, date, household_id, pantry_item_id, food_id, grams, expiry_date, opened_date, notes,
+  storage, location, frozen_date, opened, estimated, label
+)
+select
+  @staple_id,
+  @date,
+  @household_id,
+  (@pantry_item_ids::uuid[])[i],
+  (@food_ids::uuid[])[i],
+  (@grams::double precision[])[i],
+  (@expiry_dates::date[])[i],
+  (@opened_dates::date[])[i],
+  (@notes::text[])[i],
+  nullif((@storages::text[])[i], '')::pantry_storage,
+  (@locations::text[])[i],
+  (@frozen_dates::date[])[i],
+  (@opened::boolean[])[i],
+  (@estimated::boolean[])[i],
+  (@labels::text[])[i]
+from generate_subscripts(@pantry_item_ids::uuid[], 1) as i;
+
+-- name: RestoreStaplePantryUse :many
+-- Puts back what a staple eaten on a date took out of the pantry, like
+-- RestoreCookPantryUse, and forgets that it was eaten. Returns the
+-- deductions put back, none if it took nothing out.
+with used as (
+  delete from staple_pantry_uses u
+  where u.staple_id = @staple_id and u.date = @date and u.household_id = @household_id
+  returning u.staple_id, u.date
+), restored as (
+  select d.* from staple_pantry_deductions d
+  join used on used.staple_id = d.staple_id and used.date = d.date
+), put_back as (
+  insert into pantry_items (
+    id, household_id, food_id, grams, expiry_date, opened_date, notes,
+    storage, location, frozen_date, opened, estimated, label
+  )
+  select
+    r.pantry_item_id, r.household_id, r.food_id, r.grams, r.expiry_date, r.opened_date, r.notes,
+    r.storage, r.location, r.frozen_date, r.opened, r.estimated, r.label
+  from restored r
+  on conflict (id) do update set
+    grams = pantry_items.grams + excluded.grams,
+    update_time = now()
+  returning pantry_items.id
+)
+select r.food_id, r.grams from restored r
+order by r.food_id, r.pantry_item_id;

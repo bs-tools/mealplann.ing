@@ -377,7 +377,7 @@ func TestInstructions(t *testing.T) {
 		"A plan is made of:\n\n1. Cooks: a recipe (see RecipeService) made on a date for a number of servings, scaling the recipe,",
 		"\n2. Portions: what a person (see PersonService) eats at one of their eating times on a date.",
 		"\n3. Staples: recurring portions,",
-		"The pantry changes by itself in two ways:\n\n1. Completing a shopping list (see ShoppingService.CompleteShopping) adds the checked items,",
+		"The pantry changes by itself in three ways:\n\n1. Completing a shopping list (see ShoppingService.CompleteShopping) adds the checked items,",
 		"\n2. Marking a cook done (see PlanService.UpdateCook) takes its ingredients out,",
 		"To help with the weekly shop:\n\n1. Plan the week first with PlanService, and check the pantry with PantryService.ListPantry,",
 		"\n2. Create the list with CreateShoppingList, from the day of the shop.",

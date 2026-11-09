@@ -22,7 +22,8 @@ import "people/v1/people.proto";
 //    batch cooking is one cook with portions over several days.
 // 3. Staples: recurring portions, like a person's usual breakfast or daily
 //    soy milk, on chosen weekdays until changed. They show in every week
-//    without being copied, and can be skipped on a date.
+//    without being copied, and can be skipped on a date, or marked eaten
+//    on it with SetStapleEaten to take their food out of the pantry.
 //
 // To plan a shared meal, use PlanMeal: it creates the cook and splits it
 // into a portion for each person who eats from that meal, keeping each
@@ -126,6 +127,15 @@ service PlanService {
   rpc SkipStaple(SkipStapleRequest) returns (SkipStapleResponse);
   // Stop skipping a staple on a date.
   rpc UnskipStaple(UnskipStapleRequest) returns (UnskipStapleResponse);
+  // Mark a staple eaten on a date, taking its food, or its recipe's
+  // ingredients scaled to its servings without the optional ones, out of
+  // the pantry, from the lots that expire first, as far as they're in
+  // stock; or un-mark it, putting back what it took out. Marking a date
+  // that's already marked does nothing, and marking a skipped date stops
+  // skipping it. Staples aren't taken out of the pantry unless marked
+  // eaten, and shopping lists don't buy for the dates they're marked
+  // eaten on, as they're out of the pantry already.
+  rpc SetStapleEaten(SetStapleEatenRequest) returns (SetStapleEatenResponse);
   // List what's in the freezer: the frozen leftovers of cooks (see
   // Cook.frozen_servings) not all planned or taken yet, by the date they
   // were cooked, each with the servings left and the last date they keep.
@@ -527,6 +537,9 @@ message PlannedPortion {
   bool leftover = 13;
   // The notes of the portion or staple.
   string notes = 14;
+  // Whether the staple was marked eaten on the date (see SetStapleEaten),
+  // which took its food out of the pantry. False for a portion.
+  bool eaten = 15;
 }
 
 // A cook of the week, with how its servings are planned.
@@ -845,6 +858,27 @@ message UnskipStapleRequest {
 message UnskipStapleResponse {
   // The staple.
   Staple staple = 1;
+}
+
+message SetStapleEatenRequest {
+  // The ID of the staple.
+  string id = 1;
+  // The date it's eaten on (YYYY-MM-DD), one of the staple's.
+  string date = 2;
+  // Whether it was eaten: true to take its food out of the pantry, false
+  // to put it back.
+  bool eaten = 3;
+}
+
+message SetStapleEatenResponse {
+  // The staple. GetWeek shows the dates it was marked eaten on, with
+  // PlannedPortion.eaten.
+  Staple staple = 1;
+  // What marking it eaten took out of the pantry, or un-marking it put
+  // back. Empty if nothing changed, or nothing was in stock.
+  repeated PantryChange pantry_changes = 2;
+  // Whether pantry_changes were put back, rather than taken out.
+  bool pantry_restored = 3;
 }
 
 message ListFrozenLeftoversRequest {}

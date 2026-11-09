@@ -97,6 +97,8 @@ interface PortionRowProps {
   onEdit: () => void;
   onDelete: () => void;
   onSkip: () => void;
+  // Marks a staple eaten, or not, on the day.
+  onEaten: (eaten: boolean) => void;
 }
 
 /**
@@ -109,13 +111,33 @@ export const PortionRow: React.FC<PortionRowProps> = ({
   onEdit,
   onDelete,
   onSkip,
+  onEaten,
 }) => {
   const staple = portion.stapleId !== "";
   const system = useUnitSystem();
   return (
     <li className="group flex items-start gap-1">
+      {staple && (
+        <input
+          type="checkbox"
+          className="mt-0.5 size-4 shrink-0 rounded border-gray-300 accent-brand-700 print:hidden"
+          checked={portion.eaten}
+          disabled={disabled}
+          aria-label={`${portion.name} is eaten`}
+          title={
+            portion.eaten
+              ? "Eaten: it was taken out of the pantry. Uncheck to put it back."
+              : "Mark as eaten, taking it out of the pantry"
+          }
+          onChange={(event) => {
+            onEaten(event.target.checked);
+          }}
+        />
+      )}
       <div className="min-w-0 grow">
-        <p className="text-sm leading-snug text-gray-900">
+        <p
+          className={`text-sm leading-snug text-gray-900 ${portion.eaten ? "line-through decoration-gray-400" : ""}`}
+        >
           {portion.name}
           {portion.leftover && (
             <span
@@ -138,7 +160,7 @@ export const PortionRow: React.FC<PortionRowProps> = ({
         </p>
       </div>
       <div className="flex shrink-0 print:hidden">
-        {staple ? (
+        {staple && !portion.eaten && (
           <button
             type="button"
             className="rounded px-1.5 py-1 text-xs font-medium whitespace-nowrap text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50"
@@ -149,7 +171,8 @@ export const PortionRow: React.FC<PortionRowProps> = ({
           >
             Skip today
           </button>
-        ) : (
+        )}
+        {!staple && (
           <>
             <button
               type="button"
@@ -219,6 +242,7 @@ interface EatingTimeBlockProps {
   onEdit: (portion: PlannedPortion) => void;
   onDelete: (portion: PlannedPortion) => void;
   onSkip: (portion: PlannedPortion) => void;
+  onEaten: (portion: PlannedPortion, eaten: boolean) => void;
   // The staples skipped at it on its date, which can be brought back.
   skipped: Staple[];
   onUnskip: (staple: Staple) => void;
@@ -236,6 +260,7 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
   onEdit,
   onDelete,
   onSkip,
+  onEaten,
   skipped,
   onUnskip,
 }) => {
@@ -310,6 +335,9 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
               }}
               onSkip={() => {
                 onSkip(portion);
+              }}
+              onEaten={(eaten) => {
+                onEaten(portion, eaten);
               }}
             />
           ))}

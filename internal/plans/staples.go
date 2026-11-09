@@ -13,8 +13,14 @@ type Occurrence struct {
 }
 
 // OccursOn reports whether the staple is eaten on a date at midnight UTC:
-// within its dates, on one of its weekdays, and not skipped.
+// on one of its dates (see IsOn), and not skipped.
 func (s *Staple) OccursOn(date time.Time) bool {
+	return s.IsOn(date) && !s.SkippedOn(date)
+}
+
+// IsOn reports whether a date at midnight UTC is one of the staple's,
+// skipped or not: within its dates, on one of its weekdays.
+func (s *Staple) IsOn(date time.Time) bool {
 	switch {
 	case !s.StartDate.IsZero() && date.Before(s.StartDate):
 		return false
@@ -23,7 +29,19 @@ func (s *Staple) OccursOn(date time.Time) bool {
 	case len(s.Weekdays) > 0 && !slices.Contains(s.Weekdays, date.Weekday()):
 		return false
 	}
-	return !slices.ContainsFunc(s.SkippedDates, date.Equal)
+	return true
+}
+
+// SkippedOn reports whether the staple is skipped on a date at midnight
+// UTC.
+func (s *Staple) SkippedOn(date time.Time) bool {
+	return slices.ContainsFunc(s.SkippedDates, date.Equal)
+}
+
+// EatenOn reports whether the staple was marked eaten on a date at
+// midnight UTC, which took its food out of the pantry.
+func (s *Staple) EatenOn(date time.Time) bool {
+	return slices.ContainsFunc(s.EatenDates, date.Equal)
 }
 
 // ExpandStaples returns the staples on each date from one date to another,

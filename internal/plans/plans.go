@@ -159,10 +159,15 @@ type Staple struct {
 	// ReplacesMeal is whether its person eats it instead of the shared meal
 	// at its eating time, so the meal isn't planned for them.
 	ReplacesMeal bool
-	// Name, the name of the recipe or food, and SkippedDates, the dates it's
-	// skipped on in order, are read, and ignored when writing.
+	// Name, the name of the recipe or food, SkippedDates, the dates it's
+	// skipped on in order, and EatenDates, the dates it was marked eaten on
+	// in order, which took its food out of the pantry, are read, and
+	// ignored when writing. EatenDates are only read with a plan, of its
+	// range, as a daily staple marked eaten every day would otherwise list
+	// every day since it started.
 	Name         string
 	SkippedDates []time.Time
+	EatenDates   []time.Time
 	CreateTime   time.Time
 	UpdateTime   time.Time
 }
@@ -207,6 +212,7 @@ func (r *Repository) GetPlan(ctx context.Context, householdID pgtype.UUID, from,
 	var portions []*gen.ListPortionsRow
 	var staples []*gen.ListStaplesRow
 	var skips []*gen.StapleSkip
+	var eaten []*gen.ListStapleEatenDatesRow
 	fromDate, toDate := store.DateToPG(from), store.DateToPG(to)
 	var b store.Batch
 	b.Read(func(db store.Querier) error {
@@ -245,6 +251,13 @@ func (r *Repository) GetPlan(ctx context.Context, householdID pgtype.UUID, from,
 		})
 		return err
 	})
+	b.Read(func(db store.Querier) error {
+		var err error
+		eaten, err = gen.New(db).ListStapleEatenDates(ctx, &gen.ListStapleEatenDatesParams{
+			HouseholdID: householdID, FromDate: fromDate, ToDate: toDate,
+		})
+		return err
+	})
 	if err := b.Send(ctx, r.db); err != nil {
 		return nil, fmt.Errorf("failed to get plan: %w", err)
 	}
@@ -259,7 +272,7 @@ func (r *Repository) GetPlan(ctx context.Context, householdID pgtype.UUID, from,
 	for _, row := range portions {
 		plan.Portions = append(plan.Portions, portionFromDB(row))
 	}
-	plan.Staples = staplesFromDB(staples, skips)
+	plan.Staples = staplesFromDB(staples, skips, eaten)
 	return plan, nil
 }
 
@@ -707,7 +720,7 @@ func (r *Repository) ListStaples(ctx context.Context, householdID, personID pgty
 	if err := b.Send(ctx, r.db); err != nil {
 		return nil, fmt.Errorf("failed to list staples: %w", err)
 	}
-	return staplesFromDB(staples, skips), nil
+	return staplesFromDB(staples, skips, nil), nil
 }
 
 // CreateStaple creates a staple in its household, and returns it. It
@@ -825,7 +838,7 @@ func readStaple(ctx context.Context, b *store.Batch, householdID, id pgtype.UUID
 		if err != nil {
 			return err
 		}
-		if list := staplesFromDB(rows, skips); len(list) > 0 {
+		if list := staplesFromDB(rows, skips, nil); len(list) > 0 {
 			*staple = list[0]
 		}
 		return nil
@@ -887,11 +900,16 @@ func portionFromDB(row *gen.ListPortionsRow) *Portion {
 	}
 }
 
-// staplesFromDB converts staples, in order, with their skipped dates.
-func staplesFromDB(rows []*gen.ListStaplesRow, skips []*gen.StapleSkip) []*Staple {
+// staplesFromDB converts staples, in order, with their skipped dates and
+// dates marked eaten.
+func staplesFromDB(rows []*gen.ListStaplesRow, skips []*gen.StapleSkip, eaten []*gen.ListStapleEatenDatesRow) []*Staple {
 	skipped := map[pgtype.UUID][]time.Time{}
 	for _, skip := range skips {
 		skipped[skip.StapleID] = append(skipped[skip.StapleID], store.DateFromPG(skip.Date))
+	}
+	eatenDates := map[pgtype.UUID][]time.Time{}
+	for _, e := range eaten {
+		eatenDates[e.StapleID] = append(eatenDates[e.StapleID], store.DateFromPG(e.Date))
 	}
 	staples := make([]*Staple, 0, len(rows))
 	for _, row := range rows {
@@ -917,6 +935,7 @@ func staplesFromDB(rows []*gen.ListStaplesRow, skips []*gen.StapleSkip) []*Stapl
 			ReplacesMeal: s.ReplacesMeal,
 			Name:         row.Name,
 			SkippedDates: skipped[s.ID],
+			EatenDates:   eatenDates[s.ID],
 			CreateTime:   s.CreateTime.Time,
 			UpdateTime:   s.UpdateTime.Time,
 		})
