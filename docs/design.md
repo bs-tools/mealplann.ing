@@ -110,6 +110,28 @@ saying what to change.
 - Recipes are entered in the web app or by an AI agent through MCP.
   Importing from URLs is left for later.
 
+### Instructions, cook mode and the timeline
+
+A recipe's steps are its instructions: each step's text, without amounts,
+the ingredients it uses by position, its duration, whether it's waiting
+time (simmering, baking) rather than hands-on, its section, and the steps it
+follows. They're stored as JSON on the recipe (`recipes.instructions`), as
+their shape will keep changing as the pages using them do.
+
+- **Cook mode** (`/recipes/:id/cook`) shows one step at a time in large
+  type, with its ingredients scaled to the servings cooked, timers that
+  chime, and the screen kept on.
+- **The timeline** (`/recipes/:id/timeline`, `GetRecipeTimeline`) schedules
+  the steps for one cook: each starts once the steps it follows are done
+  and, if hands-on, once the cook is free, so chopping fits into the rice's
+  simmering. Given when to serve, it says when to start each step.
+- **Migrating**: recipes from before have only `steps`, plain texts, which
+  can't be structured without reading them, so an AI agent rewrites them
+  (`ListRecipes` with `without_instructions` finds them; the recipe
+  service's guide says how), and the web form saves edited steps as
+  instructions. Until every recipe has them, `steps` keeps the texts, of
+  instructions too; then the column goes, and `steps` is derived.
+
 ### Components
 
 A recipe can use another as an ingredient, a component, in servings: soaked

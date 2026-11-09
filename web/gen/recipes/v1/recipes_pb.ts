@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file recipes/v1/recipes.proto.
  */
 export const file_recipes_v1_recipes: GenFile = /*@__PURE__*/
-  fileDesc("ChhyZWNpcGVzL3YxL3JlY2lwZXMucHJvdG8SCnJlY2lwZXMudjEiuQQKBlJlY2lwZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhAKCHNlcnZpbmdzGAQgASgFEhQKDHByZXBfc2Vjb25kcxgFIAEoBRIUCgxjb29rX3NlY29uZHMYBiABKAUSKwoLaW5ncmVkaWVudHMYByADKAsyFi5yZWNpcGVzLnYxLkluZ3JlZGllbnQSDQoFc3RlcHMYCCADKAkSDAoEdGFncxgJIAMoCRISCgpzb3VyY2VfdXJsGAogASgJEhgKC2ZyaWRnZV9kYXlzGAsgASgFSACIAQESEQoJZnJlZXphYmxlGAwgASgIEg0KBW5vdGVzGA0gASgJEjYKCW51dHJpdGlvbhgOIAEoCzIbLnJlY2lwZXMudjEuUmVjaXBlTnV0cml0aW9uQgaqnxkCCAESNwoLY3JlYXRlX3RpbWUYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESEAoIZmF2b3JpdGUYESABKAgSGQoMZnJlZXplcl9kYXlzGBIgASgFSAGIAQESFwoPcHJlcF9haGVhZF9kYXlzGBMgASgFEhcKD3ByZXBfYWhlYWRfbm90ZRgUIAEoCUIOCgxfZnJpZGdlX2RheXNCDwoNX2ZyZWV6ZXJfZGF5cyLTAQoKSW5ncmVkaWVudBIPCgdmb29kX2lkGAEgASgJEhkKCWZvb2RfbmFtZRgCIAEoCUIGqp8ZAggBEg4KBmFtb3VudBgDIAEoARIiCgR1bml0GAQgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdBIMCgRub3RlGAUgASgJEhUKDW9yaWdpbmFsX3RleHQYBiABKAkSEAoIb3B0aW9uYWwYByABKAgSEQoJcmVjaXBlX2lkGAggASgJEhsKC3JlY2lwZV9uYW1lGAkgASgJQgaqnxkCCAEi5gEKD1JlY2lwZU51dHJpdGlvbhITCgt0b3RhbF9ncmFtcxgBIAEoARIZChFncmFtc19wZXJfc2VydmluZxgCIAEoARIoCgtwZXJfc2VydmluZxgDIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIuChFwZXJfaHVuZHJlZF9ncmFtcxgEIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIcChRpbmNvbXBsZXRlX251dHJpZW50cxgFIAMoCRIrCgZpc3N1ZXMYBiADKAsyGy5yZWNpcGVzLnYxLkluZ3JlZGllbnRJc3N1ZSKCAQoPSW5ncmVkaWVudElzc3VlEhgKEGluZ3JlZGllbnRfaW5kZXgYASABKAUSDwoHZm9vZF9pZBgCIAEoCRIRCglmb29kX25hbWUYAyABKAkSFgoOdW5rbm93bl93ZWlnaHQYBCABKAgSGQoRdW5rbm93bl9udXRyaWVudHMYBSADKAki1AMKDVJlY2lwZVN1bW1hcnkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIQCghzZXJ2aW5ncxgEIAEoBRIUCgxwcmVwX3NlY29uZHMYBSABKAUSFAoMY29va19zZWNvbmRzGAYgASgFEgwKBHRhZ3MYByADKAkSJAoXZW5lcmd5X2tjYWxfcGVyX3NlcnZpbmcYCCABKAFIAIgBARImChlwcm90ZWluX2dyYW1zX3Blcl9zZXJ2aW5nGAkgASgBSAGIAQESKwoeY2FyYm9oeWRyYXRlX2dyYW1zX3Blcl9zZXJ2aW5nGAogASgBSAKIAQESGQoRZ3JhbXNfcGVyX3NlcnZpbmcYCyABKAESEgoKaGFzX2lzc3VlcxgMIAEoCBIvCgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEAoIZmF2b3JpdGUYDiABKAhCGgoYX2VuZXJneV9rY2FsX3Blcl9zZXJ2aW5nQhwKGl9wcm90ZWluX2dyYW1zX3Blcl9zZXJ2aW5nQiEKH19jYXJib2h5ZHJhdGVfZ3JhbXNfcGVyX3NlcnZpbmciTQoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZRISCgpyZXF1ZXN0X2lkGAIgASgJIjoKFENyZWF0ZVJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIj0KEEdldFJlY2lwZVJlcXVlc3QSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIPCgdzdW1tYXJ5GAMgASgIIjcKEUdldFJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIlsKEkxpc3RSZWNpcGVzUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIMCgR0YWdzGAIgAygJEhYKDmZhdm9yaXRlc19vbmx5GAMgASgIEhAKCGZvb2RfaWRzGAQgAygJIk8KE0xpc3RSZWNpcGVzUmVzcG9uc2USKgoHcmVjaXBlcxgBIAMoCzIZLnJlY2lwZXMudjEuUmVjaXBlU3VtbWFyeRIMCgR0YWdzGAIgAygJImoKE1VwZGF0ZVJlY2lwZVJlcXVlc3QSIgoGcmVjaXBlGAEgASgLMhIucmVjaXBlcy52MS5SZWNpcGUSLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIjoKFFVwZGF0ZVJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIkkKFFVwZGF0ZVJlY2lwZXNSZXF1ZXN0EjEKCHJlcXVlc3RzGAEgAygLMh8ucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVSZXF1ZXN0IkgKFVVwZGF0ZVJlY2lwZXNSZXNwb25zZRIvCgdyZXN1bHRzGAEgAygLMh4ucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVSZXN1bHQiYwoSVXBkYXRlUmVjaXBlUmVzdWx0EiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlEhIKCmVycm9yX2NvZGUYAiABKAkSFQoNZXJyb3JfbWVzc2FnZRgDIAEoCSJkChJSZXBsYWNlRm9vZFJlcXVlc3QSDwoHZm9vZF9pZBgBIAEoCRITCgtuZXdfZm9vZF9pZBgCIAEoCRISCgpyZWNpcGVfaWRzGAMgAygJEhQKDGFtb3VudF9yYXRpbxgEIAEoASJBChNSZXBsYWNlRm9vZFJlc3BvbnNlEioKB3JlY2lwZXMYASADKAsyGS5yZWNpcGVzLnYxLlJlY2lwZVN1bW1hcnkiIQoTRGVsZXRlUmVjaXBlUmVxdWVzdBIKCgJpZBgBIAEoCSIWChREZWxldGVSZWNpcGVSZXNwb25zZTLIBAoNUmVjaXBlU2VydmljZRJRCgxDcmVhdGVSZWNpcGUSHy5yZWNpcGVzLnYxLkNyZWF0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLkNyZWF0ZVJlY2lwZVJlc3BvbnNlEkgKCUdldFJlY2lwZRIcLnJlY2lwZXMudjEuR2V0UmVjaXBlUmVxdWVzdBodLnJlY2lwZXMudjEuR2V0UmVjaXBlUmVzcG9uc2USTgoLTGlzdFJlY2lwZXMSHi5yZWNpcGVzLnYxLkxpc3RSZWNpcGVzUmVxdWVzdBofLnJlY2lwZXMudjEuTGlzdFJlY2lwZXNSZXNwb25zZRJRCgxVcGRhdGVSZWNpcGUSHy5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZVJlc3BvbnNlElQKDVVwZGF0ZVJlY2lwZXMSIC5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZXNSZXF1ZXN0GiEucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVzUmVzcG9uc2USTgoLUmVwbGFjZUZvb2QSHi5yZWNpcGVzLnYxLlJlcGxhY2VGb29kUmVxdWVzdBofLnJlY2lwZXMudjEuUmVwbGFjZUZvb2RSZXNwb25zZRJRCgxEZWxldGVSZWNpcGUSHy5yZWNpcGVzLnYxLkRlbGV0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLkRlbGV0ZVJlY2lwZVJlc3BvbnNlQqwBCg5jb20ucmVjaXBlcy52MUIMUmVjaXBlc1Byb3RvUAFaQ2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vcmVjaXBlcy92MTtyZWNpcGVzdjGiAgNSWFiqAgpSZWNpcGVzLlYxygIKUmVjaXBlc1xWMeICFlJlY2lwZXNcVjFcR1BCTWV0YWRhdGHqAgtSZWNpcGVzOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChhyZWNpcGVzL3YxL3JlY2lwZXMucHJvdG8SCnJlY2lwZXMudjEi4QQKBlJlY2lwZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhAKCHNlcnZpbmdzGAQgASgFEhQKDHByZXBfc2Vjb25kcxgFIAEoBRIUCgxjb29rX3NlY29uZHMYBiABKAUSKwoLaW5ncmVkaWVudHMYByADKAsyFi5yZWNpcGVzLnYxLkluZ3JlZGllbnQSDQoFc3RlcHMYCCADKAkSDAoEdGFncxgJIAMoCRISCgpzb3VyY2VfdXJsGAogASgJEhgKC2ZyaWRnZV9kYXlzGAsgASgFSACIAQESEQoJZnJlZXphYmxlGAwgASgIEg0KBW5vdGVzGA0gASgJEjYKCW51dHJpdGlvbhgOIAEoCzIbLnJlY2lwZXMudjEuUmVjaXBlTnV0cml0aW9uQgaqnxkCCAESNwoLY3JlYXRlX3RpbWUYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESEAoIZmF2b3JpdGUYESABKAgSGQoMZnJlZXplcl9kYXlzGBIgASgFSAGIAQESFwoPcHJlcF9haGVhZF9kYXlzGBMgASgFEhcKD3ByZXBfYWhlYWRfbm90ZRgUIAEoCRImCgxpbnN0cnVjdGlvbnMYFSADKAsyEC5yZWNpcGVzLnYxLlN0ZXBCDgoMX2ZyaWRnZV9kYXlzQg8KDV9mcmVlemVyX2RheXMinAEKBFN0ZXASDAoEdGV4dBgBIAEoCRIPCgdzZWN0aW9uGAIgASgJEhoKEmluZ3JlZGllbnRfaW5kZXhlcxgDIAMoBRIYChBkdXJhdGlvbl9zZWNvbmRzGAQgASgFEg8KB3dhaXRpbmcYBSABKAgSGgoSYWZ0ZXJfc3RlcF9pbmRleGVzGAYgAygFEhIKCmZyb21fc3RhcnQYByABKAgi0wEKCkluZ3JlZGllbnQSDwoHZm9vZF9pZBgBIAEoCRIZCglmb29kX25hbWUYAiABKAlCBqqfGQIIARIOCgZhbW91bnQYAyABKAESIgoEdW5pdBgEIAEoDjIULmZvb2RzLnYxLkFtb3VudFVuaXQSDAoEbm90ZRgFIAEoCRIVCg1vcmlnaW5hbF90ZXh0GAYgASgJEhAKCG9wdGlvbmFsGAcgASgIEhEKCXJlY2lwZV9pZBgIIAEoCRIbCgtyZWNpcGVfbmFtZRgJIAEoCUIGqp8ZAggBIuYBCg9SZWNpcGVOdXRyaXRpb24SEwoLdG90YWxfZ3JhbXMYASABKAESGQoRZ3JhbXNfcGVyX3NlcnZpbmcYAiABKAESKAoLcGVyX3NlcnZpbmcYAyABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSLgoRcGVyX2h1bmRyZWRfZ3JhbXMYBCABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSHAoUaW5jb21wbGV0ZV9udXRyaWVudHMYBSADKAkSKwoGaXNzdWVzGAYgAygLMhsucmVjaXBlcy52MS5JbmdyZWRpZW50SXNzdWUiggEKD0luZ3JlZGllbnRJc3N1ZRIYChBpbmdyZWRpZW50X2luZGV4GAEgASgFEg8KB2Zvb2RfaWQYAiABKAkSEQoJZm9vZF9uYW1lGAMgASgJEhYKDnVua25vd25fd2VpZ2h0GAQgASgIEhkKEXVua25vd25fbnV0cmllbnRzGAUgAygJIu4DCg1SZWNpcGVTdW1tYXJ5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEAoIc2VydmluZ3MYBCABKAUSFAoMcHJlcF9zZWNvbmRzGAUgASgFEhQKDGNvb2tfc2Vjb25kcxgGIAEoBRIMCgR0YWdzGAcgAygJEiQKF2VuZXJneV9rY2FsX3Blcl9zZXJ2aW5nGAggASgBSACIAQESJgoZcHJvdGVpbl9ncmFtc19wZXJfc2VydmluZxgJIAEoAUgBiAEBEisKHmNhcmJvaHlkcmF0ZV9ncmFtc19wZXJfc2VydmluZxgKIAEoAUgCiAEBEhkKEWdyYW1zX3Blcl9zZXJ2aW5nGAsgASgBEhIKCmhhc19pc3N1ZXMYDCABKAgSLwoLdXBkYXRlX3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhAKCGZhdm9yaXRlGA4gASgIEhgKEGhhc19pbnN0cnVjdGlvbnMYDyABKAhCGgoYX2VuZXJneV9rY2FsX3Blcl9zZXJ2aW5nQhwKGl9wcm90ZWluX2dyYW1zX3Blcl9zZXJ2aW5nQiEKH19jYXJib2h5ZHJhdGVfZ3JhbXNfcGVyX3NlcnZpbmciTQoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZRISCgpyZXF1ZXN0X2lkGAIgASgJIjoKFENyZWF0ZVJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIj0KEEdldFJlY2lwZVJlcXVlc3QSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIPCgdzdW1tYXJ5GAMgASgIIjcKEUdldFJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlInkKEkxpc3RSZWNpcGVzUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIMCgR0YWdzGAIgAygJEhYKDmZhdm9yaXRlc19vbmx5GAMgASgIEhAKCGZvb2RfaWRzGAQgAygJEhwKFHdpdGhvdXRfaW5zdHJ1Y3Rpb25zGAUgASgIIk8KE0xpc3RSZWNpcGVzUmVzcG9uc2USKgoHcmVjaXBlcxgBIAMoCzIZLnJlY2lwZXMudjEuUmVjaXBlU3VtbWFyeRIMCgR0YWdzGAIgAygJImoKE1VwZGF0ZVJlY2lwZVJlcXVlc3QSIgoGcmVjaXBlGAEgASgLMhIucmVjaXBlcy52MS5SZWNpcGUSLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIjoKFFVwZGF0ZVJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIiYKGEdldFJlY2lwZVRpbWVsaW5lUmVxdWVzdBIKCgJpZBgBIAEoCSJyChlHZXRSZWNpcGVUaW1lbGluZVJlc3BvbnNlEiQKBXN0ZXBzGAEgAygLMhUucmVjaXBlcy52MS5UaW1lZFN0ZXASFQoNdG90YWxfc2Vjb25kcxgCIAEoBRIYChBoYW5kc19vbl9zZWNvbmRzGAMgASgFIo4BCglUaW1lZFN0ZXASEgoKc3RlcF9pbmRleBgBIAEoBRIMCgR0ZXh0GAIgASgJEhUKDXN0YXJ0X3NlY29uZHMYAyABKAUSEwoLZW5kX3NlY29uZHMYBCABKAUSDwoHd2FpdGluZxgFIAEoCBIRCgllc3RpbWF0ZWQYBiABKAgSDwoHc2VjdGlvbhgHIAEoCSJJChRVcGRhdGVSZWNpcGVzUmVxdWVzdBIxCghyZXF1ZXN0cxgBIAMoCzIfLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlUmVxdWVzdCJIChVVcGRhdGVSZWNpcGVzUmVzcG9uc2USLwoHcmVzdWx0cxgBIAMoCzIeLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlUmVzdWx0ImMKElVwZGF0ZVJlY2lwZVJlc3VsdBIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZRISCgplcnJvcl9jb2RlGAIgASgJEhUKDWVycm9yX21lc3NhZ2UYAyABKAkiZAoSUmVwbGFjZUZvb2RSZXF1ZXN0Eg8KB2Zvb2RfaWQYASABKAkSEwoLbmV3X2Zvb2RfaWQYAiABKAkSEgoKcmVjaXBlX2lkcxgDIAMoCRIUCgxhbW91bnRfcmF0aW8YBCABKAEiQQoTUmVwbGFjZUZvb2RSZXNwb25zZRIqCgdyZWNpcGVzGAEgAygLMhkucmVjaXBlcy52MS5SZWNpcGVTdW1tYXJ5IiEKE0RlbGV0ZVJlY2lwZVJlcXVlc3QSCgoCaWQYASABKAkiFgoURGVsZXRlUmVjaXBlUmVzcG9uc2UyqgUKDVJlY2lwZVNlcnZpY2USYAoRR2V0UmVjaXBlVGltZWxpbmUSJC5yZWNpcGVzLnYxLkdldFJlY2lwZVRpbWVsaW5lUmVxdWVzdBolLnJlY2lwZXMudjEuR2V0UmVjaXBlVGltZWxpbmVSZXNwb25zZRJRCgxDcmVhdGVSZWNpcGUSHy5yZWNpcGVzLnYxLkNyZWF0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLkNyZWF0ZVJlY2lwZVJlc3BvbnNlEkgKCUdldFJlY2lwZRIcLnJlY2lwZXMudjEuR2V0UmVjaXBlUmVxdWVzdBodLnJlY2lwZXMudjEuR2V0UmVjaXBlUmVzcG9uc2USTgoLTGlzdFJlY2lwZXMSHi5yZWNpcGVzLnYxLkxpc3RSZWNpcGVzUmVxdWVzdBofLnJlY2lwZXMudjEuTGlzdFJlY2lwZXNSZXNwb25zZRJRCgxVcGRhdGVSZWNpcGUSHy5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZVJlc3BvbnNlElQKDVVwZGF0ZVJlY2lwZXMSIC5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZXNSZXF1ZXN0GiEucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVzUmVzcG9uc2USTgoLUmVwbGFjZUZvb2QSHi5yZWNpcGVzLnYxLlJlcGxhY2VGb29kUmVxdWVzdBofLnJlY2lwZXMudjEuUmVwbGFjZUZvb2RSZXNwb25zZRJRCgxEZWxldGVSZWNpcGUSHy5yZWNpcGVzLnYxLkRlbGV0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLkRlbGV0ZVJlY2lwZVJlc3BvbnNlQqwBCg5jb20ucmVjaXBlcy52MUIMUmVjaXBlc1Byb3RvUAFaQ2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vcmVjaXBlcy92MTtyZWNpcGVzdjGiAgNSWFiqAgpSZWNpcGVzLlYxygIKUmVjaXBlc1xWMeICFlJlY2lwZXNcVjFcR1BCTWV0YWRhdGHqAgtSZWNpcGVzOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A recipe.
@@ -76,8 +76,12 @@ export type Recipe = Message<"recipes.v1.Recipe"> & {
   ingredients: Ingredient[];
 
   /**
-   * The steps, in order, each a paragraph of plain text without its number.
-   * At most 100, of at most 2000 characters each.
+   * The steps as plain text, in order, each a paragraph without its
+   * number: the old format. For a recipe with instructions, it's their
+   * texts, and writes ignore it: set instructions instead. Recipes without
+   * instructions are still in the old format: rewrite their steps as
+   * instructions (see RecipeService). At most 100, of at most 2000
+   * characters each.
    *
    * @generated from field: repeated string steps = 8;
    */
@@ -179,6 +183,17 @@ export type Recipe = Message<"recipes.v1.Recipe"> & {
    * @generated from field: string prep_ahead_note = 20;
    */
   prepAheadNote: string;
+
+  /**
+   * The steps, in order, with their structure: the ingredients each uses,
+   * how long it takes, whether it's waiting time, and which steps it
+   * follows. Cook mode shows each step with its ingredients and a timer,
+   * and GetRecipeTimeline schedules them. Empty for a recipe still in the
+   * old format of plain steps. At most 100.
+   *
+   * @generated from field: repeated recipes.v1.Step instructions = 21;
+   */
+  instructions: Step[];
 };
 
 /**
@@ -187,6 +202,83 @@ export type Recipe = Message<"recipes.v1.Recipe"> & {
  */
 export const RecipeSchema: GenMessage<Recipe> = /*@__PURE__*/
   messageDesc(file_recipes_v1_recipes, 0);
+
+/**
+ * A step of a recipe's instructions.
+ *
+ * @generated from message recipes.v1.Step
+ */
+export type Step = Message<"recipes.v1.Step"> & {
+  /**
+   * What to do, e.g. "Simmer until the lentils are soft". Required, at most
+   * 2000 characters. Leave the amounts out: cook mode shows the step's
+   * ingredients with their amounts, scaled to the servings cooked.
+   *
+   * @generated from field: string text = 1;
+   */
+  text: string;
+
+  /**
+   * The part of the recipe it's in, e.g. "For the sauce", empty if the
+   * recipe has no parts. Steps with the same section in a row are shown
+   * under one heading. At most 100 characters.
+   *
+   * @generated from field: string section = 2;
+   */
+  section: string;
+
+  /**
+   * The ingredients it uses, by their index in the recipe's ingredients,
+   * from 0. Reordering the ingredients changes what the indexes mean:
+   * update the instructions with them.
+   *
+   * @generated from field: repeated int32 ingredient_indexes = 3;
+   */
+  ingredientIndexes: number[];
+
+  /**
+   * How long it takes, in seconds, e.g. 1200 for "simmer for 20 minutes",
+   * 0 if unknown, which the timeline counts as 5 minutes. At most 172800
+   * (2 days); start longer soaking with the recipe's prep_ahead_days.
+   *
+   * @generated from field: int32 duration_seconds = 4;
+   */
+  durationSeconds: number;
+
+  /**
+   * Whether it's waiting time, when the cook is free, like simmering,
+   * baking, rising or marinating, rather than hands-on work like chopping
+   * or stirring. The timeline fits hands-on steps into it.
+   *
+   * @generated from field: bool waiting = 5;
+   */
+  waiting: boolean;
+
+  /**
+   * The steps it starts after, by index, from 0, each before it, e.g. the
+   * curry's "Serve" after both the rice and the sauce. Empty for the step
+   * just before it.
+   *
+   * @generated from field: repeated int32 after_step_indexes = 6;
+   */
+  afterStepIndexes: number[];
+
+  /**
+   * Whether it can start right away, after no other step, like boiling
+   * water for pasta while the sauce starts. Leave after_step_indexes
+   * empty.
+   *
+   * @generated from field: bool from_start = 7;
+   */
+  fromStart: boolean;
+};
+
+/**
+ * Describes the message recipes.v1.Step.
+ * Use `create(StepSchema)` to create a new message.
+ */
+export const StepSchema: GenMessage<Step> = /*@__PURE__*/
+  messageDesc(file_recipes_v1_recipes, 1);
 
 /**
  * An ingredient of a recipe: an amount of a food, or servings of another
@@ -272,7 +364,7 @@ export type Ingredient = Message<"recipes.v1.Ingredient"> & {
  * Use `create(IngredientSchema)` to create a new message.
  */
 export const IngredientSchema: GenMessage<Ingredient> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 1);
+  messageDesc(file_recipes_v1_recipes, 2);
 
 /**
  * The nutrition of a recipe, computed from its ingredients' foods, as
@@ -336,7 +428,7 @@ export type RecipeNutrition = Message<"recipes.v1.RecipeNutrition"> & {
  * Use `create(RecipeNutritionSchema)` to create a new message.
  */
 export const RecipeNutritionSchema: GenMessage<RecipeNutrition> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 2);
+  messageDesc(file_recipes_v1_recipes, 3);
 
 /**
  * An ingredient whose food, or component's recipe, lacks data the recipe's
@@ -392,7 +484,7 @@ export type IngredientIssue = Message<"recipes.v1.IngredientIssue"> & {
  * Use `create(IngredientIssueSchema)` to create a new message.
  */
 export const IngredientIssueSchema: GenMessage<IngredientIssue> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 3);
+  messageDesc(file_recipes_v1_recipes, 4);
 
 /**
  * A summary of a recipe, for lists.
@@ -498,6 +590,13 @@ export type RecipeSummary = Message<"recipes.v1.RecipeSummary"> & {
    * @generated from field: bool favorite = 14;
    */
   favorite: boolean;
+
+  /**
+   * Whether it has instructions, rather than steps in the old format.
+   *
+   * @generated from field: bool has_instructions = 15;
+   */
+  hasInstructions: boolean;
 };
 
 /**
@@ -505,7 +604,7 @@ export type RecipeSummary = Message<"recipes.v1.RecipeSummary"> & {
  * Use `create(RecipeSummarySchema)` to create a new message.
  */
 export const RecipeSummarySchema: GenMessage<RecipeSummary> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 4);
+  messageDesc(file_recipes_v1_recipes, 5);
 
 /**
  * @generated from message recipes.v1.CreateRecipeRequest
@@ -534,7 +633,7 @@ export type CreateRecipeRequest = Message<"recipes.v1.CreateRecipeRequest"> & {
  * Use `create(CreateRecipeRequestSchema)` to create a new message.
  */
 export const CreateRecipeRequestSchema: GenMessage<CreateRecipeRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 5);
+  messageDesc(file_recipes_v1_recipes, 6);
 
 /**
  * @generated from message recipes.v1.CreateRecipeResponse
@@ -553,7 +652,7 @@ export type CreateRecipeResponse = Message<"recipes.v1.CreateRecipeResponse"> & 
  * Use `create(CreateRecipeResponseSchema)` to create a new message.
  */
 export const CreateRecipeResponseSchema: GenMessage<CreateRecipeResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 6);
+  messageDesc(file_recipes_v1_recipes, 7);
 
 /**
  * @generated from message recipes.v1.GetRecipeRequest
@@ -590,7 +689,7 @@ export type GetRecipeRequest = Message<"recipes.v1.GetRecipeRequest"> & {
  * Use `create(GetRecipeRequestSchema)` to create a new message.
  */
 export const GetRecipeRequestSchema: GenMessage<GetRecipeRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 7);
+  messageDesc(file_recipes_v1_recipes, 8);
 
 /**
  * @generated from message recipes.v1.GetRecipeResponse
@@ -609,7 +708,7 @@ export type GetRecipeResponse = Message<"recipes.v1.GetRecipeResponse"> & {
  * Use `create(GetRecipeResponseSchema)` to create a new message.
  */
 export const GetRecipeResponseSchema: GenMessage<GetRecipeResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 8);
+  messageDesc(file_recipes_v1_recipes, 9);
 
 /**
  * @generated from message recipes.v1.ListRecipesRequest
@@ -646,6 +745,14 @@ export type ListRecipesRequest = Message<"recipes.v1.ListRecipesRequest"> & {
    * @generated from field: repeated string food_ids = 4;
    */
   foodIds: string[];
+
+  /**
+   * Only list recipes still in the old format of plain steps, without
+   * instructions, e.g. to rewrite them.
+   *
+   * @generated from field: bool without_instructions = 5;
+   */
+  withoutInstructions: boolean;
 };
 
 /**
@@ -653,7 +760,7 @@ export type ListRecipesRequest = Message<"recipes.v1.ListRecipesRequest"> & {
  * Use `create(ListRecipesRequestSchema)` to create a new message.
  */
 export const ListRecipesRequestSchema: GenMessage<ListRecipesRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 9);
+  messageDesc(file_recipes_v1_recipes, 10);
 
 /**
  * @generated from message recipes.v1.ListRecipesResponse
@@ -680,7 +787,7 @@ export type ListRecipesResponse = Message<"recipes.v1.ListRecipesResponse"> & {
  * Use `create(ListRecipesResponseSchema)` to create a new message.
  */
 export const ListRecipesResponseSchema: GenMessage<ListRecipesResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 10);
+  messageDesc(file_recipes_v1_recipes, 11);
 
 /**
  * @generated from message recipes.v1.UpdateRecipeRequest
@@ -708,7 +815,7 @@ export type UpdateRecipeRequest = Message<"recipes.v1.UpdateRecipeRequest"> & {
  * Use `create(UpdateRecipeRequestSchema)` to create a new message.
  */
 export const UpdateRecipeRequestSchema: GenMessage<UpdateRecipeRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 11);
+  messageDesc(file_recipes_v1_recipes, 12);
 
 /**
  * @generated from message recipes.v1.UpdateRecipeResponse
@@ -727,7 +834,122 @@ export type UpdateRecipeResponse = Message<"recipes.v1.UpdateRecipeResponse"> & 
  * Use `create(UpdateRecipeResponseSchema)` to create a new message.
  */
 export const UpdateRecipeResponseSchema: GenMessage<UpdateRecipeResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 12);
+  messageDesc(file_recipes_v1_recipes, 13);
+
+/**
+ * @generated from message recipes.v1.GetRecipeTimelineRequest
+ */
+export type GetRecipeTimelineRequest = Message<"recipes.v1.GetRecipeTimelineRequest"> & {
+  /**
+   * The ID of the recipe.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message recipes.v1.GetRecipeTimelineRequest.
+ * Use `create(GetRecipeTimelineRequestSchema)` to create a new message.
+ */
+export const GetRecipeTimelineRequestSchema: GenMessage<GetRecipeTimelineRequest> = /*@__PURE__*/
+  messageDesc(file_recipes_v1_recipes, 14);
+
+/**
+ * @generated from message recipes.v1.GetRecipeTimelineResponse
+ */
+export type GetRecipeTimelineResponse = Message<"recipes.v1.GetRecipeTimelineResponse"> & {
+  /**
+   * The steps, in the recipe's order, with when they happen.
+   *
+   * @generated from field: repeated recipes.v1.TimedStep steps = 1;
+   */
+  steps: TimedStep[];
+
+  /**
+   * From the first step's start to the last step's end, in seconds.
+   *
+   * @generated from field: int32 total_seconds = 2;
+   */
+  totalSeconds: number;
+
+  /**
+   * The time the cook works, not waiting, in seconds.
+   *
+   * @generated from field: int32 hands_on_seconds = 3;
+   */
+  handsOnSeconds: number;
+};
+
+/**
+ * Describes the message recipes.v1.GetRecipeTimelineResponse.
+ * Use `create(GetRecipeTimelineResponseSchema)` to create a new message.
+ */
+export const GetRecipeTimelineResponseSchema: GenMessage<GetRecipeTimelineResponse> = /*@__PURE__*/
+  messageDesc(file_recipes_v1_recipes, 15);
+
+/**
+ * A step of a recipe's timeline.
+ *
+ * @generated from message recipes.v1.TimedStep
+ */
+export type TimedStep = Message<"recipes.v1.TimedStep"> & {
+  /**
+   * The index of the step in the recipe's instructions, or its steps.
+   *
+   * @generated from field: int32 step_index = 1;
+   */
+  stepIndex: number;
+
+  /**
+   * The step's text.
+   *
+   * @generated from field: string text = 2;
+   */
+  text: string;
+
+  /**
+   * When it starts, in seconds from the start of the recipe.
+   *
+   * @generated from field: int32 start_seconds = 3;
+   */
+  startSeconds: number;
+
+  /**
+   * When it ends, in seconds from the start of the recipe.
+   *
+   * @generated from field: int32 end_seconds = 4;
+   */
+  endSeconds: number;
+
+  /**
+   * Whether it's waiting time, when the cook is free.
+   *
+   * @generated from field: bool waiting = 5;
+   */
+  waiting: boolean;
+
+  /**
+   * Whether its duration is unknown, and counted as 5 minutes.
+   *
+   * @generated from field: bool estimated = 6;
+   */
+  estimated: boolean;
+
+  /**
+   * The step's section, empty if none.
+   *
+   * @generated from field: string section = 7;
+   */
+  section: string;
+};
+
+/**
+ * Describes the message recipes.v1.TimedStep.
+ * Use `create(TimedStepSchema)` to create a new message.
+ */
+export const TimedStepSchema: GenMessage<TimedStep> = /*@__PURE__*/
+  messageDesc(file_recipes_v1_recipes, 16);
 
 /**
  * @generated from message recipes.v1.UpdateRecipesRequest
@@ -746,7 +968,7 @@ export type UpdateRecipesRequest = Message<"recipes.v1.UpdateRecipesRequest"> & 
  * Use `create(UpdateRecipesRequestSchema)` to create a new message.
  */
 export const UpdateRecipesRequestSchema: GenMessage<UpdateRecipesRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 13);
+  messageDesc(file_recipes_v1_recipes, 17);
 
 /**
  * @generated from message recipes.v1.UpdateRecipesResponse
@@ -765,7 +987,7 @@ export type UpdateRecipesResponse = Message<"recipes.v1.UpdateRecipesResponse"> 
  * Use `create(UpdateRecipesResponseSchema)` to create a new message.
  */
 export const UpdateRecipesResponseSchema: GenMessage<UpdateRecipesResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 14);
+  messageDesc(file_recipes_v1_recipes, 18);
 
 /**
  * The result of updating one of several recipes.
@@ -801,7 +1023,7 @@ export type UpdateRecipeResult = Message<"recipes.v1.UpdateRecipeResult"> & {
  * Use `create(UpdateRecipeResultSchema)` to create a new message.
  */
 export const UpdateRecipeResultSchema: GenMessage<UpdateRecipeResult> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 15);
+  messageDesc(file_recipes_v1_recipes, 19);
 
 /**
  * @generated from message recipes.v1.ReplaceFoodRequest
@@ -844,7 +1066,7 @@ export type ReplaceFoodRequest = Message<"recipes.v1.ReplaceFoodRequest"> & {
  * Use `create(ReplaceFoodRequestSchema)` to create a new message.
  */
 export const ReplaceFoodRequestSchema: GenMessage<ReplaceFoodRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 16);
+  messageDesc(file_recipes_v1_recipes, 20);
 
 /**
  * @generated from message recipes.v1.ReplaceFoodResponse
@@ -863,7 +1085,7 @@ export type ReplaceFoodResponse = Message<"recipes.v1.ReplaceFoodResponse"> & {
  * Use `create(ReplaceFoodResponseSchema)` to create a new message.
  */
 export const ReplaceFoodResponseSchema: GenMessage<ReplaceFoodResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 17);
+  messageDesc(file_recipes_v1_recipes, 21);
 
 /**
  * @generated from message recipes.v1.DeleteRecipeRequest
@@ -882,7 +1104,7 @@ export type DeleteRecipeRequest = Message<"recipes.v1.DeleteRecipeRequest"> & {
  * Use `create(DeleteRecipeRequestSchema)` to create a new message.
  */
 export const DeleteRecipeRequestSchema: GenMessage<DeleteRecipeRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 18);
+  messageDesc(file_recipes_v1_recipes, 22);
 
 /**
  * @generated from message recipes.v1.DeleteRecipeResponse
@@ -895,7 +1117,7 @@ export type DeleteRecipeResponse = Message<"recipes.v1.DeleteRecipeResponse"> & 
  * Use `create(DeleteRecipeResponseSchema)` to create a new message.
  */
 export const DeleteRecipeResponseSchema: GenMessage<DeleteRecipeResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 19);
+  messageDesc(file_recipes_v1_recipes, 23);
 
 /**
  * RecipeService manages the household's recipes. A recipe's ingredients are
@@ -920,9 +1142,36 @@ export const DeleteRecipeResponseSchema: GenMessage<DeleteRecipeResponse> = /*@_
  * chickpeas" the night before. Components can have components of their
  * own, but no deeper, and a recipe can't use itself.
  *
+ * A recipe's steps are its instructions: each step's text, the ingredients
+ * it uses, how long it takes, whether it's waiting time, and the steps it
+ * follows. Recipes created before instructions existed have only steps,
+ * plain texts. To rewrite one (find them with ListRecipes and
+ * without_instructions):
+ *
+ * 1. Read it with GetRecipe.
+ * 2. Split its steps into one action each, and take the amounts out of their texts: cook mode shows the step's ingredients with amounts scaled to the servings cooked.
+ * 3. Give each step the ingredients it uses, its duration from the text ("simmer for 20 minutes" is 1200 seconds), and set waiting for time the cook is free, like simmering, baking or resting.
+ * 4. Say which steps can run alongside others: from_start for one that can start right away, or after_step_indexes for one that waits for steps other than the one before it.
+ * 5. Save it with UpdateRecipe and the update_mask "instructions", and check its GetRecipeTimeline.
+ *
  * @generated from service recipes.v1.RecipeService
  */
 export const RecipeService: GenService<{
+  /**
+   * Get when a recipe's steps happen, for one cook: each starts as soon as
+   * the steps it follows are done and, if it's hands-on, the cook is free,
+   * so hands-on steps fit into waiting time, like chopping while rice
+   * simmers. Steps of unknown duration count as 5 minutes, and are marked
+   * estimated. A recipe in the old format runs its steps one after the
+   * other.
+   *
+   * @generated from rpc recipes.v1.RecipeService.GetRecipeTimeline
+   */
+  getRecipeTimeline: {
+    methodKind: "unary";
+    input: typeof GetRecipeTimelineRequestSchema;
+    output: typeof GetRecipeTimelineResponseSchema;
+  },
   /**
    * Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
    * isn't one of the household's foods.

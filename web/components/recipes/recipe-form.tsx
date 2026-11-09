@@ -55,10 +55,23 @@ interface IngredientInput {
   optional: boolean;
 }
 
-// StepInput is a step being edited.
+/**
+ * StepStart is when a step starts: after the step before it, right away,
+ * or after the steps with these keys.
+ */
+type StepStart = "previous" | "start" | number[];
+
+// StepInput is a step being edited, with its structure.
 interface StepInput {
   key: number;
   text: string;
+  section: string;
+  // The duration in minutes, empty if unknown.
+  minutes: string;
+  waiting: boolean;
+  // The keys of the ingredients it uses.
+  ingredientKeys: number[];
+  start: StepStart;
 }
 
 // The keys of ingredients and steps added, unique on the page.
@@ -104,11 +117,96 @@ const ingredientInputs = (recipe: Recipe | undefined): IngredientInput[] => {
   });
 };
 
-const stepInputs = (recipe: Recipe | undefined): StepInput[] => {
+const emptyStep = (): StepInput => ({
+  ingredientKeys: [],
+  key: newKey(),
+  minutes: "",
+  section: "",
+  start: "previous",
+  text: "",
+  waiting: false,
+});
+
+/**
+ * StepInputs returns a recipe's steps to edit, with the keys of the
+ * ingredients being edited. Plain steps in the old format get no
+ * structure, until it's added and saved as instructions.
+ */
+const stepInputs = (
+  recipe: Recipe | undefined,
+  ingredients: IngredientInput[]
+): StepInput[] => {
   if (recipe === undefined || recipe.steps.length === 0) {
-    return [{ key: newKey(), text: "" }];
+    return [emptyStep()];
   }
-  return recipe.steps.map((text) => ({ key: newKey(), text }));
+  if (recipe.instructions.length === 0) {
+    return recipe.steps.map((text) => ({ ...emptyStep(), text }));
+  }
+  const keys = recipe.instructions.map(() => newKey());
+  return recipe.instructions.map((step, index) => {
+    let start: StepStart = "previous";
+    if (step.fromStart) {
+      start = "start";
+    } else if (step.afterStepIndexes.length > 0) {
+      start = step.afterStepIndexes.flatMap((other) => keys[other] ?? []);
+    }
+    return {
+      ingredientKeys: step.ingredientIndexes.flatMap(
+        (position) => ingredients[position]?.key ?? []
+      ),
+      key: keys[index] ?? newKey(),
+      minutes:
+        step.durationSeconds > 0
+          ? String(Math.round((step.durationSeconds / 60) * 100) / 100)
+          : "",
+      section: step.section,
+      start,
+      text: step.text,
+      waiting: step.waiting,
+    };
+  });
+};
+
+// StepsToSave are the steps with text, as they're saved.
+const stepsToSave = (
+  steps: StepInput[],
+  ingredients: IngredientInput[]
+): {
+  text: string;
+  section: string;
+  ingredientIndexes: number[];
+  durationSeconds: number;
+  waiting: boolean;
+  fromStart: boolean;
+  afterStepIndexes: number[];
+}[] => {
+  const kept = steps.filter((step) => step.text.trim() !== "");
+  const positions = new Map(
+    ingredients.map((ingredient, position) => [ingredient.key, position])
+  );
+  return kept.map((step, index) => {
+    const minutes = parseOptionalNumber(step.minutes);
+    const after =
+      typeof step.start === "string"
+        ? []
+        : step.start
+            .map((key) => kept.findIndex((other) => other.key === key))
+            .filter((other) => other >= 0 && other < index);
+    return {
+      afterStepIndexes: after,
+      durationSeconds:
+        minutes === null || minutes === undefined
+          ? 0
+          : Math.round(minutes * 60),
+      fromStart: step.start === "start",
+      ingredientIndexes: step.ingredientKeys.flatMap(
+        (key) => positions.get(key) ?? []
+      ),
+      section: step.section.trim(),
+      text: step.text.trim(),
+      waiting: step.waiting,
+    };
+  });
 };
 
 // ParseTags splits comma separated tags.
@@ -138,10 +236,8 @@ const ingredientsKey = (ingredients: IngredientInput[]): string =>
     ])
   );
 
-const stepsKey = (steps: StepInput[]): string =>
-  JSON.stringify(
-    steps.map((step) => step.text.trim()).filter((text) => text !== "")
-  );
+const stepsKey = (steps: StepInput[], ingredients: IngredientInput[]): string =>
+  JSON.stringify(stepsToSave(steps, ingredients));
 
 // Move returns list with the item at index moved by offset.
 const move = <Item,>(list: Item[], index: number, offset: number): Item[] => {
@@ -155,6 +251,181 @@ const move = <Item,>(list: Item[], index: number, offset: number): Item[] => {
     result.splice(target, 0, item);
   }
   return result;
+};
+
+// IngredientLabel names an ingredient being edited, "" if it has none yet.
+const ingredientLabel = (ingredient: IngredientInput): string =>
+  (ingredient.isRecipe ? ingredient.recipe?.name : ingredient.food?.name) ?? "";
+
+interface StepEditorProps {
+  step: StepInput;
+  index: number;
+  // The steps before it, which it can start after.
+  earlier: StepInput[];
+  ingredients: IngredientInput[];
+  onChange: (change: Partial<StepInput>) => void;
+  onMoveUp: () => void;
+  onRemove: () => void;
+}
+
+/**
+ * StepEditor edits a step: its text, and its structure, folded under it:
+ * its section, minutes, whether it's waiting time, when it starts and the
+ * ingredients it uses.
+ */
+const StepEditor: React.FC<StepEditorProps> = ({
+  step,
+  index,
+  earlier,
+  ingredients,
+  onChange,
+  onMoveUp,
+  onRemove,
+}) => {
+  const named = ingredients.filter(
+    (ingredient) => ingredientLabel(ingredient) !== ""
+  );
+  let startValue = "previous";
+  if (step.start === "start") {
+    startValue = "start";
+  } else if (Array.isArray(step.start)) {
+    startValue = step.start.join(",");
+  }
+  const stepNumber = (key: number) =>
+    earlier.findIndex((other) => other.key === key) + 1;
+  return (
+    <li className="flex items-start gap-2">
+      <span className="mt-1.5 w-5 shrink-0 text-right text-sm font-semibold text-gray-500 tabular-nums">
+        {index + 1}.
+      </span>
+      <div className="flex grow flex-col gap-2">
+        <textarea
+          aria-label={`Step ${index + 1}`}
+          className={inputClass}
+          rows={2}
+          value={step.text}
+          onChange={(event) => {
+            onChange({ text: event.target.value });
+          }}
+        />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+          <label className="flex items-center gap-1.5">
+            <input
+              aria-label={`Minutes of step ${index + 1}`}
+              className={`${inputClass} w-16! py-1`}
+              inputMode="decimal"
+              placeholder="–"
+              value={step.minutes}
+              onChange={(event) => {
+                onChange({ minutes: event.target.value });
+              }}
+            />
+            <span className="text-gray-600">min</span>
+          </label>
+          <CheckboxField
+            label="Waiting time"
+            checked={step.waiting}
+            onChange={(waiting) => {
+              onChange({ waiting });
+            }}
+          />
+          {index > 0 && (
+            <select
+              aria-label={`When step ${index + 1} starts`}
+              className={`${inputClass} w-auto! py-1`}
+              value={startValue}
+              onChange={(event) => {
+                const { value } = event.target;
+                if (value === "previous" || value === "start") {
+                  onChange({ start: value });
+                } else {
+                  onChange({ start: value.split(",").map(Number) });
+                }
+              }}
+            >
+              <option value="previous">After the step before</option>
+              <option value="start">Right away</option>
+              {earlier.slice(0, -1).map((other) => (
+                <option key={other.key} value={String(other.key)}>
+                  After step {stepNumber(other.key)}
+                </option>
+              ))}
+              {Array.isArray(step.start) && step.start.length > 1 && (
+                <option value={startValue}>
+                  After steps{" "}
+                  {step.start.map(stepNumber).filter(Boolean).join(" and ")}
+                </option>
+              )}
+            </select>
+          )}
+          <input
+            aria-label={`Section of step ${index + 1}`}
+            className={`${inputClass} w-44! py-1`}
+            placeholder="Section, e.g. Sauce"
+            value={step.section}
+            onChange={(event) => {
+              onChange({ section: event.target.value });
+            }}
+          />
+        </div>
+        {named.length > 0 && (
+          <div
+            className="flex flex-wrap gap-1.5"
+            role="group"
+            aria-label={`Ingredients of step ${index + 1}`}
+          >
+            {named.map((ingredient) => {
+              const used = step.ingredientKeys.includes(ingredient.key);
+              return (
+                <button
+                  key={ingredient.key}
+                  type="button"
+                  aria-pressed={used}
+                  className={`rounded-full px-2 py-0.5 text-xs ring-1 ${
+                    used
+                      ? "bg-brand-100 font-medium text-brand-900 ring-brand-300"
+                      : "bg-white text-gray-600 ring-gray-200 hover:ring-gray-300"
+                  }`}
+                  onClick={() => {
+                    onChange({
+                      ingredientKeys: used
+                        ? step.ingredientKeys.filter(
+                            (key) => key !== ingredient.key
+                          )
+                        : [...step.ingredientKeys, ingredient.key],
+                    });
+                  }}
+                >
+                  {ingredientLabel(ingredient)}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col">
+        <button
+          type="button"
+          className={iconButton}
+          aria-label="Move step up"
+          title="Move step up"
+          disabled={index === 0}
+          onClick={onMoveUp}
+        >
+          <ArrowUpIcon className="size-4" />
+        </button>
+        <button
+          type="button"
+          className={iconButton}
+          aria-label="Remove step"
+          title="Remove step"
+          onClick={onRemove}
+        >
+          <XMarkIcon className="size-4" />
+        </button>
+      </div>
+    </li>
+  );
 };
 
 interface RecipeFormProps {
@@ -179,10 +450,22 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
   );
   const [prep, setPrep] = useState(hoursMinutesInput(recipe?.prepSeconds ?? 0));
   const [cook, setCook] = useState(hoursMinutesInput(recipe?.cookSeconds ?? 0));
-  const [ingredients, setIngredients] = useState(() =>
-    ingredientInputs(recipe)
-  );
-  const [steps, setSteps] = useState(() => stepInputs(recipe));
+  /*
+   * The ingredients and steps as they were, which keep the keys the
+   * steps refer to ingredients and other steps by.
+   */
+  const [initial] = useState(() => {
+    const initialIngredients = ingredientInputs(recipe);
+    const initialSteps = stepInputs(recipe, initialIngredients);
+    return {
+      ingredients: initialIngredients,
+      ingredientsKey: ingredientsKey(initialIngredients),
+      steps: initialSteps,
+      stepsKey: stepsKey(initialSteps, initialIngredients),
+    };
+  });
+  const [ingredients, setIngredients] = useState(initial.ingredients);
+  const [steps, setSteps] = useState(initial.steps);
   const [tags, setTags] = useState(recipe?.tags.join(", ") ?? "");
   const [sourceUrl, setSourceUrl] = useState(recipe?.sourceUrl ?? "");
   const [fridgeDays, setFridgeDays] = useState(
@@ -225,8 +508,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
   const saving = create.isPending || update.isPending;
 
   // The fields changed, by their API names.
-  const initialIngredients = ingredientsKey(ingredientInputs(recipe));
-  const initialSteps = stepsKey(stepInputs(recipe));
+
   const changed: [string, boolean][] = [
     ["name", name !== (recipe?.name ?? "")],
     ["description", description !== (recipe?.description ?? "")],
@@ -236,8 +518,12 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
     ],
     ["prep_seconds", prep !== hoursMinutesInput(recipe?.prepSeconds ?? 0)],
     ["cook_seconds", cook !== hoursMinutesInput(recipe?.cookSeconds ?? 0)],
-    ["ingredients", ingredientsKey(ingredients) !== initialIngredients],
-    ["steps", stepsKey(steps) !== initialSteps],
+    ["ingredients", ingredientsKey(ingredients) !== initial.ingredientsKey],
+    /*
+     * The form saves steps as instructions, which rewrites a recipe in the
+     * old format once its steps are edited.
+     */
+    ["instructions", stepsKey(steps, ingredients) !== initial.stepsKey],
     ["tags", tags !== (recipe?.tags.join(", ") ?? "")],
     ["source_url", sourceUrl !== (recipe?.sourceUrl ?? "")],
     [
@@ -357,6 +643,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
       freezerDays: frozenDays,
       fridgeDays: days,
       ingredients: parsedIngredients,
+      instructions: stepsToSave(steps, kept),
       name,
       notes,
       prepAheadDays: aheadDays,
@@ -364,9 +651,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
       prepSeconds,
       servings: servingCount,
       sourceUrl,
-      steps: steps
-        .map((step) => step.text.trim())
-        .filter((text) => text !== ""),
       tags: parseTags(tags),
     };
     if (recipe === undefined) {
@@ -738,62 +1022,43 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
             </button>
           </Card>
           <Card title="Steps">
-            <ol className="flex flex-col gap-2">
+            <p className="mb-3 text-sm text-gray-600">
+              One action per step, without the amounts: cook mode shows each
+              step&apos;s ingredients, scaled to the servings cooked. Give steps
+              their minutes to get timers and a timeline.
+            </p>
+            <ol className="flex flex-col gap-4">
               {steps.map((step, index) => (
-                <li key={step.key} className="flex items-start gap-2">
-                  <span className="mt-1.5 w-5 shrink-0 text-right text-sm font-semibold text-gray-500 tabular-nums">
-                    {index + 1}.
-                  </span>
-                  <textarea
-                    aria-label={`Step ${index + 1}`}
-                    className={`${inputClass} grow`}
-                    rows={2}
-                    value={step.text}
-                    onChange={(event) => {
-                      setSteps(
-                        steps.map((other, otherIndex) =>
-                          otherIndex === index
-                            ? { ...other, text: event.target.value }
-                            : other
-                        )
-                      );
-                    }}
-                  />
-                  <div className="flex flex-col">
-                    <button
-                      type="button"
-                      className={iconButton}
-                      aria-label="Move step up"
-                      title="Move step up"
-                      disabled={index === 0}
-                      onClick={() => {
-                        setSteps(move(steps, index, -1));
-                      }}
-                    >
-                      <ArrowUpIcon className="size-4" />
-                    </button>
-                    <button
-                      type="button"
-                      className={iconButton}
-                      aria-label="Remove step"
-                      title="Remove step"
-                      onClick={() => {
-                        setSteps(
-                          steps.filter((_item, other) => other !== index)
-                        );
-                      }}
-                    >
-                      <XMarkIcon className="size-4" />
-                    </button>
-                  </div>
-                </li>
+                <StepEditor
+                  key={step.key}
+                  step={step}
+                  index={index}
+                  earlier={steps.slice(0, index)}
+                  ingredients={ingredients}
+                  onChange={(change) => {
+                    setSteps(
+                      steps.map((other) =>
+                        other.key === step.key ? { ...other, ...change } : other
+                      )
+                    );
+                  }}
+                  onMoveUp={() => {
+                    setSteps(move(steps, index, -1));
+                  }}
+                  onRemove={() => {
+                    setSteps(steps.filter((other) => other.key !== step.key));
+                  }}
+                />
               ))}
             </ol>
             <button
               type="button"
               className={`${ghostButton} mt-3`}
               onClick={() => {
-                setSteps([...steps, { key: newKey(), text: "" }]);
+                setSteps([
+                  ...steps,
+                  { ...emptyStep(), section: steps.at(-1)?.section ?? "" },
+                ]);
               }}
             >
               <PlusIcon className="size-4" aria-hidden="true" />

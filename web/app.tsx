@@ -5,6 +5,7 @@ import { getCurrentUser } from "gen/users/v1/users-UserService_connectquery";
 import type { User } from "gen/users/v1/users_pb";
 import { hideSplash } from "helpers/splash";
 import AutoPlanPage from "pages/auto-plan";
+import CookModePage from "pages/cook-mode";
 import FoodPage from "pages/food";
 import FoodsPage from "pages/foods";
 import HomePage from "pages/home";
@@ -18,6 +19,7 @@ import PlanTemplatesPage from "pages/plan-templates";
 import PrivacyPage from "pages/privacy";
 import RecipePage from "pages/recipe";
 import RecipeEditPage from "pages/recipe-edit";
+import RecipeTimelinePage from "pages/recipe-timeline";
 import RecipesPage from "pages/recipes";
 import SettingsPage from "pages/settings";
 import ShoppingPage from "pages/shopping";
@@ -121,6 +123,11 @@ const App: React.FC = () => {
             <Route path="/recipes/new" element={<RecipeEditPage />} />
             <Route path="/recipes/:id" element={<RecipePage />} />
             <Route path="/recipes/:id/edit" element={<RecipeEditPage />} />
+            <Route path="/recipes/:id/cook" element={<CookModePage />} />
+            <Route
+              path="/recipes/:id/timeline"
+              element={<RecipeTimelinePage />}
+            />
             <Route path="/foods" element={<FoodsPage />} />
             <Route path="/foods/:id" element={<FoodPage />} />
             <Route path="/settings" element={<SettingsPage user={user} />} />

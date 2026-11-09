@@ -841,6 +841,7 @@ type Recipe struct {
 	FreezerDays   *int32
 	PrepAheadDays int32
 	PrepAheadNote string
+	Instructions  json.RawMessage
 }
 
 type RecipeIngredient struct {

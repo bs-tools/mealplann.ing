@@ -193,10 +193,11 @@ func (s *Service) ListRecipes(ctx context.Context, req *recipesv1.ListRecipesReq
 		return nil, connect.Errorf(connect.CodeInvalidArgument, "invalid food ID in food_ids: %v; find foods with FoodService.ListFoods", err)
 	}
 	list, allTags, err := s.recipes.ListRecipes(ctx, user.HouseholdID(), recipes.ListFilter{
-		Query:         query,
-		Tags:          tags,
-		FavoritesOnly: req.GetFavoritesOnly(),
-		FoodIDs:       foodIDs,
+		Query:               query,
+		Tags:                tags,
+		FavoritesOnly:       req.GetFavoritesOnly(),
+		FoodIDs:             foodIDs,
+		WithoutInstructions: req.GetWithoutInstructions(),
 	})
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to list recipes")
@@ -243,6 +244,13 @@ func (s *Service) UpdateRecipe(ctx context.Context, req *recipesv1.UpdateRecipeR
 	merged := recipeToProto(existing)
 	if err := protomask.Apply(merged, req.GetRecipe(), req.GetUpdateMask(), keepFields...); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err.Error())
+	}
+	// Steps of a recipe with instructions are their texts, so an update of
+	// only the steps would change nothing: say so rather than ignore it.
+	if paths := req.GetUpdateMask().GetPaths(); len(merged.GetInstructions()) > 0 &&
+		slices.Contains(paths, "steps") && !slices.Contains(paths, "instructions") {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			"the recipe's steps are the texts of its instructions: update instructions instead, with the update_mask \"instructions\"")
 	}
 	recipe, err := recipeFromProto(merged)
 	if err != nil {
@@ -354,6 +362,41 @@ func (s *Service) ReplaceFood(ctx context.Context, req *recipesv1.ReplaceFoodReq
 		return strings.Compare(strings.ToLower(a.GetName()), strings.ToLower(b.GetName()))
 	})
 	return recipesv1.ReplaceFoodResponse_builder{Recipes: changed}.Build(), nil
+}
+
+func (s *Service) GetRecipeTimeline(ctx context.Context, req *recipesv1.GetRecipeTimelineRequest) (*recipesv1.GetRecipeTimelineResponse, error) {
+	user, ok := authn.GetUser(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+	}
+	id, err := parseRecipeID(req.GetId())
+	if err != nil {
+		return nil, err
+	}
+	recipe, err := s.recipes.GetRecipe(ctx, user.HouseholdID(), id)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to get recipe")
+	}
+	steps := recipe.StepsOf()
+	tl := recipe.Timeline()
+	timed := make([]*recipesv1.TimedStep, 0, len(tl.Steps))
+	for _, t := range tl.Steps {
+		step := steps[t.Index]
+		timed = append(timed, recipesv1.TimedStep_builder{
+			StepIndex:    int32(t.Index),
+			Text:         step.Text,
+			Section:      step.Section,
+			StartSeconds: t.StartSeconds,
+			EndSeconds:   t.EndSeconds,
+			Waiting:      step.Waiting,
+			Estimated:    t.Estimated,
+		}.Build())
+	}
+	return recipesv1.GetRecipeTimelineResponse_builder{
+		Steps:          timed,
+		TotalSeconds:   tl.TotalSeconds,
+		HandsOnSeconds: tl.HandsOnSeconds,
+	}.Build(), nil
 }
 
 func (s *Service) DeleteRecipe(ctx context.Context, req *recipesv1.DeleteRecipeRequest) (*recipesv1.DeleteRecipeResponse, error) {

@@ -63,9 +63,14 @@ type Recipe struct {
 	PrepSeconds int32
 	CookSeconds int32
 	Ingredients []*Ingredient
-	Steps       []string
-	Tags        []string
-	SourceURL   string
+	// Steps are the steps as plain texts: the old format, or the texts of
+	// Instructions.
+	Steps []string
+	// Instructions are the steps with their structure, nil for a recipe
+	// still in the old format.
+	Instructions []*Step
+	Tags         []string
+	SourceURL    string
 	// FridgeDays is how many days leftovers keep in the fridge, nil if
 	// unknown.
 	FridgeDays *int32
@@ -300,6 +305,10 @@ func NewRepository(log *slog.Logger, db *store.DB) *Repository {
 // ingredients' foods. It returns an *UnknownFoodsError if ingredients use
 // foods that aren't the household's.
 func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe, error) {
+	instructions, err := instructionsToDB(recipe.Instructions)
+	if err != nil {
+		return nil, err
+	}
 	id := store.NewUUID()
 	var row *gen.Recipe
 	var ingredients []*gen.ListRecipeIngredientsRow
@@ -320,6 +329,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			PrepSeconds:   recipe.PrepSeconds,
 			CookSeconds:   recipe.CookSeconds,
 			Steps:         nonNil(recipe.Steps),
+			Instructions:  instructions,
 			Tags:          nonNil(recipe.Tags),
 			SourceURL:     recipe.SourceURL,
 			FridgeDays:    recipe.FridgeDays,
@@ -382,6 +392,9 @@ type ListFilter struct {
 	// FoodIDs are foods the recipes have any of as an ingredient, empty
 	// for any.
 	FoodIDs []pgtype.UUID
+	// WithoutInstructions is whether to list only recipes still in the old
+	// format of plain steps.
+	WithoutInstructions bool
 }
 
 // NameMatch is a recipe found by name.
@@ -415,11 +428,12 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, f
 	b.Read(func(db store.Querier) error {
 		var err error
 		rows, err = gen.New(db).ListRecipes(ctx, &gen.ListRecipesParams{
-			HouseholdID:   householdID,
-			Query:         filter.Query,
-			Tags:          nonNil(filter.Tags),
-			FavoritesOnly: filter.FavoritesOnly,
-			FoodIds:       nonNil(filter.FoodIDs),
+			HouseholdID:         householdID,
+			Query:               filter.Query,
+			Tags:                nonNil(filter.Tags),
+			FavoritesOnly:       filter.FavoritesOnly,
+			FoodIds:             nonNil(filter.FoodIDs),
+			WithoutInstructions: filter.WithoutInstructions,
 		})
 		return err
 	})
@@ -519,6 +533,10 @@ func (r *Repository) listRecipesByID(ctx context.Context, householdID pgtype.UUI
 // such recipe, and an *UnknownFoodsError if ingredients use foods that
 // aren't the household's.
 func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe, error) {
+	instructions, err := instructionsToDB(recipe.Instructions)
+	if err != nil {
+		return nil, err
+	}
 	var row *gen.Recipe
 	var ingredients []*gen.ListRecipeIngredientsRow
 	// As in CreateRecipe, a failed statement leaves the recipe as it was.
@@ -536,6 +554,7 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			PrepSeconds:   recipe.PrepSeconds,
 			CookSeconds:   recipe.CookSeconds,
 			Steps:         nonNil(recipe.Steps),
+			Instructions:  instructions,
 			Tags:          nonNil(recipe.Tags),
 			SourceURL:     recipe.SourceURL,
 			FridgeDays:    recipe.FridgeDays,
@@ -767,6 +786,10 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) 
 	for _, in := range ingredients {
 		r.Ingredients = append(r.Ingredients, ingredientFromDB(in))
 	}
+	// Instructions are only written encoded by instructionsToDB, so they
+	// decode; if they somehow don't, the recipe still reads, with its
+	// steps in the old format, rather than failing every read of it.
+	r.Instructions, _ = instructionsFromDB(row.Instructions)
 	return r
 }
 
