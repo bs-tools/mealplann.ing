@@ -100,6 +100,7 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 		Ingredients:   ingredients,
 		Steps:         r.Steps,
 		Instructions:  instructionsToProto(r.Instructions),
+		Cost:          costToProto(r),
 		Tags:          r.Tags,
 		SourceUrl:     r.SourceURL,
 		FridgeDays:    r.FridgeDays,
@@ -170,7 +171,28 @@ func summaryToProto(r *recipes.Recipe) *recipesv1.RecipeSummary {
 		UpdateTime:                  timestamppb.New(r.UpdateTime),
 		Favorite:                    r.Favorite,
 		HasInstructions:             r.Instructions != nil,
+		CostCentsPerServing:         costPerServing(r),
 	}.Build()
+}
+
+// costToProto returns what a recipe's ingredients cost.
+func costToProto(r *recipes.Recipe) *recipesv1.RecipeCost {
+	c := r.Cost()
+	return recipesv1.RecipeCost_builder{
+		TotalCents:        int32(math.Round(c.Cents)),
+		CentsPerServing:   int32(math.Round(c.Cents / float64(max(r.Servings, 1)))),
+		UnpricedFoodNames: c.Unpriced,
+	}.Build()
+}
+
+// costPerServing returns what a serving of a recipe costs, nil if none of
+// its foods have a price.
+func costPerServing(r *recipes.Recipe) *int32 {
+	c := r.Cost()
+	if c.Cents == 0 {
+		return nil
+	}
+	return new(int32(math.Round(c.Cents / float64(max(r.Servings, 1)))))
 }
 
 // round rounds a computed amount to nutritionDigits decimals.

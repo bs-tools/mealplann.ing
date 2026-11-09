@@ -42,6 +42,17 @@ import "mcp/v1/options.proto";
 // grams_per_milliliter. The pantry and the shopping list also use
 // store_section, package_grams, shelf_life_days, preferred_store_id and
 // always_in_stock: set them when you know them.
+//
+// Meals' and plans' costs are estimated from each food's
+// price_cents_per_kilogram: what the household pays at its stores, in
+// Squamish, BC, in Canadian cents per kilogram, with the price_date it was
+// seen. To price foods:
+//
+// 1. Use the shelf price of the size the household buys, from its stores' sites or flyers (like Save-On-Foods and Nesters Market in Squamish), or from what the user says they paid.
+// 2. Convert it to cents per kilogram: a 900 g bag at $3.49 is 388; a 1 L carton at $4.29 of a food with grams_per_milliliter 1.03 is 417; produce priced each, at $1.29 an avocado of 170 g, is 759.
+// 3. Set price_date to when the price was seen, and say so to the user when a price is an estimate.
+//
+// Use UpdateFood with the update_mask "price_cents_per_kilogram,price_date".
 service FoodService {
   // Search the reference foods of the Canadian Nutrient File and USDA
   // FoodData Central (its Foundation Foods and SR Legacy datasets), without
@@ -294,6 +305,15 @@ message Food {
   // for bread or 180 for cooked beans. A pantry lot in the freezer is used
   // by then, however soon its pack expires. 0 if unknown.
   int32 freezer_shelf_life_days = 19;
+  // What the household pays for it, in Canadian cents per kilogram, at
+  // the stores it shops at (for this household, in Squamish, BC), e.g. 499
+  // for $4.99/kg, or 388 for a 900 g bag at $3.49. Meals' and plans' costs
+  // are estimated from it (see RecipeService and PlanService.GetPlanCost).
+  // 0 if unknown. At most 1000000 ($10,000/kg).
+  int32 price_cents_per_kilogram = 20;
+  // When the price was seen (YYYY-MM-DD), to know how current it is. Empty
+  // if unknown. Setting a price through the web app sets it to the day.
+  string price_date = 21;
   // Notes about the food, e.g. the brand or where to buy it. At most 2000
   // characters.
   string notes = 13;

@@ -35,6 +35,14 @@ import "people/v1/people.proto";
 // user's, from the person's care team: change the plan to meet them, never
 // the rules.
 service PlanService {
+  // Estimate what a range of the plan costs, from the foods' prices
+  // (FoodService's Food.price_cents_per_kilogram): each cook, the foods
+  // eaten without a recipe, like staples, and in all, both for everything
+  // eaten and for only what isn't in the pantry yet, which the pantry's
+  // lots cover first by date, like the shopping list. Costs are for the
+  // grams used, not whole packs. Foods without a price aren't counted, and
+  // are listed. At most 31 days.
+  rpc GetPlanCost(GetPlanCostRequest) returns (GetPlanCostResponse);
   // Get a week of the plan: for each day and person, their eating times
   // with the portions and staples planned, with weights and nutrients; the
   // day's totals; and every warning. Also the cooks of the week. Read it
@@ -507,6 +515,47 @@ message PlannedCook {
   double assigned_servings = 2;
   // The warnings about its servings.
   repeated Warning warnings = 3;
+}
+
+message GetPlanCostRequest {
+  // The first date (YYYY-MM-DD). Required.
+  string start_date = 1;
+  // The last date (YYYY-MM-DD), at most 30 days after start_date.
+  // Required.
+  string end_date = 2;
+}
+
+message GetPlanCostResponse {
+  // What everything planned costs, in Canadian cents.
+  int32 total_cents = 1;
+  // What's left to buy: everything planned, but what the pantry has
+  // already, in Canadian cents.
+  int32 to_buy_cents = 2;
+  // The cooks, by date, each with what its ingredients cost. A cook whose
+  // components another cook makes doesn't count them; that cook does.
+  repeated CookCost cooks = 3;
+  // What the foods eaten without a recipe cost, like staples and portions
+  // of a food, in Canadian cents.
+  int32 foods_cents = 4;
+  // The foods without a price, or that can't be weighed, which aren't
+  // counted, by name: set their prices with FoodService.UpdateFood.
+  repeated string unpriced_food_names = 5;
+}
+
+// What a cook's ingredients cost.
+message CookCost {
+  // The ID of the cook.
+  string cook_id = 1;
+  // The name of its recipe.
+  string recipe_name = 2;
+  // The date of the cook (YYYY-MM-DD).
+  string date = 3;
+  // The servings cooked.
+  double servings = 4;
+  // What its ingredients cost, in Canadian cents.
+  int32 total_cents = 5;
+  // What a serving costs, in Canadian cents.
+  int32 cents_per_serving = 6;
 }
 
 message PlanMealRequest {

@@ -132,6 +132,25 @@ their shape will keep changing as the pages using them do.
   instructions. Until every recipe has them, `steps` keeps the texts, of
   instructions too; then the column goes, and `steps` is derived.
 
+### Costs
+
+Each food can have a price, in Canadian cents per kilogram, with the date
+it was seen: the household's shelf prices in Squamish, BC, which the user
+or an agent enters (the food service's guide says how). Nothing fetches
+prices: stores don't publish them in a form to read, and the app reaches
+nothing beyond Cloud Run and Postgres.
+
+- **A recipe's cost** counts its ingredients pro rata to the grams used,
+  not whole packs: what the meal costs rather than what its shop does.
+  Components count their own ingredients, and optional ingredients don't.
+- **A plan's cost** (`GetPlanCost`, the plan page) counts each cook, less
+  the components another cook makes, and the foods eaten without a recipe,
+  like staples. What's left to buy leaves out what the pantry covers,
+  allocated by date like the shopping list, cooks already done, and foods
+  always in stock.
+- **Foods without a price** aren't counted, and are named, so the costs
+  are lower bounds until they have prices.
+
 ### Components
 
 A recipe can use another as an ingredient, a component, in servings: soaked

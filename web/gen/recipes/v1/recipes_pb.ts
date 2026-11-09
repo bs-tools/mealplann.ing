@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file recipes/v1/recipes.proto.
  */
 export const file_recipes_v1_recipes: GenFile = /*@__PURE__*/
-  fileDesc("ChhyZWNpcGVzL3YxL3JlY2lwZXMucHJvdG8SCnJlY2lwZXMudjEi4QQKBlJlY2lwZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhAKCHNlcnZpbmdzGAQgASgFEhQKDHByZXBfc2Vjb25kcxgFIAEoBRIUCgxjb29rX3NlY29uZHMYBiABKAUSKwoLaW5ncmVkaWVudHMYByADKAsyFi5yZWNpcGVzLnYxLkluZ3JlZGllbnQSDQoFc3RlcHMYCCADKAkSDAoEdGFncxgJIAMoCRISCgpzb3VyY2VfdXJsGAogASgJEhgKC2ZyaWRnZV9kYXlzGAsgASgFSACIAQESEQoJZnJlZXphYmxlGAwgASgIEg0KBW5vdGVzGA0gASgJEjYKCW51dHJpdGlvbhgOIAEoCzIbLnJlY2lwZXMudjEuUmVjaXBlTnV0cml0aW9uQgaqnxkCCAESNwoLY3JlYXRlX3RpbWUYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESEAoIZmF2b3JpdGUYESABKAgSGQoMZnJlZXplcl9kYXlzGBIgASgFSAGIAQESFwoPcHJlcF9haGVhZF9kYXlzGBMgASgFEhcKD3ByZXBfYWhlYWRfbm90ZRgUIAEoCRImCgxpbnN0cnVjdGlvbnMYFSADKAsyEC5yZWNpcGVzLnYxLlN0ZXBCDgoMX2ZyaWRnZV9kYXlzQg8KDV9mcmVlemVyX2RheXMinAEKBFN0ZXASDAoEdGV4dBgBIAEoCRIPCgdzZWN0aW9uGAIgASgJEhoKEmluZ3JlZGllbnRfaW5kZXhlcxgDIAMoBRIYChBkdXJhdGlvbl9zZWNvbmRzGAQgASgFEg8KB3dhaXRpbmcYBSABKAgSGgoSYWZ0ZXJfc3RlcF9pbmRleGVzGAYgAygFEhIKCmZyb21fc3RhcnQYByABKAgi0wEKCkluZ3JlZGllbnQSDwoHZm9vZF9pZBgBIAEoCRIZCglmb29kX25hbWUYAiABKAlCBqqfGQIIARIOCgZhbW91bnQYAyABKAESIgoEdW5pdBgEIAEoDjIULmZvb2RzLnYxLkFtb3VudFVuaXQSDAoEbm90ZRgFIAEoCRIVCg1vcmlnaW5hbF90ZXh0GAYgASgJEhAKCG9wdGlvbmFsGAcgASgIEhEKCXJlY2lwZV9pZBgIIAEoCRIbCgtyZWNpcGVfbmFtZRgJIAEoCUIGqp8ZAggBIuYBCg9SZWNpcGVOdXRyaXRpb24SEwoLdG90YWxfZ3JhbXMYASABKAESGQoRZ3JhbXNfcGVyX3NlcnZpbmcYAiABKAESKAoLcGVyX3NlcnZpbmcYAyABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSLgoRcGVyX2h1bmRyZWRfZ3JhbXMYBCABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSHAoUaW5jb21wbGV0ZV9udXRyaWVudHMYBSADKAkSKwoGaXNzdWVzGAYgAygLMhsucmVjaXBlcy52MS5JbmdyZWRpZW50SXNzdWUiggEKD0luZ3JlZGllbnRJc3N1ZRIYChBpbmdyZWRpZW50X2luZGV4GAEgASgFEg8KB2Zvb2RfaWQYAiABKAkSEQoJZm9vZF9uYW1lGAMgASgJEhYKDnVua25vd25fd2VpZ2h0GAQgASgIEhkKEXVua25vd25fbnV0cmllbnRzGAUgAygJIu4DCg1SZWNpcGVTdW1tYXJ5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEAoIc2VydmluZ3MYBCABKAUSFAoMcHJlcF9zZWNvbmRzGAUgASgFEhQKDGNvb2tfc2Vjb25kcxgGIAEoBRIMCgR0YWdzGAcgAygJEiQKF2VuZXJneV9rY2FsX3Blcl9zZXJ2aW5nGAggASgBSACIAQESJgoZcHJvdGVpbl9ncmFtc19wZXJfc2VydmluZxgJIAEoAUgBiAEBEisKHmNhcmJvaHlkcmF0ZV9ncmFtc19wZXJfc2VydmluZxgKIAEoAUgCiAEBEhkKEWdyYW1zX3Blcl9zZXJ2aW5nGAsgASgBEhIKCmhhc19pc3N1ZXMYDCABKAgSLwoLdXBkYXRlX3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhAKCGZhdm9yaXRlGA4gASgIEhgKEGhhc19pbnN0cnVjdGlvbnMYDyABKAhCGgoYX2VuZXJneV9rY2FsX3Blcl9zZXJ2aW5nQhwKGl9wcm90ZWluX2dyYW1zX3Blcl9zZXJ2aW5nQiEKH19jYXJib2h5ZHJhdGVfZ3JhbXNfcGVyX3NlcnZpbmciTQoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZRISCgpyZXF1ZXN0X2lkGAIgASgJIjoKFENyZWF0ZVJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIj0KEEdldFJlY2lwZVJlcXVlc3QSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIPCgdzdW1tYXJ5GAMgASgIIjcKEUdldFJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlInkKEkxpc3RSZWNpcGVzUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIMCgR0YWdzGAIgAygJEhYKDmZhdm9yaXRlc19vbmx5GAMgASgIEhAKCGZvb2RfaWRzGAQgAygJEhwKFHdpdGhvdXRfaW5zdHJ1Y3Rpb25zGAUgASgIIk8KE0xpc3RSZWNpcGVzUmVzcG9uc2USKgoHcmVjaXBlcxgBIAMoCzIZLnJlY2lwZXMudjEuUmVjaXBlU3VtbWFyeRIMCgR0YWdzGAIgAygJImoKE1VwZGF0ZVJlY2lwZVJlcXVlc3QSIgoGcmVjaXBlGAEgASgLMhIucmVjaXBlcy52MS5SZWNpcGUSLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIjoKFFVwZGF0ZVJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIiYKGEdldFJlY2lwZVRpbWVsaW5lUmVxdWVzdBIKCgJpZBgBIAEoCSJyChlHZXRSZWNpcGVUaW1lbGluZVJlc3BvbnNlEiQKBXN0ZXBzGAEgAygLMhUucmVjaXBlcy52MS5UaW1lZFN0ZXASFQoNdG90YWxfc2Vjb25kcxgCIAEoBRIYChBoYW5kc19vbl9zZWNvbmRzGAMgASgFIo4BCglUaW1lZFN0ZXASEgoKc3RlcF9pbmRleBgBIAEoBRIMCgR0ZXh0GAIgASgJEhUKDXN0YXJ0X3NlY29uZHMYAyABKAUSEwoLZW5kX3NlY29uZHMYBCABKAUSDwoHd2FpdGluZxgFIAEoCBIRCgllc3RpbWF0ZWQYBiABKAgSDwoHc2VjdGlvbhgHIAEoCSJJChRVcGRhdGVSZWNpcGVzUmVxdWVzdBIxCghyZXF1ZXN0cxgBIAMoCzIfLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlUmVxdWVzdCJIChVVcGRhdGVSZWNpcGVzUmVzcG9uc2USLwoHcmVzdWx0cxgBIAMoCzIeLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlUmVzdWx0ImMKElVwZGF0ZVJlY2lwZVJlc3VsdBIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZRISCgplcnJvcl9jb2RlGAIgASgJEhUKDWVycm9yX21lc3NhZ2UYAyABKAkiZAoSUmVwbGFjZUZvb2RSZXF1ZXN0Eg8KB2Zvb2RfaWQYASABKAkSEwoLbmV3X2Zvb2RfaWQYAiABKAkSEgoKcmVjaXBlX2lkcxgDIAMoCRIUCgxhbW91bnRfcmF0aW8YBCABKAEiQQoTUmVwbGFjZUZvb2RSZXNwb25zZRIqCgdyZWNpcGVzGAEgAygLMhkucmVjaXBlcy52MS5SZWNpcGVTdW1tYXJ5IiEKE0RlbGV0ZVJlY2lwZVJlcXVlc3QSCgoCaWQYASABKAkiFgoURGVsZXRlUmVjaXBlUmVzcG9uc2UyqgUKDVJlY2lwZVNlcnZpY2USYAoRR2V0UmVjaXBlVGltZWxpbmUSJC5yZWNpcGVzLnYxLkdldFJlY2lwZVRpbWVsaW5lUmVxdWVzdBolLnJlY2lwZXMudjEuR2V0UmVjaXBlVGltZWxpbmVSZXNwb25zZRJRCgxDcmVhdGVSZWNpcGUSHy5yZWNpcGVzLnYxLkNyZWF0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLkNyZWF0ZVJlY2lwZVJlc3BvbnNlEkgKCUdldFJlY2lwZRIcLnJlY2lwZXMudjEuR2V0UmVjaXBlUmVxdWVzdBodLnJlY2lwZXMudjEuR2V0UmVjaXBlUmVzcG9uc2USTgoLTGlzdFJlY2lwZXMSHi5yZWNpcGVzLnYxLkxpc3RSZWNpcGVzUmVxdWVzdBofLnJlY2lwZXMudjEuTGlzdFJlY2lwZXNSZXNwb25zZRJRCgxVcGRhdGVSZWNpcGUSHy5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZVJlc3BvbnNlElQKDVVwZGF0ZVJlY2lwZXMSIC5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZXNSZXF1ZXN0GiEucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVzUmVzcG9uc2USTgoLUmVwbGFjZUZvb2QSHi5yZWNpcGVzLnYxLlJlcGxhY2VGb29kUmVxdWVzdBofLnJlY2lwZXMudjEuUmVwbGFjZUZvb2RSZXNwb25zZRJRCgxEZWxldGVSZWNpcGUSHy5yZWNpcGVzLnYxLkRlbGV0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLkRlbGV0ZVJlY2lwZVJlc3BvbnNlQqwBCg5jb20ucmVjaXBlcy52MUIMUmVjaXBlc1Byb3RvUAFaQ2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vcmVjaXBlcy92MTtyZWNpcGVzdjGiAgNSWFiqAgpSZWNpcGVzLlYxygIKUmVjaXBlc1xWMeICFlJlY2lwZXNcVjFcR1BCTWV0YWRhdGHqAgtSZWNpcGVzOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChhyZWNpcGVzL3YxL3JlY2lwZXMucHJvdG8SCnJlY2lwZXMudjEijwUKBlJlY2lwZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhAKCHNlcnZpbmdzGAQgASgFEhQKDHByZXBfc2Vjb25kcxgFIAEoBRIUCgxjb29rX3NlY29uZHMYBiABKAUSKwoLaW5ncmVkaWVudHMYByADKAsyFi5yZWNpcGVzLnYxLkluZ3JlZGllbnQSDQoFc3RlcHMYCCADKAkSDAoEdGFncxgJIAMoCRISCgpzb3VyY2VfdXJsGAogASgJEhgKC2ZyaWRnZV9kYXlzGAsgASgFSACIAQESEQoJZnJlZXphYmxlGAwgASgIEg0KBW5vdGVzGA0gASgJEjYKCW51dHJpdGlvbhgOIAEoCzIbLnJlY2lwZXMudjEuUmVjaXBlTnV0cml0aW9uQgaqnxkCCAESNwoLY3JlYXRlX3RpbWUYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESEAoIZmF2b3JpdGUYESABKAgSGQoMZnJlZXplcl9kYXlzGBIgASgFSAGIAQESFwoPcHJlcF9haGVhZF9kYXlzGBMgASgFEhcKD3ByZXBfYWhlYWRfbm90ZRgUIAEoCRImCgxpbnN0cnVjdGlvbnMYFSADKAsyEC5yZWNpcGVzLnYxLlN0ZXASLAoEY29zdBgWIAEoCzIWLnJlY2lwZXMudjEuUmVjaXBlQ29zdEIGqp8ZAggBQg4KDF9mcmlkZ2VfZGF5c0IPCg1fZnJlZXplcl9kYXlzIlkKClJlY2lwZUNvc3QSEwoLdG90YWxfY2VudHMYASABKAUSGQoRY2VudHNfcGVyX3NlcnZpbmcYAiABKAUSGwoTdW5wcmljZWRfZm9vZF9uYW1lcxgDIAMoCSKcAQoEU3RlcBIMCgR0ZXh0GAEgASgJEg8KB3NlY3Rpb24YAiABKAkSGgoSaW5ncmVkaWVudF9pbmRleGVzGAMgAygFEhgKEGR1cmF0aW9uX3NlY29uZHMYBCABKAUSDwoHd2FpdGluZxgFIAEoCBIaChJhZnRlcl9zdGVwX2luZGV4ZXMYBiADKAUSEgoKZnJvbV9zdGFydBgHIAEoCCLTAQoKSW5ncmVkaWVudBIPCgdmb29kX2lkGAEgASgJEhkKCWZvb2RfbmFtZRgCIAEoCUIGqp8ZAggBEg4KBmFtb3VudBgDIAEoARIiCgR1bml0GAQgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdBIMCgRub3RlGAUgASgJEhUKDW9yaWdpbmFsX3RleHQYBiABKAkSEAoIb3B0aW9uYWwYByABKAgSEQoJcmVjaXBlX2lkGAggASgJEhsKC3JlY2lwZV9uYW1lGAkgASgJQgaqnxkCCAEi5gEKD1JlY2lwZU51dHJpdGlvbhITCgt0b3RhbF9ncmFtcxgBIAEoARIZChFncmFtc19wZXJfc2VydmluZxgCIAEoARIoCgtwZXJfc2VydmluZxgDIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIuChFwZXJfaHVuZHJlZF9ncmFtcxgEIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIcChRpbmNvbXBsZXRlX251dHJpZW50cxgFIAMoCRIrCgZpc3N1ZXMYBiADKAsyGy5yZWNpcGVzLnYxLkluZ3JlZGllbnRJc3N1ZSKCAQoPSW5ncmVkaWVudElzc3VlEhgKEGluZ3JlZGllbnRfaW5kZXgYASABKAUSDwoHZm9vZF9pZBgCIAEoCRIRCglmb29kX25hbWUYAyABKAkSFgoOdW5rbm93bl93ZWlnaHQYBCABKAgSGQoRdW5rbm93bl9udXRyaWVudHMYBSADKAkirgQKDVJlY2lwZVN1bW1hcnkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIQCghzZXJ2aW5ncxgEIAEoBRIUCgxwcmVwX3NlY29uZHMYBSABKAUSFAoMY29va19zZWNvbmRzGAYgASgFEgwKBHRhZ3MYByADKAkSJAoXZW5lcmd5X2tjYWxfcGVyX3NlcnZpbmcYCCABKAFIAIgBARImChlwcm90ZWluX2dyYW1zX3Blcl9zZXJ2aW5nGAkgASgBSAGIAQESKwoeY2FyYm9oeWRyYXRlX2dyYW1zX3Blcl9zZXJ2aW5nGAogASgBSAKIAQESGQoRZ3JhbXNfcGVyX3NlcnZpbmcYCyABKAESEgoKaGFzX2lzc3VlcxgMIAEoCBIvCgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEAoIZmF2b3JpdGUYDiABKAgSGAoQaGFzX2luc3RydWN0aW9ucxgPIAEoCBIjChZjb3N0X2NlbnRzX3Blcl9zZXJ2aW5nGBAgASgFSAOIAQFCGgoYX2VuZXJneV9rY2FsX3Blcl9zZXJ2aW5nQhwKGl9wcm90ZWluX2dyYW1zX3Blcl9zZXJ2aW5nQiEKH19jYXJib2h5ZHJhdGVfZ3JhbXNfcGVyX3NlcnZpbmdCGQoXX2Nvc3RfY2VudHNfcGVyX3NlcnZpbmciTQoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZRISCgpyZXF1ZXN0X2lkGAIgASgJIjoKFENyZWF0ZVJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIj0KEEdldFJlY2lwZVJlcXVlc3QSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIPCgdzdW1tYXJ5GAMgASgIIjcKEUdldFJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlInkKEkxpc3RSZWNpcGVzUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIMCgR0YWdzGAIgAygJEhYKDmZhdm9yaXRlc19vbmx5GAMgASgIEhAKCGZvb2RfaWRzGAQgAygJEhwKFHdpdGhvdXRfaW5zdHJ1Y3Rpb25zGAUgASgIIk8KE0xpc3RSZWNpcGVzUmVzcG9uc2USKgoHcmVjaXBlcxgBIAMoCzIZLnJlY2lwZXMudjEuUmVjaXBlU3VtbWFyeRIMCgR0YWdzGAIgAygJImoKE1VwZGF0ZVJlY2lwZVJlcXVlc3QSIgoGcmVjaXBlGAEgASgLMhIucmVjaXBlcy52MS5SZWNpcGUSLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIjoKFFVwZGF0ZVJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIiYKGEdldFJlY2lwZVRpbWVsaW5lUmVxdWVzdBIKCgJpZBgBIAEoCSJyChlHZXRSZWNpcGVUaW1lbGluZVJlc3BvbnNlEiQKBXN0ZXBzGAEgAygLMhUucmVjaXBlcy52MS5UaW1lZFN0ZXASFQoNdG90YWxfc2Vjb25kcxgCIAEoBRIYChBoYW5kc19vbl9zZWNvbmRzGAMgASgFIo4BCglUaW1lZFN0ZXASEgoKc3RlcF9pbmRleBgBIAEoBRIMCgR0ZXh0GAIgASgJEhUKDXN0YXJ0X3NlY29uZHMYAyABKAUSEwoLZW5kX3NlY29uZHMYBCABKAUSDwoHd2FpdGluZxgFIAEoCBIRCgllc3RpbWF0ZWQYBiABKAgSDwoHc2VjdGlvbhgHIAEoCSJJChRVcGRhdGVSZWNpcGVzUmVxdWVzdBIxCghyZXF1ZXN0cxgBIAMoCzIfLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlUmVxdWVzdCJIChVVcGRhdGVSZWNpcGVzUmVzcG9uc2USLwoHcmVzdWx0cxgBIAMoCzIeLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlUmVzdWx0ImMKElVwZGF0ZVJlY2lwZVJlc3VsdBIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZRISCgplcnJvcl9jb2RlGAIgASgJEhUKDWVycm9yX21lc3NhZ2UYAyABKAkiZAoSUmVwbGFjZUZvb2RSZXF1ZXN0Eg8KB2Zvb2RfaWQYASABKAkSEwoLbmV3X2Zvb2RfaWQYAiABKAkSEgoKcmVjaXBlX2lkcxgDIAMoCRIUCgxhbW91bnRfcmF0aW8YBCABKAEiQQoTUmVwbGFjZUZvb2RSZXNwb25zZRIqCgdyZWNpcGVzGAEgAygLMhkucmVjaXBlcy52MS5SZWNpcGVTdW1tYXJ5IiEKE0RlbGV0ZVJlY2lwZVJlcXVlc3QSCgoCaWQYASABKAkiFgoURGVsZXRlUmVjaXBlUmVzcG9uc2UyqgUKDVJlY2lwZVNlcnZpY2USYAoRR2V0UmVjaXBlVGltZWxpbmUSJC5yZWNpcGVzLnYxLkdldFJlY2lwZVRpbWVsaW5lUmVxdWVzdBolLnJlY2lwZXMudjEuR2V0UmVjaXBlVGltZWxpbmVSZXNwb25zZRJRCgxDcmVhdGVSZWNpcGUSHy5yZWNpcGVzLnYxLkNyZWF0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLkNyZWF0ZVJlY2lwZVJlc3BvbnNlEkgKCUdldFJlY2lwZRIcLnJlY2lwZXMudjEuR2V0UmVjaXBlUmVxdWVzdBodLnJlY2lwZXMudjEuR2V0UmVjaXBlUmVzcG9uc2USTgoLTGlzdFJlY2lwZXMSHi5yZWNpcGVzLnYxLkxpc3RSZWNpcGVzUmVxdWVzdBofLnJlY2lwZXMudjEuTGlzdFJlY2lwZXNSZXNwb25zZRJRCgxVcGRhdGVSZWNpcGUSHy5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZVJlc3BvbnNlElQKDVVwZGF0ZVJlY2lwZXMSIC5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZXNSZXF1ZXN0GiEucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVzUmVzcG9uc2USTgoLUmVwbGFjZUZvb2QSHi5yZWNpcGVzLnYxLlJlcGxhY2VGb29kUmVxdWVzdBofLnJlY2lwZXMudjEuUmVwbGFjZUZvb2RSZXNwb25zZRJRCgxEZWxldGVSZWNpcGUSHy5yZWNpcGVzLnYxLkRlbGV0ZVJlY2lwZVJlcXVlc3QaIC5yZWNpcGVzLnYxLkRlbGV0ZVJlY2lwZVJlc3BvbnNlQqwBCg5jb20ucmVjaXBlcy52MUIMUmVjaXBlc1Byb3RvUAFaQ2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vcmVjaXBlcy92MTtyZWNpcGVzdjGiAgNSWFiqAgpSZWNpcGVzLlYxygIKUmVjaXBlc1xWMeICFlJlY2lwZXNcVjFcR1BCTWV0YWRhdGHqAgtSZWNpcGVzOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A recipe.
@@ -194,6 +194,13 @@ export type Recipe = Message<"recipes.v1.Recipe"> & {
    * @generated from field: repeated recipes.v1.Step instructions = 21;
    */
   instructions: Step[];
+
+  /**
+   * What its ingredients cost, from their foods' prices.
+   *
+   * @generated from field: recipes.v1.RecipeCost cost = 22;
+   */
+  cost?: RecipeCost | undefined;
 };
 
 /**
@@ -202,6 +209,46 @@ export type Recipe = Message<"recipes.v1.Recipe"> & {
  */
 export const RecipeSchema: GenMessage<Recipe> = /*@__PURE__*/
   messageDesc(file_recipes_v1_recipes, 0);
+
+/**
+ * What a recipe's ingredients cost, from their foods' prices
+ * (FoodService's Food.price_cents_per_kilogram), for the grams used, not
+ * whole packs. Components count their own ingredients, and optional
+ * ingredients don't count.
+ *
+ * @generated from message recipes.v1.RecipeCost
+ */
+export type RecipeCost = Message<"recipes.v1.RecipeCost"> & {
+  /**
+   * What the recipe's servings cost, in Canadian cents. A lower bound if
+   * unpriced_food_names isn't empty.
+   *
+   * @generated from field: int32 total_cents = 1;
+   */
+  totalCents: number;
+
+  /**
+   * What a serving costs, in Canadian cents.
+   *
+   * @generated from field: int32 cents_per_serving = 2;
+   */
+  centsPerServing: number;
+
+  /**
+   * The foods without a price, or that can't be weighed, which aren't
+   * counted: set their prices with FoodService.UpdateFood.
+   *
+   * @generated from field: repeated string unpriced_food_names = 3;
+   */
+  unpricedFoodNames: string[];
+};
+
+/**
+ * Describes the message recipes.v1.RecipeCost.
+ * Use `create(RecipeCostSchema)` to create a new message.
+ */
+export const RecipeCostSchema: GenMessage<RecipeCost> = /*@__PURE__*/
+  messageDesc(file_recipes_v1_recipes, 1);
 
 /**
  * A step of a recipe's instructions.
@@ -278,7 +325,7 @@ export type Step = Message<"recipes.v1.Step"> & {
  * Use `create(StepSchema)` to create a new message.
  */
 export const StepSchema: GenMessage<Step> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 1);
+  messageDesc(file_recipes_v1_recipes, 2);
 
 /**
  * An ingredient of a recipe: an amount of a food, or servings of another
@@ -364,7 +411,7 @@ export type Ingredient = Message<"recipes.v1.Ingredient"> & {
  * Use `create(IngredientSchema)` to create a new message.
  */
 export const IngredientSchema: GenMessage<Ingredient> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 2);
+  messageDesc(file_recipes_v1_recipes, 3);
 
 /**
  * The nutrition of a recipe, computed from its ingredients' foods, as
@@ -428,7 +475,7 @@ export type RecipeNutrition = Message<"recipes.v1.RecipeNutrition"> & {
  * Use `create(RecipeNutritionSchema)` to create a new message.
  */
 export const RecipeNutritionSchema: GenMessage<RecipeNutrition> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 3);
+  messageDesc(file_recipes_v1_recipes, 4);
 
 /**
  * An ingredient whose food, or component's recipe, lacks data the recipe's
@@ -484,7 +531,7 @@ export type IngredientIssue = Message<"recipes.v1.IngredientIssue"> & {
  * Use `create(IngredientIssueSchema)` to create a new message.
  */
 export const IngredientIssueSchema: GenMessage<IngredientIssue> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 4);
+  messageDesc(file_recipes_v1_recipes, 5);
 
 /**
  * A summary of a recipe, for lists.
@@ -597,6 +644,15 @@ export type RecipeSummary = Message<"recipes.v1.RecipeSummary"> & {
    * @generated from field: bool has_instructions = 15;
    */
   hasInstructions: boolean;
+
+  /**
+   * What a serving costs, in Canadian cents, from the foods' prices. Unset
+   * if none of its foods have one; a lower bound if some don't (see
+   * Recipe.cost).
+   *
+   * @generated from field: optional int32 cost_cents_per_serving = 16;
+   */
+  costCentsPerServing?: number | undefined;
 };
 
 /**
@@ -604,7 +660,7 @@ export type RecipeSummary = Message<"recipes.v1.RecipeSummary"> & {
  * Use `create(RecipeSummarySchema)` to create a new message.
  */
 export const RecipeSummarySchema: GenMessage<RecipeSummary> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 5);
+  messageDesc(file_recipes_v1_recipes, 6);
 
 /**
  * @generated from message recipes.v1.CreateRecipeRequest
@@ -633,7 +689,7 @@ export type CreateRecipeRequest = Message<"recipes.v1.CreateRecipeRequest"> & {
  * Use `create(CreateRecipeRequestSchema)` to create a new message.
  */
 export const CreateRecipeRequestSchema: GenMessage<CreateRecipeRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 6);
+  messageDesc(file_recipes_v1_recipes, 7);
 
 /**
  * @generated from message recipes.v1.CreateRecipeResponse
@@ -652,7 +708,7 @@ export type CreateRecipeResponse = Message<"recipes.v1.CreateRecipeResponse"> & 
  * Use `create(CreateRecipeResponseSchema)` to create a new message.
  */
 export const CreateRecipeResponseSchema: GenMessage<CreateRecipeResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 7);
+  messageDesc(file_recipes_v1_recipes, 8);
 
 /**
  * @generated from message recipes.v1.GetRecipeRequest
@@ -689,7 +745,7 @@ export type GetRecipeRequest = Message<"recipes.v1.GetRecipeRequest"> & {
  * Use `create(GetRecipeRequestSchema)` to create a new message.
  */
 export const GetRecipeRequestSchema: GenMessage<GetRecipeRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 8);
+  messageDesc(file_recipes_v1_recipes, 9);
 
 /**
  * @generated from message recipes.v1.GetRecipeResponse
@@ -708,7 +764,7 @@ export type GetRecipeResponse = Message<"recipes.v1.GetRecipeResponse"> & {
  * Use `create(GetRecipeResponseSchema)` to create a new message.
  */
 export const GetRecipeResponseSchema: GenMessage<GetRecipeResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 9);
+  messageDesc(file_recipes_v1_recipes, 10);
 
 /**
  * @generated from message recipes.v1.ListRecipesRequest
@@ -760,7 +816,7 @@ export type ListRecipesRequest = Message<"recipes.v1.ListRecipesRequest"> & {
  * Use `create(ListRecipesRequestSchema)` to create a new message.
  */
 export const ListRecipesRequestSchema: GenMessage<ListRecipesRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 10);
+  messageDesc(file_recipes_v1_recipes, 11);
 
 /**
  * @generated from message recipes.v1.ListRecipesResponse
@@ -787,7 +843,7 @@ export type ListRecipesResponse = Message<"recipes.v1.ListRecipesResponse"> & {
  * Use `create(ListRecipesResponseSchema)` to create a new message.
  */
 export const ListRecipesResponseSchema: GenMessage<ListRecipesResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 11);
+  messageDesc(file_recipes_v1_recipes, 12);
 
 /**
  * @generated from message recipes.v1.UpdateRecipeRequest
@@ -815,7 +871,7 @@ export type UpdateRecipeRequest = Message<"recipes.v1.UpdateRecipeRequest"> & {
  * Use `create(UpdateRecipeRequestSchema)` to create a new message.
  */
 export const UpdateRecipeRequestSchema: GenMessage<UpdateRecipeRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 12);
+  messageDesc(file_recipes_v1_recipes, 13);
 
 /**
  * @generated from message recipes.v1.UpdateRecipeResponse
@@ -834,7 +890,7 @@ export type UpdateRecipeResponse = Message<"recipes.v1.UpdateRecipeResponse"> & 
  * Use `create(UpdateRecipeResponseSchema)` to create a new message.
  */
 export const UpdateRecipeResponseSchema: GenMessage<UpdateRecipeResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 13);
+  messageDesc(file_recipes_v1_recipes, 14);
 
 /**
  * @generated from message recipes.v1.GetRecipeTimelineRequest
@@ -853,7 +909,7 @@ export type GetRecipeTimelineRequest = Message<"recipes.v1.GetRecipeTimelineRequ
  * Use `create(GetRecipeTimelineRequestSchema)` to create a new message.
  */
 export const GetRecipeTimelineRequestSchema: GenMessage<GetRecipeTimelineRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 14);
+  messageDesc(file_recipes_v1_recipes, 15);
 
 /**
  * @generated from message recipes.v1.GetRecipeTimelineResponse
@@ -886,7 +942,7 @@ export type GetRecipeTimelineResponse = Message<"recipes.v1.GetRecipeTimelineRes
  * Use `create(GetRecipeTimelineResponseSchema)` to create a new message.
  */
 export const GetRecipeTimelineResponseSchema: GenMessage<GetRecipeTimelineResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 15);
+  messageDesc(file_recipes_v1_recipes, 16);
 
 /**
  * A step of a recipe's timeline.
@@ -949,7 +1005,7 @@ export type TimedStep = Message<"recipes.v1.TimedStep"> & {
  * Use `create(TimedStepSchema)` to create a new message.
  */
 export const TimedStepSchema: GenMessage<TimedStep> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 16);
+  messageDesc(file_recipes_v1_recipes, 17);
 
 /**
  * @generated from message recipes.v1.UpdateRecipesRequest
@@ -968,7 +1024,7 @@ export type UpdateRecipesRequest = Message<"recipes.v1.UpdateRecipesRequest"> & 
  * Use `create(UpdateRecipesRequestSchema)` to create a new message.
  */
 export const UpdateRecipesRequestSchema: GenMessage<UpdateRecipesRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 17);
+  messageDesc(file_recipes_v1_recipes, 18);
 
 /**
  * @generated from message recipes.v1.UpdateRecipesResponse
@@ -987,7 +1043,7 @@ export type UpdateRecipesResponse = Message<"recipes.v1.UpdateRecipesResponse"> 
  * Use `create(UpdateRecipesResponseSchema)` to create a new message.
  */
 export const UpdateRecipesResponseSchema: GenMessage<UpdateRecipesResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 18);
+  messageDesc(file_recipes_v1_recipes, 19);
 
 /**
  * The result of updating one of several recipes.
@@ -1023,7 +1079,7 @@ export type UpdateRecipeResult = Message<"recipes.v1.UpdateRecipeResult"> & {
  * Use `create(UpdateRecipeResultSchema)` to create a new message.
  */
 export const UpdateRecipeResultSchema: GenMessage<UpdateRecipeResult> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 19);
+  messageDesc(file_recipes_v1_recipes, 20);
 
 /**
  * @generated from message recipes.v1.ReplaceFoodRequest
@@ -1066,7 +1122,7 @@ export type ReplaceFoodRequest = Message<"recipes.v1.ReplaceFoodRequest"> & {
  * Use `create(ReplaceFoodRequestSchema)` to create a new message.
  */
 export const ReplaceFoodRequestSchema: GenMessage<ReplaceFoodRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 20);
+  messageDesc(file_recipes_v1_recipes, 21);
 
 /**
  * @generated from message recipes.v1.ReplaceFoodResponse
@@ -1085,7 +1141,7 @@ export type ReplaceFoodResponse = Message<"recipes.v1.ReplaceFoodResponse"> & {
  * Use `create(ReplaceFoodResponseSchema)` to create a new message.
  */
 export const ReplaceFoodResponseSchema: GenMessage<ReplaceFoodResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 21);
+  messageDesc(file_recipes_v1_recipes, 22);
 
 /**
  * @generated from message recipes.v1.DeleteRecipeRequest
@@ -1104,7 +1160,7 @@ export type DeleteRecipeRequest = Message<"recipes.v1.DeleteRecipeRequest"> & {
  * Use `create(DeleteRecipeRequestSchema)` to create a new message.
  */
 export const DeleteRecipeRequestSchema: GenMessage<DeleteRecipeRequest> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 22);
+  messageDesc(file_recipes_v1_recipes, 23);
 
 /**
  * @generated from message recipes.v1.DeleteRecipeResponse
@@ -1117,7 +1173,7 @@ export type DeleteRecipeResponse = Message<"recipes.v1.DeleteRecipeResponse"> & 
  * Use `create(DeleteRecipeResponseSchema)` to create a new message.
  */
 export const DeleteRecipeResponseSchema: GenMessage<DeleteRecipeResponse> = /*@__PURE__*/
-  messageDesc(file_recipes_v1_recipes, 23);
+  messageDesc(file_recipes_v1_recipes, 24);
 
 /**
  * RecipeService manages the household's recipes. A recipe's ingredients are

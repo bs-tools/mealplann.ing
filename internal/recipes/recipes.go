@@ -114,6 +114,8 @@ type Ingredient struct {
 	FoodName string
 	Food     nutrition.Food
 	FastCarb bool
+	// PriceCentsPerKilogram is the food's price, 0 if unknown.
+	PriceCentsPerKilogram int32
 	// Component is the component's recipe, read with it, nil for a food or
 	// a component nested deeper than MaxComponentDepth.
 	Component *Recipe
@@ -800,14 +802,15 @@ func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 		unit = unitFromDB(*in.Unit)
 	}
 	return &Ingredient{
-		FoodID:            in.FoodID,
-		ComponentRecipeID: in.ComponentRecipeID,
-		Amount:            in.Amount,
-		Unit:              unit,
-		Note:              in.Note,
-		OriginalText:      in.OriginalText,
-		Optional:          in.Optional,
-		FoodName:          row.FoodName,
+		FoodID:                in.FoodID,
+		ComponentRecipeID:     in.ComponentRecipeID,
+		Amount:                in.Amount,
+		Unit:                  unit,
+		Note:                  in.Note,
+		OriginalText:          in.OriginalText,
+		Optional:              in.Optional,
+		FoodName:              row.FoodName,
+		PriceCentsPerKilogram: orZero(row.PriceCentsPerKilogram),
 		Food: nutrition.Food{
 			Per100Grams: nutrition.Nutrients{
 				nutrition.EnergyKcal:           row.EnergyKcalPer100Grams,
@@ -871,7 +874,7 @@ func nonNil[T any](s []T) []T {
 }
 
 // orZero returns *v, or 0 for null.
-func orZero(v *float64) float64 {
+func orZero[T int32 | float64](v *T) T {
 	if v == nil {
 		return 0
 	}

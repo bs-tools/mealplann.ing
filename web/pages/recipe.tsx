@@ -28,6 +28,7 @@ import {
 import type { Recipe } from "gen/recipes/v1/recipes_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
 import {
+  formatDollars,
   formatHoursMinutes,
   formatList,
   formatRedirectTarget,
@@ -171,6 +172,17 @@ const RecipePage: React.FC = () => {
           <Stat
             label="Per serving"
             value={`${Math.round(recipe.nutrition.perServing.energyKcal)} kcal`}
+          />
+        )}
+        {recipe.cost !== undefined && recipe.cost.totalCents > 0 && (
+          <Stat
+            label="Cost per serving"
+            value={`≈ ${formatDollars(recipe.cost.centsPerServing)}`}
+            {...(recipe.cost.unpricedFoodNames.length > 0
+              ? {
+                  sub: `Without ${formatList(recipe.cost.unpricedFoodNames)}, which ${recipe.cost.unpricedFoodNames.length === 1 ? "has" : "have"} no price`,
+                }
+              : {})}
           />
         )}
       </div>

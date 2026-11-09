@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file plans/v1/plans.proto.
  */
 export const file_plans_v1_plans: GenFile = /*@__PURE__*/
-  fileDesc("ChRwbGFucy92MS9wbGFucy5wcm90bxIIcGxhbnMudjEikwMKBENvb2sSCgoCaWQYASABKAkSEQoJcmVjaXBlX2lkGAIgASgJEhsKC3JlY2lwZV9uYW1lGAMgASgJQgaqnxkCCAESDAoEZGF0ZRgEIAEoCRIQCghzZXJ2aW5ncxgFIAEoARImCgRtZWFsGAYgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSDQoFbm90ZXMYByABKAkSDAoEZG9uZRgIIAEoCBI3CgtjcmVhdGVfdGltZRgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARIXCg9mcm96ZW5fc2VydmluZ3MYCyABKAESLgoIc3VwcGxpZXMYDCADKAsyFC5wbGFucy52MS5Db29rU3VwcGx5QgaqnxkCCAESLwoJc3VwcGx5aW5nGA0gAygLMhQucGxhbnMudjEuQ29va1N1cHBseUIGqp8ZAggBItkBCgpDb29rU3VwcGx5EhgKEGNvbnN1bWVyX2Nvb2tfaWQYASABKAkSHAoUY29uc3VtZXJfcmVjaXBlX25hbWUYAiABKAkSFQoNY29uc3VtZXJfZGF0ZRgDIAEoCRIbChNjb21wb25lbnRfcmVjaXBlX2lkGAQgASgJEhgKEHN1cHBsaWVyX2Nvb2tfaWQYBSABKAkSHAoUc3VwcGxpZXJfcmVjaXBlX25hbWUYBiABKAkSFQoNc3VwcGxpZXJfZGF0ZRgHIAEoCRIQCghzZXJ2aW5ncxgIIAEoASIuCglDb29rU2hhcmUSDwoHY29va19pZBgBIAEoCRIQCghzZXJ2aW5ncxgCIAEoASI1Cg5SZWNpcGVTZXJ2aW5ncxIRCglyZWNpcGVfaWQYASABKAkSEAoIc2VydmluZ3MYAiABKAEiUQoKRm9vZEFtb3VudBIPCgdmb29kX2lkGAEgASgJEg4KBmFtb3VudBgCIAEoARIiCgR1bml0GAMgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdCK4AgoHUG9ydGlvbhIKCgJpZBgBIAEoCRIRCglwZXJzb25faWQYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSDAoEZGF0ZRgEIAEoCRIjCgRjb29rGAUgASgLMhMucGxhbnMudjEuQ29va1NoYXJlSAASJAoEZm9vZBgGIAEoCzIULnBsYW5zLnYxLkZvb2RBbW91bnRIABINCgVub3RlcxgHIAEoCRIUCgRuYW1lGAggASgJQgaqnxkCCAESNwoLY3JlYXRlX3RpbWUYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAFCBgoEd2hhdCKaAwoGU3RhcGxlEgoKAmlkGAEgASgJEhEKCXBlcnNvbl9pZBgCIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgDIAEoCRIqCgZyZWNpcGUYBCABKAsyGC5wbGFucy52MS5SZWNpcGVTZXJ2aW5nc0gAEiQKBGZvb2QYBSABKAsyFC5wbGFucy52MS5Gb29kQW1vdW50SAASIwoId2Vla2RheXMYBiADKA4yES5wbGFucy52MS5XZWVrZGF5EhIKCnN0YXJ0X2RhdGUYByABKAkSEAoIZW5kX2RhdGUYCCABKAkSDQoFbm90ZXMYCSABKAkSFAoEbmFtZRgKIAEoCUIGqp8ZAggBEh0KDXNraXBwZWRfZGF0ZXMYCyADKAlCBqqfGQIIARI3CgtjcmVhdGVfdGltZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIAUIGCgR3aGF0IoYCCgdXYXJuaW5nEiMKBGtpbmQYASABKA4yFS5wbGFucy52MS5XYXJuaW5nS2luZBIkCghzZXZlcml0eRgCIAEoDjISLnBsYW5zLnYxLlNldmVyaXR5Eg8KB21lc3NhZ2UYAyABKAkSEQoJdW5jZXJ0YWluGAQgASgIEhEKCXBlcnNvbl9pZBgFIAEoCRIMCgRkYXRlGAYgASgJEhYKDmVhdGluZ190aW1lX2lkGAcgASgJEg8KB2Nvb2tfaWQYCCABKAkSJAoIbnV0cmllbnQYCSABKA4yEi5mb29kcy52MS5OdXRyaWVudBINCgV2YWx1ZRgKIAEoARINCgVsaW1pdBgLIAEoASIxCg5HZXRXZWVrUmVxdWVzdBIOCgZtb25kYXkYASABKAkSDwoHc3VtbWFyeRgCIAEoCCJoCg9HZXRXZWVrUmVzcG9uc2USDgoGbW9uZGF5GAEgASgJEh8KBGRheXMYAiADKAsyES5wbGFucy52MS5QbGFuRGF5EiQKBWNvb2tzGAMgAygLMhUucGxhbnMudjEuUGxhbm5lZENvb2siZAoHUGxhbkRheRIMCgRkYXRlGAEgASgJEiMKBnBlb3BsZRgCIAMoCzITLnBsYW5zLnYxLlBlcnNvbkRheRImCgpwcmVwX3Rhc2tzGAMgAygLMhIucGxhbnMudjEuUHJlcFRhc2siawoIUHJlcFRhc2sSDwoHY29va19pZBgBIAEoCRITCgtyZWNpcGVfbmFtZRgCIAEoCRIRCgljb29rX2RhdGUYAyABKAkSDAoEbm90ZRgEIAEoCRIYChBmb3JfcmVjaXBlX25hbWVzGAUgAygJIuABCglQZXJzb25EYXkSEQoJcGVyc29uX2lkGAEgASgJEhMKC3BlcnNvbl9uYW1lGAIgASgJEjEKDGVhdGluZ190aW1lcxgDIAMoCzIbLnBsYW5zLnYxLlBsYW5uZWRFYXRpbmdUaW1lEg0KBWdyYW1zGAQgASgBEiYKCW51dHJpZW50cxgFIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIcChRpbmNvbXBsZXRlX251dHJpZW50cxgGIAMoCRIjCgh3YXJuaW5ncxgHIAMoCzIRLnBsYW5zLnYxLldhcm5pbmcixwEKEVBsYW5uZWRFYXRpbmdUaW1lEioKC2VhdGluZ190aW1lGAEgASgLMhUucGVvcGxlLnYxLkVhdGluZ1RpbWUSKgoIcG9ydGlvbnMYAiADKAsyGC5wbGFucy52MS5QbGFubmVkUG9ydGlvbhINCgVncmFtcxgDIAEoARImCgludXRyaWVudHMYBCABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSIwoId2FybmluZ3MYBSADKAsyES5wbGFucy52MS5XYXJuaW5nIpsCCg5QbGFubmVkUG9ydGlvbhISCgpwb3J0aW9uX2lkGAEgASgJEhEKCXN0YXBsZV9pZBgCIAEoCRIPCgdjb29rX2lkGAMgASgJEhEKCXJlY2lwZV9pZBgEIAEoCRIPCgdmb29kX2lkGAUgASgJEgwKBG5hbWUYBiABKAkSEAoIc2VydmluZ3MYByABKAESDgoGYW1vdW50GAggASgBEiIKBHVuaXQYCSABKA4yFC5mb29kcy52MS5BbW91bnRVbml0Eg0KBWdyYW1zGAogASgBEhYKDnVua25vd25fd2VpZ2h0GAsgASgIEhEKCWNvb2tfZGF0ZRgMIAEoCRIQCghsZWZ0b3ZlchgNIAEoCBINCgVub3RlcxgOIAEoCSJrCgtQbGFubmVkQ29vaxIcCgRjb29rGAEgASgLMg4ucGxhbnMudjEuQ29vaxIZChFhc3NpZ25lZF9zZXJ2aW5ncxgCIAEoARIjCgh3YXJuaW5ncxgDIAMoCzIRLnBsYW5zLnYxLldhcm5pbmcijwEKD1BsYW5NZWFsUmVxdWVzdBIRCglyZWNpcGVfaWQYASABKAkSDAoEZGF0ZRgCIAEoCRImCgRtZWFsGAMgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSEgoKcGVyc29uX2lkcxgEIAMoCRIQCghzZXJ2aW5ncxgFIAEoARINCgVub3RlcxgGIAEoCSKXAQoQUGxhbk1lYWxSZXNwb25zZRIcCgRjb29rGAEgASgLMg4ucGxhbnMudjEuQ29vaxIjCghwb3J0aW9ucxgCIAMoCzIRLnBsYW5zLnYxLlBvcnRpb24SGwoTdW5hc3NpZ25lZF9zZXJ2aW5ncxgDIAEoARIjCgh3YXJuaW5ncxgEIAMoCzIRLnBsYW5zLnYxLldhcm5pbmcigAEKCk1lYWxUb1BsYW4SEQoJcmVjaXBlX2lkGAEgASgJEgwKBGRhdGUYAiABKAkSJgoEbWVhbBgDIAEoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsEhEKCXBlcnNvbl9pZBgEIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgFIAEoCSI3ChBQbGFuTWVhbHNSZXF1ZXN0EiMKBW1lYWxzGAEgAygLMhQucGxhbnMudjEuTWVhbFRvUGxhbiJJChFQbGFuTWVhbHNSZXNwb25zZRIdCgVjb29rcxgBIAMoCzIOLnBsYW5zLnYxLkNvb2sSFQoNcG9ydGlvbl9jb3VudBgCIAEoBSJFChFDcmVhdGVDb29rUmVxdWVzdBIcCgRjb29rGAEgASgLMg4ucGxhbnMudjEuQ29vaxISCgpmcm9tX3N0b2NrGAIgASgIImIKEkNyZWF0ZUNvb2tSZXNwb25zZRIcCgRjb29rGAEgASgLMg4ucGxhbnMudjEuQ29vaxIuCg5wYW50cnlfY2hhbmdlcxgCIAMoCzIWLnBsYW5zLnYxLlBhbnRyeUNoYW5nZSJBCgxQYW50cnlDaGFuZ2USDwoHZm9vZF9pZBgBIAEoCRIRCglmb29kX25hbWUYAiABKAkSDQoFZ3JhbXMYAyABKAEiYgoRVXBkYXRlQ29va1JlcXVlc3QSHAoEY29vaxgBIAEoCzIOLnBsYW5zLnYxLkNvb2sSLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrInsKElVwZGF0ZUNvb2tSZXNwb25zZRIcCgRjb29rGAEgASgLMg4ucGxhbnMudjEuQ29vaxIuCg5wYW50cnlfY2hhbmdlcxgCIAMoCzIWLnBsYW5zLnYxLlBhbnRyeUNoYW5nZRIXCg9wYW50cnlfcmVzdG9yZWQYAyABKAgiHwoRRGVsZXRlQ29va1JlcXVlc3QSCgoCaWQYASABKAkiFAoSRGVsZXRlQ29va1Jlc3BvbnNlIjoKFENyZWF0ZVBvcnRpb25SZXF1ZXN0EiIKB3BvcnRpb24YASABKAsyES5wbGFucy52MS5Qb3J0aW9uIjsKFUNyZWF0ZVBvcnRpb25SZXNwb25zZRIiCgdwb3J0aW9uGAEgASgLMhEucGxhbnMudjEuUG9ydGlvbiJrChRVcGRhdGVQb3J0aW9uUmVxdWVzdBIiCgdwb3J0aW9uGAEgASgLMhEucGxhbnMudjEuUG9ydGlvbhIvCgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2siOwoVVXBkYXRlUG9ydGlvblJlc3BvbnNlEiIKB3BvcnRpb24YASABKAsyES5wbGFucy52MS5Qb3J0aW9uIiIKFERlbGV0ZVBvcnRpb25SZXF1ZXN0EgoKAmlkGAEgASgJIhcKFURlbGV0ZVBvcnRpb25SZXNwb25zZSI3ChNDcmVhdGVTdGFwbGVSZXF1ZXN0EiAKBnN0YXBsZRgBIAEoCzIQLnBsYW5zLnYxLlN0YXBsZSI4ChRDcmVhdGVTdGFwbGVSZXNwb25zZRIgCgZzdGFwbGUYASABKAsyEC5wbGFucy52MS5TdGFwbGUiJwoSTGlzdFN0YXBsZXNSZXF1ZXN0EhEKCXBlcnNvbl9pZBgBIAEoCSI4ChNMaXN0U3RhcGxlc1Jlc3BvbnNlEiEKB3N0YXBsZXMYASADKAsyEC5wbGFucy52MS5TdGFwbGUiaAoTVXBkYXRlU3RhcGxlUmVxdWVzdBIgCgZzdGFwbGUYASABKAsyEC5wbGFucy52MS5TdGFwbGUSLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIjgKFFVwZGF0ZVN0YXBsZVJlc3BvbnNlEiAKBnN0YXBsZRgBIAEoCzIQLnBsYW5zLnYxLlN0YXBsZSIhChNEZWxldGVTdGFwbGVSZXF1ZXN0EgoKAmlkGAEgASgJIhYKFERlbGV0ZVN0YXBsZVJlc3BvbnNlIi0KEVNraXBTdGFwbGVSZXF1ZXN0EgoKAmlkGAEgASgJEgwKBGRhdGUYAiABKAkiNgoSU2tpcFN0YXBsZVJlc3BvbnNlEiAKBnN0YXBsZRgBIAEoCzIQLnBsYW5zLnYxLlN0YXBsZSIvChNVbnNraXBTdGFwbGVSZXF1ZXN0EgoKAmlkGAEgASgJEgwKBGRhdGUYAiABKAkiOAoUVW5za2lwU3RhcGxlUmVzcG9uc2USIAoGc3RhcGxlGAEgASgLMhAucGxhbnMudjEuU3RhcGxlIhwKGkxpc3RGcm96ZW5MZWZ0b3ZlcnNSZXF1ZXN0IkoKG0xpc3RGcm96ZW5MZWZ0b3ZlcnNSZXNwb25zZRIrCglsZWZ0b3ZlcnMYASADKAsyGC5wbGFucy52MS5Gcm96ZW5MZWZ0b3ZlciKfAQoORnJvemVuTGVmdG92ZXISHAoEY29vaxgBIAEoCzIOLnBsYW5zLnYxLkNvb2sSGgoScmVtYWluaW5nX3NlcnZpbmdzGAIgASgBEhgKEHBsYW5uZWRfc2VydmluZ3MYAyABKAESEwoLa2VlcHNfdW50aWwYBCABKAkSDwoHZXhwaXJlZBgFIAEoCBITCgtmcm96ZW5fZnJvbRgGIAEoCSJgChZTZXRDb29rU3VwcGxpZXJSZXF1ZXN0Eg8KB2Nvb2tfaWQYASABKAkSGwoTY29tcG9uZW50X3JlY2lwZV9pZBgCIAEoCRIYChBzdXBwbGllcl9jb29rX2lkGAMgASgJIjcKF1NldENvb2tTdXBwbGllclJlc3BvbnNlEhwKBGNvb2sYASABKAsyDi5wbGFucy52MS5Db29rKrYBCgdXZWVrZGF5EhcKE1dFRUtEQVlfVU5TUEVDSUZJRUQQABISCg5XRUVLREFZX01PTkRBWRABEhMKD1dFRUtEQVlfVFVFU0RBWRACEhUKEVdFRUtEQVlfV0VETkVTREFZEAMSFAoQV0VFS0RBWV9USFVSU0RBWRAEEhIKDldFRUtEQVlfRlJJREFZEAUSFAoQV0VFS0RBWV9TQVRVUkRBWRAGEhIKDldFRUtEQVlfU1VOREFZEAcqrgUKC1dhcm5pbmdLaW5kEhwKGFdBUk5JTkdfS0lORF9VTlNQRUNJRklFRBAAEiIKHldBUk5JTkdfS0lORF9QT1JUSU9OX1RPT19MQVJHRRABEhwKGFdBUk5JTkdfS0lORF9QUk9URUlOX0xPVxACEiIKHldBUk5JTkdfS0lORF9DQVJCT0hZRFJBVEVfSElHSBADEiYKIldBUk5JTkdfS0lORF9DQVJCT0hZRFJBVEVfVU5QQUlSRUQQBBIcChhXQVJOSU5HX0tJTkRfU1VHQVJTX0hJR0gQBRIbChdXQVJOSU5HX0tJTkRfRkFTVF9DQVJCUxAGEh8KG1dBUk5JTkdfS0lORF9XRUlHSFRfVU5LTk9XThAHEhsKF1dBUk5JTkdfS0lORF9UQVJHRVRfTE9XEAgSHAoYV0FSTklOR19LSU5EX1RBUkdFVF9ISUdIEAkSKgomV0FSTklOR19LSU5EX0xFRlRPVkVSX1BBU1RfRlJJREdFX0RBWVMQChIgChxXQVJOSU5HX0tJTkRfTEVGVE9WRVJfRlJFRVpFEAsSJAogV0FSTklOR19LSU5EX1BPUlRJT05fQkVGT1JFX0NPT0sQDBIkCiBXQVJOSU5HX0tJTkRfU0VSVklOR1NfVU5BU1NJR05FRBANEiYKIldBUk5JTkdfS0lORF9TRVJWSU5HU19PVkVSQVNTSUdORUQQDhIeChpXQVJOSU5HX0tJTkRfTEVGVE9WRVJfVEhBVxAPEisKJ1dBUk5JTkdfS0lORF9MRUZUT1ZFUl9QQVNUX0ZSRUVaRVJfREFZUxAQEiUKIVdBUk5JTkdfS0lORF9DT01QT05FTlRfQUZURVJfQ09PSxASEiYKIldBUk5JTkdfS0lORF9GUk9aRU5fU0VSVklOR1NfU0hPUlQQESpNCghTZXZlcml0eRIYChRTRVZFUklUWV9VTlNQRUNJRklFRBAAEhQKEFNFVkVSSVRZX1dBUk5JTkcQARIRCg1TRVZFUklUWV9JTkZPEAIytAoKC1BsYW5TZXJ2aWNlEj4KB0dldFdlZWsSGC5wbGFucy52MS5HZXRXZWVrUmVxdWVzdBoZLnBsYW5zLnYxLkdldFdlZWtSZXNwb25zZRJBCghQbGFuTWVhbBIZLnBsYW5zLnYxLlBsYW5NZWFsUmVxdWVzdBoaLnBsYW5zLnYxLlBsYW5NZWFsUmVzcG9uc2USRAoJUGxhbk1lYWxzEhoucGxhbnMudjEuUGxhbk1lYWxzUmVxdWVzdBobLnBsYW5zLnYxLlBsYW5NZWFsc1Jlc3BvbnNlEkcKCkNyZWF0ZUNvb2sSGy5wbGFucy52MS5DcmVhdGVDb29rUmVxdWVzdBocLnBsYW5zLnYxLkNyZWF0ZUNvb2tSZXNwb25zZRJHCgpVcGRhdGVDb29rEhsucGxhbnMudjEuVXBkYXRlQ29va1JlcXVlc3QaHC5wbGFucy52MS5VcGRhdGVDb29rUmVzcG9uc2USRwoKRGVsZXRlQ29vaxIbLnBsYW5zLnYxLkRlbGV0ZUNvb2tSZXF1ZXN0GhwucGxhbnMudjEuRGVsZXRlQ29va1Jlc3BvbnNlElYKD1NldENvb2tTdXBwbGllchIgLnBsYW5zLnYxLlNldENvb2tTdXBwbGllclJlcXVlc3QaIS5wbGFucy52MS5TZXRDb29rU3VwcGxpZXJSZXNwb25zZRJQCg1DcmVhdGVQb3J0aW9uEh4ucGxhbnMudjEuQ3JlYXRlUG9ydGlvblJlcXVlc3QaHy5wbGFucy52MS5DcmVhdGVQb3J0aW9uUmVzcG9uc2USUAoNVXBkYXRlUG9ydGlvbhIeLnBsYW5zLnYxLlVwZGF0ZVBvcnRpb25SZXF1ZXN0Gh8ucGxhbnMudjEuVXBkYXRlUG9ydGlvblJlc3BvbnNlElAKDURlbGV0ZVBvcnRpb24SHi5wbGFucy52MS5EZWxldGVQb3J0aW9uUmVxdWVzdBofLnBsYW5zLnYxLkRlbGV0ZVBvcnRpb25SZXNwb25zZRJNCgxDcmVhdGVTdGFwbGUSHS5wbGFucy52MS5DcmVhdGVTdGFwbGVSZXF1ZXN0Gh4ucGxhbnMudjEuQ3JlYXRlU3RhcGxlUmVzcG9uc2USSgoLTGlzdFN0YXBsZXMSHC5wbGFucy52MS5MaXN0U3RhcGxlc1JlcXVlc3QaHS5wbGFucy52MS5MaXN0U3RhcGxlc1Jlc3BvbnNlEk0KDFVwZGF0ZVN0YXBsZRIdLnBsYW5zLnYxLlVwZGF0ZVN0YXBsZVJlcXVlc3QaHi5wbGFucy52MS5VcGRhdGVTdGFwbGVSZXNwb25zZRJNCgxEZWxldGVTdGFwbGUSHS5wbGFucy52MS5EZWxldGVTdGFwbGVSZXF1ZXN0Gh4ucGxhbnMudjEuRGVsZXRlU3RhcGxlUmVzcG9uc2USRwoKU2tpcFN0YXBsZRIbLnBsYW5zLnYxLlNraXBTdGFwbGVSZXF1ZXN0GhwucGxhbnMudjEuU2tpcFN0YXBsZVJlc3BvbnNlEk0KDFVuc2tpcFN0YXBsZRIdLnBsYW5zLnYxLlVuc2tpcFN0YXBsZVJlcXVlc3QaHi5wbGFucy52MS5VbnNraXBTdGFwbGVSZXNwb25zZRJiChNMaXN0RnJvemVuTGVmdG92ZXJzEiQucGxhbnMudjEuTGlzdEZyb3plbkxlZnRvdmVyc1JlcXVlc3QaJS5wbGFucy52MS5MaXN0RnJvemVuTGVmdG92ZXJzUmVzcG9uc2VCnAEKDGNvbS5wbGFucy52MUIKUGxhbnNQcm90b1ABWj9naXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3BsYW5zL3YxO3BsYW5zdjGiAgNQWFiqAghQbGFucy5WMcoCCFBsYW5zXFYx4gIUUGxhbnNcVjFcR1BCTWV0YWRhdGHqAglQbGFuczo6VjFiBnByb3RvMw", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options, file_people_v1_people]);
+  fileDesc("ChRwbGFucy92MS9wbGFucy5wcm90bxIIcGxhbnMudjEikwMKBENvb2sSCgoCaWQYASABKAkSEQoJcmVjaXBlX2lkGAIgASgJEhsKC3JlY2lwZV9uYW1lGAMgASgJQgaqnxkCCAESDAoEZGF0ZRgEIAEoCRIQCghzZXJ2aW5ncxgFIAEoARImCgRtZWFsGAYgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSDQoFbm90ZXMYByABKAkSDAoEZG9uZRgIIAEoCBI3CgtjcmVhdGVfdGltZRgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARIXCg9mcm96ZW5fc2VydmluZ3MYCyABKAESLgoIc3VwcGxpZXMYDCADKAsyFC5wbGFucy52MS5Db29rU3VwcGx5QgaqnxkCCAESLwoJc3VwcGx5aW5nGA0gAygLMhQucGxhbnMudjEuQ29va1N1cHBseUIGqp8ZAggBItkBCgpDb29rU3VwcGx5EhgKEGNvbnN1bWVyX2Nvb2tfaWQYASABKAkSHAoUY29uc3VtZXJfcmVjaXBlX25hbWUYAiABKAkSFQoNY29uc3VtZXJfZGF0ZRgDIAEoCRIbChNjb21wb25lbnRfcmVjaXBlX2lkGAQgASgJEhgKEHN1cHBsaWVyX2Nvb2tfaWQYBSABKAkSHAoUc3VwcGxpZXJfcmVjaXBlX25hbWUYBiABKAkSFQoNc3VwcGxpZXJfZGF0ZRgHIAEoCRIQCghzZXJ2aW5ncxgIIAEoASIuCglDb29rU2hhcmUSDwoHY29va19pZBgBIAEoCRIQCghzZXJ2aW5ncxgCIAEoASI1Cg5SZWNpcGVTZXJ2aW5ncxIRCglyZWNpcGVfaWQYASABKAkSEAoIc2VydmluZ3MYAiABKAEiUQoKRm9vZEFtb3VudBIPCgdmb29kX2lkGAEgASgJEg4KBmFtb3VudBgCIAEoARIiCgR1bml0GAMgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdCK4AgoHUG9ydGlvbhIKCgJpZBgBIAEoCRIRCglwZXJzb25faWQYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSDAoEZGF0ZRgEIAEoCRIjCgRjb29rGAUgASgLMhMucGxhbnMudjEuQ29va1NoYXJlSAASJAoEZm9vZBgGIAEoCzIULnBsYW5zLnYxLkZvb2RBbW91bnRIABINCgVub3RlcxgHIAEoCRIUCgRuYW1lGAggASgJQgaqnxkCCAESNwoLY3JlYXRlX3RpbWUYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAFCBgoEd2hhdCKaAwoGU3RhcGxlEgoKAmlkGAEgASgJEhEKCXBlcnNvbl9pZBgCIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgDIAEoCRIqCgZyZWNpcGUYBCABKAsyGC5wbGFucy52MS5SZWNpcGVTZXJ2aW5nc0gAEiQKBGZvb2QYBSABKAsyFC5wbGFucy52MS5Gb29kQW1vdW50SAASIwoId2Vla2RheXMYBiADKA4yES5wbGFucy52MS5XZWVrZGF5EhIKCnN0YXJ0X2RhdGUYByABKAkSEAoIZW5kX2RhdGUYCCABKAkSDQoFbm90ZXMYCSABKAkSFAoEbmFtZRgKIAEoCUIGqp8ZAggBEh0KDXNraXBwZWRfZGF0ZXMYCyADKAlCBqqfGQIIARI3CgtjcmVhdGVfdGltZRgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIAUIGCgR3aGF0IoYCCgdXYXJuaW5nEiMKBGtpbmQYASABKA4yFS5wbGFucy52MS5XYXJuaW5nS2luZBIkCghzZXZlcml0eRgCIAEoDjISLnBsYW5zLnYxLlNldmVyaXR5Eg8KB21lc3NhZ2UYAyABKAkSEQoJdW5jZXJ0YWluGAQgASgIEhEKCXBlcnNvbl9pZBgFIAEoCRIMCgRkYXRlGAYgASgJEhYKDmVhdGluZ190aW1lX2lkGAcgASgJEg8KB2Nvb2tfaWQYCCABKAkSJAoIbnV0cmllbnQYCSABKA4yEi5mb29kcy52MS5OdXRyaWVudBINCgV2YWx1ZRgKIAEoARINCgVsaW1pdBgLIAEoASIxCg5HZXRXZWVrUmVxdWVzdBIOCgZtb25kYXkYASABKAkSDwoHc3VtbWFyeRgCIAEoCCJoCg9HZXRXZWVrUmVzcG9uc2USDgoGbW9uZGF5GAEgASgJEh8KBGRheXMYAiADKAsyES5wbGFucy52MS5QbGFuRGF5EiQKBWNvb2tzGAMgAygLMhUucGxhbnMudjEuUGxhbm5lZENvb2siZAoHUGxhbkRheRIMCgRkYXRlGAEgASgJEiMKBnBlb3BsZRgCIAMoCzITLnBsYW5zLnYxLlBlcnNvbkRheRImCgpwcmVwX3Rhc2tzGAMgAygLMhIucGxhbnMudjEuUHJlcFRhc2siawoIUHJlcFRhc2sSDwoHY29va19pZBgBIAEoCRITCgtyZWNpcGVfbmFtZRgCIAEoCRIRCgljb29rX2RhdGUYAyABKAkSDAoEbm90ZRgEIAEoCRIYChBmb3JfcmVjaXBlX25hbWVzGAUgAygJIuABCglQZXJzb25EYXkSEQoJcGVyc29uX2lkGAEgASgJEhMKC3BlcnNvbl9uYW1lGAIgASgJEjEKDGVhdGluZ190aW1lcxgDIAMoCzIbLnBsYW5zLnYxLlBsYW5uZWRFYXRpbmdUaW1lEg0KBWdyYW1zGAQgASgBEiYKCW51dHJpZW50cxgFIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIcChRpbmNvbXBsZXRlX251dHJpZW50cxgGIAMoCRIjCgh3YXJuaW5ncxgHIAMoCzIRLnBsYW5zLnYxLldhcm5pbmcixwEKEVBsYW5uZWRFYXRpbmdUaW1lEioKC2VhdGluZ190aW1lGAEgASgLMhUucGVvcGxlLnYxLkVhdGluZ1RpbWUSKgoIcG9ydGlvbnMYAiADKAsyGC5wbGFucy52MS5QbGFubmVkUG9ydGlvbhINCgVncmFtcxgDIAEoARImCgludXRyaWVudHMYBCABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSIwoId2FybmluZ3MYBSADKAsyES5wbGFucy52MS5XYXJuaW5nIpsCCg5QbGFubmVkUG9ydGlvbhISCgpwb3J0aW9uX2lkGAEgASgJEhEKCXN0YXBsZV9pZBgCIAEoCRIPCgdjb29rX2lkGAMgASgJEhEKCXJlY2lwZV9pZBgEIAEoCRIPCgdmb29kX2lkGAUgASgJEgwKBG5hbWUYBiABKAkSEAoIc2VydmluZ3MYByABKAESDgoGYW1vdW50GAggASgBEiIKBHVuaXQYCSABKA4yFC5mb29kcy52MS5BbW91bnRVbml0Eg0KBWdyYW1zGAogASgBEhYKDnVua25vd25fd2VpZ2h0GAsgASgIEhEKCWNvb2tfZGF0ZRgMIAEoCRIQCghsZWZ0b3ZlchgNIAEoCBINCgVub3RlcxgOIAEoCSJrCgtQbGFubmVkQ29vaxIcCgRjb29rGAEgASgLMg4ucGxhbnMudjEuQ29vaxIZChFhc3NpZ25lZF9zZXJ2aW5ncxgCIAEoARIjCgh3YXJuaW5ncxgDIAMoCzIRLnBsYW5zLnYxLldhcm5pbmciOgoSR2V0UGxhbkNvc3RSZXF1ZXN0EhIKCnN0YXJ0X2RhdGUYASABKAkSEAoIZW5kX2RhdGUYAiABKAkilQEKE0dldFBsYW5Db3N0UmVzcG9uc2USEwoLdG90YWxfY2VudHMYASABKAUSFAoMdG9fYnV5X2NlbnRzGAIgASgFEiEKBWNvb2tzGAMgAygLMhIucGxhbnMudjEuQ29va0Nvc3QSEwoLZm9vZHNfY2VudHMYBCABKAUSGwoTdW5wcmljZWRfZm9vZF9uYW1lcxgFIAMoCSKAAQoIQ29va0Nvc3QSDwoHY29va19pZBgBIAEoCRITCgtyZWNpcGVfbmFtZRgCIAEoCRIMCgRkYXRlGAMgASgJEhAKCHNlcnZpbmdzGAQgASgBEhMKC3RvdGFsX2NlbnRzGAUgASgFEhkKEWNlbnRzX3Blcl9zZXJ2aW5nGAYgASgFIo8BCg9QbGFuTWVhbFJlcXVlc3QSEQoJcmVjaXBlX2lkGAEgASgJEgwKBGRhdGUYAiABKAkSJgoEbWVhbBgDIAEoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsEhIKCnBlcnNvbl9pZHMYBCADKAkSEAoIc2VydmluZ3MYBSABKAESDQoFbm90ZXMYBiABKAkilwEKEFBsYW5NZWFsUmVzcG9uc2USHAoEY29vaxgBIAEoCzIOLnBsYW5zLnYxLkNvb2sSIwoIcG9ydGlvbnMYAiADKAsyES5wbGFucy52MS5Qb3J0aW9uEhsKE3VuYXNzaWduZWRfc2VydmluZ3MYAyABKAESIwoId2FybmluZ3MYBCADKAsyES5wbGFucy52MS5XYXJuaW5nIoABCgpNZWFsVG9QbGFuEhEKCXJlY2lwZV9pZBgBIAEoCRIMCgRkYXRlGAIgASgJEiYKBG1lYWwYAyABKA4yGC5wZW9wbGUudjEuSG91c2Vob2xkTWVhbBIRCglwZXJzb25faWQYBCABKAkSFgoOZWF0aW5nX3RpbWVfaWQYBSABKAkiNwoQUGxhbk1lYWxzUmVxdWVzdBIjCgVtZWFscxgBIAMoCzIULnBsYW5zLnYxLk1lYWxUb1BsYW4iSQoRUGxhbk1lYWxzUmVzcG9uc2USHQoFY29va3MYASADKAsyDi5wbGFucy52MS5Db29rEhUKDXBvcnRpb25fY291bnQYAiABKAUiRQoRQ3JlYXRlQ29va1JlcXVlc3QSHAoEY29vaxgBIAEoCzIOLnBsYW5zLnYxLkNvb2sSEgoKZnJvbV9zdG9jaxgCIAEoCCJiChJDcmVhdGVDb29rUmVzcG9uc2USHAoEY29vaxgBIAEoCzIOLnBsYW5zLnYxLkNvb2sSLgoOcGFudHJ5X2NoYW5nZXMYAiADKAsyFi5wbGFucy52MS5QYW50cnlDaGFuZ2UiQQoMUGFudHJ5Q2hhbmdlEg8KB2Zvb2RfaWQYASABKAkSEQoJZm9vZF9uYW1lGAIgASgJEg0KBWdyYW1zGAMgASgBImIKEVVwZGF0ZUNvb2tSZXF1ZXN0EhwKBGNvb2sYASABKAsyDi5wbGFucy52MS5Db29rEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayJ7ChJVcGRhdGVDb29rUmVzcG9uc2USHAoEY29vaxgBIAEoCzIOLnBsYW5zLnYxLkNvb2sSLgoOcGFudHJ5X2NoYW5nZXMYAiADKAsyFi5wbGFucy52MS5QYW50cnlDaGFuZ2USFwoPcGFudHJ5X3Jlc3RvcmVkGAMgASgIIh8KEURlbGV0ZUNvb2tSZXF1ZXN0EgoKAmlkGAEgASgJIhQKEkRlbGV0ZUNvb2tSZXNwb25zZSI6ChRDcmVhdGVQb3J0aW9uUmVxdWVzdBIiCgdwb3J0aW9uGAEgASgLMhEucGxhbnMudjEuUG9ydGlvbiI7ChVDcmVhdGVQb3J0aW9uUmVzcG9uc2USIgoHcG9ydGlvbhgBIAEoCzIRLnBsYW5zLnYxLlBvcnRpb24iawoUVXBkYXRlUG9ydGlvblJlcXVlc3QSIgoHcG9ydGlvbhgBIAEoCzIRLnBsYW5zLnYxLlBvcnRpb24SLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIjsKFVVwZGF0ZVBvcnRpb25SZXNwb25zZRIiCgdwb3J0aW9uGAEgASgLMhEucGxhbnMudjEuUG9ydGlvbiIiChREZWxldGVQb3J0aW9uUmVxdWVzdBIKCgJpZBgBIAEoCSIXChVEZWxldGVQb3J0aW9uUmVzcG9uc2UiNwoTQ3JlYXRlU3RhcGxlUmVxdWVzdBIgCgZzdGFwbGUYASABKAsyEC5wbGFucy52MS5TdGFwbGUiOAoUQ3JlYXRlU3RhcGxlUmVzcG9uc2USIAoGc3RhcGxlGAEgASgLMhAucGxhbnMudjEuU3RhcGxlIicKEkxpc3RTdGFwbGVzUmVxdWVzdBIRCglwZXJzb25faWQYASABKAkiOAoTTGlzdFN0YXBsZXNSZXNwb25zZRIhCgdzdGFwbGVzGAEgAygLMhAucGxhbnMudjEuU3RhcGxlImgKE1VwZGF0ZVN0YXBsZVJlcXVlc3QSIAoGc3RhcGxlGAEgASgLMhAucGxhbnMudjEuU3RhcGxlEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayI4ChRVcGRhdGVTdGFwbGVSZXNwb25zZRIgCgZzdGFwbGUYASABKAsyEC5wbGFucy52MS5TdGFwbGUiIQoTRGVsZXRlU3RhcGxlUmVxdWVzdBIKCgJpZBgBIAEoCSIWChREZWxldGVTdGFwbGVSZXNwb25zZSItChFTa2lwU3RhcGxlUmVxdWVzdBIKCgJpZBgBIAEoCRIMCgRkYXRlGAIgASgJIjYKElNraXBTdGFwbGVSZXNwb25zZRIgCgZzdGFwbGUYASABKAsyEC5wbGFucy52MS5TdGFwbGUiLwoTVW5za2lwU3RhcGxlUmVxdWVzdBIKCgJpZBgBIAEoCRIMCgRkYXRlGAIgASgJIjgKFFVuc2tpcFN0YXBsZVJlc3BvbnNlEiAKBnN0YXBsZRgBIAEoCzIQLnBsYW5zLnYxLlN0YXBsZSIcChpMaXN0RnJvemVuTGVmdG92ZXJzUmVxdWVzdCJKChtMaXN0RnJvemVuTGVmdG92ZXJzUmVzcG9uc2USKwoJbGVmdG92ZXJzGAEgAygLMhgucGxhbnMudjEuRnJvemVuTGVmdG92ZXIinwEKDkZyb3plbkxlZnRvdmVyEhwKBGNvb2sYASABKAsyDi5wbGFucy52MS5Db29rEhoKEnJlbWFpbmluZ19zZXJ2aW5ncxgCIAEoARIYChBwbGFubmVkX3NlcnZpbmdzGAMgASgBEhMKC2tlZXBzX3VudGlsGAQgASgJEg8KB2V4cGlyZWQYBSABKAgSEwoLZnJvemVuX2Zyb20YBiABKAkiYAoWU2V0Q29va1N1cHBsaWVyUmVxdWVzdBIPCgdjb29rX2lkGAEgASgJEhsKE2NvbXBvbmVudF9yZWNpcGVfaWQYAiABKAkSGAoQc3VwcGxpZXJfY29va19pZBgDIAEoCSI3ChdTZXRDb29rU3VwcGxpZXJSZXNwb25zZRIcCgRjb29rGAEgASgLMg4ucGxhbnMudjEuQ29vayq2AQoHV2Vla2RheRIXChNXRUVLREFZX1VOU1BFQ0lGSUVEEAASEgoOV0VFS0RBWV9NT05EQVkQARITCg9XRUVLREFZX1RVRVNEQVkQAhIVChFXRUVLREFZX1dFRE5FU0RBWRADEhQKEFdFRUtEQVlfVEhVUlNEQVkQBBISCg5XRUVLREFZX0ZSSURBWRAFEhQKEFdFRUtEQVlfU0FUVVJEQVkQBhISCg5XRUVLREFZX1NVTkRBWRAHKq4FCgtXYXJuaW5nS2luZBIcChhXQVJOSU5HX0tJTkRfVU5TUEVDSUZJRUQQABIiCh5XQVJOSU5HX0tJTkRfUE9SVElPTl9UT09fTEFSR0UQARIcChhXQVJOSU5HX0tJTkRfUFJPVEVJTl9MT1cQAhIiCh5XQVJOSU5HX0tJTkRfQ0FSQk9IWURSQVRFX0hJR0gQAxImCiJXQVJOSU5HX0tJTkRfQ0FSQk9IWURSQVRFX1VOUEFJUkVEEAQSHAoYV0FSTklOR19LSU5EX1NVR0FSU19ISUdIEAUSGwoXV0FSTklOR19LSU5EX0ZBU1RfQ0FSQlMQBhIfChtXQVJOSU5HX0tJTkRfV0VJR0hUX1VOS05PV04QBxIbChdXQVJOSU5HX0tJTkRfVEFSR0VUX0xPVxAIEhwKGFdBUk5JTkdfS0lORF9UQVJHRVRfSElHSBAJEioKJldBUk5JTkdfS0lORF9MRUZUT1ZFUl9QQVNUX0ZSSURHRV9EQVlTEAoSIAocV0FSTklOR19LSU5EX0xFRlRPVkVSX0ZSRUVaRRALEiQKIFdBUk5JTkdfS0lORF9QT1JUSU9OX0JFRk9SRV9DT09LEAwSJAogV0FSTklOR19LSU5EX1NFUlZJTkdTX1VOQVNTSUdORUQQDRImCiJXQVJOSU5HX0tJTkRfU0VSVklOR1NfT1ZFUkFTU0lHTkVEEA4SHgoaV0FSTklOR19LSU5EX0xFRlRPVkVSX1RIQVcQDxIrCidXQVJOSU5HX0tJTkRfTEVGVE9WRVJfUEFTVF9GUkVFWkVSX0RBWVMQEBIlCiFXQVJOSU5HX0tJTkRfQ09NUE9ORU5UX0FGVEVSX0NPT0sQEhImCiJXQVJOSU5HX0tJTkRfRlJPWkVOX1NFUlZJTkdTX1NIT1JUEBEqTQoIU2V2ZXJpdHkSGAoUU0VWRVJJVFlfVU5TUEVDSUZJRUQQABIUChBTRVZFUklUWV9XQVJOSU5HEAESEQoNU0VWRVJJVFlfSU5GTxACMoALCgtQbGFuU2VydmljZRJKCgtHZXRQbGFuQ29zdBIcLnBsYW5zLnYxLkdldFBsYW5Db3N0UmVxdWVzdBodLnBsYW5zLnYxLkdldFBsYW5Db3N0UmVzcG9uc2USPgoHR2V0V2VlaxIYLnBsYW5zLnYxLkdldFdlZWtSZXF1ZXN0GhkucGxhbnMudjEuR2V0V2Vla1Jlc3BvbnNlEkEKCFBsYW5NZWFsEhkucGxhbnMudjEuUGxhbk1lYWxSZXF1ZXN0GhoucGxhbnMudjEuUGxhbk1lYWxSZXNwb25zZRJECglQbGFuTWVhbHMSGi5wbGFucy52MS5QbGFuTWVhbHNSZXF1ZXN0GhsucGxhbnMudjEuUGxhbk1lYWxzUmVzcG9uc2USRwoKQ3JlYXRlQ29vaxIbLnBsYW5zLnYxLkNyZWF0ZUNvb2tSZXF1ZXN0GhwucGxhbnMudjEuQ3JlYXRlQ29va1Jlc3BvbnNlEkcKClVwZGF0ZUNvb2sSGy5wbGFucy52MS5VcGRhdGVDb29rUmVxdWVzdBocLnBsYW5zLnYxLlVwZGF0ZUNvb2tSZXNwb25zZRJHCgpEZWxldGVDb29rEhsucGxhbnMudjEuRGVsZXRlQ29va1JlcXVlc3QaHC5wbGFucy52MS5EZWxldGVDb29rUmVzcG9uc2USVgoPU2V0Q29va1N1cHBsaWVyEiAucGxhbnMudjEuU2V0Q29va1N1cHBsaWVyUmVxdWVzdBohLnBsYW5zLnYxLlNldENvb2tTdXBwbGllclJlc3BvbnNlElAKDUNyZWF0ZVBvcnRpb24SHi5wbGFucy52MS5DcmVhdGVQb3J0aW9uUmVxdWVzdBofLnBsYW5zLnYxLkNyZWF0ZVBvcnRpb25SZXNwb25zZRJQCg1VcGRhdGVQb3J0aW9uEh4ucGxhbnMudjEuVXBkYXRlUG9ydGlvblJlcXVlc3QaHy5wbGFucy52MS5VcGRhdGVQb3J0aW9uUmVzcG9uc2USUAoNRGVsZXRlUG9ydGlvbhIeLnBsYW5zLnYxLkRlbGV0ZVBvcnRpb25SZXF1ZXN0Gh8ucGxhbnMudjEuRGVsZXRlUG9ydGlvblJlc3BvbnNlEk0KDENyZWF0ZVN0YXBsZRIdLnBsYW5zLnYxLkNyZWF0ZVN0YXBsZVJlcXVlc3QaHi5wbGFucy52MS5DcmVhdGVTdGFwbGVSZXNwb25zZRJKCgtMaXN0U3RhcGxlcxIcLnBsYW5zLnYxLkxpc3RTdGFwbGVzUmVxdWVzdBodLnBsYW5zLnYxLkxpc3RTdGFwbGVzUmVzcG9uc2USTQoMVXBkYXRlU3RhcGxlEh0ucGxhbnMudjEuVXBkYXRlU3RhcGxlUmVxdWVzdBoeLnBsYW5zLnYxLlVwZGF0ZVN0YXBsZVJlc3BvbnNlEk0KDERlbGV0ZVN0YXBsZRIdLnBsYW5zLnYxLkRlbGV0ZVN0YXBsZVJlcXVlc3QaHi5wbGFucy52MS5EZWxldGVTdGFwbGVSZXNwb25zZRJHCgpTa2lwU3RhcGxlEhsucGxhbnMudjEuU2tpcFN0YXBsZVJlcXVlc3QaHC5wbGFucy52MS5Ta2lwU3RhcGxlUmVzcG9uc2USTQoMVW5za2lwU3RhcGxlEh0ucGxhbnMudjEuVW5za2lwU3RhcGxlUmVxdWVzdBoeLnBsYW5zLnYxLlVuc2tpcFN0YXBsZVJlc3BvbnNlEmIKE0xpc3RGcm96ZW5MZWZ0b3ZlcnMSJC5wbGFucy52MS5MaXN0RnJvemVuTGVmdG92ZXJzUmVxdWVzdBolLnBsYW5zLnYxLkxpc3RGcm96ZW5MZWZ0b3ZlcnNSZXNwb25zZUKcAQoMY29tLnBsYW5zLnYxQgpQbGFuc1Byb3RvUAFaP2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vcGxhbnMvdjE7cGxhbnN2MaICA1BYWKoCCFBsYW5zLlYxygIIUGxhbnNcVjHiAhRQbGFuc1xWMVxHUEJNZXRhZGF0YeoCCVBsYW5zOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options, file_people_v1_people]);
 
 /**
  * A recipe made on a date, for a number of servings.
@@ -1026,6 +1026,140 @@ export const PlannedCookSchema: GenMessage<PlannedCook> = /*@__PURE__*/
   messageDesc(file_plans_v1_plans, 15);
 
 /**
+ * @generated from message plans.v1.GetPlanCostRequest
+ */
+export type GetPlanCostRequest = Message<"plans.v1.GetPlanCostRequest"> & {
+  /**
+   * The first date (YYYY-MM-DD). Required.
+   *
+   * @generated from field: string start_date = 1;
+   */
+  startDate: string;
+
+  /**
+   * The last date (YYYY-MM-DD), at most 30 days after start_date.
+   * Required.
+   *
+   * @generated from field: string end_date = 2;
+   */
+  endDate: string;
+};
+
+/**
+ * Describes the message plans.v1.GetPlanCostRequest.
+ * Use `create(GetPlanCostRequestSchema)` to create a new message.
+ */
+export const GetPlanCostRequestSchema: GenMessage<GetPlanCostRequest> = /*@__PURE__*/
+  messageDesc(file_plans_v1_plans, 16);
+
+/**
+ * @generated from message plans.v1.GetPlanCostResponse
+ */
+export type GetPlanCostResponse = Message<"plans.v1.GetPlanCostResponse"> & {
+  /**
+   * What everything planned costs, in Canadian cents.
+   *
+   * @generated from field: int32 total_cents = 1;
+   */
+  totalCents: number;
+
+  /**
+   * What's left to buy: everything planned, but what the pantry has
+   * already, in Canadian cents.
+   *
+   * @generated from field: int32 to_buy_cents = 2;
+   */
+  toBuyCents: number;
+
+  /**
+   * The cooks, by date, each with what its ingredients cost. A cook whose
+   * components another cook makes doesn't count them; that cook does.
+   *
+   * @generated from field: repeated plans.v1.CookCost cooks = 3;
+   */
+  cooks: CookCost[];
+
+  /**
+   * What the foods eaten without a recipe cost, like staples and portions
+   * of a food, in Canadian cents.
+   *
+   * @generated from field: int32 foods_cents = 4;
+   */
+  foodsCents: number;
+
+  /**
+   * The foods without a price, or that can't be weighed, which aren't
+   * counted, by name: set their prices with FoodService.UpdateFood.
+   *
+   * @generated from field: repeated string unpriced_food_names = 5;
+   */
+  unpricedFoodNames: string[];
+};
+
+/**
+ * Describes the message plans.v1.GetPlanCostResponse.
+ * Use `create(GetPlanCostResponseSchema)` to create a new message.
+ */
+export const GetPlanCostResponseSchema: GenMessage<GetPlanCostResponse> = /*@__PURE__*/
+  messageDesc(file_plans_v1_plans, 17);
+
+/**
+ * What a cook's ingredients cost.
+ *
+ * @generated from message plans.v1.CookCost
+ */
+export type CookCost = Message<"plans.v1.CookCost"> & {
+  /**
+   * The ID of the cook.
+   *
+   * @generated from field: string cook_id = 1;
+   */
+  cookId: string;
+
+  /**
+   * The name of its recipe.
+   *
+   * @generated from field: string recipe_name = 2;
+   */
+  recipeName: string;
+
+  /**
+   * The date of the cook (YYYY-MM-DD).
+   *
+   * @generated from field: string date = 3;
+   */
+  date: string;
+
+  /**
+   * The servings cooked.
+   *
+   * @generated from field: double servings = 4;
+   */
+  servings: number;
+
+  /**
+   * What its ingredients cost, in Canadian cents.
+   *
+   * @generated from field: int32 total_cents = 5;
+   */
+  totalCents: number;
+
+  /**
+   * What a serving costs, in Canadian cents.
+   *
+   * @generated from field: int32 cents_per_serving = 6;
+   */
+  centsPerServing: number;
+};
+
+/**
+ * Describes the message plans.v1.CookCost.
+ * Use `create(CookCostSchema)` to create a new message.
+ */
+export const CookCostSchema: GenMessage<CookCost> = /*@__PURE__*/
+  messageDesc(file_plans_v1_plans, 18);
+
+/**
  * @generated from message plans.v1.PlanMealRequest
  */
 export type PlanMealRequest = Message<"plans.v1.PlanMealRequest"> & {
@@ -1080,7 +1214,7 @@ export type PlanMealRequest = Message<"plans.v1.PlanMealRequest"> & {
  * Use `create(PlanMealRequestSchema)` to create a new message.
  */
 export const PlanMealRequestSchema: GenMessage<PlanMealRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 16);
+  messageDesc(file_plans_v1_plans, 19);
 
 /**
  * @generated from message plans.v1.PlanMealResponse
@@ -1120,7 +1254,7 @@ export type PlanMealResponse = Message<"plans.v1.PlanMealResponse"> & {
  * Use `create(PlanMealResponseSchema)` to create a new message.
  */
 export const PlanMealResponseSchema: GenMessage<PlanMealResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 17);
+  messageDesc(file_plans_v1_plans, 20);
 
 /**
  * A shared meal to plan with PlanMeals.
@@ -1170,7 +1304,7 @@ export type MealToPlan = Message<"plans.v1.MealToPlan"> & {
  * Use `create(MealToPlanSchema)` to create a new message.
  */
 export const MealToPlanSchema: GenMessage<MealToPlan> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 18);
+  messageDesc(file_plans_v1_plans, 21);
 
 /**
  * @generated from message plans.v1.PlanMealsRequest
@@ -1191,7 +1325,7 @@ export type PlanMealsRequest = Message<"plans.v1.PlanMealsRequest"> & {
  * Use `create(PlanMealsRequestSchema)` to create a new message.
  */
 export const PlanMealsRequestSchema: GenMessage<PlanMealsRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 19);
+  messageDesc(file_plans_v1_plans, 22);
 
 /**
  * @generated from message plans.v1.PlanMealsResponse
@@ -1217,7 +1351,7 @@ export type PlanMealsResponse = Message<"plans.v1.PlanMealsResponse"> & {
  * Use `create(PlanMealsResponseSchema)` to create a new message.
  */
 export const PlanMealsResponseSchema: GenMessage<PlanMealsResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 20);
+  messageDesc(file_plans_v1_plans, 23);
 
 /**
  * @generated from message plans.v1.CreateCookRequest
@@ -1249,7 +1383,7 @@ export type CreateCookRequest = Message<"plans.v1.CreateCookRequest"> & {
  * Use `create(CreateCookRequestSchema)` to create a new message.
  */
 export const CreateCookRequestSchema: GenMessage<CreateCookRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 21);
+  messageDesc(file_plans_v1_plans, 24);
 
 /**
  * @generated from message plans.v1.CreateCookResponse
@@ -1275,7 +1409,7 @@ export type CreateCookResponse = Message<"plans.v1.CreateCookResponse"> & {
  * Use `create(CreateCookResponseSchema)` to create a new message.
  */
 export const CreateCookResponseSchema: GenMessage<CreateCookResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 22);
+  messageDesc(file_plans_v1_plans, 25);
 
 /**
  * An amount of a food taken out of the pantry, or put back, by marking a
@@ -1311,7 +1445,7 @@ export type PantryChange = Message<"plans.v1.PantryChange"> & {
  * Use `create(PantryChangeSchema)` to create a new message.
  */
 export const PantryChangeSchema: GenMessage<PantryChange> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 23);
+  messageDesc(file_plans_v1_plans, 26);
 
 /**
  * @generated from message plans.v1.UpdateCookRequest
@@ -1338,7 +1472,7 @@ export type UpdateCookRequest = Message<"plans.v1.UpdateCookRequest"> & {
  * Use `create(UpdateCookRequestSchema)` to create a new message.
  */
 export const UpdateCookRequestSchema: GenMessage<UpdateCookRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 24);
+  messageDesc(file_plans_v1_plans, 27);
 
 /**
  * @generated from message plans.v1.UpdateCookResponse
@@ -1372,7 +1506,7 @@ export type UpdateCookResponse = Message<"plans.v1.UpdateCookResponse"> & {
  * Use `create(UpdateCookResponseSchema)` to create a new message.
  */
 export const UpdateCookResponseSchema: GenMessage<UpdateCookResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 25);
+  messageDesc(file_plans_v1_plans, 28);
 
 /**
  * @generated from message plans.v1.DeleteCookRequest
@@ -1391,7 +1525,7 @@ export type DeleteCookRequest = Message<"plans.v1.DeleteCookRequest"> & {
  * Use `create(DeleteCookRequestSchema)` to create a new message.
  */
 export const DeleteCookRequestSchema: GenMessage<DeleteCookRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 26);
+  messageDesc(file_plans_v1_plans, 29);
 
 /**
  * @generated from message plans.v1.DeleteCookResponse
@@ -1404,7 +1538,7 @@ export type DeleteCookResponse = Message<"plans.v1.DeleteCookResponse"> & {
  * Use `create(DeleteCookResponseSchema)` to create a new message.
  */
 export const DeleteCookResponseSchema: GenMessage<DeleteCookResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 27);
+  messageDesc(file_plans_v1_plans, 30);
 
 /**
  * @generated from message plans.v1.CreatePortionRequest
@@ -1423,7 +1557,7 @@ export type CreatePortionRequest = Message<"plans.v1.CreatePortionRequest"> & {
  * Use `create(CreatePortionRequestSchema)` to create a new message.
  */
 export const CreatePortionRequestSchema: GenMessage<CreatePortionRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 28);
+  messageDesc(file_plans_v1_plans, 31);
 
 /**
  * @generated from message plans.v1.CreatePortionResponse
@@ -1442,7 +1576,7 @@ export type CreatePortionResponse = Message<"plans.v1.CreatePortionResponse"> & 
  * Use `create(CreatePortionResponseSchema)` to create a new message.
  */
 export const CreatePortionResponseSchema: GenMessage<CreatePortionResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 29);
+  messageDesc(file_plans_v1_plans, 32);
 
 /**
  * @generated from message plans.v1.UpdatePortionRequest
@@ -1471,7 +1605,7 @@ export type UpdatePortionRequest = Message<"plans.v1.UpdatePortionRequest"> & {
  * Use `create(UpdatePortionRequestSchema)` to create a new message.
  */
 export const UpdatePortionRequestSchema: GenMessage<UpdatePortionRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 30);
+  messageDesc(file_plans_v1_plans, 33);
 
 /**
  * @generated from message plans.v1.UpdatePortionResponse
@@ -1490,7 +1624,7 @@ export type UpdatePortionResponse = Message<"plans.v1.UpdatePortionResponse"> & 
  * Use `create(UpdatePortionResponseSchema)` to create a new message.
  */
 export const UpdatePortionResponseSchema: GenMessage<UpdatePortionResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 31);
+  messageDesc(file_plans_v1_plans, 34);
 
 /**
  * @generated from message plans.v1.DeletePortionRequest
@@ -1509,7 +1643,7 @@ export type DeletePortionRequest = Message<"plans.v1.DeletePortionRequest"> & {
  * Use `create(DeletePortionRequestSchema)` to create a new message.
  */
 export const DeletePortionRequestSchema: GenMessage<DeletePortionRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 32);
+  messageDesc(file_plans_v1_plans, 35);
 
 /**
  * @generated from message plans.v1.DeletePortionResponse
@@ -1522,7 +1656,7 @@ export type DeletePortionResponse = Message<"plans.v1.DeletePortionResponse"> & 
  * Use `create(DeletePortionResponseSchema)` to create a new message.
  */
 export const DeletePortionResponseSchema: GenMessage<DeletePortionResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 33);
+  messageDesc(file_plans_v1_plans, 36);
 
 /**
  * @generated from message plans.v1.CreateStapleRequest
@@ -1541,7 +1675,7 @@ export type CreateStapleRequest = Message<"plans.v1.CreateStapleRequest"> & {
  * Use `create(CreateStapleRequestSchema)` to create a new message.
  */
 export const CreateStapleRequestSchema: GenMessage<CreateStapleRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 34);
+  messageDesc(file_plans_v1_plans, 37);
 
 /**
  * @generated from message plans.v1.CreateStapleResponse
@@ -1560,7 +1694,7 @@ export type CreateStapleResponse = Message<"plans.v1.CreateStapleResponse"> & {
  * Use `create(CreateStapleResponseSchema)` to create a new message.
  */
 export const CreateStapleResponseSchema: GenMessage<CreateStapleResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 35);
+  messageDesc(file_plans_v1_plans, 38);
 
 /**
  * @generated from message plans.v1.ListStaplesRequest
@@ -1579,7 +1713,7 @@ export type ListStaplesRequest = Message<"plans.v1.ListStaplesRequest"> & {
  * Use `create(ListStaplesRequestSchema)` to create a new message.
  */
 export const ListStaplesRequestSchema: GenMessage<ListStaplesRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 36);
+  messageDesc(file_plans_v1_plans, 39);
 
 /**
  * @generated from message plans.v1.ListStaplesResponse
@@ -1598,7 +1732,7 @@ export type ListStaplesResponse = Message<"plans.v1.ListStaplesResponse"> & {
  * Use `create(ListStaplesResponseSchema)` to create a new message.
  */
 export const ListStaplesResponseSchema: GenMessage<ListStaplesResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 37);
+  messageDesc(file_plans_v1_plans, 40);
 
 /**
  * @generated from message plans.v1.UpdateStapleRequest
@@ -1626,7 +1760,7 @@ export type UpdateStapleRequest = Message<"plans.v1.UpdateStapleRequest"> & {
  * Use `create(UpdateStapleRequestSchema)` to create a new message.
  */
 export const UpdateStapleRequestSchema: GenMessage<UpdateStapleRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 38);
+  messageDesc(file_plans_v1_plans, 41);
 
 /**
  * @generated from message plans.v1.UpdateStapleResponse
@@ -1645,7 +1779,7 @@ export type UpdateStapleResponse = Message<"plans.v1.UpdateStapleResponse"> & {
  * Use `create(UpdateStapleResponseSchema)` to create a new message.
  */
 export const UpdateStapleResponseSchema: GenMessage<UpdateStapleResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 39);
+  messageDesc(file_plans_v1_plans, 42);
 
 /**
  * @generated from message plans.v1.DeleteStapleRequest
@@ -1664,7 +1798,7 @@ export type DeleteStapleRequest = Message<"plans.v1.DeleteStapleRequest"> & {
  * Use `create(DeleteStapleRequestSchema)` to create a new message.
  */
 export const DeleteStapleRequestSchema: GenMessage<DeleteStapleRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 40);
+  messageDesc(file_plans_v1_plans, 43);
 
 /**
  * @generated from message plans.v1.DeleteStapleResponse
@@ -1677,7 +1811,7 @@ export type DeleteStapleResponse = Message<"plans.v1.DeleteStapleResponse"> & {
  * Use `create(DeleteStapleResponseSchema)` to create a new message.
  */
 export const DeleteStapleResponseSchema: GenMessage<DeleteStapleResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 41);
+  messageDesc(file_plans_v1_plans, 44);
 
 /**
  * @generated from message plans.v1.SkipStapleRequest
@@ -1703,7 +1837,7 @@ export type SkipStapleRequest = Message<"plans.v1.SkipStapleRequest"> & {
  * Use `create(SkipStapleRequestSchema)` to create a new message.
  */
 export const SkipStapleRequestSchema: GenMessage<SkipStapleRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 42);
+  messageDesc(file_plans_v1_plans, 45);
 
 /**
  * @generated from message plans.v1.SkipStapleResponse
@@ -1722,7 +1856,7 @@ export type SkipStapleResponse = Message<"plans.v1.SkipStapleResponse"> & {
  * Use `create(SkipStapleResponseSchema)` to create a new message.
  */
 export const SkipStapleResponseSchema: GenMessage<SkipStapleResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 43);
+  messageDesc(file_plans_v1_plans, 46);
 
 /**
  * @generated from message plans.v1.UnskipStapleRequest
@@ -1748,7 +1882,7 @@ export type UnskipStapleRequest = Message<"plans.v1.UnskipStapleRequest"> & {
  * Use `create(UnskipStapleRequestSchema)` to create a new message.
  */
 export const UnskipStapleRequestSchema: GenMessage<UnskipStapleRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 44);
+  messageDesc(file_plans_v1_plans, 47);
 
 /**
  * @generated from message plans.v1.UnskipStapleResponse
@@ -1767,7 +1901,7 @@ export type UnskipStapleResponse = Message<"plans.v1.UnskipStapleResponse"> & {
  * Use `create(UnskipStapleResponseSchema)` to create a new message.
  */
 export const UnskipStapleResponseSchema: GenMessage<UnskipStapleResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 45);
+  messageDesc(file_plans_v1_plans, 48);
 
 /**
  * @generated from message plans.v1.ListFrozenLeftoversRequest
@@ -1780,7 +1914,7 @@ export type ListFrozenLeftoversRequest = Message<"plans.v1.ListFrozenLeftoversRe
  * Use `create(ListFrozenLeftoversRequestSchema)` to create a new message.
  */
 export const ListFrozenLeftoversRequestSchema: GenMessage<ListFrozenLeftoversRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 46);
+  messageDesc(file_plans_v1_plans, 49);
 
 /**
  * @generated from message plans.v1.ListFrozenLeftoversResponse
@@ -1799,7 +1933,7 @@ export type ListFrozenLeftoversResponse = Message<"plans.v1.ListFrozenLeftoversR
  * Use `create(ListFrozenLeftoversResponseSchema)` to create a new message.
  */
 export const ListFrozenLeftoversResponseSchema: GenMessage<ListFrozenLeftoversResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 47);
+  messageDesc(file_plans_v1_plans, 50);
 
 /**
  * Frozen servings of a cook, not all planned yet.
@@ -1862,7 +1996,7 @@ export type FrozenLeftover = Message<"plans.v1.FrozenLeftover"> & {
  * Use `create(FrozenLeftoverSchema)` to create a new message.
  */
 export const FrozenLeftoverSchema: GenMessage<FrozenLeftover> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 48);
+  messageDesc(file_plans_v1_plans, 51);
 
 /**
  * @generated from message plans.v1.SetCookSupplierRequest
@@ -1897,7 +2031,7 @@ export type SetCookSupplierRequest = Message<"plans.v1.SetCookSupplierRequest"> 
  * Use `create(SetCookSupplierRequestSchema)` to create a new message.
  */
 export const SetCookSupplierRequestSchema: GenMessage<SetCookSupplierRequest> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 49);
+  messageDesc(file_plans_v1_plans, 52);
 
 /**
  * @generated from message plans.v1.SetCookSupplierResponse
@@ -1916,7 +2050,7 @@ export type SetCookSupplierResponse = Message<"plans.v1.SetCookSupplierResponse"
  * Use `create(SetCookSupplierResponseSchema)` to create a new message.
  */
 export const SetCookSupplierResponseSchema: GenMessage<SetCookSupplierResponse> = /*@__PURE__*/
-  messageDesc(file_plans_v1_plans, 50);
+  messageDesc(file_plans_v1_plans, 53);
 
 /**
  * Weekday is a day of the week.
@@ -2187,6 +2321,22 @@ export const SeveritySchema: GenEnum<Severity> = /*@__PURE__*/
  * @generated from service plans.v1.PlanService
  */
 export const PlanService: GenService<{
+  /**
+   * Estimate what a range of the plan costs, from the foods' prices
+   * (FoodService's Food.price_cents_per_kilogram): each cook, the foods
+   * eaten without a recipe, like staples, and in all, both for everything
+   * eaten and for only what isn't in the pantry yet, which the pantry's
+   * lots cover first by date, like the shopping list. Costs are for the
+   * grams used, not whole packs. Foods without a price aren't counted, and
+   * are listed. At most 31 days.
+   *
+   * @generated from rpc plans.v1.PlanService.GetPlanCost
+   */
+  getPlanCost: {
+    methodKind: "unary";
+    input: typeof GetPlanCostRequestSchema;
+    output: typeof GetPlanCostResponseSchema;
+  },
   /**
    * Get a week of the plan: for each day and person, their eating times
    * with the portions and staples planned, with weights and nutrients; the

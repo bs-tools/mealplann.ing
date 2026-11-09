@@ -29,13 +29,18 @@ import { HouseholdMeal } from "gen/people/v1/people_pb";
 import {
   deleteCook,
   deletePortion,
+  getPlanCost,
   getWeek,
   listStaples,
   skipStaple,
   unskipStaple,
   updateCook,
 } from "gen/plans/v1/plans-PlanService_connectquery";
-import type { PlannedPortion, UpdateCookResponse } from "gen/plans/v1/plans_pb";
+import type {
+  GetPlanCostResponse,
+  PlannedPortion,
+  UpdateCookResponse,
+} from "gen/plans/v1/plans_pb";
 import { PlanService, Severity } from "gen/plans/v1/plans_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import {
@@ -46,7 +51,12 @@ import {
   startOfWeek,
   today,
 } from "helpers/dates";
-import { formatGrams, formatList, formatShortDate } from "helpers/format";
+import {
+  formatDollars,
+  formatGrams,
+  formatList,
+  formatShortDate,
+} from "helpers/format";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
@@ -86,6 +96,41 @@ interface PortionEdit {
   portion?: PlannedPortion | undefined;
 }
 
+interface WeekCostProps {
+  cost: GetPlanCostResponse;
+}
+
+/**
+ * WeekCost says what the week's food costs, from the foods' prices: in
+ * all, and what's left to buy beyond the pantry, and which foods have no
+ * price.
+ */
+const WeekCost: React.FC<WeekCostProps> = ({ cost }) => (
+  <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-md bg-white px-3 py-2 text-sm text-gray-700 ring-1 ring-gray-200">
+    <span>
+      This week&apos;s food:{" "}
+      <span className="font-semibold text-gray-900 tabular-nums">
+        ≈ {formatDollars(cost.totalCents)}
+      </span>
+    </span>
+    <span>
+      Left to buy:{" "}
+      <span className="font-semibold text-gray-900 tabular-nums">
+        ≈ {formatDollars(cost.toBuyCents)}
+      </span>
+    </span>
+    {cost.unpricedFoodNames.length > 0 && (
+      <span className="text-xs text-gray-500">
+        Without {formatList(cost.unpricedFoodNames.slice(0, 5))}
+        {cost.unpricedFoodNames.length > 5 &&
+          ` and ${cost.unpricedFoodNames.length - 5} more`}
+        , which {cost.unpricedFoodNames.length === 1 ? "has" : "have"} no price
+        yet
+      </span>
+    )}
+  </p>
+);
+
 /**
  * PlanPage shows a week of the plan, from Monday: each day's cooks and
  * everyone's eating times with what they eat, their totals against their
@@ -112,6 +157,15 @@ const PlanPage: React.FC = () => {
   );
   const people = useQuery(listPeople, {});
   const recipes = useQuery(listRecipes, {});
+  // What the week costs, from the foods' prices.
+  const cost = useQuery(
+    getPlanCost,
+    { endDate: dates.at(-1) ?? monday, startDate: monday },
+    { placeholderData: keepPreviousData }
+  );
+  const costs = new Map(
+    (cost.data?.cooks ?? []).map((cook) => [cook.cookId, cook.totalCents])
+  );
   const [planning, setPlanning] = useState<MealPlanning | null>(null);
   const [editing, setEditing] = useState<PortionEdit | null>(null);
   // The empty eating time recipes are suggested for, or null.
@@ -227,6 +281,9 @@ const PlanPage: React.FC = () => {
             </button>
           ))}
         </nav>
+        {cost.data !== undefined && cost.data.totalCents > 0 && (
+          <WeekCost cost={cost.data} />
+        )}
         {week.data.days.map((planDay) => (
           <DayCard
             key={planDay.date}
@@ -263,6 +320,7 @@ const PlanPage: React.FC = () => {
               skip.mutate({ date, id: portion.stapleId });
             }}
             staples={staples.data?.staples ?? []}
+            costs={costs}
             onUnskip={(staple, date) => {
               unskip.mutate({ date, id: staple.id });
             }}

@@ -27,6 +27,8 @@ import { FoodService, StoreSection } from "gen/foods/v1/foods_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
 import { listStores } from "gen/shopping/v1/shopping-ShoppingService_connectquery";
 import type { Store } from "gen/shopping/v1/shopping_pb";
+import { today } from "helpers/dates";
+import { formatDollars, formatShortDate } from "helpers/format";
 import { STORE_SECTIONS, foodSourceInfo } from "helpers/labels";
 import type { NutrientKey } from "helpers/nutrients";
 import { NUTRIENT_GROUPS, NUTRIENTS } from "helpers/nutrients";
@@ -34,6 +36,29 @@ import { optionalNumberInput, parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+
+/**
+ * PriceHint says what a pack costs at a price per kilogram, and when the
+ * price was seen, e.g. "$3.49 a 900 g pack · seen Nov 1".
+ */
+const priceHint = (
+  price: string,
+  packageGrams: string,
+  priceDate: string
+): string => {
+  const parts: string[] = [];
+  const dollars = Number(price);
+  const grams = Number(packageGrams);
+  if (price !== "" && dollars > 0 && grams > 0) {
+    parts.push(`${formatDollars((dollars * grams) / 10)} a ${grams} g pack`);
+  }
+  if (priceDate !== "") {
+    parts.push(`seen ${formatShortDate(priceDate)}`);
+  }
+  return parts.length > 0
+    ? parts.join(" · ")
+    : "What it costs where you shop, to estimate meals' costs.";
+};
 
 /**
  * FoodPage shows one of the household's foods, to edit all of its fields,
@@ -128,6 +153,12 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
     food.preferredStoreId
   );
   const [alwaysInStock, setAlwaysInStock] = useState(food.alwaysInStock);
+  // The price in dollars per kilogram, as entered.
+  const initialPrice =
+    food.priceCentsPerKilogram > 0
+      ? (food.priceCentsPerKilogram / 100).toFixed(2)
+      : "";
+  const [price, setPrice] = useState(initialPrice);
   const [notes, setNotes] = useState(food.notes);
   const [invalid, setInvalid] = useState("");
 
@@ -215,6 +246,9 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
   if (notes !== food.notes) {
     paths.push("notes");
   }
+  if (price !== initialPrice) {
+    paths.push("price_cents_per_kilogram", "price_date");
+  }
   for (const nutrient of changedNutrients) {
     paths.push(`nutrients.${nutrient.field}`);
   }
@@ -230,6 +264,13 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
         return;
       }
       parsed[number.path] = value ?? 0;
+    }
+    const priceDollars = parseOptionalNumber(price);
+    if (priceDollars === null) {
+      setInvalid(
+        "The price must be dollars per kilogram, like 4.99, or empty if unknown."
+      );
+      return;
     }
     const values: Partial<Record<NutrientKey, number>> = {};
     for (const nutrient of NUTRIENTS) {
@@ -258,6 +299,9 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
         openedShelfLifeDays: Math.round(parsed.opened_shelf_life_days ?? 0),
         packageGrams: parsed.package_grams ?? 0,
         preferredStoreId,
+        priceCentsPerKilogram: Math.round((priceDollars ?? 0) * 100),
+        // A price entered here was seen today.
+        priceDate: priceDollars === undefined ? "" : today(),
         shelfLifeDays: Math.round(parsed.shelf_life_days ?? 0),
         storeSection,
       },
@@ -400,7 +444,14 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
                 inputMode="decimal"
                 onChange={setPackageGrams}
               />
-              <span />
+              <TextField
+                label="Price ($/kg)"
+                value={price}
+                inputMode="decimal"
+                placeholder="Unknown"
+                hint={priceHint(price, packageGrams, food.priceDate)}
+                onChange={setPrice}
+              />
               <TextField
                 label="Keeps (days)"
                 value={shelfLifeDays}
