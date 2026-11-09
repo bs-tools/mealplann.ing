@@ -187,6 +187,7 @@ func portionToProto(p *plans.Portion) *plansv1.Portion {
 		EatingTimeId: store.UUIDToString(p.EatingTimeID),
 		Date:         store.FormatDate(p.Date),
 		Notes:        p.Notes,
+		FromFreezer:  p.FromFreezer,
 		Name:         p.Name,
 		CreateTime:   timestamppb.New(p.CreateTime),
 		UpdateTime:   timestamppb.New(p.UpdateTime),

@@ -95,7 +95,7 @@ select
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
   coalesce((
     select sum(p.servings) from portions p
-    where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
+    where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
   ), 0)::double precision as late_servings,
   coalesce((
     select sum(ri.amount * cc.servings / cr.servings)
@@ -124,7 +124,7 @@ select
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
   coalesce((
     select sum(p.servings) from portions p
-    where p.cook_id = cooks.id and p.date > cooks.date + r.fridge_days
+    where p.cook_id = cooks.id and (p.from_freezer or p.date > cooks.date + r.fridge_days)
   ), 0)::double precision as late_servings,
   coalesce((
     select sum(ri.amount * cc.servings / cr.servings)
@@ -145,9 +145,9 @@ order by cooks.date, cooks.create_time, cooks.id;
 
 -- name: CreatePortion :execrows
 insert into portions (
-  id, household_id, person_id, eating_time_id, date, cook_id, servings, food_id, amount, unit, notes
+  id, household_id, person_id, eating_time_id, date, cook_id, servings, food_id, amount, unit, notes, from_freezer
 ) values (
-  @id, @household_id, @person_id, @eating_time_id, @date, @cook_id, @servings, @food_id, @amount, @unit, @notes
+  @id, @household_id, @person_id, @eating_time_id, @date, @cook_id, @servings, @food_id, @amount, @unit, @notes, @from_freezer
 );
 
 -- name: CreateCookPortions :execrows
@@ -291,7 +291,7 @@ from cooks
 join recipes r on r.id = cooks.recipe_id
 cross join lateral (
   select coalesce(sum(p.servings), 0) as servings from portions p
-  where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
+  where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
 ) late
 where cooks.household_id = @household_id and cooks.frozen_servings > late.servings + cooks.off_plan_servings + 0.01
 order by cooks.date, cooks.id;

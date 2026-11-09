@@ -212,10 +212,10 @@ export const listFrozenLeftovers = PlanService.method.listFrozenLeftovers;
  * person's eating time on a date, as a portion of the cook, or off plan,
  * when they were eaten without being planned, given away or thrown out,
  * which adds to the cook's off_plan_servings. Either way they're no
- * longer in the freezer, and don't count as unassigned. Fails with
- * FAILED_PRECONDITION if the freezer has fewer of them, or a portion's
- * date isn't after the recipe's fridge_days, when they'd come from the
- * fridge rather than the freezer.
+ * longer in the freezer, and don't count as unassigned. A portion can be
+ * on any date from the cook's, like food frozen the day it was cooked and
+ * eaten a few days later, and is marked from_freezer. Fails with
+ * FAILED_PRECONDITION if the freezer has fewer of them.
  *
  * @generated from rpc plans.v1.PlanService.TakeFromFreezer
  */

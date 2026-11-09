@@ -122,6 +122,10 @@ type Portion struct {
 	Amount float64
 	Unit   nutrition.Unit
 	Notes  string
+	// FromFreezer is whether a share of a cook is eaten from its frozen
+	// servings, whatever its date. Portions after the recipe's fridge
+	// days are too, without it.
+	FromFreezer bool
 	// Name, the name of the recipe or food, and CookDate, CookRecipeID and
 	// CookFrozenServings, of a share of a cook, are read, and ignored when
 	// writing.
@@ -619,6 +623,7 @@ func (r *Repository) CreatePortion(ctx context.Context, p *Portion) (*Portion, e
 		Amount:       positive(p.Amount, p.FoodID.Valid),
 		Unit:         unitToDB(p.Unit, p.FoodID.Valid),
 		Notes:        p.Notes,
+		FromFreezer:  p.FromFreezer,
 	})
 	b.Read(func(db store.Querier) error {
 		var err error
@@ -891,6 +896,7 @@ func portionFromDB(row *gen.ListPortionsRow) *Portion {
 		Amount:             orZero(p.Amount),
 		Unit:               unitFromDB(p.Unit),
 		Notes:              p.Notes,
+		FromFreezer:        p.FromFreezer,
 		Name:               row.Name,
 		CookDate:           store.DateFromPG(row.CookDate),
 		CookRecipeID:       row.CookRecipeID,

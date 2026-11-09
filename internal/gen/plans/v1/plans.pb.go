@@ -963,6 +963,7 @@ type Portion struct {
 	xxx_hidden_Name         string                 `protobuf:"bytes,8,opt,name=name,proto3"`
 	xxx_hidden_CreateTime   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=create_time,json=createTime,proto3"`
 	xxx_hidden_UpdateTime   *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=update_time,json=updateTime,proto3"`
+	xxx_hidden_FromFreezer  bool                   `protobuf:"varint,11,opt,name=from_freezer,json=fromFreezer,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1066,6 +1067,13 @@ func (x *Portion) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Portion) GetFromFreezer() bool {
+	if x != nil {
+		return x.xxx_hidden_FromFreezer
+	}
+	return false
+}
+
 func (x *Portion) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -1112,6 +1120,10 @@ func (x *Portion) SetCreateTime(v *timestamppb.Timestamp) {
 
 func (x *Portion) SetUpdateTime(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdateTime = v
+}
+
+func (x *Portion) SetFromFreezer(v bool) {
+	x.xxx_hidden_FromFreezer = v
 }
 
 func (x *Portion) HasWhat() bool {
@@ -1222,6 +1234,10 @@ type Portion_builder struct {
 	CreateTime *timestamppb.Timestamp
 	// When the portion was last changed.
 	UpdateTime *timestamppb.Timestamp
+	// Whether a share of a cook is eaten from its frozen servings, taken
+	// out of the freezer with TakeFromFreezer, whatever its date. Portions
+	// after the recipe's fridge_days come from the freezer too.
+	FromFreezer bool
 }
 
 func (b0 Portion_builder) Build() *Portion {
@@ -1242,6 +1258,7 @@ func (b0 Portion_builder) Build() *Portion {
 	x.xxx_hidden_Name = b.Name
 	x.xxx_hidden_CreateTime = b.CreateTime
 	x.xxx_hidden_UpdateTime = b.UpdateTime
+	x.xxx_hidden_FromFreezer = b.FromFreezer
 	return m0
 }
 
@@ -6593,8 +6610,8 @@ type TakeFromFreezerRequest_builder struct {
 	PersonId string
 	// The person's eating time, with person_id.
 	EatingTimeId string
-	// The date they're eaten on (YYYY-MM-DD), after the recipe's
-	// fridge_days, with person_id.
+	// The date they're eaten on (YYYY-MM-DD), on or after the cook's, with
+	// person_id.
 	Date string
 }
 
@@ -6908,7 +6925,7 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"FoodAmount\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\x01R\x06amount\x12(\n" +
-	"\x04unit\x18\x03 \x01(\x0e2\x14.foods.v1.AmountUnitR\x04unit\"\x8b\x03\n" +
+	"\x04unit\x18\x03 \x01(\x0e2\x14.foods.v1.AmountUnitR\x04unit\"\xb6\x03\n" +
 	"\aPortion\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tperson_id\x18\x02 \x01(\tR\bpersonId\x12$\n" +
@@ -6922,7 +6939,8 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"createTime\x12C\n" +
 	"\vupdate_time\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
-	"updateTimeB\x06\n" +
+	"updateTime\x12)\n" +
+	"\ffrom_freezer\x18\v \x01(\bB\x06\xaa\x9f\x19\x02\b\x01R\vfromFreezerB\x06\n" +
 	"\x04what\"\xba\x04\n" +
 	"\x06Staple\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +

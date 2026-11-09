@@ -823,6 +823,7 @@ type Portion struct {
 	Notes        string
 	CreateTime   pgtype.Timestamptz
 	UpdateTime   pgtype.Timestamptz
+	FromFreezer  bool
 }
 
 type Recipe struct {

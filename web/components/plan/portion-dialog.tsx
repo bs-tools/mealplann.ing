@@ -11,12 +11,14 @@ import {
   primaryButton,
   secondaryButton,
 } from "@components/ui/styles";
-import { useMutation } from "@connectrpc/connect-query";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import type { Person } from "gen/people/v1/people_pb";
 import {
   createPortion,
+  listFrozenLeftovers,
+  takeFromFreezer,
   updatePortion,
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type { PlannedCook, PlannedPortion } from "gen/plans/v1/plans_pb";
@@ -32,6 +34,9 @@ import React, { useState } from "react";
  * it.
  */
 type What = "cook" | "food" | "recipe";
+
+// FROZEN prefixes the option of a cook's frozen leftovers.
+const FROZEN = "freezer:";
 
 // Slot is a person's eating time on a date.
 export interface Slot {
@@ -116,7 +121,14 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
   };
   const create = useMutation(createPortion, { onSuccess });
   const update = useMutation(updatePortion, { onSuccess });
-  const pending = create.isPending || update.isPending;
+  const take = useMutation(takeFromFreezer, { onSuccess });
+  const pending = create.isPending || update.isPending || take.isPending;
+  // What's in the freezer, to thaw for it, when adding.
+  const freezer = useQuery(
+    listFrozenLeftovers,
+    {},
+    { enabled: portion === undefined }
+  );
 
   const person = people.find((other) => other.id === personId);
   const cookOptions = offered.map((planned) => {
@@ -128,6 +140,18 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
       value: planned.cook?.id ?? "",
     };
   });
+  /*
+   * Frozen leftovers are taken out of the freezer for it, whatever the
+   * day, like food frozen the day it was cooked.
+   */
+  for (const frozen of freezer.data?.leftovers ?? []) {
+    if (frozen.remainingServings > 0 && !frozen.expired) {
+      cookOptions.push({
+        label: `${frozen.cook?.recipeName ?? ""} · ${formatShortDate(frozen.cook?.date ?? "")} · frozen, ${formatServings(frozen.remainingServings)} left`,
+        value: `${FROZEN}${frozen.cook?.id ?? ""}`,
+      });
+    }
+  }
   // A portion of a cook of another week keeps it as an option.
   if (
     portion !== undefined &&
@@ -176,6 +200,21 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
           personId,
           what: { case: "cook", value: { cookId: "", servings: eaten } },
         },
+      });
+      return;
+    }
+    if (what === "cook" && cookId.startsWith(FROZEN)) {
+      const value = parseOptionalNumber(servings);
+      if (value === null || value === undefined || value <= 0) {
+        setInvalid("The servings must be a number more than 0, like 0.5.");
+        return;
+      }
+      take.mutate({
+        cookId: cookId.slice(FROZEN.length),
+        date,
+        eatingTimeId,
+        personId,
+        servings: value,
       });
       return;
     }
@@ -307,6 +346,9 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
             disabled={cookOptions.length === 0}
             onClick={() => {
               setWhat("cook");
+              if (cookId === "") {
+                setCookId(cookOptions[0]?.value ?? "");
+              }
             }}
           >
             A cook or leftovers
@@ -399,7 +441,7 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
         )}
         <TextField label="Notes" value={notes} onChange={setNotes} />
         {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
-        <ErrorText error={create.error ?? update.error} />
+        <ErrorText error={create.error ?? update.error ?? take.error} />
         <div className="flex justify-end gap-2">
           <button type="button" className={secondaryButton} onClick={onClose}>
             Cancel

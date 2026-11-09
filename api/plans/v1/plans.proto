@@ -148,10 +148,10 @@ service PlanService {
   // person's eating time on a date, as a portion of the cook, or off plan,
   // when they were eaten without being planned, given away or thrown out,
   // which adds to the cook's off_plan_servings. Either way they're no
-  // longer in the freezer, and don't count as unassigned. Fails with
-  // FAILED_PRECONDITION if the freezer has fewer of them, or a portion's
-  // date isn't after the recipe's fridge_days, when they'd come from the
-  // fridge rather than the freezer.
+  // longer in the freezer, and don't count as unassigned. A portion can be
+  // on any date from the cook's, like food frozen the day it was cooked and
+  // eaten a few days later, and is marked from_freezer. Fails with
+  // FAILED_PRECONDITION if the freezer has fewer of them.
   rpc TakeFromFreezer(TakeFromFreezerRequest) returns (TakeFromFreezerResponse);
 }
 
@@ -278,6 +278,10 @@ message Portion {
   google.protobuf.Timestamp create_time = 9 [(mcp.v1.field).output_only = true];
   // When the portion was last changed.
   google.protobuf.Timestamp update_time = 10 [(mcp.v1.field).output_only = true];
+  // Whether a share of a cook is eaten from its frozen servings, taken
+  // out of the freezer with TakeFromFreezer, whatever its date. Portions
+  // after the recipe's fridge_days come from the freezer too.
+  bool from_freezer = 11 [(mcp.v1.field).output_only = true];
 }
 
 // Weekday is a day of the week.
@@ -948,8 +952,8 @@ message TakeFromFreezerRequest {
   string person_id = 3;
   // The person's eating time, with person_id.
   string eating_time_id = 4;
-  // The date they're eaten on (YYYY-MM-DD), after the recipe's
-  // fridge_days, with person_id.
+  // The date they're eaten on (YYYY-MM-DD), on or after the cook's, with
+  // person_id.
   string date = 5;
 }
 
