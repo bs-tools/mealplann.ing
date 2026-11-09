@@ -131,12 +131,10 @@ their shape will keep changing as the pages using them do.
   the steps for one cook: each starts once the steps it follows are done
   and, if hands-on, once the cook is free, so chopping fits into the rice's
   simmering. Given when to serve, it says when to start each step.
-- **Migrating**: recipes from before have only `steps`, plain texts, which
-  can't be structured without reading them, so an AI agent rewrites them
-  (`ListRecipes` with `without_instructions` finds them; the recipe
-  service's guide says how), and the web form saves edited steps as
-  instructions. Until every recipe has them, `steps` keeps the texts, of
-  instructions too; then the column goes, and `steps` is derived.
+- **Migrating**: recipes from before had only plain texts, which couldn't
+  be structured without reading them, so an AI agent rewrote all of them
+  as instructions. The old column is gone, and `steps` is derived from the
+  instructions' texts, read only.
 
 ### Costs
 

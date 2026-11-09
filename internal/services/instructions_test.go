@@ -18,33 +18,31 @@ func TestInstructions(t *testing.T) {
 	lentils := customFood(t, e, "Red lentils", 350, 25, 60, 2, 1, nil)
 	onions := customFood(t, e, "Onions", 40, 1, 9, 4, 0.1, nil)
 
-	// A dal in the old format, with plain steps.
-	old, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
-		Name: "Dal and rice", Servings: 4,
-		Ingredients: []*recipesv1.Ingredient{
-			ingredient(rice.GetId(), 300, grams), ingredient(lentils.GetId(), 250, grams), ingredient(onions.GetId(), 150, grams),
-		},
+	ingredients := []*recipesv1.Ingredient{
+		ingredient(rice.GetId(), 300, grams), ingredient(lentils.GetId(), 250, grams), ingredient(onions.GetId(), 150, grams),
+	}
+	// Steps alone are refused, as they're read from the instructions.
+	_, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
+		Name: "Dal and rice", Servings: 4, Ingredients: ingredients,
 		Steps: []string{"Cook the rice.", "Chop and fry the onions, add the lentils and simmer for 20 minutes."},
+	}.Build()}.Build())
+	wantCode(t, err, connect.CodeInvalidArgument)
+	// A dal of two steps of unknown duration runs them in a row,
+	// estimated.
+	created, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
+		Name: "Dal and rice", Servings: 4, Ingredients: ingredients,
+		Instructions: []*recipesv1.Step{
+			recipesv1.Step_builder{Text: "Cook the rice."}.Build(),
+			recipesv1.Step_builder{Text: "Chop and fry the onions, add the lentils and simmer."}.Build(),
+		},
 	}.Build()}.Build())
 	if err != nil {
 		t.Fatalf("CreateRecipe: %v", err)
 	}
-	dal := old.GetRecipe()
-	if len(dal.GetInstructions()) != 0 {
-		t.Errorf("got instructions %v, want none in the old format", dal.GetInstructions())
+	dal := created.GetRecipe()
+	if !slices.Equal(dal.GetSteps(), []string{"Cook the rice.", "Chop and fry the onions, add the lentils and simmer."}) {
+		t.Errorf("got steps %v, want the instructions' texts", dal.GetSteps())
 	}
-	listOld := func() []string {
-		t.Helper()
-		resp, err := e.recipes.ListRecipes(ctx, recipesv1.ListRecipesRequest_builder{WithoutInstructions: true}.Build())
-		if err != nil {
-			t.Fatalf("ListRecipes: %v", err)
-		}
-		return recipeNames(resp.GetRecipes())
-	}
-	if got := listOld(); !slices.Equal(got, []string{"Dal and rice"}) {
-		t.Errorf("got %v in the old format, want the dal", got)
-	}
-	// Its timeline runs the steps in a row, estimated.
 	tl, err := e.recipes.GetRecipeTimeline(ctx, recipesv1.GetRecipeTimelineRequest_builder{Id: dal.GetId()}.Build())
 	if err != nil {
 		t.Fatalf("GetRecipeTimeline: %v", err)
@@ -53,7 +51,7 @@ func TestInstructions(t *testing.T) {
 		t.Errorf("got %v, want two estimated steps in a row", s)
 	}
 
-	// Rewritten as instructions: the rice simmers while the onions are
+	// Rewritten with structure: the rice simmers while the onions are
 	// chopped and fried, and the steps follow from them.
 	step := func(text string, ingredients []int32, seconds int32, waiting bool) *recipesv1.Step {
 		return recipesv1.Step_builder{Text: text, IngredientIndexes: ingredients, DurationSeconds: seconds, Waiting: waiting}.Build()
@@ -80,9 +78,6 @@ func TestInstructions(t *testing.T) {
 	}
 	if steps := got.GetSteps(); len(steps) != 6 || steps[0] != "Rinse the rice and bring it to a boil" {
 		t.Errorf("got steps %v, want the instructions' texts", steps)
-	}
-	if got := listOld(); len(got) != 0 {
-		t.Errorf("got %v in the old format, want none", got)
 	}
 	tl, err = e.recipes.GetRecipeTimeline(ctx, recipesv1.GetRecipeTimelineRequest_builder{Id: dal.GetId()}.Build())
 	if err != nil {

@@ -1,55 +1,17 @@
-import type { Ingredient, Recipe } from "gen/recipes/v1/recipes_pb";
+import type { Ingredient, Step } from "gen/recipes/v1/recipes_pb";
 import type { UnitSystem } from "gen/users/v1/users_pb";
 
 import { formatIngredientAmount, formatServings } from "./labels";
-
-/**
- * StepView is a step to show: a step of a recipe's instructions, or one of
- * its plain steps in the old format, which has only its text.
- */
-export interface StepView {
-  text: string;
-  section: string;
-  ingredientIndexes: number[];
-  durationSeconds: number;
-  waiting: boolean;
-  afterStepIndexes: number[];
-  fromStart: boolean;
-}
-
-// RecipeSteps returns a recipe's steps, from its instructions if it has any.
-export const recipeSteps = (recipe: Recipe): StepView[] => {
-  if (recipe.instructions.length > 0) {
-    return recipe.instructions.map((step) => ({
-      afterStepIndexes: step.afterStepIndexes,
-      durationSeconds: step.durationSeconds,
-      fromStart: step.fromStart,
-      ingredientIndexes: step.ingredientIndexes,
-      section: step.section,
-      text: step.text,
-      waiting: step.waiting,
-    }));
-  }
-  return recipe.steps.map((text) => ({
-    afterStepIndexes: [],
-    durationSeconds: 0,
-    fromStart: false,
-    ingredientIndexes: [],
-    section: "",
-    text,
-    waiting: false,
-  }));
-};
 
 // StepGroup is steps in a row with the same section.
 export interface StepGroup {
   section: string;
   // The steps, with their indexes in the recipe.
-  steps: { step: StepView; index: number }[];
+  steps: { step: Step; index: number }[];
 }
 
 // GroupSteps groups steps in a row with the same section.
-export const groupSteps = (steps: StepView[]): StepGroup[] => {
+export const groupSteps = (steps: Step[]): StepGroup[] => {
   const groups: StepGroup[] = [];
   for (const [index, step] of steps.entries()) {
     const last = groups.at(-1);

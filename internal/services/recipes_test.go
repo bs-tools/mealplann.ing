@@ -75,7 +75,10 @@ func TestRecipes(t *testing.T) {
 				ingredient(garlic.GetId(), 3, pieces),
 				recipesv1.Ingredient_builder{FoodId: soyMilk.GetId(), Amount: 50, Unit: milliliters, Optional: true}.Build(),
 			},
-			Steps:      []string{" Fry the onions. ", "Add the rest and simmer."},
+			Instructions: []*recipesv1.Step{
+				recipesv1.Step_builder{Text: " Fry the onions. "}.Build(),
+				recipesv1.Step_builder{Text: "Add the rest and simmer."}.Build(),
+			},
 			Tags:       []string{"Dinner", " batch-friendly", "dinner"},
 			SourceUrl:  "https://example.com/chana-masala",
 			FridgeDays: new(int32(3)),
@@ -321,14 +324,17 @@ func TestRecipes(t *testing.T) {
 		}.Build()
 	}
 	for name, change := range map[string]func(r *recipesv1.Recipe){
-		"no name":          func(r *recipesv1.Recipe) { r.SetName(" ") },
-		"no servings":      func(r *recipesv1.Recipe) { r.SetServings(0) },
-		"too many":         func(r *recipesv1.Recipe) { r.SetServings(101) },
-		"negative time":    func(r *recipesv1.Recipe) { r.SetCookSeconds(-1) },
-		"no unit":          func(r *recipesv1.Recipe) { r.GetIngredients()[0].SetUnit(foodsv1.AmountUnit_AMOUNT_UNIT_UNSPECIFIED) },
-		"no amount":        func(r *recipesv1.Recipe) { r.GetIngredients()[0].SetAmount(0) },
-		"invalid food":     func(r *recipesv1.Recipe) { r.GetIngredients()[0].SetFoodId("chickpeas") },
-		"empty step":       func(r *recipesv1.Recipe) { r.SetSteps([]string{"Blend.", " "}) },
+		"no name":       func(r *recipesv1.Recipe) { r.SetName(" ") },
+		"no servings":   func(r *recipesv1.Recipe) { r.SetServings(0) },
+		"too many":      func(r *recipesv1.Recipe) { r.SetServings(101) },
+		"negative time": func(r *recipesv1.Recipe) { r.SetCookSeconds(-1) },
+		"no unit":       func(r *recipesv1.Recipe) { r.GetIngredients()[0].SetUnit(foodsv1.AmountUnit_AMOUNT_UNIT_UNSPECIFIED) },
+		"no amount":     func(r *recipesv1.Recipe) { r.GetIngredients()[0].SetAmount(0) },
+		"invalid food":  func(r *recipesv1.Recipe) { r.GetIngredients()[0].SetFoodId("chickpeas") },
+		"empty step": func(r *recipesv1.Recipe) {
+			r.SetInstructions([]*recipesv1.Step{recipesv1.Step_builder{Text: "Blend."}.Build(), recipesv1.Step_builder{Text: " "}.Build()})
+		},
+		"only steps":       func(r *recipesv1.Recipe) { r.SetInstructions(nil); r.SetSteps([]string{"Blend."}) },
 		"empty tag":        func(r *recipesv1.Recipe) { r.SetTags([]string{""}) },
 		"long tag":         func(r *recipesv1.Recipe) { r.SetTags([]string{strings.Repeat("a", 41)}) },
 		"not a web URL":    func(r *recipesv1.Recipe) { r.SetSourceUrl("ftp://example.com/hummus") },

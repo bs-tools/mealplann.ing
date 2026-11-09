@@ -88,8 +88,9 @@ func (s *Service) checkComponents(ctx context.Context, recipe *recipes.Recipe) e
 	return nil
 }
 
-// keepFields are the fields of a recipe updates don't change.
-var keepFields = []protoreflect.Name{"id", "nutrition", "create_time", "update_time"}
+// keepFields are the fields of a recipe updates don't change. The steps
+// are read from the instructions.
+var keepFields = []protoreflect.Name{"id", "nutrition", "create_time", "update_time", "steps"}
 
 func (s *Service) CreateRecipe(ctx context.Context, req *recipesv1.CreateRecipeRequest) (*recipesv1.CreateRecipeResponse, error) {
 	user, ok := authn.GetUser(ctx)
@@ -193,11 +194,10 @@ func (s *Service) ListRecipes(ctx context.Context, req *recipesv1.ListRecipesReq
 		return nil, connect.Errorf(connect.CodeInvalidArgument, "invalid food ID in food_ids: %v; find foods with FoodService.ListFoods", err)
 	}
 	list, allTags, err := s.recipes.ListRecipes(ctx, user.HouseholdID(), recipes.ListFilter{
-		Query:               query,
-		Tags:                tags,
-		FavoritesOnly:       req.GetFavoritesOnly(),
-		FoodIDs:             foodIDs,
-		WithoutInstructions: req.GetWithoutInstructions(),
+		Query:         query,
+		Tags:          tags,
+		FavoritesOnly: req.GetFavoritesOnly(),
+		FoodIDs:       foodIDs,
 	})
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to list recipes")
@@ -377,7 +377,7 @@ func (s *Service) GetRecipeTimeline(ctx context.Context, req *recipesv1.GetRecip
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to get recipe")
 	}
-	steps := recipe.StepsOf()
+	steps := recipe.Instructions
 	tl := recipe.Timeline()
 	timed := make([]*recipesv1.TimedStep, 0, len(tl.Steps))
 	for _, t := range tl.Steps {

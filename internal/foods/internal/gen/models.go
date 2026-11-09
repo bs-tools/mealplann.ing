@@ -832,7 +832,6 @@ type Recipe struct {
 	Servings      int32
 	PrepSeconds   int32
 	CookSeconds   int32
-	Steps         []string
 	Tags          []string
 	SourceURL     string
 	FridgeDays    *int32

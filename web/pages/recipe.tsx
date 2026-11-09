@@ -35,12 +35,7 @@ import {
 } from "helpers/format";
 import { invalidateServices } from "helpers/query";
 import { ingredientAmount } from "helpers/steps";
-import {
-  formatStepDuration,
-  groupSteps,
-  ingredientName,
-  recipeSteps,
-} from "helpers/steps";
+import { formatStepDuration, groupSteps, ingredientName } from "helpers/steps";
 import { useUnitSystem } from "helpers/user";
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router";
@@ -269,11 +264,11 @@ const RecipePage: React.FC = () => {
             )}
           </Card>
           <Card title="Steps">
-            {recipe.steps.length === 0 ? (
+            {recipe.instructions.length === 0 ? (
               <p className="text-sm text-gray-500">No steps yet.</p>
             ) : (
               <div className="flex flex-col gap-4">
-                {groupSteps(recipeSteps(recipe)).map((group) => (
+                {groupSteps(recipe.instructions).map((group) => (
                   <div
                     key={group.steps[0]?.index}
                     className="flex flex-col gap-2"

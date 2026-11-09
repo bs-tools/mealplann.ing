@@ -16,15 +16,13 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { getRecipe } from "gen/recipes/v1/recipes-RecipeService_connectquery";
-import type { Recipe } from "gen/recipes/v1/recipes_pb";
+import type { Recipe, Step } from "gen/recipes/v1/recipes_pb";
 import { formatServings } from "helpers/labels";
-import type { StepView } from "helpers/steps";
 import {
   formatClock,
   formatStepDuration,
   ingredientAmount,
   ingredientName,
-  recipeSteps,
 } from "helpers/steps";
 import { useUnitSystem } from "helpers/user";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -124,7 +122,7 @@ const useNow = (active: boolean): number => {
 
 interface StepPageProps {
   recipe: Recipe;
-  step: StepView;
+  step: Step;
   index: number;
   count: number;
   scale: number;
@@ -220,7 +218,7 @@ const CookModePage: React.FC = () => {
   useWakeLock();
 
   const data = recipe.data?.recipe;
-  const steps = data === undefined ? [] : recipeSteps(data);
+  const steps = data?.instructions ?? [];
   const lastPage = steps.length + 1;
   const servings =
     Number(params.get("servings")) > 0

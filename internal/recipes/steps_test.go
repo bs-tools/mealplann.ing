@@ -35,8 +35,8 @@ func TestTimeline(t *testing.T) {
 		t.Errorf("got %+v, want only serving estimated", tl.Steps)
 	}
 
-	// Plain steps run one after the other, each estimated.
-	plain := (&Recipe{Steps: []string{"Mix", "Bake"}}).Timeline()
+	// Steps of unknown duration run one after the other, each estimated.
+	plain := (&Recipe{Instructions: []*Step{{Text: "Mix"}, {Text: "Bake"}}}).Timeline()
 	if plain.TotalSeconds != 2*DefaultStepSeconds || !plain.Steps[1].Estimated || plain.Steps[1].StartSeconds != DefaultStepSeconds {
 		t.Errorf("got %+v, want two estimated steps in a row", plain)
 	}
@@ -56,8 +56,9 @@ func TestInstructionsJSON(t *testing.T) {
 	if len(back) != 2 || back[0].DurationSeconds != 3600 || !back[0].UsesIngredient(0) || back[1].After[0] != 0 {
 		t.Errorf("got %+v back from %s", back, data)
 	}
-	if none, _ := instructionsToDB(nil); none != nil {
-		t.Errorf("got %s for no instructions, want nil", none)
+	// No instructions are an empty array, as the column is required.
+	if none, _ := instructionsToDB(nil); string(none) != "[]" {
+		t.Errorf("got %s for no instructions, want []", none)
 	}
 	if empty, _ := instructionsFromDB([]byte("[]")); empty == nil {
 		t.Error("got nil for empty instructions, want empty")

@@ -31,22 +31,18 @@ import "mcp/v1/options.proto";
 //
 // A recipe's steps are its instructions: each step's text, the ingredients
 // it uses, how long it takes, whether it's waiting time, and the steps it
-// follows. Recipes created before instructions existed have only steps,
-// plain texts. To rewrite one (find them with ListRecipes and
-// without_instructions):
+// follows. To write them:
 //
-// 1. Read it with GetRecipe.
-// 2. Split its steps into one action each, and take the amounts out of their texts: cook mode shows the step's ingredients with amounts scaled to the servings cooked.
-// 3. Give each step the ingredients it uses, its duration from the text ("simmer for 20 minutes" is 1200 seconds), and set waiting for time the cook is free, like simmering, baking or resting.
-// 4. Say which steps can run alongside others: from_start for one that can start right away, or after_step_indexes for one that waits for steps other than the one before it.
-// 5. Save it with UpdateRecipe and the update_mask "instructions", and check its GetRecipeTimeline.
+// 1. Split the recipe into one action per step, and keep the amounts out of their texts: cook mode shows the step's ingredients with amounts scaled to the servings cooked.
+// 2. Give each step the ingredients it uses, its duration from the text ("simmer for 20 minutes" is 1200 seconds), and set waiting for time the cook is free, like simmering, baking or resting.
+// 3. Say which steps can run alongside others: from_start for one that can start right away, or after_step_indexes for one that waits for steps other than the one before it.
+// 4. Check the result with GetRecipeTimeline.
 service RecipeService {
   // Get when a recipe's steps happen, for one cook: each starts as soon as
   // the steps it follows are done and, if it's hands-on, the cook is free,
   // so hands-on steps fit into waiting time, like chopping while rice
   // simmers. Steps of unknown duration count as 5 minutes, and are marked
-  // estimated. A recipe in the old format runs its steps one after the
-  // other.
+  // estimated.
   rpc GetRecipeTimeline(GetRecipeTimelineRequest) returns (GetRecipeTimelineResponse);
   // Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
   // isn't one of the household's foods.
@@ -101,13 +97,9 @@ message Recipe {
   int32 cook_seconds = 6;
   // The ingredients, in the recipe's order. At most 100.
   repeated Ingredient ingredients = 7;
-  // The steps as plain text, in order, each a paragraph without its
-  // number: the old format. For a recipe with instructions, it's their
-  // texts, and writes ignore it: set instructions instead. Recipes without
-  // instructions are still in the old format: rewrite their steps as
-  // instructions (see RecipeService). At most 100, of at most 2000
-  // characters each.
-  repeated string steps = 8;
+  // The texts of the instructions, in order: a plain view of them. Set
+  // instructions to change them.
+  repeated string steps = 8 [(mcp.v1.field).output_only = true];
   // Tags to find the recipe by, lowercase, e.g. "breakfast",
   // "batch-friendly" or "quick". Reuse the tags of other recipes (see
   // ListRecipesResponse.tags) rather than inventing synonyms. At most 20, of
@@ -148,8 +140,7 @@ message Recipe {
   // The steps, in order, with their structure: the ingredients each uses,
   // how long it takes, whether it's waiting time, and which steps it
   // follows. Cook mode shows each step with its ingredients and a timer,
-  // and GetRecipeTimeline schedules them. Empty for a recipe still in the
-  // old format of plain steps. At most 100.
+  // and GetRecipeTimeline schedules them. At most 100.
   repeated Step instructions = 21;
   // What its ingredients cost, from their foods' prices.
   RecipeCost cost = 22 [(mcp.v1.field).output_only = true];
@@ -315,8 +306,8 @@ message RecipeSummary {
   google.protobuf.Timestamp update_time = 13;
   // Whether the household marked the recipe as a favorite.
   bool favorite = 14;
-  // Whether it has instructions, rather than steps in the old format.
-  bool has_instructions = 15;
+  reserved 15;
+  reserved "has_instructions";
   // What a serving costs, in Canadian cents, from the foods' prices. Unset
   // if none of its foods have one; a lower bound if some don't (see
   // Recipe.cost).
@@ -369,9 +360,8 @@ message ListRecipesRequest {
   // only through a component recipe aren't listed: the component is. Empty
   // to list all. At most 100.
   repeated string food_ids = 4;
-  // Only list recipes still in the old format of plain steps, without
-  // instructions, e.g. to rewrite them.
-  bool without_instructions = 5;
+  reserved 5;
+  reserved "without_instructions";
 }
 
 message ListRecipesResponse {
@@ -387,7 +377,8 @@ message UpdateRecipeRequest {
   // update_mask.
   Recipe recipe = 1;
   // The fields to update, e.g. "name,servings". If empty, all fields are
-  // replaced. Lists, like ingredients and steps, are replaced as a whole.
+  // replaced. Lists, like ingredients and instructions, are replaced as a
+  // whole.
   google.protobuf.FieldMask update_mask = 2;
 }
 
@@ -412,7 +403,7 @@ message GetRecipeTimelineResponse {
 
 // A step of a recipe's timeline.
 message TimedStep {
-  // The index of the step in the recipe's instructions, or its steps.
+  // The index of the step in the recipe's instructions.
   int32 step_index = 1;
   // The step's text.
   string text = 2;
