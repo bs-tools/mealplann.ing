@@ -558,6 +558,7 @@ type ListPantryRequest struct {
 	xxx_hidden_Summary            bool                   `protobuf:"varint,4,opt,name=summary,proto3"`
 	xxx_hidden_Storage            Storage                `protobuf:"varint,5,opt,name=storage,proto3,enum=pantry.v1.Storage"`
 	xxx_hidden_EstimatedOnly      bool                   `protobuf:"varint,6,opt,name=estimated_only,json=estimatedOnly,proto3"`
+	xxx_hidden_Query              string                 `protobuf:"bytes,7,opt,name=query,proto3"`
 	XXX_raceDetectHookData        protoimpl.RaceDetectHookData
 	XXX_presence                  [1]uint32
 	unknownFields                 protoimpl.UnknownFields
@@ -631,6 +632,13 @@ func (x *ListPantryRequest) GetEstimatedOnly() bool {
 	return false
 }
 
+func (x *ListPantryRequest) GetQuery() string {
+	if x != nil {
+		return x.xxx_hidden_Query
+	}
+	return ""
+}
+
 func (x *ListPantryRequest) SetFoodIds(v []string) {
 	x.xxx_hidden_FoodIds = v
 }
@@ -641,7 +649,7 @@ func (x *ListPantryRequest) SetStoreSection(v v1.StoreSection) {
 
 func (x *ListPantryRequest) SetExpiringWithinDays(v int32) {
 	x.xxx_hidden_ExpiringWithinDays = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 6)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 7)
 }
 
 func (x *ListPantryRequest) SetSummary(v bool) {
@@ -654,6 +662,10 @@ func (x *ListPantryRequest) SetStorage(v Storage) {
 
 func (x *ListPantryRequest) SetEstimatedOnly(v bool) {
 	x.xxx_hidden_EstimatedOnly = v
+}
+
+func (x *ListPantryRequest) SetQuery(v string) {
+	x.xxx_hidden_Query = v
 }
 
 func (x *ListPantryRequest) HasExpiringWithinDays() bool {
@@ -679,13 +691,18 @@ type ListPantryRequest_builder struct {
 	// Only list lots to use within this many days from today (UTC),
 	// including those already past their use-by date. Unset to list all.
 	ExpiringWithinDays *int32
-	// Whether to leave out the lots' create and update times, to keep a
-	// large pantry's response small.
+	// Whether to return only each lot's ID, food, grams, use-by date, days
+	// to expiry, storage, and whether it's opened or estimated, leaving out
+	// its other fields and any at their default values, to keep a large
+	// pantry's response small. Get a lot's details from a full listing.
 	Summary bool
 	// Only list lots kept there. STORAGE_UNSPECIFIED to list all.
 	Storage Storage
 	// Only list lots whose amounts are guesses, for the user to check.
 	EstimatedOnly bool
+	// Only list lots, and foods always in stock, whose food's name contains
+	// this text, ignoring case, e.g. "tofu". Empty to list all.
+	Query string
 }
 
 func (b0 ListPantryRequest_builder) Build() *ListPantryRequest {
@@ -695,12 +712,13 @@ func (b0 ListPantryRequest_builder) Build() *ListPantryRequest {
 	x.xxx_hidden_FoodIds = b.FoodIds
 	x.xxx_hidden_StoreSection = b.StoreSection
 	if b.ExpiringWithinDays != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 6)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 7)
 		x.xxx_hidden_ExpiringWithinDays = *b.ExpiringWithinDays
 	}
 	x.xxx_hidden_Summary = b.Summary
 	x.xxx_hidden_Storage = b.Storage
 	x.xxx_hidden_EstimatedOnly = b.EstimatedOnly
+	x.xxx_hidden_Query = b.Query
 	return m0
 }
 
@@ -1710,14 +1728,15 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\x11AlwaysInStockFood\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x1b\n" +
 	"\tfood_name\x18\x02 \x01(\tR\bfoodName\x12;\n" +
-	"\rstore_section\x18\x03 \x01(\x0e2\x16.foods.v1.StoreSectionR\fstoreSection\"\xaa\x02\n" +
+	"\rstore_section\x18\x03 \x01(\x0e2\x16.foods.v1.StoreSectionR\fstoreSection\"\xc0\x02\n" +
 	"\x11ListPantryRequest\x12\x19\n" +
 	"\bfood_ids\x18\x01 \x03(\tR\afoodIds\x12;\n" +
 	"\rstore_section\x18\x02 \x01(\x0e2\x16.foods.v1.StoreSectionR\fstoreSection\x125\n" +
 	"\x14expiring_within_days\x18\x03 \x01(\x05H\x00R\x12expiringWithinDays\x88\x01\x01\x12\x18\n" +
 	"\asummary\x18\x04 \x01(\bR\asummary\x12,\n" +
 	"\astorage\x18\x05 \x01(\x0e2\x12.pantry.v1.StorageR\astorage\x12%\n" +
-	"\x0eestimated_only\x18\x06 \x01(\bR\restimatedOnlyB\x17\n" +
+	"\x0eestimated_only\x18\x06 \x01(\bR\restimatedOnly\x12\x14\n" +
+	"\x05query\x18\a \x01(\tR\x05queryB\x17\n" +
 	"\x15_expiring_within_days\"\x92\x01\n" +
 	"\x12ListPantryResponse\x12+\n" +
 	"\x05items\x18\x01 \x03(\v2\x15.pantry.v1.PantryItemR\x05items\x12O\n" +

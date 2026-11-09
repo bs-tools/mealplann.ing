@@ -2568,6 +2568,7 @@ type ListFoodsRequest struct {
 	xxx_hidden_Query     string                 `protobuf:"bytes,1,opt,name=query,proto3"`
 	xxx_hidden_PageSize  int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3"`
 	xxx_hidden_PageToken string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3"`
+	xxx_hidden_Summary   bool                   `protobuf:"varint,4,opt,name=summary,proto3"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -2618,6 +2619,13 @@ func (x *ListFoodsRequest) GetPageToken() string {
 	return ""
 }
 
+func (x *ListFoodsRequest) GetSummary() bool {
+	if x != nil {
+		return x.xxx_hidden_Summary
+	}
+	return false
+}
+
 func (x *ListFoodsRequest) SetQuery(v string) {
 	x.xxx_hidden_Query = v
 }
@@ -2630,17 +2638,28 @@ func (x *ListFoodsRequest) SetPageToken(v string) {
 	x.xxx_hidden_PageToken = v
 }
 
+func (x *ListFoodsRequest) SetSummary(v bool) {
+	x.xxx_hidden_Summary = v
+}
+
 type ListFoodsRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	// Only list foods whose name contains this text, ignoring case. Empty to
 	// list all.
 	Query string
-	// The most foods to return, from 1 to 200. 50 if 0.
+	// The most foods to return, from 1 to 200. 25 if 0.
 	PageSize int32
 	// The next_page_token of the previous page, to get the next one. Empty for
 	// the first page.
 	PageToken string
+	// Whether to return only each food's ID, name, and how it's weighed,
+	// measured and stocked (grams_per_piece, grams_per_milliliter, measure,
+	// package_grams, store_section, preferred_store_id, always_in_stock),
+	// leaving out its nutrients, prices, notes and times, and any fields at
+	// their default values, to look foods up cheaply. Get a food's details
+	// with GetFood.
+	Summary bool
 }
 
 func (b0 ListFoodsRequest_builder) Build() *ListFoodsRequest {
@@ -2650,6 +2669,7 @@ func (b0 ListFoodsRequest_builder) Build() *ListFoodsRequest {
 	x.xxx_hidden_Query = b.Query
 	x.xxx_hidden_PageSize = b.PageSize
 	x.xxx_hidden_PageToken = b.PageToken
+	x.xxx_hidden_Summary = b.Summary
 	return m0
 }
 
@@ -3373,12 +3393,13 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"5\n" +
 	"\x0fGetFoodResponse\x12\"\n" +
-	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\"d\n" +
+	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\"~\n" +
 	"\x10ListFoodsRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x03 \x01(\tR\tpageToken\"a\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\x12\x18\n" +
+	"\asummary\x18\x04 \x01(\bR\asummary\"a\n" +
 	"\x11ListFoodsResponse\x12$\n" +
 	"\x05foods\x18\x01 \x03(\v2\x0e.foods.v1.FoodR\x05foods\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"t\n" +

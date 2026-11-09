@@ -634,8 +634,9 @@ export type GetWeekRequest = Message<"plans.v1.GetWeekRequest"> & {
    * Whether to return a summary: only the main nutrients (energy_kcal,
    * protein_grams and carbohydrate_grams), and none of the steps, original
    * ingredient texts, nutrition per 100 g, incomplete nutrients, ingredient
-   * issues, or create and update times. Use it to scan, and read the full
-   * response only for what needs a closer look.
+   * issues, or create and update times, nor fields at their default
+   * values. Use it to scan, and read the full response only for what needs
+   * a closer look.
    *
    * @generated from field: bool summary = 2;
    */
