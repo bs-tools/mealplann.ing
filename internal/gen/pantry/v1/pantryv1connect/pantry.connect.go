@@ -82,8 +82,9 @@ type PantryServiceClient interface {
 	// List the household's pantry: every lot in stock, with its food's name
 	// and store section, and how many days it has left, ordered by food
 	// name and then by expiry, soonest first. Also the foods always in
-	// stock. It can list only some foods, a part of the store, or what to use
-	// soon, and leave out the times with summary.
+	// stock. It can list only some foods, by ID or name, a part of the store,
+	// or what to use soon, and return only the main fields of each lot with
+	// summary.
 	ListPantry(context.Context, *v1.ListPantryRequest) (*v1.ListPantryResponse, error)
 	// Add an amount of a food to the pantry, as a new lot. The amount is
 	// converted to grams with the food's grams_per_piece or
@@ -116,8 +117,9 @@ type PantryServiceHandler interface {
 	// List the household's pantry: every lot in stock, with its food's name
 	// and store section, and how many days it has left, ordered by food
 	// name and then by expiry, soonest first. Also the foods always in
-	// stock. It can list only some foods, a part of the store, or what to use
-	// soon, and leave out the times with summary.
+	// stock. It can list only some foods, by ID or name, a part of the store,
+	// or what to use soon, and return only the main fields of each lot with
+	// summary.
 	ListPantry(context.Context, *v1.ListPantryRequest) (*v1.ListPantryResponse, error)
 	// Add an amount of a food to the pantry, as a new lot. The amount is
 	// converted to grams with the food's grams_per_piece or

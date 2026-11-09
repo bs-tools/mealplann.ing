@@ -692,8 +692,9 @@ export const StorageSchema: GenEnum<Storage> = /*@__PURE__*/
  * 1. Completing a shopping list (see ShoppingService.CompleteShopping) adds
  *    the checked items, expiring after the food's shelf_life_days.
  * 2. Marking a cook done (see PlanService.UpdateCook) takes its
- *    ingredients out, from the lots that expire first, and un-marking it
- *    puts them back. Portions of foods and staples aren't taken out, as
+ *    ingredients out, from the lots that expire first, or as its food_uses
+ *    say was actually used, and un-marking it puts them back. Preview the
+ *    changes with its preview. Portions of foods and staples aren't taken out, as
  *    they're eaten too irregularly to track: correct the pantry with
  *    UpdatePantryItem when it's off.
  *
@@ -704,7 +705,10 @@ export const StorageSchema: GenEnum<Storage> = /*@__PURE__*/
  *
  * Cooked food in stock, like frozen leftovers or a batch of cooked rice, is
  * a cook of its recipe (see PlanService.CreateCook's from_stock), not a
- * lot, so it keeps its recipe's nutrition and can be planned.
+ * lot, so it keeps its recipe's nutrition and can be planned. List what's
+ * in the freezer with PlanService.ListFrozenLeftovers, and take servings
+ * out with PlanService.TakeFromFreezer: for someone's meal, or off plan,
+ * when they're eaten unplanned or thrown out.
  *
  * @generated from service pantry.v1.PantryService
  */
@@ -713,8 +717,9 @@ export const PantryService: GenService<{
    * List the household's pantry: every lot in stock, with its food's name
    * and store section, and how many days it has left, ordered by food
    * name and then by expiry, soonest first. Also the foods always in
-   * stock. It can list only some foods, a part of the store, or what to use
-   * soon, and leave out the times with summary.
+   * stock. It can list only some foods, by ID or name, a part of the store,
+   * or what to use soon, and return only the main fields of each lot with
+   * summary.
    *
    * @generated from rpc pantry.v1.PantryService.ListPantry
    */

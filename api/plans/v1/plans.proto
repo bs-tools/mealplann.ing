@@ -127,12 +127,19 @@ service PlanService {
   // Stop skipping a staple on a date.
   rpc UnskipStaple(UnskipStapleRequest) returns (UnskipStapleResponse);
   // List what's in the freezer: the frozen leftovers of cooks (see
-  // Cook.frozen_servings) not all planned yet, by the date they were
-  // cooked, each with the servings left to plan and the last date they
-  // keep. Plan them with CreatePortion, as shares of their cook on any
-  // later date, or discard them by setting the cook's frozen_servings to
-  // the servings planned.
+  // Cook.frozen_servings) not all planned or taken yet, by the date they
+  // were cooked, each with the servings left and the last date they keep.
+  // Take them out with TakeFromFreezer.
   rpc ListFrozenLeftovers(ListFrozenLeftoversRequest) returns (ListFrozenLeftoversResponse);
+  // Take servings of a cook's frozen leftovers out of the freezer: for a
+  // person's eating time on a date, as a portion of the cook, or off plan,
+  // when they were eaten without being planned, given away or thrown out,
+  // which adds to the cook's off_plan_servings. Either way they're no
+  // longer in the freezer, and don't count as unassigned. Fails with
+  // FAILED_PRECONDITION if the freezer has fewer of them, or a portion's
+  // date isn't after the recipe's fridge_days, when they'd come from the
+  // fridge rather than the freezer.
+  rpc TakeFromFreezer(TakeFromFreezerRequest) returns (TakeFromFreezerResponse);
 }
 
 // A recipe made on a date, for a number of servings.
@@ -175,6 +182,11 @@ message Cook {
   repeated CookSupply supplies = 12 [(mcp.v1.field).output_only = true];
   // The cooks it makes a component of.
   repeated CookSupply supplying = 13 [(mcp.v1.field).output_only = true];
+  // How many of its servings were taken without a portion: eaten without
+  // being planned, given away or thrown out, like a frozen serving grabbed
+  // for a lunch. They count as used, so they're neither unassigned nor in
+  // the freezer. Add to it with TakeFromFreezer. From 0 to servings.
+  double off_plan_servings = 14;
 }
 
 // A cook making a component of another cook: e.g. a pot of chickpeas for
@@ -846,8 +858,8 @@ message ListFrozenLeftoversResponse {
 message FrozenLeftover {
   // The cook.
   Cook cook = 1;
-  // How many of its frozen servings aren't planned yet: those in the
-  // freezer.
+  // How many of its frozen servings aren't planned yet, nor taken off
+  // plan: those in the freezer.
   double remaining_servings = 2;
   // How many of its frozen servings are planned already, as portions eaten
   // after the recipe's fridge days.
@@ -856,13 +868,35 @@ message FrozenLeftover {
   // recipe's freezer_days. Empty if unknown.
   string keeps_until = 4;
   // Whether keeps_until is before today, so they should be thrown out:
-  // discard them by setting the cook's frozen_servings to
-  // planned_servings.
+  // take remaining_servings off plan with TakeFromFreezer.
   bool expired = 5;
   // The first date (YYYY-MM-DD) a portion of them is from the freezer: the
   // day after the recipe's fridge days. Empty if the recipe's fridge days
   // are unknown.
   string frozen_from = 6;
+}
+
+message TakeFromFreezerRequest {
+  // The ID of the cook whose frozen leftovers to take, from
+  // ListFrozenLeftovers. Required.
+  string cook_id = 1;
+  // How many servings to take, more than 0, at most those in the freezer.
+  double servings = 2;
+  // For a portion, the person eating them, with eating_time_id and date.
+  // Empty to take them off plan.
+  string person_id = 3;
+  // The person's eating time, with person_id.
+  string eating_time_id = 4;
+  // The date they're eaten on (YYYY-MM-DD), after the recipe's
+  // fridge_days, with person_id.
+  string date = 5;
+}
+
+message TakeFromFreezerResponse {
+  // What's left of the cook's frozen leftovers.
+  FrozenLeftover leftover = 1;
+  // The portion created, for a person.
+  Portion portion = 2;
 }
 
 message SetCookSupplierRequest {

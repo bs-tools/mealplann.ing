@@ -1,6 +1,6 @@
 -- name: CreateCook :execrows
-insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done, frozen_servings)
-values (@id, @household_id, @recipe_id, @date, @servings, @meal, @notes, @done, @frozen_servings);
+insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done, frozen_servings, off_plan_servings)
+values (@id, @household_id, @recipe_id, @date, @servings, @meal, @notes, @done, @frozen_servings, @off_plan_servings);
 
 -- name: GrowCook :execrows
 -- Adds servings to a cook, for portions of it planned later, like the rest
@@ -17,6 +17,7 @@ update cooks set
   notes = @notes,
   done = @done,
   frozen_servings = @frozen_servings,
+  off_plan_servings = @off_plan_servings,
   update_time = now()
 where id = @id and household_id = @household_id;
 
@@ -237,9 +238,10 @@ where household_id = @household_id
 order by staple_id, date;
 
 -- name: ListFrozenCooks :many
--- The household's cooks with frozen servings not all planned yet: those in
--- the freezer, with their recipe's name and keeping days, and the servings
--- of their portions eaten after the recipe's fridge days, by date.
+-- The household's cooks with frozen servings not all planned or taken off
+-- plan yet: those in the freezer, with their recipe's name and keeping
+-- days, and the servings of their portions eaten after the recipe's fridge
+-- days, by date.
 select
   sqlc.embed(cooks),
   r.name as recipe_name,
@@ -252,7 +254,7 @@ cross join lateral (
   select coalesce(sum(p.servings), 0) as servings from portions p
   where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
 ) late
-where cooks.household_id = @household_id and cooks.frozen_servings > late.servings + 0.01
+where cooks.household_id = @household_id and cooks.frozen_servings > late.servings + cooks.off_plan_servings + 0.01
 order by cooks.date, cooks.id;
 
 -- name: DeleteUnusedCook :execrows

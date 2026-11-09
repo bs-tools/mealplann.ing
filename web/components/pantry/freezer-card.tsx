@@ -13,13 +13,17 @@ import {
   secondaryButton,
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
-import { CalendarDaysIcon, TrashIcon } from "@heroicons/react/24/outline";
+import {
+  CalendarDaysIcon,
+  MinusCircleIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import {
   createPortion,
   listFrozenLeftovers,
-  updateCook,
+  takeFromFreezer,
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type { FrozenLeftover } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
@@ -199,7 +203,8 @@ const FreezerCard: React.FC = () => {
   const queryClient = useQueryClient();
   const leftovers = useQuery(listFrozenLeftovers, {});
   const [planning, setPlanning] = useState<FrozenLeftover | null>(null);
-  const discard = useMutation(updateCook, {
+  // Servings are taken off plan: thrown out, or eaten without a plan.
+  const discard = useMutation(takeFromFreezer, {
     onSuccess: async () => {
       await invalidateServices(queryClient, [PlanService]);
     },
@@ -276,6 +281,21 @@ const FreezerCard: React.FC = () => {
                   <CalendarDaysIcon className="size-4" aria-hidden="true" />
                   Plan
                 </button>
+                <button
+                  type="button"
+                  className={ghostButton}
+                  title="Take a serving out of the freezer, eaten without a plan"
+                  disabled={discard.isPending}
+                  onClick={() => {
+                    discard.mutate({
+                      cookId: cook.id,
+                      servings: Math.min(1, leftover.remainingServings),
+                    });
+                  }}
+                >
+                  <MinusCircleIcon className="size-4" aria-hidden="true" />
+                  Used 1
+                </button>
                 <ConfirmButton
                   className={ghostButton}
                   title={`Throw out ${cook.recipeName}?`}
@@ -283,11 +303,8 @@ const FreezerCard: React.FC = () => {
                   disabled={discard.isPending}
                   onConfirm={() => {
                     discard.mutate({
-                      cook: {
-                        frozenServings: leftover.plannedServings,
-                        id: cook.id,
-                      },
-                      updateMask: { paths: ["frozen_servings"] },
+                      cookId: cook.id,
+                      servings: leftover.remainingServings,
                     });
                   }}
                 >

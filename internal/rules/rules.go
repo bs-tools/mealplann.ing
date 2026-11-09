@@ -288,6 +288,9 @@ type Cook struct {
 	// LateServings is how many servings its portions eat after its fridge
 	// days, which CheckServings checks against FrozenServings.
 	LateServings float64
+	// OffPlanServings is how many servings were taken without a portion,
+	// which count as used, from the freezer first.
+	OffPlanServings float64
 }
 
 // CheckPortion checks when a portion of the cook is eaten: not before it's
@@ -364,11 +367,13 @@ func CheckSupply(recipeName string, date time.Time, componentName string, suppli
 }
 
 // CheckServings checks that a cook's servings match the servings of its
-// portions, assigned, and that it has frozen enough servings for those
-// eaten after its fridge days. Frozen servings not planned yet are in the
-// freezer, rather than unassigned. It returns nil if all's well.
+// portions, assigned, and those taken off plan, and that it has frozen
+// enough servings for those eaten after its fridge days. Frozen servings
+// not planned or taken yet are in the freezer, rather than unassigned. It
+// returns nil if all's well.
 func CheckServings(c *Cook, assigned float64) *Warning {
-	inFreezer := max(c.FrozenServings-c.LateServings, 0)
+	inFreezer := max(c.FrozenServings-c.LateServings-c.OffPlanServings, 0)
+	assigned += c.OffPlanServings
 	switch {
 	case c.FrozenServings > 0 && c.LateServings > c.FrozenServings+servingsSlack:
 		return &Warning{

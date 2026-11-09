@@ -543,17 +543,18 @@ type APIToken struct {
 }
 
 type Cook struct {
-	ID             pgtype.UUID
-	HouseholdID    pgtype.UUID
-	RecipeID       pgtype.UUID
-	Date           pgtype.Date
-	Servings       float64
-	Meal           *HouseholdMeal
-	Notes          string
-	Done           bool
-	CreateTime     pgtype.Timestamptz
-	UpdateTime     pgtype.Timestamptz
-	FrozenServings float64
+	ID              pgtype.UUID
+	HouseholdID     pgtype.UUID
+	RecipeID        pgtype.UUID
+	Date            pgtype.Date
+	Servings        float64
+	Meal            *HouseholdMeal
+	Notes           string
+	Done            bool
+	CreateTime      pgtype.Timestamptz
+	UpdateTime      pgtype.Timestamptz
+	FrozenServings  float64
+	OffPlanServings float64
 }
 
 type CookPantryDeduction struct {

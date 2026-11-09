@@ -445,11 +445,12 @@ func (d *planData) prepTasks(date time.Time) []*plansv1.PrepTask {
 func (d *planData) plannedCook(c *plans.Cook) *plansv1.PlannedCook {
 	var warnings []*plansv1.Warning
 	check := &rules.Cook{
-		RecipeName:     c.RecipeName,
-		Date:           c.Date,
-		Servings:       c.Servings,
-		FrozenServings: c.FrozenServings,
-		LateServings:   c.LateServings,
+		RecipeName:      c.RecipeName,
+		Date:            c.Date,
+		Servings:        c.Servings,
+		FrozenServings:  c.FrozenServings,
+		LateServings:    c.LateServings,
+		OffPlanServings: c.OffPlanServings,
 	}
 	// What it makes for other cooks counts as planned, like portions.
 	assigned := c.AssignedServings + c.SuppliedServings

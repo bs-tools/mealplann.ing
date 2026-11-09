@@ -62,6 +62,9 @@ const (
 	// PlanServiceListFrozenLeftoversProcedure is the procedure name of the PlanService's
 	// ListFrozenLeftovers RPC.
 	PlanServiceListFrozenLeftoversProcedure = "/plans.v1.PlanService/ListFrozenLeftovers"
+	// PlanServiceTakeFromFreezerProcedure is the procedure name of the PlanService's TakeFromFreezer
+	// RPC.
+	PlanServiceTakeFromFreezerProcedure = "/plans.v1.PlanService/TakeFromFreezer"
 )
 
 var (
@@ -191,6 +194,13 @@ var (
 			Procedure:  PlanServiceListFrozenLeftoversProcedure,
 		}
 	})
+	planServiceTakeFromFreezerSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("TakeFromFreezer"),
+			Procedure:  PlanServiceTakeFromFreezerProcedure,
+		}
+	})
 )
 
 // PlanServiceClient is a client for the plans.v1.PlanService service.
@@ -287,12 +297,19 @@ type PlanServiceClient interface {
 	// Stop skipping a staple on a date.
 	UnskipStaple(context.Context, *v1.UnskipStapleRequest) (*v1.UnskipStapleResponse, error)
 	// List what's in the freezer: the frozen leftovers of cooks (see
-	// Cook.frozen_servings) not all planned yet, by the date they were
-	// cooked, each with the servings left to plan and the last date they
-	// keep. Plan them with CreatePortion, as shares of their cook on any
-	// later date, or discard them by setting the cook's frozen_servings to
-	// the servings planned.
+	// Cook.frozen_servings) not all planned or taken yet, by the date they
+	// were cooked, each with the servings left and the last date they keep.
+	// Take them out with TakeFromFreezer.
 	ListFrozenLeftovers(context.Context, *v1.ListFrozenLeftoversRequest) (*v1.ListFrozenLeftoversResponse, error)
+	// Take servings of a cook's frozen leftovers out of the freezer: for a
+	// person's eating time on a date, as a portion of the cook, or off plan,
+	// when they were eaten without being planned, given away or thrown out,
+	// which adds to the cook's off_plan_servings. Either way they're no
+	// longer in the freezer, and don't count as unassigned. Fails with
+	// FAILED_PRECONDITION if the freezer has fewer of them, or a portion's
+	// date isn't after the recipe's fridge_days, when they'd come from the
+	// fridge rather than the freezer.
+	TakeFromFreezer(context.Context, *v1.TakeFromFreezerRequest) (*v1.TakeFromFreezerResponse, error)
 }
 
 // NewPlanServiceClient constructs a client for the plans.v1.PlanService service. Multiple service
@@ -395,12 +412,19 @@ type PlanServiceHandler interface {
 	// Stop skipping a staple on a date.
 	UnskipStaple(context.Context, *v1.UnskipStapleRequest) (*v1.UnskipStapleResponse, error)
 	// List what's in the freezer: the frozen leftovers of cooks (see
-	// Cook.frozen_servings) not all planned yet, by the date they were
-	// cooked, each with the servings left to plan and the last date they
-	// keep. Plan them with CreatePortion, as shares of their cook on any
-	// later date, or discard them by setting the cook's frozen_servings to
-	// the servings planned.
+	// Cook.frozen_servings) not all planned or taken yet, by the date they
+	// were cooked, each with the servings left and the last date they keep.
+	// Take them out with TakeFromFreezer.
 	ListFrozenLeftovers(context.Context, *v1.ListFrozenLeftoversRequest) (*v1.ListFrozenLeftoversResponse, error)
+	// Take servings of a cook's frozen leftovers out of the freezer: for a
+	// person's eating time on a date, as a portion of the cook, or off plan,
+	// when they were eaten without being planned, given away or thrown out,
+	// which adds to the cook's off_plan_servings. Either way they're no
+	// longer in the freezer, and don't count as unassigned. Fails with
+	// FAILED_PRECONDITION if the freezer has fewer of them, or a portion's
+	// date isn't after the recipe's fridge_days, when they'd come from the
+	// fridge rather than the freezer.
+	TakeFromFreezer(context.Context, *v1.TakeFromFreezerRequest) (*v1.TakeFromFreezerResponse, error)
 }
 
 // RegisterPlanServiceHandler registers svc as the plans.v1.PlanService implementation on server.
@@ -425,6 +449,7 @@ func RegisterPlanServiceHandler(server *connect.Server, svc PlanServiceHandler) 
 		connect.Method{Spec: planServiceSkipStapleSpec(), Handler: adapter.skipStaple},
 		connect.Method{Spec: planServiceUnskipStapleSpec(), Handler: adapter.unskipStaple},
 		connect.Method{Spec: planServiceListFrozenLeftoversSpec(), Handler: adapter.listFrozenLeftovers},
+		connect.Method{Spec: planServiceTakeFromFreezerSpec(), Handler: adapter.takeFromFreezer},
 	)
 }
 
@@ -501,6 +526,10 @@ func (UnimplementedPlanServiceHandler) UnskipStaple(context.Context, *v1.UnskipS
 
 func (UnimplementedPlanServiceHandler) ListFrozenLeftovers(context.Context, *v1.ListFrozenLeftoversRequest) (*v1.ListFrozenLeftoversResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.ListFrozenLeftovers is not implemented")
+}
+
+func (UnimplementedPlanServiceHandler) TakeFromFreezer(context.Context, *v1.TakeFromFreezerRequest) (*v1.TakeFromFreezerResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.TakeFromFreezer is not implemented")
 }
 
 type planServiceClient struct {
@@ -646,6 +675,14 @@ func (c *planServiceClient) UnskipStaple(ctx context.Context, req *v1.UnskipStap
 func (c *planServiceClient) ListFrozenLeftovers(ctx context.Context, req *v1.ListFrozenLeftoversRequest) (*v1.ListFrozenLeftoversResponse, error) {
 	var res v1.ListFrozenLeftoversResponse
 	if err := c.client.CallUnary(ctx, planServiceListFrozenLeftoversSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) TakeFromFreezer(ctx context.Context, req *v1.TakeFromFreezerRequest) (*v1.TakeFromFreezerResponse, error) {
+	var res v1.TakeFromFreezerResponse
+	if err := c.client.CallUnary(ctx, planServiceTakeFromFreezerSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -863,6 +900,18 @@ func (h planServiceHandler) listFrozenLeftovers(ctx context.Context, _ connect.S
 		return err
 	}
 	res, err := h.svc.ListFrozenLeftovers(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) takeFromFreezer(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.TakeFromFreezerRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.TakeFromFreezer(ctx, &req)
 	if err != nil {
 		return err
 	}
