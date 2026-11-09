@@ -104,7 +104,10 @@ service PlanService {
   // too, if they'd be too few.
   rpc SetCookSupplier(SetCookSupplierRequest) returns (SetCookSupplierResponse);
   // Create a portion: what a person eats at one of their eating times on a
-  // date, either a share of a cook or an amount of a food.
+  // date, either a share of a cook or an amount of a food. With new_cook,
+  // the cook is created with it, on its date: a recipe cooked for one
+  // person's eating time, like a recipe of one or two servings cooked and
+  // eaten right away.
   rpc CreatePortion(CreatePortionRequest) returns (CreatePortionResponse);
   // Update a portion, e.g. move it to another date or eating time, or
   // change its servings.
@@ -776,11 +779,25 @@ message DeleteCookResponse {}
 message CreatePortionRequest {
   // The portion.
   Portion portion = 1;
+  // A cook to create for the portion, which is a share of it: set the
+  // portion's cook with its servings, and no cook_id.
+  NewCook new_cook = 2;
+}
+
+// A cook created with a portion of it.
+message NewCook {
+  // The ID of the household's recipe to cook. Required.
+  string recipe_id = 1;
+  // How many servings to cook, at least the portion's; the rest are left
+  // over, to plan later. 0 for the portion's.
+  double servings = 2;
 }
 
 message CreatePortionResponse {
   // The created portion.
   Portion portion = 1;
+  // The cook created with it, if new_cook was set.
+  Cook cook = 2;
 }
 
 message UpdatePortionRequest {

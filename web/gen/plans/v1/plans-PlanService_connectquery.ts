@@ -113,7 +113,10 @@ export const setCookSupplier = PlanService.method.setCookSupplier;
 
 /**
  * Create a portion: what a person eats at one of their eating times on a
- * date, either a share of a cook or an amount of a food.
+ * date, either a share of a cook or an amount of a food. With new_cook,
+ * the cook is created with it, on its date: a recipe cooked for one
+ * person's eating time, like a recipe of one or two servings cooked and
+ * eaten right away.
  *
  * @generated from rpc plans.v1.PlanService.CreatePortion
  */
