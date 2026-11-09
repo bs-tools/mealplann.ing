@@ -9,7 +9,6 @@ import { InformationCircleIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import type { Person } from "gen/people/v1/people_pb";
 import { listStaples } from "gen/plans/v1/plans-PlanService_connectquery";
-import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import { getHousehold } from "gen/users/v1/users-UserService_connectquery";
 import React, { useState } from "react";
 
@@ -21,7 +20,6 @@ const PeoplePage: React.FC = () => {
   const people = useQuery(listPeople, {});
   const staples = useQuery(listStaples, {});
   const household = useQuery(getHousehold, {});
-  const recipes = useQuery(listRecipes, {});
   // The person being edited, null for a new one, undefined if none.
   const [editing, setEditing] = useState<Person | null | undefined>(undefined);
   const members = household.data?.household?.members ?? [];
@@ -56,7 +54,6 @@ const PeoplePage: React.FC = () => {
               (staple) => staple.personId === person.id
             )}
             members={members}
-            recipes={recipes.data?.recipes ?? []}
             onEdit={() => {
               setEditing(person);
             }}

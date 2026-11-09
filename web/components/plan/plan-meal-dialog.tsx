@@ -1,5 +1,7 @@
 import { WarningList } from "@components/plan/plan-bits";
 import SuggestionList from "@components/plan/suggestion-list";
+import type { PickedRecipe } from "@components/recipes/recipe-picker";
+import RecipePicker from "@components/recipes/recipe-picker";
 import { CheckboxField, SelectField, TextField } from "@components/ui/fields";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
@@ -61,7 +63,8 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("suggestions");
-  const [recipeId, setRecipeId] = useState(recipes[0]?.id ?? "");
+  const [recipe, setRecipe] = useState<PickedRecipe | null>(null);
+  const recipeId = recipe?.id ?? "";
   const [date, setDate] = useState(initialDate);
   const [meal, setMeal] = useState(initialMeal ?? HouseholdMeal.DINNER);
   const eaters = people.filter((person) =>
@@ -288,15 +291,14 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
               save();
             }}
           >
-            <SelectField
-              label="Recipe"
-              value={recipeId}
-              options={recipes.map((recipe) => ({
-                label: `${recipe.name} (${formatAmount(recipe.gramsPerServing)} g a serving)`,
-                value: recipe.id,
-              }))}
-              onChange={setRecipeId}
-            />
+            <div className="flex flex-col gap-1">
+              <span className={labelClass}>Recipe</span>
+              <RecipePicker
+                value={recipe}
+                onChange={setRecipe}
+                label="Recipe"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <TextField
                 label="Servings to cook"

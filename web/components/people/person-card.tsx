@@ -26,7 +26,6 @@ import {
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type { Staple } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
-import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
 import type { HouseholdMember } from "gen/users/v1/users_pb";
 import type { UnitSystem } from "gen/users/v1/users_pb";
 import { today } from "helpers/dates";
@@ -107,7 +106,6 @@ interface PersonCardProps {
   // The person's staples.
   staples: Staple[];
   members: HouseholdMember[];
-  recipes: RecipeSummary[];
   onEdit: () => void;
 }
 
@@ -119,7 +117,6 @@ const PersonCard: React.FC<PersonCardProps> = ({
   person,
   staples,
   members,
-  recipes,
   onEdit,
 }) => {
   const queryClient = useQueryClient();
@@ -366,7 +363,6 @@ const PersonCard: React.FC<PersonCardProps> = ({
         <StapleDialog
           person={person}
           staple={editing ?? undefined}
-          recipes={recipes}
           onClose={() => {
             setEditing(undefined);
           }}
