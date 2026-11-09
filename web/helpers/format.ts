@@ -140,6 +140,13 @@ export const formatDaysUntil = (value: string): string => {
   return `in ${days} days`;
 };
 
+// DOLLAR is the currency sign of prices, in Canadian dollars.
+const DOLLAR = "$";
+
+// FormatDollars formats cents as dollars, e.g. "$3.49".
+export const formatDollars = (cents: number): string =>
+  `${DOLLAR}${(Math.round(cents) / 100).toFixed(2)}`;
+
 export const formatPercent = (fraction: number): string =>
   `${Math.round(fraction * 100)}%`;
 

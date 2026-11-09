@@ -5,6 +5,19 @@
 import { PlanService } from "./plans_pb";
 
 /**
+ * Estimate what a range of the plan costs, from the foods' prices
+ * (FoodService's Food.price_cents_per_kilogram): each cook, the foods
+ * eaten without a recipe, like staples, and in all, both for everything
+ * eaten and for only what isn't in the pantry yet, which the pantry's
+ * lots cover first by date, like the shopping list. Costs are for the
+ * grams used, not whole packs. Foods without a price aren't counted, and
+ * are listed. At most 31 days.
+ *
+ * @generated from rpc plans.v1.PlanService.GetPlanCost
+ */
+export const getPlanCost = PlanService.method.getPlanCost;
+
+/**
  * Get a week of the plan: for each day and person, their eating times
  * with the portions and staples planned, with weights and nutrients; the
  * day's totals; and every warning. Also the cooks of the week. Read it

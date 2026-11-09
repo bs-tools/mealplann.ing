@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"connectrpc.com/connect/v2"
@@ -19,8 +20,10 @@ import (
 
 // Limits of a food's fields.
 const (
-	maxNameLength  = 200
-	maxNotesLength = 2000
+	maxNameLength = 200
+	// maxPriceCentsPerKilogram is $10,000/kg, more than saffron.
+	maxPriceCentsPerKilogram = 1_000_000
+	maxNotesLength           = 2000
 	// maxGramsPerPiece is the most a piece can weigh, like a large pumpkin
 	// or a whole block of something.
 	maxGramsPerPiece = 20_000
@@ -221,25 +224,27 @@ func foodToProto(f *foods.Food) *foodsv1.Food {
 		source = foodsv1.FoodSource_FOOD_SOURCE_CUSTOM
 	}
 	return foodsv1.Food_builder{
-		Id:                   store.UUIDToString(f.ID),
-		Name:                 f.Name,
-		Source:               source,
-		SourceId:             f.SourceID,
-		FdcId:                fdcID(f.Source, f.SourceID),
-		Nutrients:            NutrientsToProto(&f.Per100Grams, -1),
-		GramsPerPiece:        f.GramsPerPiece,
-		GramsPerMilliliter:   f.GramsPerMilliliter,
-		FastCarb:             f.FastCarb,
-		StoreSection:         storeSectionsToProto[f.StoreSection],
-		PackageGrams:         f.PackageGrams,
-		ShelfLifeDays:        f.ShelfLifeDays,
-		OpenedShelfLifeDays:  f.OpenedShelfLifeDays,
-		FreezerShelfLifeDays: f.FreezerShelfLifeDays,
-		Notes:                f.Notes,
-		PreferredStoreId:     optionalID(f.PreferredStoreID),
-		AlwaysInStock:        f.AlwaysInStock,
-		CreateTime:           timestamppb.New(f.CreateTime),
-		UpdateTime:           timestamppb.New(f.UpdateTime),
+		Id:                    store.UUIDToString(f.ID),
+		Name:                  f.Name,
+		Source:                source,
+		SourceId:              f.SourceID,
+		FdcId:                 fdcID(f.Source, f.SourceID),
+		Nutrients:             NutrientsToProto(&f.Per100Grams, -1),
+		GramsPerPiece:         f.GramsPerPiece,
+		GramsPerMilliliter:    f.GramsPerMilliliter,
+		FastCarb:              f.FastCarb,
+		StoreSection:          storeSectionsToProto[f.StoreSection],
+		PackageGrams:          f.PackageGrams,
+		ShelfLifeDays:         f.ShelfLifeDays,
+		OpenedShelfLifeDays:   f.OpenedShelfLifeDays,
+		FreezerShelfLifeDays:  f.FreezerShelfLifeDays,
+		PriceCentsPerKilogram: f.PriceCentsPerKilogram,
+		PriceDate:             store.FormatDate(f.PriceDate),
+		Notes:                 f.Notes,
+		PreferredStoreId:      optionalID(f.PreferredStoreID),
+		AlwaysInStock:         f.AlwaysInStock,
+		CreateTime:            timestamppb.New(f.CreateTime),
+		UpdateTime:            timestamppb.New(f.UpdateTime),
 	}.Build()
 }
 
@@ -256,6 +261,14 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 	notes := strings.TrimSpace(p.GetNotes())
 	if utf8.RuneCountInString(notes) > maxNotesLength {
 		return nil, connect.Errorf(connect.CodeInvalidArgument, "notes must be at most %d characters", maxNotesLength)
+	}
+	var priceDate time.Time
+	if d := strings.TrimSpace(p.GetPriceDate()); d != "" {
+		parsed, err := store.ParseDate(d)
+		if err != nil {
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "price_date must be a date (YYYY-MM-DD), or empty if unknown: %v", err)
+		}
+		priceDate = parsed
 	}
 	per100, err := nutrientsFromProto(p.GetNutrients(), "nutrients")
 	if err != nil {
@@ -276,6 +289,7 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 		{"shelf_life_days", float64(p.GetShelfLifeDays()), maxShelfLifeDays},
 		{"opened_shelf_life_days", float64(p.GetOpenedShelfLifeDays()), maxShelfLifeDays},
 		{"freezer_shelf_life_days", float64(p.GetFreezerShelfLifeDays()), maxShelfLifeDays},
+		{"price_cents_per_kilogram", float64(p.GetPriceCentsPerKilogram()), maxPriceCentsPerKilogram},
 	} {
 		if math.IsNaN(check.value) || check.value < 0 || check.value > check.most {
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s must be from 0 to %v, with 0 for unknown", check.field, check.most)
@@ -291,19 +305,21 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 		}
 	}
 	return &foods.Food{
-		Name:                 name,
-		Per100Grams:          per100,
-		GramsPerPiece:        p.GetGramsPerPiece(),
-		GramsPerMilliliter:   p.GetGramsPerMilliliter(),
-		FastCarb:             p.GetFastCarb(),
-		StoreSection:         section,
-		PackageGrams:         p.GetPackageGrams(),
-		ShelfLifeDays:        p.GetShelfLifeDays(),
-		OpenedShelfLifeDays:  p.GetOpenedShelfLifeDays(),
-		FreezerShelfLifeDays: p.GetFreezerShelfLifeDays(),
-		Notes:                notes,
-		PreferredStoreID:     storeID,
-		AlwaysInStock:        p.GetAlwaysInStock(),
+		Name:                  name,
+		Per100Grams:           per100,
+		GramsPerPiece:         p.GetGramsPerPiece(),
+		GramsPerMilliliter:    p.GetGramsPerMilliliter(),
+		FastCarb:              p.GetFastCarb(),
+		StoreSection:          section,
+		PackageGrams:          p.GetPackageGrams(),
+		ShelfLifeDays:         p.GetShelfLifeDays(),
+		OpenedShelfLifeDays:   p.GetOpenedShelfLifeDays(),
+		FreezerShelfLifeDays:  p.GetFreezerShelfLifeDays(),
+		PriceCentsPerKilogram: p.GetPriceCentsPerKilogram(),
+		PriceDate:             priceDate,
+		Notes:                 notes,
+		PreferredStoreID:      storeID,
+		AlwaysInStock:         p.GetAlwaysInStock(),
 	}, nil
 }
 
@@ -340,6 +356,8 @@ func foodFromReference(ref *foods.ReferenceFood, in *foodsv1.Food) (*foods.Food,
 	base.SetShelfLifeDays(in.GetShelfLifeDays())
 	base.SetOpenedShelfLifeDays(in.GetOpenedShelfLifeDays())
 	base.SetFreezerShelfLifeDays(in.GetFreezerShelfLifeDays())
+	base.SetPriceCentsPerKilogram(in.GetPriceCentsPerKilogram())
+	base.SetPriceDate(in.GetPriceDate())
 	base.SetNotes(in.GetNotes())
 	base.SetPreferredStoreId(in.GetPreferredStoreId())
 	base.SetAlwaysInStock(in.GetAlwaysInStock())

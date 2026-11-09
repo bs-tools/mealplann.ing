@@ -34,6 +34,8 @@ insert into foods (
   shelf_life_days,
   opened_shelf_life_days,
   freezer_shelf_life_days,
+  price_cents_per_kilogram,
+  price_date,
   notes,
   preferred_store_id,
   always_in_stock
@@ -72,6 +74,8 @@ insert into foods (
   @shelf_life_days,
   @opened_shelf_life_days,
   @freezer_shelf_life_days,
+  @price_cents_per_kilogram,
+  @price_date,
   @notes,
   @preferred_store_id,
   @always_in_stock
@@ -122,6 +126,8 @@ update foods set
   shelf_life_days = @shelf_life_days,
   opened_shelf_life_days = @opened_shelf_life_days,
   freezer_shelf_life_days = @freezer_shelf_life_days,
+  price_cents_per_kilogram = @price_cents_per_kilogram,
+  price_date = @price_date,
   notes = @notes,
   preferred_store_id = @preferred_store_id,
   always_in_stock = @always_in_stock,

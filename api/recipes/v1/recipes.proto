@@ -151,6 +151,23 @@ message Recipe {
   // and GetRecipeTimeline schedules them. Empty for a recipe still in the
   // old format of plain steps. At most 100.
   repeated Step instructions = 21;
+  // What its ingredients cost, from their foods' prices.
+  RecipeCost cost = 22 [(mcp.v1.field).output_only = true];
+}
+
+// What a recipe's ingredients cost, from their foods' prices
+// (FoodService's Food.price_cents_per_kilogram), for the grams used, not
+// whole packs. Components count their own ingredients, and optional
+// ingredients don't count.
+message RecipeCost {
+  // What the recipe's servings cost, in Canadian cents. A lower bound if
+  // unpriced_food_names isn't empty.
+  int32 total_cents = 1;
+  // What a serving costs, in Canadian cents.
+  int32 cents_per_serving = 2;
+  // The foods without a price, or that can't be weighed, which aren't
+  // counted: set their prices with FoodService.UpdateFood.
+  repeated string unpriced_food_names = 3;
 }
 
 // A step of a recipe's instructions.
@@ -294,6 +311,10 @@ message RecipeSummary {
   bool favorite = 14;
   // Whether it has instructions, rather than steps in the old format.
   bool has_instructions = 15;
+  // What a serving costs, in Canadian cents, from the foods' prices. Unset
+  // if none of its foods have one; a lower bound if some don't (see
+  // Recipe.cost).
+  optional int32 cost_cents_per_serving = 16;
 }
 
 message CreateRecipeRequest {

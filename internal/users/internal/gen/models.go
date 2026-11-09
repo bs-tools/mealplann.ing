@@ -669,6 +669,8 @@ type Food struct {
 	ReferenceSource                 NullReferenceFoodSource
 	ReferenceID                     pgtype.Int4
 	FreezerShelfLifeDays            pgtype.Int4
+	PriceCentsPerKilogram           pgtype.Int4
+	PriceDate                       pgtype.Date
 }
 
 type Household struct {

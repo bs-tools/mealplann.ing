@@ -24,6 +24,8 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// PlanServiceGetPlanCostProcedure is the procedure name of the PlanService's GetPlanCost RPC.
+	PlanServiceGetPlanCostProcedure = "/plans.v1.PlanService/GetPlanCost"
 	// PlanServiceGetWeekProcedure is the procedure name of the PlanService's GetWeek RPC.
 	PlanServiceGetWeekProcedure = "/plans.v1.PlanService/GetWeek"
 	// PlanServicePlanMealProcedure is the procedure name of the PlanService's PlanMeal RPC.
@@ -63,6 +65,13 @@ const (
 )
 
 var (
+	planServiceGetPlanCostSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("GetPlanCost"),
+			Procedure:  PlanServiceGetPlanCostProcedure,
+		}
+	})
 	planServiceGetWeekSpec = sync.OnceValue(func() connect.Spec {
 		return connect.Spec{
 			StreamType: connect.StreamTypeUnary,
@@ -186,6 +195,14 @@ var (
 
 // PlanServiceClient is a client for the plans.v1.PlanService service.
 type PlanServiceClient interface {
+	// Estimate what a range of the plan costs, from the foods' prices
+	// (FoodService's Food.price_cents_per_kilogram): each cook, the foods
+	// eaten without a recipe, like staples, and in all, both for everything
+	// eaten and for only what isn't in the pantry yet, which the pantry's
+	// lots cover first by date, like the shopping list. Costs are for the
+	// grams used, not whole packs. Foods without a price aren't counted, and
+	// are listed. At most 31 days.
+	GetPlanCost(context.Context, *v1.GetPlanCostRequest) (*v1.GetPlanCostResponse, error)
 	// Get a week of the plan: for each day and person, their eating times
 	// with the portions and staples planned, with weights and nutrients; the
 	// day's totals; and every warning. Also the cooks of the week. Read it
@@ -281,6 +298,14 @@ func NewPlanServiceClient(client *connect.Client) PlanServiceClient {
 
 // PlanServiceHandler is an implementation of the plans.v1.PlanService service.
 type PlanServiceHandler interface {
+	// Estimate what a range of the plan costs, from the foods' prices
+	// (FoodService's Food.price_cents_per_kilogram): each cook, the foods
+	// eaten without a recipe, like staples, and in all, both for everything
+	// eaten and for only what isn't in the pantry yet, which the pantry's
+	// lots cover first by date, like the shopping list. Costs are for the
+	// grams used, not whole packs. Foods without a price aren't counted, and
+	// are listed. At most 31 days.
+	GetPlanCost(context.Context, *v1.GetPlanCostRequest) (*v1.GetPlanCostResponse, error)
 	// Get a week of the plan: for each day and person, their eating times
 	// with the portions and staples planned, with weights and nutrients; the
 	// day's totals; and every warning. Also the cooks of the week. Read it
@@ -372,6 +397,7 @@ type PlanServiceHandler interface {
 func RegisterPlanServiceHandler(server *connect.Server, svc PlanServiceHandler) {
 	adapter := planServiceHandler{svc: svc}
 	server.Register(
+		connect.Method{Spec: planServiceGetPlanCostSpec(), Handler: adapter.getPlanCost},
 		connect.Method{Spec: planServiceGetWeekSpec(), Handler: adapter.getWeek},
 		connect.Method{Spec: planServicePlanMealSpec(), Handler: adapter.planMeal},
 		connect.Method{Spec: planServicePlanMealsSpec(), Handler: adapter.planMeals},
@@ -394,6 +420,10 @@ func RegisterPlanServiceHandler(server *connect.Server, svc PlanServiceHandler) 
 
 // UnimplementedPlanServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPlanServiceHandler struct{}
+
+func (UnimplementedPlanServiceHandler) GetPlanCost(context.Context, *v1.GetPlanCostRequest) (*v1.GetPlanCostResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.GetPlanCost is not implemented")
+}
 
 func (UnimplementedPlanServiceHandler) GetWeek(context.Context, *v1.GetWeekRequest) (*v1.GetWeekResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.GetWeek is not implemented")
@@ -465,6 +495,14 @@ func (UnimplementedPlanServiceHandler) ListFrozenLeftovers(context.Context, *v1.
 
 type planServiceClient struct {
 	client *connect.Client
+}
+
+func (c *planServiceClient) GetPlanCost(ctx context.Context, req *v1.GetPlanCostRequest) (*v1.GetPlanCostResponse, error) {
+	var res v1.GetPlanCostResponse
+	if err := c.client.CallUnary(ctx, planServiceGetPlanCostSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
 }
 
 func (c *planServiceClient) GetWeek(ctx context.Context, req *v1.GetWeekRequest) (*v1.GetWeekResponse, error) {
@@ -604,6 +642,18 @@ func (c *planServiceClient) ListFrozenLeftovers(ctx context.Context, req *v1.Lis
 }
 
 type planServiceHandler struct{ svc PlanServiceHandler }
+
+func (h planServiceHandler) getPlanCost(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetPlanCostRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetPlanCost(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
 
 func (h planServiceHandler) getWeek(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
 	var req v1.GetWeekRequest

@@ -25,7 +25,7 @@ import type {
   PlannedPortion,
   Staple,
 } from "gen/plans/v1/plans_pb";
-import { formatDate, formatShortDate } from "helpers/format";
+import { formatDate, formatDollars, formatShortDate } from "helpers/format";
 import { formatServings, householdMealLabel } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
@@ -35,6 +35,8 @@ interface CookRowProps {
   planned: PlannedCook;
   // The week's cooks, which can supply its components.
   weekCooks: PlannedCook[];
+  // What its ingredients cost, in cents, undefined if unknown.
+  costCents?: number | undefined;
   disabled: boolean;
   onDone: (done: boolean) => void;
   onDelete: () => void;
@@ -44,6 +46,7 @@ interface CookRowProps {
 const CookRow: React.FC<CookRowProps> = ({
   planned,
   weekCooks,
+  costCents,
   disabled,
   onDone,
   onDelete,
@@ -87,6 +90,9 @@ const CookRow: React.FC<CookRowProps> = ({
             · {meal === "" ? "" : `${meal} · `}
             {formatServings(cook.servings)}
             {cook.frozenServings > 0 && ` · ${frozen} frozen`}
+            {costCents !== undefined &&
+              costCents > 0 &&
+              ` · ≈ ${formatDollars(costCents)}`}
           </span>
         </span>
         <button
@@ -242,6 +248,8 @@ interface DayCardProps {
   onEdit: (slot: Slot, portion: PlannedPortion) => void;
   onDelete: (portion: PlannedPortion) => void;
   onSkip: (portion: PlannedPortion, date: string) => void;
+  // What each cook costs, in cents, by cook ID.
+  costs: Map<string, number>;
   // The household's staples, to show those skipped on the day.
   staples: Staple[];
   onUnskip: (staple: Staple, date: string) => void;
@@ -268,6 +276,7 @@ const DayCard: React.FC<DayCardProps> = ({
   onSkip,
   staples,
   onUnskip,
+  costs,
   onCookDone,
   onCookDelete,
 }) => (
@@ -312,6 +321,7 @@ const DayCard: React.FC<DayCardProps> = ({
               key={planned.cook?.id}
               planned={planned}
               weekCooks={weekCooks}
+              costCents={costs.get(planned.cook?.id ?? "")}
               disabled={disabled}
               onDone={(done) => {
                 onCookDone(planned, done);
