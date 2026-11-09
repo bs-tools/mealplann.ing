@@ -7,9 +7,15 @@ import Card from "@components/ui/card";
 import ConfirmButton from "@components/ui/confirm-button";
 import { Badge, EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
-import { iconButton, linkClass, primaryButton } from "@components/ui/styles";
+import {
+  iconButton,
+  inputClass,
+  linkClass,
+  primaryButton,
+} from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
+  MagnifyingGlassIcon,
   PencilSquareIcon,
   PlusIcon,
   TrashIcon,
@@ -30,6 +36,20 @@ import { STORAGES, STORE_SECTIONS } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 import { Link } from "react-router";
+
+/**
+ * MatchesSearch reports whether a lot matches a search: whether each of
+ * its words is in its food's name, label, notes or place, ignoring case.
+ */
+const matchesSearch = (item: PantryItem, search: string): boolean => {
+  const text = [item.foodName, item.label, item.notes, storagePlace(item)]
+    .join(" ")
+    .toLowerCase();
+  return search
+    .toLowerCase()
+    .split(/\s+/u)
+    .every((word) => text.includes(word));
+};
 
 // SOON_DAYS is how many days left count as soon to expire.
 const SOON_DAYS = 3;
@@ -107,6 +127,8 @@ const PantryPage: React.FC = () => {
     undefined
   );
   const [stockedFood, setStockedFood] = useState<PickedFood | null>(null);
+  // The search the lots are filtered by, "" for all.
+  const [search, setSearch] = useState("");
   const remove = useMutation(removeFromPantry, {
     onSuccess: async () => {
       await invalidateServices(queryClient, [PantryService]);
@@ -139,7 +161,12 @@ const PantryPage: React.FC = () => {
       />
     );
   } else {
-    const { items, alwaysInStockFoods } = pantry.data;
+    const { items: allItems, alwaysInStockFoods } = pantry.data;
+    const trimmed = search.trim();
+    const items =
+      trimmed === ""
+        ? allItems
+        : allItems.filter((item) => matchesSearch(item, trimmed));
     const soon = items.filter(
       (item) =>
         item.useByDate !== "" && daysBetween(now, item.useByDate) <= SOON_DAYS
@@ -155,7 +182,27 @@ const PantryPage: React.FC = () => {
               : plan them early in the week.
             </p>
           )}
-          {items.length === 0 ? (
+          {allItems.length > 0 && (
+            <label className="relative block sm:max-w-sm">
+              <span className="sr-only">Search the pantry</span>
+              <MagnifyingGlassIcon className="pointer-events-none absolute top-2 left-2.5 size-4 text-gray-400" />
+              <input
+                type="search"
+                className={`${inputClass} pl-8`}
+                value={search}
+                placeholder="Search the pantry"
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                }}
+              />
+            </label>
+          )}
+          {allItems.length > 0 && items.length === 0 && (
+            <p className="text-sm text-gray-600">
+              Nothing in the pantry matches &quot;{trimmed}&quot;.
+            </p>
+          )}
+          {allItems.length === 0 ? (
             <EmptyState title="The pantry is empty">
               Add what you have, or check items off a{" "}
               <Link to="/shopping" className={linkClass}>
