@@ -174,3 +174,11 @@ left join foods f on f.id = recipe_ingredients.food_id
 where recipe_ingredients.household_id = @household_id
   and (@all_recipes::boolean or recipe_ingredients.recipe_id = any(@recipe_ids::uuid[]))
 order by recipe_ingredients.recipe_id, recipe_ingredients.position;
+
+-- name: MatchFoodNames :many
+-- The household's foods named any of the names, ignoring case, with the
+-- name each matched, for matching imported ingredients to foods.
+select n.name::text as matched, f.id, f.name
+from unnest(@names::text[]) as n(name)
+join foods f on f.household_id = @household_id and lower(f.name) = lower(n.name)
+order by f.id;

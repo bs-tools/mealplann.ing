@@ -21,6 +21,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/idempotency"
 	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 	"github.com/bs-tools/mealplann.ing/internal/protomask"
+	"github.com/bs-tools/mealplann.ing/internal/recipeimport"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
 	"github.com/bs-tools/mealplann.ing/internal/services/batch"
 	"github.com/bs-tools/mealplann.ing/internal/services/summary"
@@ -40,6 +41,7 @@ type Repository interface {
 	DeleteRecipe(ctx context.Context, householdID, id pgtype.UUID) error
 	ListRecipesByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*recipes.Recipe, error)
 	FindRecipesByName(ctx context.Context, householdID pgtype.UUID, name string, limit int32) ([]recipes.NameMatch, error)
+	MatchFoodNames(ctx context.Context, householdID pgtype.UUID, names []string) (map[string]recipes.FoodMatch, error)
 }
 
 // Service implements the RecipeService.
@@ -48,12 +50,93 @@ type Service struct {
 	report   *errreport.Reporter
 	recipes  Repository
 	requests *idempotency.Store
+	// pages fetches the web pages recipes are imported from.
+	pages recipeimport.Fetcher
 }
 
 // NewService returns a RecipeService storing recipes in the repository,
-// and the responses of requests with request IDs in requests.
+// and the responses of requests with request IDs in requests. It imports
+// recipes from the public internet.
 func NewService(log *slog.Logger, report *errreport.Reporter, recipes Repository, requests *idempotency.Store) *Service {
-	return &Service{log: log, report: report, recipes: recipes, requests: requests}
+	return &Service{log: log, report: report, recipes: recipes, requests: requests, pages: recipeimport.NewHTTPFetcher()}
+}
+
+// SetPageFetcher replaces how pages are fetched to import recipes, for
+// tests, which serve them locally.
+func (s *Service) SetPageFetcher(f recipeimport.Fetcher) {
+	s.pages = f
+}
+
+func (s *Service) ImportRecipe(ctx context.Context, req *recipesv1.ImportRecipeRequest) (*recipesv1.ImportRecipeResponse, error) {
+	user, ok := authn.GetUser(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+	}
+	pageURL, err := recipeimport.CheckURL(req.GetUrl())
+	if err != nil {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "url is invalid: %v", err)
+	}
+	page, err := s.pages.Fetch(ctx, pageURL)
+	if err != nil {
+		// The page's failures are the site's, not the server's, so they
+		// aren't reported.
+		s.log.InfoContext(ctx, "Failed to fetch a recipe page", slog.String("url", pageURL), slog.Any("error", err))
+		return nil, connect.Errorf(connect.CodeFailedPrecondition,
+			"couldn't get the page, as %s: check the address, or enter the recipe by hand", recipeimport.Describe(err))
+	}
+	imported, err := recipeimport.Parse(page, pageURL)
+	if err != nil {
+		return nil, connect.Errorf(connect.CodeFailedPrecondition,
+			"%v, so it can't be imported: enter the recipe by hand, or try the recipe's own page", err)
+	}
+	r := imported.Recipe
+	r.HouseholdID = user.HouseholdID()
+	matched, err := s.matchFoods(ctx, imported)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to match the ingredients to foods")
+	}
+	created, err := s.recipes.CreateRecipe(ctx, r)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to create recipe")
+	}
+	return recipesv1.ImportRecipeResponse_builder{Recipe: recipeToProto(created), MatchedIngredients: int32(matched)}.Build(), nil
+}
+
+// matchFoods matches an imported recipe's ingredients with an amount to
+// the household's foods named like them, ignoring case, also in the
+// singular, like "onion" for "onions", returning how many it matched.
+func (s *Service) matchFoods(ctx context.Context, imported *recipeimport.Imported) (int, error) {
+	r := imported.Recipe
+	candidates := make([][]string, len(r.Ingredients))
+	var names []string
+	for i, name := range imported.FoodNames {
+		if name == "" || r.Ingredients[i].Unit == 0 {
+			continue
+		}
+		lower := strings.ToLower(name)
+		candidates[i] = []string{lower}
+		for _, suffix := range []string{"es", "s"} {
+			if singular, ok := strings.CutSuffix(lower, suffix); ok && singular != "" {
+				candidates[i] = append(candidates[i], singular)
+			}
+		}
+		names = append(names, candidates[i]...)
+	}
+	matches, err := s.recipes.MatchFoodNames(ctx, r.HouseholdID, names)
+	if err != nil {
+		return 0, err
+	}
+	matched := 0
+	for i, in := range r.Ingredients {
+		for _, name := range candidates[i] {
+			if m, ok := matches[name]; ok {
+				in.FoodID, in.FoodName = m.ID, m.Name
+				matched++
+				break
+			}
+		}
+	}
+	return matched, nil
 }
 
 // checkComponents checks that a recipe's components don't use it, as

@@ -640,6 +640,46 @@ func (q *Queries) ListRecipesByID(ctx context.Context, arg *ListRecipesByIDParam
 	return items, nil
 }
 
+const matchFoodNames = `-- name: MatchFoodNames :many
+select n.name::text as matched, f.id, f.name
+from unnest($1::text[]) as n(name)
+join foods f on f.household_id = $2 and lower(f.name) = lower(n.name)
+order by f.id
+`
+
+type MatchFoodNamesParams struct {
+	Names       []string
+	HouseholdID pgtype.UUID
+}
+
+type MatchFoodNamesRow struct {
+	Matched string
+	ID      pgtype.UUID
+	Name    string
+}
+
+// The household's foods named any of the names, ignoring case, with the
+// name each matched, for matching imported ingredients to foods.
+func (q *Queries) MatchFoodNames(ctx context.Context, arg *MatchFoodNamesParams) ([]*MatchFoodNamesRow, error) {
+	rows, err := q.db.Query(ctx, matchFoodNames, arg.Names, arg.HouseholdID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*MatchFoodNamesRow
+	for rows.Next() {
+		var i MatchFoodNamesRow
+		if err := rows.Scan(&i.Matched, &i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateRecipe = `-- name: UpdateRecipe :one
 update recipes set
   name = $1,

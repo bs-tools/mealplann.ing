@@ -1,9 +1,16 @@
 import Loading from "@components/loading";
+import ImportRecipeDialog from "@components/recipes/import-recipe-dialog";
 import { Badge, EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
-import { cardClass, inputClass, primaryButton } from "@components/ui/styles";
+import {
+  cardClass,
+  inputClass,
+  primaryButton,
+  secondaryButton,
+} from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
 import {
+  ArrowDownTrayIcon,
   ClockIcon,
   ExclamationTriangleIcon,
   MagnifyingGlassIcon,
@@ -28,6 +35,7 @@ import { Link, useSearchParams } from "react-router";
 const RecipesPage: React.FC = () => {
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState(params.get("q") ?? "");
+  const [importing, setImporting] = useState(false);
   const tags = params.getAll("tag");
   const favoritesOnly = params.get("favorites") === "1";
   const search = useDebouncedValue(query.trim());
@@ -104,11 +112,29 @@ const RecipesPage: React.FC = () => {
         title="Recipes"
         subtitle="Your household's recipes, with nutrition per serving."
         actions={
-          <Link to="/recipes/new" className={primaryButton}>
-            <PlusIcon className="size-4" aria-hidden="true" />
-            New recipe
-          </Link>
+          <>
+            <button
+              type="button"
+              className={secondaryButton}
+              onClick={() => {
+                setImporting(true);
+              }}
+            >
+              <ArrowDownTrayIcon className="size-4" aria-hidden="true" />
+              Import
+            </button>
+            <Link to="/recipes/new" className={primaryButton}>
+              <PlusIcon className="size-4" aria-hidden="true" />
+              New recipe
+            </Link>
+          </>
         }
+      />
+      <ImportRecipeDialog
+        open={importing}
+        onClose={() => {
+          setImporting(false);
+        }}
       />
       <div className="flex flex-col gap-2">
         <label className="relative block sm:max-w-sm">

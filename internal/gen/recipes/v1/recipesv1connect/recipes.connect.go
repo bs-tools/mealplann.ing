@@ -40,6 +40,8 @@ const (
 	RecipeServiceUpdateRecipesProcedure = "/recipes.v1.RecipeService/UpdateRecipes"
 	// RecipeServiceReplaceFoodProcedure is the procedure name of the RecipeService's ReplaceFood RPC.
 	RecipeServiceReplaceFoodProcedure = "/recipes.v1.RecipeService/ReplaceFood"
+	// RecipeServiceImportRecipeProcedure is the procedure name of the RecipeService's ImportRecipe RPC.
+	RecipeServiceImportRecipeProcedure = "/recipes.v1.RecipeService/ImportRecipe"
 	// RecipeServiceDeleteRecipeProcedure is the procedure name of the RecipeService's DeleteRecipe RPC.
 	RecipeServiceDeleteRecipeProcedure = "/recipes.v1.RecipeService/DeleteRecipe"
 )
@@ -94,6 +96,13 @@ var (
 			Procedure:  RecipeServiceReplaceFoodProcedure,
 		}
 	})
+	recipeServiceImportRecipeSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_recipes_v1_recipes_proto.Services().ByName("RecipeService").Methods().ByName("ImportRecipe"),
+			Procedure:  RecipeServiceImportRecipeProcedure,
+		}
+	})
 	recipeServiceDeleteRecipeSpec = sync.OnceValue(func() connect.Spec {
 		return connect.Spec{
 			StreamType: connect.StreamTypeUnary,
@@ -142,6 +151,17 @@ type RecipeServiceClient interface {
 	// the new food fix it. Each recipe changes on its own: if some fail, the
 	// error names them, and the others are changed.
 	ReplaceFood(context.Context, *v1.ReplaceFoodRequest) (*v1.ReplaceFoodResponse, error)
+	// Import a recipe from a web page, like a food blog's, as a draft (see
+	// Recipe.draft): its name, servings, times, ingredients and steps are
+	// read from the schema.org Recipe in the page's JSON-LD, which most
+	// recipe sites have. Ingredients are kept as the page writes them, in
+	// original_text, with their amounts and units where they can be read,
+	// and matched to the household's foods with the same name, ignoring
+	// case; the rest are left unmatched. Review the draft, match its
+	// ingredients and give its steps their ingredients and durations, then
+	// save it with draft false. Fails with FAILED_PRECONDITION if the page
+	// can't be fetched or has no recipe data.
+	ImportRecipe(context.Context, *v1.ImportRecipeRequest) (*v1.ImportRecipeResponse, error)
 	// Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
 	// the plan (see PlanService), or other recipes as a component, use it:
 	// delete or change them first.
@@ -193,6 +213,17 @@ type RecipeServiceHandler interface {
 	// the new food fix it. Each recipe changes on its own: if some fail, the
 	// error names them, and the others are changed.
 	ReplaceFood(context.Context, *v1.ReplaceFoodRequest) (*v1.ReplaceFoodResponse, error)
+	// Import a recipe from a web page, like a food blog's, as a draft (see
+	// Recipe.draft): its name, servings, times, ingredients and steps are
+	// read from the schema.org Recipe in the page's JSON-LD, which most
+	// recipe sites have. Ingredients are kept as the page writes them, in
+	// original_text, with their amounts and units where they can be read,
+	// and matched to the household's foods with the same name, ignoring
+	// case; the rest are left unmatched. Review the draft, match its
+	// ingredients and give its steps their ingredients and durations, then
+	// save it with draft false. Fails with FAILED_PRECONDITION if the page
+	// can't be fetched or has no recipe data.
+	ImportRecipe(context.Context, *v1.ImportRecipeRequest) (*v1.ImportRecipeResponse, error)
 	// Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
 	// the plan (see PlanService), or other recipes as a component, use it:
 	// delete or change them first.
@@ -211,6 +242,7 @@ func RegisterRecipeServiceHandler(server *connect.Server, svc RecipeServiceHandl
 		connect.Method{Spec: recipeServiceUpdateRecipeSpec(), Handler: adapter.updateRecipe},
 		connect.Method{Spec: recipeServiceUpdateRecipesSpec(), Handler: adapter.updateRecipes},
 		connect.Method{Spec: recipeServiceReplaceFoodSpec(), Handler: adapter.replaceFood},
+		connect.Method{Spec: recipeServiceImportRecipeSpec(), Handler: adapter.importRecipe},
 		connect.Method{Spec: recipeServiceDeleteRecipeSpec(), Handler: adapter.deleteRecipe},
 	)
 }
@@ -244,6 +276,10 @@ func (UnimplementedRecipeServiceHandler) UpdateRecipes(context.Context, *v1.Upda
 
 func (UnimplementedRecipeServiceHandler) ReplaceFood(context.Context, *v1.ReplaceFoodRequest) (*v1.ReplaceFoodResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "recipes.v1.RecipeService.ReplaceFood is not implemented")
+}
+
+func (UnimplementedRecipeServiceHandler) ImportRecipe(context.Context, *v1.ImportRecipeRequest) (*v1.ImportRecipeResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "recipes.v1.RecipeService.ImportRecipe is not implemented")
 }
 
 func (UnimplementedRecipeServiceHandler) DeleteRecipe(context.Context, *v1.DeleteRecipeRequest) (*v1.DeleteRecipeResponse, error) {
@@ -305,6 +341,14 @@ func (c *recipeServiceClient) UpdateRecipes(ctx context.Context, req *v1.UpdateR
 func (c *recipeServiceClient) ReplaceFood(ctx context.Context, req *v1.ReplaceFoodRequest) (*v1.ReplaceFoodResponse, error) {
 	var res v1.ReplaceFoodResponse
 	if err := c.client.CallUnary(ctx, recipeServiceReplaceFoodSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *recipeServiceClient) ImportRecipe(ctx context.Context, req *v1.ImportRecipeRequest) (*v1.ImportRecipeResponse, error) {
+	var res v1.ImportRecipeResponse
+	if err := c.client.CallUnary(ctx, recipeServiceImportRecipeSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -398,6 +442,18 @@ func (h recipeServiceHandler) replaceFood(ctx context.Context, _ connect.Spec, s
 		return err
 	}
 	res, err := h.svc.ReplaceFood(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h recipeServiceHandler) importRecipe(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ImportRecipeRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ImportRecipe(ctx, &req)
 	if err != nil {
 		return err
 	}
