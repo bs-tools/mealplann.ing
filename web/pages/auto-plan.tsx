@@ -25,13 +25,15 @@ import { planMeals } from "gen/plans/v1/plans-PlanService_connectquery";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import { suggestPlan } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
-import type { PlanSlot } from "gen/suggestions/v1/suggestions_pb";
+import type { PlanSlot, Suggestion } from "gen/suggestions/v1/suggestions_pb";
 import { Emphasis, PlanSlotState } from "gen/suggestions/v1/suggestions_pb";
 import { addDays, startOfWeek, today } from "helpers/dates";
 import { formatShortDate, formatWeekday } from "helpers/format";
 import { useDebouncedValue } from "helpers/hooks";
 import { invalidateServices } from "helpers/query";
 import { readStorage, writeStorage } from "helpers/storage";
+import type { Leftover } from "helpers/suggestions";
+import { planKey, suggestionKey } from "helpers/suggestions";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
@@ -105,6 +107,11 @@ interface Choice {
   personId: string;
   eatingTimeId: string;
   recipeId: string;
+  /*
+   * The earlier meal it's the rest of, for a leftover kept at one person's
+   * eating time.
+   */
+  leftoverOf?: Leftover | undefined;
 }
 
 // SaveLabel labels the button adding a plan's meals to the plan.
@@ -295,18 +302,23 @@ const AutoPlanPage: React.FC = () => {
     writeStorage(CRITERIA_KEY, JSON.stringify(remembered));
     setReplanned(new Map(choices));
   };
-  const choose = (slot: PlanSlot, recipeId: string | undefined) => {
+  /*
+   * Choose keeps a suggestion at a slot, leaves it empty with "", or lets
+   * it be planned again with undefined.
+   */
+  const choose = (slot: PlanSlot, pick: Suggestion | "" | undefined) => {
     const next = new Map(choices);
     const key = slotKey(slot);
-    if (recipeId === undefined) {
+    if (pick === undefined) {
       next.delete(key);
     } else {
       next.set(key, {
         date: slot.date,
         eatingTimeId: slot.eatingTimeId,
+        leftoverOf: pick === "" ? undefined : pick.leftoverOf,
         meal: slot.meal,
         personId: slot.personId,
-        recipeId,
+        recipeId: pick === "" ? "" : pick.recipeId,
       });
     }
     setChoices(next);
@@ -422,28 +434,28 @@ const AutoPlanPage: React.FC = () => {
               <ul className="flex flex-col gap-2">
                 {daySlots.map((slot) => {
                   const key = slotKey(slot);
-                  const recipeId = slot.suggestion?.recipeId ?? "";
-                  const chosen = choices.get(key)?.recipeId;
+                  const planned =
+                    slot.suggestion === undefined
+                      ? ""
+                      : suggestionKey(slot.suggestion);
+                  const choice = choices.get(key);
+                  const locked =
+                    choice !== undefined &&
+                    choice.recipeId !== "" &&
+                    planKey(choice.recipeId, choice.leftoverOf) === planned;
                   index++;
                   return (
                     <PlanSlotCard
                       // A new recipe at the slot rises in again.
-                      key={`${key}|${recipeId}|${slot.state}`}
+                      key={`${key}|${planned}|${slot.state}`}
                       slot={slot}
                       mealName={slotName(slot)}
                       maxScore={maxScore}
-                      locked={
-                        chosen !== undefined &&
-                        chosen !== "" &&
-                        chosen === recipeId
-                      }
+                      locked={locked}
                       index={index}
                       disabled={busy}
                       onToggleLock={() => {
-                        choose(
-                          slot,
-                          chosen === recipeId ? undefined : recipeId
-                        );
+                        choose(slot, locked ? undefined : slot.suggestion);
                       }}
                       onSwap={(swapped) => {
                         setReplanned(choose(slot, swapped));
@@ -531,6 +543,7 @@ const AutoPlanPage: React.FC = () => {
                   meals: toSave.map((slot) => ({
                     date: slot.date,
                     eatingTimeId: slot.eatingTimeId,
+                    leftoverOf: slot.suggestion?.leftoverOf,
                     meal: slot.meal,
                     personId: slot.personId,
                     recipeId: slot.suggestion?.recipeId ?? "",

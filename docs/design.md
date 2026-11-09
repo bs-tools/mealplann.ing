@@ -326,14 +326,15 @@ roughly 15 to 35:
 | **Keeping**: each fresh food to buy that won't keep from the shop until the date | −4 |
 | **Keeping**: all fresh foods to buy keep until a date 3 or more days after the shop | +2 |
 | **Keeping**: leftovers on later days within the recipe's fridge days, or to freeze, or that won't keep | +1, −1 or −5 |
-| **Flavor**: each curated pairing, matched on food names (`internal/suggest/pairings.go`) | +1.5, at most +3 |
 | **Variety**: each cook of the recipe within 6 days (at a snack, only the nearest), or a staple of an eater that day | −6, −3 more within 2 days |
-| **Meal tag**: tagged for the slot's meal (or "snack" for small eating times) | +2, −6 if tagged only for another meal; lunch and dinner are interchangeable, and any recipe can be a small meal |
+| **Meal tag**: tagged for the slot's meal (or "snack" for small eating times) | +2, −6 if tagged only for another meal; lunch and dinner are interchangeable; at a small meal, −4 if not tagged "snack" |
+| **Leftover**: at a small meal, a serving more of an earlier shared meal's cook, eaten reheated: the latest cook of each recipe from an earlier day within its fridge days (2 if unknown), or earlier the same day | +1, and none of the shared ingredients, variety, meal tag or favorite components, as it's a cook the week has already |
 
 The web app shows the suggestions in the plan-a-meal dialog, and for an
 empty small meal, with a bar for the score, the reasons as chips, and "Plan
 this", which calls `PlanMeal`, or `CreateCook` and `CreatePortion` for a
-small meal. The AI agent uses the same scores through MCP, and can reason
+small meal, or `PlanMeals` with `leftover_of` for the rest of an earlier
+meal, which grows that meal's cook. The AI agent uses the same scores through MCP, and can reason
 beyond them, like proposing a new recipe that would score well.
 
 ### Planning several days at once
@@ -359,9 +360,13 @@ scoring as `SuggestRecipes`.
   reasons and alternatives.
 - **Breakfast is a hard constraint**: it only takes recipes tagged
   "breakfast", as a recipe with no meal tag is most likely a main meal.
-  The other slots take any recipe, a breakfast for lunch too, with the meal
-  tags only counting in the score. A breakfast no recipe fits says to tag
-  some.
+  Lunch and dinner take any recipe, a breakfast for lunch too, with the
+  meal tags only counting in the score. A breakfast no recipe fits says to
+  tag some. A small meal takes a recipe tagged "snack" that breaks no rule,
+  if there's any, even if it repeats, as snacks come first; otherwise the
+  rest of an earlier meal of the plan, reheated, which adds a serving to
+  that meal's cook, or another recipe. Its alternatives include the
+  leftovers, for the user to swap in.
 - **Each day's shared meals come before its personal eating times**, so a
   shared meal's portion that's more than someone's maximum portion spills
   into their next small eating times, as `PlanMeal` splits it, and such an
@@ -371,7 +376,7 @@ scoring as `SuggestRecipes`.
   when too few fit everyone's rules and the plan has to repeat them.
 - **Criteria** weigh the score's components: variety, favorites, the
   pantry and packs, a short shop, and nutrition, each off, less, normal or
-  more. The rules, flavor and meal tags always count. Recipes can be left
+  more. The rules, meal tags and leftovers always count. Recipes can be left
   out by time, tag or name.
 - **Reproducible**: the request's seed fixes the draws, so the same request
   gives the same plan, and "Shuffle" is a new seed. Kept and cleared meals

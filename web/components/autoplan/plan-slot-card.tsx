@@ -14,6 +14,7 @@ import type { PlanSlot, Suggestion } from "gen/suggestions/v1/suggestions_pb";
 import { PlanSlotState } from "gen/suggestions/v1/suggestions_pb";
 import { formatList } from "helpers/format";
 import { formatAmount } from "helpers/nutrients";
+import { leftoverLabel, suggestionKey } from "helpers/suggestions";
 import React from "react";
 import { Link } from "react-router";
 
@@ -36,7 +37,7 @@ interface PlanSlotCardProps {
   index: number;
   disabled: boolean;
   onToggleLock: () => void;
-  onSwap: (recipeId: string) => void;
+  onSwap: (alternative: Suggestion) => void;
   onSkip: () => void;
   onFill: () => void;
 }
@@ -154,6 +155,11 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
           >
             {suggestion.recipeName}
           </Link>
+          {suggestion.leftoverOf !== undefined && (
+            <span className="text-xs text-gray-600">
+              {leftoverLabel(suggestion.leftoverOf)}, reheated
+            </span>
+          )}
         </div>
         <div className="-mt-1 -mr-1 flex shrink-0 items-center print:hidden">
           <button
@@ -193,17 +199,23 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
                   Next best, given the rest of the plan
                 </p>
                 {slot.alternatives.map((alternative) => (
-                  <MenuItem key={alternative.recipeId}>
+                  <MenuItem key={suggestionKey(alternative)}>
                     <button
                       type="button"
                       className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left data-[focus]:bg-gray-100"
                       onClick={() => {
-                        onSwap(alternative.recipeId);
+                        onSwap(alternative);
                       }}
                     >
                       <span className="flex w-full items-baseline justify-between gap-2">
                         <span className="text-sm font-medium text-gray-900">
                           {alternative.recipeName}
+                          {alternative.leftoverOf !== undefined && (
+                            <span className="font-normal text-gray-600">
+                              {" "}
+                              · {leftoverLabel(alternative.leftoverOf)}
+                            </span>
+                          )}
                         </span>
                         <span className="shrink-0 text-xs text-gray-500 tabular-nums">
                           {formatAmount(alternative.score)} points

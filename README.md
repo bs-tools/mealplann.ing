@@ -29,7 +29,8 @@ Version 1 is done, milestones 1 to 5:
   point by point: the rest of a can another meal opens, what's in the pantry
   and going off, ingredients shared with the week's other meals, everyone's
   nutrition targets and rules, what keeps until the day of the meal from a
-  single weekly shop, flavor pairings and variety. Your AI agent gets the
+  single weekly shop, and variety, with snacks from the household's snack
+  recipes or the rest of an earlier meal. Your AI agent gets the
   same suggestions, and can propose new recipes beyond them.
 - A home page with the week at a glance: today's meals, the shopping list,
   and what to use soon.

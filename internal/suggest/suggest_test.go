@@ -1,6 +1,7 @@
 package suggest
 
 import (
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -409,46 +410,6 @@ func TestKeeping(t *testing.T) {
 	}
 }
 
-func TestFlavor(t *testing.T) {
-	t.Parallel()
-	for name, test := range map[string]struct {
-		names []string
-		want  []string
-	}{
-		"chickpeas and cumin": {[]string{"Chickpeas, canned", "Ground cumin"}, []string{"chickpeas and cumin"}},
-		"three foods":         {[]string{"Firm tofu", "Fresh ginger", "Soy sauce (tamari)"}, []string{"tofu, ginger and soy sauce"}},
-		"alternatives":        {[]string{"Garbanzo beans", "Tahini"}, []string{"chickpeas and tahini"}},
-		"not within words":    {[]string{"Chickpeas", "Slime"}, nil},
-		"one ingredient":      {[]string{"Coconut milk curry paste"}, nil},
-		"missing a food":      {[]string{"Tofu", "Ginger"}, nil},
-		"several":             {[]string{"Red lentils", "Tomatoes, canned", "Cumin seeds"}, []string{"lentils and tomato", "lentils and cumin"}},
-		"after punctuation":   {[]string{"Beans, black", "Lime (juice)", "Spinach,garlic"}, nil},
-	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			var got []string
-			for _, p := range matchPairings(test.names) {
-				got = append(got, p.Name)
-			}
-			if !slices.Equal(got, test.want) {
-				t.Errorf("got %v, want %v", got, test.want)
-			}
-		})
-	}
-
-	// A recipe gets points for at most two pairings.
-	b := ben()
-	dal := recipe("Dal", 2, ingredient(food("Red lentils", 0, 0, 0, 0, 0, nil), 200), ingredient(food("Tomatoes", 0, 0, 0, 0, 0, nil), 200), ingredient(cumin, 5),
-		ingredient(spinach, 100), ingredient(food("Garlic", 0, 0, 0, 0, 0, nil), 10))
-	in := input(wednesday, []*people.Person{b}, dal)
-	for _, ing := range dal.Ingredients {
-		if _, ok := in.Foods[ing.FoodID]; !ok {
-			in.Foods[ing.FoodID] = &foods.Food{ID: ing.FoodID, Name: ing.FoodName}
-		}
-	}
-	wantComponents(t, Suggest(in)[0], Flavor, "1.5 lentils and tomato go well together", "1.5 lentils and cumin go well together")
-}
-
 func TestVariety(t *testing.T) {
 	t.Parallel()
 	b := ben()
@@ -513,17 +474,83 @@ func TestMealTag(t *testing.T) {
 	wantComponents(t, suggestionOf(t, list, oats), MealTag, "-6 tagged breakfast, not dinner")
 	wantComponents(t, suggestionOf(t, list, none), MealTag)
 
-	// At a small meal, snacks get points, and other meals' recipes no
-	// penalty, as small meals are often part of a main meal.
+	// At a small meal, snacks get points, and other recipes a penalty, as
+	// snacks come first there, then the rest of an earlier meal.
 	a := anna()
 	snack := tagged("snack")
-	in := input(wednesday, []*people.Person{a}, dinner, oats, snack)
+	in := input(wednesday, []*people.Person{a}, dinner, oats, snack, none)
 	in.Meal = people.MealNone
 	in.EatingTimeID = etID(a, "Mid-afternoon")
 	list = Suggest(in)
+	notSnack := "-4 not tagged snack: a snack recipe, or the rest of an earlier meal, comes first"
 	wantComponents(t, suggestionOf(t, list, snack), MealTag, "2 tagged snack")
-	wantComponents(t, suggestionOf(t, list, dinner), MealTag)
-	wantComponents(t, suggestionOf(t, list, oats), MealTag)
+	wantComponents(t, suggestionOf(t, list, dinner), MealTag, notSnack)
+	wantComponents(t, suggestionOf(t, list, oats), MealTag, notSnack)
+	wantComponents(t, suggestionOf(t, list, none), MealTag, notSnack)
+}
+
+func TestLeftovers(t *testing.T) {
+	t.Parallel()
+	a := anna()
+	for _, et := range a.EatingTimes {
+		et.TimeOfDay = map[string]string{
+			"Breakfast": "07:00", "Mid-morning": "10:00", "Lunch": "12:30",
+			"Mid-afternoon": "15:30", "Dinner": "19:00", "Evening": "21:00",
+		}[et.Name]
+	}
+	curry := recipe("Curry", 4, ingredient(chickpeas, 400))
+	curry.FridgeDays = new(int32(3))
+	stew := recipe("Stew", 4, ingredient(chickpeas, 400))
+	soup := recipe("Soup", 4, ingredient(chickpeas, 400))
+	soup.FridgeDays = new(int32(1))
+	in := input(thursday, []*people.Person{a})
+	in.Meal = people.MealNone
+	in.EatingTimeID = etID(a, "Mid-afternoon")
+	in.Leftovers = true
+	// Monday's curry keeps until Thursday, and Wednesday's stew of unknown
+	// fridge days does too, but Monday's soup, kept a day, doesn't, nor
+	// does Thursday's dinner, after the snack. Tuesday's curry is the
+	// latest of it.
+	in.cook(curry, monday, 4)
+	in.cook(curry, tuesday, 4)
+	in.cook(stew, wednesday, 4)
+	in.cook(soup, monday, 4)
+	in.cook(soup, thursday, 4)
+	in.Candidates = []*recipes.Recipe{}
+	got := map[string]*Suggestion{}
+	for _, sg := range Suggest(in) {
+		if sg.Leftover == nil {
+			t.Fatalf("got a new cook of %s, want only leftovers", sg.Recipe.Name)
+		}
+		got[sg.Recipe.Name] = sg
+	}
+	if len(got) != 2 || got["Curry"] == nil || got["Stew"] == nil {
+		t.Fatalf("got leftovers of %v, want the curry and the stew", slices.Collect(maps.Keys(got)))
+	}
+	if !got["Curry"].Leftover.Date.Equal(tuesday) {
+		t.Errorf("got the curry of %s, want Tuesday's", got["Curry"].Leftover.Date)
+	}
+	wantComponents(t, got["Stew"], Leftover, "1 the rest of Wed 4 Nov's dinner, reheated, with no cooking")
+	if sg := got["Stew"]; sg.CookServings <= 0 || len(sg.Portions) != 1 || sg.Portions[0].Servings != sg.CookServings {
+		t.Errorf("got %v servings more for portions %v, want the portion's", sg.CookServings, sg.Portions)
+	}
+
+	// The evening snack takes Thursday's dinner too, before it.
+	in.EatingTimeID = etID(a, "Evening")
+	if !slices.ContainsFunc(Suggest(in), func(sg *Suggestion) bool { return sg.Recipe == soup && sg.Leftover.Date.Equal(thursday) }) {
+		t.Error("got no leftover of Thursday's soup in the evening")
+	}
+	// Only the one asked for, if any.
+	in.LeftoverOf = &LeftoverRef{Date: wednesday, Meal: people.MealDinner, RecipeID: stew.ID}
+	if list := Suggest(in); len(list) != 1 || list[0].Recipe != stew {
+		t.Errorf("got %d suggestions, want the stew's leftover alone", len(list))
+	}
+	// None without Leftovers.
+	in.LeftoverOf = nil
+	in.Leftovers = false
+	if list := Suggest(in); len(list) != 0 {
+		t.Errorf("got %d suggestions without leftovers, want none", len(list))
+	}
 }
 
 func TestFavorite(t *testing.T) {

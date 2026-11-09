@@ -11,6 +11,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/plans"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
 	"github.com/bs-tools/mealplann.ing/internal/rules"
+	"github.com/bs-tools/mealplann.ing/internal/store"
 )
 
 // planInput returns the input of planning dinners from Monday for days,
@@ -234,5 +235,58 @@ func TestFitsMeal(t *testing.T) {
 				t.Errorf("FitsMeal(%v, %q) = %v, want %v", tt.tags, tag, got, want)
 			}
 		}
+	}
+}
+
+func TestPlanSnacks(t *testing.T) {
+	t.Parallel()
+	a := anna()
+	curry := recipe("Curry", 2, ingredient(chickpeas, 400))
+	curry.Tags = []string{"dinner"}
+	stew := recipe("Stew", 2, ingredient(chickpeas, 400))
+	bar := recipe("Bar", 4, ingredient(tofu, 400))
+	bar.Tags = []string{"snack"}
+	snackSlot := func(in *PlanInput) *PlanSlot {
+		s := &PlanSlot{Date: tuesday, People: []*people.Person{a}, EatingTimeID: etID(a, "Mid-afternoon")}
+		in.Slots = append(in.Slots, s)
+		return s
+	}
+
+	// With a snack recipe, the snack is it, though repeating it costs
+	// variety, and the rest of Monday's dinner an alternative; never a new
+	// cook of a dinner.
+	in := planInput(1, []*people.Person{a}, curry, stew, bar)
+	in.Plan.Cooks = append(in.Plan.Cooks, &plans.Cook{ID: store.NewUUID(), RecipeID: bar.ID, RecipeName: bar.Name, Date: monday, Servings: 1})
+	snackSlot(in)
+	result := Plan(in)
+	if sg := result.Slots[1].Suggestion; sg == nil || sg.Recipe != bar || sg.Leftover != nil {
+		t.Fatalf("got %v at the snack, want the bar", sg)
+	}
+	leftover := false
+	for _, alt := range result.Slots[1].Alternatives {
+		if alt.Leftover == nil && alt.Recipe != bar {
+			t.Errorf("got a new cook of %s as an alternative, want only the bar and leftovers", alt.Recipe.Name)
+		}
+		leftover = leftover || alt.Leftover != nil && alt.Recipe == result.Slots[0].Suggestion.Recipe
+	}
+	if !leftover {
+		t.Error("got no alternative of the rest of Monday's dinner")
+	}
+
+	// Without one, the rest of Monday's dinner beats cooking another.
+	in = planInput(1, []*people.Person{a}, curry, stew)
+	snackSlot(in)
+	result = Plan(in)
+	if sg := result.Slots[1].Suggestion; sg == nil || sg.Leftover == nil || sg.Recipe != result.Slots[0].Suggestion.Recipe {
+		t.Errorf("got %v at the snack, want the rest of Monday's dinner", sg)
+	}
+
+	// A leftover the user chose is kept.
+	in = planInput(1, []*people.Person{a}, curry, stew, bar)
+	in.Slots[0].Fixed = stew
+	snackSlot(in).FixedLeftover = &LeftoverRef{Date: monday, Meal: people.MealDinner, RecipeID: stew.ID}
+	result = Plan(in)
+	if sg := result.Slots[1].Suggestion; sg == nil || sg.Leftover == nil || sg.Recipe != stew {
+		t.Errorf("got %v at the snack, want the kept leftover of the stew", sg)
 	}
 }

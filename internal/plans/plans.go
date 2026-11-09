@@ -362,10 +362,15 @@ type CookWithPortions struct {
 	// Supplies are the cooks supplying its components, by their IDs, among
 	// those created or existing, whose ConsumerCookID is ignored.
 	Supplies []*Supply
+	// Existing is whether the cook exists already, with its ID: it isn't
+	// created, but grows by Cook.Servings, for Portions, and keeps its
+	// supplies.
+	Existing bool
 }
 
-// CreateCooksWithPortions creates cooks in their household, each with
-// shares of it for people, all or nothing, in a single round trip. It
+// CreateCooksWithPortions creates cooks in their household, or grows
+// existing ones, each with shares of it for people, all or nothing, in a
+// single round trip. It
 // returns the cooks in their order, and the portions of each in theirs,
 // and a *ReferenceError if they refer to something that isn't the
 // household's.
@@ -386,17 +391,21 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 			id = store.NewUUID()
 		}
 		cookIDs = append(cookIDs, id)
-		_, _ = q.CreateCook(ctx, &gen.CreateCookParams{
-			ID:             id,
-			HouseholdID:    c.HouseholdID,
-			RecipeID:       c.RecipeID,
-			Date:           store.DateToPG(c.Date),
-			Servings:       c.Servings,
-			Meal:           mealToDB(c.Meal),
-			Notes:          c.Notes,
-			Done:           c.Done,
-			FrozenServings: c.FrozenServings,
-		})
+		if cp.Existing {
+			_, _ = q.GrowCook(ctx, &gen.GrowCookParams{ID: id, HouseholdID: c.HouseholdID, Servings: c.Servings})
+		} else {
+			_, _ = q.CreateCook(ctx, &gen.CreateCookParams{
+				ID:             id,
+				HouseholdID:    c.HouseholdID,
+				RecipeID:       c.RecipeID,
+				Date:           store.DateToPG(c.Date),
+				Servings:       c.Servings,
+				Meal:           mealToDB(c.Meal),
+				Notes:          c.Notes,
+				Done:           c.Done,
+				FrozenServings: c.FrozenServings,
+			})
+		}
 		p := &gen.CreateCookPortionsParams{HouseholdID: c.HouseholdID, CookID: id}
 		for _, portion := range cp.Portions {
 			p.Ids = append(p.Ids, store.NewUUID())

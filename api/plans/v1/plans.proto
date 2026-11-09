@@ -608,6 +608,22 @@ message MealToPlan {
   string person_id = 4;
   // The person's eating time, with person_id.
   string eating_time_id = 5;
+  // For one person's eating time, instead of a new cook of recipe_id, the
+  // rest of an earlier shared meal, reheated: a serving more of that
+  // meal's cook of recipe_id, which grows by it. The cook is one planned
+  // by this request, or else already. SuggestRecipes and SuggestPlan
+  // suggest these as their suggestions' leftover_of.
+  LeftoverOf leftover_of = 6;
+}
+
+// LeftoverOf is an earlier shared meal whose cook a portion is the rest
+// of.
+message LeftoverOf {
+  // The date of the meal (YYYY-MM-DD), on or before the portion's.
+  // Required.
+  string date = 1;
+  // The shared meal. Required.
+  people.v1.HouseholdMeal meal = 2;
 }
 
 message PlanMealsRequest {

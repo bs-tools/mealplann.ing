@@ -18,6 +18,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
 	"github.com/bs-tools/mealplann.ing/internal/rules"
 	pantrysvc "github.com/bs-tools/mealplann.ing/internal/services/pantry"
+	"github.com/bs-tools/mealplann.ing/internal/services/person"
 	"github.com/bs-tools/mealplann.ing/internal/shopping"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/bs-tools/mealplann.ing/internal/suggest"
@@ -147,6 +148,8 @@ func (s *Service) SuggestRecipes(ctx context.Context, req *suggestionsv1.Suggest
 	})
 	in.Foods = d.foods
 	in.Lots = lots
+	// One person's small meal can be the rest of an earlier meal.
+	in.Leftovers = in.Meal == people.MealNone
 
 	suggestions := suggest.Suggest(in)
 	result := make([]*suggestionsv1.Suggestion, 0, len(suggestions))
@@ -240,10 +243,10 @@ var scoreKindsToProto = map[suggest.Kind]suggestionsv1.ScoreKind{
 	suggest.Nutrition:         suggestionsv1.ScoreKind_SCORE_KIND_NUTRITION,
 	suggest.Rules:             suggestionsv1.ScoreKind_SCORE_KIND_RULES,
 	suggest.Keeping:           suggestionsv1.ScoreKind_SCORE_KIND_KEEPING,
-	suggest.Flavor:            suggestionsv1.ScoreKind_SCORE_KIND_FLAVOR,
 	suggest.Variety:           suggestionsv1.ScoreKind_SCORE_KIND_VARIETY,
 	suggest.MealTag:           suggestionsv1.ScoreKind_SCORE_KIND_MEAL_TAG,
 	suggest.Favorite:          suggestionsv1.ScoreKind_SCORE_KIND_FAVORITE,
+	suggest.Leftover:          suggestionsv1.ScoreKind_SCORE_KIND_LEFTOVER,
 }
 
 // suggestionToProto converts a suggestion to the API.
@@ -299,5 +302,15 @@ func suggestionToProto(sg *suggest.Suggestion) *suggestionsv1.Suggestion {
 		CookServings: round(sg.CookServings),
 		NewItemCount: int32(sg.NewItemCount),
 		ItemsToBuy:   items,
+		LeftoverOf:   leftoverToProto(sg.LeftoverRef()),
 	}.Build()
+}
+
+// leftoverToProto converts the earlier meal of a leftover to the API, nil
+// for none.
+func leftoverToProto(ref *suggest.LeftoverRef) *plansv1.LeftoverOf {
+	if ref == nil {
+		return nil
+	}
+	return plansv1.LeftoverOf_builder{Date: store.FormatDate(ref.Date), Meal: person.MealsToProto[ref.Meal]}.Build()
 }

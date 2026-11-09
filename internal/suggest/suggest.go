@@ -50,20 +50,21 @@ const (
 	// Keeping is whether what's bought keeps from the shop until the slot,
 	// and the leftovers until they're eaten.
 	Keeping
-	// Flavor is ingredients that go well together.
-	Flavor
 	// Variety is the same recipe planned on nearby days.
 	Variety
 	// MealTag is the recipe's tags for meals.
 	MealTag
 	// Favorite is the household's favorite recipes.
 	Favorite
+	// Leftover is eating the rest of an earlier shared meal, reheated,
+	// rather than cooking.
+	Leftover
 )
 
 // The weights of the components, in points. A typical good suggestion
 // scores 10 to 25 points; the weights are set so that what saves a trip or
 // waste (the pantry, the rest of a pack, keeping until the slot) and
-// breaking a rule weigh most, nutrition about as much, and flavor least.
+// breaking a rule weigh most, and nutrition about as much.
 const (
 	// SharedIngredientPoints is for each ingredient the week's other cooks
 	// also use, which makes the shop shorter, and FreshSharedPoints more
@@ -131,10 +132,6 @@ const (
 	LeftoverFreezePenalty = 1.0
 	LeftoverSpoilsPenalty = 5.0
 
-	// FlavorPoints is for each pairing, up to MaxFlavorPoints.
-	FlavorPoints    = 1.5
-	MaxFlavorPoints = 3.0
-
 	// VarietyPenalty is for each cook of the recipe within VarietyDays of
 	// the slot, and RecentPenalty more if within RecentDays.
 	VarietyPenalty = 6.0
@@ -147,6 +144,16 @@ const (
 	// oats for dinner, which is rarely what the household wants.
 	MealTagPoints       = 2.0
 	OtherMealTagPenalty = 6.0
+	// UntaggedSnackPenalty is for a recipe not tagged "snack" cooked for a
+	// small meal, as the household's snack recipes come first there, and
+	// LeftoverPoints for the rest of an earlier meal eaten at one instead,
+	// which needs no cooking, only reheating, but comes after a snack
+	// recipe.
+	UntaggedSnackPenalty = 4.0
+	LeftoverPoints       = 1.0
+	// DefaultLeftoverDays is how many days after its cook a meal of
+	// unknown fridge days is eaten as a leftover at a small meal.
+	DefaultLeftoverDays = 2
 
 	// FavoritePoints is for a recipe the household marked as a favorite.
 	// It's about what using the rest of a pack earns, so favorites come up
@@ -207,6 +214,28 @@ type Input struct {
 	Lots []*pantry.Item
 	// Max is the most suggestions to return.
 	Max int
+	// Leftovers is whether to also suggest, at a small meal, a serving
+	// more of a cook of an earlier shared meal among Cooks, eaten reheated
+	// rather than cooking: the rest of last night's dinner. They're scored
+	// after Candidates, whichever those are.
+	Leftovers bool
+	// LeftoverOf, if not nil, is the only leftover to suggest: the cook of
+	// its recipe at its shared meal, if there's one.
+	LeftoverOf *LeftoverRef
+}
+
+// LeftoverRef refers to the cook of a recipe at a shared meal on a date,
+// of which a slot eats a serving more as a leftover.
+type LeftoverRef struct {
+	// Date is at midnight UTC.
+	Date     time.Time
+	Meal     people.Meal
+	RecipeID pgtype.UUID
+}
+
+// Matches reports whether a cook is the one the leftover refers to.
+func (l *LeftoverRef) Matches(c *plans.Cook) bool {
+	return c.Date.Equal(l.Date) && c.Meal == l.Meal && c.RecipeID == l.RecipeID
 }
 
 // Component is a part of a score.
@@ -266,6 +295,28 @@ type Suggestion struct {
 	// doesn't buy already.
 	ItemsToBuy   []ItemToBuy
 	NewItemCount int
+	// Leftover, if not nil, is the earlier cook of a shared meal the
+	// suggestion eats a serving more of, reheated, rather than cooking
+	// Recipe anew: CookServings are the servings it adds to that cook.
+	Leftover *plans.Cook
+}
+
+// LeftoverRef returns what the suggestion's leftover refers to, nil if
+// it's a new cook.
+func (sg *Suggestion) LeftoverRef() *LeftoverRef {
+	if sg.Leftover == nil {
+		return nil
+	}
+	return &LeftoverRef{Date: sg.Leftover.Date, Meal: sg.Leftover.Meal, RecipeID: sg.Leftover.RecipeID}
+}
+
+// Same reports whether two suggestions plan the same: the same recipe, as
+// a new cook or as a leftover of the same cook.
+func (sg *Suggestion) Same(other *Suggestion) bool {
+	if sg.Recipe != other.Recipe || (sg.Leftover == nil) != (other.Leftover == nil) {
+		return false
+	}
+	return sg.Leftover == nil || sg.LeftoverRef().Matches(other.Leftover)
 }
 
 // Suggest scores the recipes for the slot, and returns the best in.Max,
@@ -278,7 +329,10 @@ func Suggest(in *Input) []*Suggestion {
 	}
 	suggestions := make([]*Suggestion, 0, len(candidates))
 	for _, r := range candidates {
-		suggestions = append(suggestions, s.score(r))
+		suggestions = append(suggestions, s.score(r, nil))
+	}
+	for _, cook := range s.leftovers() {
+		suggestions = append(suggestions, s.score(s.recipes[cook.RecipeID], cook))
 	}
 	slices.SortStableFunc(suggestions, func(a, b *Suggestion) int {
 		if c := cmp.Compare(b.Score, a.Score); c != 0 {
@@ -410,6 +464,18 @@ type candidate struct {
 	// withPantry what it takes from the pantry.
 	with       map[pgtype.UUID]*bought
 	withPantry map[pgtype.UUID]float64
+	// leftover is the earlier cook it's a serving more of, nil for a new
+	// cook at the slot.
+	leftover *plans.Cook
+}
+
+// cookDate returns the date it's cooked on: the slot's, or its leftover's
+// cook's.
+func (c *candidate) cookDate(slot time.Time) time.Time {
+	if c.leftover != nil {
+		return c.leftover.Date
+	}
+	return slot
 }
 
 // add adds a component, unless it's worth nothing.
@@ -421,13 +487,15 @@ func (c *candidate) add(kind Kind, points float64, format string, args ...any) {
 	c.suggestion.Components = append(c.suggestion.Components, Component{Kind: kind, Points: points, Reason: fmt.Sprintf(format, args...)})
 }
 
-// score scores a recipe for the slot.
-func (s *scorer) score(r *recipes.Recipe) *Suggestion {
+// score scores a recipe for the slot: a new cook of it, or a serving more
+// of an earlier cook of it, if leftover isn't nil.
+func (s *scorer) score(r *recipes.Recipe, leftover *plans.Cook) *Suggestion {
 	c := &candidate{
 		recipe:     r,
 		nutrition:  r.Nutrition(),
 		suggestion: &Suggestion{Recipe: r, FitsRules: true},
 		grams:      map[pgtype.UUID]float64{},
+		leftover:   leftover,
 	}
 	s.portion(c)
 	for _, ing := range r.IngredientsFor(c.suggestion.CookServings) {
@@ -435,7 +503,7 @@ func (s *scorer) score(r *recipes.Recipe) *Suggestion {
 		if !ok {
 			continue
 		}
-		c.needed = append(c.needed, shopping.Need{FoodID: ing.FoodID, Date: s.in.Date, Amount: ing.Amount, Unit: ing.Unit})
+		c.needed = append(c.needed, shopping.Need{FoodID: ing.FoodID, Date: c.cookDate(s.in.Date), Amount: ing.Amount, Unit: ing.Unit})
 		if _, seen := c.grams[ing.FoodID]; !seen {
 			c.foods = append(c.foods, ing.FoodID)
 		}
@@ -446,20 +514,28 @@ func (s *scorer) score(r *recipes.Recipe) *Suggestion {
 	c.with = s.shop(needs)
 	c.withPantry = shopping.PantryGrams(s.shopInput(needs))
 
-	s.sharedIngredients(c)
 	s.packLeftovers(c)
 	s.pantry(c)
 	s.nutrition(c)
 	s.rules(c)
 	s.keeping(c)
-	s.flavor(c)
-	s.variety(c)
-	s.mealTag(c)
-	if r.Favorite {
-		c.add(Favorite, FavoritePoints, "a household favorite")
+	if leftover != nil {
+		// A leftover adds to a cook the week has already: it shares all of
+		// that cook's ingredients and repeats it by nature, and its meal
+		// tags don't matter, as it's the rest of a meal.
+		c.add(Leftover, LeftoverPoints, "the rest of %s's %s, reheated, with no cooking",
+			formatDate(leftover.Date), leftover.Meal)
+	} else {
+		s.sharedIngredients(c)
+		s.variety(c)
+		s.mealTag(c)
+		if r.Favorite {
+			c.add(Favorite, FavoritePoints, "a household favorite")
+		}
 	}
 
 	sg := c.suggestion
+	sg.Leftover = c.leftover
 	if s.in.Weights != nil {
 		weighted := sg.Components[:0]
 		for _, comp := range sg.Components {
@@ -517,6 +593,11 @@ func (s *scorer) portion(c *candidate) {
 	slot := plans.Slot{PersonID: p.ID, EatingTimeID: s.in.EatingTimeID, Date: s.in.Date}
 	servings, cookServings := plans.EatingTimeServings(p, gramsPerServing, s.plannedGrams[slot])
 	sg.CookServings = cookServings
+	if c.leftover != nil {
+		// A leftover's cook grows by the portion, not by a cook's least
+		// servings.
+		sg.CookServings = servings
+	}
 	sg.Portions = []Portion{{
 		Share:      plans.Share{Slot: slot, Servings: servings},
 		Person:     p,
@@ -892,7 +973,8 @@ func ruleReason(person, eatingTime string, w *rules.Warning, et *rules.EatingTim
 // keeping scores whether the fresh foods to buy keep from the shop until
 // the slot, and the leftovers until they're eaten.
 func (s *scorer) keeping(c *candidate) {
-	days := pantry.DaysTo(s.in.ShopDate, s.in.Date)
+	cookDate := c.cookDate(s.in.Date)
+	days := pantry.DaysTo(s.in.ShopDate, cookDate)
 	freshKeeps := false
 	topUps := 0
 	for _, id := range c.foods {
@@ -903,21 +985,21 @@ func (s *scorer) keeping(c *candidate) {
 		if days > int(f.ShelfLifeDays) {
 			topUps++
 			c.add(Keeping, -TopUpPenalty, "%s keeps %s, so it won't keep from the shop on %s until %s: buy it on a second trip",
-				foodName(f), count(int(f.ShelfLifeDays), "day", "days"), formatDate(s.in.ShopDate), formatDate(s.in.Date))
+				foodName(f), count(int(f.ShelfLifeDays), "day", "days"), formatDate(s.in.ShopDate), formatDate(cookDate))
 		} else if isFresh(f) {
 			freshKeeps = true
 		}
 	}
 	if freshKeeps && topUps == 0 && days >= KeepsMinDays {
-		c.add(Keeping, KeepsPoints, "its fresh foods keep from the shop on %s until %s", formatDate(s.in.ShopDate), formatDate(s.in.Date))
+		c.add(Keeping, KeepsPoints, "its fresh foods keep from the shop on %s until %s", formatDate(s.in.ShopDate), formatDate(cookDate))
 	}
 
 	// Leftovers are the portions on later days than the cook.
-	cook := &rules.Cook{RecipeName: c.recipe.Name, Date: s.in.Date, FridgeDays: c.recipe.FridgeDays, Freezable: c.recipe.Freezable}
+	cook := &rules.Cook{RecipeName: c.recipe.Name, Date: cookDate, FridgeDays: c.recipe.FridgeDays, Freezable: c.recipe.Freezable}
 	var last time.Time
 	var who []string
 	for _, p := range c.suggestion.Portions {
-		if !p.Date.After(s.in.Date) {
+		if !p.Date.After(cookDate) {
 			continue
 		}
 		if p.Date.After(last) {
@@ -940,24 +1022,6 @@ func (s *scorer) keeping(c *candidate) {
 	case w != nil && w.Kind == rules.LeftoverPastFridgeDays:
 		c.add(Keeping, -LeftoverSpoilsPenalty, "keeps %s in the fridge, not until %s's leftovers on %s",
 			count(int(*cook.FridgeDays), "day", "days"), list(who), formatDate(last))
-	}
-}
-
-// flavor scores the pairings of the recipe's ingredients.
-func (s *scorer) flavor(c *candidate) {
-	ingredients := c.recipe.IngredientsFor(float64(c.recipe.Servings))
-	names := make([]string, 0, len(ingredients))
-	for _, ing := range ingredients {
-		names = append(names, ing.FoodName)
-	}
-	var total float64
-	for _, p := range matchPairings(names) {
-		points := min(FlavorPoints, MaxFlavorPoints-total)
-		if points <= 0 {
-			break
-		}
-		total += points
-		c.add(Flavor, points, "%s go well together", p.Name)
 	}
 }
 
@@ -1029,29 +1093,96 @@ var mealTags = []string{"breakfast", "lunch", "dinner", "snack"}
 
 // mealTag scores the recipe's tags for meals: points if it's tagged for
 // the slot's meal, a penalty if it's tagged only for others. Lunch and
-// dinner are interchangeable, so neither counts against the other, and any
-// recipe can make a small meal.
+// dinner are interchangeable, so neither counts against the other. A small
+// meal takes the household's snack recipes first: another recipe cooked
+// for one has a penalty, as the rest of an earlier meal makes a small meal
+// with no cooking (see Input.Leftovers).
 func (s *scorer) mealTag(c *candidate) {
-	var et *people.EatingTime
-	if s.in.Meal == people.MealNone {
-		et = s.in.People[0].EatingTime(s.in.EatingTimeID)
-	}
-	want := slotTag(s.in.Meal, et)
+	want := s.slotTag()
 	if want == "" {
 		return
 	}
 	tagged := recipeMealTags(c.recipe)
 	switch {
-	case len(tagged) == 0:
 	case slices.Contains(tagged, want):
 		c.add(MealTag, MealTagPoints, "tagged %s", want)
 	case want == "snack":
-		// Small meals are often a part of a main meal's recipe, so a recipe
-		// for another meal isn't out of place at one.
+		c.add(MealTag, -UntaggedSnackPenalty, "not tagged snack: a snack recipe, or the rest of an earlier meal, comes first")
+	case len(tagged) == 0:
 	case (want == "lunch" && slices.Contains(tagged, "dinner")) || (want == "dinner" && slices.Contains(tagged, "lunch")):
 	default:
 		c.add(MealTag, -OtherMealTagPenalty, "tagged %s, not %s", list(tagged), want)
 	}
+}
+
+// slotTag returns the meal tag of the slot (see slotTag).
+func (s *scorer) slotTag() string {
+	var et *people.EatingTime
+	if s.in.Meal == people.MealNone {
+		et = s.in.People[0].EatingTime(s.in.EatingTimeID)
+	}
+	return slotTag(s.in.Meal, et)
+}
+
+// leftovers returns the cooks of earlier shared meals the slot may eat a
+// serving more of, if Input.Leftovers: for a small meal of one person,
+// the latest cook of each recipe on an earlier day within its fridge
+// days, or earlier the same day, before the slot's eating time. Most
+// meals are as good reheated, and eating the rest of one is less work
+// than cooking a snack.
+func (s *scorer) leftovers() []*plans.Cook {
+	if !s.in.Leftovers || s.in.Meal != people.MealNone || s.slotTag() != "snack" {
+		return nil
+	}
+	p := s.in.People[0]
+	snack := p.EatingTime(s.in.EatingTimeID)
+	latest := map[pgtype.UUID]*plans.Cook{}
+	var order []pgtype.UUID
+	for _, cook := range s.in.Cooks {
+		r, ok := s.recipes[cook.RecipeID]
+		if !ok || cook.Meal == people.MealNone || cook.Date.After(s.in.Date) {
+			continue
+		}
+		if s.in.LeftoverOf != nil && !s.in.LeftoverOf.Matches(cook) {
+			continue
+		}
+		keeps := DefaultLeftoverDays
+		if r.FridgeDays != nil {
+			keeps = int(*r.FridgeDays)
+		}
+		if pantry.DaysTo(cook.Date, s.in.Date) > keeps {
+			continue
+		}
+		if cook.Date.Equal(s.in.Date) && !eatenBefore(p, cook.Meal, snack) {
+			continue
+		}
+		prev, seen := latest[cook.RecipeID]
+		if !seen {
+			order = append(order, cook.RecipeID)
+		}
+		if !seen || cook.Date.After(prev.Date) {
+			latest[cook.RecipeID] = cook
+		}
+	}
+	cooks := make([]*plans.Cook, 0, len(order))
+	for _, id := range order {
+		cooks = append(cooks, latest[id])
+	}
+	return cooks
+}
+
+// eatenBefore reports whether the person eats a shared meal before an
+// eating time of theirs the same day, as both have known times.
+func eatenBefore(p *people.Person, meal people.Meal, et *people.EatingTime) bool {
+	if et == nil || et.TimeOfDay == "" {
+		return false
+	}
+	for _, other := range p.EatingTimes {
+		if other.Meal == meal && other.TimeOfDay != "" && other.TimeOfDay < et.TimeOfDay {
+			return true
+		}
+	}
+	return false
 }
 
 // slotTag returns the meal tag of a slot: its shared meal's, or for one

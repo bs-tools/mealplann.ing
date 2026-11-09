@@ -432,10 +432,10 @@ export const KIND_LABELS: Record<ScoreKind, string> = {
   [ScoreKind.NUTRITION]: "Nutrition",
   [ScoreKind.RULES]: "Rules",
   [ScoreKind.KEEPING]: "Keeping",
-  [ScoreKind.FLAVOR]: "Flavor",
   [ScoreKind.VARIETY]: "Variety",
   [ScoreKind.MEAL_TAG]: "Meal",
   [ScoreKind.FAVORITE]: "Favorite",
+  [ScoreKind.LEFTOVER]: "Leftover",
 };
 
 // FormatPoints formats a component's points with their sign, e.g. "+6".

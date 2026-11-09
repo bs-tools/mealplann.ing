@@ -41,7 +41,10 @@ import (
 // SuggestRecipes, but a slot only draws from recipes that break no rule if
 // it has any. Breakfast is a hard constraint: it only draws from the
 // recipes FitsMeal allows, those tagged "breakfast", so it's never a
-// chili.
+// chili. A small meal draws from the recipes tagged "snack" that break no
+// rule, if there are any, and otherwise from the rest of the plan's
+// earlier meals, eaten reheated (see Input.Leftovers), so snacks come
+// first even when repeating one costs variety.
 //
 // The slots are shared meals, and the eating times of one person that eat
 // from no shared meal, like a snack mid-morning. A shared meal's portion
@@ -85,6 +88,9 @@ type PlanSlot struct {
 	EatingTimeID pgtype.UUID
 	// Fixed is the recipe the user chose for the slot, nil to pick one.
 	Fixed *recipes.Recipe
+	// FixedLeftover is the leftover the user chose for a small meal of
+	// one person, nil to pick one. It's planned if the plan has its cook.
+	FixedLeftover *LeftoverRef
 }
 
 // PlanInput is what planning a range of days needs.
@@ -204,6 +210,19 @@ func Plan(in *PlanInput) *PlanResult {
 				p.eligible[tag] = append(p.eligible[tag], r)
 			}
 		}
+		// A small meal takes the snack recipes, if there are any, as the
+		// rest of an earlier meal is the other choice there.
+		if tag == "snack" {
+			var snacks []*recipes.Recipe
+			for _, r := range p.eligible[tag] {
+				if slices.Contains(recipeMealTags(r), "snack") {
+					snacks = append(snacks, r)
+				}
+			}
+			if len(snacks) > 0 {
+				p.eligible[tag] = snacks
+			}
+		}
 	}
 
 	deadline := now().Add(budget)
@@ -259,7 +278,7 @@ func (p *planner) rollout(draw bool) ([]*Suggestion, float64) {
 			continue
 		}
 		ranked := Suggest(st.input(slot, p.candidates(slot)))
-		sg := p.pick(ranked, draw)
+		sg := p.pick(preferred(slot, ranked), draw)
 		if sg == nil {
 			continue
 		}
@@ -270,11 +289,15 @@ func (p *planner) rollout(draw bool) ([]*Suggestion, float64) {
 	return picks, total
 }
 
-// candidates returns the recipes a slot picks from: its fixed recipe, or
-// the input's candidates that its meal tag allows.
+// candidates returns the recipes a slot picks from: its fixed recipe, none
+// for a fixed leftover, or the input's candidates that its meal tag
+// allows.
 func (p *planner) candidates(slot *PlanSlot) []*recipes.Recipe {
-	if slot.Fixed != nil {
+	switch {
+	case slot.Fixed != nil:
 		return []*recipes.Recipe{slot.Fixed}
+	case slot.FixedLeftover != nil:
+		return []*recipes.Recipe{}
 	}
 	return p.eligible[slot.Tag()]
 }
@@ -305,6 +328,27 @@ func (p *planner) pick(ranked []*Suggestion, draw bool) *Suggestion {
 		x -= w
 	}
 	return choices[len(choices)-1]
+}
+
+// preferred returns the suggestions a slot picks from: at a small meal,
+// those of recipes tagged "snack", if any break no rule, and otherwise
+// all of them, leftovers too.
+func preferred(slot *PlanSlot, ranked []*Suggestion) []*Suggestion {
+	if slot.Tag() != "snack" {
+		return ranked
+	}
+	var snacks []*Suggestion
+	fits := false
+	for _, sg := range ranked {
+		if sg.Leftover == nil && slices.Contains(recipeMealTags(sg.Recipe), "snack") {
+			snacks = append(snacks, sg)
+			fits = fits || sg.FitsRules
+		}
+	}
+	if !fits {
+		return ranked
+	}
+	return snacks
 }
 
 // fitting returns the suggestions that break no rule, or all of them if
@@ -340,6 +384,9 @@ func (p *planner) polish(picks []*Suggestion) ([]*PlannedSlot, float64) {
 			}
 		}
 		planned := &PlannedSlot{Slot: slot, Eligible: len(p.candidates(slot))}
+		if slot.FixedLeftover != nil {
+			planned.Eligible = 1
+		}
 		slots[i] = planned
 		if st.filled(slot) {
 			planned.FilledByMeal = true
@@ -352,15 +399,17 @@ func (p *planner) polish(picks []*Suggestion) ([]*PlannedSlot, float64) {
 				planned.Fitting++
 			}
 		}
+		// The pick is kept if it's still among the slot's preferred
+		// suggestions, and a better one that breaks no more rules replaces
+		// it, like a final greedy step.
+		choices := preferred(slot, ranked)
 		var current *Suggestion
-		for _, sg := range ranked {
-			if picks[i] != nil && sg.Recipe == picks[i].Recipe {
+		for _, sg := range choices {
+			if picks[i] != nil && sg.Same(picks[i]) {
 				current = sg
 			}
 		}
-		// A better recipe that breaks no more rules replaces the pick,
-		// like a final greedy step.
-		if best := p.pick(ranked, false); best != nil && (current == nil || (best.Score > current.Score && (best.FitsRules || !current.FitsRules))) {
+		if best := p.pick(choices, false); best != nil && (current == nil || (best.Score > current.Score && (best.FitsRules || !current.FitsRules))) {
 			current = best
 		}
 		if current == nil {
@@ -433,6 +482,9 @@ func (st *state) input(slot *PlanSlot, candidates []*recipes.Recipe) *Input {
 		Foods:        st.p.in.Foods,
 		Lots:         st.p.in.Lots,
 		Weights:      st.p.in.Weights,
+		// A slot of a recipe the user chose takes no leftover.
+		Leftovers:  slot.personal() && slot.Fixed == nil,
+		LeftoverOf: slot.FixedLeftover,
 	}
 }
 
@@ -452,19 +504,35 @@ func (st *state) filled(slot *PlanSlot) bool {
 	return !had || et.Amount.Grams > before.Amount.Grams
 }
 
-// add plans a suggestion at a slot: its cook, its portions, and what they
-// add to their eating times.
+// add plans a suggestion at a slot: its cook, or for a leftover, the
+// servings it adds to the state's cook of it, its portions, and what they
+// add to their eating times. A leftover of a cook the state doesn't have,
+// as another recipe replaced it, isn't planned.
 func (st *state) add(slot *PlanSlot, sg *Suggestion) {
 	r := sg.Recipe
-	cook := &plans.Cook{
-		ID:         store.NewUUID(),
-		RecipeID:   r.ID,
-		RecipeName: r.Name,
-		Date:       slot.Date,
-		Servings:   sg.CookServings,
-		Meal:       slot.Meal,
+	var cook *plans.Cook
+	if ref := sg.LeftoverRef(); ref != nil {
+		i := slices.IndexFunc(st.cooks, ref.Matches)
+		if i < 0 {
+			return
+		}
+		// The cook is copied, as the input's and other states share it;
+		// the slice is the state's own.
+		grown := *st.cooks[i]
+		grown.Servings += sg.CookServings
+		st.cooks[i] = &grown
+		cook = &grown
+	} else {
+		cook = &plans.Cook{
+			ID:         store.NewUUID(),
+			RecipeID:   r.ID,
+			RecipeName: r.Name,
+			Date:       slot.Date,
+			Servings:   sg.CookServings,
+			Meal:       slot.Meal,
+		}
+		st.cooks = append(st.cooks, cook)
 	}
-	st.cooks = append(st.cooks, cook)
 	// The planned eating times are copied before the first change, once
 	// per state.
 	if !st.owned {
@@ -485,7 +553,7 @@ func (st *state) add(slot *PlanSlot, sg *Suggestion) {
 			CookID:       cook.ID,
 			Servings:     portion.Servings,
 			Name:         r.Name,
-			CookDate:     slot.Date,
+			CookDate:     cook.Date,
 			CookRecipeID: r.ID,
 		})
 		et := &rules.EatingTime{}
