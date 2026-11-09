@@ -30,6 +30,7 @@ import { formatVolume, formatWeight } from "helpers/measures";
 import { formatAmount, nutrientInfoOf } from "helpers/nutrients";
 import { useUnitSystem } from "helpers/user";
 import React from "react";
+import { Link } from "react-router";
 
 interface WarningListProps {
   warnings: Warning[];
@@ -90,6 +91,33 @@ const portionAmount = (portion: PlannedPortion, system: UnitSystem): string => {
   return parts.join(" · ");
 };
 
+/**
+ * PortionPath returns the page of what a portion or staple is: its recipe,
+ * or its food.
+ */
+export const portionPath = (portion: PlannedPortion): string => {
+  if (portion.recipeId !== "") {
+    return `/recipes/${portion.recipeId}`;
+  }
+  return `/foods/${portion.foodId}`;
+};
+
+/**
+ * PortionName names a portion or staple, linking to its recipe or food, for
+ * more about it.
+ */
+export const PortionName: React.FC<{ portion: PlannedPortion }> = ({
+  portion,
+}) => (
+  <Link
+    to={portionPath(portion)}
+    className="hover:underline"
+    title={`See ${portion.name}`}
+  >
+    {portion.name}
+  </Link>
+);
+
 interface PortionRowProps {
   portion: PlannedPortion;
   // Whether a mutation is running, which disables the buttons.
@@ -138,7 +166,7 @@ export const PortionRow: React.FC<PortionRowProps> = ({
         <p
           className={`text-sm leading-snug text-gray-900 ${portion.eaten ? "line-through decoration-gray-400" : ""}`}
         >
-          {portion.name}
+          <PortionName portion={portion} />
           {portion.leftover && (
             <span
               className="ml-1 inline-flex items-center gap-0.5 rounded bg-violet-50 px-1 text-[11px] font-medium text-violet-800"

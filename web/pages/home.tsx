@@ -1,4 +1,5 @@
 import Loading from "@components/loading";
+import { PortionName } from "@components/plan/plan-bits";
 import Card from "@components/ui/card";
 import { PageHeader, ProgressBar } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
@@ -124,7 +125,7 @@ const PersonToday: React.FC<PersonTodayProps> = ({ day }) => {
         <ul className="flex flex-col gap-0.5 text-sm">
           {day.eatingTimes.map((planned) => {
             const et = planned.eatingTime;
-            const names = planned.portions.map((portion) => portion.name);
+
             return (
               <li key={et?.id} className="flex gap-2">
                 <span
@@ -133,9 +134,22 @@ const PersonToday: React.FC<PersonTodayProps> = ({ day }) => {
                   {et?.name}
                 </span>
                 <span
-                  className={`min-w-0 ${names.length === 0 ? "text-gray-400" : "text-gray-900"}`}
+                  className={`min-w-0 ${planned.portions.length === 0 ? "text-gray-400" : "text-gray-900"}`}
                 >
-                  {names.length === 0 ? "Nothing planned" : names.join(", ")}
+                  {planned.portions.length === 0
+                    ? "Nothing planned"
+                    : planned.portions.map((portion, index) => (
+                        <React.Fragment
+                          key={
+                            portion.portionId === ""
+                              ? `staple-${portion.stapleId}`
+                              : portion.portionId
+                          }
+                        >
+                          {index > 0 && ", "}
+                          <PortionName portion={portion} />
+                        </React.Fragment>
+                      ))}
                 </span>
               </li>
             );
