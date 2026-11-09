@@ -1,6 +1,6 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
-import { SelectField, TextField } from "@components/ui/fields";
+import { CheckboxField, SelectField, TextField } from "@components/ui/fields";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
 import {
@@ -14,6 +14,7 @@ import { useMutation } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import type { Person } from "gen/people/v1/people_pb";
+import { HouseholdMeal } from "gen/people/v1/people_pb";
 import {
   createStaple,
   updateStaple,
@@ -22,7 +23,12 @@ import type { Staple, Weekday } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
 import { today } from "helpers/dates";
-import { AMOUNT_UNITS, WEEKDAYS, optionValue } from "helpers/labels";
+import {
+  AMOUNT_UNITS,
+  WEEKDAYS,
+  householdMealLabel,
+  optionValue,
+} from "helpers/labels";
 import { parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
@@ -79,6 +85,14 @@ const StapleDialog: React.FC<StapleDialogProps> = ({
   const [startDate, setStartDate] = useState(staple?.startDate ?? today());
   const [endDate, setEndDate] = useState(staple?.endDate ?? "");
   const [notes, setNotes] = useState(staple?.notes ?? "");
+  const [replacesMeal, setReplacesMeal] = useState(
+    staple?.replacesMeal ?? false
+  );
+  // The shared meal at the eating time, which the staple can replace.
+  const sharedMeal = householdMealLabel(
+    person.eatingTimes.find((et) => et.id === eatingTimeId)?.meal ??
+      HouseholdMeal.UNSPECIFIED
+  );
   const [invalid, setInvalid] = useState("");
 
   const onSuccess = async (): Promise<void> => {
@@ -137,6 +151,7 @@ const StapleDialog: React.FC<StapleDialogProps> = ({
       id: staple?.id ?? "",
       notes,
       personId: person.id,
+      replacesMeal: sharedMeal !== "" && replacesMeal,
       startDate,
       weekdays,
       what: whatMessage,
@@ -155,6 +170,7 @@ const StapleDialog: React.FC<StapleDialogProps> = ({
           "start_date",
           "end_date",
           "notes",
+          "replaces_meal",
         ],
       },
     });
@@ -297,6 +313,13 @@ const StapleDialog: React.FC<StapleDialogProps> = ({
             />
           </label>
         </div>
+        {sharedMeal !== "" && (
+          <CheckboxField
+            label={`Eaten instead of the shared ${sharedMeal.toLowerCase()}, so it's planned for the others only`}
+            checked={replacesMeal}
+            onChange={setReplacesMeal}
+          />
+        )}
         <TextField label="Notes" value={notes} onChange={setNotes} />
         {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
         <ErrorText error={create.error ?? update.error} />

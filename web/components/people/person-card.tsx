@@ -290,6 +290,9 @@ const PersonCard: React.FC<PersonCardProps> = ({
                     <p className="text-xs text-gray-500">
                       {[
                         et?.name ?? "",
+                        staple.replacesMeal && et !== undefined
+                          ? `instead of the shared ${householdMealLabel(et.meal).toLowerCase()}`
+                          : "",
                         formatWeekdays(staple.weekdays),
                         ...dates,
                       ]

@@ -166,9 +166,9 @@ order by portions.date, portions.create_time, portions.id;
 
 -- name: CreateStaple :execrows
 insert into staples (
-  id, household_id, person_id, eating_time_id, recipe_id, servings, food_id, amount, unit, weekdays, start_date, end_date, notes
+  id, household_id, person_id, eating_time_id, recipe_id, servings, food_id, amount, unit, weekdays, start_date, end_date, notes, replaces_meal
 ) values (
-  @id, @household_id, @person_id, @eating_time_id, @recipe_id, @servings, @food_id, @amount, @unit, @weekdays, @start_date, @end_date, @notes
+  @id, @household_id, @person_id, @eating_time_id, @recipe_id, @servings, @food_id, @amount, @unit, @weekdays, @start_date, @end_date, @notes, @replaces_meal
 );
 
 -- name: UpdateStaple :execrows
@@ -184,6 +184,7 @@ update staples set
   start_date = @start_date,
   end_date = @end_date,
   notes = @notes,
+  replaces_meal = @replaces_meal,
   update_time = now()
 where id = @id and household_id = @household_id;
 

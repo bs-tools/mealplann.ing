@@ -35,8 +35,8 @@ export const stapleOccursOn = (staple: Staple, date: string): boolean => {
 };
 
 /**
- * StaplesAt returns the staples a person eats at their eating time for a
- * shared meal on a date, which they have instead of the meal.
+ * StaplesAt returns the staples a person eats instead of a shared meal on a
+ * date, at their eating time for it: those that replace the meal.
  */
 export const staplesAt = (
   staples: Staple[],
@@ -49,6 +49,7 @@ export const staplesAt = (
   );
   return staples.filter(
     (staple) =>
+      staple.replacesMeal &&
       staple.personId === person.id &&
       eatingTimes.has(staple.eatingTimeId) &&
       stapleOccursOn(staple, date)

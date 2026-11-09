@@ -311,9 +311,9 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 	}.Build(), nil
 }
 
-// stapledAt returns the staples a person has at their eating time for a
-// shared meal on a date: what they always have there, like their own
-// breakfast.
+// stapledAt returns the staples a person has instead of a shared meal on
+// a date, at their eating time for it: those that replace the meal, like
+// their own breakfast, not those had with it, like a cup of tea.
 func stapledAt(staples []*plans.Staple, p *people.Person, meal people.Meal, date time.Time) []*plans.Staple {
 	var found []*plans.Staple
 	for _, et := range p.EatingTimes {
@@ -321,7 +321,7 @@ func stapledAt(staples []*plans.Staple, p *people.Person, meal people.Meal, date
 			continue
 		}
 		for _, s := range staples {
-			if s.PersonID == p.ID && s.EatingTimeID == et.ID && s.OccursOn(date) {
+			if s.ReplacesMeal && s.PersonID == p.ID && s.EatingTimeID == et.ID && s.OccursOn(date) {
 				found = append(found, s)
 			}
 		}
@@ -330,7 +330,7 @@ func stapledAt(staples []*plans.Staple, p *people.Person, meal people.Meal, date
 }
 
 // withoutStapled returns the people who eat a shared meal on a date but
-// have no staple at it: those with one eat their staple instead, so the
+// have no staple that replaces it: those with one eat it instead, so the
 // meal isn't planned for them. It also returns the names of the staples
 // of those left out.
 func withoutStapled(eaters []*people.Person, staples []*plans.Staple, meal people.Meal, date time.Time) ([]*people.Person, []string) {
@@ -352,10 +352,10 @@ func withoutStapled(eaters []*people.Person, staples []*plans.Staple, meal peopl
 }
 
 // allStapled says that everyone who eats a shared meal on a date has a
-// staple at it, so it's not planned for anyone.
+// staple that replaces it, so it's not planned for anyone.
 func allStapled(meal people.Meal, date time.Time) error {
 	return connect.Errorf(connect.CodeFailedPrecondition,
-		"everyone who eats the shared %s on %s has a staple at it, which they eat instead: skip a staple on that date with SkipStaple, or give person_ids to plan the meal for them too",
+		"everyone who eats the shared %s on %s has a staple that replaces it, which they eat instead: skip a staple on that date with SkipStaple, or give person_ids to plan the meal for them too",
 		meal, store.FormatDate(date))
 }
 

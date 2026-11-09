@@ -12,9 +12,10 @@ import (
 	suggestionsv1 "github.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1"
 )
 
-// TestSharedMealsSkipStapled checks that people with a staple at a shared
-// meal eat it instead: the meal is planned and suggested for the others,
-// and is planned already if everyone has one.
+// TestSharedMealsSkipStapled checks that people with a staple that
+// replaces a shared meal eat it instead: the meal is planned and suggested
+// for the others, and is planned already if everyone has one. A staple had
+// with the meal, like tea, leaves its person in it.
 func TestSharedMealsSkipStapled(t *testing.T) {
 	t.Parallel()
 	e := newEnv(t)
@@ -39,9 +40,18 @@ func TestSharedMealsSkipStapled(t *testing.T) {
 	// Ben has his own breakfast every day, but Wednesday, when he skips it.
 	staple, err := e.plans.CreateStaple(ctx, plansv1.CreateStapleRequest_builder{Staple: plansv1.Staple_builder{
 		PersonId: b.GetId(), EatingTimeId: eatingTimeID(t, b, "Breakfast"),
-		Food: plansv1.FoodAmount_builder{FoodId: oats.GetId(), Amount: 60, Unit: grams}.Build(),
+		Food:         plansv1.FoodAmount_builder{FoodId: oats.GetId(), Amount: 60, Unit: grams}.Build(),
+		ReplacesMeal: true,
 	}.Build()}.Build())
 	if err != nil {
+		t.Fatalf("CreateStaple: %v", err)
+	}
+	// Cleo has tea with her breakfast, which doesn't replace it.
+	tea := customFood(t, e, "Tea", 1, 0, 0, 0, 0, nil)
+	if _, err := e.plans.CreateStaple(ctx, plansv1.CreateStapleRequest_builder{Staple: plansv1.Staple_builder{
+		PersonId: cleo.GetId(), EatingTimeId: eatingTimeID(t, cleo, "Breakfast"),
+		Food: plansv1.FoodAmount_builder{FoodId: tea.GetId(), Amount: 250, Unit: grams}.Build(),
+	}.Build()}.Build()); err != nil {
 		t.Fatalf("CreateStaple: %v", err)
 	}
 	if _, err := e.plans.SkipStaple(ctx, plansv1.SkipStapleRequest_builder{Id: staple.GetStaple().GetId(), Date: wednesday}.Build()); err != nil {
@@ -108,7 +118,8 @@ func TestSharedMealsSkipStapled(t *testing.T) {
 	// already, and planning it fails, saying why.
 	if _, err := e.plans.CreateStaple(ctx, plansv1.CreateStapleRequest_builder{Staple: plansv1.Staple_builder{
 		PersonId: cleo.GetId(), EatingTimeId: eatingTimeID(t, cleo, "Breakfast"),
-		Food: plansv1.FoodAmount_builder{FoodId: oats.GetId(), Amount: 50, Unit: grams}.Build(),
+		Food:         plansv1.FoodAmount_builder{FoodId: oats.GetId(), Amount: 50, Unit: grams}.Build(),
+		ReplacesMeal: true,
 	}.Build()}.Build()); err != nil {
 		t.Fatalf("CreateStaple: %v", err)
 	}

@@ -82,8 +82,8 @@ export type SuggestRecipesRequest = Message<"suggestions.v1.SuggestRecipesReques
 
   /**
    * For a shared meal, the people who eat it, each of whom must have an
-   * eating time for it. Empty for everyone who does and has no staple at it
-   * that day. Ignored for an eating time.
+   * eating time for it. Empty for everyone who does and has no staple that
+   * replaces it that day. Ignored for an eating time.
    *
    * @generated from field: repeated string person_ids = 4;
    */
@@ -1027,8 +1027,9 @@ export const SuggestionService: GenService<{
    * slots planned before, keeps the best plan, and then improves each slot
    * given all the others. Slots that already have a cook of their meal
    * aren't planned again, nor are eating times with portions or staples. A
-   * shared meal leaves out the people with a staple at it that day, who
-   * eat that instead, and is planned already if everyone has one.
+   * shared meal leaves out the people with a staple that replaces it that
+   * day (see Staple.replaces_meal), who eat that instead, and is planned
+   * already if everyone has one.
    * An eating time where the rest of a shared meal of the plan is eaten,
    * as it's more than the person's max_portion_grams, isn't planned
    * either. A slot only gets a recipe that breaks someone's rules if every
