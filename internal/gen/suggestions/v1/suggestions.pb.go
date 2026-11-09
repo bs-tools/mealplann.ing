@@ -2026,8 +2026,10 @@ func (x *SuggestPlanResponse) SetRecipeCount(v int32) {
 type SuggestPlanResponse_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// Every slot of the days, by date: the shared meals, in order, then the
-	// eating times of one person, by person and in the order of their day.
+	// Every slot of the days, by date, each day's in the order they're
+	// eaten: one person's eating time where it is in their day, like a
+	// snack between breakfast and lunch, and a shared meal where its eaters
+	// eat it.
 	Slots []*PlanSlot
 	// The plan's score: the sum of its slots'.
 	Score float64
