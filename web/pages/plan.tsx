@@ -502,7 +502,10 @@ const PlanPage: React.FC = () => {
           portion={editing.portion}
           people={people.data?.people ?? []}
           dates={dates}
-          cooks={week.data?.cooks ?? []}
+          cooks={[
+            ...(week.data?.earlierLeftovers ?? []),
+            ...(week.data?.cooks ?? []),
+          ]}
           onClose={() => {
             setEditing(null);
           }}

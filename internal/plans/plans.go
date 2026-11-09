@@ -1013,3 +1013,21 @@ func orZero(v *float64) float64 {
 	}
 	return *v
 }
+
+// ListLeftoverCooks lists a household's cooks before a date, from up to 14
+// days before it, whose leftovers still keep in the fridge on it, by their
+// recipe's fridge days, by date.
+func (r *Repository) ListLeftoverCooks(ctx context.Context, householdID pgtype.UUID, before time.Time) ([]*Cook, error) {
+	rows, err := gen.New(r.db).ListLeftoverCooks(ctx, &gen.ListLeftoverCooksParams{HouseholdID: householdID, Before: store.DateToPG(before)})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list leftover cooks: %w", err)
+	}
+	cooks := make([]*Cook, 0, len(rows))
+	for _, row := range rows {
+		cooks = append(cooks, cookFromDB(&gen.ListCooksRow{
+			Cook: row.Cook, RecipeName: row.RecipeName, AssignedServings: row.AssignedServings,
+			LateServings: row.LateServings, SuppliedServings: row.SuppliedServings,
+		}))
+	}
+	return cooks, nil
+}

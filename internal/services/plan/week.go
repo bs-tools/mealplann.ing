@@ -467,6 +467,7 @@ func (d *planData) plannedCook(c *plans.Cook) *plansv1.PlannedCook {
 		Cook:             cookToProto(c),
 		AssignedServings: round(assigned),
 		Warnings:         warnings,
+		LeftServings:     round(max(leftServings(c), 0)),
 	}.Build()
 }
 

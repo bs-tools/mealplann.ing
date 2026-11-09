@@ -564,6 +564,86 @@ func (q *Queries) ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) 
 	return items, nil
 }
 
+const listLeftoverCooks = `-- name: ListLeftoverCooks :many
+select
+  cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings, cooks.off_plan_servings,
+  r.name as recipe_name,
+  coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
+  coalesce((
+    select sum(p.servings) from portions p
+    where p.cook_id = cooks.id and p.date > cooks.date + r.fridge_days
+  ), 0)::double precision as late_servings,
+  coalesce((
+    select sum(ri.amount * cc.servings / cr.servings)
+    from cook_supplies s
+    join cooks cc on cc.id = s.consumer_cook_id
+    join recipes cr on cr.id = cc.recipe_id
+    join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+    where s.supplier_cook_id = cooks.id
+  ), 0)::double precision as supplied_servings
+from cooks
+join recipes r on r.id = cooks.recipe_id
+where cooks.household_id = $1
+  and cooks.date < $2::date
+  and cooks.date >= $2::date - 14
+  and r.fridge_days is not null
+  and cooks.date + r.fridge_days >= $2::date
+order by cooks.date, cooks.create_time, cooks.id
+`
+
+type ListLeftoverCooksParams struct {
+	HouseholdID pgtype.UUID
+	Before      pgtype.Date
+}
+
+type ListLeftoverCooksRow struct {
+	Cook             Cook
+	RecipeName       string
+	AssignedServings float64
+	LateServings     float64
+	SuppliedServings float64
+}
+
+// The household's cooks before a date, from up to 14 days before it, whose
+// leftovers still keep in the fridge on it, by the recipe's fridge_days,
+// with what ListCooks reads of them, to plan their leftovers.
+func (q *Queries) ListLeftoverCooks(ctx context.Context, arg *ListLeftoverCooksParams) ([]*ListLeftoverCooksRow, error) {
+	rows, err := q.db.Query(ctx, listLeftoverCooks, arg.HouseholdID, arg.Before)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListLeftoverCooksRow
+	for rows.Next() {
+		var i ListLeftoverCooksRow
+		if err := rows.Scan(
+			&i.Cook.ID,
+			&i.Cook.HouseholdID,
+			&i.Cook.RecipeID,
+			&i.Cook.Date,
+			&i.Cook.Servings,
+			&i.Cook.Meal,
+			&i.Cook.Notes,
+			&i.Cook.Done,
+			&i.Cook.CreateTime,
+			&i.Cook.UpdateTime,
+			&i.Cook.FrozenServings,
+			&i.Cook.OffPlanServings,
+			&i.RecipeName,
+			&i.AssignedServings,
+			&i.LateServings,
+			&i.SuppliedServings,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPortions = `-- name: ListPortions :many
 select
   portions.id, portions.household_id, portions.person_id, portions.eating_time_id, portions.date, portions.cook_id, portions.servings, portions.food_id, portions.amount, portions.unit, portions.notes, portions.create_time, portions.update_time,
