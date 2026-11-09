@@ -16,6 +16,7 @@ import {
   ArrowTopRightOnSquareIcon,
   ChartBarIcon,
   ExclamationTriangleIcon,
+  DocumentDuplicateIcon,
   PencilIcon,
   PlayIcon,
   TrashIcon,
@@ -148,6 +149,14 @@ const RecipePage: React.FC = () => {
             <Link to={`/recipes/${recipe.id}/edit`} className={secondaryButton}>
               <PencilIcon className="size-4" aria-hidden="true" />
               Edit
+            </Link>
+            <Link
+              to={`/recipes/new?from=${recipe.id}`}
+              className={secondaryButton}
+              title="Start a new recipe from this one, to make a variation of it"
+            >
+              <DocumentDuplicateIcon className="size-4" aria-hidden="true" />
+              Duplicate
             </Link>
             <Link
               to={`/recipes/${recipe.id}/timeline`}

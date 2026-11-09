@@ -571,6 +571,11 @@ const StepEditor: React.FC<StepEditorProps> = ({
 interface RecipeFormProps {
   // The recipe to edit, or undefined for a new one.
   recipe?: Recipe | undefined;
+  /*
+   * A recipe to start a new one from, as a copy to vary, which stays as it
+   * is. Only for a new recipe.
+   */
+  copyOf?: Recipe | undefined;
   // The tags of the household's recipes, to reuse.
   allTags: string[];
 }
@@ -580,23 +585,27 @@ interface RecipeFormProps {
  * household's foods, its steps and its tags. It goes to the recipe once
  * saved.
  */
-const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
+const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [name, setName] = useState(recipe?.name ?? "");
-  const [description, setDescription] = useState(recipe?.description ?? "");
-  const [servings, setServings] = useState(
-    recipe === undefined ? "4" : String(recipe.servings)
+  // The recipe the fields start from: the one edited, or the one copied.
+  const source = recipe ?? copyOf;
+  const [name, setName] = useState(
+    recipe?.name ?? (copyOf === undefined ? "" : `${copyOf.name} (copy)`)
   );
-  const [prep, setPrep] = useState(hoursMinutesInput(recipe?.prepSeconds ?? 0));
-  const [cook, setCook] = useState(hoursMinutesInput(recipe?.cookSeconds ?? 0));
+  const [description, setDescription] = useState(source?.description ?? "");
+  const [servings, setServings] = useState(
+    source === undefined ? "4" : String(source.servings)
+  );
+  const [prep, setPrep] = useState(hoursMinutesInput(source?.prepSeconds ?? 0));
+  const [cook, setCook] = useState(hoursMinutesInput(source?.cookSeconds ?? 0));
   /*
    * The ingredients and steps as they were, which keep the keys the
    * steps refer to ingredients and other steps by.
    */
   const [initial] = useState(() => {
-    const initialIngredients = ingredientInputs(recipe);
-    const initialSteps = stepInputs(recipe, initialIngredients);
+    const initialIngredients = ingredientInputs(source);
+    const initialSteps = stepInputs(source, initialIngredients);
     return {
       ingredients: initialIngredients,
       ingredientsKey: ingredientsKey(initialIngredients),
@@ -606,34 +615,34 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
   });
   const [ingredients, setIngredients] = useState(initial.ingredients);
   const [steps, setSteps] = useState(initial.steps);
-  const [tags, setTags] = useState(recipe?.tags.join(", ") ?? "");
-  const [sourceUrl, setSourceUrl] = useState(recipe?.sourceUrl ?? "");
+  const [tags, setTags] = useState(source?.tags.join(", ") ?? "");
+  const [sourceUrl, setSourceUrl] = useState(source?.sourceUrl ?? "");
   const [fridgeDays, setFridgeDays] = useState(
-    recipe?.fridgeDays === undefined ? "" : String(recipe.fridgeDays)
+    source?.fridgeDays === undefined ? "" : String(source.fridgeDays)
   );
-  const [freezable, setFreezable] = useState(recipe?.freezable ?? false);
+  const [freezable, setFreezable] = useState(source?.freezable ?? false);
   const [freezerDays, setFreezerDays] = useState(
-    recipe?.freezerDays === undefined ? "" : String(recipe.freezerDays)
+    source?.freezerDays === undefined ? "" : String(source.freezerDays)
   );
   const [prepAheadDays, setPrepAheadDays] = useState(
-    recipe === undefined || recipe.prepAheadDays === 0
+    source === undefined || source.prepAheadDays === 0
       ? ""
-      : String(recipe.prepAheadDays)
+      : String(source.prepAheadDays)
   );
   const [prepAheadNote, setPrepAheadNote] = useState(
-    recipe?.prepAheadNote ?? ""
+    source?.prepAheadNote ?? ""
   );
-  const [notes, setNotes] = useState(recipe?.notes ?? "");
-  // What the recipe makes, for recipes using it by weight or volume.
+  const [notes, setNotes] = useState(source?.notes ?? "");
+  // What the source makes, for recipes using it by weight or volume.
   const initialYield =
-    recipe === undefined || recipe.yieldAmount === 0
+    source === undefined || source.yieldAmount === 0
       ? ""
-      : String(recipe.yieldAmount);
+      : String(source.yieldAmount);
   const [yieldAmount, setYieldAmount] = useState(initialYield);
   const [yieldUnit, setYieldUnit] = useState<AmountUnit>(
-    recipe === undefined || recipe.yieldUnit === AmountUnit.UNSPECIFIED
+    source === undefined || source.yieldUnit === AmountUnit.UNSPECIFIED
       ? AmountUnit.GRAMS
-      : recipe.yieldUnit
+      : source.yieldUnit
   );
   const [invalid, setInvalid] = useState("");
 
@@ -859,11 +868,15 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
    * Actions are the form's buttons, at its top and bottom, as a long
    * recipe's bottom is far from its top.
    */
+  let title = recipe === undefined ? "New recipe" : `Edit ${recipe.name}`;
+  if (copyOf !== undefined) {
+    title = `Copy of ${copyOf.name}`;
+  }
   const unchanged = recipe !== undefined && !dirty;
   const actions = (
     <>
       <Link
-        to={recipe === undefined ? "/recipes" : `/recipes/${recipe.id}`}
+        to={source === undefined ? "/recipes" : `/recipes/${source.id}`}
         className={secondaryButton}
       >
         Cancel
@@ -910,10 +923,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
       <UnsavedChangesGuard
         dirty={dirty && !create.isSuccess && !update.isSuccess}
       />
-      <PageHeader
-        title={recipe === undefined ? "New recipe" : `Edit ${recipe.name}`}
-        actions={actions}
-      />
+      <PageHeader title={title} actions={actions} />
       {recipe?.draft === true && (
         <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           This is a draft: it isn&apos;t planned or suggested. Choose a food for
