@@ -28,7 +28,10 @@ const (
 	// eats at once.
 	maxShareServings = 20
 	// maxFoodAmount is the most of a food eaten at once, in its unit.
-	maxFoodAmount       = 5000
+	maxFoodAmount = 5000
+	// maxFoodUses is the most foods a cook marked done can say were used
+	// otherwise than its recipe says.
+	maxFoodUses         = 100
 	maxCookNotesLength  = 2000
 	maxOtherNotesLength = 500
 	// minYear and maxYear bound plan dates, to catch typos like "0226".
