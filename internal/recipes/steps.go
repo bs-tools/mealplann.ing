@@ -31,10 +31,14 @@ type Step struct {
 	// FromStart is whether it starts right away, after no other step.
 	FromStart bool `json:"from_start,omitempty"`
 	// StartOffsetSeconds, if more than 0, is how long after the steps it
-	// follows start it starts, rather than once they're done, like pasta
-	// 10 minutes into a simmer; with no steps to follow, after the recipe
-	// starts.
+	// follows start it starts, from the latest start of them, rather than
+	// once they're done, like pasta 10 minutes into a simmer; with no steps
+	// to follow, after the recipe starts.
 	StartOffsetSeconds int32 `json:"start_offset_seconds,omitempty"`
+	// EndBeforeSeconds, if not nil, is how long before the latest end of
+	// the steps it follows it ends, rather than starting after them, like
+	// the oven preheated 3 minutes before the marinating is done.
+	EndBeforeSeconds *int32 `json:"end_before_seconds,omitempty"`
 }
 
 // Amount returns how much of the ingredient at a position the step uses,
@@ -145,16 +149,23 @@ func (r *Recipe) Timeline() *Timeline {
 		}
 	}
 	// A step's chain is the longest time from its start to the end of the
-	// recipe through the steps that follow it.
+	// recipe through the steps that follow it. link is how long after a
+	// step starts one that follows it starts.
+	link := func(i, j int) int32 {
+		switch {
+		case steps[j].EndBeforeSeconds != nil:
+			return durations[i] - *steps[j].EndBeforeSeconds - durations[j]
+		case steps[j].StartOffsetSeconds > 0:
+			return steps[j].StartOffsetSeconds
+		default:
+			return durations[i]
+		}
+	}
 	chain := make([]int32, n)
 	for i := n - 1; i >= 0; i-- {
 		chain[i] = durations[i]
 		for _, j := range next[i] {
-			link := durations[i]
-			if steps[j].StartOffsetSeconds > 0 {
-				link = steps[j].StartOffsetSeconds
-			}
-			chain[i] = max(chain[i], link+chain[j])
+			chain[i] = max(chain[i], link(i, j)+chain[j])
 		}
 	}
 	scheduled := make([]bool, n)
@@ -163,15 +174,22 @@ func (r *Recipe) Timeline() *Timeline {
 	ready := func(i int) (int32, bool) {
 		offset := steps[i].StartOffsetSeconds
 		at := max(offset, 0)
+		var lastEnd int32
 		for _, dep := range deps[i] {
 			if !scheduled[dep] {
 				return 0, false
 			}
+			lastEnd = max(lastEnd, t.Steps[dep].EndSeconds)
 			if offset > 0 {
 				at = max(at, t.Steps[dep].StartSeconds+offset)
 			} else {
 				at = max(at, t.Steps[dep].EndSeconds)
 			}
+		}
+		// A step ending before the steps it follows end starts its
+		// duration before that, but not before the recipe starts.
+		if before := steps[i].EndBeforeSeconds; before != nil && len(deps[i]) > 0 {
+			at = max(lastEnd-*before-durations[i], 0)
 		}
 		return at, true
 	}

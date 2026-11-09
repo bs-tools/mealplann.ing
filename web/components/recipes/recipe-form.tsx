@@ -28,7 +28,7 @@ import {
   listRecipes,
   updateRecipe,
 } from "gen/recipes/v1/recipes-RecipeService_connectquery";
-import type { Recipe } from "gen/recipes/v1/recipes_pb";
+import type { Recipe, Step } from "gen/recipes/v1/recipes_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
 import { AMOUNT_UNITS } from "helpers/labels";
 import {
@@ -78,10 +78,11 @@ interface StepInput {
   amounts: Record<number, string>;
   start: StepStart;
   /*
-   * How many minutes into the steps it follows it starts, empty to start
-   * once they're done.
+   * How many minutes into the steps it follows it starts, or with
+   * offsetEnd, before they end it ends; empty to start once they're done.
    */
   offsetMinutes: string;
+  offsetEnd: boolean;
 }
 
 // The keys of ingredients and steps added, unique on the page.
@@ -132,6 +133,7 @@ const emptyStep = (): StepInput => ({
   ingredientKeys: [],
   key: newKey(),
   minutes: "",
+  offsetEnd: false,
   offsetMinutes: "",
   section: "",
   start: "previous",
@@ -173,13 +175,22 @@ const stepInputs = (
       ),
       key: keys[index] ?? newKey(),
       minutes: minutesInput(step.durationSeconds),
-      offsetMinutes: minutesInput(step.startOffsetSeconds),
+      offsetEnd: step.endBeforeSeconds !== undefined,
+      offsetMinutes: offsetInput(step),
       section: step.section,
       start,
       text: step.text,
       waiting: step.waiting,
     };
   });
+};
+
+// OffsetInput formats a step's offset to edit, "0" to end as others do.
+const offsetInput = (step: Step): string => {
+  if (step.endBeforeSeconds === undefined) {
+    return minutesInput(step.startOffsetSeconds);
+  }
+  return step.endBeforeSeconds > 0 ? minutesInput(step.endBeforeSeconds) : "0";
 };
 
 // MinutesInput formats seconds as minutes to edit, empty for none.
@@ -192,21 +203,25 @@ const seconds = (minutes: string): number => {
   return Math.round(value * 60);
 };
 
-// StepsToSave are the steps with text, as they're saved.
-const stepsToSave = (
-  steps: StepInput[],
-  ingredients: IngredientInput[]
-): {
+// SavedStep is a step as it's saved.
+interface SavedStep {
   text: string;
   section: string;
   ingredientIndexes: number[];
   ingredientAmounts: number[];
   durationSeconds: number;
   startOffsetSeconds: number;
+  endBeforeSeconds?: number;
   waiting: boolean;
   fromStart: boolean;
   afterStepIndexes: number[];
-}[] => {
+}
+
+// StepsToSave are the steps with text, as they're saved.
+const stepsToSave = (
+  steps: StepInput[],
+  ingredients: IngredientInput[]
+): SavedStep[] => {
   const kept = steps.filter((step) => step.text.trim() !== "");
   const positions = new Map(
     ingredients.map((ingredient, position) => [ingredient.key, position])
@@ -222,7 +237,7 @@ const stepsToSave = (
         : step.start
             .map((key) => kept.findIndex((other) => other.key === key))
             .filter((other) => other >= 0 && other < index);
-    return {
+    const saved: SavedStep = {
       afterStepIndexes: after,
       durationSeconds: seconds(step.minutes),
       fromStart: step.start === "start",
@@ -233,6 +248,12 @@ const stepsToSave = (
       text: step.text.trim(),
       waiting: step.waiting,
     };
+    // A step ending before others needs some to follow.
+    if (step.offsetEnd && step.start !== "start" && index > 0) {
+      saved.endBeforeSeconds = seconds(step.offsetMinutes);
+      saved.startOffsetSeconds = 0;
+    }
+    return saved;
   });
 };
 
@@ -387,9 +408,21 @@ const StepEditor: React.FC<StepEditorProps> = ({
           )}
           <label
             className="flex items-center gap-1.5"
-            title="Start this many minutes into the steps it follows, rather than once they're done, like pasta 10 minutes into a simmer"
+            title="Start this many minutes into the steps it follows, rather than once they're done, like pasta 10 minutes into a simmer; or end this many minutes before they end, like the oven preheated 3 minutes before the marinating is done"
           >
-            <span className="text-gray-600">starting</span>
+            <select
+              aria-label={`How step ${index + 1} is timed`}
+              className={`${inputClass} w-auto! py-1`}
+              value={step.offsetEnd ? "end" : "start"}
+              onChange={(event) => {
+                onChange({ offsetEnd: event.target.value === "end" });
+              }}
+            >
+              <option value="start">starting</option>
+              {index > 0 && step.start !== "start" && (
+                <option value="end">ending</option>
+              )}
+            </select>
             <input
               aria-label={`Minutes in that step ${index + 1} starts`}
               className={`${inputClass} w-14! py-1`}
@@ -400,7 +433,9 @@ const StepEditor: React.FC<StepEditorProps> = ({
                 onChange({ offsetMinutes: event.target.value });
               }}
             />
-            <span className="text-gray-600">min in</span>
+            <span className="text-gray-600">
+              {step.offsetEnd ? "min before it ends" : "min in"}
+            </span>
           </label>
           <input
             aria-label={`Section of step ${index + 1}`}

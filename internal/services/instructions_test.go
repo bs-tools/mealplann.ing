@@ -136,6 +136,9 @@ func TestInstructions(t *testing.T) {
 		Text: "Add", IngredientIndexes: []int32{0, 1}, IngredientAmounts: []float64{10},
 	}.Build()))
 	bad("negative offset", []string{"instructions"}, with(recipesv1.Step_builder{Text: "Go", StartOffsetSeconds: -1}.Build()))
+	bad("both anchors", []string{"instructions"}, with(recipesv1.Step_builder{Text: "Go", StartOffsetSeconds: 60, EndBeforeSeconds: new(int32(60))}.Build()))
+	bad("end before nothing", []string{"instructions"}, with(recipesv1.Step_builder{Text: "Go", FromStart: true, EndBeforeSeconds: new(int32(60))}.Build()))
+	bad("negative end before", []string{"instructions"}, with(recipesv1.Step_builder{Text: "Go", EndBeforeSeconds: new(int32(-1))}.Build()))
 
 	// The lentils are split between two steps, and the second goes in 10
 	// minutes into the first's simmer.
@@ -159,6 +162,29 @@ func TestInstructions(t *testing.T) {
 	}
 	if s := tl.GetSteps(); s[1].GetStartSeconds() != 600 || tl.GetTotalSeconds() != 1200 {
 		t.Errorf("got %v, want the rest added 10 minutes into the simmer", s)
+	}
+
+	// A step can end a while before the one it follows does: the onions
+	// fry to be done 2 minutes before the lentils.
+	ended, err := e.recipes.UpdateRecipe(ctx, recipesv1.UpdateRecipeRequest_builder{
+		Recipe: recipesv1.Recipe_builder{Id: dal.GetId(), Instructions: []*recipesv1.Step{
+			recipesv1.Step_builder{Text: "Simmer the lentils", IngredientIndexes: []int32{1}, DurationSeconds: 1200, Waiting: true}.Build(),
+			recipesv1.Step_builder{Text: "Fry the onions", IngredientIndexes: []int32{2}, DurationSeconds: 480, EndBeforeSeconds: new(int32(120))}.Build(),
+		}}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"instructions"}},
+	}.Build())
+	if err != nil {
+		t.Fatalf("UpdateRecipe: %v", err)
+	}
+	if s := ended.GetRecipe().GetInstructions()[1]; !s.HasEndBeforeSeconds() || s.GetEndBeforeSeconds() != 120 {
+		t.Errorf("got %v, want end_before_seconds 120 back", s)
+	}
+	tl, err = e.recipes.GetRecipeTimeline(ctx, recipesv1.GetRecipeTimelineRequest_builder{Id: dal.GetId()}.Build())
+	if err != nil {
+		t.Fatalf("GetRecipeTimeline: %v", err)
+	}
+	if s := tl.GetSteps()[1]; s.GetStartSeconds() != 600 || s.GetEndSeconds() != 1080 {
+		t.Errorf("got the onions %d–%d s, want 600–1080, 2 minutes before the lentils", s.GetStartSeconds(), s.GetEndSeconds())
 	}
 
 	// Replacing a food keeps the instructions.

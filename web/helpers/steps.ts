@@ -90,8 +90,8 @@ export const stepIngredientAmount = (
 
 /**
  * StepStart says when a step starts, other than after the step before it,
- * e.g. "Can start right away", "After steps 2 and 4" or "10 min into step
- * 3", or "" for the step before it.
+ * e.g. "Can start right away", "After steps 2 and 4", "10 min into step 3"
+ * or "Ends 3 min before step 2 ends", or "" for the step before it.
  */
 export const stepStart = (step: Step, index: number): string => {
   const offset = formatStepDuration(step.startOffsetSeconds);
@@ -100,6 +100,12 @@ export const stepStart = (step: Step, index: number): string => {
       ? step.afterStepIndexes.map((other) => other + 1)
       : [index];
   const steps = `step${after.length > 1 ? "s" : ""} ${after.join(" and ")}`;
+  if (step.endBeforeSeconds !== undefined && !step.fromStart && index > 0) {
+    const before = formatStepDuration(step.endBeforeSeconds);
+    return before === ""
+      ? `Ends as ${steps} ${after.length > 1 ? "end" : "ends"}`
+      : `Ends ${before} before ${steps} ${after.length > 1 ? "end" : "ends"}`;
+  }
   if (step.fromStart || index === 0) {
     if (offset !== "") {
       return `${offset} after starting`;
