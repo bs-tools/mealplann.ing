@@ -66,6 +66,10 @@ type Cook struct {
 	// those its portions eat after the recipe's fridge days come from, and
 	// the rest are in the freezer.
 	FrozenServings float64
+	// OffPlanServings are its servings taken without a portion: eaten
+	// unplanned, given away or thrown out, like a frozen serving grabbed
+	// for a lunch.
+	OffPlanServings float64
 	// RecipeName, AssignedServings, the servings of all its portions,
 	// LateServings, those of its portions eaten after the recipe's fridge
 	// days, and SuppliedServings, those it makes for other cooks, are read,
@@ -395,15 +399,16 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 			_, _ = q.GrowCook(ctx, &gen.GrowCookParams{ID: id, HouseholdID: c.HouseholdID, Servings: c.Servings})
 		} else {
 			_, _ = q.CreateCook(ctx, &gen.CreateCookParams{
-				ID:             id,
-				HouseholdID:    c.HouseholdID,
-				RecipeID:       c.RecipeID,
-				Date:           store.DateToPG(c.Date),
-				Servings:       c.Servings,
-				Meal:           mealToDB(c.Meal),
-				Notes:          c.Notes,
-				Done:           c.Done,
-				FrozenServings: c.FrozenServings,
+				ID:              id,
+				HouseholdID:     c.HouseholdID,
+				RecipeID:        c.RecipeID,
+				Date:            store.DateToPG(c.Date),
+				Servings:        c.Servings,
+				Meal:            mealToDB(c.Meal),
+				Notes:           c.Notes,
+				Done:            c.Done,
+				FrozenServings:  c.FrozenServings,
+				OffPlanServings: c.OffPlanServings,
 			})
 		}
 		p := &gen.CreateCookPortionsParams{HouseholdID: c.HouseholdID, CookID: id}
@@ -521,15 +526,16 @@ func (r *Repository) UpdateCook(ctx context.Context, c *Cook) (*Cook, error) {
 	b.Read(func(db store.Querier) error {
 		var err error
 		updated, err = gen.New(db).UpdateCook(ctx, &gen.UpdateCookParams{
-			ID:             c.ID,
-			HouseholdID:    c.HouseholdID,
-			RecipeID:       c.RecipeID,
-			Date:           store.DateToPG(c.Date),
-			Servings:       c.Servings,
-			Meal:           mealToDB(c.Meal),
-			Notes:          c.Notes,
-			Done:           c.Done,
-			FrozenServings: c.FrozenServings,
+			ID:              c.ID,
+			HouseholdID:     c.HouseholdID,
+			RecipeID:        c.RecipeID,
+			Date:            store.DateToPG(c.Date),
+			Servings:        c.Servings,
+			Meal:            mealToDB(c.Meal),
+			Notes:           c.Notes,
+			Done:            c.Done,
+			FrozenServings:  c.FrozenServings,
+			OffPlanServings: c.OffPlanServings,
 		})
 		return err
 	})
@@ -848,6 +854,7 @@ func cookFromDB(row *gen.ListCooksRow) *Cook {
 		Notes:            c.Notes,
 		Done:             c.Done,
 		FrozenServings:   c.FrozenServings,
+		OffPlanServings:  c.OffPlanServings,
 		RecipeName:       row.RecipeName,
 		AssignedServings: row.AssignedServings,
 		LateServings:     row.LateServings,

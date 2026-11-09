@@ -168,3 +168,79 @@ func TestFreezer(t *testing.T) {
 		t.Errorf("got the other household's freezer %v, want it empty", other.GetLeftovers())
 	}
 }
+
+// TestTakeFromFreezer checks that frozen leftovers can be taken out of the
+// freezer for someone, or off plan, without leaving servings unassigned.
+func TestTakeFromFreezer(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	ben := createPerson(t, e, ben())
+	lentils := customFood(t, e, "Lentils", 116, 9, 20, 1.8, 0.4, nil)
+	created, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
+		Name: "Lentil soup", Servings: 4, Ingredients: []*recipesv1.Ingredient{ingredient(lentils.GetId(), 600, grams)},
+		FridgeDays: new(int32(3)), Freezable: true, FreezerDays: new(int32(60)),
+	}.Build()}.Build())
+	if err != nil {
+		t.Fatalf("CreateRecipe: %v", err)
+	}
+	// A batch from the freezer: 4 servings, all frozen.
+	cook, err := e.plans.CreateCook(ctx, plansv1.CreateCookRequest_builder{
+		Cook:      plansv1.Cook_builder{RecipeId: created.GetRecipe().GetId(), Date: monday, Servings: 4, FrozenServings: 4, Done: true}.Build(),
+		FromStock: true,
+	}.Build())
+	if err != nil {
+		t.Fatalf("CreateCook: %v", err)
+	}
+	id := cook.GetCook().GetId()
+	take := func(servings float64, personID, date string) (*plansv1.TakeFromFreezerResponse, error) {
+		b := plansv1.TakeFromFreezerRequest_builder{CookId: id, Servings: servings, Date: date, PersonId: personID}
+		if personID != "" {
+			b.EatingTimeId = eatingTimeID(t, ben, "Lunch")
+		}
+		return e.plans.TakeFromFreezer(ctx, b.Build())
+	}
+
+	// One for Ben's lunch on Friday, and one eaten without a plan.
+	resp, err := take(1, ben.GetId(), friday)
+	if err != nil {
+		t.Fatalf("TakeFromFreezer for Ben: %v", err)
+	}
+	if resp.GetPortion().GetCook().GetServings() != 1 || resp.GetLeftover().GetRemainingServings() != 3 {
+		t.Errorf("got %v, want a portion, and 3 servings left", resp)
+	}
+	resp, err = take(1, "", "")
+	if err != nil {
+		t.Fatalf("TakeFromFreezer off plan: %v", err)
+	}
+	if got := resp.GetLeftover(); got.GetRemainingServings() != 2 || got.GetCook().GetOffPlanServings() != 1 {
+		t.Errorf("got %v, want 2 servings left, 1 taken off plan", got)
+	}
+	if got := weekWarnings(t, e, monday); slices.Contains(got, plansv1.WarningKind_WARNING_KIND_SERVINGS_UNASSIGNED) {
+		t.Errorf("got warnings %v, want none unassigned", got)
+	}
+
+	// The freezer has only 2, and Tuesday's portion would be from the
+	// fridge.
+	_, err = take(3, "", "")
+	wantCode(t, err, connect.CodeFailedPrecondition)
+	_, err = take(1, ben.GetId(), tuesday)
+	wantCode(t, err, connect.CodeFailedPrecondition)
+	_, err = take(0, "", "")
+	wantCode(t, err, connect.CodeInvalidArgument)
+
+	// Throwing the rest out empties the freezer, with nothing unassigned.
+	if _, err := take(2, "", ""); err != nil {
+		t.Fatalf("TakeFromFreezer: %v", err)
+	}
+	leftovers, err := e.plans.ListFrozenLeftovers(ctx, plansv1.ListFrozenLeftoversRequest_builder{}.Build())
+	if err != nil {
+		t.Fatalf("ListFrozenLeftovers: %v", err)
+	}
+	if len(leftovers.GetLeftovers()) != 0 {
+		t.Errorf("got %v, want an empty freezer", leftovers.GetLeftovers())
+	}
+	if got := weekWarnings(t, e, monday); slices.Contains(got, plansv1.WarningKind_WARNING_KIND_SERVINGS_UNASSIGNED) {
+		t.Errorf("got warnings %v, want none unassigned", got)
+	}
+}

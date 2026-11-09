@@ -8,8 +8,9 @@ import { PantryService } from "./pantry_pb";
  * List the household's pantry: every lot in stock, with its food's name
  * and store section, and how many days it has left, ordered by food
  * name and then by expiry, soonest first. Also the foods always in
- * stock. It can list only some foods, a part of the store, or what to use
- * soon, and leave out the times with summary.
+ * stock. It can list only some foods, by ID or name, a part of the store,
+ * or what to use soon, and return only the main fields of each lot with
+ * summary.
  *
  * @generated from rpc pantry.v1.PantryService.ListPantry
  */

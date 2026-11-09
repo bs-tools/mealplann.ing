@@ -182,12 +182,24 @@ export const unskipStaple = PlanService.method.unskipStaple;
 
 /**
  * List what's in the freezer: the frozen leftovers of cooks (see
- * Cook.frozen_servings) not all planned yet, by the date they were
- * cooked, each with the servings left to plan and the last date they
- * keep. Plan them with CreatePortion, as shares of their cook on any
- * later date, or discard them by setting the cook's frozen_servings to
- * the servings planned.
+ * Cook.frozen_servings) not all planned or taken yet, by the date they
+ * were cooked, each with the servings left and the last date they keep.
+ * Take them out with TakeFromFreezer.
  *
  * @generated from rpc plans.v1.PlanService.ListFrozenLeftovers
  */
 export const listFrozenLeftovers = PlanService.method.listFrozenLeftovers;
+
+/**
+ * Take servings of a cook's frozen leftovers out of the freezer: for a
+ * person's eating time on a date, as a portion of the cook, or off plan,
+ * when they were eaten without being planned, given away or thrown out,
+ * which adds to the cook's off_plan_servings. Either way they're no
+ * longer in the freezer, and don't count as unassigned. Fails with
+ * FAILED_PRECONDITION if the freezer has fewer of them, or a portion's
+ * date isn't after the recipe's fridge_days, when they'd come from the
+ * fridge rather than the freezer.
+ *
+ * @generated from rpc plans.v1.PlanService.TakeFromFreezer
+ */
+export const takeFromFreezer = PlanService.method.takeFromFreezer;
