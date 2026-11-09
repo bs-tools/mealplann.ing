@@ -30,7 +30,9 @@ import {
   deleteCook,
   deletePortion,
   getWeek,
+  listStaples,
   skipStaple,
+  unskipStaple,
   updateCook,
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type { PlannedPortion, UpdateCookResponse } from "gen/plans/v1/plans_pb";
@@ -122,6 +124,9 @@ const PlanPage: React.FC = () => {
   };
   const remove = useMutation(deletePortion, { onSuccess });
   const skip = useMutation(skipStaple, { onSuccess });
+  const unskip = useMutation(unskipStaple, { onSuccess });
+  // The staples, to show those skipped on each day, to bring back.
+  const staples = useQuery(listStaples, {});
   const cookDone = useMutation(updateCook, {
     onSuccess: async (response) => {
       setPantryNote(pantryChangeNote(response));
@@ -132,6 +137,7 @@ const PlanPage: React.FC = () => {
   const pending =
     remove.isPending ||
     skip.isPending ||
+    unskip.isPending ||
     cookDone.isPending ||
     removeCook.isPending;
 
@@ -255,6 +261,10 @@ const PlanPage: React.FC = () => {
             }}
             onSkip={(portion, date) => {
               skip.mutate({ date, id: portion.stapleId });
+            }}
+            staples={staples.data?.staples ?? []}
+            onUnskip={(staple, date) => {
+              unskip.mutate({ date, id: staple.id });
             }}
             onCookDone={(planned, done) => {
               cookDone.mutate({

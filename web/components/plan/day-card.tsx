@@ -23,6 +23,7 @@ import type {
   PlanDay,
   PlannedCook,
   PlannedPortion,
+  Staple,
 } from "gen/plans/v1/plans_pb";
 import { formatDate, formatShortDate } from "helpers/format";
 import { formatServings, householdMealLabel } from "helpers/labels";
@@ -241,6 +242,9 @@ interface DayCardProps {
   onEdit: (slot: Slot, portion: PlannedPortion) => void;
   onDelete: (portion: PlannedPortion) => void;
   onSkip: (portion: PlannedPortion, date: string) => void;
+  // The household's staples, to show those skipped on the day.
+  staples: Staple[];
+  onUnskip: (staple: Staple, date: string) => void;
   onCookDone: (planned: PlannedCook, done: boolean) => void;
   onCookDelete: (planned: PlannedCook) => void;
 }
@@ -262,6 +266,8 @@ const DayCard: React.FC<DayCardProps> = ({
   onEdit,
   onDelete,
   onSkip,
+  staples,
+  onUnskip,
   onCookDone,
   onCookDelete,
 }) => (
@@ -370,6 +376,15 @@ const DayCard: React.FC<DayCardProps> = ({
                       onDelete={onDelete}
                       onSkip={(portion) => {
                         onSkip(portion, day.date);
+                      }}
+                      skipped={staples.filter(
+                        (staple) =>
+                          staple.personId === slot.personId &&
+                          staple.eatingTimeId === slot.eatingTimeId &&
+                          staple.skippedDates.includes(day.date)
+                      )}
+                      onUnskip={(staple) => {
+                        onUnskip(staple, day.date);
                       }}
                     />
                   );

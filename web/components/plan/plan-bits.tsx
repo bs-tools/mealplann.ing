@@ -3,7 +3,6 @@ import { iconButton } from "@components/ui/styles";
 import {
   ArrowUturnLeftIcon,
   ExclamationTriangleIcon,
-  EyeSlashIcon,
   InformationCircleIcon,
   PencilIcon,
   PlusIcon,
@@ -18,6 +17,7 @@ import type {
   PersonDay,
   PlannedEatingTime,
   PlannedPortion,
+  Staple,
   Warning,
 } from "gen/plans/v1/plans_pb";
 import { Severity, WarningKind } from "gen/plans/v1/plans_pb";
@@ -137,13 +137,13 @@ export const PortionRow: React.FC<PortionRowProps> = ({
         {staple ? (
           <button
             type="button"
-            className={iconButton}
+            className="rounded px-1.5 py-1 text-xs font-medium whitespace-nowrap text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50"
             disabled={disabled}
-            aria-label={`Skip ${portion.name} this day`}
-            title="Skip this day"
+            aria-label={`Skip ${portion.name} on this day`}
+            title="Leave it out on this day only. It stays on the other days, and you can bring it back."
             onClick={onSkip}
           >
-            <EyeSlashIcon className="size-4" />
+            Skip today
           </button>
         ) : (
           <>
@@ -215,6 +215,9 @@ interface EatingTimeBlockProps {
   onEdit: (portion: PlannedPortion) => void;
   onDelete: (portion: PlannedPortion) => void;
   onSkip: (portion: PlannedPortion) => void;
+  // The staples skipped at it on its date, which can be brought back.
+  skipped: Staple[];
+  onUnskip: (staple: Staple) => void;
 }
 
 /**
@@ -229,6 +232,8 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
   onEdit,
   onDelete,
   onSkip,
+  skipped,
+  onUnskip,
 }) => {
   const et = planned.eatingTime;
   const main = et?.kind === EatingTimeKind.MAIN;
@@ -303,6 +308,33 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
                 onSkip(portion);
               }}
             />
+          ))}
+        </ul>
+      )}
+      {skipped.length > 0 && (
+        <ul className="mt-1 flex flex-col gap-1">
+          {skipped.map((staple) => (
+            <li
+              key={staple.id}
+              className="flex items-center gap-1 text-sm text-gray-400"
+            >
+              <span className="min-w-0 grow">
+                <span className="line-through">{staple.name}</span>{" "}
+                <span className="text-xs">skipped today</span>
+              </span>
+              <button
+                type="button"
+                className="inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 print:hidden"
+                disabled={disabled}
+                aria-label={`Bring back ${staple.name} on this day`}
+                onClick={() => {
+                  onUnskip(staple);
+                }}
+              >
+                <ArrowUturnLeftIcon className="size-3.5" aria-hidden="true" />
+                Bring back
+              </button>
+            </li>
           ))}
         </ul>
       )}
