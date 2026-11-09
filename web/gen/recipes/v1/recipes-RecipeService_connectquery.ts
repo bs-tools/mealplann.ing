@@ -9,8 +9,7 @@ import { RecipeService } from "./recipes_pb";
  * the steps it follows are done and, if it's hands-on, the cook is free,
  * so hands-on steps fit into waiting time, like chopping while rice
  * simmers. Steps of unknown duration count as 5 minutes, and are marked
- * estimated. A recipe in the old format runs its steps one after the
- * other.
+ * estimated.
  *
  * @generated from rpc recipes.v1.RecipeService.GetRecipeTimeline
  */

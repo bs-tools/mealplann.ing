@@ -416,12 +416,8 @@ type Recipe_builder struct {
 	CookSeconds int32
 	// The ingredients, in the recipe's order. At most 100.
 	Ingredients []*Ingredient
-	// The steps as plain text, in order, each a paragraph without its
-	// number: the old format. For a recipe with instructions, it's their
-	// texts, and writes ignore it: set instructions instead. Recipes without
-	// instructions are still in the old format: rewrite their steps as
-	// instructions (see RecipeService). At most 100, of at most 2000
-	// characters each.
+	// The texts of the instructions, in order: a plain view of them. Set
+	// instructions to change them.
 	Steps []string
 	// Tags to find the recipe by, lowercase, e.g. "breakfast",
 	// "batch-friendly" or "quick". Reuse the tags of other recipes (see
@@ -463,8 +459,7 @@ type Recipe_builder struct {
 	// The steps, in order, with their structure: the ingredients each uses,
 	// how long it takes, whether it's waiting time, and which steps it
 	// follows. Cook mode shows each step with its ingredients and a timer,
-	// and GetRecipeTimeline schedules them. Empty for a recipe still in the
-	// old format of plain steps. At most 100.
+	// and GetRecipeTimeline schedules them. At most 100.
 	Instructions []*Step
 	// What its ingredients cost, from their foods' prices.
 	Cost *RecipeCost
@@ -1304,7 +1299,6 @@ type RecipeSummary struct {
 	xxx_hidden_HasIssues                   bool                   `protobuf:"varint,12,opt,name=has_issues,json=hasIssues,proto3"`
 	xxx_hidden_UpdateTime                  *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=update_time,json=updateTime,proto3"`
 	xxx_hidden_Favorite                    bool                   `protobuf:"varint,14,opt,name=favorite,proto3"`
-	xxx_hidden_HasInstructions             bool                   `protobuf:"varint,15,opt,name=has_instructions,json=hasInstructions,proto3"`
 	xxx_hidden_CostCentsPerServing         int32                  `protobuf:"varint,16,opt,name=cost_cents_per_serving,json=costCentsPerServing,proto3,oneof"`
 	XXX_raceDetectHookData                 protoimpl.RaceDetectHookData
 	XXX_presence                           [1]uint32
@@ -1435,13 +1429,6 @@ func (x *RecipeSummary) GetFavorite() bool {
 	return false
 }
 
-func (x *RecipeSummary) GetHasInstructions() bool {
-	if x != nil {
-		return x.xxx_hidden_HasInstructions
-	}
-	return false
-}
-
 func (x *RecipeSummary) GetCostCentsPerServing() int32 {
 	if x != nil {
 		return x.xxx_hidden_CostCentsPerServing
@@ -1479,17 +1466,17 @@ func (x *RecipeSummary) SetTags(v []string) {
 
 func (x *RecipeSummary) SetEnergyKcalPerServing(v float64) {
 	x.xxx_hidden_EnergyKcalPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 16)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 15)
 }
 
 func (x *RecipeSummary) SetProteinGramsPerServing(v float64) {
 	x.xxx_hidden_ProteinGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 16)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 15)
 }
 
 func (x *RecipeSummary) SetCarbohydrateGramsPerServing(v float64) {
 	x.xxx_hidden_CarbohydrateGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 16)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 15)
 }
 
 func (x *RecipeSummary) SetGramsPerServing(v float64) {
@@ -1508,13 +1495,9 @@ func (x *RecipeSummary) SetFavorite(v bool) {
 	x.xxx_hidden_Favorite = v
 }
 
-func (x *RecipeSummary) SetHasInstructions(v bool) {
-	x.xxx_hidden_HasInstructions = v
-}
-
 func (x *RecipeSummary) SetCostCentsPerServing(v int32) {
 	x.xxx_hidden_CostCentsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 16)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 15)
 }
 
 func (x *RecipeSummary) HasEnergyKcalPerServing() bool {
@@ -1549,7 +1532,7 @@ func (x *RecipeSummary) HasCostCentsPerServing() bool {
 	if x == nil {
 		return false
 	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 15)
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 14)
 }
 
 func (x *RecipeSummary) ClearEnergyKcalPerServing() {
@@ -1572,7 +1555,7 @@ func (x *RecipeSummary) ClearUpdateTime() {
 }
 
 func (x *RecipeSummary) ClearCostCentsPerServing() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 15)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
 	x.xxx_hidden_CostCentsPerServing = 0
 }
 
@@ -1608,8 +1591,6 @@ type RecipeSummary_builder struct {
 	UpdateTime *timestamppb.Timestamp
 	// Whether the household marked the recipe as a favorite.
 	Favorite bool
-	// Whether it has instructions, rather than steps in the old format.
-	HasInstructions bool
 	// What a serving costs, in Canadian cents, from the foods' prices. Unset
 	// if none of its foods have one; a lower bound if some don't (see
 	// Recipe.cost).
@@ -1628,24 +1609,23 @@ func (b0 RecipeSummary_builder) Build() *RecipeSummary {
 	x.xxx_hidden_CookSeconds = b.CookSeconds
 	x.xxx_hidden_Tags = b.Tags
 	if b.EnergyKcalPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 16)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 15)
 		x.xxx_hidden_EnergyKcalPerServing = *b.EnergyKcalPerServing
 	}
 	if b.ProteinGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 16)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 15)
 		x.xxx_hidden_ProteinGramsPerServing = *b.ProteinGramsPerServing
 	}
 	if b.CarbohydrateGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 16)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 15)
 		x.xxx_hidden_CarbohydrateGramsPerServing = *b.CarbohydrateGramsPerServing
 	}
 	x.xxx_hidden_GramsPerServing = b.GramsPerServing
 	x.xxx_hidden_HasIssues = b.HasIssues
 	x.xxx_hidden_UpdateTime = b.UpdateTime
 	x.xxx_hidden_Favorite = b.Favorite
-	x.xxx_hidden_HasInstructions = b.HasInstructions
 	if b.CostCentsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 16)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 15)
 		x.xxx_hidden_CostCentsPerServing = *b.CostCentsPerServing
 	}
 	return m0
@@ -1969,14 +1949,13 @@ func (b0 GetRecipeResponse_builder) Build() *GetRecipeResponse {
 }
 
 type ListRecipesRequest struct {
-	state                          protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Query               string                 `protobuf:"bytes,1,opt,name=query,proto3"`
-	xxx_hidden_Tags                []string               `protobuf:"bytes,2,rep,name=tags,proto3"`
-	xxx_hidden_FavoritesOnly       bool                   `protobuf:"varint,3,opt,name=favorites_only,json=favoritesOnly,proto3"`
-	xxx_hidden_FoodIds             []string               `protobuf:"bytes,4,rep,name=food_ids,json=foodIds,proto3"`
-	xxx_hidden_WithoutInstructions bool                   `protobuf:"varint,5,opt,name=without_instructions,json=withoutInstructions,proto3"`
-	unknownFields                  protoimpl.UnknownFields
-	sizeCache                      protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Query         string                 `protobuf:"bytes,1,opt,name=query,proto3"`
+	xxx_hidden_Tags          []string               `protobuf:"bytes,2,rep,name=tags,proto3"`
+	xxx_hidden_FavoritesOnly bool                   `protobuf:"varint,3,opt,name=favorites_only,json=favoritesOnly,proto3"`
+	xxx_hidden_FoodIds       []string               `protobuf:"bytes,4,rep,name=food_ids,json=foodIds,proto3"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *ListRecipesRequest) Reset() {
@@ -2032,13 +2011,6 @@ func (x *ListRecipesRequest) GetFoodIds() []string {
 	return nil
 }
 
-func (x *ListRecipesRequest) GetWithoutInstructions() bool {
-	if x != nil {
-		return x.xxx_hidden_WithoutInstructions
-	}
-	return false
-}
-
 func (x *ListRecipesRequest) SetQuery(v string) {
 	x.xxx_hidden_Query = v
 }
@@ -2053,10 +2025,6 @@ func (x *ListRecipesRequest) SetFavoritesOnly(v bool) {
 
 func (x *ListRecipesRequest) SetFoodIds(v []string) {
 	x.xxx_hidden_FoodIds = v
-}
-
-func (x *ListRecipesRequest) SetWithoutInstructions(v bool) {
-	x.xxx_hidden_WithoutInstructions = v
 }
 
 type ListRecipesRequest_builder struct {
@@ -2074,9 +2042,6 @@ type ListRecipesRequest_builder struct {
 	// only through a component recipe aren't listed: the component is. Empty
 	// to list all. At most 100.
 	FoodIds []string
-	// Only list recipes still in the old format of plain steps, without
-	// instructions, e.g. to rewrite them.
-	WithoutInstructions bool
 }
 
 func (b0 ListRecipesRequest_builder) Build() *ListRecipesRequest {
@@ -2087,7 +2052,6 @@ func (b0 ListRecipesRequest_builder) Build() *ListRecipesRequest {
 	x.xxx_hidden_Tags = b.Tags
 	x.xxx_hidden_FavoritesOnly = b.FavoritesOnly
 	x.xxx_hidden_FoodIds = b.FoodIds
-	x.xxx_hidden_WithoutInstructions = b.WithoutInstructions
 	return m0
 }
 
@@ -2251,7 +2215,8 @@ type UpdateRecipeRequest_builder struct {
 	// update_mask.
 	Recipe *Recipe
 	// The fields to update, e.g. "name,servings". If empty, all fields are
-	// replaced. Lists, like ingredients and steps, are replaced as a whole.
+	// replaced. Lists, like ingredients and instructions, are replaced as a
+	// whole.
 	UpdateMask *fieldmaskpb.FieldMask
 }
 
@@ -2600,7 +2565,7 @@ func (x *TimedStep) SetSection(v string) {
 type TimedStep_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The index of the step in the recipe's instructions, or its steps.
+	// The index of the step in the recipe's instructions.
 	StepIndex int32
 	// The step's text.
 	Text string
@@ -3123,7 +3088,7 @@ var File_recipes_v1_recipes_proto protoreflect.FileDescriptor
 const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\n" +
 	"\x18recipes/v1/recipes.proto\x12\n" +
-	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xf9\x06\n" +
+	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\x81\a\n" +
 	"\x06Recipe\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -3131,8 +3096,8 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\bservings\x18\x04 \x01(\x05R\bservings\x12!\n" +
 	"\fprep_seconds\x18\x05 \x01(\x05R\vprepSeconds\x12!\n" +
 	"\fcook_seconds\x18\x06 \x01(\x05R\vcookSeconds\x128\n" +
-	"\vingredients\x18\a \x03(\v2\x16.recipes.v1.IngredientR\vingredients\x12\x14\n" +
-	"\x05steps\x18\b \x03(\tR\x05steps\x12\x12\n" +
+	"\vingredients\x18\a \x03(\v2\x16.recipes.v1.IngredientR\vingredients\x12\x1c\n" +
+	"\x05steps\x18\b \x03(\tB\x06\xaa\x9f\x19\x02\b\x01R\x05steps\x12\x12\n" +
 	"\x04tags\x18\t \x03(\tR\x04tags\x12\x1d\n" +
 	"\n" +
 	"source_url\x18\n" +
@@ -3199,7 +3164,7 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\afood_id\x18\x02 \x01(\tR\x06foodId\x12\x1b\n" +
 	"\tfood_name\x18\x03 \x01(\tR\bfoodName\x12%\n" +
 	"\x0eunknown_weight\x18\x04 \x01(\bR\runknownWeight\x12+\n" +
-	"\x11unknown_nutrients\x18\x05 \x03(\tR\x10unknownNutrients\"\x92\x06\n" +
+	"\x11unknown_nutrients\x18\x05 \x03(\tR\x10unknownNutrients\"\xff\x05\n" +
 	"\rRecipeSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -3217,13 +3182,12 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"has_issues\x18\f \x01(\bR\thasIssues\x12;\n" +
 	"\vupdate_time\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"updateTime\x12\x1a\n" +
-	"\bfavorite\x18\x0e \x01(\bR\bfavorite\x12)\n" +
-	"\x10has_instructions\x18\x0f \x01(\bR\x0fhasInstructions\x128\n" +
+	"\bfavorite\x18\x0e \x01(\bR\bfavorite\x128\n" +
 	"\x16cost_cents_per_serving\x18\x10 \x01(\x05H\x03R\x13costCentsPerServing\x88\x01\x01B\x1a\n" +
 	"\x18_energy_kcal_per_servingB\x1c\n" +
 	"\x1a_protein_grams_per_servingB!\n" +
 	"\x1f_carbohydrate_grams_per_servingB\x19\n" +
-	"\x17_cost_cents_per_serving\"`\n" +
+	"\x17_cost_cents_per_servingJ\x04\b\x0f\x10\x10R\x10has_instructions\"`\n" +
 	"\x13CreateRecipeRequest\x12*\n" +
 	"\x06recipe\x18\x01 \x01(\v2\x12.recipes.v1.RecipeR\x06recipe\x12\x1d\n" +
 	"\n" +
@@ -3235,13 +3199,12 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\asummary\x18\x03 \x01(\bR\asummary\"?\n" +
 	"\x11GetRecipeResponse\x12*\n" +
-	"\x06recipe\x18\x01 \x01(\v2\x12.recipes.v1.RecipeR\x06recipe\"\xb3\x01\n" +
+	"\x06recipe\x18\x01 \x01(\v2\x12.recipes.v1.RecipeR\x06recipe\"\x9c\x01\n" +
 	"\x12ListRecipesRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x12\n" +
 	"\x04tags\x18\x02 \x03(\tR\x04tags\x12%\n" +
 	"\x0efavorites_only\x18\x03 \x01(\bR\rfavoritesOnly\x12\x19\n" +
-	"\bfood_ids\x18\x04 \x03(\tR\afoodIds\x121\n" +
-	"\x14without_instructions\x18\x05 \x01(\bR\x13withoutInstructions\"^\n" +
+	"\bfood_ids\x18\x04 \x03(\tR\afoodIdsJ\x04\b\x05\x10\x06R\x14without_instructions\"^\n" +
 	"\x13ListRecipesResponse\x123\n" +
 	"\arecipes\x18\x01 \x03(\v2\x19.recipes.v1.RecipeSummaryR\arecipes\x12\x12\n" +
 	"\x04tags\x18\x02 \x03(\tR\x04tags\"~\n" +

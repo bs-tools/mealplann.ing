@@ -32,7 +32,7 @@ func TestLookups(t *testing.T) {
 			ingredients = append(ingredients, ingredient(f.GetId(), 100, grams))
 		}
 		resp, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
-			Name: name, Servings: 2, Ingredients: ingredients, Steps: []string{"Cook it."},
+			Name: name, Servings: 2, Ingredients: ingredients, Instructions: []*recipesv1.Step{recipesv1.Step_builder{Text: "Cook it."}.Build()},
 		}.Build()}.Build())
 		if err != nil {
 			t.Fatalf("CreateRecipe: %v", err)

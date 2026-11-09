@@ -64,11 +64,7 @@ type Recipe struct {
 	PrepSeconds int32
 	CookSeconds int32
 	Ingredients []*Ingredient
-	// Steps are the steps as plain texts: the old format, or the texts of
-	// Instructions.
-	Steps []string
-	// Instructions are the steps with their structure, nil for a recipe
-	// still in the old format.
+	// Instructions are the steps with their structure.
 	Instructions []*Step
 	Tags         []string
 	SourceURL    string
@@ -332,7 +328,6 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			Servings:      recipe.Servings,
 			PrepSeconds:   recipe.PrepSeconds,
 			CookSeconds:   recipe.CookSeconds,
-			Steps:         nonNil(recipe.Steps),
 			Instructions:  instructions,
 			Tags:          nonNil(recipe.Tags),
 			SourceURL:     recipe.SourceURL,
@@ -396,9 +391,6 @@ type ListFilter struct {
 	// FoodIDs are foods the recipes have any of as an ingredient, empty
 	// for any.
 	FoodIDs []pgtype.UUID
-	// WithoutInstructions is whether to list only recipes still in the old
-	// format of plain steps.
-	WithoutInstructions bool
 }
 
 // NameMatch is a recipe found by name.
@@ -432,12 +424,11 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, f
 	b.Read(func(db store.Querier) error {
 		var err error
 		rows, err = gen.New(db).ListRecipes(ctx, &gen.ListRecipesParams{
-			HouseholdID:         householdID,
-			Query:               filter.Query,
-			Tags:                nonNil(filter.Tags),
-			FavoritesOnly:       filter.FavoritesOnly,
-			FoodIds:             nonNil(filter.FoodIDs),
-			WithoutInstructions: filter.WithoutInstructions,
+			HouseholdID:   householdID,
+			Query:         filter.Query,
+			Tags:          nonNil(filter.Tags),
+			FavoritesOnly: filter.FavoritesOnly,
+			FoodIds:       nonNil(filter.FoodIDs),
 		})
 		return err
 	})
@@ -557,7 +548,6 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			Servings:      recipe.Servings,
 			PrepSeconds:   recipe.PrepSeconds,
 			CookSeconds:   recipe.CookSeconds,
-			Steps:         nonNil(recipe.Steps),
 			Instructions:  instructions,
 			Tags:          nonNil(recipe.Tags),
 			SourceURL:     recipe.SourceURL,
@@ -773,7 +763,6 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) 
 		Servings:      row.Servings,
 		PrepSeconds:   row.PrepSeconds,
 		CookSeconds:   row.CookSeconds,
-		Steps:         row.Steps,
 		Tags:          row.Tags,
 		SourceURL:     row.SourceURL,
 		FridgeDays:    row.FridgeDays,
@@ -791,9 +780,12 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) 
 		r.Ingredients = append(r.Ingredients, ingredientFromDB(in))
 	}
 	// Instructions are only written encoded by instructionsToDB, so they
-	// decode; if they somehow don't, the recipe still reads, with its
-	// steps in the old format, rather than failing every read of it.
-	r.Instructions, _ = instructionsFromDB(row.Instructions)
+	// decode; if they somehow don't, the recipe still reads, without
+	// steps, rather than failing every read of it.
+	var err error
+	if r.Instructions, err = instructionsFromDB(row.Instructions); err != nil {
+		r.Instructions = []*Step{}
+	}
 	return r
 }
 

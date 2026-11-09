@@ -109,8 +109,7 @@ type RecipeServiceClient interface {
 	// the steps it follows are done and, if it's hands-on, the cook is free,
 	// so hands-on steps fit into waiting time, like chopping while rice
 	// simmers. Steps of unknown duration count as 5 minutes, and are marked
-	// estimated. A recipe in the old format runs its steps one after the
-	// other.
+	// estimated.
 	GetRecipeTimeline(context.Context, *v1.GetRecipeTimelineRequest) (*v1.GetRecipeTimelineResponse, error)
 	// Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
 	// isn't one of the household's foods.
@@ -158,8 +157,7 @@ type RecipeServiceHandler interface {
 	// the steps it follows are done and, if it's hands-on, the cook is free,
 	// so hands-on steps fit into waiting time, like chopping while rice
 	// simmers. Steps of unknown duration count as 5 minutes, and are marked
-	// estimated. A recipe in the old format runs its steps one after the
-	// other.
+	// estimated.
 	GetRecipeTimeline(context.Context, *v1.GetRecipeTimelineRequest) (*v1.GetRecipeTimelineResponse, error)
 	// Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
 	// isn't one of the household's foods.

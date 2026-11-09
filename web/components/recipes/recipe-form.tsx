@@ -129,18 +129,14 @@ const emptyStep = (): StepInput => ({
 
 /**
  * StepInputs returns a recipe's steps to edit, with the keys of the
- * ingredients being edited. Plain steps in the old format get no
- * structure, until it's added and saved as instructions.
+ * ingredients being edited.
  */
 const stepInputs = (
   recipe: Recipe | undefined,
   ingredients: IngredientInput[]
 ): StepInput[] => {
-  if (recipe === undefined || recipe.steps.length === 0) {
+  if (recipe === undefined || recipe.instructions.length === 0) {
     return [emptyStep()];
-  }
-  if (recipe.instructions.length === 0) {
-    return recipe.steps.map((text) => ({ ...emptyStep(), text }));
   }
   const keys = recipe.instructions.map(() => newKey());
   return recipe.instructions.map((step, index) => {
@@ -519,10 +515,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
     ["prep_seconds", prep !== hoursMinutesInput(recipe?.prepSeconds ?? 0)],
     ["cook_seconds", cook !== hoursMinutesInput(recipe?.cookSeconds ?? 0)],
     ["ingredients", ingredientsKey(ingredients) !== initial.ingredientsKey],
-    /*
-     * The form saves steps as instructions, which rewrites a recipe in the
-     * old format once its steps are edited.
-     */
     ["instructions", stepsKey(steps, ingredients) !== initial.stepsKey],
     ["tags", tags !== (recipe?.tags.join(", ") ?? "")],
     ["source_url", sourceUrl !== (recipe?.sourceUrl ?? "")],

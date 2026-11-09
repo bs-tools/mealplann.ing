@@ -101,7 +101,7 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 		PrepSeconds:   r.PrepSeconds,
 		CookSeconds:   r.CookSeconds,
 		Ingredients:   ingredients,
-		Steps:         r.Steps,
+		Steps:         recipes.StepTexts(r.Instructions),
 		Instructions:  instructionsToProto(r.Instructions),
 		Cost:          costToProto(r),
 		Tags:          r.Tags,
@@ -173,7 +173,6 @@ func summaryToProto(r *recipes.Recipe) *recipesv1.RecipeSummary {
 		HasIssues:                   len(n.Issues) > 0,
 		UpdateTime:                  timestamppb.New(r.UpdateTime),
 		Favorite:                    r.Favorite,
-		HasInstructions:             r.Instructions != nil,
 		CostCentsPerServing:         costPerServing(r),
 	}.Build()
 }
@@ -243,21 +242,16 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 	if err != nil {
 		return nil, err
 	}
-	// With instructions, the steps are their texts, so the steps given
-	// are ignored: they're what was read, or stale.
-	var steps []string
-	var instructions []*recipes.Step
-	if len(p.GetInstructions()) > 0 {
-		instructions, err = instructionsFromProto(p.GetInstructions(), len(ingredients))
-		if err != nil {
-			return nil, err
-		}
-		steps = recipes.StepTexts(instructions)
-	} else {
-		steps, err = stepsFromProto(p.GetSteps())
-		if err != nil {
-			return nil, err
-		}
+	// The steps are the instructions' texts, so the steps given are
+	// ignored, being what was read, unless they're all there is: then
+	// they'd be lost, so it fails, saying what to set.
+	if len(p.GetInstructions()) == 0 && len(p.GetSteps()) > 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			"steps are read only, the texts of instructions: give the steps as instructions, with each one's text, ingredients and duration")
+	}
+	instructions, err := instructionsFromProto(p.GetInstructions(), len(ingredients))
+	if err != nil {
+		return nil, err
 	}
 	tags, err := normalizeTags(p.GetTags())
 	if err != nil {
@@ -281,7 +275,6 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 		PrepSeconds:   p.GetPrepSeconds(),
 		CookSeconds:   p.GetCookSeconds(),
 		Ingredients:   ingredients,
-		Steps:         steps,
 		Instructions:  instructions,
 		Tags:          tags,
 		SourceURL:     sourceURL,
@@ -433,24 +426,6 @@ func instructionsFromProto(list []*recipesv1.Step, ingredientCount int) ([]*reci
 			}
 		}
 		steps = append(steps, s)
-	}
-	return steps, nil
-}
-
-func stepsFromProto(list []string) ([]string, error) {
-	if len(list) > maxSteps {
-		return nil, connect.Errorf(connect.CodeInvalidArgument, "a recipe can have at most %d steps", maxSteps)
-	}
-	steps := make([]string, 0, len(list))
-	for i, step := range list {
-		step = strings.TrimSpace(step)
-		switch {
-		case step == "":
-			return nil, connect.Errorf(connect.CodeInvalidArgument, "steps[%d] is empty; remove it", i)
-		case utf8.RuneCountInString(step) > maxStepLength:
-			return nil, connect.Errorf(connect.CodeInvalidArgument, "steps[%d] must be at most %d characters; split it into several steps", i, maxStepLength)
-		}
-		steps = append(steps, step)
 	}
 	return steps, nil
 }

@@ -50,30 +50,10 @@ func StepTexts(steps []*Step) []string {
 	return texts
 }
 
-// PlainSteps returns the steps of a recipe in the old format, plain texts
-// done one after the other, as instructions, so what reads instructions
-// works for every recipe.
-func PlainSteps(texts []string) []*Step {
-	steps := make([]*Step, 0, len(texts))
-	for _, t := range texts {
-		steps = append(steps, &Step{Text: t})
-	}
-	return steps
-}
-
-// StepsOf returns a recipe's instructions, or its plain steps as
-// instructions if it has none.
-func (r *Recipe) StepsOf() []*Step {
-	if r.Instructions != nil {
-		return r.Instructions
-	}
-	return PlainSteps(r.Steps)
-}
-
-// instructionsToDB returns instructions as JSON, nil for none.
+// instructionsToDB returns instructions as JSON.
 func instructionsToDB(steps []*Step) (json.RawMessage, error) {
 	if steps == nil {
-		return nil, nil
+		steps = []*Step{}
 	}
 	data, err := json.Marshal(steps)
 	if err != nil {
@@ -82,11 +62,9 @@ func instructionsToDB(steps []*Step) (json.RawMessage, error) {
 	return data, nil
 }
 
-// instructionsFromDB returns instructions from their JSON, nil for none.
+// instructionsFromDB returns instructions from their JSON, empty for
+// none.
 func instructionsFromDB(data json.RawMessage) ([]*Step, error) {
-	if len(data) == 0 || string(data) == "null" {
-		return nil, nil
-	}
 	var steps []*Step
 	if err := json.Unmarshal(data, &steps); err != nil {
 		return nil, fmt.Errorf("failed to decode instructions: %w", err)
@@ -124,7 +102,7 @@ type Timeline struct {
 // cook to be free, but waiting steps, like simmering, don't keep the cook
 // busy, so hands-on steps overlap them.
 func (r *Recipe) Timeline() *Timeline {
-	steps := r.StepsOf()
+	steps := r.Instructions
 	t := &Timeline{Steps: make([]TimedStep, 0, len(steps))}
 	var cookFree int32
 	for i, s := range steps {
