@@ -79,6 +79,9 @@ type Food struct {
 	GramsPerPiece float64
 	// GramsPerMilliliter is the density, 0 if unknown.
 	GramsPerMilliliter float64
+	// Measure is how its amounts are shown to people, MeasureAuto to choose
+	// by the amount.
+	Measure Measure
 	// FastCarb is whether the food's carbohydrate is quickly absorbed.
 	FastCarb     bool
 	StoreSection StoreSection
@@ -104,6 +107,40 @@ type Food struct {
 	AlwaysInStock bool
 	CreateTime    time.Time
 	UpdateTime    time.Time
+}
+
+// Measure is how a food's amounts are shown to people.
+type Measure string
+
+// The measures.
+const (
+	// MeasureAuto chooses by the amount: small amounts the food's density
+	// converts by volume, like spoons of spices or oil, and the rest as
+	// entered.
+	MeasureAuto Measure = ""
+	// MeasureWeight is by weight, like tofu or pasta.
+	MeasureWeight Measure = "weight"
+	// MeasureVolume is by volume, like oil, spices or plant milk.
+	MeasureVolume Measure = "volume"
+	// MeasurePieces is in pieces, like onions or garlic cloves.
+	MeasurePieces Measure = "pieces"
+)
+
+// MeasureToDB converts a measure to the database's, nil for MeasureAuto.
+func MeasureToDB(m Measure) *string {
+	if m == MeasureAuto {
+		return nil
+	}
+	s := string(m)
+	return &s
+}
+
+// MeasureFromDB converts a measure from the database's.
+func MeasureFromDB(m *string) Measure {
+	if m == nil {
+		return MeasureAuto
+	}
+	return Measure(*m)
 }
 
 // Nutrition returns what nutrition math needs of the food.
@@ -160,6 +197,7 @@ func (r *Repository) CreateFood(ctx context.Context, f *Food) (*Food, error) {
 		PotassiumMilligramsPer100Grams:  n[nutrition.PotassiumMilligrams],
 		GramsPerPiece:                   positive(f.GramsPerPiece),
 		GramsPerMilliliter:              positive(f.GramsPerMilliliter),
+		Measure:                         MeasureToDB(f.Measure),
 		FastCarb:                        f.FastCarb,
 		StoreSection:                    storeSectionToDB(f.StoreSection),
 		PackageGrams:                    positive(f.PackageGrams),
@@ -248,6 +286,7 @@ func (r *Repository) UpdateFood(ctx context.Context, f *Food) (*Food, error) {
 		PotassiumMilligramsPer100Grams:  n[nutrition.PotassiumMilligrams],
 		GramsPerPiece:                   positive(f.GramsPerPiece),
 		GramsPerMilliliter:              positive(f.GramsPerMilliliter),
+		Measure:                         MeasureToDB(f.Measure),
 		FastCarb:                        f.FastCarb,
 		StoreSection:                    storeSectionToDB(f.StoreSection),
 		PackageGrams:                    positive(f.PackageGrams),
@@ -471,6 +510,7 @@ func foodFromDB(row *gen.Food) *Food {
 		},
 		GramsPerPiece:         orZero(row.GramsPerPiece),
 		GramsPerMilliliter:    orZero(row.GramsPerMilliliter),
+		Measure:               MeasureFromDB(row.Measure),
 		FastCarb:              row.FastCarb,
 		StoreSection:          storeSectionFromDB(row.StoreSection),
 		PackageGrams:          orZero(row.PackageGrams),

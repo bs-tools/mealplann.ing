@@ -30,7 +30,9 @@ type PasskeyUser struct {
 	UserHandle []byte
 	// The key of the user's avatar image in the blob store. Empty if the
 	// user has no avatar.
-	AvatarKey   string
+	AvatarKey string
+	// UnitSystem is how the user reads amounts.
+	UnitSystem  UnitSystem
 	householdID pgtype.UUID
 	admin       bool
 }
@@ -187,7 +189,7 @@ func (r *Repository) GetPasskeyUser(ctx context.Context, userID pgtype.UUID) (*P
 		}
 		return nil, fmt.Errorf("failed to get passkey user: %w", err)
 	}
-	return &PasskeyUser{id: row.ID, Name: row.Name, UserHandle: row.UserHandle, AvatarKey: row.AvatarKey.String, householdID: row.HouseholdID, admin: row.IsAdmin}, nil
+	return &PasskeyUser{id: row.ID, Name: row.Name, UserHandle: row.UserHandle, AvatarKey: row.AvatarKey.String, householdID: row.HouseholdID, admin: row.IsAdmin, UnitSystem: UnitSystem(row.UnitSystem)}, nil
 }
 
 // CreateChallenge stores a challenge for a WebAuthn ceremony until expiry,

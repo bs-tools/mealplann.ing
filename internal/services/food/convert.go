@@ -232,6 +232,7 @@ func foodToProto(f *foods.Food) *foodsv1.Food {
 		Nutrients:             NutrientsToProto(&f.Per100Grams, -1),
 		GramsPerPiece:         f.GramsPerPiece,
 		GramsPerMilliliter:    f.GramsPerMilliliter,
+		Measure:               MeasuresToProto[f.Measure],
 		FastCarb:              f.FastCarb,
 		StoreSection:          storeSectionsToProto[f.StoreSection],
 		PackageGrams:          f.PackageGrams,
@@ -295,6 +296,11 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s must be from 0 to %v, with 0 for unknown", check.field, check.most)
 		}
 	}
+	measure, ok := measuresFromProto[p.GetMeasure()]
+	if !ok {
+		return nil, connect.Errorf(connect.CodeInvalidArgument,
+			"invalid measure %v: use MEASURE_WEIGHT, MEASURE_VOLUME, MEASURE_PIECES, or MEASURE_UNSPECIFIED to choose by the amount", p.GetMeasure())
+	}
 	var storeID pgtype.UUID
 	if s := strings.TrimSpace(p.GetPreferredStoreId()); s != "" {
 		var err error
@@ -309,6 +315,7 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 		Per100Grams:           per100,
 		GramsPerPiece:         p.GetGramsPerPiece(),
 		GramsPerMilliliter:    p.GetGramsPerMilliliter(),
+		Measure:               measure,
 		FastCarb:              p.GetFastCarb(),
 		StoreSection:          section,
 		PackageGrams:          p.GetPackageGrams(),
@@ -321,6 +328,22 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 		PreferredStoreID:      storeID,
 		AlwaysInStock:         p.GetAlwaysInStock(),
 	}, nil
+}
+
+// MeasuresToProto converts measures to the API.
+var MeasuresToProto = map[foods.Measure]foodsv1.Measure{
+	foods.MeasureAuto:   foodsv1.Measure_MEASURE_UNSPECIFIED,
+	foods.MeasureWeight: foodsv1.Measure_MEASURE_WEIGHT,
+	foods.MeasureVolume: foodsv1.Measure_MEASURE_VOLUME,
+	foods.MeasurePieces: foodsv1.Measure_MEASURE_PIECES,
+}
+
+// measuresFromProto converts measures from the API.
+var measuresFromProto = map[foodsv1.Measure]foods.Measure{
+	foodsv1.Measure_MEASURE_UNSPECIFIED: foods.MeasureAuto,
+	foodsv1.Measure_MEASURE_WEIGHT:      foods.MeasureWeight,
+	foodsv1.Measure_MEASURE_VOLUME:      foods.MeasureVolume,
+	foodsv1.Measure_MEASURE_PIECES:      foods.MeasurePieces,
 }
 
 // foodFromReference returns a food created from a reference food, with the
@@ -351,6 +374,7 @@ func foodFromReference(ref *foods.ReferenceFood, in *foodsv1.Food) (*foods.Food,
 	if v := in.GetStoreSection(); v != foodsv1.StoreSection_STORE_SECTION_UNSPECIFIED {
 		base.SetStoreSection(v)
 	}
+	base.SetMeasure(in.GetMeasure())
 	base.SetFastCarb(in.GetFastCarb())
 	base.SetPackageGrams(in.GetPackageGrams())
 	base.SetShelfLifeDays(in.GetShelfLifeDays())

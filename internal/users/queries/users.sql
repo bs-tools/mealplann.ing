@@ -6,3 +6,6 @@ select avatar_key from users where id = $1 for update;
 
 -- name: SetAvatarKey :exec
 update users set avatar_key = $2 where id = $1;
+
+-- name: SetUnitSystem :exec
+update users set unit_system = $2 where id = $1;

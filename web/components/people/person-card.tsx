@@ -28,6 +28,7 @@ import type { Staple } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
 import type { HouseholdMember } from "gen/users/v1/users_pb";
+import type { UnitSystem } from "gen/users/v1/users_pb";
 import { today } from "helpers/dates";
 import { formatShortDate } from "helpers/format";
 import {
@@ -38,6 +39,7 @@ import {
 } from "helpers/labels";
 import { formatAmount, nutrientInfoOf } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
+import { useUnitSystem } from "helpers/user";
 import React, { useState } from "react";
 
 // RuleFacts describes a person's rules, e.g. "Portions up to 200 g".
@@ -89,10 +91,10 @@ const targetFacts = (person: Person): string[] =>
   });
 
 // StapleAmount describes how much of a staple is eaten.
-const stapleAmount = (staple: Staple): string => {
+const stapleAmount = (staple: Staple, system: UnitSystem): string => {
   if (staple.what.case === "food") {
     const { amount, unit } = staple.what.value;
-    return formatIngredientAmount(amount, unit);
+    return formatIngredientAmount(amount, unit, system);
   }
   if (staple.what.case === "recipe") {
     return formatServings(staple.what.value.servings);
@@ -121,6 +123,7 @@ const PersonCard: React.FC<PersonCardProps> = ({
   onEdit,
 }) => {
   const queryClient = useQueryClient();
+  const system = useUnitSystem();
   // The staple being edited, null for a new one, undefined if none.
   const [editing, setEditing] = useState<Staple | null | undefined>(undefined);
   const invalidate = async (): Promise<void> => {
@@ -284,7 +287,7 @@ const PersonCard: React.FC<PersonCardProps> = ({
                     <p className="font-medium text-gray-900">
                       {staple.name}{" "}
                       <span className="font-normal text-gray-600 tabular-nums">
-                        {stapleAmount(staple)}
+                        {stapleAmount(staple, system)}
                       </span>
                     </p>
                     <p className="text-xs text-gray-500">

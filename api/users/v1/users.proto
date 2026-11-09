@@ -32,6 +32,9 @@ service UserService {
   rpc DeleteAvatar(DeleteAvatarRequest) returns (DeleteAvatarResponse) {
     option (mcp.v1.method).exclude = true;
   }
+  // Change the signed in user's settings, like the units they read amounts
+  // in.
+  rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse);
   // Get the signed in user's household: the people who share recipes,
   // plans, the pantry and the shopping list.
   rpc GetHousehold(GetHouseholdRequest) returns (GetHouseholdResponse);
@@ -92,6 +95,30 @@ message User {
   bool admin = 7;
   // The ID of the user's household.
   string household_id = 8;
+  // The units the user reads amounts in. Amounts are stored and given in
+  // metric units either way; it's how apps show them.
+  UnitSystem unit_system = 9;
+}
+
+// UnitSystem is the units a user reads amounts in.
+enum UnitSystem {
+  // Metric.
+  UNIT_SYSTEM_UNSPECIFIED = 0;
+  // Grams, kilograms and milliliters, with teaspoons and tablespoons for
+  // small volumes.
+  UNIT_SYSTEM_METRIC = 1;
+  // US customary units: ounces, pounds, cups, teaspoons and tablespoons.
+  UNIT_SYSTEM_IMPERIAL = 2;
+}
+
+message UpdateSettingsRequest {
+  // The units to read amounts in. Required.
+  UnitSystem unit_system = 1;
+}
+
+message UpdateSettingsResponse {
+  // The user, with the new settings.
+  User user = 1;
 }
 
 message GetCurrentUserRequest {}

@@ -1,6 +1,8 @@
 package users
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/bs-tools/mealplann.ing/internal/store"
@@ -32,4 +34,26 @@ func NewRepository(log *slog.Logger, db *store.DB) (*Repository, error) {
 		querier: gen.New(db),
 		db:      db,
 	}, nil
+}
+
+// UnitSystem is how a user reads amounts, which are stored in metric
+// either way.
+type UnitSystem string
+
+// The unit systems.
+const (
+	// Metric is grams, milliliters, and teaspoons and tablespoons for
+	// small volumes.
+	Metric UnitSystem = "metric"
+	// Imperial is US customary units: ounces, pounds, cups, teaspoons and
+	// tablespoons.
+	Imperial UnitSystem = "imperial"
+)
+
+// SetUnitSystem sets how a user reads amounts.
+func (r *Repository) SetUnitSystem(ctx context.Context, userID pgtype.UUID, system UnitSystem) error {
+	if err := r.querier.SetUnitSystem(ctx, &gen.SetUnitSystemParams{ID: userID, UnitSystem: string(system)}); err != nil {
+		return fmt.Errorf("failed to set unit system: %w", err)
+	}
+	return nil
 }

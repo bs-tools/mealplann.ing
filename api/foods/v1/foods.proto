@@ -43,6 +43,14 @@ import "mcp/v1/options.proto";
 // store_section, package_grams, shelf_life_days, preferred_store_id and
 // always_in_stock: set them when you know them.
 //
+// People read recipes' amounts in each food's measure, in their own unit
+// system: set measure to MEASURE_VOLUME for foods spooned or poured, like
+// oils, vinegars, sauces, spices, dried herbs, baking powder and plant
+// milks, with grams_per_milliliter, so 30 g of oil shows as 2 tbsp; to
+// MEASURE_PIECES for foods counted, with grams_per_piece; and to
+// MEASURE_WEIGHT for foods weighed. Left unspecified, small amounts show by
+// volume where grams_per_milliliter converts them.
+//
 // Meals' and plans' costs are estimated from each food's
 // price_cents_per_kilogram: what the household pays at its stores, in
 // Squamish, BC, in Canadian cents per kilogram, with the price_date it was
@@ -336,6 +344,27 @@ message Food {
   // The ID of the reference food it was created from in its source, e.g.
   // a CNF food ID for FOOD_SOURCE_CNF. 0 for custom foods.
   int32 source_id = 18 [(mcp.v1.field).output_only = true];
+  // How the food's amounts are shown to people in recipes, in their unit
+  // system (see users.v1.User.unit_system), whatever unit they're entered
+  // in: e.g. MEASURE_VOLUME for oils, vinegars, spices and plant milks,
+  // shown in teaspoons, tablespoons, cups or milliliters, and
+  // MEASURE_WEIGHT for tofu, pasta or flour. Converting between weight and
+  // volume needs grams_per_milliliter, and to pieces grams_per_piece.
+  Measure measure = 22;
+}
+
+// Measure is how a food's amounts are shown to people.
+enum Measure {
+  // Chosen by the amount: up to 75 ml, by volume if grams_per_milliliter
+  // converts it, like a tablespoon of oil or a teaspoon of cumin, and
+  // otherwise in the unit it's entered in.
+  MEASURE_UNSPECIFIED = 0;
+  // By weight, in grams or ounces.
+  MEASURE_WEIGHT = 1;
+  // By volume, in spoons, cups or milliliters.
+  MEASURE_VOLUME = 2;
+  // In pieces, like 2 onions.
+  MEASURE_PIECES = 3;
 }
 
 // A reference food, of the Canadian Nutrient File or USDA FoodData Central.

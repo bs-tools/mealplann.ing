@@ -9,6 +9,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/bs-tools/mealplann.ing/internal/foods"
 	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 	"github.com/bs-tools/mealplann.ing/internal/recipes/internal/gen"
 	"github.com/bs-tools/mealplann.ing/internal/store"
@@ -109,11 +110,12 @@ type Ingredient struct {
 	Note         string
 	OriginalText string
 	Optional     bool
-	// FoodName, Food and FastCarb are read from the food, and ignored when
-	// writing.
-	FoodName string
-	Food     nutrition.Food
-	FastCarb bool
+	// FoodName, Food, FoodMeasure and FastCarb are read from the food, and
+	// ignored when writing.
+	FoodName    string
+	Food        nutrition.Food
+	FoodMeasure foods.Measure
+	FastCarb    bool
 	// PriceCentsPerKilogram is the food's price, 0 if unknown.
 	PriceCentsPerKilogram int32
 	// Component is the component's recipe, read with it, nil for a food or
@@ -810,6 +812,7 @@ func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 		OriginalText:          in.OriginalText,
 		Optional:              in.Optional,
 		FoodName:              row.FoodName,
+		FoodMeasure:           foods.MeasureFromDB(row.Measure),
 		PriceCentsPerKilogram: orZero(row.PriceCentsPerKilogram),
 		Food: nutrition.Food{
 			Per100Grams: nutrition.Nutrients{

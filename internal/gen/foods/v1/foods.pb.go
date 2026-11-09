@@ -337,6 +337,60 @@ func (x AmountUnit) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
+// Measure is how a food's amounts are shown to people.
+type Measure int32
+
+const (
+	// Chosen by the amount: up to 75 ml, by volume if grams_per_milliliter
+	// converts it, like a tablespoon of oil or a teaspoon of cumin, and
+	// otherwise in the unit it's entered in.
+	Measure_MEASURE_UNSPECIFIED Measure = 0
+	// By weight, in grams or ounces.
+	Measure_MEASURE_WEIGHT Measure = 1
+	// By volume, in spoons, cups or milliliters.
+	Measure_MEASURE_VOLUME Measure = 2
+	// In pieces, like 2 onions.
+	Measure_MEASURE_PIECES Measure = 3
+)
+
+// Enum value maps for Measure.
+var (
+	Measure_name = map[int32]string{
+		0: "MEASURE_UNSPECIFIED",
+		1: "MEASURE_WEIGHT",
+		2: "MEASURE_VOLUME",
+		3: "MEASURE_PIECES",
+	}
+	Measure_value = map[string]int32{
+		"MEASURE_UNSPECIFIED": 0,
+		"MEASURE_WEIGHT":      1,
+		"MEASURE_VOLUME":      2,
+		"MEASURE_PIECES":      3,
+	}
+)
+
+func (x Measure) Enum() *Measure {
+	p := new(Measure)
+	*p = x
+	return p
+}
+
+func (x Measure) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Measure) Descriptor() protoreflect.EnumDescriptor {
+	return file_foods_v1_foods_proto_enumTypes[4].Descriptor()
+}
+
+func (Measure) Type() protoreflect.EnumType {
+	return &file_foods_v1_foods_proto_enumTypes[4]
+}
+
+func (x Measure) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
 // Nutrients are the amounts of the nutrients the app tracks in an amount of
 // food, e.g. per 100 g of a food or per serving of a recipe. Every field is
 // optional: unset means unknown, which is different from 0. The reference
@@ -1066,6 +1120,7 @@ type Food struct {
 	xxx_hidden_PreferredStoreId      string                 `protobuf:"bytes,16,opt,name=preferred_store_id,json=preferredStoreId,proto3"`
 	xxx_hidden_AlwaysInStock         bool                   `protobuf:"varint,17,opt,name=always_in_stock,json=alwaysInStock,proto3"`
 	xxx_hidden_SourceId              int32                  `protobuf:"varint,18,opt,name=source_id,json=sourceId,proto3"`
+	xxx_hidden_Measure               Measure                `protobuf:"varint,22,opt,name=measure,proto3,enum=foods.v1.Measure"`
 	unknownFields                    protoimpl.UnknownFields
 	sizeCache                        protoimpl.SizeCache
 }
@@ -1242,6 +1297,13 @@ func (x *Food) GetSourceId() int32 {
 	return 0
 }
 
+func (x *Food) GetMeasure() Measure {
+	if x != nil {
+		return x.xxx_hidden_Measure
+	}
+	return Measure_MEASURE_UNSPECIFIED
+}
+
 func (x *Food) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -1324,6 +1386,10 @@ func (x *Food) SetAlwaysInStock(v bool) {
 
 func (x *Food) SetSourceId(v int32) {
 	x.xxx_hidden_SourceId = v
+}
+
+func (x *Food) SetMeasure(v Measure) {
+	x.xxx_hidden_Measure = v
 }
 
 func (x *Food) HasNutrients() bool {
@@ -1440,6 +1506,13 @@ type Food_builder struct {
 	// The ID of the reference food it was created from in its source, e.g.
 	// a CNF food ID for FOOD_SOURCE_CNF. 0 for custom foods.
 	SourceId int32
+	// How the food's amounts are shown to people in recipes, in their unit
+	// system (see users.v1.User.unit_system), whatever unit they're entered
+	// in: e.g. MEASURE_VOLUME for oils, vinegars, spices and plant milks,
+	// shown in teaspoons, tablespoons, cups or milliliters, and
+	// MEASURE_WEIGHT for tofu, pasta or flour. Converting between weight and
+	// volume needs grams_per_milliliter, and to pieces grams_per_piece.
+	Measure Measure
 }
 
 func (b0 Food_builder) Build() *Food {
@@ -1467,6 +1540,7 @@ func (b0 Food_builder) Build() *Food {
 	x.xxx_hidden_PreferredStoreId = b.PreferredStoreId
 	x.xxx_hidden_AlwaysInStock = b.AlwaysInStock
 	x.xxx_hidden_SourceId = b.SourceId
+	x.xxx_hidden_Measure = b.Measure
 	return m0
 }
 
@@ -3227,7 +3301,7 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x12_copper_milligramsB\x17\n" +
 	"\x15_magnesium_milligramsB\x14\n" +
 	"\x12_sodium_milligramsB\x17\n" +
-	"\x15_potassium_milligrams\"\x92\a\n" +
+	"\x15_potassium_milligrams\"\xbf\a\n" +
 	"\x04Food\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x124\n" +
@@ -3253,7 +3327,8 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"updateTime\x12,\n" +
 	"\x12preferred_store_id\x18\x10 \x01(\tR\x10preferredStoreId\x12&\n" +
 	"\x0falways_in_stock\x18\x11 \x01(\bR\ralwaysInStock\x12#\n" +
-	"\tsource_id\x18\x12 \x01(\x05B\x06\xaa\x9f\x19\x02\b\x01R\bsourceId\"\xf9\x02\n" +
+	"\tsource_id\x18\x12 \x01(\x05B\x06\xaa\x9f\x19\x02\b\x01R\bsourceId\x12+\n" +
+	"\ameasure\x18\x16 \x01(\x0e2\x11.foods.v1.MeasureR\ameasure\"\xf9\x02\n" +
 	"\bFoodData\x12\x15\n" +
 	"\x06fdc_id\x18\x01 \x01(\x05R\x05fdcId\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1a\n" +
@@ -3375,7 +3450,12 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x17AMOUNT_UNIT_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11AMOUNT_UNIT_GRAMS\x10\x01\x12\x1b\n" +
 	"\x17AMOUNT_UNIT_MILLILITERS\x10\x02\x12\x16\n" +
-	"\x12AMOUNT_UNIT_PIECES\x10\x032\xe4\x04\n" +
+	"\x12AMOUNT_UNIT_PIECES\x10\x03*^\n" +
+	"\aMeasure\x12\x17\n" +
+	"\x13MEASURE_UNSPECIFIED\x10\x00\x12\x12\n" +
+	"\x0eMEASURE_WEIGHT\x10\x01\x12\x12\n" +
+	"\x0eMEASURE_VOLUME\x10\x02\x12\x12\n" +
+	"\x0eMEASURE_PIECES\x10\x032\xe4\x04\n" +
 	"\vFoodService\x12S\n" +
 	"\x0eSearchFoodData\x12\x1f.foods.v1.SearchFoodDataRequest\x1a .foods.v1.SearchFoodDataResponse\x12G\n" +
 	"\n" +
@@ -3391,81 +3471,83 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\fcom.foods.v1B\n" +
 	"FoodsProtoP\x01Z?github.com/bs-tools/mealplann.ing/internal/gen/foods/v1;foodsv1\xa2\x02\x03FXX\xaa\x02\bFoods.V1\xca\x02\bFoods\\V1\xe2\x02\x14Foods\\V1\\GPBMetadata\xea\x02\tFoods::V1b\x06proto3"
 
-var file_foods_v1_foods_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_foods_v1_foods_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
 var file_foods_v1_foods_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_foods_v1_foods_proto_goTypes = []any{
 	(Nutrient)(0),                  // 0: foods.v1.Nutrient
 	(FoodSource)(0),                // 1: foods.v1.FoodSource
 	(StoreSection)(0),              // 2: foods.v1.StoreSection
 	(AmountUnit)(0),                // 3: foods.v1.AmountUnit
-	(*Nutrients)(nil),              // 4: foods.v1.Nutrients
-	(*Food)(nil),                   // 5: foods.v1.Food
-	(*FoodData)(nil),               // 6: foods.v1.FoodData
-	(*FoodDataPortion)(nil),        // 7: foods.v1.FoodDataPortion
-	(*SearchFoodDataRequest)(nil),  // 8: foods.v1.SearchFoodDataRequest
-	(*SearchFoodDataResponse)(nil), // 9: foods.v1.SearchFoodDataResponse
-	(*CreateFoodRequest)(nil),      // 10: foods.v1.CreateFoodRequest
-	(*CreateFoodResponse)(nil),     // 11: foods.v1.CreateFoodResponse
-	(*CreateFoodsRequest)(nil),     // 12: foods.v1.CreateFoodsRequest
-	(*CreateFoodsResponse)(nil),    // 13: foods.v1.CreateFoodsResponse
-	(*CreateFoodResult)(nil),       // 14: foods.v1.CreateFoodResult
-	(*GetFoodRequest)(nil),         // 15: foods.v1.GetFoodRequest
-	(*GetFoodResponse)(nil),        // 16: foods.v1.GetFoodResponse
-	(*ListFoodsRequest)(nil),       // 17: foods.v1.ListFoodsRequest
-	(*ListFoodsResponse)(nil),      // 18: foods.v1.ListFoodsResponse
-	(*UpdateFoodRequest)(nil),      // 19: foods.v1.UpdateFoodRequest
-	(*UpdateFoodResponse)(nil),     // 20: foods.v1.UpdateFoodResponse
-	(*ListFoodUsagesRequest)(nil),  // 21: foods.v1.ListFoodUsagesRequest
-	(*ListFoodUsagesResponse)(nil), // 22: foods.v1.ListFoodUsagesResponse
-	(*FoodUsageRecipe)(nil),        // 23: foods.v1.FoodUsageRecipe
-	(*DeleteFoodRequest)(nil),      // 24: foods.v1.DeleteFoodRequest
-	(*DeleteFoodResponse)(nil),     // 25: foods.v1.DeleteFoodResponse
-	(*timestamppb.Timestamp)(nil),  // 26: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),  // 27: google.protobuf.FieldMask
+	(Measure)(0),                   // 4: foods.v1.Measure
+	(*Nutrients)(nil),              // 5: foods.v1.Nutrients
+	(*Food)(nil),                   // 6: foods.v1.Food
+	(*FoodData)(nil),               // 7: foods.v1.FoodData
+	(*FoodDataPortion)(nil),        // 8: foods.v1.FoodDataPortion
+	(*SearchFoodDataRequest)(nil),  // 9: foods.v1.SearchFoodDataRequest
+	(*SearchFoodDataResponse)(nil), // 10: foods.v1.SearchFoodDataResponse
+	(*CreateFoodRequest)(nil),      // 11: foods.v1.CreateFoodRequest
+	(*CreateFoodResponse)(nil),     // 12: foods.v1.CreateFoodResponse
+	(*CreateFoodsRequest)(nil),     // 13: foods.v1.CreateFoodsRequest
+	(*CreateFoodsResponse)(nil),    // 14: foods.v1.CreateFoodsResponse
+	(*CreateFoodResult)(nil),       // 15: foods.v1.CreateFoodResult
+	(*GetFoodRequest)(nil),         // 16: foods.v1.GetFoodRequest
+	(*GetFoodResponse)(nil),        // 17: foods.v1.GetFoodResponse
+	(*ListFoodsRequest)(nil),       // 18: foods.v1.ListFoodsRequest
+	(*ListFoodsResponse)(nil),      // 19: foods.v1.ListFoodsResponse
+	(*UpdateFoodRequest)(nil),      // 20: foods.v1.UpdateFoodRequest
+	(*UpdateFoodResponse)(nil),     // 21: foods.v1.UpdateFoodResponse
+	(*ListFoodUsagesRequest)(nil),  // 22: foods.v1.ListFoodUsagesRequest
+	(*ListFoodUsagesResponse)(nil), // 23: foods.v1.ListFoodUsagesResponse
+	(*FoodUsageRecipe)(nil),        // 24: foods.v1.FoodUsageRecipe
+	(*DeleteFoodRequest)(nil),      // 25: foods.v1.DeleteFoodRequest
+	(*DeleteFoodResponse)(nil),     // 26: foods.v1.DeleteFoodResponse
+	(*timestamppb.Timestamp)(nil),  // 27: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),  // 28: google.protobuf.FieldMask
 }
 var file_foods_v1_foods_proto_depIdxs = []int32{
 	1,  // 0: foods.v1.Food.source:type_name -> foods.v1.FoodSource
-	4,  // 1: foods.v1.Food.nutrients:type_name -> foods.v1.Nutrients
+	5,  // 1: foods.v1.Food.nutrients:type_name -> foods.v1.Nutrients
 	2,  // 2: foods.v1.Food.store_section:type_name -> foods.v1.StoreSection
-	26, // 3: foods.v1.Food.create_time:type_name -> google.protobuf.Timestamp
-	26, // 4: foods.v1.Food.update_time:type_name -> google.protobuf.Timestamp
-	4,  // 5: foods.v1.FoodData.nutrients:type_name -> foods.v1.Nutrients
-	7,  // 6: foods.v1.FoodData.portions:type_name -> foods.v1.FoodDataPortion
-	1,  // 7: foods.v1.FoodData.source:type_name -> foods.v1.FoodSource
-	6,  // 8: foods.v1.SearchFoodDataResponse.foods:type_name -> foods.v1.FoodData
-	5,  // 9: foods.v1.CreateFoodRequest.food:type_name -> foods.v1.Food
-	1,  // 10: foods.v1.CreateFoodRequest.source:type_name -> foods.v1.FoodSource
-	5,  // 11: foods.v1.CreateFoodResponse.food:type_name -> foods.v1.Food
-	10, // 12: foods.v1.CreateFoodsRequest.requests:type_name -> foods.v1.CreateFoodRequest
-	14, // 13: foods.v1.CreateFoodsResponse.results:type_name -> foods.v1.CreateFoodResult
-	5,  // 14: foods.v1.CreateFoodResult.food:type_name -> foods.v1.Food
-	5,  // 15: foods.v1.GetFoodResponse.food:type_name -> foods.v1.Food
-	5,  // 16: foods.v1.ListFoodsResponse.foods:type_name -> foods.v1.Food
-	5,  // 17: foods.v1.UpdateFoodRequest.food:type_name -> foods.v1.Food
-	27, // 18: foods.v1.UpdateFoodRequest.update_mask:type_name -> google.protobuf.FieldMask
-	5,  // 19: foods.v1.UpdateFoodResponse.food:type_name -> foods.v1.Food
-	23, // 20: foods.v1.ListFoodUsagesResponse.recipes:type_name -> foods.v1.FoodUsageRecipe
-	8,  // 21: foods.v1.FoodService.SearchFoodData:input_type -> foods.v1.SearchFoodDataRequest
-	10, // 22: foods.v1.FoodService.CreateFood:input_type -> foods.v1.CreateFoodRequest
-	12, // 23: foods.v1.FoodService.CreateFoods:input_type -> foods.v1.CreateFoodsRequest
-	15, // 24: foods.v1.FoodService.GetFood:input_type -> foods.v1.GetFoodRequest
-	17, // 25: foods.v1.FoodService.ListFoods:input_type -> foods.v1.ListFoodsRequest
-	19, // 26: foods.v1.FoodService.UpdateFood:input_type -> foods.v1.UpdateFoodRequest
-	21, // 27: foods.v1.FoodService.ListFoodUsages:input_type -> foods.v1.ListFoodUsagesRequest
-	24, // 28: foods.v1.FoodService.DeleteFood:input_type -> foods.v1.DeleteFoodRequest
-	9,  // 29: foods.v1.FoodService.SearchFoodData:output_type -> foods.v1.SearchFoodDataResponse
-	11, // 30: foods.v1.FoodService.CreateFood:output_type -> foods.v1.CreateFoodResponse
-	13, // 31: foods.v1.FoodService.CreateFoods:output_type -> foods.v1.CreateFoodsResponse
-	16, // 32: foods.v1.FoodService.GetFood:output_type -> foods.v1.GetFoodResponse
-	18, // 33: foods.v1.FoodService.ListFoods:output_type -> foods.v1.ListFoodsResponse
-	20, // 34: foods.v1.FoodService.UpdateFood:output_type -> foods.v1.UpdateFoodResponse
-	22, // 35: foods.v1.FoodService.ListFoodUsages:output_type -> foods.v1.ListFoodUsagesResponse
-	25, // 36: foods.v1.FoodService.DeleteFood:output_type -> foods.v1.DeleteFoodResponse
-	29, // [29:37] is the sub-list for method output_type
-	21, // [21:29] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	27, // 3: foods.v1.Food.create_time:type_name -> google.protobuf.Timestamp
+	27, // 4: foods.v1.Food.update_time:type_name -> google.protobuf.Timestamp
+	4,  // 5: foods.v1.Food.measure:type_name -> foods.v1.Measure
+	5,  // 6: foods.v1.FoodData.nutrients:type_name -> foods.v1.Nutrients
+	8,  // 7: foods.v1.FoodData.portions:type_name -> foods.v1.FoodDataPortion
+	1,  // 8: foods.v1.FoodData.source:type_name -> foods.v1.FoodSource
+	7,  // 9: foods.v1.SearchFoodDataResponse.foods:type_name -> foods.v1.FoodData
+	6,  // 10: foods.v1.CreateFoodRequest.food:type_name -> foods.v1.Food
+	1,  // 11: foods.v1.CreateFoodRequest.source:type_name -> foods.v1.FoodSource
+	6,  // 12: foods.v1.CreateFoodResponse.food:type_name -> foods.v1.Food
+	11, // 13: foods.v1.CreateFoodsRequest.requests:type_name -> foods.v1.CreateFoodRequest
+	15, // 14: foods.v1.CreateFoodsResponse.results:type_name -> foods.v1.CreateFoodResult
+	6,  // 15: foods.v1.CreateFoodResult.food:type_name -> foods.v1.Food
+	6,  // 16: foods.v1.GetFoodResponse.food:type_name -> foods.v1.Food
+	6,  // 17: foods.v1.ListFoodsResponse.foods:type_name -> foods.v1.Food
+	6,  // 18: foods.v1.UpdateFoodRequest.food:type_name -> foods.v1.Food
+	28, // 19: foods.v1.UpdateFoodRequest.update_mask:type_name -> google.protobuf.FieldMask
+	6,  // 20: foods.v1.UpdateFoodResponse.food:type_name -> foods.v1.Food
+	24, // 21: foods.v1.ListFoodUsagesResponse.recipes:type_name -> foods.v1.FoodUsageRecipe
+	9,  // 22: foods.v1.FoodService.SearchFoodData:input_type -> foods.v1.SearchFoodDataRequest
+	11, // 23: foods.v1.FoodService.CreateFood:input_type -> foods.v1.CreateFoodRequest
+	13, // 24: foods.v1.FoodService.CreateFoods:input_type -> foods.v1.CreateFoodsRequest
+	16, // 25: foods.v1.FoodService.GetFood:input_type -> foods.v1.GetFoodRequest
+	18, // 26: foods.v1.FoodService.ListFoods:input_type -> foods.v1.ListFoodsRequest
+	20, // 27: foods.v1.FoodService.UpdateFood:input_type -> foods.v1.UpdateFoodRequest
+	22, // 28: foods.v1.FoodService.ListFoodUsages:input_type -> foods.v1.ListFoodUsagesRequest
+	25, // 29: foods.v1.FoodService.DeleteFood:input_type -> foods.v1.DeleteFoodRequest
+	10, // 30: foods.v1.FoodService.SearchFoodData:output_type -> foods.v1.SearchFoodDataResponse
+	12, // 31: foods.v1.FoodService.CreateFood:output_type -> foods.v1.CreateFoodResponse
+	14, // 32: foods.v1.FoodService.CreateFoods:output_type -> foods.v1.CreateFoodsResponse
+	17, // 33: foods.v1.FoodService.GetFood:output_type -> foods.v1.GetFoodResponse
+	19, // 34: foods.v1.FoodService.ListFoods:output_type -> foods.v1.ListFoodsResponse
+	21, // 35: foods.v1.FoodService.UpdateFood:output_type -> foods.v1.UpdateFoodResponse
+	23, // 36: foods.v1.FoodService.ListFoodUsages:output_type -> foods.v1.ListFoodUsagesResponse
+	26, // 37: foods.v1.FoodService.DeleteFood:output_type -> foods.v1.DeleteFoodResponse
+	30, // [30:38] is the sub-list for method output_type
+	22, // [22:30] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_foods_v1_foods_proto_init() }
@@ -3479,7 +3561,7 @@ func file_foods_v1_foods_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_foods_v1_foods_proto_rawDesc), len(file_foods_v1_foods_proto_rawDesc)),
-			NumEnums:      4,
+			NumEnums:      5,
 			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,

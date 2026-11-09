@@ -2,8 +2,8 @@
 // @generated from file users/v1/users.proto (package users.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import { file_mcp_v1_options } from "../../mcp/v1/options_pb";
@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file users/v1/users.proto.
  */
 export const file_users_v1_users: GenFile = /*@__PURE__*/
-  fileDesc("ChR1c2Vycy92MS91c2Vycy5wcm90bxIIdXNlcnMudjEiYQoJSG91c2Vob2xkEhIKAmlkGAEgASgJQgaqnxkCCAESDAoEbmFtZRgCIAEoCRIyCgdtZW1iZXJzGAMgAygLMhkudXNlcnMudjEuSG91c2Vob2xkTWVtYmVyQgaqnxkCCAEiRAoPSG91c2Vob2xkTWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgphdmF0YXJfdXJsGAMgASgJIhUKE0dldEhvdXNlaG9sZFJlcXVlc3QiPgoUR2V0SG91c2Vob2xkUmVzcG9uc2USJgoJaG91c2Vob2xkGAEgASgLMhMudXNlcnMudjEuSG91c2Vob2xkIiYKFlVwZGF0ZUhvdXNlaG9sZFJlcXVlc3QSDAoEbmFtZRgBIAEoCSJBChdVcGRhdGVIb3VzZWhvbGRSZXNwb25zZRImCglob3VzZWhvbGQYASABKAsyEy51c2Vycy52MS5Ib3VzZWhvbGQikQEKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRISCgpnaXZlbl9uYW1lGAQgASgJEhMKC2ZhbWlseV9uYW1lGAUgASgJEhIKCmF2YXRhcl91cmwYBiABKAkSDQoFYWRtaW4YByABKAgSFAoMaG91c2Vob2xkX2lkGAggASgJIhcKFUdldEN1cnJlbnRVc2VyUmVxdWVzdCI2ChZHZXRDdXJyZW50VXNlclJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi51c2Vycy52MS5Vc2VyIokBCghBUElUb2tlbhIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEi8KC2NyZWF0ZV90aW1lGAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIyCg5sYXN0X3VzZWRfdGltZRgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiJQoVQ3JlYXRlQVBJVG9rZW5SZXF1ZXN0EgwKBG5hbWUYASABKAkiSwoWQ3JlYXRlQVBJVG9rZW5SZXNwb25zZRIhCgV0b2tlbhgBIAEoCzISLnVzZXJzLnYxLkFQSVRva2VuEg4KBnNlY3JldBgCIAEoCSIWChRMaXN0QVBJVG9rZW5zUmVxdWVzdCI7ChVMaXN0QVBJVG9rZW5zUmVzcG9uc2USIgoGdG9rZW5zGAEgAygLMhIudXNlcnMudjEuQVBJVG9rZW4iIwoVRGVsZXRlQVBJVG9rZW5SZXF1ZXN0EgoKAmlkGAEgASgJIhgKFkRlbGV0ZUFQSVRva2VuUmVzcG9uc2UiIwoTVXBsb2FkQXZhdGFyUmVxdWVzdBIMCgRkYXRhGAEgASgMIjQKFFVwbG9hZEF2YXRhclJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi51c2Vycy52MS5Vc2VyIhUKE0RlbGV0ZUF2YXRhclJlcXVlc3QiNAoURGVsZXRlQXZhdGFyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIy0wUKC1VzZXJTZXJ2aWNlElMKDkdldEN1cnJlbnRVc2VyEh8udXNlcnMudjEuR2V0Q3VycmVudFVzZXJSZXF1ZXN0GiAudXNlcnMudjEuR2V0Q3VycmVudFVzZXJSZXNwb25zZRJbCg5DcmVhdGVBUElUb2tlbhIfLnVzZXJzLnYxLkNyZWF0ZUFQSVRva2VuUmVxdWVzdBogLnVzZXJzLnYxLkNyZWF0ZUFQSVRva2VuUmVzcG9uc2UiBqKfGQIIARJYCg1MaXN0QVBJVG9rZW5zEh4udXNlcnMudjEuTGlzdEFQSVRva2Vuc1JlcXVlc3QaHy51c2Vycy52MS5MaXN0QVBJVG9rZW5zUmVzcG9uc2UiBqKfGQIIARJbCg5EZWxldGVBUElUb2tlbhIfLnVzZXJzLnYxLkRlbGV0ZUFQSVRva2VuUmVxdWVzdBogLnVzZXJzLnYxLkRlbGV0ZUFQSVRva2VuUmVzcG9uc2UiBqKfGQIIARJVCgxVcGxvYWRBdmF0YXISHS51c2Vycy52MS5VcGxvYWRBdmF0YXJSZXF1ZXN0Gh4udXNlcnMudjEuVXBsb2FkQXZhdGFyUmVzcG9uc2UiBqKfGQIIARJVCgxEZWxldGVBdmF0YXISHS51c2Vycy52MS5EZWxldGVBdmF0YXJSZXF1ZXN0Gh4udXNlcnMudjEuRGVsZXRlQXZhdGFyUmVzcG9uc2UiBqKfGQIIARJNCgxHZXRIb3VzZWhvbGQSHS51c2Vycy52MS5HZXRIb3VzZWhvbGRSZXF1ZXN0Gh4udXNlcnMudjEuR2V0SG91c2Vob2xkUmVzcG9uc2USXgoPVXBkYXRlSG91c2Vob2xkEiAudXNlcnMudjEuVXBkYXRlSG91c2Vob2xkUmVxdWVzdBohLnVzZXJzLnYxLlVwZGF0ZUhvdXNlaG9sZFJlc3BvbnNlIgainxkCCAFCnAEKDGNvbS51c2Vycy52MUIKVXNlcnNQcm90b1ABWj9naXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3VzZXJzL3YxO3VzZXJzdjGiAgNVWFiqAghVc2Vycy5WMcoCCFVzZXJzXFYx4gIUVXNlcnNcVjFcR1BCTWV0YWRhdGHqAglVc2Vyczo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChR1c2Vycy92MS91c2Vycy5wcm90bxIIdXNlcnMudjEiYQoJSG91c2Vob2xkEhIKAmlkGAEgASgJQgaqnxkCCAESDAoEbmFtZRgCIAEoCRIyCgdtZW1iZXJzGAMgAygLMhkudXNlcnMudjEuSG91c2Vob2xkTWVtYmVyQgaqnxkCCAEiRAoPSG91c2Vob2xkTWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgphdmF0YXJfdXJsGAMgASgJIhUKE0dldEhvdXNlaG9sZFJlcXVlc3QiPgoUR2V0SG91c2Vob2xkUmVzcG9uc2USJgoJaG91c2Vob2xkGAEgASgLMhMudXNlcnMudjEuSG91c2Vob2xkIiYKFlVwZGF0ZUhvdXNlaG9sZFJlcXVlc3QSDAoEbmFtZRgBIAEoCSJBChdVcGRhdGVIb3VzZWhvbGRSZXNwb25zZRImCglob3VzZWhvbGQYASABKAsyEy51c2Vycy52MS5Ib3VzZWhvbGQivAEKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRISCgpnaXZlbl9uYW1lGAQgASgJEhMKC2ZhbWlseV9uYW1lGAUgASgJEhIKCmF2YXRhcl91cmwYBiABKAkSDQoFYWRtaW4YByABKAgSFAoMaG91c2Vob2xkX2lkGAggASgJEikKC3VuaXRfc3lzdGVtGAkgASgOMhQudXNlcnMudjEuVW5pdFN5c3RlbSJCChVVcGRhdGVTZXR0aW5nc1JlcXVlc3QSKQoLdW5pdF9zeXN0ZW0YASABKA4yFC51c2Vycy52MS5Vbml0U3lzdGVtIjYKFlVwZGF0ZVNldHRpbmdzUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiFwoVR2V0Q3VycmVudFVzZXJSZXF1ZXN0IjYKFkdldEN1cnJlbnRVc2VyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiiQEKCEFQSVRva2VuEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSLwoLY3JlYXRlX3RpbWUYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKDmxhc3RfdXNlZF90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIlChVDcmVhdGVBUElUb2tlblJlcXVlc3QSDAoEbmFtZRgBIAEoCSJLChZDcmVhdGVBUElUb2tlblJlc3BvbnNlEiEKBXRva2VuGAEgASgLMhIudXNlcnMudjEuQVBJVG9rZW4SDgoGc2VjcmV0GAIgASgJIhYKFExpc3RBUElUb2tlbnNSZXF1ZXN0IjsKFUxpc3RBUElUb2tlbnNSZXNwb25zZRIiCgZ0b2tlbnMYASADKAsyEi51c2Vycy52MS5BUElUb2tlbiIjChVEZWxldGVBUElUb2tlblJlcXVlc3QSCgoCaWQYASABKAkiGAoWRGVsZXRlQVBJVG9rZW5SZXNwb25zZSIjChNVcGxvYWRBdmF0YXJSZXF1ZXN0EgwKBGRhdGEYASABKAwiNAoUVXBsb2FkQXZhdGFyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiFQoTRGVsZXRlQXZhdGFyUmVxdWVzdCI0ChREZWxldGVBdmF0YXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4udXNlcnMudjEuVXNlcipbCgpVbml0U3lzdGVtEhsKF1VOSVRfU1lTVEVNX1VOU1BFQ0lGSUVEEAASFgoSVU5JVF9TWVNURU1fTUVUUklDEAESGAoUVU5JVF9TWVNURU1fSU1QRVJJQUwQAjKoBgoLVXNlclNlcnZpY2USUwoOR2V0Q3VycmVudFVzZXISHy51c2Vycy52MS5HZXRDdXJyZW50VXNlclJlcXVlc3QaIC51c2Vycy52MS5HZXRDdXJyZW50VXNlclJlc3BvbnNlElsKDkNyZWF0ZUFQSVRva2VuEh8udXNlcnMudjEuQ3JlYXRlQVBJVG9rZW5SZXF1ZXN0GiAudXNlcnMudjEuQ3JlYXRlQVBJVG9rZW5SZXNwb25zZSIGop8ZAggBElgKDUxpc3RBUElUb2tlbnMSHi51c2Vycy52MS5MaXN0QVBJVG9rZW5zUmVxdWVzdBofLnVzZXJzLnYxLkxpc3RBUElUb2tlbnNSZXNwb25zZSIGop8ZAggBElsKDkRlbGV0ZUFQSVRva2VuEh8udXNlcnMudjEuRGVsZXRlQVBJVG9rZW5SZXF1ZXN0GiAudXNlcnMudjEuRGVsZXRlQVBJVG9rZW5SZXNwb25zZSIGop8ZAggBElUKDFVwbG9hZEF2YXRhchIdLnVzZXJzLnYxLlVwbG9hZEF2YXRhclJlcXVlc3QaHi51c2Vycy52MS5VcGxvYWRBdmF0YXJSZXNwb25zZSIGop8ZAggBElUKDERlbGV0ZUF2YXRhchIdLnVzZXJzLnYxLkRlbGV0ZUF2YXRhclJlcXVlc3QaHi51c2Vycy52MS5EZWxldGVBdmF0YXJSZXNwb25zZSIGop8ZAggBElMKDlVwZGF0ZVNldHRpbmdzEh8udXNlcnMudjEuVXBkYXRlU2V0dGluZ3NSZXF1ZXN0GiAudXNlcnMudjEuVXBkYXRlU2V0dGluZ3NSZXNwb25zZRJNCgxHZXRIb3VzZWhvbGQSHS51c2Vycy52MS5HZXRIb3VzZWhvbGRSZXF1ZXN0Gh4udXNlcnMudjEuR2V0SG91c2Vob2xkUmVzcG9uc2USXgoPVXBkYXRlSG91c2Vob2xkEiAudXNlcnMudjEuVXBkYXRlSG91c2Vob2xkUmVxdWVzdBohLnVzZXJzLnYxLlVwZGF0ZUhvdXNlaG9sZFJlc3BvbnNlIgainxkCCAFCnAEKDGNvbS51c2Vycy52MUIKVXNlcnNQcm90b1ABWj9naXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3VzZXJzL3YxO3VzZXJzdjGiAgNVWFiqAghVc2Vycy5WMcoCCFVzZXJzXFYx4gIUVXNlcnNcVjFcR1BCTWV0YWRhdGHqAglVc2Vyczo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A household: the users who share everything the app stores about food,
@@ -204,6 +204,14 @@ export type User = Message<"users.v1.User"> & {
    * @generated from field: string household_id = 8;
    */
   householdId: string;
+
+  /**
+   * The units the user reads amounts in. Amounts are stored and given in
+   * metric units either way; it's how apps show them.
+   *
+   * @generated from field: users.v1.UnitSystem unit_system = 9;
+   */
+  unitSystem: UnitSystem;
 };
 
 /**
@@ -212,6 +220,44 @@ export type User = Message<"users.v1.User"> & {
  */
 export const UserSchema: GenMessage<User> = /*@__PURE__*/
   messageDesc(file_users_v1_users, 6);
+
+/**
+ * @generated from message users.v1.UpdateSettingsRequest
+ */
+export type UpdateSettingsRequest = Message<"users.v1.UpdateSettingsRequest"> & {
+  /**
+   * The units to read amounts in. Required.
+   *
+   * @generated from field: users.v1.UnitSystem unit_system = 1;
+   */
+  unitSystem: UnitSystem;
+};
+
+/**
+ * Describes the message users.v1.UpdateSettingsRequest.
+ * Use `create(UpdateSettingsRequestSchema)` to create a new message.
+ */
+export const UpdateSettingsRequestSchema: GenMessage<UpdateSettingsRequest> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 7);
+
+/**
+ * @generated from message users.v1.UpdateSettingsResponse
+ */
+export type UpdateSettingsResponse = Message<"users.v1.UpdateSettingsResponse"> & {
+  /**
+   * The user, with the new settings.
+   *
+   * @generated from field: users.v1.User user = 1;
+   */
+  user?: User | undefined;
+};
+
+/**
+ * Describes the message users.v1.UpdateSettingsResponse.
+ * Use `create(UpdateSettingsResponseSchema)` to create a new message.
+ */
+export const UpdateSettingsResponseSchema: GenMessage<UpdateSettingsResponse> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 8);
 
 /**
  * @generated from message users.v1.GetCurrentUserRequest
@@ -224,7 +270,7 @@ export type GetCurrentUserRequest = Message<"users.v1.GetCurrentUserRequest"> & 
  * Use `create(GetCurrentUserRequestSchema)` to create a new message.
  */
 export const GetCurrentUserRequestSchema: GenMessage<GetCurrentUserRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 7);
+  messageDesc(file_users_v1_users, 9);
 
 /**
  * @generated from message users.v1.GetCurrentUserResponse
@@ -241,7 +287,7 @@ export type GetCurrentUserResponse = Message<"users.v1.GetCurrentUserResponse"> 
  * Use `create(GetCurrentUserResponseSchema)` to create a new message.
  */
 export const GetCurrentUserResponseSchema: GenMessage<GetCurrentUserResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 8);
+  messageDesc(file_users_v1_users, 10);
 
 /**
  * An API token. The token secret is only returned when it is created.
@@ -283,7 +329,7 @@ export type APIToken = Message<"users.v1.APIToken"> & {
  * Use `create(APITokenSchema)` to create a new message.
  */
 export const APITokenSchema: GenMessage<APIToken> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 9);
+  messageDesc(file_users_v1_users, 11);
 
 /**
  * @generated from message users.v1.CreateAPITokenRequest
@@ -302,7 +348,7 @@ export type CreateAPITokenRequest = Message<"users.v1.CreateAPITokenRequest"> & 
  * Use `create(CreateAPITokenRequestSchema)` to create a new message.
  */
 export const CreateAPITokenRequestSchema: GenMessage<CreateAPITokenRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 10);
+  messageDesc(file_users_v1_users, 12);
 
 /**
  * @generated from message users.v1.CreateAPITokenResponse
@@ -328,7 +374,7 @@ export type CreateAPITokenResponse = Message<"users.v1.CreateAPITokenResponse"> 
  * Use `create(CreateAPITokenResponseSchema)` to create a new message.
  */
 export const CreateAPITokenResponseSchema: GenMessage<CreateAPITokenResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 11);
+  messageDesc(file_users_v1_users, 13);
 
 /**
  * @generated from message users.v1.ListAPITokensRequest
@@ -341,7 +387,7 @@ export type ListAPITokensRequest = Message<"users.v1.ListAPITokensRequest"> & {
  * Use `create(ListAPITokensRequestSchema)` to create a new message.
  */
 export const ListAPITokensRequestSchema: GenMessage<ListAPITokensRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 12);
+  messageDesc(file_users_v1_users, 14);
 
 /**
  * @generated from message users.v1.ListAPITokensResponse
@@ -360,7 +406,7 @@ export type ListAPITokensResponse = Message<"users.v1.ListAPITokensResponse"> & 
  * Use `create(ListAPITokensResponseSchema)` to create a new message.
  */
 export const ListAPITokensResponseSchema: GenMessage<ListAPITokensResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 13);
+  messageDesc(file_users_v1_users, 15);
 
 /**
  * @generated from message users.v1.DeleteAPITokenRequest
@@ -379,7 +425,7 @@ export type DeleteAPITokenRequest = Message<"users.v1.DeleteAPITokenRequest"> & 
  * Use `create(DeleteAPITokenRequestSchema)` to create a new message.
  */
 export const DeleteAPITokenRequestSchema: GenMessage<DeleteAPITokenRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 14);
+  messageDesc(file_users_v1_users, 16);
 
 /**
  * @generated from message users.v1.DeleteAPITokenResponse
@@ -392,7 +438,7 @@ export type DeleteAPITokenResponse = Message<"users.v1.DeleteAPITokenResponse"> 
  * Use `create(DeleteAPITokenResponseSchema)` to create a new message.
  */
 export const DeleteAPITokenResponseSchema: GenMessage<DeleteAPITokenResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 15);
+  messageDesc(file_users_v1_users, 17);
 
 /**
  * @generated from message users.v1.UploadAvatarRequest
@@ -411,7 +457,7 @@ export type UploadAvatarRequest = Message<"users.v1.UploadAvatarRequest"> & {
  * Use `create(UploadAvatarRequestSchema)` to create a new message.
  */
 export const UploadAvatarRequestSchema: GenMessage<UploadAvatarRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 16);
+  messageDesc(file_users_v1_users, 18);
 
 /**
  * @generated from message users.v1.UploadAvatarResponse
@@ -430,7 +476,7 @@ export type UploadAvatarResponse = Message<"users.v1.UploadAvatarResponse"> & {
  * Use `create(UploadAvatarResponseSchema)` to create a new message.
  */
 export const UploadAvatarResponseSchema: GenMessage<UploadAvatarResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 17);
+  messageDesc(file_users_v1_users, 19);
 
 /**
  * @generated from message users.v1.DeleteAvatarRequest
@@ -443,7 +489,7 @@ export type DeleteAvatarRequest = Message<"users.v1.DeleteAvatarRequest"> & {
  * Use `create(DeleteAvatarRequestSchema)` to create a new message.
  */
 export const DeleteAvatarRequestSchema: GenMessage<DeleteAvatarRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 18);
+  messageDesc(file_users_v1_users, 20);
 
 /**
  * @generated from message users.v1.DeleteAvatarResponse
@@ -462,7 +508,42 @@ export type DeleteAvatarResponse = Message<"users.v1.DeleteAvatarResponse"> & {
  * Use `create(DeleteAvatarResponseSchema)` to create a new message.
  */
 export const DeleteAvatarResponseSchema: GenMessage<DeleteAvatarResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 19);
+  messageDesc(file_users_v1_users, 21);
+
+/**
+ * UnitSystem is the units a user reads amounts in.
+ *
+ * @generated from enum users.v1.UnitSystem
+ */
+export enum UnitSystem {
+  /**
+   * Metric.
+   *
+   * @generated from enum value: UNIT_SYSTEM_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Grams, kilograms and milliliters, with teaspoons and tablespoons for
+   * small volumes.
+   *
+   * @generated from enum value: UNIT_SYSTEM_METRIC = 1;
+   */
+  METRIC = 1,
+
+  /**
+   * US customary units: ounces, pounds, cups, teaspoons and tablespoons.
+   *
+   * @generated from enum value: UNIT_SYSTEM_IMPERIAL = 2;
+   */
+  IMPERIAL = 2,
+}
+
+/**
+ * Describes the enum users.v1.UnitSystem.
+ */
+export const UnitSystemSchema: GenEnum<UnitSystem> = /*@__PURE__*/
+  enumDesc(file_users_v1_users, 0);
 
 /**
  * UserService provides information about the signed in user, and their
@@ -532,6 +613,17 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof DeleteAvatarRequestSchema;
     output: typeof DeleteAvatarResponseSchema;
+  },
+  /**
+   * Change the signed in user's settings, like the units they read amounts
+   * in.
+   *
+   * @generated from rpc users.v1.UserService.UpdateSettings
+   */
+  updateSettings: {
+    methodKind: "unary";
+    input: typeof UpdateSettingsRequestSchema;
+    output: typeof UpdateSettingsResponseSchema;
   },
   /**
    * Get the signed in user's household: the people who share recipes,

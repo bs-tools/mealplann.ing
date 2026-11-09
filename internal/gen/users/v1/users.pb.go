@@ -22,6 +22,55 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// UnitSystem is the units a user reads amounts in.
+type UnitSystem int32
+
+const (
+	// Metric.
+	UnitSystem_UNIT_SYSTEM_UNSPECIFIED UnitSystem = 0
+	// Grams, kilograms and milliliters, with teaspoons and tablespoons for
+	// small volumes.
+	UnitSystem_UNIT_SYSTEM_METRIC UnitSystem = 1
+	// US customary units: ounces, pounds, cups, teaspoons and tablespoons.
+	UnitSystem_UNIT_SYSTEM_IMPERIAL UnitSystem = 2
+)
+
+// Enum value maps for UnitSystem.
+var (
+	UnitSystem_name = map[int32]string{
+		0: "UNIT_SYSTEM_UNSPECIFIED",
+		1: "UNIT_SYSTEM_METRIC",
+		2: "UNIT_SYSTEM_IMPERIAL",
+	}
+	UnitSystem_value = map[string]int32{
+		"UNIT_SYSTEM_UNSPECIFIED": 0,
+		"UNIT_SYSTEM_METRIC":      1,
+		"UNIT_SYSTEM_IMPERIAL":    2,
+	}
+)
+
+func (x UnitSystem) Enum() *UnitSystem {
+	p := new(UnitSystem)
+	*p = x
+	return p
+}
+
+func (x UnitSystem) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (UnitSystem) Descriptor() protoreflect.EnumDescriptor {
+	return file_users_v1_users_proto_enumTypes[0].Descriptor()
+}
+
+func (UnitSystem) Type() protoreflect.EnumType {
+	return &file_users_v1_users_proto_enumTypes[0]
+}
+
+func (x UnitSystem) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
 // A household: the users who share everything the app stores about food,
 // like recipes, plans, the pantry and the shopping list.
 type Household struct {
@@ -451,6 +500,7 @@ type User struct {
 	xxx_hidden_AvatarUrl   string                 `protobuf:"bytes,6,opt,name=avatar_url,json=avatarUrl,proto3"`
 	xxx_hidden_Admin       bool                   `protobuf:"varint,7,opt,name=admin,proto3"`
 	xxx_hidden_HouseholdId string                 `protobuf:"bytes,8,opt,name=household_id,json=householdId,proto3"`
+	xxx_hidden_UnitSystem  UnitSystem             `protobuf:"varint,9,opt,name=unit_system,json=unitSystem,proto3,enum=users.v1.UnitSystem"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
@@ -536,6 +586,13 @@ func (x *User) GetHouseholdId() string {
 	return ""
 }
 
+func (x *User) GetUnitSystem() UnitSystem {
+	if x != nil {
+		return x.xxx_hidden_UnitSystem
+	}
+	return UnitSystem_UNIT_SYSTEM_UNSPECIFIED
+}
+
 func (x *User) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -568,6 +625,10 @@ func (x *User) SetHouseholdId(v string) {
 	x.xxx_hidden_HouseholdId = v
 }
 
+func (x *User) SetUnitSystem(v UnitSystem) {
+	x.xxx_hidden_UnitSystem = v
+}
+
 type User_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -584,6 +645,9 @@ type User_builder struct {
 	Admin bool
 	// The ID of the user's household.
 	HouseholdId string
+	// The units the user reads amounts in. Amounts are stored and given in
+	// metric units either way; it's how apps show them.
+	UnitSystem UnitSystem
 }
 
 func (b0 User_builder) Build() *User {
@@ -598,6 +662,134 @@ func (b0 User_builder) Build() *User {
 	x.xxx_hidden_AvatarUrl = b.AvatarUrl
 	x.xxx_hidden_Admin = b.Admin
 	x.xxx_hidden_HouseholdId = b.HouseholdId
+	x.xxx_hidden_UnitSystem = b.UnitSystem
+	return m0
+}
+
+type UpdateSettingsRequest struct {
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_UnitSystem UnitSystem             `protobuf:"varint,1,opt,name=unit_system,json=unitSystem,proto3,enum=users.v1.UnitSystem"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *UpdateSettingsRequest) Reset() {
+	*x = UpdateSettingsRequest{}
+	mi := &file_users_v1_users_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateSettingsRequest) ProtoMessage() {}
+
+func (x *UpdateSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_v1_users_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *UpdateSettingsRequest) GetUnitSystem() UnitSystem {
+	if x != nil {
+		return x.xxx_hidden_UnitSystem
+	}
+	return UnitSystem_UNIT_SYSTEM_UNSPECIFIED
+}
+
+func (x *UpdateSettingsRequest) SetUnitSystem(v UnitSystem) {
+	x.xxx_hidden_UnitSystem = v
+}
+
+type UpdateSettingsRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The units to read amounts in. Required.
+	UnitSystem UnitSystem
+}
+
+func (b0 UpdateSettingsRequest_builder) Build() *UpdateSettingsRequest {
+	m0 := &UpdateSettingsRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_UnitSystem = b.UnitSystem
+	return m0
+}
+
+type UpdateSettingsResponse struct {
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_User *User                  `protobuf:"bytes,1,opt,name=user,proto3"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *UpdateSettingsResponse) Reset() {
+	*x = UpdateSettingsResponse{}
+	mi := &file_users_v1_users_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateSettingsResponse) ProtoMessage() {}
+
+func (x *UpdateSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_users_v1_users_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *UpdateSettingsResponse) GetUser() *User {
+	if x != nil {
+		return x.xxx_hidden_User
+	}
+	return nil
+}
+
+func (x *UpdateSettingsResponse) SetUser(v *User) {
+	x.xxx_hidden_User = v
+}
+
+func (x *UpdateSettingsResponse) HasUser() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_User != nil
+}
+
+func (x *UpdateSettingsResponse) ClearUser() {
+	x.xxx_hidden_User = nil
+}
+
+type UpdateSettingsResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The user, with the new settings.
+	User *User
+}
+
+func (b0 UpdateSettingsResponse_builder) Build() *UpdateSettingsResponse {
+	m0 := &UpdateSettingsResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_User = b.User
 	return m0
 }
 
@@ -609,7 +801,7 @@ type GetCurrentUserRequest struct {
 
 func (x *GetCurrentUserRequest) Reset() {
 	*x = GetCurrentUserRequest{}
-	mi := &file_users_v1_users_proto_msgTypes[7]
+	mi := &file_users_v1_users_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -621,7 +813,7 @@ func (x *GetCurrentUserRequest) String() string {
 func (*GetCurrentUserRequest) ProtoMessage() {}
 
 func (x *GetCurrentUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[7]
+	mi := &file_users_v1_users_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -653,7 +845,7 @@ type GetCurrentUserResponse struct {
 
 func (x *GetCurrentUserResponse) Reset() {
 	*x = GetCurrentUserResponse{}
-	mi := &file_users_v1_users_proto_msgTypes[8]
+	mi := &file_users_v1_users_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -665,7 +857,7 @@ func (x *GetCurrentUserResponse) String() string {
 func (*GetCurrentUserResponse) ProtoMessage() {}
 
 func (x *GetCurrentUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[8]
+	mi := &file_users_v1_users_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -725,7 +917,7 @@ type APIToken struct {
 
 func (x *APIToken) Reset() {
 	*x = APIToken{}
-	mi := &file_users_v1_users_proto_msgTypes[9]
+	mi := &file_users_v1_users_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -737,7 +929,7 @@ func (x *APIToken) String() string {
 func (*APIToken) ProtoMessage() {}
 
 func (x *APIToken) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[9]
+	mi := &file_users_v1_users_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -847,7 +1039,7 @@ type CreateAPITokenRequest struct {
 
 func (x *CreateAPITokenRequest) Reset() {
 	*x = CreateAPITokenRequest{}
-	mi := &file_users_v1_users_proto_msgTypes[10]
+	mi := &file_users_v1_users_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -859,7 +1051,7 @@ func (x *CreateAPITokenRequest) String() string {
 func (*CreateAPITokenRequest) ProtoMessage() {}
 
 func (x *CreateAPITokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[10]
+	mi := &file_users_v1_users_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -906,7 +1098,7 @@ type CreateAPITokenResponse struct {
 
 func (x *CreateAPITokenResponse) Reset() {
 	*x = CreateAPITokenResponse{}
-	mi := &file_users_v1_users_proto_msgTypes[11]
+	mi := &file_users_v1_users_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -918,7 +1110,7 @@ func (x *CreateAPITokenResponse) String() string {
 func (*CreateAPITokenResponse) ProtoMessage() {}
 
 func (x *CreateAPITokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[11]
+	mi := &file_users_v1_users_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -988,7 +1180,7 @@ type ListAPITokensRequest struct {
 
 func (x *ListAPITokensRequest) Reset() {
 	*x = ListAPITokensRequest{}
-	mi := &file_users_v1_users_proto_msgTypes[12]
+	mi := &file_users_v1_users_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1000,7 +1192,7 @@ func (x *ListAPITokensRequest) String() string {
 func (*ListAPITokensRequest) ProtoMessage() {}
 
 func (x *ListAPITokensRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[12]
+	mi := &file_users_v1_users_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1032,7 +1224,7 @@ type ListAPITokensResponse struct {
 
 func (x *ListAPITokensResponse) Reset() {
 	*x = ListAPITokensResponse{}
-	mi := &file_users_v1_users_proto_msgTypes[13]
+	mi := &file_users_v1_users_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1044,7 +1236,7 @@ func (x *ListAPITokensResponse) String() string {
 func (*ListAPITokensResponse) ProtoMessage() {}
 
 func (x *ListAPITokensResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[13]
+	mi := &file_users_v1_users_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1092,7 +1284,7 @@ type DeleteAPITokenRequest struct {
 
 func (x *DeleteAPITokenRequest) Reset() {
 	*x = DeleteAPITokenRequest{}
-	mi := &file_users_v1_users_proto_msgTypes[14]
+	mi := &file_users_v1_users_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1104,7 +1296,7 @@ func (x *DeleteAPITokenRequest) String() string {
 func (*DeleteAPITokenRequest) ProtoMessage() {}
 
 func (x *DeleteAPITokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[14]
+	mi := &file_users_v1_users_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1149,7 +1341,7 @@ type DeleteAPITokenResponse struct {
 
 func (x *DeleteAPITokenResponse) Reset() {
 	*x = DeleteAPITokenResponse{}
-	mi := &file_users_v1_users_proto_msgTypes[15]
+	mi := &file_users_v1_users_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1161,7 +1353,7 @@ func (x *DeleteAPITokenResponse) String() string {
 func (*DeleteAPITokenResponse) ProtoMessage() {}
 
 func (x *DeleteAPITokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[15]
+	mi := &file_users_v1_users_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1193,7 +1385,7 @@ type UploadAvatarRequest struct {
 
 func (x *UploadAvatarRequest) Reset() {
 	*x = UploadAvatarRequest{}
-	mi := &file_users_v1_users_proto_msgTypes[16]
+	mi := &file_users_v1_users_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1205,7 +1397,7 @@ func (x *UploadAvatarRequest) String() string {
 func (*UploadAvatarRequest) ProtoMessage() {}
 
 func (x *UploadAvatarRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[16]
+	mi := &file_users_v1_users_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1254,7 +1446,7 @@ type UploadAvatarResponse struct {
 
 func (x *UploadAvatarResponse) Reset() {
 	*x = UploadAvatarResponse{}
-	mi := &file_users_v1_users_proto_msgTypes[17]
+	mi := &file_users_v1_users_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1266,7 +1458,7 @@ func (x *UploadAvatarResponse) String() string {
 func (*UploadAvatarResponse) ProtoMessage() {}
 
 func (x *UploadAvatarResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[17]
+	mi := &file_users_v1_users_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1322,7 +1514,7 @@ type DeleteAvatarRequest struct {
 
 func (x *DeleteAvatarRequest) Reset() {
 	*x = DeleteAvatarRequest{}
-	mi := &file_users_v1_users_proto_msgTypes[18]
+	mi := &file_users_v1_users_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1334,7 +1526,7 @@ func (x *DeleteAvatarRequest) String() string {
 func (*DeleteAvatarRequest) ProtoMessage() {}
 
 func (x *DeleteAvatarRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[18]
+	mi := &file_users_v1_users_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1366,7 +1558,7 @@ type DeleteAvatarResponse struct {
 
 func (x *DeleteAvatarResponse) Reset() {
 	*x = DeleteAvatarResponse{}
-	mi := &file_users_v1_users_proto_msgTypes[19]
+	mi := &file_users_v1_users_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1378,7 +1570,7 @@ func (x *DeleteAvatarResponse) String() string {
 func (*DeleteAvatarResponse) ProtoMessage() {}
 
 func (x *DeleteAvatarResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[19]
+	mi := &file_users_v1_users_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1446,7 +1638,7 @@ const file_users_v1_users_proto_rawDesc = "" +
 	"\x16UpdateHouseholdRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"L\n" +
 	"\x17UpdateHouseholdResponse\x121\n" +
-	"\thousehold\x18\x01 \x01(\v2\x13.users.v1.HouseholdR\thousehold\"\xd8\x01\n" +
+	"\thousehold\x18\x01 \x01(\v2\x13.users.v1.HouseholdR\thousehold\"\x8f\x02\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
@@ -1458,7 +1650,14 @@ const file_users_v1_users_proto_rawDesc = "" +
 	"\n" +
 	"avatar_url\x18\x06 \x01(\tR\tavatarUrl\x12\x14\n" +
 	"\x05admin\x18\a \x01(\bR\x05admin\x12!\n" +
-	"\fhousehold_id\x18\b \x01(\tR\vhouseholdId\"\x17\n" +
+	"\fhousehold_id\x18\b \x01(\tR\vhouseholdId\x125\n" +
+	"\vunit_system\x18\t \x01(\x0e2\x14.users.v1.UnitSystemR\n" +
+	"unitSystem\"N\n" +
+	"\x15UpdateSettingsRequest\x125\n" +
+	"\vunit_system\x18\x01 \x01(\x0e2\x14.users.v1.UnitSystemR\n" +
+	"unitSystem\"<\n" +
+	"\x16UpdateSettingsResponse\x12\"\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.users.v1.UserR\x04user\"\x17\n" +
 	"\x15GetCurrentUserRequest\"<\n" +
 	"\x16GetCurrentUserResponse\x12\"\n" +
 	"\x04user\x18\x01 \x01(\v2\x0e.users.v1.UserR\x04user\"\xad\x01\n" +
@@ -1485,75 +1684,90 @@ const file_users_v1_users_proto_rawDesc = "" +
 	"\x04user\x18\x01 \x01(\v2\x0e.users.v1.UserR\x04user\"\x15\n" +
 	"\x13DeleteAvatarRequest\":\n" +
 	"\x14DeleteAvatarResponse\x12\"\n" +
-	"\x04user\x18\x01 \x01(\v2\x0e.users.v1.UserR\x04user2\xd3\x05\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.users.v1.UserR\x04user*[\n" +
+	"\n" +
+	"UnitSystem\x12\x1b\n" +
+	"\x17UNIT_SYSTEM_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12UNIT_SYSTEM_METRIC\x10\x01\x12\x18\n" +
+	"\x14UNIT_SYSTEM_IMPERIAL\x10\x022\xa8\x06\n" +
 	"\vUserService\x12S\n" +
 	"\x0eGetCurrentUser\x12\x1f.users.v1.GetCurrentUserRequest\x1a .users.v1.GetCurrentUserResponse\x12[\n" +
 	"\x0eCreateAPIToken\x12\x1f.users.v1.CreateAPITokenRequest\x1a .users.v1.CreateAPITokenResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12X\n" +
 	"\rListAPITokens\x12\x1e.users.v1.ListAPITokensRequest\x1a\x1f.users.v1.ListAPITokensResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12[\n" +
 	"\x0eDeleteAPIToken\x12\x1f.users.v1.DeleteAPITokenRequest\x1a .users.v1.DeleteAPITokenResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12U\n" +
 	"\fUploadAvatar\x12\x1d.users.v1.UploadAvatarRequest\x1a\x1e.users.v1.UploadAvatarResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12U\n" +
-	"\fDeleteAvatar\x12\x1d.users.v1.DeleteAvatarRequest\x1a\x1e.users.v1.DeleteAvatarResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12M\n" +
+	"\fDeleteAvatar\x12\x1d.users.v1.DeleteAvatarRequest\x1a\x1e.users.v1.DeleteAvatarResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12S\n" +
+	"\x0eUpdateSettings\x12\x1f.users.v1.UpdateSettingsRequest\x1a .users.v1.UpdateSettingsResponse\x12M\n" +
 	"\fGetHousehold\x12\x1d.users.v1.GetHouseholdRequest\x1a\x1e.users.v1.GetHouseholdResponse\x12^\n" +
 	"\x0fUpdateHousehold\x12 .users.v1.UpdateHouseholdRequest\x1a!.users.v1.UpdateHouseholdResponse\"\x06\xa2\x9f\x19\x02\b\x01B\x9c\x01\n" +
 	"\fcom.users.v1B\n" +
 	"UsersProtoP\x01Z?github.com/bs-tools/mealplann.ing/internal/gen/users/v1;usersv1\xa2\x02\x03UXX\xaa\x02\bUsers.V1\xca\x02\bUsers\\V1\xe2\x02\x14Users\\V1\\GPBMetadata\xea\x02\tUsers::V1b\x06proto3"
 
-var file_users_v1_users_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_users_v1_users_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_users_v1_users_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_users_v1_users_proto_goTypes = []any{
-	(*Household)(nil),               // 0: users.v1.Household
-	(*HouseholdMember)(nil),         // 1: users.v1.HouseholdMember
-	(*GetHouseholdRequest)(nil),     // 2: users.v1.GetHouseholdRequest
-	(*GetHouseholdResponse)(nil),    // 3: users.v1.GetHouseholdResponse
-	(*UpdateHouseholdRequest)(nil),  // 4: users.v1.UpdateHouseholdRequest
-	(*UpdateHouseholdResponse)(nil), // 5: users.v1.UpdateHouseholdResponse
-	(*User)(nil),                    // 6: users.v1.User
-	(*GetCurrentUserRequest)(nil),   // 7: users.v1.GetCurrentUserRequest
-	(*GetCurrentUserResponse)(nil),  // 8: users.v1.GetCurrentUserResponse
-	(*APIToken)(nil),                // 9: users.v1.APIToken
-	(*CreateAPITokenRequest)(nil),   // 10: users.v1.CreateAPITokenRequest
-	(*CreateAPITokenResponse)(nil),  // 11: users.v1.CreateAPITokenResponse
-	(*ListAPITokensRequest)(nil),    // 12: users.v1.ListAPITokensRequest
-	(*ListAPITokensResponse)(nil),   // 13: users.v1.ListAPITokensResponse
-	(*DeleteAPITokenRequest)(nil),   // 14: users.v1.DeleteAPITokenRequest
-	(*DeleteAPITokenResponse)(nil),  // 15: users.v1.DeleteAPITokenResponse
-	(*UploadAvatarRequest)(nil),     // 16: users.v1.UploadAvatarRequest
-	(*UploadAvatarResponse)(nil),    // 17: users.v1.UploadAvatarResponse
-	(*DeleteAvatarRequest)(nil),     // 18: users.v1.DeleteAvatarRequest
-	(*DeleteAvatarResponse)(nil),    // 19: users.v1.DeleteAvatarResponse
-	(*timestamppb.Timestamp)(nil),   // 20: google.protobuf.Timestamp
+	(UnitSystem)(0),                 // 0: users.v1.UnitSystem
+	(*Household)(nil),               // 1: users.v1.Household
+	(*HouseholdMember)(nil),         // 2: users.v1.HouseholdMember
+	(*GetHouseholdRequest)(nil),     // 3: users.v1.GetHouseholdRequest
+	(*GetHouseholdResponse)(nil),    // 4: users.v1.GetHouseholdResponse
+	(*UpdateHouseholdRequest)(nil),  // 5: users.v1.UpdateHouseholdRequest
+	(*UpdateHouseholdResponse)(nil), // 6: users.v1.UpdateHouseholdResponse
+	(*User)(nil),                    // 7: users.v1.User
+	(*UpdateSettingsRequest)(nil),   // 8: users.v1.UpdateSettingsRequest
+	(*UpdateSettingsResponse)(nil),  // 9: users.v1.UpdateSettingsResponse
+	(*GetCurrentUserRequest)(nil),   // 10: users.v1.GetCurrentUserRequest
+	(*GetCurrentUserResponse)(nil),  // 11: users.v1.GetCurrentUserResponse
+	(*APIToken)(nil),                // 12: users.v1.APIToken
+	(*CreateAPITokenRequest)(nil),   // 13: users.v1.CreateAPITokenRequest
+	(*CreateAPITokenResponse)(nil),  // 14: users.v1.CreateAPITokenResponse
+	(*ListAPITokensRequest)(nil),    // 15: users.v1.ListAPITokensRequest
+	(*ListAPITokensResponse)(nil),   // 16: users.v1.ListAPITokensResponse
+	(*DeleteAPITokenRequest)(nil),   // 17: users.v1.DeleteAPITokenRequest
+	(*DeleteAPITokenResponse)(nil),  // 18: users.v1.DeleteAPITokenResponse
+	(*UploadAvatarRequest)(nil),     // 19: users.v1.UploadAvatarRequest
+	(*UploadAvatarResponse)(nil),    // 20: users.v1.UploadAvatarResponse
+	(*DeleteAvatarRequest)(nil),     // 21: users.v1.DeleteAvatarRequest
+	(*DeleteAvatarResponse)(nil),    // 22: users.v1.DeleteAvatarResponse
+	(*timestamppb.Timestamp)(nil),   // 23: google.protobuf.Timestamp
 }
 var file_users_v1_users_proto_depIdxs = []int32{
-	1,  // 0: users.v1.Household.members:type_name -> users.v1.HouseholdMember
-	0,  // 1: users.v1.GetHouseholdResponse.household:type_name -> users.v1.Household
-	0,  // 2: users.v1.UpdateHouseholdResponse.household:type_name -> users.v1.Household
-	6,  // 3: users.v1.GetCurrentUserResponse.user:type_name -> users.v1.User
-	20, // 4: users.v1.APIToken.create_time:type_name -> google.protobuf.Timestamp
-	20, // 5: users.v1.APIToken.last_used_time:type_name -> google.protobuf.Timestamp
-	9,  // 6: users.v1.CreateAPITokenResponse.token:type_name -> users.v1.APIToken
-	9,  // 7: users.v1.ListAPITokensResponse.tokens:type_name -> users.v1.APIToken
-	6,  // 8: users.v1.UploadAvatarResponse.user:type_name -> users.v1.User
-	6,  // 9: users.v1.DeleteAvatarResponse.user:type_name -> users.v1.User
-	7,  // 10: users.v1.UserService.GetCurrentUser:input_type -> users.v1.GetCurrentUserRequest
-	10, // 11: users.v1.UserService.CreateAPIToken:input_type -> users.v1.CreateAPITokenRequest
-	12, // 12: users.v1.UserService.ListAPITokens:input_type -> users.v1.ListAPITokensRequest
-	14, // 13: users.v1.UserService.DeleteAPIToken:input_type -> users.v1.DeleteAPITokenRequest
-	16, // 14: users.v1.UserService.UploadAvatar:input_type -> users.v1.UploadAvatarRequest
-	18, // 15: users.v1.UserService.DeleteAvatar:input_type -> users.v1.DeleteAvatarRequest
-	2,  // 16: users.v1.UserService.GetHousehold:input_type -> users.v1.GetHouseholdRequest
-	4,  // 17: users.v1.UserService.UpdateHousehold:input_type -> users.v1.UpdateHouseholdRequest
-	8,  // 18: users.v1.UserService.GetCurrentUser:output_type -> users.v1.GetCurrentUserResponse
-	11, // 19: users.v1.UserService.CreateAPIToken:output_type -> users.v1.CreateAPITokenResponse
-	13, // 20: users.v1.UserService.ListAPITokens:output_type -> users.v1.ListAPITokensResponse
-	15, // 21: users.v1.UserService.DeleteAPIToken:output_type -> users.v1.DeleteAPITokenResponse
-	17, // 22: users.v1.UserService.UploadAvatar:output_type -> users.v1.UploadAvatarResponse
-	19, // 23: users.v1.UserService.DeleteAvatar:output_type -> users.v1.DeleteAvatarResponse
-	3,  // 24: users.v1.UserService.GetHousehold:output_type -> users.v1.GetHouseholdResponse
-	5,  // 25: users.v1.UserService.UpdateHousehold:output_type -> users.v1.UpdateHouseholdResponse
-	18, // [18:26] is the sub-list for method output_type
-	10, // [10:18] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	2,  // 0: users.v1.Household.members:type_name -> users.v1.HouseholdMember
+	1,  // 1: users.v1.GetHouseholdResponse.household:type_name -> users.v1.Household
+	1,  // 2: users.v1.UpdateHouseholdResponse.household:type_name -> users.v1.Household
+	0,  // 3: users.v1.User.unit_system:type_name -> users.v1.UnitSystem
+	0,  // 4: users.v1.UpdateSettingsRequest.unit_system:type_name -> users.v1.UnitSystem
+	7,  // 5: users.v1.UpdateSettingsResponse.user:type_name -> users.v1.User
+	7,  // 6: users.v1.GetCurrentUserResponse.user:type_name -> users.v1.User
+	23, // 7: users.v1.APIToken.create_time:type_name -> google.protobuf.Timestamp
+	23, // 8: users.v1.APIToken.last_used_time:type_name -> google.protobuf.Timestamp
+	12, // 9: users.v1.CreateAPITokenResponse.token:type_name -> users.v1.APIToken
+	12, // 10: users.v1.ListAPITokensResponse.tokens:type_name -> users.v1.APIToken
+	7,  // 11: users.v1.UploadAvatarResponse.user:type_name -> users.v1.User
+	7,  // 12: users.v1.DeleteAvatarResponse.user:type_name -> users.v1.User
+	10, // 13: users.v1.UserService.GetCurrentUser:input_type -> users.v1.GetCurrentUserRequest
+	13, // 14: users.v1.UserService.CreateAPIToken:input_type -> users.v1.CreateAPITokenRequest
+	15, // 15: users.v1.UserService.ListAPITokens:input_type -> users.v1.ListAPITokensRequest
+	17, // 16: users.v1.UserService.DeleteAPIToken:input_type -> users.v1.DeleteAPITokenRequest
+	19, // 17: users.v1.UserService.UploadAvatar:input_type -> users.v1.UploadAvatarRequest
+	21, // 18: users.v1.UserService.DeleteAvatar:input_type -> users.v1.DeleteAvatarRequest
+	8,  // 19: users.v1.UserService.UpdateSettings:input_type -> users.v1.UpdateSettingsRequest
+	3,  // 20: users.v1.UserService.GetHousehold:input_type -> users.v1.GetHouseholdRequest
+	5,  // 21: users.v1.UserService.UpdateHousehold:input_type -> users.v1.UpdateHouseholdRequest
+	11, // 22: users.v1.UserService.GetCurrentUser:output_type -> users.v1.GetCurrentUserResponse
+	14, // 23: users.v1.UserService.CreateAPIToken:output_type -> users.v1.CreateAPITokenResponse
+	16, // 24: users.v1.UserService.ListAPITokens:output_type -> users.v1.ListAPITokensResponse
+	18, // 25: users.v1.UserService.DeleteAPIToken:output_type -> users.v1.DeleteAPITokenResponse
+	20, // 26: users.v1.UserService.UploadAvatar:output_type -> users.v1.UploadAvatarResponse
+	22, // 27: users.v1.UserService.DeleteAvatar:output_type -> users.v1.DeleteAvatarResponse
+	9,  // 28: users.v1.UserService.UpdateSettings:output_type -> users.v1.UpdateSettingsResponse
+	4,  // 29: users.v1.UserService.GetHousehold:output_type -> users.v1.GetHouseholdResponse
+	6,  // 30: users.v1.UserService.UpdateHousehold:output_type -> users.v1.UpdateHouseholdResponse
+	22, // [22:31] is the sub-list for method output_type
+	13, // [13:22] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_users_v1_users_proto_init() }
@@ -1566,13 +1780,14 @@ func file_users_v1_users_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_v1_users_proto_rawDesc), len(file_users_v1_users_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   20,
+			NumEnums:      1,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_users_v1_users_proto_goTypes,
 		DependencyIndexes: file_users_v1_users_proto_depIdxs,
+		EnumInfos:         file_users_v1_users_proto_enumTypes,
 		MessageInfos:      file_users_v1_users_proto_msgTypes,
 	}.Build()
 	File_users_v1_users_proto = out.File

@@ -4,6 +4,7 @@ import Connections from "@components/settings/connections";
 import HouseholdCard from "@components/settings/household";
 import Invitations from "@components/settings/invitations";
 import Passkeys from "@components/settings/passkeys";
+import UnitsCard from "@components/settings/units";
 import Card from "@components/ui/card";
 import ConfirmButton from "@components/ui/confirm-button";
 import { CopyField, PageHeader } from "@components/ui/misc";
@@ -253,6 +254,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div className="flex flex-col gap-4">
         <AvatarCard user={user} />
+        <UnitsCard />
         <HouseholdCard />
         <Passkeys />
         <Invitations admin={user.admin} />

@@ -90,6 +90,12 @@ saying what to change.
 - Each food also has:
   - A typical **weight per piece** ("1 onion" ≈ 150 g) and a **density** for
     milliliters, so amounts can be converted to grams.
+  - A **measure**, how its amounts show in recipes: by weight, by volume
+    (spices and oils, in teaspoons and tablespoons, then milliliters or
+    cups) or in pieces, converted with the density or piece weight.
+    Automatic shows amounts up to 75 ml by volume where the density converts
+    them, and the rest as entered. Each user reads them in metric or US
+    customary units, a setting of their own; amounts are stored in metric.
   - Whether it's a **fast carb**, set by hand or by the agent, since neither
     source has a glycemic index.
   - A **store section** (produce, dry goods, chilled, frozen and so on) and

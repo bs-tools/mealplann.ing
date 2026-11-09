@@ -35,7 +35,7 @@ func (r *Repository) GetSession(ctx context.Context, token string) (*Session, er
 		}
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
-	user := &PasskeyUser{id: row.ID, Name: row.Name, UserHandle: row.UserHandle, AvatarKey: row.AvatarKey.String, householdID: row.HouseholdID, admin: row.IsAdmin}
+	user := &PasskeyUser{id: row.ID, Name: row.Name, UserHandle: row.UserHandle, AvatarKey: row.AvatarKey.String, householdID: row.HouseholdID, admin: row.IsAdmin, UnitSystem: UnitSystem(row.UnitSystem)}
 	return &Session{User: user, Expiry: row.Expiry.Time}, nil
 }
 
@@ -71,5 +71,5 @@ func (r *Repository) loadUser(ctx context.Context, querier *gen.Queries, userID 
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
-	return &PasskeyUser{id: row.ID, Name: row.Name, UserHandle: row.UserHandle, AvatarKey: row.AvatarKey.String, householdID: row.HouseholdID, admin: row.IsAdmin}, nil
+	return &PasskeyUser{id: row.ID, Name: row.Name, UserHandle: row.UserHandle, AvatarKey: row.AvatarKey.String, householdID: row.HouseholdID, admin: row.IsAdmin, UnitSystem: UnitSystem(row.UnitSystem)}, nil
 }

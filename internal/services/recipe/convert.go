@@ -87,6 +87,9 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 			b.FoodId = store.UUIDToString(in.FoodID)
 			b.FoodName = in.FoodName
 			b.Unit = unitsToProto[in.Unit]
+			b.FoodMeasure = food.MeasuresToProto[in.FoodMeasure]
+			b.FoodGramsPerMilliliter = in.Food.GramsPerMilliliter
+			b.FoodGramsPerPiece = in.Food.GramsPerPiece
 		}
 		ingredients = append(ingredients, b.Build())
 	}
