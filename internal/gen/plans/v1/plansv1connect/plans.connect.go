@@ -303,7 +303,10 @@ type PlanServiceClient interface {
 	UpdateStaple(context.Context, *v1.UpdateStapleRequest) (*v1.UpdateStapleResponse, error)
 	// Delete a staple, from every date.
 	DeleteStaple(context.Context, *v1.DeleteStapleRequest) (*v1.DeleteStapleResponse, error)
-	// Skip a staple on a date, e.g. when the person eats out. Skipping a date
+	// Skip a staple on a date, e.g. when the person eats out: it's left out
+	// of that day's nutrition and shopping list. Skipping doesn't change the
+	// pantry, and not skipping doesn't either: a staple only comes out of the
+	// pantry when it's marked eaten with SetStapleEaten. Skipping a date
 	// that's already skipped does nothing.
 	SkipStaple(context.Context, *v1.SkipStapleRequest) (*v1.SkipStapleResponse, error)
 	// Stop skipping a staple on a date.
@@ -430,7 +433,10 @@ type PlanServiceHandler interface {
 	UpdateStaple(context.Context, *v1.UpdateStapleRequest) (*v1.UpdateStapleResponse, error)
 	// Delete a staple, from every date.
 	DeleteStaple(context.Context, *v1.DeleteStapleRequest) (*v1.DeleteStapleResponse, error)
-	// Skip a staple on a date, e.g. when the person eats out. Skipping a date
+	// Skip a staple on a date, e.g. when the person eats out: it's left out
+	// of that day's nutrition and shopping list. Skipping doesn't change the
+	// pantry, and not skipping doesn't either: a staple only comes out of the
+	// pantry when it's marked eaten with SetStapleEaten. Skipping a date
 	// that's already skipped does nothing.
 	SkipStaple(context.Context, *v1.SkipStapleRequest) (*v1.SkipStapleResponse, error)
 	// Stop skipping a staple on a date.

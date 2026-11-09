@@ -169,7 +169,10 @@ export const updateStaple = PlanService.method.updateStaple;
 export const deleteStaple = PlanService.method.deleteStaple;
 
 /**
- * Skip a staple on a date, e.g. when the person eats out. Skipping a date
+ * Skip a staple on a date, e.g. when the person eats out: it's left out
+ * of that day's nutrition and shopping list. Skipping doesn't change the
+ * pantry, and not skipping doesn't either: a staple only comes out of the
+ * pantry when it's marked eaten with SetStapleEaten. Skipping a date
  * that's already skipped does nothing.
  *
  * @generated from rpc plans.v1.PlanService.SkipStaple
