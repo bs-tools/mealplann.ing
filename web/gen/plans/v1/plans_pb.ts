@@ -415,7 +415,9 @@ export const PortionSchema: GenMessage<Portion> = /*@__PURE__*/
   messageDesc(file_plans_v1_plans, 5);
 
 /**
- * A portion a person eats regularly.
+ * A portion a person eats regularly. It's counted in each day's nutrition
+ * and shopping list unless skipped, but only taken out of the pantry when
+ * marked eaten on a date (see SetStapleEaten and PlannedPortion.eaten).
  *
  * @generated from message plans.v1.Staple
  */
@@ -2682,7 +2684,9 @@ export const SeveritySchema: GenEnum<Severity> = /*@__PURE__*/
  * 3. Staples: recurring portions, like a person's usual breakfast or daily
  *    soy milk, on chosen weekdays until changed. They show in every week
  *    without being copied, and can be skipped on a date, or marked eaten
- *    on it with SetStapleEaten to take their food out of the pantry.
+ *    on it with SetStapleEaten to take their food out of the pantry. A
+ *    staple is never taken out of the pantry by itself, whether skipped or
+ *    not: only marking it eaten does, after it's eaten.
  *
  * To plan a shared meal, use PlanMeal: it creates the cook and splits it
  * into a portion for each person who eats from that meal, keeping each
@@ -2908,7 +2912,10 @@ export const PlanService: GenService<{
     output: typeof DeleteStapleResponseSchema;
   },
   /**
-   * Skip a staple on a date, e.g. when the person eats out. Skipping a date
+   * Skip a staple on a date, e.g. when the person eats out: it's left out
+   * of that day's nutrition and shopping list. Skipping doesn't change the
+   * pantry, and not skipping doesn't either: a staple only comes out of the
+   * pantry when it's marked eaten with SetStapleEaten. Skipping a date
    * that's already skipped does nothing.
    *
    * @generated from rpc plans.v1.PlanService.SkipStaple
