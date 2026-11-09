@@ -77,6 +77,22 @@ export const updateRecipes = RecipeService.method.updateRecipes;
 export const replaceFood = RecipeService.method.replaceFood;
 
 /**
+ * Import a recipe from a web page, like a food blog's, as a draft (see
+ * Recipe.draft): its name, servings, times, ingredients and steps are
+ * read from the schema.org Recipe in the page's JSON-LD, which most
+ * recipe sites have. Ingredients are kept as the page writes them, in
+ * original_text, with their amounts and units where they can be read,
+ * and matched to the household's foods with the same name, ignoring
+ * case; the rest are left unmatched. Review the draft, match its
+ * ingredients and give its steps their ingredients and durations, then
+ * save it with draft false. Fails with FAILED_PRECONDITION if the page
+ * can't be fetched or has no recipe data.
+ *
+ * @generated from rpc recipes.v1.RecipeService.ImportRecipe
+ */
+export const importRecipe = RecipeService.method.importRecipe;
+
+/**
  * Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
  * the plan (see PlanService), or other recipes as a component, use it:
  * delete or change them first.

@@ -127,8 +127,13 @@ saying what to change.
   left without a food, with only their wording, and it isn't planned or
   suggested until it's saved as a recipe, which needs every ingredient
   matched.
-- Recipes are entered in the web app or by an AI agent through MCP.
-  Importing from URLs is left for later.
+- Recipes are entered in the web app or by an AI agent through MCP, or
+  **imported from a web page** as a draft: the server fetches the page,
+  from public addresses only, and reads the schema.org Recipe in its
+  JSON-LD, which most recipe sites have. Ingredients keep their wording,
+  with their amounts and units read where they can be, and are matched to
+  the household's foods with the same name; the rest are left for the
+  household to match before saving the recipe.
 
 ### Instructions, cook mode and the timeline
 

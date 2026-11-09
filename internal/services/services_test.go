@@ -5,6 +5,7 @@ package services_test
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -58,6 +59,8 @@ import (
 
 // env is a running server for a test, with clients authenticated as a user.
 type env struct {
+	// pages are the web pages recipes are imported from, by URL.
+	pages    fakePages
 	t        *testing.T
 	db       *store.DB
 	userRepo *users.Repository
@@ -164,6 +167,10 @@ func newEnv(t *testing.T) *env {
 	foodService := food.NewService(log, report, e.foodRepo, requests)
 	recipeRepo := recipes.NewRepository(log, db)
 	recipeService := recipe.NewService(log, report, recipeRepo, requests)
+	// Recipe pages are served from e.pages, as tests don't reach the
+	// internet.
+	e.pages = fakePages{}
+	recipeService.SetPageFetcher(e.pages)
 	peopleRepo := people.NewRepository(log, db)
 	personService := person.NewService(log, report, peopleRepo)
 	planRepo := plans.NewRepository(log, db)
@@ -319,4 +326,15 @@ func wantCode(t *testing.T, err error, code connect.Code) {
 	if connect.CodeOf(err) != code {
 		t.Fatalf("got error %v, want code %v", err, code)
 	}
+}
+
+// fakePages serves web pages by URL, for importing recipes.
+type fakePages map[string]string
+
+func (p fakePages) Fetch(_ context.Context, rawURL string) ([]byte, error) {
+	page, ok := p[rawURL]
+	if !ok {
+		return nil, errors.New("the site answered 404 Not Found")
+	}
+	return []byte(page), nil
 }
