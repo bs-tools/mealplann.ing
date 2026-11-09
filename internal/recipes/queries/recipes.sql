@@ -16,7 +16,10 @@ insert into recipes (
   prep_ahead_days,
   prep_ahead_note,
   notes,
-  favorite
+  favorite,
+  yield_amount,
+  yield_unit,
+  draft
 ) values (
   @id,
   @household_id,
@@ -34,7 +37,10 @@ insert into recipes (
   @prep_ahead_days,
   @prep_ahead_note,
   @notes,
-  @favorite
+  @favorite,
+  sqlc.narg(yield_amount),
+  sqlc.narg(yield_unit)::amount_unit,
+  @draft
 )
 returning *;
 
@@ -96,6 +102,9 @@ update recipes set
   prep_ahead_note = @prep_ahead_note,
   notes = @notes,
   favorite = @favorite,
+  yield_amount = sqlc.narg(yield_amount),
+  yield_unit = sqlc.narg(yield_unit)::amount_unit,
+  draft = @draft,
   update_time = now()
 where id = @id and household_id = @household_id
 returning *;

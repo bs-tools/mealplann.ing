@@ -21,6 +21,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
+import { AmountUnit } from "gen/foods/v1/foods_pb";
 import {
   deleteRecipe,
   getRecipe,
@@ -33,6 +34,7 @@ import {
   formatList,
   formatRedirectTarget,
 } from "helpers/format";
+import { formatIngredientAmount, formatServings } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
 import {
   formatStepDuration,
@@ -162,8 +164,27 @@ const RecipePage: React.FC = () => {
         }
       />
       <ErrorText error={remove.error} />
+      {recipe.draft && (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          This is a draft: it isn&apos;t planned or suggested.{" "}
+          <Link to={`/recipes/${recipe.id}/edit`} className={linkClass}>
+            Edit it
+          </Link>{" "}
+          to choose a food for each ingredient, and save it to finish it.
+        </p>
+      )}
       <div className="flex flex-wrap gap-x-8 gap-y-3">
         <Stat label="Servings" value={recipe.servings} />
+        {recipe.yieldAmount > 0 && (
+          <Stat
+            label="Makes"
+            value={formatIngredientAmount(
+              recipe.yieldAmount,
+              recipe.yieldUnit,
+              system
+            )}
+          />
+        )}
         {recipe.prepSeconds > 0 && (
           <Stat label="Prep" value={formatHoursMinutes(recipe.prepSeconds)} />
         )}
@@ -226,17 +247,29 @@ const RecipePage: React.FC = () => {
                     key={index}
                     className="flex flex-wrap items-baseline gap-x-1.5"
                   >
-                    <span className="font-medium text-gray-900 tabular-nums">
-                      {ingredientAmount(ingredient, 1, system)}
-                    </span>
-                    {ingredient.recipeId === "" ? (
+                    {(ingredient.foodId !== "" ||
+                      ingredient.recipeId !== "") && (
+                      <span className="font-medium text-gray-900 tabular-nums">
+                        {ingredientAmount(ingredient, 1, system)}
+                      </span>
+                    )}
+                    {ingredient.recipeId === "" && ingredient.foodId === "" && (
+                      <>
+                        <span className="text-gray-900">
+                          {ingredient.originalText}
+                        </span>
+                        <Badge>No food yet</Badge>
+                      </>
+                    )}
+                    {ingredient.recipeId === "" && ingredient.foodId !== "" && (
                       <Link
                         to={`/foods/${ingredient.foodId}`}
                         className="text-gray-900 hover:underline"
                       >
                         {ingredient.foodName}
                       </Link>
-                    ) : (
+                    )}
+                    {ingredient.recipeId !== "" && (
                       <>
                         <span className="text-gray-500">of</span>
                         <Link
@@ -246,6 +279,13 @@ const RecipePage: React.FC = () => {
                           {ingredient.recipeName}
                         </Link>
                         <Badge>Recipe</Badge>
+                        {ingredient.unit !== AmountUnit.UNSPECIFIED && (
+                          <span className="text-xs text-gray-500">
+                            {ingredient.componentServings > 0
+                              ? formatServings(ingredient.componentServings)
+                              : "servings unknown: set what it makes"}
+                          </span>
+                        )}
                       </>
                     )}
                     {ingredient.note !== "" && (
@@ -258,11 +298,12 @@ const RecipePage: React.FC = () => {
                         aria-label="Its food lacks data"
                       />
                     )}
-                    {ingredient.originalText !== "" && (
-                      <span className="w-full text-xs text-gray-400">
-                        “{ingredient.originalText}”
-                      </span>
-                    )}
+                    {ingredient.originalText !== "" &&
+                      ingredient.foodId !== "" && (
+                        <span className="w-full text-xs text-gray-400">
+                          “{ingredient.originalText}”
+                        </span>
+                      )}
                   </li>
                 ))}
               </ul>

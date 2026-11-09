@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file recipes/v1/recipes.proto.
  */
 export const file_recipes_v1_recipes: GenFile = /*@__PURE__*/
-  fileDesc("ChhyZWNpcGVzL3YxL3JlY2lwZXMucHJvdG8SCnJlY2lwZXMudjEilwUKBlJlY2lwZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhAKCHNlcnZpbmdzGAQgASgFEhQKDHByZXBfc2Vjb25kcxgFIAEoBRIUCgxjb29rX3NlY29uZHMYBiABKAUSKwoLaW5ncmVkaWVudHMYByADKAsyFi5yZWNpcGVzLnYxLkluZ3JlZGllbnQSFQoFc3RlcHMYCCADKAlCBqqfGQIIARIMCgR0YWdzGAkgAygJEhIKCnNvdXJjZV91cmwYCiABKAkSGAoLZnJpZGdlX2RheXMYCyABKAVIAIgBARIRCglmcmVlemFibGUYDCABKAgSDQoFbm90ZXMYDSABKAkSNgoJbnV0cml0aW9uGA4gASgLMhsucmVjaXBlcy52MS5SZWNpcGVOdXRyaXRpb25CBqqfGQIIARI3CgtjcmVhdGVfdGltZRgPIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgQIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARIQCghmYXZvcml0ZRgRIAEoCBIZCgxmcmVlemVyX2RheXMYEiABKAVIAYgBARIXCg9wcmVwX2FoZWFkX2RheXMYEyABKAUSFwoPcHJlcF9haGVhZF9ub3RlGBQgASgJEiYKDGluc3RydWN0aW9ucxgVIAMoCzIQLnJlY2lwZXMudjEuU3RlcBIsCgRjb3N0GBYgASgLMhYucmVjaXBlcy52MS5SZWNpcGVDb3N0QgaqnxkCCAFCDgoMX2ZyaWRnZV9kYXlzQg8KDV9mcmVlemVyX2RheXMiWQoKUmVjaXBlQ29zdBITCgt0b3RhbF9jZW50cxgBIAEoBRIZChFjZW50c19wZXJfc2VydmluZxgCIAEoBRIbChN1bnByaWNlZF9mb29kX25hbWVzGAMgAygJIo4CCgRTdGVwEgwKBHRleHQYASABKAkSDwoHc2VjdGlvbhgCIAEoCRIaChJpbmdyZWRpZW50X2luZGV4ZXMYAyADKAUSGgoSaW5ncmVkaWVudF9hbW91bnRzGAkgAygBEhgKEGR1cmF0aW9uX3NlY29uZHMYBCABKAUSDwoHd2FpdGluZxgFIAEoCBIaChJhZnRlcl9zdGVwX2luZGV4ZXMYBiADKAUSEgoKZnJvbV9zdGFydBgHIAEoCBIcChRzdGFydF9vZmZzZXRfc2Vjb25kcxgIIAEoBRIfChJlbmRfYmVmb3JlX3NlY29uZHMYCiABKAVIAIgBAUIVChNfZW5kX2JlZm9yZV9zZWNvbmRzItUCCgpJbmdyZWRpZW50Eg8KB2Zvb2RfaWQYASABKAkSGQoJZm9vZF9uYW1lGAIgASgJQgaqnxkCCAESDgoGYW1vdW50GAMgASgBEiIKBHVuaXQYBCABKA4yFC5mb29kcy52MS5BbW91bnRVbml0EgwKBG5vdGUYBSABKAkSFQoNb3JpZ2luYWxfdGV4dBgGIAEoCRIQCghvcHRpb25hbBgHIAEoCBIRCglyZWNpcGVfaWQYCCABKAkSGwoLcmVjaXBlX25hbWUYCSABKAlCBqqfGQIIARIvCgxmb29kX21lYXN1cmUYCiABKA4yES5mb29kcy52MS5NZWFzdXJlQgaqnxkCCAESKQoZZm9vZF9ncmFtc19wZXJfbWlsbGlsaXRlchgLIAEoAUIGqp8ZAggBEiQKFGZvb2RfZ3JhbXNfcGVyX3BpZWNlGAwgASgBQgaqnxkCCAEi5gEKD1JlY2lwZU51dHJpdGlvbhITCgt0b3RhbF9ncmFtcxgBIAEoARIZChFncmFtc19wZXJfc2VydmluZxgCIAEoARIoCgtwZXJfc2VydmluZxgDIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIuChFwZXJfaHVuZHJlZF9ncmFtcxgEIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIcChRpbmNvbXBsZXRlX251dHJpZW50cxgFIAMoCRIrCgZpc3N1ZXMYBiADKAsyGy5yZWNpcGVzLnYxLkluZ3JlZGllbnRJc3N1ZSKCAQoPSW5ncmVkaWVudElzc3VlEhgKEGluZ3JlZGllbnRfaW5kZXgYASABKAUSDwoHZm9vZF9pZBgCIAEoCRIRCglmb29kX25hbWUYAyABKAkSFgoOdW5rbm93bl93ZWlnaHQYBCABKAgSGQoRdW5rbm93bl9udXRyaWVudHMYBSADKAkirAQKDVJlY2lwZVN1bW1hcnkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIQCghzZXJ2aW5ncxgEIAEoBRIUCgxwcmVwX3NlY29uZHMYBSABKAUSFAoMY29va19zZWNvbmRzGAYgASgFEgwKBHRhZ3MYByADKAkSJAoXZW5lcmd5X2tjYWxfcGVyX3NlcnZpbmcYCCABKAFIAIgBARImChlwcm90ZWluX2dyYW1zX3Blcl9zZXJ2aW5nGAkgASgBSAGIAQESKwoeY2FyYm9oeWRyYXRlX2dyYW1zX3Blcl9zZXJ2aW5nGAogASgBSAKIAQESGQoRZ3JhbXNfcGVyX3NlcnZpbmcYCyABKAESEgoKaGFzX2lzc3VlcxgMIAEoCBIvCgt1cGRhdGVfdGltZRgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEAoIZmF2b3JpdGUYDiABKAgSIwoWY29zdF9jZW50c19wZXJfc2VydmluZxgQIAEoBUgDiAEBQhoKGF9lbmVyZ3lfa2NhbF9wZXJfc2VydmluZ0IcChpfcHJvdGVpbl9ncmFtc19wZXJfc2VydmluZ0IhCh9fY2FyYm9oeWRyYXRlX2dyYW1zX3Blcl9zZXJ2aW5nQhkKF19jb3N0X2NlbnRzX3Blcl9zZXJ2aW5nSgQIDxAQUhBoYXNfaW5zdHJ1Y3Rpb25zIk0KE0NyZWF0ZVJlY2lwZVJlcXVlc3QSIgoGcmVjaXBlGAEgASgLMhIucmVjaXBlcy52MS5SZWNpcGUSEgoKcmVxdWVzdF9pZBgCIAEoCSI6ChRDcmVhdGVSZWNpcGVSZXNwb25zZRIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZSI9ChBHZXRSZWNpcGVSZXF1ZXN0EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDwoHc3VtbWFyeRgDIAEoCCI3ChFHZXRSZWNpcGVSZXNwb25zZRIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZSKIAQoSTGlzdFJlY2lwZXNSZXF1ZXN0Eg0KBXF1ZXJ5GAEgASgJEgwKBHRhZ3MYAiADKAkSFgoOZmF2b3JpdGVzX29ubHkYAyABKAgSEAoIZm9vZF9pZHMYBCADKAkSDwoHc3VtbWFyeRgGIAEoCEoECAUQBlIUd2l0aG91dF9pbnN0cnVjdGlvbnMiTwoTTGlzdFJlY2lwZXNSZXNwb25zZRIqCgdyZWNpcGVzGAEgAygLMhkucmVjaXBlcy52MS5SZWNpcGVTdW1tYXJ5EgwKBHRhZ3MYAiADKAkiagoTVXBkYXRlUmVjaXBlUmVxdWVzdBIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZRIvCgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2siOgoUVXBkYXRlUmVjaXBlUmVzcG9uc2USIgoGcmVjaXBlGAEgASgLMhIucmVjaXBlcy52MS5SZWNpcGUiJgoYR2V0UmVjaXBlVGltZWxpbmVSZXF1ZXN0EgoKAmlkGAEgASgJInIKGUdldFJlY2lwZVRpbWVsaW5lUmVzcG9uc2USJAoFc3RlcHMYASADKAsyFS5yZWNpcGVzLnYxLlRpbWVkU3RlcBIVCg10b3RhbF9zZWNvbmRzGAIgASgFEhgKEGhhbmRzX29uX3NlY29uZHMYAyABKAUijgEKCVRpbWVkU3RlcBISCgpzdGVwX2luZGV4GAEgASgFEgwKBHRleHQYAiABKAkSFQoNc3RhcnRfc2Vjb25kcxgDIAEoBRITCgtlbmRfc2Vjb25kcxgEIAEoBRIPCgd3YWl0aW5nGAUgASgIEhEKCWVzdGltYXRlZBgGIAEoCBIPCgdzZWN0aW9uGAcgASgJIkkKFFVwZGF0ZVJlY2lwZXNSZXF1ZXN0EjEKCHJlcXVlc3RzGAEgAygLMh8ucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVSZXF1ZXN0IkgKFVVwZGF0ZVJlY2lwZXNSZXNwb25zZRIvCgdyZXN1bHRzGAEgAygLMh4ucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVSZXN1bHQiYwoSVXBkYXRlUmVjaXBlUmVzdWx0EiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlEhIKCmVycm9yX2NvZGUYAiABKAkSFQoNZXJyb3JfbWVzc2FnZRgDIAEoCSJkChJSZXBsYWNlRm9vZFJlcXVlc3QSDwoHZm9vZF9pZBgBIAEoCRITCgtuZXdfZm9vZF9pZBgCIAEoCRISCgpyZWNpcGVfaWRzGAMgAygJEhQKDGFtb3VudF9yYXRpbxgEIAEoASJBChNSZXBsYWNlRm9vZFJlc3BvbnNlEioKB3JlY2lwZXMYASADKAsyGS5yZWNpcGVzLnYxLlJlY2lwZVN1bW1hcnkiIQoTRGVsZXRlUmVjaXBlUmVxdWVzdBIKCgJpZBgBIAEoCSIWChREZWxldGVSZWNpcGVSZXNwb25zZTKqBQoNUmVjaXBlU2VydmljZRJgChFHZXRSZWNpcGVUaW1lbGluZRIkLnJlY2lwZXMudjEuR2V0UmVjaXBlVGltZWxpbmVSZXF1ZXN0GiUucmVjaXBlcy52MS5HZXRSZWNpcGVUaW1lbGluZVJlc3BvbnNlElEKDENyZWF0ZVJlY2lwZRIfLnJlY2lwZXMudjEuQ3JlYXRlUmVjaXBlUmVxdWVzdBogLnJlY2lwZXMudjEuQ3JlYXRlUmVjaXBlUmVzcG9uc2USSAoJR2V0UmVjaXBlEhwucmVjaXBlcy52MS5HZXRSZWNpcGVSZXF1ZXN0Gh0ucmVjaXBlcy52MS5HZXRSZWNpcGVSZXNwb25zZRJOCgtMaXN0UmVjaXBlcxIeLnJlY2lwZXMudjEuTGlzdFJlY2lwZXNSZXF1ZXN0Gh8ucmVjaXBlcy52MS5MaXN0UmVjaXBlc1Jlc3BvbnNlElEKDFVwZGF0ZVJlY2lwZRIfLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlUmVxdWVzdBogLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlUmVzcG9uc2USVAoNVXBkYXRlUmVjaXBlcxIgLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlc1JlcXVlc3QaIS5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZXNSZXNwb25zZRJOCgtSZXBsYWNlRm9vZBIeLnJlY2lwZXMudjEuUmVwbGFjZUZvb2RSZXF1ZXN0Gh8ucmVjaXBlcy52MS5SZXBsYWNlRm9vZFJlc3BvbnNlElEKDERlbGV0ZVJlY2lwZRIfLnJlY2lwZXMudjEuRGVsZXRlUmVjaXBlUmVxdWVzdBogLnJlY2lwZXMudjEuRGVsZXRlUmVjaXBlUmVzcG9uc2VCrAEKDmNvbS5yZWNpcGVzLnYxQgxSZWNpcGVzUHJvdG9QAVpDZ2l0aHViLmNvbS9icy10b29scy9tZWFscGxhbm4uaW5nL2ludGVybmFsL2dlbi9yZWNpcGVzL3YxO3JlY2lwZXN2MaICA1JYWKoCClJlY2lwZXMuVjHKAgpSZWNpcGVzXFYx4gIWUmVjaXBlc1xWMVxHUEJNZXRhZGF0YeoCC1JlY2lwZXM6OlYxYgZwcm90bzM", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChhyZWNpcGVzL3YxL3JlY2lwZXMucHJvdG8SCnJlY2lwZXMudjEi5gUKBlJlY2lwZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhAKCHNlcnZpbmdzGAQgASgFEhQKDHByZXBfc2Vjb25kcxgFIAEoBRIUCgxjb29rX3NlY29uZHMYBiABKAUSKwoLaW5ncmVkaWVudHMYByADKAsyFi5yZWNpcGVzLnYxLkluZ3JlZGllbnQSFQoFc3RlcHMYCCADKAlCBqqfGQIIARIMCgR0YWdzGAkgAygJEhIKCnNvdXJjZV91cmwYCiABKAkSGAoLZnJpZGdlX2RheXMYCyABKAVIAIgBARIRCglmcmVlemFibGUYDCABKAgSDQoFbm90ZXMYDSABKAkSNgoJbnV0cml0aW9uGA4gASgLMhsucmVjaXBlcy52MS5SZWNpcGVOdXRyaXRpb25CBqqfGQIIARI3CgtjcmVhdGVfdGltZRgPIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgQIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARIQCghmYXZvcml0ZRgRIAEoCBIZCgxmcmVlemVyX2RheXMYEiABKAVIAYgBARIXCg9wcmVwX2FoZWFkX2RheXMYEyABKAUSFwoPcHJlcF9haGVhZF9ub3RlGBQgASgJEiYKDGluc3RydWN0aW9ucxgVIAMoCzIQLnJlY2lwZXMudjEuU3RlcBIsCgRjb3N0GBYgASgLMhYucmVjaXBlcy52MS5SZWNpcGVDb3N0QgaqnxkCCAESFAoMeWllbGRfYW1vdW50GBcgASgBEigKCnlpZWxkX3VuaXQYGCABKA4yFC5mb29kcy52MS5BbW91bnRVbml0Eg0KBWRyYWZ0GBkgASgIQg4KDF9mcmlkZ2VfZGF5c0IPCg1fZnJlZXplcl9kYXlzIlkKClJlY2lwZUNvc3QSEwoLdG90YWxfY2VudHMYASABKAUSGQoRY2VudHNfcGVyX3NlcnZpbmcYAiABKAUSGwoTdW5wcmljZWRfZm9vZF9uYW1lcxgDIAMoCSKOAgoEU3RlcBIMCgR0ZXh0GAEgASgJEg8KB3NlY3Rpb24YAiABKAkSGgoSaW5ncmVkaWVudF9pbmRleGVzGAMgAygFEhoKEmluZ3JlZGllbnRfYW1vdW50cxgJIAMoARIYChBkdXJhdGlvbl9zZWNvbmRzGAQgASgFEg8KB3dhaXRpbmcYBSABKAgSGgoSYWZ0ZXJfc3RlcF9pbmRleGVzGAYgAygFEhIKCmZyb21fc3RhcnQYByABKAgSHAoUc3RhcnRfb2Zmc2V0X3NlY29uZHMYCCABKAUSHwoSZW5kX2JlZm9yZV9zZWNvbmRzGAogASgFSACIAQFCFQoTX2VuZF9iZWZvcmVfc2Vjb25kcyL5AgoKSW5ncmVkaWVudBIPCgdmb29kX2lkGAEgASgJEhkKCWZvb2RfbmFtZRgCIAEoCUIGqp8ZAggBEg4KBmFtb3VudBgDIAEoARIiCgR1bml0GAQgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdBIMCgRub3RlGAUgASgJEhUKDW9yaWdpbmFsX3RleHQYBiABKAkSEAoIb3B0aW9uYWwYByABKAgSEQoJcmVjaXBlX2lkGAggASgJEhsKC3JlY2lwZV9uYW1lGAkgASgJQgaqnxkCCAESLwoMZm9vZF9tZWFzdXJlGAogASgOMhEuZm9vZHMudjEuTWVhc3VyZUIGqp8ZAggBEikKGWZvb2RfZ3JhbXNfcGVyX21pbGxpbGl0ZXIYCyABKAFCBqqfGQIIARIkChRmb29kX2dyYW1zX3Blcl9waWVjZRgMIAEoAUIGqp8ZAggBEiIKEmNvbXBvbmVudF9zZXJ2aW5ncxgNIAEoAUIGqp8ZAggBIuYBCg9SZWNpcGVOdXRyaXRpb24SEwoLdG90YWxfZ3JhbXMYASABKAESGQoRZ3JhbXNfcGVyX3NlcnZpbmcYAiABKAESKAoLcGVyX3NlcnZpbmcYAyABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSLgoRcGVyX2h1bmRyZWRfZ3JhbXMYBCABKAsyEy5mb29kcy52MS5OdXRyaWVudHMSHAoUaW5jb21wbGV0ZV9udXRyaWVudHMYBSADKAkSKwoGaXNzdWVzGAYgAygLMhsucmVjaXBlcy52MS5JbmdyZWRpZW50SXNzdWUilQEKD0luZ3JlZGllbnRJc3N1ZRIYChBpbmdyZWRpZW50X2luZGV4GAEgASgFEg8KB2Zvb2RfaWQYAiABKAkSEQoJZm9vZF9uYW1lGAMgASgJEhYKDnVua25vd25fd2VpZ2h0GAQgASgIEhkKEXVua25vd25fbnV0cmllbnRzGAUgAygJEhEKCXVubWF0Y2hlZBgGIAEoCCK7BAoNUmVjaXBlU3VtbWFyeRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhAKCHNlcnZpbmdzGAQgASgFEhQKDHByZXBfc2Vjb25kcxgFIAEoBRIUCgxjb29rX3NlY29uZHMYBiABKAUSDAoEdGFncxgHIAMoCRIkChdlbmVyZ3lfa2NhbF9wZXJfc2VydmluZxgIIAEoAUgAiAEBEiYKGXByb3RlaW5fZ3JhbXNfcGVyX3NlcnZpbmcYCSABKAFIAYgBARIrCh5jYXJib2h5ZHJhdGVfZ3JhbXNfcGVyX3NlcnZpbmcYCiABKAFIAogBARIZChFncmFtc19wZXJfc2VydmluZxgLIAEoARISCgpoYXNfaXNzdWVzGAwgASgIEi8KC3VwZGF0ZV90aW1lGA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghmYXZvcml0ZRgOIAEoCBIjChZjb3N0X2NlbnRzX3Blcl9zZXJ2aW5nGBAgASgFSAOIAQESDQoFZHJhZnQYESABKAhCGgoYX2VuZXJneV9rY2FsX3Blcl9zZXJ2aW5nQhwKGl9wcm90ZWluX2dyYW1zX3Blcl9zZXJ2aW5nQiEKH19jYXJib2h5ZHJhdGVfZ3JhbXNfcGVyX3NlcnZpbmdCGQoXX2Nvc3RfY2VudHNfcGVyX3NlcnZpbmdKBAgPEBBSEGhhc19pbnN0cnVjdGlvbnMiTQoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZRISCgpyZXF1ZXN0X2lkGAIgASgJIjoKFENyZWF0ZVJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIj0KEEdldFJlY2lwZVJlcXVlc3QSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIPCgdzdW1tYXJ5GAMgASgIIjcKEUdldFJlY2lwZVJlc3BvbnNlEiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlIogBChJMaXN0UmVjaXBlc1JlcXVlc3QSDQoFcXVlcnkYASABKAkSDAoEdGFncxgCIAMoCRIWCg5mYXZvcml0ZXNfb25seRgDIAEoCBIQCghmb29kX2lkcxgEIAMoCRIPCgdzdW1tYXJ5GAYgASgISgQIBRAGUhR3aXRob3V0X2luc3RydWN0aW9ucyJPChNMaXN0UmVjaXBlc1Jlc3BvbnNlEioKB3JlY2lwZXMYASADKAsyGS5yZWNpcGVzLnYxLlJlY2lwZVN1bW1hcnkSDAoEdGFncxgCIAMoCSJqChNVcGRhdGVSZWNpcGVSZXF1ZXN0EiIKBnJlY2lwZRgBIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayI6ChRVcGRhdGVSZWNpcGVSZXNwb25zZRIiCgZyZWNpcGUYASABKAsyEi5yZWNpcGVzLnYxLlJlY2lwZSImChhHZXRSZWNpcGVUaW1lbGluZVJlcXVlc3QSCgoCaWQYASABKAkicgoZR2V0UmVjaXBlVGltZWxpbmVSZXNwb25zZRIkCgVzdGVwcxgBIAMoCzIVLnJlY2lwZXMudjEuVGltZWRTdGVwEhUKDXRvdGFsX3NlY29uZHMYAiABKAUSGAoQaGFuZHNfb25fc2Vjb25kcxgDIAEoBSKOAQoJVGltZWRTdGVwEhIKCnN0ZXBfaW5kZXgYASABKAUSDAoEdGV4dBgCIAEoCRIVCg1zdGFydF9zZWNvbmRzGAMgASgFEhMKC2VuZF9zZWNvbmRzGAQgASgFEg8KB3dhaXRpbmcYBSABKAgSEQoJZXN0aW1hdGVkGAYgASgIEg8KB3NlY3Rpb24YByABKAkiSQoUVXBkYXRlUmVjaXBlc1JlcXVlc3QSMQoIcmVxdWVzdHMYASADKAsyHy5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZVJlcXVlc3QiSAoVVXBkYXRlUmVjaXBlc1Jlc3BvbnNlEi8KB3Jlc3VsdHMYASADKAsyHi5yZWNpcGVzLnYxLlVwZGF0ZVJlY2lwZVJlc3VsdCJjChJVcGRhdGVSZWNpcGVSZXN1bHQSIgoGcmVjaXBlGAEgASgLMhIucmVjaXBlcy52MS5SZWNpcGUSEgoKZXJyb3JfY29kZRgCIAEoCRIVCg1lcnJvcl9tZXNzYWdlGAMgASgJImQKElJlcGxhY2VGb29kUmVxdWVzdBIPCgdmb29kX2lkGAEgASgJEhMKC25ld19mb29kX2lkGAIgASgJEhIKCnJlY2lwZV9pZHMYAyADKAkSFAoMYW1vdW50X3JhdGlvGAQgASgBIkEKE1JlcGxhY2VGb29kUmVzcG9uc2USKgoHcmVjaXBlcxgBIAMoCzIZLnJlY2lwZXMudjEuUmVjaXBlU3VtbWFyeSIhChNEZWxldGVSZWNpcGVSZXF1ZXN0EgoKAmlkGAEgASgJIhYKFERlbGV0ZVJlY2lwZVJlc3BvbnNlMqoFCg1SZWNpcGVTZXJ2aWNlEmAKEUdldFJlY2lwZVRpbWVsaW5lEiQucmVjaXBlcy52MS5HZXRSZWNpcGVUaW1lbGluZVJlcXVlc3QaJS5yZWNpcGVzLnYxLkdldFJlY2lwZVRpbWVsaW5lUmVzcG9uc2USUQoMQ3JlYXRlUmVjaXBlEh8ucmVjaXBlcy52MS5DcmVhdGVSZWNpcGVSZXF1ZXN0GiAucmVjaXBlcy52MS5DcmVhdGVSZWNpcGVSZXNwb25zZRJICglHZXRSZWNpcGUSHC5yZWNpcGVzLnYxLkdldFJlY2lwZVJlcXVlc3QaHS5yZWNpcGVzLnYxLkdldFJlY2lwZVJlc3BvbnNlEk4KC0xpc3RSZWNpcGVzEh4ucmVjaXBlcy52MS5MaXN0UmVjaXBlc1JlcXVlc3QaHy5yZWNpcGVzLnYxLkxpc3RSZWNpcGVzUmVzcG9uc2USUQoMVXBkYXRlUmVjaXBlEh8ucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVSZXF1ZXN0GiAucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVSZXNwb25zZRJUCg1VcGRhdGVSZWNpcGVzEiAucmVjaXBlcy52MS5VcGRhdGVSZWNpcGVzUmVxdWVzdBohLnJlY2lwZXMudjEuVXBkYXRlUmVjaXBlc1Jlc3BvbnNlEk4KC1JlcGxhY2VGb29kEh4ucmVjaXBlcy52MS5SZXBsYWNlRm9vZFJlcXVlc3QaHy5yZWNpcGVzLnYxLlJlcGxhY2VGb29kUmVzcG9uc2USUQoMRGVsZXRlUmVjaXBlEh8ucmVjaXBlcy52MS5EZWxldGVSZWNpcGVSZXF1ZXN0GiAucmVjaXBlcy52MS5EZWxldGVSZWNpcGVSZXNwb25zZUKsAQoOY29tLnJlY2lwZXMudjFCDFJlY2lwZXNQcm90b1ABWkNnaXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3JlY2lwZXMvdjE7cmVjaXBlc3YxogIDUlhYqgIKUmVjaXBlcy5WMcoCClJlY2lwZXNcVjHiAhZSZWNpcGVzXFYxXEdQQk1ldGFkYXRh6gILUmVjaXBlczo6VjFiBnByb3RvMw", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A recipe.
@@ -196,6 +196,37 @@ export type Recipe = Message<"recipes.v1.Recipe"> & {
    * @generated from field: recipes.v1.RecipeCost cost = 22;
    */
   cost?: RecipeCost | undefined;
+
+  /**
+   * What the whole recipe makes, in yield_unit, e.g. 1200 g of cooked
+   * chickpeas or 12 tortillas, so recipes using it as a component can give
+   * its amount by weight, volume or pieces (see Ingredient.recipe_id). 0 if
+   * not given: a component by weight then counts the weight of its
+   * ingredients, raw, which leaves out water gained or lost cooking.
+   *
+   * @generated from field: double yield_amount = 23;
+   */
+  yieldAmount: number;
+
+  /**
+   * The unit of yield_amount, required with it: AMOUNT_UNIT_GRAMS,
+   * AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES, or a kitchen unit, which
+   * is converted to its base unit.
+   *
+   * @generated from field: foods.v1.AmountUnit yield_unit = 24;
+   */
+  yieldUnit: AmountUnit;
+
+  /**
+   * Whether it's a draft: saved unfinished, like a recipe being written or
+   * imported from a web page. A draft's ingredients can be unmatched, with
+   * only their original_text, and it isn't planned or suggested until
+   * it's saved with draft false, which needs every ingredient matched to a
+   * food or recipe.
+   *
+   * @generated from field: bool draft = 25;
+   */
+  draft: boolean;
 };
 
 /**
@@ -361,14 +392,17 @@ export const StepSchema: GenMessage<Step> = /*@__PURE__*/
   messageDesc(file_recipes_v1_recipes, 2);
 
 /**
- * An ingredient of a recipe: an amount of a food, or servings of another
- * recipe, a component.
+ * An ingredient of a recipe: an amount of a food, or of another recipe, a
+ * component. A draft's ingredient can also be unmatched: only its
+ * original_text, with its amount and unit if known, until its food is
+ * chosen.
  *
  * @generated from message recipes.v1.Ingredient
  */
 export type Ingredient = Message<"recipes.v1.Ingredient"> & {
   /**
-   * The ID of the household's food. Required, unless recipe_id is set.
+   * The ID of the household's food. Required, unless recipe_id is set, or
+   * the ingredient is a draft's, unmatched.
    *
    * @generated from field: string food_id = 1;
    */
@@ -382,17 +416,20 @@ export type Ingredient = Message<"recipes.v1.Ingredient"> & {
   foodName: string;
 
   /**
-   * The amount, in unit of a food, or in servings of a component. More
-   * than 0.
+   * The amount, in unit. More than 0, or 0 for an unmatched draft
+   * ingredient whose amount isn't known.
    *
    * @generated from field: double amount = 3;
    */
   amount: number;
 
   /**
-   * The unit of a food's amount. Required for a food, and unspecified for
-   * a component. Amounts in milliliters or pieces are weighed with the
-   * food's grams_per_milliliter or grams_per_piece.
+   * The unit of a food's amount. Required for a food. Amounts in
+   * milliliters or pieces are weighed with the food's grams_per_milliliter
+   * or grams_per_piece. For a component, unspecified for an amount in
+   * servings of its recipe, or a unit of what its recipe makes, like 400 g
+   * of cooked pinto beans, converted to servings with its recipe's
+   * yield_amount (see component_servings).
    *
    * @generated from field: foods.v1.AmountUnit unit = 4;
    */
@@ -456,6 +493,16 @@ export type Ingredient = Message<"recipes.v1.Ingredient"> & {
    * @generated from field: double food_grams_per_piece = 12;
    */
   foodGramsPerPiece: number;
+
+  /**
+   * For a component, how many servings of its recipe the amount is: the
+   * amount itself in servings, or converted with the recipe's yield_amount,
+   * or for grams without one, the weight of its ingredients. 0 if it can't
+   * be converted, as the recipe has no yield in that unit.
+   *
+   * @generated from field: double component_servings = 13;
+   */
+  componentServings: number;
 };
 
 /**
@@ -576,6 +623,15 @@ export type IngredientIssue = Message<"recipes.v1.IngredientIssue"> & {
    * @generated from field: repeated string unknown_nutrients = 5;
    */
   unknownNutrients: string[];
+
+  /**
+   * Whether the ingredient isn't matched to a food or recipe yet, as a
+   * draft's can be: set its food_id or recipe_id. It's left out of the
+   * nutrition.
+   *
+   * @generated from field: bool unmatched = 6;
+   */
+  unmatched: boolean;
 };
 
 /**
@@ -698,6 +754,14 @@ export type RecipeSummary = Message<"recipes.v1.RecipeSummary"> & {
    * @generated from field: optional int32 cost_cents_per_serving = 16;
    */
   costCentsPerServing?: number | undefined;
+
+  /**
+   * Whether it's a draft, which isn't planned or suggested (see
+   * Recipe.draft).
+   *
+   * @generated from field: bool draft = 17;
+   */
+  draft: boolean;
 };
 
 /**
@@ -1232,7 +1296,7 @@ export const DeleteRecipeResponseSchema: GenMessage<DeleteRecipeResponse> = /*@_
  * Write recipes by these conventions, which the nutrition, the shopping
  * list and the pantry rely on:
  *
- * 1. Amounts are in grams, milliliters or pieces, weighed with the food's grams_per_milliliter or grams_per_piece.
+ * 1. Amounts are in grams, milliliters or pieces, weighed with the food's grams_per_milliliter or grams_per_piece, or in the kitchen unit the source gives, like AMOUNT_UNIT_TABLESPOONS, which is converted and kept to show the recipe as written.
  * 2. An ingredient is weighed as it goes into the recipe, with a food that matches that form: canned chickpeas drained, with a food for drained canned chickpeas, or chickpeas cooked from dry, with a food for cooked chickpeas.
  * 3. Optional ingredients, like a garnish, aren't counted in the nutrition.
  * 4. Servings are what the recipe really makes. A person's portion of a meal is in servings of its recipe, scaled for each person, so a serving should be one person's meal.
@@ -1240,12 +1304,20 @@ export const DeleteRecipeResponseSchema: GenMessage<DeleteRecipeResponse> = /*@_
  * The nutrition lists the ingredients whose data is missing, to fix on the
  * foods with UpdateFood.
  *
- * An ingredient can also be another recipe, a component, in servings, like
- * soaked and pressure cooked chickpeas in a chili: planning the chili also
- * plans a cook of the chickpeas for it (see PlanService), and a component
- * with prep_ahead_days shows on the plan the days before, like "Soak the
- * chickpeas" the night before. Components can have components of their
- * own, but no deeper, and a recipe can't use itself.
+ * An ingredient can also be another recipe, a component, like soaked and
+ * pressure cooked chickpeas in a chili: planning the chili also plans a
+ * cook of the chickpeas for it (see PlanService), and a component with
+ * prep_ahead_days shows on the plan the days before, like "Soak the
+ * chickpeas" the night before. A component's amount is in servings of its
+ * recipe, or by weight, volume or pieces of what it makes, like 400 g of
+ * chickpeas, converted with its recipe's yield_amount: set the yield on
+ * recipes used that way. Components can have components of their own, but
+ * no deeper, and a recipe can't use itself.
+ *
+ * A recipe can be saved as a draft, unfinished, with ingredients not yet
+ * matched to foods, only their original_text: drafts aren't planned or
+ * suggested. Finish one by matching its ingredients and saving it with
+ * draft false.
  *
  * To swap one food for another, like super-firm tofu for extra-firm, or
  * canned beans for beans cooked from dry: find the recipes using it with

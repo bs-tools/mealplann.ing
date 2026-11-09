@@ -1,5 +1,6 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
+import RecipePicker from "@components/recipes/recipe-picker";
 import Card from "@components/ui/card";
 import { CheckboxField, TextAreaField, TextField } from "@components/ui/fields";
 import { PageHeader } from "@components/ui/misc";
@@ -14,7 +15,7 @@ import {
 import UnsavedChangesGuard, {
   leaveUnsaved,
 } from "@components/ui/unsaved-changes-guard";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { useMutation } from "@connectrpc/connect-query";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -25,10 +26,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import {
   createRecipe,
-  listRecipes,
   updateRecipe,
 } from "gen/recipes/v1/recipes-RecipeService_connectquery";
-import type { Recipe, Step } from "gen/recipes/v1/recipes_pb";
+import type { Ingredient, Recipe, Step } from "gen/recipes/v1/recipes_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
 import { AMOUNT_UNITS } from "helpers/labels";
 import {
@@ -45,11 +45,12 @@ import { Link, useNavigate } from "react-router";
 interface IngredientInput {
   // A key for React, as ingredients move.
   key: number;
-  // Whether it's a component: another recipe, in servings.
+  // Whether it's a component: another recipe.
   isRecipe: boolean;
   food: PickedFood | null;
   recipe: PickedFood | null;
   amount: string;
+  // The unit of the amount, unspecified for servings of a component.
   unit: AmountUnit;
   note: string;
   originalText: string;
@@ -105,6 +106,32 @@ const emptyIngredient = (): IngredientInput => ({
   unit: AmountUnit.GRAMS,
 });
 
+/**
+ * IngredientUnit returns the unit to edit an ingredient's amount in: its
+ * own, or grams for an unmatched draft ingredient without one.
+ */
+const ingredientUnit = (
+  ingredient: Ingredient,
+  isRecipe: boolean
+): AmountUnit => {
+  if (isRecipe || ingredient.unit !== AmountUnit.UNSPECIFIED) {
+    return ingredient.unit;
+  }
+  return AmountUnit.GRAMS;
+};
+
+/*
+ * COMPONENT_UNITS are the units of a component's amount: servings of its
+ * recipe, or what it makes, by weight, volume or pieces.
+ */
+const COMPONENT_UNITS: { value: AmountUnit; label: string }[] = [
+  { label: "servings", value: AmountUnit.UNSPECIFIED },
+  ...AMOUNT_UNITS,
+];
+
+// YIELD_UNITS are the units of what a recipe makes.
+const YIELD_UNITS = AMOUNT_UNITS;
+
 const ingredientInputs = (recipe: Recipe | undefined): IngredientInput[] => {
   if (recipe === undefined) {
     return [emptyIngredient()];
@@ -112,7 +139,8 @@ const ingredientInputs = (recipe: Recipe | undefined): IngredientInput[] => {
   return recipe.ingredients.map((ingredient) => {
     const isRecipe = ingredient.recipeId !== "";
     return {
-      amount: String(ingredient.amount),
+      // An unmatched draft ingredient's unknown amount is empty.
+      amount: ingredient.amount === 0 ? "" : String(ingredient.amount),
       food: isRecipe
         ? null
         : { id: ingredient.foodId, name: ingredient.foodName },
@@ -124,7 +152,7 @@ const ingredientInputs = (recipe: Recipe | undefined): IngredientInput[] => {
       recipe: isRecipe
         ? { id: ingredient.recipeId, name: ingredient.recipeName }
         : null,
-      unit: isRecipe ? AmountUnit.GRAMS : ingredient.unit,
+      unit: ingredientUnit(ingredient, isRecipe),
     };
   });
 };
@@ -302,9 +330,13 @@ const move = <Item,>(list: Item[], index: number, offset: number): Item[] => {
   return result;
 };
 
-// IngredientLabel names an ingredient being edited, "" if it has none yet.
+/**
+ * IngredientLabel names an ingredient being edited: its food or recipe, or
+ * the original wording of one without a food yet, "" if it has none.
+ */
 const ingredientLabel = (ingredient: IngredientInput): string =>
-  (ingredient.isRecipe ? ingredient.recipe?.name : ingredient.food?.name) ?? "";
+  (ingredient.isRecipe ? ingredient.recipe?.name : ingredient.food?.name) ??
+  ingredient.originalText.trim();
 
 interface StepEditorProps {
   step: StepInput;
@@ -592,12 +624,18 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
     recipe?.prepAheadNote ?? ""
   );
   const [notes, setNotes] = useState(recipe?.notes ?? "");
-  const [invalid, setInvalid] = useState("");
-  // The household's recipes, to use as components, but this one.
-  const recipeList = useQuery(listRecipes, {});
-  const components = (recipeList.data?.recipes ?? []).filter(
-    (other) => other.id !== recipe?.id
+  // What the recipe makes, for recipes using it by weight or volume.
+  const initialYield =
+    recipe === undefined || recipe.yieldAmount === 0
+      ? ""
+      : String(recipe.yieldAmount);
+  const [yieldAmount, setYieldAmount] = useState(initialYield);
+  const [yieldUnit, setYieldUnit] = useState<AmountUnit>(
+    recipe === undefined || recipe.yieldUnit === AmountUnit.UNSPECIFIED
+      ? AmountUnit.GRAMS
+      : recipe.yieldUnit
   );
+  const [invalid, setInvalid] = useState("");
 
   const onSaved = async (id: string) => {
     await invalidateServices(queryClient, [RecipeService]);
@@ -650,13 +688,23 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
           : String(recipe.prepAheadDays)),
     ],
     ["prep_ahead_note", prepAheadNote !== (recipe?.prepAheadNote ?? "")],
+    [
+      "yield_amount",
+      yieldAmount.trim() !== initialYield ||
+        (yieldAmount.trim() !== "" && yieldUnit !== recipe?.yieldUnit),
+    ],
   ];
   const paths = changed
     .filter(([, isChanged]) => isChanged)
     .map(([path]) => path);
   const dirty = paths.length > 0;
 
-  const save = () => {
+  /*
+   * Save saves the recipe, as a draft if draft: a draft can leave
+   * ingredients unmatched, with only their original wording, and isn't
+   * planned until it's saved as a recipe.
+   */
+  const save = (draft: boolean) => {
     setInvalid("");
     const servingCount = Number(servings);
     if (!Number.isInteger(servingCount) || servingCount < 1) {
@@ -696,11 +744,20 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
       );
       return;
     }
+    let yieldValue = parseQuantity(yieldAmount);
+    if (yieldValue === null || yieldValue === 0) {
+      setInvalid(
+        "What it makes must be an amount, like 1200, or empty if unknown."
+      );
+      return;
+    }
+    yieldValue ??= 0;
     const kept = ingredients.filter(
       (ingredient) =>
         ingredient.food !== null ||
         ingredient.recipe !== null ||
-        ingredient.amount.trim() !== ""
+        ingredient.amount.trim() !== "" ||
+        ingredient.originalText.trim() !== ""
     );
     const parsedIngredients = [];
     for (const [index, ingredient] of kept.entries()) {
@@ -711,7 +768,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
           return;
         }
         if (amount === null || amount === undefined || amount <= 0) {
-          setInvalid(`Give the servings of ${ingredient.recipe.name}.`);
+          setInvalid(`Give the amount of ${ingredient.recipe.name}.`);
           return;
         }
         parsedIngredients.push({
@@ -720,12 +777,33 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
           optional: ingredient.optional,
           originalText: ingredient.originalText,
           recipeId: ingredient.recipe.id,
+          unit: ingredient.unit,
         });
         continue;
       }
       if (ingredient.food === null) {
-        setInvalid(`Choose the food of ingredient ${index + 1}.`);
-        return;
+        const text = ingredient.originalText.trim();
+        if (!draft || text === "") {
+          setInvalid(
+            text === ""
+              ? `Choose the food of ingredient ${index + 1}.`
+              : `Choose the food of “${text}”, or save a draft to finish it later.`
+          );
+          return;
+        }
+        if (amount === null) {
+          setInvalid(`The amount of “${text}” must be a number, or empty.`);
+          return;
+        }
+        // An unmatched ingredient of a draft, with its amount if known.
+        parsedIngredients.push({
+          amount: amount ?? 0,
+          note: ingredient.note,
+          optional: ingredient.optional,
+          originalText: text,
+          unit: amount === undefined ? AmountUnit.UNSPECIFIED : ingredient.unit,
+        });
+        continue;
       }
       if (amount === null || amount === undefined || amount <= 0) {
         setInvalid(`Give an amount for ${ingredient.food.name}.`);
@@ -743,6 +821,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
     const fields = {
       cookSeconds,
       description,
+      draft,
       freezable,
       freezerDays: frozenDays,
       fridgeDays: days,
@@ -756,16 +835,59 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
       servings: servingCount,
       sourceUrl,
       tags: parseTags(tags),
+      yieldAmount: yieldValue,
+      yieldUnit: yieldValue === 0 ? AmountUnit.UNSPECIFIED : yieldUnit,
     };
     if (recipe === undefined) {
       create.mutate({ recipe: fields });
     } else {
+      // Saving as a recipe or a draft is a change of its own.
+      const savePaths = paths.flatMap((path) =>
+        path === "yield_amount" ? [path, "yield_unit"] : [path]
+      );
+      if (draft !== recipe.draft) {
+        savePaths.push("draft");
+      }
       update.mutate({
         recipe: { ...fields, id: recipe.id },
-        updateMask: { paths },
+        updateMask: { paths: savePaths },
       });
     }
   };
+
+  /*
+   * Actions are the form's buttons, at its top and bottom, as a long
+   * recipe's bottom is far from its top.
+   */
+  const unchanged = recipe !== undefined && !dirty;
+  const actions = (
+    <>
+      <Link
+        to={recipe === undefined ? "/recipes" : `/recipes/${recipe.id}`}
+        className={secondaryButton}
+      >
+        Cancel
+      </Link>
+      <button
+        type="button"
+        className={secondaryButton}
+        disabled={saving || (unchanged && recipe.draft)}
+        title="Save it unfinished: ingredients can be left without a food, and it isn't planned until it's saved as a recipe."
+        onClick={() => {
+          save(true);
+        }}
+      >
+        {recipe?.draft === false ? "Save as draft" : "Save draft"}
+      </button>
+      <button
+        type="submit"
+        className={primaryButton}
+        disabled={saving || (unchanged && !recipe.draft)}
+      >
+        {saving ? "Saving…" : "Save"}
+      </button>
+    </>
+  );
 
   const setIngredient = (index: number, change: Partial<IngredientInput>) => {
     setIngredients(
@@ -782,7 +904,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
       className="flex flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault();
-        save();
+        save(false);
       }}
     >
       <UnsavedChangesGuard
@@ -790,24 +912,14 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
       />
       <PageHeader
         title={recipe === undefined ? "New recipe" : `Edit ${recipe.name}`}
-        actions={
-          <>
-            <Link
-              to={recipe === undefined ? "/recipes" : `/recipes/${recipe.id}`}
-              className={secondaryButton}
-            >
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              className={primaryButton}
-              disabled={saving || (recipe !== undefined && !dirty)}
-            >
-              {saving ? "Saving…" : "Save"}
-            </button>
-          </>
-        }
+        actions={actions}
       />
+      {recipe?.draft === true && (
+        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          This is a draft: it isn&apos;t planned or suggested. Choose a food for
+          each ingredient and save it to finish it.
+        </p>
+      )}
       <ErrorText error={create.error ?? update.error} />
       {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -843,6 +955,41 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
             <p className="-mt-1 text-xs text-gray-500">
               Times are minutes, like 45, or hours and minutes, like 1:30.
             </p>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-end gap-2">
+                <TextField
+                  label="Makes"
+                  value={yieldAmount}
+                  inputMode="decimal"
+                  placeholder="Unknown"
+                  className="grow"
+                  onChange={setYieldAmount}
+                />
+                <select
+                  aria-label="Unit of what it makes"
+                  className={`${inputClass} w-28`}
+                  value={yieldUnit}
+                  onChange={(event) => {
+                    const option = YIELD_UNITS.find(
+                      ({ value }) => String(value) === event.target.value
+                    );
+                    if (option !== undefined) {
+                      setYieldUnit(option.value);
+                    }
+                  }}
+                >
+                  {YIELD_UNITS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-xs text-gray-500">
+                What the whole recipe makes, like 1200 g of cooked beans, so
+                other recipes can use it by weight.
+              </p>
+            </div>
             <div className="flex flex-col gap-1">
               <TextField
                 label="Tags"
@@ -940,7 +1087,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
                           aria-pressed={ingredient.isRecipe === isRecipe}
                           title={
                             isRecipe
-                              ? "Another recipe, in servings, like cooked chickpeas: planning this recipe plans a cook of it too"
+                              ? "Another recipe, like cooked chickpeas, in servings or by weight: planning this recipe plans a cook of it too"
                               : "A food, like tomatoes"
                           }
                           className={`-ml-px px-2 py-1.5 text-xs font-medium ring-1 ring-inset first:ml-0 first:rounded-l-md last:rounded-r-md ${
@@ -949,7 +1096,14 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
                               : "bg-white text-gray-700 ring-gray-300 hover:bg-gray-50"
                           }`}
                           onClick={() => {
-                            setIngredient(index, { isRecipe });
+                            if (isRecipe !== ingredient.isRecipe) {
+                              setIngredient(index, {
+                                isRecipe,
+                                unit: isRecipe
+                                  ? AmountUnit.UNSPECIFIED
+                                  : AmountUnit.GRAMS,
+                              });
+                            }
                           }}
                         >
                           {isRecipe ? "Recipe" : "Food"}
@@ -958,37 +1112,14 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
                     </div>
                     <div className="min-w-48 grow basis-60">
                       {ingredient.isRecipe ? (
-                        <select
-                          aria-label={`Recipe of ingredient ${index + 1}`}
-                          className={inputClass}
-                          value={ingredient.recipe?.id ?? ""}
-                          onChange={(event) => {
-                            const picked = components.find(
-                              (other) => other.id === event.target.value
-                            );
-                            setIngredient(index, {
-                              recipe:
-                                picked === undefined
-                                  ? null
-                                  : { id: picked.id, name: picked.name },
-                            });
+                        <RecipePicker
+                          label={`Recipe of ingredient ${index + 1}`}
+                          value={ingredient.recipe}
+                          exclude={recipe?.id}
+                          onChange={(picked) => {
+                            setIngredient(index, { recipe: picked });
                           }}
-                        >
-                          <option value="">Choose a recipe</option>
-                          {ingredient.recipe !== null &&
-                            !components.some(
-                              (other) => other.id === ingredient.recipe?.id
-                            ) && (
-                              <option value={ingredient.recipe.id}>
-                                {ingredient.recipe.name}
-                              </option>
-                            )}
-                          {components.map((other) => (
-                            <option key={other.id} value={other.id}>
-                              {other.name}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       ) : (
                         <FoodPicker
                           label={`Food of ingredient ${index + 1}`}
@@ -1010,33 +1141,31 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
                           setIngredient(index, { amount: event.target.value });
                         }}
                       />
-                      {ingredient.isRecipe ? (
-                        <span className="w-28 text-sm text-gray-600">
-                          servings
-                        </span>
-                      ) : (
-                        <select
-                          aria-label={`Unit of ingredient ${index + 1}`}
-                          className={`${inputClass} w-28`}
-                          value={ingredient.unit}
-                          onChange={(event) => {
-                            // The option's own value keeps the enum's type.
-                            const option = AMOUNT_UNITS.find(
-                              ({ value }) =>
-                                String(value) === event.target.value
-                            );
-                            if (option !== undefined) {
-                              setIngredient(index, { unit: option.value });
-                            }
-                          }}
-                        >
-                          {AMOUNT_UNITS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                      <select
+                        aria-label={`Unit of ingredient ${index + 1}`}
+                        className={`${inputClass} w-28`}
+                        value={ingredient.unit}
+                        onChange={(event) => {
+                          // The option's own value keeps the enum's type.
+                          const option = (
+                            ingredient.isRecipe ? COMPONENT_UNITS : AMOUNT_UNITS
+                          ).find(
+                            ({ value }) => String(value) === event.target.value
+                          );
+                          if (option !== undefined) {
+                            setIngredient(index, { unit: option.value });
+                          }
+                        }}
+                      >
+                        {(ingredient.isRecipe
+                          ? COMPONENT_UNITS
+                          : AMOUNT_UNITS
+                        ).map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -1171,6 +1300,9 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
           </Card>
         </div>
       </div>
+      <ErrorText error={create.error ?? update.error} />
+      {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+      <div className="flex flex-wrap justify-end gap-2">{actions}</div>
     </form>
   );
 };

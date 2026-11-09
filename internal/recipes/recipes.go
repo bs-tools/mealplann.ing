@@ -81,7 +81,14 @@ type Recipe struct {
 	Notes         string
 	// Favorite is whether the household marked the recipe as a favorite,
 	// which suggestions score higher.
-	Favorite   bool
+	Favorite bool
+	// YieldAmount is what the whole recipe makes, in YieldUnit, 0 if not
+	// given, to convert amounts of it as a component to servings.
+	YieldAmount float64
+	YieldUnit   nutrition.Unit
+	// Draft is whether it's saved unfinished: its ingredients may be
+	// unmatched, and it isn't planned or suggested.
+	Draft      bool
 	CreateTime time.Time
 	UpdateTime time.Time
 }
@@ -99,9 +106,12 @@ type Ingredient struct {
 	FoodID pgtype.UUID
 	// ComponentRecipeID is the component's recipe, invalid for a food.
 	ComponentRecipeID pgtype.UUID
-	// Amount is in Unit of a food, or in servings of a component.
+	// Amount is in Unit, or in servings of a component without a unit. An
+	// unmatched ingredient's is 0 if unknown.
 	Amount float64
-	// Unit is the unit of a food's amount, unused for a component.
+	// Unit is the unit of the amount: of a food, of what a component's
+	// recipe makes (see ComponentServings), or 0 for a component in
+	// servings or an unmatched ingredient without an amount.
 	Unit nutrition.Unit
 	// KitchenUnit is the unit the amount was entered in, like tablespoons,
 	// to show it in, if not Unit. Amount is in Unit regardless.
@@ -127,9 +137,47 @@ func (in *Ingredient) IsComponent() bool {
 	return in.ComponentRecipeID.Valid
 }
 
+// IsMatched reports whether the ingredient is a food or a component,
+// rather than a draft's ingredient with only its original text.
+func (in *Ingredient) IsMatched() bool {
+	return in.FoodID.Valid || in.ComponentRecipeID.Valid
+}
+
+// ComponentServings returns how many servings of its recipe a component
+// is: its amount if in servings, or converted with its recipe's yield if
+// in a unit of what it makes, or for grams without a yield in grams, with
+// the weight of its recipe's ingredients. It returns 0 if the amount can't
+// be converted, or the component wasn't read.
+func (in *Ingredient) ComponentServings() float64 {
+	return in.componentServings(0)
+}
+
+func (in *Ingredient) componentServings(depth int) float64 {
+	if in.Unit == 0 {
+		return in.Amount
+	}
+	c := in.Component
+	if c == nil {
+		return 0
+	}
+	servings := float64(max(c.Servings, 1))
+	if c.YieldAmount > 0 && c.YieldUnit == in.Unit {
+		return in.Amount / c.YieldAmount * servings
+	}
+	if in.Unit == nutrition.Grams && depth < MaxComponentDepth {
+		if total := c.nutrition(depth + 1).TotalGrams; total > 0 {
+			return in.Amount / total * servings
+		}
+	}
+	return 0
+}
+
 // Name returns the name of the ingredient's food or component, "" if a
-// component wasn't read.
+// component wasn't read, or an unmatched ingredient's original text.
 func (in *Ingredient) Name() string {
+	if !in.IsMatched() {
+		return in.OriginalText
+	}
 	if in.IsComponent() {
 		if in.Component != nil {
 			return in.Component.Name
@@ -153,6 +201,14 @@ func (r *Recipe) nutrition(depth int) *nutrition.Recipe {
 	ingredients := make([]nutrition.Ingredient, 0, len(r.Ingredients))
 	var componentIncomplete []nutrition.Nutrient
 	for _, in := range r.Ingredients {
+		if !in.IsMatched() {
+			// It has no food, so it can't be weighed, which the issues
+			// report, keeping each issue's index the ingredient's.
+			ingredients = append(ingredients, nutrition.Ingredient{
+				Food: &nutrition.Food{}, Amount: 1, Unit: nutrition.Pieces, Optional: in.Optional,
+			})
+			continue
+		}
 		if !in.IsComponent() {
 			ingredients = append(ingredients, nutrition.Ingredient{
 				Food:     &in.Food,
@@ -173,9 +229,14 @@ func (r *Recipe) nutrition(depth int) *nutrition.Recipe {
 				componentIncomplete = append(componentIncomplete, n.Incomplete...)
 			}
 		}
+		amount := in.componentServings(depth)
+		if amount <= 0 {
+			// Unconverted, it can't be weighed.
+			food, amount = &nutrition.Food{}, 1
+		}
 		ingredients = append(ingredients, nutrition.Ingredient{
 			Food:     food,
-			Amount:   in.Amount,
+			Amount:   amount,
 			Unit:     nutrition.Pieces,
 			Optional: in.Optional,
 		})
@@ -213,10 +274,10 @@ func (r *Recipe) ingredientsWithout(servings float64, supplied map[pgtype.UUID]b
 	scaled := make([]*Ingredient, 0, len(r.Ingredients))
 	for _, in := range r.Ingredients {
 		switch {
-		case in.Optional:
+		case in.Optional, !in.IsMatched():
 		case in.IsComponent():
 			if !supplied[in.ComponentRecipeID] && in.Component != nil && depth < MaxComponentDepth {
-				scaled = append(scaled, in.Component.ingredientsWithout(in.Amount*scale, nil, depth+1)...)
+				scaled = append(scaled, in.Component.ingredientsWithout(in.componentServings(depth)*scale, nil, depth+1)...)
 			}
 		default:
 			c := *in
@@ -243,11 +304,12 @@ func (r *Recipe) ComponentsFor(servings float64) []ComponentNeed {
 		if in.Optional || !in.IsComponent() || in.Component == nil {
 			continue
 		}
+		servings := in.ComponentServings() * scale
 		if i := slices.IndexFunc(needs, func(n ComponentNeed) bool { return n.Recipe.ID == in.ComponentRecipeID }); i >= 0 {
-			needs[i].Servings += in.Amount * scale
+			needs[i].Servings += servings
 			continue
 		}
-		needs = append(needs, ComponentNeed{Recipe: in.Component, Servings: in.Amount * scale})
+		needs = append(needs, ComponentNeed{Recipe: in.Component, Servings: servings})
 	}
 	return needs
 }
@@ -341,6 +403,9 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			PrepAheadNote: recipe.PrepAheadNote,
 			Notes:         recipe.Notes,
 			Favorite:      recipe.Favorite,
+			YieldAmount:   yieldAmountToDB(recipe),
+			YieldUnit:     yieldUnitToDB(recipe),
+			Draft:         recipe.Draft,
 		})
 		return err
 	})
@@ -561,6 +626,9 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			PrepAheadNote: recipe.PrepAheadNote,
 			Notes:         recipe.Notes,
 			Favorite:      recipe.Favorite,
+			YieldAmount:   yieldAmountToDB(recipe),
+			YieldUnit:     yieldUnitToDB(recipe),
+			Draft:         recipe.Draft,
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return store.ErrNotFound
@@ -611,7 +679,7 @@ func (r *Repository) DeleteRecipe(ctx context.Context, householdID, id pgtype.UU
 func checkFoods(ctx context.Context, b *store.Batch, recipe *Recipe) {
 	ids := make([]pgtype.UUID, 0, len(recipe.Ingredients))
 	for _, in := range recipe.Ingredients {
-		if !in.IsComponent() {
+		if in.FoodID.Valid {
 			ids = append(ids, in.FoodID)
 		}
 	}
@@ -747,7 +815,7 @@ func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredien
 		p.ComponentRecipeIds = append(p.ComponentRecipeIds, in.ComponentRecipeID)
 		p.Amounts = append(p.Amounts, in.Amount)
 		unit := ""
-		if !in.IsComponent() {
+		if in.Unit != 0 {
 			unit = string(unitToDB(in.Unit))
 		}
 		p.Units = append(p.Units, unit)
@@ -777,9 +845,13 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) 
 		PrepAheadNote: row.PrepAheadNote,
 		Notes:         row.Notes,
 		Favorite:      row.Favorite,
+		Draft:         row.Draft,
 		CreateTime:    row.CreateTime.Time,
 		UpdateTime:    row.UpdateTime.Time,
 		Ingredients:   make([]*Ingredient, 0, len(ingredients)),
+	}
+	if row.YieldAmount != nil && row.YieldUnit != nil {
+		r.YieldAmount, r.YieldUnit = *row.YieldAmount, unitFromDB(*row.YieldUnit)
 	}
 	for _, in := range ingredients {
 		r.Ingredients = append(r.Ingredients, ingredientFromDB(in))
@@ -808,7 +880,8 @@ func kitchenUnitFromDB(u *string) nutrition.KitchenUnit {
 
 func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 	in := &row.RecipeIngredient
-	unit := nutrition.Grams
+	// A component in servings, or an unmatched ingredient, has no unit.
+	var unit nutrition.Unit
 	if in.Unit != nil {
 		unit = unitFromDB(*in.Unit)
 	}
@@ -853,6 +926,22 @@ func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 		},
 		FastCarb: row.FastCarb,
 	}
+}
+
+// yieldAmountToDB and yieldUnitToDB return a recipe's yield as stored, nil
+// for none.
+func yieldAmountToDB(r *Recipe) *float64 {
+	if r.YieldAmount <= 0 || r.YieldUnit == 0 {
+		return nil
+	}
+	return new(r.YieldAmount)
+}
+
+func yieldUnitToDB(r *Recipe) *gen.AmountUnit {
+	if r.YieldAmount <= 0 || r.YieldUnit == 0 {
+		return nil
+	}
+	return new(unitToDB(r.YieldUnit))
 }
 
 func unitToDB(u nutrition.Unit) gen.AmountUnit {

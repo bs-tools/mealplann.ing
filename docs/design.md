@@ -119,6 +119,14 @@ saying what to change.
   accepted and converted.
 - Nutrition per serving and per 100 g is computed from the ingredients, so
   a portion can be measured in grams for a maximum portion size.
+- A recipe can say what it **makes**, like 1250 g of cooked pinto beans,
+  so a recipe using it as an ingredient can give it by weight, volume or
+  pieces, like 400 g of the beans, converted to servings with it. Without
+  one, an amount in grams counts the weight of its ingredients, raw.
+- A recipe can be saved as a **draft**, unfinished: its ingredients can be
+  left without a food, with only their wording, and it isn't planned or
+  suggested until it's saved as a recipe, which needs every ingredient
+  matched.
 - Recipes are entered in the web app or by an AI agent through MCP.
   Importing from URLs is left for later.
 

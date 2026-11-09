@@ -206,7 +206,8 @@ func Plan(in *PlanInput) *PlanResult {
 		}
 		p.eligible[tag] = []*recipes.Recipe{}
 		for _, r := range all {
-			if FitsMeal(r, tag) {
+			// Drafts aren't finished, so they aren't planned.
+			if !r.Draft && FitsMeal(r, tag) {
 				p.eligible[tag] = append(p.eligible[tag], r)
 			}
 		}

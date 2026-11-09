@@ -127,7 +127,10 @@ const NutritionPanel: React.FC<NutritionPanelProps> = ({ recipe }) => {
               {issues.map((issue) => {
                 const unit = recipe.ingredients[issue.ingredientIndex]?.unit;
                 let problem = "";
-                if (issue.unknownWeight) {
+                if (issue.unmatched) {
+                  problem =
+                    "has no food yet, so it's left out. Choose its food.";
+                } else if (issue.unknownWeight) {
                   problem =
                     unit !== undefined && isVolumeUnit(unit)
                       ? "has no density, so it's left out. Set its density."
@@ -139,9 +142,13 @@ const NutritionPanel: React.FC<NutritionPanelProps> = ({ recipe }) => {
                 }
                 return (
                   <li key={issue.ingredientIndex}>
-                    <Link to={`/foods/${issue.foodId}`} className={linkClass}>
-                      {issue.foodName}
-                    </Link>{" "}
+                    {issue.foodId === "" ? (
+                      <span className="font-medium">{issue.foodName}</span>
+                    ) : (
+                      <Link to={`/foods/${issue.foodId}`} className={linkClass}>
+                        {issue.foodName}
+                      </Link>
+                    )}{" "}
                     {problem}
                   </li>
                 );

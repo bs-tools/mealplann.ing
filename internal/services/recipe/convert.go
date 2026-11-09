@@ -70,10 +70,15 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 			OriginalText: in.OriginalText,
 			Optional:     in.Optional,
 		}
-		if in.IsComponent() {
+		switch {
+		case in.IsComponent():
 			b.RecipeId = store.UUIDToString(in.ComponentRecipeID)
 			b.RecipeName = in.Name()
-		} else {
+			b.Amount, b.Unit = amounts.ToProto(in.Amount, in.Unit, in.KitchenUnit)
+			b.ComponentServings = round(in.ComponentServings())
+		case !in.IsMatched():
+			b.Amount, b.Unit = amounts.ToProto(in.Amount, in.Unit, in.KitchenUnit)
+		default:
 			b.FoodId = store.UUIDToString(in.FoodID)
 			b.FoodName = in.FoodName
 			b.Amount, b.Unit = amounts.ToProto(in.Amount, in.Unit, in.KitchenUnit)
@@ -103,6 +108,9 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 		PrepAheadNote: r.PrepAheadNote,
 		Notes:         r.Notes,
 		Favorite:      r.Favorite,
+		Draft:         r.Draft,
+		YieldAmount:   r.YieldAmount,
+		YieldUnit:     yieldUnitToProto(r),
 		Nutrition:     nutritionToProto(r),
 		CreateTime:    timestamppb.New(r.CreateTime),
 		UpdateTime:    timestamppb.New(r.UpdateTime),
@@ -126,8 +134,9 @@ func nutritionToProto(r *recipes.Recipe) *recipesv1.RecipeNutrition {
 			IngredientIndex:  int32(issue.Index),
 			FoodId:           store.UUIDToString(in.FoodID),
 			FoodName:         in.Name(),
-			UnknownWeight:    issue.UnknownWeight,
+			UnknownWeight:    issue.UnknownWeight && in.IsMatched(),
 			UnknownNutrients: unknown,
+			Unmatched:        !in.IsMatched(),
 		}.Build())
 	}
 	return recipesv1.RecipeNutrition_builder{
@@ -164,6 +173,7 @@ func summaryToProto(r *recipes.Recipe) *recipesv1.RecipeSummary {
 		UpdateTime:                  timestamppb.New(r.UpdateTime),
 		Favorite:                    r.Favorite,
 		CostCentsPerServing:         costPerServing(r),
+		Draft:                       r.Draft,
 	}.Build()
 }
 
@@ -228,7 +238,7 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 	case utf8.RuneCountInString(prepNote) > maxPrepAheadNoteLength:
 		return nil, connect.Errorf(connect.CodeInvalidArgument, "prep_ahead_note must be at most %d characters", maxPrepAheadNoteLength)
 	}
-	ingredients, err := ingredientsFromProto(p.GetIngredients())
+	ingredients, err := ingredientsFromProto(p.GetIngredients(), p.GetDraft())
 	if err != nil {
 		return nil, err
 	}
@@ -248,6 +258,10 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 		return nil, err
 	}
 	sourceURL, err := sourceURLFromProto(p.GetSourceUrl())
+	if err != nil {
+		return nil, err
+	}
+	yieldAmount, yieldUnit, err := yieldFromProto(p)
 	if err != nil {
 		return nil, err
 	}
@@ -275,10 +289,42 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 		PrepAheadNote: prepNote,
 		Notes:         notes,
 		Favorite:      p.GetFavorite(),
+		YieldAmount:   yieldAmount,
+		YieldUnit:     yieldUnit,
+		Draft:         p.GetDraft(),
 	}, nil
 }
 
-func ingredientsFromProto(list []*recipesv1.Ingredient) ([]*recipes.Ingredient, error) {
+// yieldUnitToProto returns the unit of what a recipe makes, unspecified if
+// it isn't given.
+func yieldUnitToProto(r *recipes.Recipe) foodsv1.AmountUnit {
+	if r.YieldAmount <= 0 {
+		return foodsv1.AmountUnit_AMOUNT_UNIT_UNSPECIFIED
+	}
+	_, unit := amounts.ToProto(r.YieldAmount, r.YieldUnit, nutrition.NoKitchenUnit)
+	return unit
+}
+
+// yieldFromProto converts and checks what a recipe makes, in its base
+// unit.
+func yieldFromProto(p *recipesv1.Recipe) (float64, nutrition.Unit, error) {
+	if p.GetYieldAmount() == 0 && p.GetYieldUnit() == foodsv1.AmountUnit_AMOUNT_UNIT_UNSPECIFIED {
+		return 0, 0, nil
+	}
+	amount, unit, _, ok := amounts.FromProto(p.GetYieldAmount(), p.GetYieldUnit())
+	switch {
+	case !ok:
+		return 0, 0, connect.Errorf(connect.CodeInvalidArgument, "yield_unit is required with yield_amount: %s", amounts.UnitsHelp)
+	case math.IsNaN(amount) || amount <= 0 || amount > maxAmount:
+		return 0, 0, connect.Errorf(connect.CodeInvalidArgument,
+			"yield_amount must be more than 0 and at most %d g, ml or pieces, or 0 with no yield_unit if unknown", maxAmount)
+	}
+	return amount, unit, nil
+}
+
+// ingredientsFromProto converts and checks ingredients, which a draft's
+// can leave unmatched.
+func ingredientsFromProto(list []*recipesv1.Ingredient, draft bool) ([]*recipes.Ingredient, error) {
 	if len(list) > maxIngredients {
 		return nil, connect.Errorf(connect.CodeInvalidArgument, "a recipe can have at most %d ingredients", maxIngredients)
 	}
@@ -300,9 +346,27 @@ func ingredientsFromProto(list []*recipesv1.Ingredient) ([]*recipes.Ingredient, 
 					"%s.recipe_id is invalid: %v; find the household's recipes with ListRecipes", field, err).WithCause(err)
 			}
 			if p.GetUnit() != foodsv1.AmountUnit_AMOUNT_UNIT_UNSPECIFIED {
-				return nil, connect.Errorf(connect.CodeInvalidArgument,
-					"%s.unit must be unspecified for a component, whose amount is in servings of its recipe", field)
+				var ok bool
+				if _, unit, kitchen, ok = amounts.FromProto(0, p.GetUnit()); !ok {
+					return nil, connect.Errorf(connect.CodeInvalidArgument,
+						"%s.unit is unknown: leave it unspecified for servings of the recipe, or give %s", field, amounts.UnitsHelp)
+				}
 			}
+		case p.GetFoodId() == "" && draft:
+			// An unmatched ingredient of a draft, with its unit if known.
+			if strings.TrimSpace(p.GetOriginalText()) == "" {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s has no food_id, recipe_id nor original_text: give the ingredient as the recipe writes it in original_text, to match it later", field)
+			}
+			if p.GetUnit() != foodsv1.AmountUnit_AMOUNT_UNIT_UNSPECIFIED {
+				var ok bool
+				if _, unit, kitchen, ok = amounts.FromProto(0, p.GetUnit()); !ok {
+					return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.unit is unknown: give %s", field, amounts.UnitsHelp)
+				}
+			}
+		case p.GetFoodId() == "":
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s has no food_id: choose its food (find foods with ListFoods), set recipe_id for a component, or save the recipe as a draft to match it later", field)
 		default:
 			foodID, err = store.StringToUUID(p.GetFoodId())
 			if err != nil {
@@ -316,7 +380,11 @@ func ingredientsFromProto(list []*recipesv1.Ingredient) ([]*recipes.Ingredient, 
 			}
 		}
 		amount := p.GetAmount()
-		if math.IsNaN(amount) || amount <= 0 || amount > maxAmount {
+		unmatched := !foodID.Valid && !componentID.Valid
+		switch {
+		case unmatched && amount == 0:
+			// The amount isn't known yet.
+		case math.IsNaN(amount) || amount <= 0 || amount > maxAmount:
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.amount must be more than 0 and at most %d", field, maxAmount)
 		}
 		if kitchen != nutrition.NoKitchenUnit {

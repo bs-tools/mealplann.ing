@@ -19,6 +19,7 @@ import (
 	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
 	"github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1/recipesv1connect"
 	"github.com/bs-tools/mealplann.ing/internal/idempotency"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 	"github.com/bs-tools/mealplann.ing/internal/protomask"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
 	"github.com/bs-tools/mealplann.ing/internal/services/batch"
@@ -83,6 +84,23 @@ func (s *Service) checkComponents(ctx context.Context, recipe *recipes.Recipe) e
 		case 1+c.Depth() > recipes.MaxComponentDepth:
 			return connect.Errorf(connect.CodeInvalidArgument,
 				"%s has components with components of their own, which nests too deep: components can have components, but no deeper", c.Name)
+		}
+	}
+	// A component by weight, volume or pieces needs its recipe's yield in
+	// that unit to be converted to servings, or for grams, falls back to
+	// the weight of its ingredients.
+	for i, in := range recipe.Ingredients {
+		if !in.IsComponent() || in.Unit == 0 || in.Unit == nutrition.Grams {
+			continue
+		}
+		k := slices.IndexFunc(components, func(c *recipes.Recipe) bool { return c.ID == in.ComponentRecipeID })
+		if k < 0 {
+			// The repository refuses components that aren't the household's.
+			continue
+		}
+		if c := components[k]; c.YieldAmount <= 0 || c.YieldUnit != in.Unit {
+			return connect.Errorf(connect.CodeInvalidArgument,
+				"ingredients[%d]: %s doesn't say how much it makes in that unit, to convert the amount to servings: set its yield_amount and yield_unit with UpdateRecipe, or give the amount in servings", i, components[k].Name)
 		}
 	}
 	return nil
