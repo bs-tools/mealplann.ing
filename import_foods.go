@@ -45,8 +45,8 @@ var importCommands = []importCommand{
 		name:   "import-cnf",
 		source: "the Canadian Nutrient File",
 		usage: "Imports the CSV download of Health Canada's Canadian Nutrient File\n" +
-			"(https://www.canada.ca/en/health-canada/services/food-nutrition/healthy-eating/nutrient-data/canadian-nutrient-file-2015-download-files.html),\n" +
-			"as a zip file or an extracted directory.",
+			"(the 2026 or 2015 edition, from https://open.canada.ca), as a zip file or an\n" +
+			"extracted directory.",
 		run: cnf.Import,
 	},
 }

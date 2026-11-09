@@ -1,0 +1,24 @@
+﻿Nutrient_Code,Nutrient_Symbol,Nutrient_Unit,Nutrient_Name_EN,Nutrient_Name_FR,Tagname,Nutrient_Decimals
+203,PROT,gram,Protein,Protéines,PROCNT,2
+204,FAT,gram,Fat (Total lipids),Lipides totaux,FAT,2
+205,CARB,gram,"Carbohydrate, Total (by difference)",Glucides totaux (par différence),CHOCDF,2
+208,KCAL,kilocalorie,Energy (Kilocalories),Énergie (kilocalories),ENERC_KCAL,0
+268,KJ,kilojoule,Energy (Kilojoules),Énergie (kilojoules),ENERC_KJ,0
+269,TSUG,gram,"Sugars, Total",Sucres totaux,SUGAR,2
+291,TDF,gram,"Fibre, Total Dietary",Fibres alimentaires totales,FIBTG,1
+301,CA,milligram,Calcium,Calcium,CA,0
+303,FE,milligram,Iron,Fer,FE,2
+304,MG,milligram,Magnesium,Magnésium,MG,0
+306,K,milligram,Potassium,Potassium,K,0
+307,NA,milligram,Sodium,Sodium,NA,0
+309,ZN,milligram,Zinc,Zinc,ZN,2
+312,CU,milligram,Copper,Cuivre,CU,3
+320,RAE,microgram,Retinol Activity Equivalents,Équivalents d'activité du rétinol,VITA_RAE,0
+323,ATMN,milligram,Alpha-Tocopherol,Alpha-tocophérol,TOCPHA,2
+324,D-IU,International Unit,Vitamin D (International Units),Vitamine d (unités internationales),VITD,0
+328,D-µg,microgram,Vitamin D (D2+D3),Vitamine d (d2 + d3),VITDD,1
+418,B12,microgram,Vitamin B-12,Vitamine b12,VITB12,2
+430,VITK,microgram,Vitamin K (Phylloquinone),Vitamine k,VITK1,1
+435,DFE,microgram,Dietary Folate Equivalents,Équivalents de folate alimentaire,FOLDFE,0
+619,18:3,gram,"PUFA, 18:3undifferentiated, Linolenic, Octadecatrienoic","18:3 indifférencié, linolénique",F18D3,3
+851,18:3n3,gram,"PUFA, 18:3 c,c,c n-3, Linolenic, Octadecatrienoic","18:3 c,c,c n-3 linolénique",F18D3CN3,3

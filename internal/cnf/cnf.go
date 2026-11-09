@@ -1,13 +1,14 @@
 // Package cnf imports the foods of Health Canada's Canadian Nutrient File
-// (CNF), from its CSV download
-// (https://www.canada.ca/en/health-canada/services/food-nutrition/healthy-eating/nutrient-data/canadian-nutrient-file-2015-download-files.html),
-// which households create their foods from alongside USDA FoodData Central's
-// (see internal/fdc). CNF has the foods as sold in Canada, with Canadian
-// fortification, like vitamin D and B12 in plant beverages and vitamin D in
-// margarine.
+// (CNF), from its CSV download on the Open Government Portal
+// (https://open.canada.ca), which households create their foods from
+// alongside USDA FoodData Central's (see internal/fdc). CNF has the foods as
+// sold in Canada, with Canadian fortification, like vitamin D and B12 in
+// plant beverages and vitamin D in margarine.
 //
-// The download is a zip file of CSV files, one per table, of which the
-// importer reads:
+// The download is a zip file of CSV files, one per table. The importer reads
+// both the 2026 edition and the 2015 one, whose files and columns are named
+// differently (see the 2026 edition's "database structure and file content
+// description", Appendix A). Of the 2015 edition, it reads:
 //
 //   - FOOD NAME.csv: FoodID, FoodGroupID, FoodDescription, FoodDescriptionF
 //     and FoodDateOfPublication (or FoodDateOfEntry).
@@ -21,6 +22,14 @@
 //     the weight of a measure of a food in hundreds of grams, and MEASURE
 //     NAME.csv: MeasureID and MeasureDescription, like "250ml" or "1
 //     medium", for the foods' portions. They're optional.
+//
+// The 2026 edition renames the files "Food Name", "CNF Food Group",
+// "Nutrient Name", "Nutrient Amount", "Measure Weight Conversion" and
+// "Measure Name", and their columns, like Food_Code for FoodID and
+// Nutrient_Amount for NutrientValue. Its Measure Weight Conversion gives a
+// measure's weight in grams rather than hundreds of grams, and has refuse
+// and yield weights too, told apart by its Measure_Type_Code, which its
+// "Measure Type" file describes. It spells units out, like "microgram".
 //
 // Health Canada's files have changed over the years, so the reader is
 // tolerant: it finds the files ignoring case, spaces and underscores in
@@ -64,7 +73,16 @@ const (
 	fileNutrientAmount   = "nutrientamount"
 	fileConversionFactor = "conversionfactor"
 	fileMeasureName      = "measurename"
+	fileMeasureType      = "measuretype"
 )
+
+// fileAliases are the 2026 edition's names of the files whose 2015 names
+// differ, normalized, by the 2015 names they're read as.
+var fileAliases = map[string]string{
+	"cnffoodgroup":             fileFoodGroup,
+	"measureweightconversion":  fileConversionFactor,
+	"measureweightconversions": fileConversionFactor,
+}
 
 // requiredFiles are the files a download must have. Without FOOD GROUP.csv
 // the animal foods couldn't be left out.
@@ -73,11 +91,12 @@ var requiredFiles = []string{fileFoodName, fileFoodGroup, fileNutrientName, file
 // displayNames are the files' names in the download, for errors.
 var displayNames = map[string]string{
 	fileFoodName:         "FOOD NAME.csv",
-	fileFoodGroup:        "FOOD GROUP.csv",
+	fileFoodGroup:        "FOOD GROUP.csv (CNF Food Group.csv in 2026)",
 	fileNutrientName:     "NUTRIENT NAME.csv",
 	fileNutrientAmount:   "NUTRIENT AMOUNT.csv",
-	fileConversionFactor: "CONVERSION FACTOR.csv",
+	fileConversionFactor: "CONVERSION FACTOR.csv (Measure Weight Conversion.csv in 2026)",
 	fileMeasureName:      "MEASURE NAME.csv",
+	fileMeasureType:      "Measure Type.csv",
 }
 
 // normalizeFileName normalizes the name of a CSV file of the download, so
@@ -131,6 +150,9 @@ func findFiles(fsys fs.FS) (map[string]string, error) {
 			return nil
 		}
 		name := normalizeFileName(d.Name())
+		if alias, ok := fileAliases[name]; ok {
+			name = alias
+		}
 		if _, ok := displayNames[name]; ok {
 			if _, dup := files[name]; !dup {
 				files[name] = p
@@ -173,7 +195,7 @@ func (r *reader) read() ([]*foods.ReferenceFood, Stats, error) {
 	var stats Stats
 	groups := map[string]string{}
 	if err := r.readCSV(fileFoodGroup, func(row foodimport.Record) error {
-		groups[row.Get("FoodGroupID")] = row.Get("FoodGroupName")
+		groups[get(row, "CNF_Food_Group_Code", "FoodGroupID")] = get(row, "CNF_Food_Group_Description_EN", "FoodGroupName")
 		return nil
 	}); err != nil {
 		return nil, stats, err
@@ -181,15 +203,15 @@ func (r *reader) read() ([]*foods.ReferenceFood, Stats, error) {
 
 	names := map[int]nutrientName{}
 	if err := r.readCSV(fileNutrientName, func(row foodimport.Record) error {
-		id, err := strconv.Atoi(row.Get("NutrientID"))
+		id, err := parseNutrientID(row)
 		if err != nil {
-			return fmt.Errorf("invalid NutrientID: %w", err)
+			return err
 		}
 		names[id] = nutrientName{
 			id:      id,
-			symbol:  row.Get("NutrientSymbol"),
-			unit:    row.Get("NutrientUnit"),
-			name:    row.Get("NutrientName"),
+			symbol:  get(row, "Nutrient_Symbol", "NutrientSymbol"),
+			unit:    get(row, "Nutrient_Unit", "NutrientUnit"),
+			name:    get(row, "Nutrient_Name_EN", "NutrientName"),
 			tagname: row.Get("Tagname"),
 		}
 		return nil
@@ -203,16 +225,16 @@ func (r *reader) read() ([]*foods.ReferenceFood, Stats, error) {
 
 	r.foods = map[int32]*foods.ReferenceFood{}
 	if err := r.readCSV(fileFoodName, func(row foodimport.Record) error {
-		id, err := parseID(row.Get("FoodID"))
+		id, err := parseFoodID(row)
 		if err != nil {
 			return err
 		}
-		groupID := row.Get("FoodGroupID")
+		groupID := get(row, "CNF_Food_Group_Code", "FoodGroupID")
 		group, ok := groups[groupID]
 		if !ok {
 			// Its group can't be told, so neither can whether it's an
 			// animal food.
-			return fmt.Errorf("food %d is in food group %q, which FOOD GROUP.csv doesn't have", id, groupID)
+			return fmt.Errorf("food %d is in food group %q, which the food group file doesn't have", id, groupID)
 		}
 		if foodimport.IsExcludedCategory(group) {
 			stats.Excluded++
@@ -222,11 +244,11 @@ func (r *reader) read() ([]*foods.ReferenceFood, Stats, error) {
 			Source:            foods.SourceCNF,
 			SourceID:          id,
 			DataType:          dataType,
-			Description:       row.Get("FoodDescription"),
-			FrenchDescription: row.Get("FoodDescriptionF"),
+			Description:       get(row, "Food_Description_EN", "FoodDescription"),
+			FrenchDescription: get(row, "Food_Description_FR", "FoodDescriptionF"),
 			Category:          group,
 			// Foods without a date are kept, without it.
-			PublicationDate: parseDate(row.Get("FoodDateOfPublication"), row.Get("FoodDateOfEntry")),
+			PublicationDate: parseDate(row.Get("Food_Last_Updated_Date"), row.Get("FoodDateOfPublication"), row.Get("FoodDateOfEntry")),
 		}
 		return nil
 	}); err != nil {
@@ -242,18 +264,18 @@ func (r *reader) read() ([]*foods.ReferenceFood, Stats, error) {
 	// held.
 	amounts := map[int32]map[int]float64{}
 	if err := r.readCSV(fileNutrientAmount, func(row foodimport.Record) error {
-		id, err := parseID(row.Get("FoodID"))
+		id, err := parseFoodID(row)
 		if err != nil {
 			return err
 		}
 		if r.foods[id] == nil {
 			return nil
 		}
-		nutrientID, err := strconv.Atoi(row.Get("NutrientID"))
+		nutrientID, err := parseNutrientID(row)
 		if err != nil {
-			return fmt.Errorf("invalid NutrientID: %w", err)
+			return err
 		}
-		value := row.Get("NutrientValue")
+		value := get(row, "Nutrient_Amount", "NutrientValue")
 		if read[nutrientID] == nil || value == "" {
 			return nil
 		}
@@ -281,21 +303,37 @@ func (r *reader) read() ([]*foods.ReferenceFood, Stats, error) {
 }
 
 // readPortions reads the portions of the foods kept, in the order of
-// CONVERSION FACTOR.csv. Downloads without it or MEASURE NAME.csv are read
-// without portions.
+// CONVERSION FACTOR.csv (Measure Weight Conversion.csv in 2026). Downloads
+// without it or MEASURE NAME.csv are read without portions.
 func (r *reader) readPortions() error {
 	if r.files[fileConversionFactor] == "" || r.files[fileMeasureName] == "" {
 		return nil
 	}
 	measures := map[string]string{}
 	if err := r.readCSV(fileMeasureName, func(row foodimport.Record) error {
-		measures[row.Get("MeasureID")] = row.Get("MeasureDescription")
+		measures[get(row, "Measure_Code", "MeasureID")] = get(row, "Measure_Description_&_Unit_EN", "MeasureDescription")
 		return nil
 	}); err != nil {
 		return err
 	}
+	// The 2026 edition's refuse and yield weights aren't portions, so only
+	// the measures of other types are read: the household measures, like
+	// "250 ml" or "1 medium". Without its Measure Type file, the types
+	// can't be told apart, so no measure with a type is read.
+	portionTypes := map[string]bool{}
+	if r.files[fileMeasureType] != "" {
+		if err := r.readCSV(fileMeasureType, func(row foodimport.Record) error {
+			description := strings.ToLower(row.Get("Measure_Type_Description_EN"))
+			if !strings.Contains(description, "refuse") && !strings.Contains(description, "yield") {
+				portionTypes[row.Get("Measure_Type_Code")] = true
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
 	return r.readCSV(fileConversionFactor, func(row foodimport.Record) error {
-		id, err := parseID(row.Get("FoodID"))
+		id, err := parseFoodID(row)
 		if err != nil {
 			return err
 		}
@@ -303,26 +341,40 @@ func (r *reader) readPortions() error {
 		if f == nil {
 			return nil
 		}
-		description := measures[row.Get("MeasureID")]
+		if t := row.Get("Measure_Type_Code"); t != "" && !portionTypes[t] {
+			return nil
+		}
+		description := measures[get(row, "Measure_Code", "MeasureID")]
 		if description == "" {
 			return nil
 		}
-		factor, err := strconv.ParseFloat(row.Get("ConversionFactorValue"), 64)
+		grams, err := measureGrams(row)
 		if err != nil {
-			return fmt.Errorf("invalid conversion factor of food %d: %w", id, err)
+			return fmt.Errorf("invalid measure weight of food %d: %w", id, err)
 		}
-		if factor <= 0 {
+		if grams <= 0 {
 			return nil
 		}
 		f.Portions = append(f.Portions, foods.Portion{
 			Description: description,
 			Amount:      portionAmount(description),
-			// The conversion factor is the measure's weight over the 100 g
-			// the nutrients are given for.
-			Grams: roundGrams(factor * 100),
+			Grams:       roundGrams(grams),
 		})
 		return nil
 	})
+}
+
+// measureGrams returns the weight of a measure of a food in a row of
+// CONVERSION FACTOR.csv or Measure Weight Conversion.csv.
+func measureGrams(row foodimport.Record) (float64, error) {
+	if w := row.Get("Measure_Weight_Conversion"); w != "" {
+		// The 2026 edition gives the weight in grams.
+		return strconv.ParseFloat(w, 64)
+	}
+	// The 2015 edition gives the weight over the 100 g the nutrients are
+	// given for.
+	factor, err := strconv.ParseFloat(row.Get("ConversionFactorValue"), 64)
+	return factor * 100, err
 }
 
 // roundGrams rounds a portion's weight to a hundredth of a gram, as the
@@ -393,12 +445,34 @@ func parseDate(dates ...string) time.Time {
 	return time.Time{}
 }
 
-func parseID(s string) (int32, error) {
-	id, err := strconv.ParseInt(s, 10, 32)
+// get returns a row's field in the first of columns it has, as the 2026
+// edition's columns are named differently from the 2015 one's: each is
+// given its 2026 name, like "Food_Code", then its 2015 name, like "FoodID".
+func get(row foodimport.Record, columns ...string) string {
+	for _, c := range columns {
+		if v := row.Get(c); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// parseFoodID parses a row's FoodID (Food_Code in 2026).
+func parseFoodID(row foodimport.Record) (int32, error) {
+	id, err := strconv.ParseInt(get(row, "Food_Code", "FoodID"), 10, 32)
 	if err != nil {
 		return 0, fmt.Errorf("invalid FoodID: %w", err)
 	}
 	return int32(id), nil
+}
+
+// parseNutrientID parses a row's NutrientID (Nutrient_Code in 2026).
+func parseNutrientID(row foodimport.Record) (int, error) {
+	id, err := strconv.Atoi(get(row, "Nutrient_Code", "NutrientID"))
+	if err != nil {
+		return 0, fmt.Errorf("invalid NutrientID: %w", err)
+	}
+	return id, nil
 }
 
 // readCSV streams the rows of a file to fn, read as UTF-8 or else
