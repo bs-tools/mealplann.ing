@@ -89,6 +89,13 @@ func (s *Service) SuggestRecipes(ctx context.Context, req *suggestionsv1.Suggest
 		if err != nil {
 			return nil, err
 		}
+		// People with a staple at the meal eat it instead, unless they're
+		// asked for.
+		if len(personIDs) == 0 {
+			if in.People, _ = withoutStapled(in.People, d.plan.Staples, in.Meal, date); len(in.People) == 0 {
+				return nil, allStapled(in.Meal, date)
+			}
+		}
 	} else {
 		i := slices.IndexFunc(d.people, func(p *people.Person) bool { return p.ID == slotPersonID })
 		if i < 0 {

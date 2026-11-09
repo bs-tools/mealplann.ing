@@ -331,7 +331,14 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 	// into them when they're more than the person's maximum portion.
 	for date := start; !date.After(end); date = date.AddDate(0, 0, 1) {
 		for _, meal := range meals {
-			addSlot(slotKey{date: date, meal: meal}, &suggest.PlanSlot{Date: date, Meal: meal, People: eaters[meal]})
+			// People with a staple at the meal eat it instead; with
+			// everyone's, the meal is planned already.
+			key := slotKey{date: date, meal: meal}
+			eating, staples := withoutStapled(eaters[meal], d.plan.Staples, meal, date)
+			if len(eating) == 0 {
+				plannedNames[key] = append(plannedNames[key], staples...)
+			}
+			addSlot(key, &suggest.PlanSlot{Date: date, Meal: meal, People: eating})
 		}
 		for _, ps := range personal {
 			addSlot(personalSlot(date, ps.person.ID, ps.eatingTime.ID),
@@ -590,10 +597,14 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 				return nil, err
 			}
 		}
+		eating, _ := withoutStapled(eaters[m.meal], d.plan.Staples, m.meal, m.date)
+		if len(eating) == 0 {
+			return nil, allStapled(m.meal, m.date)
+		}
 		split, err := plans.SplitMeal(&plans.SplitInput{
 			Date:            m.date,
 			Meal:            m.meal,
-			People:          eaters[m.meal],
+			People:          eating,
 			GramsPerServing: gramsPerServing,
 			PlannedGrams:    planned,
 		})

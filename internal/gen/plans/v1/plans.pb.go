@@ -3339,7 +3339,8 @@ type PlanMealRequest_builder struct {
 	// The shared meal. Required.
 	Meal v1.HouseholdMeal
 	// The people to plan for, each of whom must have an eating time for the
-	// meal. Empty for everyone who does.
+	// meal, even if they have a staple at it. Empty for everyone who does and
+	// has no staple at it that day.
 	PersonIds []string
 	// How many servings to cook, at least the servings planned for people;
 	// the rest are left over, to plan later with CreatePortion. 0 for the

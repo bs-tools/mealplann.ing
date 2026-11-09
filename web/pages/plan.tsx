@@ -447,6 +447,7 @@ const PlanPage: React.FC = () => {
           date={planning.date}
           meal={planning.meal}
           people={people.data?.people ?? []}
+          staples={staples.data?.staples ?? []}
           recipes={recipes.data?.recipes ?? []}
           onClose={() => {
             setPlanning(null);
