@@ -27,7 +27,7 @@ import {
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type { FrozenLeftover } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
-import { addDays, maxDate, today } from "helpers/dates";
+import { maxDate, today } from "helpers/dates";
 import { formatShortDate } from "helpers/format";
 import { parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
@@ -45,7 +45,7 @@ interface PlanFrozenDialogProps {
 
 /**
  * PlanFrozenDialog plans a portion of a frozen leftover for someone, at an
- * eating time on a later date.
+ * eating time on a date, thawed from the freezer.
  */
 const PlanFrozenDialog: React.FC<PlanFrozenDialogProps> = ({
   leftover,
@@ -54,12 +54,8 @@ const PlanFrozenDialog: React.FC<PlanFrozenDialogProps> = ({
   const queryClient = useQueryClient();
   const people = useQuery(listPeople, {});
   const { cook } = leftover;
-  const [date, setDate] = useState(
-    maxDate(
-      addDays(today(), 1),
-      leftover.frozenFrom === "" ? today() : leftover.frozenFrom
-    )
-  );
+  // It can be eaten from today, or from when it was cooked.
+  const [date, setDate] = useState(maxDate(today(), cook?.date ?? today()));
   const [personId, setPersonId] = useState("");
   const [eatingTimeId, setEatingTimeId] = useState("");
   const [servings, setServings] = useState(

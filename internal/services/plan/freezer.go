@@ -102,17 +102,14 @@ func (s *Service) TakeFromFreezer(ctx context.Context, req *plansv1.TakeFromFree
 	}
 	resp := plansv1.TakeFromFreezerResponse_builder{}
 	if forPerson {
-		// A portion only comes from the freezer after the fridge days.
-		if f.FridgeDays == nil {
-			return nil, connect.Errorf(connect.CodeFailedPrecondition,
-				"%s has no fridge_days, so a portion of it isn't known to come from the freezer: set the recipe's fridge_days, or take it off plan", c.RecipeName)
-		}
-		if from := c.Date.AddDate(0, 0, int(*f.FridgeDays)+1); portion.Date.Before(from) {
-			return nil, connect.Errorf(connect.CodeFailedPrecondition,
-				"a portion on %s is eaten from the fridge, not the freezer: give a date from %s, or plan it with CreatePortion",
-				store.FormatDate(portion.Date), store.FormatDate(from))
+		// Frozen food can be eaten any day from when it was cooked, like
+		// food frozen the day it was cooked, thawed a few days later.
+		if portion.Date.Before(c.Date) {
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s was cooked on %s: give a date from then", c.RecipeName, store.FormatDate(c.Date))
 		}
 		portion.HouseholdID = user.HouseholdID()
+		portion.FromFreezer = true
 		created, err := s.plans.CreatePortion(ctx, portion)
 		if err != nil {
 			return nil, s.toConnectError(ctx, err, "failed to create portion", "")

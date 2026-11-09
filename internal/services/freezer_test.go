@@ -220,17 +220,25 @@ func TestTakeFromFreezer(t *testing.T) {
 		t.Errorf("got warnings %v, want none unassigned", got)
 	}
 
-	// The freezer has only 2, and Tuesday's portion would be from the
-	// fridge.
-	_, err = take(3, "", "")
+	// Frozen the day it was cooked, a serving can be thawed within the
+	// fridge days too, for Tuesday's lunch, which comes from the freezer.
+	resp, err = take(1, ben.GetId(), tuesday)
+	if err != nil {
+		t.Fatalf("TakeFromFreezer for Tuesday: %v", err)
+	}
+	if !resp.GetPortion().GetFromFreezer() || resp.GetLeftover().GetRemainingServings() != 1 {
+		t.Errorf("got %v, want a portion from the freezer, and 1 serving left", resp)
+	}
+	// The freezer has only 1, and nothing is eaten before it's cooked.
+	_, err = take(2, "", "")
 	wantCode(t, err, connect.CodeFailedPrecondition)
-	_, err = take(1, ben.GetId(), tuesday)
-	wantCode(t, err, connect.CodeFailedPrecondition)
+	_, err = take(1, ben.GetId(), "2026-11-01")
+	wantCode(t, err, connect.CodeInvalidArgument)
 	_, err = take(0, "", "")
 	wantCode(t, err, connect.CodeInvalidArgument)
 
 	// Throwing the rest out empties the freezer, with nothing unassigned.
-	if _, err := take(2, "", ""); err != nil {
+	if _, err := take(1, "", ""); err != nil {
 		t.Fatalf("TakeFromFreezer: %v", err)
 	}
 	leftovers, err := e.plans.ListFrozenLeftovers(ctx, plansv1.ListFrozenLeftoversRequest_builder{}.Build())

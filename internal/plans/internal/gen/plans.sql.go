@@ -118,9 +118,9 @@ func (q *Queries) CreateCookSupplies(ctx context.Context, arg *CreateCookSupplie
 
 const createPortion = `-- name: CreatePortion :execrows
 insert into portions (
-  id, household_id, person_id, eating_time_id, date, cook_id, servings, food_id, amount, unit, notes
+  id, household_id, person_id, eating_time_id, date, cook_id, servings, food_id, amount, unit, notes, from_freezer
 ) values (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 )
 `
 
@@ -136,6 +136,7 @@ type CreatePortionParams struct {
 	Amount       *float64
 	Unit         *AmountUnit
 	Notes        string
+	FromFreezer  bool
 }
 
 func (q *Queries) CreatePortion(ctx context.Context, arg *CreatePortionParams) (int64, error) {
@@ -151,6 +152,7 @@ func (q *Queries) CreatePortion(ctx context.Context, arg *CreatePortionParams) (
 		arg.Amount,
 		arg.Unit,
 		arg.Notes,
+		arg.FromFreezer,
 	)
 	if err != nil {
 		return 0, err
@@ -417,7 +419,7 @@ select
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
   coalesce((
     select sum(p.servings) from portions p
-    where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
+    where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
   ), 0)::double precision as late_servings,
   coalesce((
     select sum(ri.amount * cc.servings / cr.servings)
@@ -509,7 +511,7 @@ from cooks
 join recipes r on r.id = cooks.recipe_id
 cross join lateral (
   select coalesce(sum(p.servings), 0) as servings from portions p
-  where p.cook_id = cooks.id and r.fridge_days is not null and p.date > cooks.date + r.fridge_days
+  where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
 ) late
 where cooks.household_id = $1 and cooks.frozen_servings > late.servings + cooks.off_plan_servings + 0.01
 order by cooks.date, cooks.id
@@ -571,7 +573,7 @@ select
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
   coalesce((
     select sum(p.servings) from portions p
-    where p.cook_id = cooks.id and p.date > cooks.date + r.fridge_days
+    where p.cook_id = cooks.id and (p.from_freezer or p.date > cooks.date + r.fridge_days)
   ), 0)::double precision as late_servings,
   coalesce((
     select sum(ri.amount * cc.servings / cr.servings)
@@ -646,7 +648,7 @@ func (q *Queries) ListLeftoverCooks(ctx context.Context, arg *ListLeftoverCooksP
 
 const listPortions = `-- name: ListPortions :many
 select
-  portions.id, portions.household_id, portions.person_id, portions.eating_time_id, portions.date, portions.cook_id, portions.servings, portions.food_id, portions.amount, portions.unit, portions.notes, portions.create_time, portions.update_time,
+  portions.id, portions.household_id, portions.person_id, portions.eating_time_id, portions.date, portions.cook_id, portions.servings, portions.food_id, portions.amount, portions.unit, portions.notes, portions.create_time, portions.update_time, portions.from_freezer,
   coalesce(r.name, f.name, '')::text as name,
   c.date as cook_date,
   c.recipe_id as cook_recipe_id,
@@ -708,6 +710,7 @@ func (q *Queries) ListPortions(ctx context.Context, arg *ListPortionsParams) ([]
 			&i.Portion.Notes,
 			&i.Portion.CreateTime,
 			&i.Portion.UpdateTime,
+			&i.Portion.FromFreezer,
 			&i.Name,
 			&i.CookDate,
 			&i.CookRecipeID,
