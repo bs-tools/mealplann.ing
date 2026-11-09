@@ -235,6 +235,9 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 	if !ok {
 		return nil, connect.NewError(connect.CodeNotFound, recipeNotFound)
 	}
+	if err := checkNotDraft(recipe); err != nil {
+		return nil, err
+	}
 	eaters, err := mealEaters(d.people, meal, personIDs)
 	if err != nil {
 		return nil, err
@@ -435,6 +438,9 @@ func (s *Service) CreateCook(ctx context.Context, req *plansv1.CreateCookRequest
 	if len(list) == 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, referenceMessages["recipe_id"])
 	}
+	if err := checkNotDraft(list[0]); err != nil {
+		return nil, err
+	}
 	toCreate := []*plans.CookWithPortions{{Cook: c}}
 	if !req.GetFromStock() {
 		toCreate = withSuppliers(toCreate, map[pgtype.UUID]*recipes.Recipe{list[0].ID: list[0]})
@@ -455,6 +461,16 @@ func (s *Service) CreateCook(ctx context.Context, req *plansv1.CreateCookRequest
 		}
 	}
 	return plansv1.CreateCookResponse_builder{Cook: cookToProto(created), PantryChanges: changes}.Build(), nil
+}
+
+// checkNotDraft fails if a recipe is a draft, which isn't planned until
+// it's finished.
+func checkNotDraft(r *recipes.Recipe) error {
+	if r.Draft {
+		return connect.Errorf(connect.CodeFailedPrecondition,
+			"%s is a draft: finish it, matching its ingredients to foods, and save it with draft false before planning it", r.Name)
+	}
+	return nil
 }
 
 // foodUse is what was actually used of a food when cooking (see

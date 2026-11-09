@@ -14,7 +14,7 @@ import "mcp/v1/options.proto";
 // Write recipes by these conventions, which the nutrition, the shopping
 // list and the pantry rely on:
 //
-// 1. Amounts are in grams, milliliters or pieces, weighed with the food's grams_per_milliliter or grams_per_piece.
+// 1. Amounts are in grams, milliliters or pieces, weighed with the food's grams_per_milliliter or grams_per_piece, or in the kitchen unit the source gives, like AMOUNT_UNIT_TABLESPOONS, which is converted and kept to show the recipe as written.
 // 2. An ingredient is weighed as it goes into the recipe, with a food that matches that form: canned chickpeas drained, with a food for drained canned chickpeas, or chickpeas cooked from dry, with a food for cooked chickpeas.
 // 3. Optional ingredients, like a garnish, aren't counted in the nutrition.
 // 4. Servings are what the recipe really makes. A person's portion of a meal is in servings of its recipe, scaled for each person, so a serving should be one person's meal.
@@ -22,12 +22,20 @@ import "mcp/v1/options.proto";
 // The nutrition lists the ingredients whose data is missing, to fix on the
 // foods with UpdateFood.
 //
-// An ingredient can also be another recipe, a component, in servings, like
-// soaked and pressure cooked chickpeas in a chili: planning the chili also
-// plans a cook of the chickpeas for it (see PlanService), and a component
-// with prep_ahead_days shows on the plan the days before, like "Soak the
-// chickpeas" the night before. Components can have components of their
-// own, but no deeper, and a recipe can't use itself.
+// An ingredient can also be another recipe, a component, like soaked and
+// pressure cooked chickpeas in a chili: planning the chili also plans a
+// cook of the chickpeas for it (see PlanService), and a component with
+// prep_ahead_days shows on the plan the days before, like "Soak the
+// chickpeas" the night before. A component's amount is in servings of its
+// recipe, or by weight, volume or pieces of what it makes, like 400 g of
+// chickpeas, converted with its recipe's yield_amount: set the yield on
+// recipes used that way. Components can have components of their own, but
+// no deeper, and a recipe can't use itself.
+//
+// A recipe can be saved as a draft, unfinished, with ingredients not yet
+// matched to foods, only their original_text: drafts aren't planned or
+// suggested. Finish one by matching its ingredients and saving it with
+// draft false.
 //
 // To swap one food for another, like super-firm tofu for extra-firm, or
 // canned beans for beans cooked from dry: find the recipes using it with
@@ -156,6 +164,22 @@ message Recipe {
   repeated Step instructions = 21;
   // What its ingredients cost, from their foods' prices.
   RecipeCost cost = 22 [(mcp.v1.field).output_only = true];
+  // What the whole recipe makes, in yield_unit, e.g. 1200 g of cooked
+  // chickpeas or 12 tortillas, so recipes using it as a component can give
+  // its amount by weight, volume or pieces (see Ingredient.recipe_id). 0 if
+  // not given: a component by weight then counts the weight of its
+  // ingredients, raw, which leaves out water gained or lost cooking.
+  double yield_amount = 23;
+  // The unit of yield_amount, required with it: AMOUNT_UNIT_GRAMS,
+  // AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES, or a kitchen unit, which
+  // is converted to its base unit.
+  foods.v1.AmountUnit yield_unit = 24;
+  // Whether it's a draft: saved unfinished, like a recipe being written or
+  // imported from a web page. A draft's ingredients can be unmatched, with
+  // only their original_text, and it isn't planned or suggested until
+  // it's saved with draft false, which needs every ingredient matched to a
+  // food or recipe.
+  bool draft = 25;
 }
 
 // What a recipe's ingredients cost, from their foods' prices
@@ -228,19 +252,25 @@ message Step {
   optional int32 end_before_seconds = 10;
 }
 
-// An ingredient of a recipe: an amount of a food, or servings of another
-// recipe, a component.
+// An ingredient of a recipe: an amount of a food, or of another recipe, a
+// component. A draft's ingredient can also be unmatched: only its
+// original_text, with its amount and unit if known, until its food is
+// chosen.
 message Ingredient {
-  // The ID of the household's food. Required, unless recipe_id is set.
+  // The ID of the household's food. Required, unless recipe_id is set, or
+  // the ingredient is a draft's, unmatched.
   string food_id = 1;
   // The name of the food.
   string food_name = 2 [(mcp.v1.field).output_only = true];
-  // The amount, in unit of a food, or in servings of a component. More
-  // than 0.
+  // The amount, in unit. More than 0, or 0 for an unmatched draft
+  // ingredient whose amount isn't known.
   double amount = 3;
-  // The unit of a food's amount. Required for a food, and unspecified for
-  // a component. Amounts in milliliters or pieces are weighed with the
-  // food's grams_per_milliliter or grams_per_piece.
+  // The unit of a food's amount. Required for a food. Amounts in
+  // milliliters or pieces are weighed with the food's grams_per_milliliter
+  // or grams_per_piece. For a component, unspecified for an amount in
+  // servings of its recipe, or a unit of what its recipe makes, like 400 g
+  // of cooked pinto beans, converted to servings with its recipe's
+  // yield_amount (see component_servings).
   foods.v1.AmountUnit unit = 4;
   // How the food is prepared, e.g. "finely chopped" or "drained". At most
   // 200 characters.
@@ -263,6 +293,11 @@ message Ingredient {
   foods.v1.Measure food_measure = 10 [(mcp.v1.field).output_only = true];
   double food_grams_per_milliliter = 11 [(mcp.v1.field).output_only = true];
   double food_grams_per_piece = 12 [(mcp.v1.field).output_only = true];
+  // For a component, how many servings of its recipe the amount is: the
+  // amount itself in servings, or converted with the recipe's yield_amount,
+  // or for grams without one, the weight of its ingredients. 0 if it can't
+  // be converted, as the recipe has no yield in that unit.
+  double component_servings = 13 [(mcp.v1.field).output_only = true];
 }
 
 // The nutrition of a recipe, computed from its ingredients' foods, as
@@ -308,6 +343,10 @@ message IngredientIssue {
   // field name in Nutrients, e.g. "vitamin_b12_micrograms". Empty if
   // unknown_weight.
   repeated string unknown_nutrients = 5;
+  // Whether the ingredient isn't matched to a food or recipe yet, as a
+  // draft's can be: set its food_id or recipe_id. It's left out of the
+  // nutrition.
+  bool unmatched = 6;
 }
 
 // A summary of a recipe, for lists.
@@ -347,6 +386,9 @@ message RecipeSummary {
   // if none of its foods have one; a lower bound if some don't (see
   // Recipe.cost).
   optional int32 cost_cents_per_serving = 16;
+  // Whether it's a draft, which isn't planned or suggested (see
+  // Recipe.draft).
+  bool draft = 17;
 }
 
 message CreateRecipeRequest {

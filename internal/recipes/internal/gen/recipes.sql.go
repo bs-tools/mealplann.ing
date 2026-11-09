@@ -30,7 +30,10 @@ insert into recipes (
   prep_ahead_days,
   prep_ahead_note,
   notes,
-  favorite
+  favorite,
+  yield_amount,
+  yield_unit,
+  draft
 ) values (
   $1,
   $2,
@@ -48,9 +51,12 @@ insert into recipes (
   $14,
   $15,
   $16,
-  $17
+  $17,
+  $18,
+  $19::amount_unit,
+  $20
 )
-returning id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions
+returning id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft
 `
 
 type CreateRecipeParams struct {
@@ -71,6 +77,9 @@ type CreateRecipeParams struct {
 	PrepAheadNote string
 	Notes         string
 	Favorite      bool
+	YieldAmount   *float64
+	YieldUnit     *AmountUnit
+	Draft         bool
 }
 
 func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*Recipe, error) {
@@ -92,6 +101,9 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*R
 		arg.PrepAheadNote,
 		arg.Notes,
 		arg.Favorite,
+		arg.YieldAmount,
+		arg.YieldUnit,
+		arg.Draft,
 	)
 	var i Recipe
 	err := row.Scan(
@@ -114,6 +126,9 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*R
 		&i.PrepAheadDays,
 		&i.PrepAheadNote,
 		&i.Instructions,
+		&i.YieldAmount,
+		&i.YieldUnit,
+		&i.Draft,
 	)
 	return &i, err
 }
@@ -253,7 +268,7 @@ func (q *Queries) FindRecipesByName(ctx context.Context, arg *FindRecipesByNameP
 }
 
 const getRecipe = `-- name: GetRecipe :one
-select id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions from recipes where id = $1 and household_id = $2
+select id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft from recipes where id = $1 and household_id = $2
 `
 
 type GetRecipeParams struct {
@@ -284,6 +299,9 @@ func (q *Queries) GetRecipe(ctx context.Context, arg *GetRecipeParams) (*Recipe,
 		&i.PrepAheadDays,
 		&i.PrepAheadNote,
 		&i.Instructions,
+		&i.YieldAmount,
+		&i.YieldUnit,
+		&i.Draft,
 	)
 	return &i, err
 }
@@ -492,7 +510,7 @@ func (q *Queries) ListRecipeTags(ctx context.Context, householdID pgtype.UUID) (
 }
 
 const listRecipes = `-- name: ListRecipes :many
-select r.id, r.household_id, r.name, r.description, r.servings, r.prep_seconds, r.cook_seconds, r.tags, r.source_url, r.fridge_days, r.freezable, r.notes, r.create_time, r.update_time, r.favorite, r.freezer_days, r.prep_ahead_days, r.prep_ahead_note, r.instructions from recipes r
+select r.id, r.household_id, r.name, r.description, r.servings, r.prep_seconds, r.cook_seconds, r.tags, r.source_url, r.fridge_days, r.freezable, r.notes, r.create_time, r.update_time, r.favorite, r.freezer_days, r.prep_ahead_days, r.prep_ahead_note, r.instructions, r.yield_amount, r.yield_unit, r.draft from recipes r
 where r.household_id = $1
   and (
     $2::text = ''
@@ -554,6 +572,9 @@ func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*R
 			&i.PrepAheadDays,
 			&i.PrepAheadNote,
 			&i.Instructions,
+			&i.YieldAmount,
+			&i.YieldUnit,
+			&i.Draft,
 		); err != nil {
 			return nil, err
 		}
@@ -566,7 +587,7 @@ func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*R
 }
 
 const listRecipesByID = `-- name: ListRecipesByID :many
-select id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions from recipes
+select id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft from recipes
 where household_id = $1 and id = any($2::uuid[])
 order by lower(name), id
 `
@@ -605,6 +626,9 @@ func (q *Queries) ListRecipesByID(ctx context.Context, arg *ListRecipesByIDParam
 			&i.PrepAheadDays,
 			&i.PrepAheadNote,
 			&i.Instructions,
+			&i.YieldAmount,
+			&i.YieldUnit,
+			&i.Draft,
 		); err != nil {
 			return nil, err
 		}
@@ -633,9 +657,12 @@ update recipes set
   prep_ahead_note = $13,
   notes = $14,
   favorite = $15,
+  yield_amount = $16,
+  yield_unit = $17::amount_unit,
+  draft = $18,
   update_time = now()
-where id = $16 and household_id = $17
-returning id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions
+where id = $19 and household_id = $20
+returning id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft
 `
 
 type UpdateRecipeParams struct {
@@ -654,6 +681,9 @@ type UpdateRecipeParams struct {
 	PrepAheadNote string
 	Notes         string
 	Favorite      bool
+	YieldAmount   *float64
+	YieldUnit     *AmountUnit
+	Draft         bool
 	ID            pgtype.UUID
 	HouseholdID   pgtype.UUID
 }
@@ -675,6 +705,9 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg *UpdateRecipeParams) (*R
 		arg.PrepAheadNote,
 		arg.Notes,
 		arg.Favorite,
+		arg.YieldAmount,
+		arg.YieldUnit,
+		arg.Draft,
 		arg.ID,
 		arg.HouseholdID,
 	)
@@ -699,6 +732,9 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg *UpdateRecipeParams) (*R
 		&i.PrepAheadDays,
 		&i.PrepAheadNote,
 		&i.Instructions,
+		&i.YieldAmount,
+		&i.YieldUnit,
+		&i.Draft,
 	)
 	return &i, err
 }

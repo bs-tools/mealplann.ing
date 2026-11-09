@@ -845,6 +845,9 @@ type Recipe struct {
 	PrepAheadDays int32
 	PrepAheadNote string
 	Instructions  json.RawMessage
+	YieldAmount   pgtype.Float8
+	YieldUnit     NullAmountUnit
+	Draft         bool
 }
 
 type RecipeIngredient struct {

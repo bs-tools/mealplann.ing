@@ -329,7 +329,10 @@ func Suggest(in *Input) []*Suggestion {
 	}
 	suggestions := make([]*Suggestion, 0, len(candidates))
 	for _, r := range candidates {
-		suggestions = append(suggestions, s.score(r, nil))
+		// Drafts aren't finished, so they aren't suggested.
+		if !r.Draft {
+			suggestions = append(suggestions, s.score(r, nil))
+		}
 	}
 	for _, cook := range s.leftovers() {
 		suggestions = append(suggestions, s.score(s.recipes[cook.RecipeID], cook))

@@ -209,6 +209,11 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
                 aria-label="Favorite"
               />
             )}
+            {recipe.draft && (
+              <span className="ml-2 align-middle">
+                <Badge>Draft</Badge>
+              </span>
+            )}
           </h2>
           {recipe.description !== "" && (
             <p className="line-clamp-2 text-sm text-gray-600">

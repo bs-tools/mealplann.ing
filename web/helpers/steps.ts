@@ -1,3 +1,4 @@
+import { AmountUnit } from "gen/foods/v1/foods_pb";
 import type { Ingredient, Recipe, Step } from "gen/recipes/v1/recipes_pb";
 import type { UnitSystem } from "gen/users/v1/users_pb";
 
@@ -27,21 +28,37 @@ export const groupSteps = (steps: Step[]): StepGroup[] => {
 /**
  * IngredientAmount formats an ingredient's amount scaled by a factor, in a
  * unit system and its food's measure, e.g. "200 g" or "2 tbsp", or
- * "1 serving" of a component.
+ * "1 serving" of a component in servings. An unmatched draft ingredient's
+ * unknown amount is "".
  */
 export const ingredientAmount = (
   ingredient: Ingredient,
   scale: number,
   system: UnitSystem,
   amount: number = ingredient.amount
-): string =>
-  ingredient.recipeId === ""
-    ? formatIngredientAmount(amount * scale, ingredient.unit, system, {
-        gramsPerMilliliter: ingredient.foodGramsPerMilliliter,
-        gramsPerPiece: ingredient.foodGramsPerPiece,
-        measure: ingredient.foodMeasure,
-      })
-    : formatServings(amount * scale);
+): string => {
+  if (
+    ingredient.recipeId !== "" &&
+    ingredient.unit === AmountUnit.UNSPECIFIED
+  ) {
+    return formatServings(amount * scale);
+  }
+  if (amount === 0) {
+    return "";
+  }
+  return formatIngredientAmount(
+    amount * scale,
+    ingredient.unit,
+    system,
+    ingredient.foodId === ""
+      ? undefined
+      : {
+          gramsPerMilliliter: ingredient.foodGramsPerMilliliter,
+          gramsPerPiece: ingredient.foodGramsPerPiece,
+          measure: ingredient.foodMeasure,
+        }
+  );
+};
 
 // StepAmount returns how much of the ingredient at a position a step uses.
 const stepAmount = (step: Step, position: number): number => {
@@ -118,9 +135,18 @@ export const stepStart = (step: Step, index: number): string => {
   return step.afterStepIndexes.length > 0 ? `After ${steps}` : "";
 };
 
-// IngredientName names an ingredient's food or component recipe.
-export const ingredientName = (ingredient: Ingredient): string =>
-  ingredient.recipeId === "" ? ingredient.foodName : ingredient.recipeName;
+/**
+ * IngredientName names an ingredient's food or component recipe, or an
+ * unmatched draft ingredient by its original text.
+ */
+export const ingredientName = (ingredient: Ingredient): string => {
+  if (ingredient.recipeId !== "") {
+    return ingredient.recipeName;
+  }
+  return ingredient.foodId === ""
+    ? ingredient.originalText
+    : ingredient.foodName;
+};
 
 /**
  * FormatStepDuration formats a step's duration, e.g. "20 min" or "1h 30m",

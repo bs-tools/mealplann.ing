@@ -49,6 +49,9 @@ type Recipe struct {
 	xxx_hidden_PrepAheadNote string                 `protobuf:"bytes,20,opt,name=prep_ahead_note,json=prepAheadNote,proto3"`
 	xxx_hidden_Instructions  *[]*Step               `protobuf:"bytes,21,rep,name=instructions,proto3"`
 	xxx_hidden_Cost          *RecipeCost            `protobuf:"bytes,22,opt,name=cost,proto3"`
+	xxx_hidden_YieldAmount   float64                `protobuf:"fixed64,23,opt,name=yield_amount,json=yieldAmount,proto3"`
+	xxx_hidden_YieldUnit     v1.AmountUnit          `protobuf:"varint,24,opt,name=yield_unit,json=yieldUnit,proto3,enum=foods.v1.AmountUnit"`
+	xxx_hidden_Draft         bool                   `protobuf:"varint,25,opt,name=draft,proto3"`
 	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
 	XXX_presence             [1]uint32
 	unknownFields            protoimpl.UnknownFields
@@ -238,6 +241,27 @@ func (x *Recipe) GetCost() *RecipeCost {
 	return nil
 }
 
+func (x *Recipe) GetYieldAmount() float64 {
+	if x != nil {
+		return x.xxx_hidden_YieldAmount
+	}
+	return 0
+}
+
+func (x *Recipe) GetYieldUnit() v1.AmountUnit {
+	if x != nil {
+		return x.xxx_hidden_YieldUnit
+	}
+	return v1.AmountUnit(0)
+}
+
+func (x *Recipe) GetDraft() bool {
+	if x != nil {
+		return x.xxx_hidden_Draft
+	}
+	return false
+}
+
 func (x *Recipe) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -280,7 +304,7 @@ func (x *Recipe) SetSourceUrl(v string) {
 
 func (x *Recipe) SetFridgeDays(v int32) {
 	x.xxx_hidden_FridgeDays = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 22)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 25)
 }
 
 func (x *Recipe) SetFreezable(v bool) {
@@ -309,7 +333,7 @@ func (x *Recipe) SetFavorite(v bool) {
 
 func (x *Recipe) SetFreezerDays(v int32) {
 	x.xxx_hidden_FreezerDays = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 22)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 25)
 }
 
 func (x *Recipe) SetPrepAheadDays(v int32) {
@@ -326,6 +350,18 @@ func (x *Recipe) SetInstructions(v []*Step) {
 
 func (x *Recipe) SetCost(v *RecipeCost) {
 	x.xxx_hidden_Cost = v
+}
+
+func (x *Recipe) SetYieldAmount(v float64) {
+	x.xxx_hidden_YieldAmount = v
+}
+
+func (x *Recipe) SetYieldUnit(v v1.AmountUnit) {
+	x.xxx_hidden_YieldUnit = v
+}
+
+func (x *Recipe) SetDraft(v bool) {
+	x.xxx_hidden_Draft = v
 }
 
 func (x *Recipe) HasFridgeDays() bool {
@@ -463,6 +499,22 @@ type Recipe_builder struct {
 	Instructions []*Step
 	// What its ingredients cost, from their foods' prices.
 	Cost *RecipeCost
+	// What the whole recipe makes, in yield_unit, e.g. 1200 g of cooked
+	// chickpeas or 12 tortillas, so recipes using it as a component can give
+	// its amount by weight, volume or pieces (see Ingredient.recipe_id). 0 if
+	// not given: a component by weight then counts the weight of its
+	// ingredients, raw, which leaves out water gained or lost cooking.
+	YieldAmount float64
+	// The unit of yield_amount, required with it: AMOUNT_UNIT_GRAMS,
+	// AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES, or a kitchen unit, which
+	// is converted to its base unit.
+	YieldUnit v1.AmountUnit
+	// Whether it's a draft: saved unfinished, like a recipe being written or
+	// imported from a web page. A draft's ingredients can be unmatched, with
+	// only their original_text, and it isn't planned or suggested until
+	// it's saved with draft false, which needs every ingredient matched to a
+	// food or recipe.
+	Draft bool
 }
 
 func (b0 Recipe_builder) Build() *Recipe {
@@ -480,7 +532,7 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_Tags = b.Tags
 	x.xxx_hidden_SourceUrl = b.SourceUrl
 	if b.FridgeDays != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 22)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 25)
 		x.xxx_hidden_FridgeDays = *b.FridgeDays
 	}
 	x.xxx_hidden_Freezable = b.Freezable
@@ -490,13 +542,16 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_UpdateTime = b.UpdateTime
 	x.xxx_hidden_Favorite = b.Favorite
 	if b.FreezerDays != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 22)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 25)
 		x.xxx_hidden_FreezerDays = *b.FreezerDays
 	}
 	x.xxx_hidden_PrepAheadDays = b.PrepAheadDays
 	x.xxx_hidden_PrepAheadNote = b.PrepAheadNote
 	x.xxx_hidden_Instructions = &b.Instructions
 	x.xxx_hidden_Cost = b.Cost
+	x.xxx_hidden_YieldAmount = b.YieldAmount
+	x.xxx_hidden_YieldUnit = b.YieldUnit
+	x.xxx_hidden_Draft = b.Draft
 	return m0
 }
 
@@ -837,8 +892,10 @@ func (b0 Step_builder) Build() *Step {
 	return m0
 }
 
-// An ingredient of a recipe: an amount of a food, or servings of another
-// recipe, a component.
+// An ingredient of a recipe: an amount of a food, or of another recipe, a
+// component. A draft's ingredient can also be unmatched: only its
+// original_text, with its amount and unit if known, until its food is
+// chosen.
 type Ingredient struct {
 	state                             protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_FoodId                 string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
@@ -853,6 +910,7 @@ type Ingredient struct {
 	xxx_hidden_FoodMeasure            v1.Measure             `protobuf:"varint,10,opt,name=food_measure,json=foodMeasure,proto3,enum=foods.v1.Measure"`
 	xxx_hidden_FoodGramsPerMilliliter float64                `protobuf:"fixed64,11,opt,name=food_grams_per_milliliter,json=foodGramsPerMilliliter,proto3"`
 	xxx_hidden_FoodGramsPerPiece      float64                `protobuf:"fixed64,12,opt,name=food_grams_per_piece,json=foodGramsPerPiece,proto3"`
+	xxx_hidden_ComponentServings      float64                `protobuf:"fixed64,13,opt,name=component_servings,json=componentServings,proto3"`
 	unknownFields                     protoimpl.UnknownFields
 	sizeCache                         protoimpl.SizeCache
 }
@@ -966,6 +1024,13 @@ func (x *Ingredient) GetFoodGramsPerPiece() float64 {
 	return 0
 }
 
+func (x *Ingredient) GetComponentServings() float64 {
+	if x != nil {
+		return x.xxx_hidden_ComponentServings
+	}
+	return 0
+}
+
 func (x *Ingredient) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -1014,19 +1079,27 @@ func (x *Ingredient) SetFoodGramsPerPiece(v float64) {
 	x.xxx_hidden_FoodGramsPerPiece = v
 }
 
+func (x *Ingredient) SetComponentServings(v float64) {
+	x.xxx_hidden_ComponentServings = v
+}
+
 type Ingredient_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The ID of the household's food. Required, unless recipe_id is set.
+	// The ID of the household's food. Required, unless recipe_id is set, or
+	// the ingredient is a draft's, unmatched.
 	FoodId string
 	// The name of the food.
 	FoodName string
-	// The amount, in unit of a food, or in servings of a component. More
-	// than 0.
+	// The amount, in unit. More than 0, or 0 for an unmatched draft
+	// ingredient whose amount isn't known.
 	Amount float64
-	// The unit of a food's amount. Required for a food, and unspecified for
-	// a component. Amounts in milliliters or pieces are weighed with the
-	// food's grams_per_milliliter or grams_per_piece.
+	// The unit of a food's amount. Required for a food. Amounts in
+	// milliliters or pieces are weighed with the food's grams_per_milliliter
+	// or grams_per_piece. For a component, unspecified for an amount in
+	// servings of its recipe, or a unit of what its recipe makes, like 400 g
+	// of cooked pinto beans, converted to servings with its recipe's
+	// yield_amount (see component_servings).
 	Unit v1.AmountUnit
 	// How the food is prepared, e.g. "finely chopped" or "drained". At most
 	// 200 characters.
@@ -1049,6 +1122,11 @@ type Ingredient_builder struct {
 	FoodMeasure            v1.Measure
 	FoodGramsPerMilliliter float64
 	FoodGramsPerPiece      float64
+	// For a component, how many servings of its recipe the amount is: the
+	// amount itself in servings, or converted with the recipe's yield_amount,
+	// or for grams without one, the weight of its ingredients. 0 if it can't
+	// be converted, as the recipe has no yield in that unit.
+	ComponentServings float64
 }
 
 func (b0 Ingredient_builder) Build() *Ingredient {
@@ -1067,6 +1145,7 @@ func (b0 Ingredient_builder) Build() *Ingredient {
 	x.xxx_hidden_FoodMeasure = b.FoodMeasure
 	x.xxx_hidden_FoodGramsPerMilliliter = b.FoodGramsPerMilliliter
 	x.xxx_hidden_FoodGramsPerPiece = b.FoodGramsPerPiece
+	x.xxx_hidden_ComponentServings = b.ComponentServings
 	return m0
 }
 
@@ -1245,6 +1324,7 @@ type IngredientIssue struct {
 	xxx_hidden_FoodName         string                 `protobuf:"bytes,3,opt,name=food_name,json=foodName,proto3"`
 	xxx_hidden_UnknownWeight    bool                   `protobuf:"varint,4,opt,name=unknown_weight,json=unknownWeight,proto3"`
 	xxx_hidden_UnknownNutrients []string               `protobuf:"bytes,5,rep,name=unknown_nutrients,json=unknownNutrients,proto3"`
+	xxx_hidden_Unmatched        bool                   `protobuf:"varint,6,opt,name=unmatched,proto3"`
 	unknownFields               protoimpl.UnknownFields
 	sizeCache                   protoimpl.SizeCache
 }
@@ -1309,6 +1389,13 @@ func (x *IngredientIssue) GetUnknownNutrients() []string {
 	return nil
 }
 
+func (x *IngredientIssue) GetUnmatched() bool {
+	if x != nil {
+		return x.xxx_hidden_Unmatched
+	}
+	return false
+}
+
 func (x *IngredientIssue) SetIngredientIndex(v int32) {
 	x.xxx_hidden_IngredientIndex = v
 }
@@ -1327,6 +1414,10 @@ func (x *IngredientIssue) SetUnknownWeight(v bool) {
 
 func (x *IngredientIssue) SetUnknownNutrients(v []string) {
 	x.xxx_hidden_UnknownNutrients = v
+}
+
+func (x *IngredientIssue) SetUnmatched(v bool) {
+	x.xxx_hidden_Unmatched = v
 }
 
 type IngredientIssue_builder struct {
@@ -1348,6 +1439,10 @@ type IngredientIssue_builder struct {
 	// field name in Nutrients, e.g. "vitamin_b12_micrograms". Empty if
 	// unknown_weight.
 	UnknownNutrients []string
+	// Whether the ingredient isn't matched to a food or recipe yet, as a
+	// draft's can be: set its food_id or recipe_id. It's left out of the
+	// nutrition.
+	Unmatched bool
 }
 
 func (b0 IngredientIssue_builder) Build() *IngredientIssue {
@@ -1359,6 +1454,7 @@ func (b0 IngredientIssue_builder) Build() *IngredientIssue {
 	x.xxx_hidden_FoodName = b.FoodName
 	x.xxx_hidden_UnknownWeight = b.UnknownWeight
 	x.xxx_hidden_UnknownNutrients = b.UnknownNutrients
+	x.xxx_hidden_Unmatched = b.Unmatched
 	return m0
 }
 
@@ -1380,6 +1476,7 @@ type RecipeSummary struct {
 	xxx_hidden_UpdateTime                  *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=update_time,json=updateTime,proto3"`
 	xxx_hidden_Favorite                    bool                   `protobuf:"varint,14,opt,name=favorite,proto3"`
 	xxx_hidden_CostCentsPerServing         int32                  `protobuf:"varint,16,opt,name=cost_cents_per_serving,json=costCentsPerServing,proto3,oneof"`
+	xxx_hidden_Draft                       bool                   `protobuf:"varint,17,opt,name=draft,proto3"`
 	XXX_raceDetectHookData                 protoimpl.RaceDetectHookData
 	XXX_presence                           [1]uint32
 	unknownFields                          protoimpl.UnknownFields
@@ -1516,6 +1613,13 @@ func (x *RecipeSummary) GetCostCentsPerServing() int32 {
 	return 0
 }
 
+func (x *RecipeSummary) GetDraft() bool {
+	if x != nil {
+		return x.xxx_hidden_Draft
+	}
+	return false
+}
+
 func (x *RecipeSummary) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -1546,17 +1650,17 @@ func (x *RecipeSummary) SetTags(v []string) {
 
 func (x *RecipeSummary) SetEnergyKcalPerServing(v float64) {
 	x.xxx_hidden_EnergyKcalPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 15)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 16)
 }
 
 func (x *RecipeSummary) SetProteinGramsPerServing(v float64) {
 	x.xxx_hidden_ProteinGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 15)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 16)
 }
 
 func (x *RecipeSummary) SetCarbohydrateGramsPerServing(v float64) {
 	x.xxx_hidden_CarbohydrateGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 15)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 16)
 }
 
 func (x *RecipeSummary) SetGramsPerServing(v float64) {
@@ -1577,7 +1681,11 @@ func (x *RecipeSummary) SetFavorite(v bool) {
 
 func (x *RecipeSummary) SetCostCentsPerServing(v int32) {
 	x.xxx_hidden_CostCentsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 15)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 16)
+}
+
+func (x *RecipeSummary) SetDraft(v bool) {
+	x.xxx_hidden_Draft = v
 }
 
 func (x *RecipeSummary) HasEnergyKcalPerServing() bool {
@@ -1675,6 +1783,9 @@ type RecipeSummary_builder struct {
 	// if none of its foods have one; a lower bound if some don't (see
 	// Recipe.cost).
 	CostCentsPerServing *int32
+	// Whether it's a draft, which isn't planned or suggested (see
+	// Recipe.draft).
+	Draft bool
 }
 
 func (b0 RecipeSummary_builder) Build() *RecipeSummary {
@@ -1689,15 +1800,15 @@ func (b0 RecipeSummary_builder) Build() *RecipeSummary {
 	x.xxx_hidden_CookSeconds = b.CookSeconds
 	x.xxx_hidden_Tags = b.Tags
 	if b.EnergyKcalPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 15)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 16)
 		x.xxx_hidden_EnergyKcalPerServing = *b.EnergyKcalPerServing
 	}
 	if b.ProteinGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 15)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 16)
 		x.xxx_hidden_ProteinGramsPerServing = *b.ProteinGramsPerServing
 	}
 	if b.CarbohydrateGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 15)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 16)
 		x.xxx_hidden_CarbohydrateGramsPerServing = *b.CarbohydrateGramsPerServing
 	}
 	x.xxx_hidden_GramsPerServing = b.GramsPerServing
@@ -1705,9 +1816,10 @@ func (b0 RecipeSummary_builder) Build() *RecipeSummary {
 	x.xxx_hidden_UpdateTime = b.UpdateTime
 	x.xxx_hidden_Favorite = b.Favorite
 	if b.CostCentsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 15)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 16)
 		x.xxx_hidden_CostCentsPerServing = *b.CostCentsPerServing
 	}
+	x.xxx_hidden_Draft = b.Draft
 	return m0
 }
 
@@ -3187,7 +3299,7 @@ var File_recipes_v1_recipes_proto protoreflect.FileDescriptor
 const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\n" +
 	"\x18recipes/v1/recipes.proto\x12\n" +
-	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\x81\a\n" +
+	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xef\a\n" +
 	"\x06Recipe\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -3215,7 +3327,11 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x0fprep_ahead_days\x18\x13 \x01(\x05R\rprepAheadDays\x12&\n" +
 	"\x0fprep_ahead_note\x18\x14 \x01(\tR\rprepAheadNote\x124\n" +
 	"\finstructions\x18\x15 \x03(\v2\x10.recipes.v1.StepR\finstructions\x122\n" +
-	"\x04cost\x18\x16 \x01(\v2\x16.recipes.v1.RecipeCostB\x06\xaa\x9f\x19\x02\b\x01R\x04costB\x0e\n" +
+	"\x04cost\x18\x16 \x01(\v2\x16.recipes.v1.RecipeCostB\x06\xaa\x9f\x19\x02\b\x01R\x04cost\x12!\n" +
+	"\fyield_amount\x18\x17 \x01(\x01R\vyieldAmount\x123\n" +
+	"\n" +
+	"yield_unit\x18\x18 \x01(\x0e2\x14.foods.v1.AmountUnitR\tyieldUnit\x12\x14\n" +
+	"\x05draft\x18\x19 \x01(\bR\x05draftB\x0e\n" +
 	"\f_fridge_daysB\x0f\n" +
 	"\r_freezer_days\"\x89\x01\n" +
 	"\n" +
@@ -3237,7 +3353,7 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x14start_offset_seconds\x18\b \x01(\x05R\x12startOffsetSeconds\x121\n" +
 	"\x12end_before_seconds\x18\n" +
 	" \x01(\x05H\x00R\x10endBeforeSeconds\x88\x01\x01B\x15\n" +
-	"\x13_end_before_seconds\"\xe1\x03\n" +
+	"\x13_end_before_seconds\"\x98\x04\n" +
 	"\n" +
 	"Ingredient\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12#\n" +
@@ -3253,7 +3369,8 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\ffood_measure\x18\n" +
 	" \x01(\x0e2\x11.foods.v1.MeasureB\x06\xaa\x9f\x19\x02\b\x01R\vfoodMeasure\x12A\n" +
 	"\x19food_grams_per_milliliter\x18\v \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x16foodGramsPerMilliliter\x127\n" +
-	"\x14food_grams_per_piece\x18\f \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x11foodGramsPerPiece\"\xbd\x02\n" +
+	"\x14food_grams_per_piece\x18\f \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x11foodGramsPerPiece\x125\n" +
+	"\x12component_servings\x18\r \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x11componentServings\"\xbd\x02\n" +
 	"\x0fRecipeNutrition\x12\x1f\n" +
 	"\vtotal_grams\x18\x01 \x01(\x01R\n" +
 	"totalGrams\x12*\n" +
@@ -3262,13 +3379,14 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"perServing\x12?\n" +
 	"\x11per_hundred_grams\x18\x04 \x01(\v2\x13.foods.v1.NutrientsR\x0fperHundredGrams\x121\n" +
 	"\x14incomplete_nutrients\x18\x05 \x03(\tR\x13incompleteNutrients\x123\n" +
-	"\x06issues\x18\x06 \x03(\v2\x1b.recipes.v1.IngredientIssueR\x06issues\"\xc6\x01\n" +
+	"\x06issues\x18\x06 \x03(\v2\x1b.recipes.v1.IngredientIssueR\x06issues\"\xe4\x01\n" +
 	"\x0fIngredientIssue\x12)\n" +
 	"\x10ingredient_index\x18\x01 \x01(\x05R\x0fingredientIndex\x12\x17\n" +
 	"\afood_id\x18\x02 \x01(\tR\x06foodId\x12\x1b\n" +
 	"\tfood_name\x18\x03 \x01(\tR\bfoodName\x12%\n" +
 	"\x0eunknown_weight\x18\x04 \x01(\bR\runknownWeight\x12+\n" +
-	"\x11unknown_nutrients\x18\x05 \x03(\tR\x10unknownNutrients\"\xff\x05\n" +
+	"\x11unknown_nutrients\x18\x05 \x03(\tR\x10unknownNutrients\x12\x1c\n" +
+	"\tunmatched\x18\x06 \x01(\bR\tunmatched\"\x95\x06\n" +
 	"\rRecipeSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -3287,7 +3405,8 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\vupdate_time\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"updateTime\x12\x1a\n" +
 	"\bfavorite\x18\x0e \x01(\bR\bfavorite\x128\n" +
-	"\x16cost_cents_per_serving\x18\x10 \x01(\x05H\x03R\x13costCentsPerServing\x88\x01\x01B\x1a\n" +
+	"\x16cost_cents_per_serving\x18\x10 \x01(\x05H\x03R\x13costCentsPerServing\x88\x01\x01\x12\x14\n" +
+	"\x05draft\x18\x11 \x01(\bR\x05draftB\x1a\n" +
 	"\x18_energy_kcal_per_servingB\x1c\n" +
 	"\x1a_protein_grams_per_servingB!\n" +
 	"\x1f_carbohydrate_grams_per_servingB\x19\n" +
@@ -3408,45 +3527,46 @@ var file_recipes_v1_recipes_proto_depIdxs = []int32{
 	25, // 3: recipes.v1.Recipe.update_time:type_name -> google.protobuf.Timestamp
 	2,  // 4: recipes.v1.Recipe.instructions:type_name -> recipes.v1.Step
 	1,  // 5: recipes.v1.Recipe.cost:type_name -> recipes.v1.RecipeCost
-	26, // 6: recipes.v1.Ingredient.unit:type_name -> foods.v1.AmountUnit
-	27, // 7: recipes.v1.Ingredient.food_measure:type_name -> foods.v1.Measure
-	28, // 8: recipes.v1.RecipeNutrition.per_serving:type_name -> foods.v1.Nutrients
-	28, // 9: recipes.v1.RecipeNutrition.per_hundred_grams:type_name -> foods.v1.Nutrients
-	5,  // 10: recipes.v1.RecipeNutrition.issues:type_name -> recipes.v1.IngredientIssue
-	25, // 11: recipes.v1.RecipeSummary.update_time:type_name -> google.protobuf.Timestamp
-	0,  // 12: recipes.v1.CreateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
-	0,  // 13: recipes.v1.CreateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	0,  // 14: recipes.v1.GetRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	6,  // 15: recipes.v1.ListRecipesResponse.recipes:type_name -> recipes.v1.RecipeSummary
-	0,  // 16: recipes.v1.UpdateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
-	29, // 17: recipes.v1.UpdateRecipeRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 18: recipes.v1.UpdateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	17, // 19: recipes.v1.GetRecipeTimelineResponse.steps:type_name -> recipes.v1.TimedStep
-	13, // 20: recipes.v1.UpdateRecipesRequest.requests:type_name -> recipes.v1.UpdateRecipeRequest
-	20, // 21: recipes.v1.UpdateRecipesResponse.results:type_name -> recipes.v1.UpdateRecipeResult
-	0,  // 22: recipes.v1.UpdateRecipeResult.recipe:type_name -> recipes.v1.Recipe
-	6,  // 23: recipes.v1.ReplaceFoodResponse.recipes:type_name -> recipes.v1.RecipeSummary
-	15, // 24: recipes.v1.RecipeService.GetRecipeTimeline:input_type -> recipes.v1.GetRecipeTimelineRequest
-	7,  // 25: recipes.v1.RecipeService.CreateRecipe:input_type -> recipes.v1.CreateRecipeRequest
-	9,  // 26: recipes.v1.RecipeService.GetRecipe:input_type -> recipes.v1.GetRecipeRequest
-	11, // 27: recipes.v1.RecipeService.ListRecipes:input_type -> recipes.v1.ListRecipesRequest
-	13, // 28: recipes.v1.RecipeService.UpdateRecipe:input_type -> recipes.v1.UpdateRecipeRequest
-	18, // 29: recipes.v1.RecipeService.UpdateRecipes:input_type -> recipes.v1.UpdateRecipesRequest
-	21, // 30: recipes.v1.RecipeService.ReplaceFood:input_type -> recipes.v1.ReplaceFoodRequest
-	23, // 31: recipes.v1.RecipeService.DeleteRecipe:input_type -> recipes.v1.DeleteRecipeRequest
-	16, // 32: recipes.v1.RecipeService.GetRecipeTimeline:output_type -> recipes.v1.GetRecipeTimelineResponse
-	8,  // 33: recipes.v1.RecipeService.CreateRecipe:output_type -> recipes.v1.CreateRecipeResponse
-	10, // 34: recipes.v1.RecipeService.GetRecipe:output_type -> recipes.v1.GetRecipeResponse
-	12, // 35: recipes.v1.RecipeService.ListRecipes:output_type -> recipes.v1.ListRecipesResponse
-	14, // 36: recipes.v1.RecipeService.UpdateRecipe:output_type -> recipes.v1.UpdateRecipeResponse
-	19, // 37: recipes.v1.RecipeService.UpdateRecipes:output_type -> recipes.v1.UpdateRecipesResponse
-	22, // 38: recipes.v1.RecipeService.ReplaceFood:output_type -> recipes.v1.ReplaceFoodResponse
-	24, // 39: recipes.v1.RecipeService.DeleteRecipe:output_type -> recipes.v1.DeleteRecipeResponse
-	32, // [32:40] is the sub-list for method output_type
-	24, // [24:32] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	26, // 6: recipes.v1.Recipe.yield_unit:type_name -> foods.v1.AmountUnit
+	26, // 7: recipes.v1.Ingredient.unit:type_name -> foods.v1.AmountUnit
+	27, // 8: recipes.v1.Ingredient.food_measure:type_name -> foods.v1.Measure
+	28, // 9: recipes.v1.RecipeNutrition.per_serving:type_name -> foods.v1.Nutrients
+	28, // 10: recipes.v1.RecipeNutrition.per_hundred_grams:type_name -> foods.v1.Nutrients
+	5,  // 11: recipes.v1.RecipeNutrition.issues:type_name -> recipes.v1.IngredientIssue
+	25, // 12: recipes.v1.RecipeSummary.update_time:type_name -> google.protobuf.Timestamp
+	0,  // 13: recipes.v1.CreateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
+	0,  // 14: recipes.v1.CreateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	0,  // 15: recipes.v1.GetRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	6,  // 16: recipes.v1.ListRecipesResponse.recipes:type_name -> recipes.v1.RecipeSummary
+	0,  // 17: recipes.v1.UpdateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
+	29, // 18: recipes.v1.UpdateRecipeRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 19: recipes.v1.UpdateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	17, // 20: recipes.v1.GetRecipeTimelineResponse.steps:type_name -> recipes.v1.TimedStep
+	13, // 21: recipes.v1.UpdateRecipesRequest.requests:type_name -> recipes.v1.UpdateRecipeRequest
+	20, // 22: recipes.v1.UpdateRecipesResponse.results:type_name -> recipes.v1.UpdateRecipeResult
+	0,  // 23: recipes.v1.UpdateRecipeResult.recipe:type_name -> recipes.v1.Recipe
+	6,  // 24: recipes.v1.ReplaceFoodResponse.recipes:type_name -> recipes.v1.RecipeSummary
+	15, // 25: recipes.v1.RecipeService.GetRecipeTimeline:input_type -> recipes.v1.GetRecipeTimelineRequest
+	7,  // 26: recipes.v1.RecipeService.CreateRecipe:input_type -> recipes.v1.CreateRecipeRequest
+	9,  // 27: recipes.v1.RecipeService.GetRecipe:input_type -> recipes.v1.GetRecipeRequest
+	11, // 28: recipes.v1.RecipeService.ListRecipes:input_type -> recipes.v1.ListRecipesRequest
+	13, // 29: recipes.v1.RecipeService.UpdateRecipe:input_type -> recipes.v1.UpdateRecipeRequest
+	18, // 30: recipes.v1.RecipeService.UpdateRecipes:input_type -> recipes.v1.UpdateRecipesRequest
+	21, // 31: recipes.v1.RecipeService.ReplaceFood:input_type -> recipes.v1.ReplaceFoodRequest
+	23, // 32: recipes.v1.RecipeService.DeleteRecipe:input_type -> recipes.v1.DeleteRecipeRequest
+	16, // 33: recipes.v1.RecipeService.GetRecipeTimeline:output_type -> recipes.v1.GetRecipeTimelineResponse
+	8,  // 34: recipes.v1.RecipeService.CreateRecipe:output_type -> recipes.v1.CreateRecipeResponse
+	10, // 35: recipes.v1.RecipeService.GetRecipe:output_type -> recipes.v1.GetRecipeResponse
+	12, // 36: recipes.v1.RecipeService.ListRecipes:output_type -> recipes.v1.ListRecipesResponse
+	14, // 37: recipes.v1.RecipeService.UpdateRecipe:output_type -> recipes.v1.UpdateRecipeResponse
+	19, // 38: recipes.v1.RecipeService.UpdateRecipes:output_type -> recipes.v1.UpdateRecipesResponse
+	22, // 39: recipes.v1.RecipeService.ReplaceFood:output_type -> recipes.v1.ReplaceFoodResponse
+	24, // 40: recipes.v1.RecipeService.DeleteRecipe:output_type -> recipes.v1.DeleteRecipeResponse
+	33, // [33:41] is the sub-list for method output_type
+	25, // [25:33] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_recipes_v1_recipes_proto_init() }

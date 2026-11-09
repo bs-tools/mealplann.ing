@@ -93,7 +93,8 @@ func TestRecipeComponents(t *testing.T) {
 	_, err = create(recipesv1.Recipe_builder{Name: "Burrito plate", Servings: 2, Ingredients: []*recipesv1.Ingredient{componentIngredient(burrito.GetId(), 1)}}.Build())
 	wantCode(t, err, connect.CodeInvalidArgument)
 	_, err = create(recipesv1.Recipe_builder{Name: "Bad", Servings: 2, Ingredients: []*recipesv1.Ingredient{
-		recipesv1.Ingredient_builder{RecipeId: chili.GetId(), Amount: 1, Unit: grams}.Build(),
+		// The chili doesn't say how many pieces it makes.
+		recipesv1.Ingredient_builder{RecipeId: chili.GetId(), Amount: 1, Unit: pieces}.Build(),
 	}}.Build())
 	wantCode(t, err, connect.CodeInvalidArgument)
 	_, err = e.otherRecipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
