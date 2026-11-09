@@ -165,13 +165,106 @@ const formatPieces = (pieces: number): string => {
   return text === "" ? "¼" : text;
 };
 
+// KitchenUnit is how an amount in a kitchen unit is shown.
+interface KitchenUnit {
+  // Singular and plural are its name, like "tbsp" or "cup" and "cups".
+  singular: string;
+  plural: string;
+  // Fractions are those it's measured to, none to show decimals.
+  fractions?: [number, string][];
+  // Milliliters and grams are how much one of it is, of one of them.
+  milliliters?: number;
+  grams?: number;
+}
+
+// KITCHEN_UNITS are the kitchen units amounts can be entered in.
+const KITCHEN_UNITS = new Map<AmountUnit, KitchenUnit>([
+  [
+    AmountUnit.TEASPOONS,
+    {
+      fractions: SPOON_FRACTIONS,
+      milliliters: MILLILITERS_PER_TEASPOON,
+      plural: "tsp",
+      singular: "tsp",
+    },
+  ],
+  [
+    AmountUnit.TABLESPOONS,
+    {
+      fractions: SPOON_FRACTIONS,
+      milliliters: MILLILITERS_PER_TABLESPOON,
+      plural: "tbsp",
+      singular: "tbsp",
+    },
+  ],
+  [
+    AmountUnit.CUPS,
+    {
+      fractions: CUP_FRACTIONS,
+      milliliters: MILLILITERS_PER_CUP,
+      plural: "cups",
+      singular: "cup",
+    },
+  ],
+  [AmountUnit.LITERS, { milliliters: 1000, plural: "L", singular: "L" }],
+  [AmountUnit.KILOGRAMS, { grams: 1000, plural: "kg", singular: "kg" }],
+  [
+    AmountUnit.OUNCES,
+    {
+      fractions: SPOON_FRACTIONS,
+      grams: GRAMS_PER_OUNCE,
+      plural: "oz",
+      singular: "oz",
+    },
+  ],
+  [
+    AmountUnit.POUNDS,
+    {
+      fractions: SPOON_FRACTIONS,
+      grams: GRAMS_PER_OUNCE * OUNCES_PER_POUND,
+      plural: "lb",
+      singular: "lb",
+    },
+  ],
+]);
+
+// IsVolumeUnit reports whether a unit is a volume, weighed with a density.
+export const isVolumeUnit = (unit: AmountUnit): boolean =>
+  unit === AmountUnit.MILLILITERS ||
+  KITCHEN_UNITS.get(unit)?.milliliters !== undefined;
+
+/**
+ * FormatKitchenAmount formats an amount in a kitchen unit as entered, e.g.
+ * "1 ½ tbsp" or "2 cups", or undefined if the unit isn't one.
+ */
+const formatKitchenAmount = (
+  amount: number,
+  unit: AmountUnit
+): string | undefined => {
+  const kitchen = KITCHEN_UNITS.get(unit);
+  if (kitchen === undefined) {
+    return undefined;
+  }
+  let text =
+    kitchen.fractions === undefined
+      ? round(amount)
+      : formatFraction(amount, kitchen.fractions);
+  if (text === "") {
+    // Less than the smallest fraction, like a pinch of a teaspoon.
+    text = kitchen.fractions?.[1]?.[1] ?? round(amount);
+    return `< ${text} ${kitchen.singular}`;
+  }
+  return `${text} ${amount > 1.125 ? kitchen.plural : kitchen.singular}`;
+};
+
 /**
  * FormatMeasure formats an amount of a food as people read it: in the
  * food's measure (by weight, volume or pieces), converted with its density
  * or piece weight, in the user's unit system. An automatic measure shows
  * small amounts by volume, like a teaspoon of cumin or a tablespoon of oil,
  * and the rest as entered. An amount that can't be converted shows as
- * entered.
+ * entered. An amount in a kitchen unit, like tablespoons, shows as entered,
+ * as the recipe wrote it.
  */
 export const formatMeasure = (
   amount: number,
@@ -179,6 +272,10 @@ export const formatMeasure = (
   system: UnitSystem,
   food: FoodMeasures = UNKNOWN_FOOD
 ): string => {
+  const kitchen = formatKitchenAmount(amount, unit);
+  if (kitchen !== undefined) {
+    return kitchen;
+  }
   let grams: number | undefined;
   let milliliters: number | undefined;
   let pieces: number | undefined;

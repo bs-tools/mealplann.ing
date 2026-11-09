@@ -128,3 +128,51 @@ export const parseOptionalNumber = (
 // OptionalNumberInput formats a number that may be unknown for an input.
 export const optionalNumberInput = (value: number | undefined): string =>
   value === undefined ? "" : String(value);
+
+// VULGAR_FRACTIONS are the fraction characters recipes write, by value.
+const VULGAR_FRACTIONS: Record<string, number> = {
+  "¼": 1 / 4,
+  "½": 1 / 2,
+  "¾": 3 / 4,
+  "⅓": 1 / 3,
+  "⅔": 2 / 3,
+  "⅛": 1 / 8,
+};
+
+/**
+ * ParseQuantity parses an amount as recipes write it: a decimal number,
+ * or a fraction, like "1/2", "1 1/2", "½" or "1½". Like
+ * parseOptionalNumber, empty input is undefined and invalid input null.
+ */
+export const parseQuantity = (text: string): number | undefined | null => {
+  let trimmed = text.trim();
+  for (const [fraction, value] of Object.entries(VULGAR_FRACTIONS)) {
+    trimmed = trimmed.replace(fraction, ` ${value}`);
+  }
+  const parts = trimmed.split(/\s+/u).filter((part) => part !== "");
+  if (parts.length === 0) {
+    return undefined;
+  }
+  let total = 0;
+  for (const part of parts) {
+    const [numerator, denominator, ...rest] = part.split("/");
+    if (rest.length > 0) {
+      return null;
+    }
+    const value =
+      denominator === undefined
+        ? parseOptionalNumber(numerator ?? "")
+        : (parseOptionalNumber(numerator ?? "") ?? Number.NaN) /
+          (parseOptionalNumber(denominator) ?? Number.NaN);
+    if (
+      value === null ||
+      value === undefined ||
+      !Number.isFinite(value) ||
+      value < 0
+    ) {
+      return null;
+    }
+    total += value;
+  }
+  return total;
+};

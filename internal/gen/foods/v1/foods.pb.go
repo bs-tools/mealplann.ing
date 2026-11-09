@@ -290,28 +290,60 @@ type AmountUnit int32
 
 const (
 	AmountUnit_AMOUNT_UNIT_UNSPECIFIED AmountUnit = 0
-	// Grams. Prefer grams where the recipe gives them.
+	// Grams. Use the unit the recipe gives, like grams or tablespoons.
 	AmountUnit_AMOUNT_UNIT_GRAMS AmountUnit = 1
-	// Milliliters, for liquids, e.g. 250 ml of soy milk. 1 tablespoon is 15
-	// ml, 1 teaspoon 5 ml and 1 US cup 240 ml.
+	// Milliliters, for liquids, e.g. 250 ml of soy milk.
 	AmountUnit_AMOUNT_UNIT_MILLILITERS AmountUnit = 2
 	// Pieces, e.g. 2 onions or 3 cloves of garlic.
 	AmountUnit_AMOUNT_UNIT_PIECES AmountUnit = 3
+	// The kitchen units below are converted to milliliters or grams, and a
+	// recipe's ingredients keep the one they're entered in, to show them as
+	// written, like 1 tablespoon of oil rather than 15 ml. Elsewhere they're
+	// returned converted.
+	//
+	// Teaspoons, of 5 ml.
+	AmountUnit_AMOUNT_UNIT_TEASPOONS AmountUnit = 4
+	// Tablespoons, of 15 ml.
+	AmountUnit_AMOUNT_UNIT_TABLESPOONS AmountUnit = 5
+	// US cups, of 240 ml.
+	AmountUnit_AMOUNT_UNIT_CUPS AmountUnit = 6
+	// Liters, of 1000 ml.
+	AmountUnit_AMOUNT_UNIT_LITERS AmountUnit = 7
+	// Kilograms, of 1000 g.
+	AmountUnit_AMOUNT_UNIT_KILOGRAMS AmountUnit = 8
+	// Ounces by weight, of 28.35 g.
+	AmountUnit_AMOUNT_UNIT_OUNCES AmountUnit = 9
+	// Pounds, of 453.6 g.
+	AmountUnit_AMOUNT_UNIT_POUNDS AmountUnit = 10
 )
 
 // Enum value maps for AmountUnit.
 var (
 	AmountUnit_name = map[int32]string{
-		0: "AMOUNT_UNIT_UNSPECIFIED",
-		1: "AMOUNT_UNIT_GRAMS",
-		2: "AMOUNT_UNIT_MILLILITERS",
-		3: "AMOUNT_UNIT_PIECES",
+		0:  "AMOUNT_UNIT_UNSPECIFIED",
+		1:  "AMOUNT_UNIT_GRAMS",
+		2:  "AMOUNT_UNIT_MILLILITERS",
+		3:  "AMOUNT_UNIT_PIECES",
+		4:  "AMOUNT_UNIT_TEASPOONS",
+		5:  "AMOUNT_UNIT_TABLESPOONS",
+		6:  "AMOUNT_UNIT_CUPS",
+		7:  "AMOUNT_UNIT_LITERS",
+		8:  "AMOUNT_UNIT_KILOGRAMS",
+		9:  "AMOUNT_UNIT_OUNCES",
+		10: "AMOUNT_UNIT_POUNDS",
 	}
 	AmountUnit_value = map[string]int32{
 		"AMOUNT_UNIT_UNSPECIFIED": 0,
 		"AMOUNT_UNIT_GRAMS":       1,
 		"AMOUNT_UNIT_MILLILITERS": 2,
 		"AMOUNT_UNIT_PIECES":      3,
+		"AMOUNT_UNIT_TEASPOONS":   4,
+		"AMOUNT_UNIT_TABLESPOONS": 5,
+		"AMOUNT_UNIT_CUPS":        6,
+		"AMOUNT_UNIT_LITERS":      7,
+		"AMOUNT_UNIT_KILOGRAMS":   8,
+		"AMOUNT_UNIT_OUNCES":      9,
+		"AMOUNT_UNIT_POUNDS":      10,
 	}
 )
 
@@ -3490,13 +3522,21 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x14STORE_SECTION_DRINKS\x10\b\x12\x1b\n" +
 	"\x17STORE_SECTION_HOUSEHOLD\x10\t\x12\x17\n" +
 	"\x13STORE_SECTION_OTHER\x10\n" +
-	"*u\n" +
+	"*\xa6\x02\n" +
 	"\n" +
 	"AmountUnit\x12\x1b\n" +
 	"\x17AMOUNT_UNIT_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11AMOUNT_UNIT_GRAMS\x10\x01\x12\x1b\n" +
 	"\x17AMOUNT_UNIT_MILLILITERS\x10\x02\x12\x16\n" +
-	"\x12AMOUNT_UNIT_PIECES\x10\x03*w\n" +
+	"\x12AMOUNT_UNIT_PIECES\x10\x03\x12\x19\n" +
+	"\x15AMOUNT_UNIT_TEASPOONS\x10\x04\x12\x1b\n" +
+	"\x17AMOUNT_UNIT_TABLESPOONS\x10\x05\x12\x14\n" +
+	"\x10AMOUNT_UNIT_CUPS\x10\x06\x12\x16\n" +
+	"\x12AMOUNT_UNIT_LITERS\x10\a\x12\x19\n" +
+	"\x15AMOUNT_UNIT_KILOGRAMS\x10\b\x12\x16\n" +
+	"\x12AMOUNT_UNIT_OUNCES\x10\t\x12\x16\n" +
+	"\x12AMOUNT_UNIT_POUNDS\x10\n" +
+	"*w\n" +
 	"\aMeasure\x12\x17\n" +
 	"\x13MEASURE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eMEASURE_WEIGHT\x10\x01\x12\x12\n" +

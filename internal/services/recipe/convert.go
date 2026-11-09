@@ -8,6 +8,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/bs-tools/mealplann.ing/internal/services/amounts"
+
 	"connectrpc.com/connect/v2"
 	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
 	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
@@ -59,18 +61,6 @@ const (
 // is enough for micrograms.
 const nutritionDigits = 3
 
-var unitsToProto = map[nutrition.Unit]foodsv1.AmountUnit{
-	nutrition.Grams:       foodsv1.AmountUnit_AMOUNT_UNIT_GRAMS,
-	nutrition.Milliliters: foodsv1.AmountUnit_AMOUNT_UNIT_MILLILITERS,
-	nutrition.Pieces:      foodsv1.AmountUnit_AMOUNT_UNIT_PIECES,
-}
-
-var unitsFromProto = map[foodsv1.AmountUnit]nutrition.Unit{
-	foodsv1.AmountUnit_AMOUNT_UNIT_GRAMS:       nutrition.Grams,
-	foodsv1.AmountUnit_AMOUNT_UNIT_MILLILITERS: nutrition.Milliliters,
-	foodsv1.AmountUnit_AMOUNT_UNIT_PIECES:      nutrition.Pieces,
-}
-
 func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 	ingredients := make([]*recipesv1.Ingredient, 0, len(r.Ingredients))
 	for _, in := range r.Ingredients {
@@ -86,7 +76,7 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 		} else {
 			b.FoodId = store.UUIDToString(in.FoodID)
 			b.FoodName = in.FoodName
-			b.Unit = unitsToProto[in.Unit]
+			b.Amount, b.Unit = amounts.ToProto(in.Amount, in.Unit, in.KitchenUnit)
 			b.FoodMeasure = food.MeasuresToProto[in.FoodMeasure]
 			b.FoodGramsPerMilliliter = in.Food.GramsPerMilliliter
 			b.FoodGramsPerPiece = in.Food.GramsPerPiece
@@ -102,7 +92,7 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 		CookSeconds:   r.CookSeconds,
 		Ingredients:   ingredients,
 		Steps:         recipes.StepTexts(r.Instructions),
-		Instructions:  instructionsToProto(r.Instructions),
+		Instructions:  instructionsToProto(r.Instructions, r.Ingredients),
 		Cost:          costToProto(r),
 		Tags:          r.Tags,
 		SourceUrl:     r.SourceURL,
@@ -297,6 +287,7 @@ func ingredientsFromProto(list []*recipesv1.Ingredient) ([]*recipes.Ingredient, 
 		field := fmt.Sprintf("ingredients[%d]", i)
 		var foodID, componentID pgtype.UUID
 		var unit nutrition.Unit
+		var kitchen nutrition.KitchenUnit
 		var err error
 		switch {
 		case p.GetRecipeId() != "" && p.GetFoodId() != "":
@@ -319,15 +310,17 @@ func ingredientsFromProto(list []*recipesv1.Ingredient) ([]*recipes.Ingredient, 
 					"%s.food_id is invalid: %v; find the household's foods with ListFoods, or set recipe_id for a component", field, err).WithCause(err)
 			}
 			var ok bool
-			unit, ok = unitsFromProto[p.GetUnit()]
-			if !ok {
+			if _, unit, kitchen, ok = amounts.FromProto(0, p.GetUnit()); !ok {
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
-					"%s.unit is required: AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES", field)
+					"%s.unit is required: %s", field, amounts.UnitsHelp)
 			}
 		}
 		amount := p.GetAmount()
 		if math.IsNaN(amount) || amount <= 0 || amount > maxAmount {
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.amount must be more than 0 and at most %d", field, maxAmount)
+		}
+		if kitchen != nutrition.NoKitchenUnit {
+			amount, _, _, _ = amounts.FromProto(amount, p.GetUnit())
 		}
 		note := strings.TrimSpace(p.GetNote())
 		if utf8.RuneCountInString(note) > maxNoteLength {
@@ -342,6 +335,7 @@ func ingredientsFromProto(list []*recipesv1.Ingredient) ([]*recipes.Ingredient, 
 			ComponentRecipeID: componentID,
 			Amount:            amount,
 			Unit:              unit,
+			KitchenUnit:       kitchen,
 			Note:              note,
 			OriginalText:      original,
 			Optional:          p.GetOptional(),
@@ -350,8 +344,9 @@ func ingredientsFromProto(list []*recipesv1.Ingredient) ([]*recipes.Ingredient, 
 	return ingredients, nil
 }
 
-// instructionsToProto converts instructions, nil for none.
-func instructionsToProto(steps []*recipes.Step) []*recipesv1.Step {
+// instructionsToProto converts instructions, nil for none, with the
+// amounts of ingredients in the units they were entered in.
+func instructionsToProto(steps []*recipes.Step, ingredients []*recipes.Ingredient) []*recipesv1.Step {
 	if steps == nil {
 		return nil
 	}
@@ -364,8 +359,13 @@ func instructionsToProto(steps []*recipes.Step) []*recipesv1.Step {
 			Waiting:            s.Waiting,
 			FromStart:          s.FromStart,
 			StartOffsetSeconds: s.StartOffsetSeconds,
-			IngredientAmounts:  s.Amounts,
 			EndBeforeSeconds:   s.EndBeforeSeconds,
+		}
+		for k, a := range s.Amounts {
+			if k < len(s.Ingredients) && s.Ingredients[k] < len(ingredients) {
+				a /= kitchenSize(ingredients[s.Ingredients[k]])
+			}
+			b.IngredientAmounts = append(b.IngredientAmounts, a)
 		}
 		for _, i := range s.Ingredients {
 			b.IngredientIndexes = append(b.IngredientIndexes, int32(i))
@@ -446,6 +446,8 @@ func instructionsFromProto(list []*recipesv1.Step, ingredients []*recipes.Ingred
 					return nil, connect.Errorf(connect.CodeInvalidArgument,
 						"%s.ingredient_amounts[%d] must be at least 0, with 0 for all of it or the rest", field, k)
 				}
+				// It's in the unit the ingredient's amount was given in.
+				amount *= kitchenSize(ingredients[in])
 			}
 			// An ingredient given twice uses both amounts.
 			if j := slices.Index(s.Ingredients, int(in)); j >= 0 {
@@ -456,9 +458,10 @@ func instructionsFromProto(list []*recipesv1.Step, ingredients []*recipes.Ingred
 			}
 			used[in] += amount
 			if have := ingredients[in].Amount; used[in] > have*(1+1e-9) {
+				size := kitchenSize(ingredients[in])
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
 					"the steps use %v of %s, but the recipe has %v: lower their ingredient_amounts, or raise the ingredient's amount",
-					used[in], ingredients[in].Name(), have)
+					used[in]/size, ingredients[in].Name(), have/size)
 			}
 		}
 		if slices.ContainsFunc(amounts, func(a float64) bool { return a > 0 }) {
@@ -511,4 +514,13 @@ func sourceURLFromProto(s string) (string, error) {
 			"source_url must be an http or https URL of at most %d characters, or empty", maxSourceURLLength)
 	}
 	return s, nil
+}
+
+// kitchenSize returns how many of its base unit one of the kitchen unit an
+// ingredient was entered in is, like 15 for tablespoons, or 1.
+func kitchenSize(in *recipes.Ingredient) float64 {
+	if _, size := in.KitchenUnit.Base(); size > 0 {
+		return size
+	}
+	return 1
 }

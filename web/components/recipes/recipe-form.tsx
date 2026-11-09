@@ -35,6 +35,7 @@ import {
   hoursMinutesInput,
   parseDuration,
   parseOptionalNumber,
+  parseQuantity,
 } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
@@ -229,7 +230,7 @@ const stepsToSave = (
   return kept.map((step, index) => {
     const used = step.ingredientKeys.filter((key) => positions.has(key));
     const amounts = used.map(
-      (key) => parseOptionalNumber(step.amounts[key] ?? "") ?? 0
+      (key) => parseQuantity(step.amounts[key] ?? "") ?? 0
     );
     const after =
       typeof step.start === "string"
@@ -703,7 +704,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, allTags }) => {
     );
     const parsedIngredients = [];
     for (const [index, ingredient] of kept.entries()) {
-      const amount = parseOptionalNumber(ingredient.amount);
+      const amount = parseQuantity(ingredient.amount);
       if (ingredient.isRecipe) {
         if (ingredient.recipe === null) {
           setInvalid(`Choose the recipe of ingredient ${index + 1}.`);

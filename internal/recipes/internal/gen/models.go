@@ -858,6 +858,7 @@ type RecipeIngredient struct {
 	OriginalText      string
 	Optional          bool
 	ComponentRecipeID pgtype.UUID
+	KitchenUnit       *string
 }
 
 type ReferenceFood struct {

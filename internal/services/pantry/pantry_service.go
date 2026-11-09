@@ -14,6 +14,8 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/bs-tools/mealplann.ing/internal/services/amounts"
+
 	"connectrpc.com/connect/v2"
 	"github.com/bs-tools/mealplann.ing/internal/authn"
 	"github.com/bs-tools/mealplann.ing/internal/errreport"
@@ -218,13 +220,13 @@ func (s *Service) addToPantry(ctx context.Context, householdID pgtype.UUID, req 
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "packages must be more than 0 and at most %d", maxPackages)
 		}
 	default:
-		if math.IsNaN(amount) || amount <= 0 || amount > MaxGrams {
-			return nil, connect.Errorf(connect.CodeInvalidArgument, "amount must be more than 0 and at most %d", MaxGrams)
-		}
 		var ok bool
-		unit, ok = unitsFromProto[req.GetUnit()]
+		amount, unit, _, ok = amounts.FromProto(amount, req.GetUnit())
 		if !ok {
-			return nil, connect.NewError(connect.CodeInvalidArgument, "unit is required: AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES")
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "unit is required: %s", amounts.UnitsHelp)
+		}
+		if math.IsNaN(amount) || amount <= 0 || amount > MaxGrams {
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "amount must be more than 0 and at most %d g, ml or pieces", MaxGrams)
 		}
 	}
 	details, err := lotDetailsFromProto(req.GetStorage(), req.GetLocation(), req.GetLabel(), req.GetFrozenDate(), Today(s.nowFn()))
@@ -498,12 +500,6 @@ func sortByFoodName(items []*pantryv1.PantryItem) {
 		return strings.ToLower(it.GetFoodName()) + "\x00" + it.GetFoodId()
 	}
 	slices.SortStableFunc(items, func(a, b *pantryv1.PantryItem) int { return strings.Compare(key(a), key(b)) })
-}
-
-var unitsFromProto = map[foodsv1.AmountUnit]nutrition.Unit{
-	foodsv1.AmountUnit_AMOUNT_UNIT_GRAMS:       nutrition.Grams,
-	foodsv1.AmountUnit_AMOUNT_UNIT_MILLILITERS: nutrition.Milliliters,
-	foodsv1.AmountUnit_AMOUNT_UNIT_PIECES:      nutrition.Pieces,
 }
 
 // parseID parses a reference, naming field in errors, with how to find a

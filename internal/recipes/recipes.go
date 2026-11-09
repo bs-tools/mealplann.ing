@@ -102,7 +102,10 @@ type Ingredient struct {
 	// Amount is in Unit of a food, or in servings of a component.
 	Amount float64
 	// Unit is the unit of a food's amount, unused for a component.
-	Unit         nutrition.Unit
+	Unit nutrition.Unit
+	// KitchenUnit is the unit the amount was entered in, like tablespoons,
+	// to show it in, if not Unit. Amount is in Unit regardless.
+	KitchenUnit  nutrition.KitchenUnit
 	Note         string
 	OriginalText string
 	Optional     bool
@@ -737,6 +740,7 @@ func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredien
 		Notes:              make([]string, 0, len(ingredients)),
 		OriginalTexts:      make([]string, 0, len(ingredients)),
 		Optionals:          make([]bool, 0, len(ingredients)),
+		KitchenUnits:       make([]string, 0, len(ingredients)),
 	}
 	for _, in := range ingredients {
 		p.FoodIds = append(p.FoodIds, in.FoodID)
@@ -750,6 +754,7 @@ func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredien
 		p.Notes = append(p.Notes, in.Note)
 		p.OriginalTexts = append(p.OriginalTexts, in.OriginalText)
 		p.Optionals = append(p.Optionals, in.Optional)
+		p.KitchenUnits = append(p.KitchenUnits, string(in.KitchenUnit))
 	}
 	return p
 }
@@ -789,6 +794,18 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) 
 	return r
 }
 
+// kitchenUnitFromDB converts a stored kitchen unit, ignoring one the app
+// doesn't know, which a later release may have stored.
+func kitchenUnitFromDB(u *string) nutrition.KitchenUnit {
+	if u == nil {
+		return nutrition.NoKitchenUnit
+	}
+	if _, size := nutrition.KitchenUnit(*u).Base(); size == 0 {
+		return nutrition.NoKitchenUnit
+	}
+	return nutrition.KitchenUnit(*u)
+}
+
 func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 	in := &row.RecipeIngredient
 	unit := nutrition.Grams
@@ -804,6 +821,7 @@ func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 		OriginalText:          in.OriginalText,
 		Optional:              in.Optional,
 		FoodName:              row.FoodName,
+		KitchenUnit:           kitchenUnitFromDB(in.KitchenUnit),
 		FoodMeasure:           foods.MeasureFromDB(row.Measure),
 		PriceCentsPerKilogram: orZero(row.PriceCentsPerKilogram),
 		Food: nutrition.Food{

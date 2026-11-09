@@ -139,3 +139,46 @@ func (f *Food) Grams(amount float64, unit Unit) (float64, bool) {
 		return 0, false
 	}
 }
+
+// KitchenUnit is a unit people measure in, like a tablespoon or a pound,
+// that an amount can be entered in. Amounts are stored and computed in
+// their base unit, grams or milliliters, and the kitchen unit is kept only
+// to show them as entered, like "1 tbsp" rather than "15 ml".
+type KitchenUnit string
+
+// The kitchen units. Their names are stored in the database.
+const (
+	NoKitchenUnit KitchenUnit = ""
+	Teaspoons     KitchenUnit = "teaspoons"
+	Tablespoons   KitchenUnit = "tablespoons"
+	Cups          KitchenUnit = "cups"
+	Liters        KitchenUnit = "liters"
+	Kilograms     KitchenUnit = "kilograms"
+	Ounces        KitchenUnit = "ounces"
+	Pounds        KitchenUnit = "pounds"
+)
+
+// Base returns the unit an amount in a kitchen unit is stored in, and how
+// many of it one of the kitchen unit is. Spoons and cups are the API's
+// documented sizes: a teaspoon is 5 ml, a tablespoon 15 ml and a cup a US
+// cup's 240 ml. It returns 0 for no kitchen unit.
+func (u KitchenUnit) Base() (Unit, float64) {
+	switch u {
+	case Teaspoons:
+		return Milliliters, 5
+	case Tablespoons:
+		return Milliliters, 15
+	case Cups:
+		return Milliliters, 240
+	case Liters:
+		return Milliliters, 1000
+	case Kilograms:
+		return Grams, 1000
+	case Ounces:
+		return Grams, 28.349523125
+	case Pounds:
+		return Grams, 453.59237
+	default:
+		return 0, 0
+	}
+}
