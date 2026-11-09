@@ -254,9 +254,15 @@ concurrent edits make a cycle.
   two phones mark it at once. Changing or deleting a done cook doesn't change
   the pantry: un-mark it and mark it again to redo it. Ingredients that can't
   be weighed are left in.
-- Only cooks take from the pantry. Portions of foods and staples aren't
-  taken out, as they're eaten too irregularly to track; the pantry is
-  corrected by hand when it's off.
+- Marking a staple eaten on a date takes its food, or its recipe's
+  ingredients scaled to its servings, out the same way, recorded per date
+  so un-marking it puts them back. A staple not marked eaten stays in the
+  pantry, and a date marked eaten can't be skipped, nor is it bought for
+  again, as it's out of the pantry already. Only the week's dates marked
+  eaten are read, as a daily staple would otherwise list every day since
+  it started.
+- Portions of foods aren't taken out, as they're eaten too irregularly to
+  track; the pantry is corrected by hand when it's off.
 
 ## Shopping list
 

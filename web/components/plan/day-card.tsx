@@ -248,6 +248,11 @@ interface DayCardProps {
   onEdit: (slot: Slot, portion: PlannedPortion) => void;
   onDelete: (portion: PlannedPortion) => void;
   onSkip: (portion: PlannedPortion, date: string) => void;
+  onStapleEaten: (
+    portion: PlannedPortion,
+    date: string,
+    eaten: boolean
+  ) => void;
   // What each cook costs, in cents, by cook ID.
   costs: Map<string, number>;
   // The household's staples, to show those skipped on the day.
@@ -274,6 +279,7 @@ const DayCard: React.FC<DayCardProps> = ({
   onEdit,
   onDelete,
   onSkip,
+  onStapleEaten,
   staples,
   onUnskip,
   costs,
@@ -335,8 +341,8 @@ const DayCard: React.FC<DayCardProps> = ({
       )}
       {cooks.some((planned) => planned.cook?.done === false) && (
         <p className="text-xs text-gray-500 print:hidden">
-          Tick a cook once it&apos;s cooked: its ingredients come out of the
-          pantry, and go back if you untick it.
+          Tick a cook once it&apos;s cooked, and a staple once it&apos;s eaten:
+          its ingredients come out of the pantry, and go back if you untick it.
         </p>
       )}
     </div>
@@ -386,6 +392,9 @@ const DayCard: React.FC<DayCardProps> = ({
                       onDelete={onDelete}
                       onSkip={(portion) => {
                         onSkip(portion, day.date);
+                      }}
+                      onEaten={(portion, eaten) => {
+                        onStapleEaten(portion, day.date, eaten);
                       }}
                       skipped={staples.filter(
                         (staple) =>

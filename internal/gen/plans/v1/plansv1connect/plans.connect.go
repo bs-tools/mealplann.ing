@@ -59,6 +59,8 @@ const (
 	PlanServiceSkipStapleProcedure = "/plans.v1.PlanService/SkipStaple"
 	// PlanServiceUnskipStapleProcedure is the procedure name of the PlanService's UnskipStaple RPC.
 	PlanServiceUnskipStapleProcedure = "/plans.v1.PlanService/UnskipStaple"
+	// PlanServiceSetStapleEatenProcedure is the procedure name of the PlanService's SetStapleEaten RPC.
+	PlanServiceSetStapleEatenProcedure = "/plans.v1.PlanService/SetStapleEaten"
 	// PlanServiceListFrozenLeftoversProcedure is the procedure name of the PlanService's
 	// ListFrozenLeftovers RPC.
 	PlanServiceListFrozenLeftoversProcedure = "/plans.v1.PlanService/ListFrozenLeftovers"
@@ -187,6 +189,13 @@ var (
 			Procedure:  PlanServiceUnskipStapleProcedure,
 		}
 	})
+	planServiceSetStapleEatenSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("SetStapleEaten"),
+			Procedure:  PlanServiceSetStapleEatenProcedure,
+		}
+	})
 	planServiceListFrozenLeftoversSpec = sync.OnceValue(func() connect.Spec {
 		return connect.Spec{
 			StreamType: connect.StreamTypeUnary,
@@ -296,6 +305,15 @@ type PlanServiceClient interface {
 	SkipStaple(context.Context, *v1.SkipStapleRequest) (*v1.SkipStapleResponse, error)
 	// Stop skipping a staple on a date.
 	UnskipStaple(context.Context, *v1.UnskipStapleRequest) (*v1.UnskipStapleResponse, error)
+	// Mark a staple eaten on a date, taking its food, or its recipe's
+	// ingredients scaled to its servings without the optional ones, out of
+	// the pantry, from the lots that expire first, as far as they're in
+	// stock; or un-mark it, putting back what it took out. Marking a date
+	// that's already marked does nothing, and marking a skipped date stops
+	// skipping it. Staples aren't taken out of the pantry unless marked
+	// eaten, and shopping lists don't buy for the dates they're marked
+	// eaten on, as they're out of the pantry already.
+	SetStapleEaten(context.Context, *v1.SetStapleEatenRequest) (*v1.SetStapleEatenResponse, error)
 	// List what's in the freezer: the frozen leftovers of cooks (see
 	// Cook.frozen_servings) not all planned or taken yet, by the date they
 	// were cooked, each with the servings left and the last date they keep.
@@ -411,6 +429,15 @@ type PlanServiceHandler interface {
 	SkipStaple(context.Context, *v1.SkipStapleRequest) (*v1.SkipStapleResponse, error)
 	// Stop skipping a staple on a date.
 	UnskipStaple(context.Context, *v1.UnskipStapleRequest) (*v1.UnskipStapleResponse, error)
+	// Mark a staple eaten on a date, taking its food, or its recipe's
+	// ingredients scaled to its servings without the optional ones, out of
+	// the pantry, from the lots that expire first, as far as they're in
+	// stock; or un-mark it, putting back what it took out. Marking a date
+	// that's already marked does nothing, and marking a skipped date stops
+	// skipping it. Staples aren't taken out of the pantry unless marked
+	// eaten, and shopping lists don't buy for the dates they're marked
+	// eaten on, as they're out of the pantry already.
+	SetStapleEaten(context.Context, *v1.SetStapleEatenRequest) (*v1.SetStapleEatenResponse, error)
 	// List what's in the freezer: the frozen leftovers of cooks (see
 	// Cook.frozen_servings) not all planned or taken yet, by the date they
 	// were cooked, each with the servings left and the last date they keep.
@@ -448,6 +475,7 @@ func RegisterPlanServiceHandler(server *connect.Server, svc PlanServiceHandler) 
 		connect.Method{Spec: planServiceDeleteStapleSpec(), Handler: adapter.deleteStaple},
 		connect.Method{Spec: planServiceSkipStapleSpec(), Handler: adapter.skipStaple},
 		connect.Method{Spec: planServiceUnskipStapleSpec(), Handler: adapter.unskipStaple},
+		connect.Method{Spec: planServiceSetStapleEatenSpec(), Handler: adapter.setStapleEaten},
 		connect.Method{Spec: planServiceListFrozenLeftoversSpec(), Handler: adapter.listFrozenLeftovers},
 		connect.Method{Spec: planServiceTakeFromFreezerSpec(), Handler: adapter.takeFromFreezer},
 	)
@@ -522,6 +550,10 @@ func (UnimplementedPlanServiceHandler) SkipStaple(context.Context, *v1.SkipStapl
 
 func (UnimplementedPlanServiceHandler) UnskipStaple(context.Context, *v1.UnskipStapleRequest) (*v1.UnskipStapleResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.UnskipStaple is not implemented")
+}
+
+func (UnimplementedPlanServiceHandler) SetStapleEaten(context.Context, *v1.SetStapleEatenRequest) (*v1.SetStapleEatenResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.SetStapleEaten is not implemented")
 }
 
 func (UnimplementedPlanServiceHandler) ListFrozenLeftovers(context.Context, *v1.ListFrozenLeftoversRequest) (*v1.ListFrozenLeftoversResponse, error) {
@@ -667,6 +699,14 @@ func (c *planServiceClient) SkipStaple(ctx context.Context, req *v1.SkipStapleRe
 func (c *planServiceClient) UnskipStaple(ctx context.Context, req *v1.UnskipStapleRequest) (*v1.UnskipStapleResponse, error) {
 	var res v1.UnskipStapleResponse
 	if err := c.client.CallUnary(ctx, planServiceUnskipStapleSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) SetStapleEaten(ctx context.Context, req *v1.SetStapleEatenRequest) (*v1.SetStapleEatenResponse, error) {
+	var res v1.SetStapleEatenResponse
+	if err := c.client.CallUnary(ctx, planServiceSetStapleEatenSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -888,6 +928,18 @@ func (h planServiceHandler) unskipStaple(ctx context.Context, _ connect.Spec, st
 		return err
 	}
 	res, err := h.svc.UnskipStaple(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) setStapleEaten(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SetStapleEatenRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SetStapleEaten(ctx, &req)
 	if err != nil {
 		return err
 	}

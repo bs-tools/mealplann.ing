@@ -181,6 +181,20 @@ export const skipStaple = PlanService.method.skipStaple;
 export const unskipStaple = PlanService.method.unskipStaple;
 
 /**
+ * Mark a staple eaten on a date, taking its food, or its recipe's
+ * ingredients scaled to its servings without the optional ones, out of
+ * the pantry, from the lots that expire first, as far as they're in
+ * stock; or un-mark it, putting back what it took out. Marking a date
+ * that's already marked does nothing, and marking a skipped date stops
+ * skipping it. Staples aren't taken out of the pantry unless marked
+ * eaten, and shopping lists don't buy for the dates they're marked
+ * eaten on, as they're out of the pantry already.
+ *
+ * @generated from rpc plans.v1.PlanService.SetStapleEaten
+ */
+export const setStapleEaten = PlanService.method.setStapleEaten;
+
+/**
  * List what's in the freezer: the frozen leftovers of cooks (see
  * Cook.frozen_servings) not all planned or taken yet, by the date they
  * were cooked, each with the servings left and the last date they keep.

@@ -32,6 +32,7 @@ import {
   getPlanCost,
   getWeek,
   listStaples,
+  setStapleEaten,
   skipStaple,
   unskipStaple,
   updateCook,
@@ -39,6 +40,7 @@ import {
 import type {
   GetPlanCostResponse,
   PlannedPortion,
+  SetStapleEatenResponse,
   UpdateCookResponse,
 } from "gen/plans/v1/plans_pb";
 import { PlanService, Severity } from "gen/plans/v1/plans_pb";
@@ -62,11 +64,18 @@ import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
 /**
- * PantryChangeNote says what marking a cook done took out of the pantry, or
- * un-marking it put back, e.g. "Took 600 g of lentils and 150 g of onions
- * out of the pantry."
+ * PantryChangeNote says what marking a cook done or a staple eaten took out
+ * of the pantry, or un-marking it put back, e.g. "Cooked: took 600 g of
+ * lentils and 150 g of onions out of the pantry." Done is whether it was
+ * marked, doneLabel what that's called, like "Cooked", and noneNote what to
+ * say when none of it was in the pantry.
  */
-const pantryChangeNote = (response: UpdateCookResponse): string => {
+const pantryChangeNote = (
+  response: UpdateCookResponse | SetStapleEatenResponse,
+  done: boolean,
+  doneLabel: string,
+  noneNote: string
+): string => {
   const amounts = response.pantryChanges.map(
     (change) => `${formatGrams(change.grams)} of ${change.foodName}`
   );
@@ -75,12 +84,12 @@ const pantryChangeNote = (response: UpdateCookResponse): string => {
       ? ""
       : `Put ${formatList(amounts)} back into the pantry.`;
   }
-  if (response.cook?.done !== true) {
+  if (!done) {
     return "";
   }
   return amounts.length === 0
-    ? "Cooked. None of its ingredients were in the pantry."
-    : `Cooked: took ${formatList(amounts)} out of the pantry.`;
+    ? `${doneLabel}. ${noneNote}`
+    : `${doneLabel}: took ${formatList(amounts)} out of the pantry.`;
 };
 
 // MealPlanning is the shared meal being planned.
@@ -183,7 +192,27 @@ const PlanPage: React.FC = () => {
   const staples = useQuery(listStaples, {});
   const cookDone = useMutation(updateCook, {
     onSuccess: async (response) => {
-      setPantryNote(pantryChangeNote(response));
+      setPantryNote(
+        pantryChangeNote(
+          response,
+          response.cook?.done === true,
+          "Cooked",
+          "None of its ingredients were in the pantry."
+        )
+      );
+      await invalidateServices(queryClient, [PlanService, PantryService]);
+    },
+  });
+  const stapleEaten = useMutation(setStapleEaten, {
+    onSuccess: async (response, request) => {
+      setPantryNote(
+        pantryChangeNote(
+          response,
+          request.eaten === true,
+          `Ate ${response.staple?.name ?? "it"}`,
+          "None of it was in the pantry."
+        )
+      );
       await invalidateServices(queryClient, [PlanService, PantryService]);
     },
   });
@@ -193,6 +222,7 @@ const PlanPage: React.FC = () => {
     skip.isPending ||
     unskip.isPending ||
     cookDone.isPending ||
+    stapleEaten.isPending ||
     removeCook.isPending;
 
   const goTo = (nextWeek: string, nextDay?: string) => {
@@ -318,6 +348,9 @@ const PlanPage: React.FC = () => {
             }}
             onSkip={(portion, date) => {
               skip.mutate({ date, id: portion.stapleId });
+            }}
+            onStapleEaten={(portion, date, eaten) => {
+              stapleEaten.mutate({ date, eaten, id: portion.stapleId });
             }}
             staples={staples.data?.staples ?? []}
             costs={costs}

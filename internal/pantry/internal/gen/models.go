@@ -963,6 +963,31 @@ type Staple struct {
 	ReplacesMeal bool
 }
 
+type StaplePantryDeduction struct {
+	StapleID     pgtype.UUID
+	Date         pgtype.Date
+	HouseholdID  pgtype.UUID
+	PantryItemID pgtype.UUID
+	FoodID       pgtype.UUID
+	Grams        float64
+	ExpiryDate   pgtype.Date
+	OpenedDate   pgtype.Date
+	Notes        string
+	Storage      *PantryStorage
+	Location     string
+	FrozenDate   pgtype.Date
+	Opened       bool
+	Estimated    bool
+	Label        string
+}
+
+type StaplePantryUse struct {
+	StapleID    pgtype.UUID
+	Date        pgtype.Date
+	HouseholdID pgtype.UUID
+	CreateTime  pgtype.Timestamptz
+}
+
 type StapleSkip struct {
 	HouseholdID pgtype.UUID
 	StapleID    pgtype.UUID

@@ -244,6 +244,72 @@ var errNoChange = errors.New("nothing to change")
 // so a cook marked done twice takes them out once. It returns
 // store.ErrNotFound if the household has no such cook.
 func (r *Repository) UseForCook(ctx context.Context, householdID, cookID pgtype.UUID, uses []Use) ([]Deduction, error) {
+	deductions, err := r.use(ctx, householdID, uses,
+		func(q *gen.Queries) (int64, error) {
+			return q.CreateCookPantryUse(ctx, &gen.CreateCookPantryUseParams{CookID: cookID, HouseholdID: householdID})
+		},
+		func(q *gen.Queries, l *lotDetails) {
+			_ = q.CreateCookPantryDeductions(ctx, &gen.CreateCookPantryDeductionsParams{
+				CookID: cookID, HouseholdID: householdID,
+				PantryItemIds: l.ids, FoodIds: l.foodIDs, Grams: l.grams, ExpiryDates: l.expiryDates,
+				OpenedDates: l.openedDates, Notes: l.notes, Storages: l.storages, Locations: l.locations,
+				FrozenDates: l.frozenDates, Opened: l.opened, Estimated: l.estimated, Labels: l.labels,
+			})
+		})
+	if err != nil {
+		return nil, fmt.Errorf("failed to take a cook's ingredients out of the pantry: %w", err)
+	}
+	return deductions, nil
+}
+
+// UseForStaple takes what a staple eaten on a date uses out of a
+// household's pantry, like UseForCook, so RestoreForStaple can put it back.
+// It returns nothing if the staple was already marked eaten on the date. It
+// returns store.ErrNotFound if the household has no such staple.
+func (r *Repository) UseForStaple(ctx context.Context, householdID, stapleID pgtype.UUID, date time.Time, uses []Use) ([]Deduction, error) {
+	pgDate := store.DateToPG(date)
+	deductions, err := r.use(ctx, householdID, uses,
+		func(q *gen.Queries) (int64, error) {
+			return q.CreateStaplePantryUse(ctx, &gen.CreateStaplePantryUseParams{StapleID: stapleID, Date: pgDate, HouseholdID: householdID})
+		},
+		func(q *gen.Queries, l *lotDetails) {
+			_ = q.CreateStaplePantryDeductions(ctx, &gen.CreateStaplePantryDeductionsParams{
+				StapleID: stapleID, Date: pgDate, HouseholdID: householdID,
+				PantryItemIds: l.ids, FoodIds: l.foodIDs, Grams: l.grams, ExpiryDates: l.expiryDates,
+				OpenedDates: l.openedDates, Notes: l.notes, Storages: l.storages, Locations: l.locations,
+				FrozenDates: l.frozenDates, Opened: l.opened, Estimated: l.estimated, Labels: l.labels,
+			})
+		})
+	if err != nil {
+		return nil, fmt.Errorf("failed to take a staple's food out of the pantry: %w", err)
+	}
+	return deductions, nil
+}
+
+// lotDetails are what was taken out of lots, with the lots' details to
+// recreate them, as the arrays the queries recording it take.
+type lotDetails struct {
+	ids         []pgtype.UUID
+	foodIDs     []pgtype.UUID
+	grams       []float64
+	expiryDates []pgtype.Date
+	openedDates []pgtype.Date
+	notes       []string
+	storages    []string
+	locations   []string
+	frozenDates []pgtype.Date
+	opened      []bool
+	estimated   []bool
+	labels      []string
+}
+
+// use takes uses out of a household's pantry, from the lots that expire
+// first, once: create records the use, returning 0 rows if it was already
+// recorded, which takes nothing out, and record records what was taken
+// out of each lot. It returns what it took out.
+func (r *Repository) use(ctx context.Context, householdID pgtype.UUID, uses []Use,
+	create func(*gen.Queries) (int64, error), record func(*gen.Queries, *lotDetails),
+) ([]Deduction, error) {
 	var foodIDs []pgtype.UUID
 	for _, u := range uses {
 		foodIDs = append(foodIDs, u.FoodID)
@@ -258,7 +324,7 @@ func (r *Repository) UseForCook(ctx context.Context, householdID, cookID pgtype.
 		func(b *store.Batch) error {
 			b.Read(func(db store.Querier) error {
 				var err error
-				created, err = gen.New(db).CreateCookPantryUse(ctx, &gen.CreateCookPantryUseParams{CookID: cookID, HouseholdID: householdID})
+				created, err = create(gen.New(db))
 				return err
 			})
 			b.Read(func(db store.Querier) error {
@@ -283,7 +349,7 @@ func (r *Repository) UseForCook(ctx context.Context, householdID, cookID pgtype.
 			q := gen.New(b)
 			set := &gen.SetPantryItemGramsParams{HouseholdID: householdID}
 			emptied := &gen.DeletePantryItemsParams{HouseholdID: householdID}
-			record := &gen.CreateCookPantryDeductionsParams{CookID: cookID, HouseholdID: householdID}
+			var l lotDetails
 			for _, d := range deductions {
 				if left := d.Item.Grams - d.Grams; left > emptyGrams {
 					set.Ids = append(set.Ids, d.Item.ID)
@@ -291,18 +357,18 @@ func (r *Repository) UseForCook(ctx context.Context, householdID, cookID pgtype.
 				} else {
 					emptied.Ids = append(emptied.Ids, d.Item.ID)
 				}
-				record.PantryItemIds = append(record.PantryItemIds, d.Item.ID)
-				record.FoodIds = append(record.FoodIds, d.Item.FoodID)
-				record.Grams = append(record.Grams, d.Grams)
-				record.ExpiryDates = append(record.ExpiryDates, store.DateToPG(d.Item.ExpiryDate))
-				record.OpenedDates = append(record.OpenedDates, store.DateToPG(d.Item.OpenedDate))
-				record.Notes = append(record.Notes, d.Item.Notes)
-				record.Storages = append(record.Storages, string(d.Item.Storage))
-				record.Locations = append(record.Locations, d.Item.Location)
-				record.FrozenDates = append(record.FrozenDates, store.DateToPG(d.Item.FrozenDate))
-				record.Opened = append(record.Opened, d.Item.Opened)
-				record.Estimated = append(record.Estimated, d.Item.Estimated)
-				record.Labels = append(record.Labels, d.Item.Label)
+				l.ids = append(l.ids, d.Item.ID)
+				l.foodIDs = append(l.foodIDs, d.Item.FoodID)
+				l.grams = append(l.grams, d.Grams)
+				l.expiryDates = append(l.expiryDates, store.DateToPG(d.Item.ExpiryDate))
+				l.openedDates = append(l.openedDates, store.DateToPG(d.Item.OpenedDate))
+				l.notes = append(l.notes, d.Item.Notes)
+				l.storages = append(l.storages, string(d.Item.Storage))
+				l.locations = append(l.locations, d.Item.Location)
+				l.frozenDates = append(l.frozenDates, store.DateToPG(d.Item.FrozenDate))
+				l.opened = append(l.opened, d.Item.Opened)
+				l.estimated = append(l.estimated, d.Item.Estimated)
+				l.labels = append(l.labels, d.Item.Label)
 			}
 			if len(set.Ids) > 0 {
 				_ = q.SetPantryItemGrams(ctx, set)
@@ -310,7 +376,7 @@ func (r *Repository) UseForCook(ctx context.Context, householdID, cookID pgtype.
 			if len(emptied.Ids) > 0 {
 				_ = q.DeletePantryItems(ctx, emptied)
 			}
-			_ = q.CreateCookPantryDeductions(ctx, record)
+			record(q, &l)
 			return nil
 		},
 	)
@@ -321,7 +387,7 @@ func (r *Repository) UseForCook(ctx context.Context, householdID, cookID pgtype.
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == pgerrcode.ForeignKeyViolation {
 			return nil, store.ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to take a cook's ingredients out of the pantry: %w", err)
+		return nil, err
 	}
 	return deductions, nil
 }
@@ -334,15 +400,40 @@ func (r *Repository) RestoreForCook(ctx context.Context, householdID, cookID pgt
 	if err != nil {
 		return nil, fmt.Errorf("failed to put a cook's ingredients back into the pantry: %w", err)
 	}
-	var restored []Use
+	deducted := make([]Use, 0, len(rows))
 	for _, row := range rows {
-		if n := len(restored); n > 0 && restored[n-1].FoodID == row.FoodID {
-			restored[n-1].Grams += row.Grams
+		deducted = append(deducted, Use(*row))
+	}
+	return byFood(deducted), nil
+}
+
+// RestoreForStaple puts back what a staple eaten on a date took out of a
+// household's pantry, like RestoreForCook, and un-marks it eaten.
+func (r *Repository) RestoreForStaple(ctx context.Context, householdID, stapleID pgtype.UUID, date time.Time) ([]Use, error) {
+	rows, err := gen.New(r.db).RestoreStaplePantryUse(ctx, &gen.RestoreStaplePantryUseParams{
+		StapleID: stapleID, Date: store.DateToPG(date), HouseholdID: householdID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to put a staple's food back into the pantry: %w", err)
+	}
+	deducted := make([]Use, 0, len(rows))
+	for _, row := range rows {
+		deducted = append(deducted, Use(*row))
+	}
+	return byFood(deducted), nil
+}
+
+// byFood sums deductions put back, in order of their foods, by food.
+func byFood(deducted []Use) []Use {
+	var restored []Use
+	for _, u := range deducted {
+		if n := len(restored); n > 0 && restored[n-1].FoodID == u.FoodID {
+			restored[n-1].Grams += u.Grams
 			continue
 		}
-		restored = append(restored, Use{FoodID: row.FoodID, Grams: row.Grams})
+		restored = append(restored, u)
 	}
-	return restored, nil
+	return restored
 }
 
 // writeError translates the errors of writing lots.

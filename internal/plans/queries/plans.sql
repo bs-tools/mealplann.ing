@@ -237,6 +237,16 @@ where household_id = @household_id
   and (sqlc.narg(to_date)::date is null or date <= sqlc.narg(to_date))
 order by staple_id, date;
 
+-- name: ListStapleEatenDates :many
+-- The dates the household's staples, or one of them, were marked eaten on,
+-- in a range of dates or all.
+select staple_id, date from staple_pantry_uses
+where household_id = @household_id
+  and (sqlc.narg(staple_id)::uuid is null or staple_id = sqlc.narg(staple_id))
+  and (sqlc.narg(from_date)::date is null or date >= sqlc.narg(from_date))
+  and (sqlc.narg(to_date)::date is null or date <= sqlc.narg(to_date))
+order by staple_id, date;
+
 -- name: ListFrozenCooks :many
 -- The household's cooks with frozen servings not all planned or taken off
 -- plan yet: those in the freezer, with their recipe's name and keeping

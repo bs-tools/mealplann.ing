@@ -687,16 +687,20 @@ export const StorageSchema: GenEnum<Storage> = /*@__PURE__*/
  * have several lots, like an opened bag and a new one, each with its own
  * expiry date, so the oldest is used first.
  *
- * The pantry changes by itself in two ways:
+ * The pantry changes by itself in three ways:
  *
  * 1. Completing a shopping list (see ShoppingService.CompleteShopping) adds
  *    the checked items, expiring after the food's shelf_life_days.
  * 2. Marking a cook done (see PlanService.UpdateCook) takes its
  *    ingredients out, from the lots that expire first, or as its food_uses
  *    say was actually used, and un-marking it puts them back. Preview the
- *    changes with its preview. Portions of foods and staples aren't taken out, as
- *    they're eaten too irregularly to track: correct the pantry with
- *    UpdatePantryItem when it's off.
+ *    changes with its preview.
+ * 3. Marking a staple eaten on a date (see PlanService.SetStapleEaten)
+ *    takes its food, or its recipe's ingredients, out, and un-marking it
+ *    puts them back. Staples not marked eaten stay in the pantry.
+ *
+ * Portions of foods aren't taken out, as they're eaten too irregularly to
+ * track: correct the pantry with UpdatePantryItem when it's off.
  *
  * Foods the household always has, like salt and spices, aren't tracked: set
  * always_in_stock on the food with FoodService.UpdateFood instead of adding

@@ -80,12 +80,14 @@ type FoodRepository interface {
 	ListFoodsByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*foods.Food, error)
 }
 
-// PantryRepository takes the ingredients of cooks marked done out of the
-// pantry, and puts them back. Suggestions read what's in it.
+// PantryRepository takes the ingredients of cooks marked done, and the
+// food of staples marked eaten, out of the pantry, and puts them back. Suggestions read what's in it.
 type PantryRepository interface {
 	ListItems(ctx context.Context, householdID pgtype.UUID) ([]*pantry.Item, error)
 	UseForCook(ctx context.Context, householdID, cookID pgtype.UUID, uses []pantry.Use) ([]pantry.Deduction, error)
 	RestoreForCook(ctx context.Context, householdID, cookID pgtype.UUID) ([]pantry.Use, error)
+	UseForStaple(ctx context.Context, householdID, stapleID pgtype.UUID, date time.Time, uses []pantry.Use) ([]pantry.Deduction, error)
+	RestoreForStaple(ctx context.Context, householdID, stapleID pgtype.UUID, date time.Time) ([]pantry.Use, error)
 }
 
 // ShoppingRepository reads the shopping lists, whose shop suggestions
@@ -608,6 +610,11 @@ func (s *Service) useForCook(ctx context.Context, c *plans.Cook, uses []pantry.U
 	} else if deductions, err = s.pantry.UseForCook(ctx, c.HouseholdID, c.ID, uses); err != nil {
 		return nil, err
 	}
+	return deductionChanges(deductions, names), nil
+}
+
+// deductionChanges converts what was taken out of lots, by food.
+func deductionChanges(deductions []pantry.Deduction, names map[pgtype.UUID]string) []*plansv1.PantryChange {
 	var used []pantry.Use
 	for _, d := range deductions {
 		if n := len(used); n > 0 && used[n-1].FoodID == d.Item.FoodID {
@@ -616,22 +623,31 @@ func (s *Service) useForCook(ctx context.Context, c *plans.Cook, uses []pantry.U
 		}
 		used = append(used, pantry.Use{FoodID: d.Item.FoodID, Grams: d.Grams})
 	}
-	return pantryChanges(used, names), nil
+	return pantryChanges(used, names)
 }
 
 // restoreForCook puts back what a cook took out of the pantry, and returns
 // it.
 func (s *Service) restoreForCook(ctx context.Context, c *plans.Cook) ([]*plansv1.PantryChange, error) {
 	restored, err := s.pantry.RestoreForCook(ctx, c.HouseholdID, c.ID)
-	if err != nil || len(restored) == 0 {
+	if err != nil {
 		return nil, err
+	}
+	return s.restoredChanges(ctx, c.HouseholdID, restored)
+}
+
+// restoredChanges converts what was put back into the pantry, with the
+// foods' names.
+func (s *Service) restoredChanges(ctx context.Context, householdID pgtype.UUID, restored []pantry.Use) ([]*plansv1.PantryChange, error) {
+	if len(restored) == 0 {
+		return nil, nil
 	}
 	names := map[pgtype.UUID]string{}
 	var foodIDs []pgtype.UUID
 	for _, u := range restored {
 		foodIDs = append(foodIDs, u.FoodID)
 	}
-	list, err := s.foods.ListFoodsByID(ctx, c.HouseholdID, foodIDs)
+	list, err := s.foods.ListFoodsByID(ctx, householdID, foodIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -930,11 +946,122 @@ func (s *Service) setStapleSkipped(ctx context.Context, rawID, rawDate string, s
 	if err != nil {
 		return nil, err
 	}
+	if skipped {
+		// A staple marked eaten took its food out of the pantry, which
+		// skipping it would leave out.
+		plan, err := s.plans.GetPlan(ctx, user.HouseholdID(), date, date)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to get plan", "")
+		}
+		for _, st := range plan.Staples {
+			if st.ID == id && st.EatenOn(date) {
+				return nil, connect.Errorf(connect.CodeFailedPrecondition,
+					"%s was marked eaten on %s: un-mark it with SetStapleEaten first, which puts its food back in the pantry", st.Name, store.FormatDate(date))
+			}
+		}
+	}
 	st, err := s.plans.SetStapleSkipped(ctx, user.HouseholdID(), id, date, skipped)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to skip staple", stapleNotFound)
 	}
 	return stapleToProto(st), nil
+}
+
+func (s *Service) SetStapleEaten(ctx context.Context, req *plansv1.SetStapleEatenRequest) (*plansv1.SetStapleEatenResponse, error) {
+	user, ok := authn.GetUser(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+	}
+	householdID := user.HouseholdID()
+	id, err := parseID("id", req.GetId(), "find staples with ListStaples")
+	if err != nil {
+		return nil, err
+	}
+	date, err := parseDate("date", req.GetDate())
+	if err != nil {
+		return nil, err
+	}
+	st, err := s.plans.GetStaple(ctx, householdID, id)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to get staple", stapleNotFound)
+	}
+	resp := plansv1.SetStapleEatenResponse_builder{}
+	if req.GetEaten() {
+		if !st.IsOn(date) {
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s isn't eaten on %s: give one of its dates, by its weekdays, start_date and end_date, or change them with UpdateStaple", st.Name, store.FormatDate(date))
+		}
+		if st.SkippedOn(date) {
+			if _, err := s.plans.SetStapleSkipped(ctx, householdID, id, date, false); err != nil {
+				return nil, s.toConnectError(ctx, err, "failed to stop skipping staple", stapleNotFound)
+			}
+		}
+		uses, names, err := s.stapleUses(ctx, st)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to read the staple's food", "")
+		}
+		deductions, err := s.pantry.UseForStaple(ctx, householdID, id, date, uses)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to take the staple's food out of the pantry", stapleNotFound)
+		}
+		resp.PantryChanges = deductionChanges(deductions, names)
+	} else {
+		restored, err := s.pantry.RestoreForStaple(ctx, householdID, id, date)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to put the staple's food back in the pantry", "")
+		}
+		if resp.PantryChanges, err = s.restoredChanges(ctx, householdID, restored); err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to read the staple's food", "")
+		}
+		resp.PantryRestored = len(restored) > 0
+	}
+	// The staple is read again, as marking it eaten may stop skipping it.
+	if st, err = s.plans.GetStaple(ctx, householdID, id); err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to get staple", stapleNotFound)
+	}
+	resp.Staple = stapleToProto(st)
+	return resp.Build(), nil
+}
+
+// stapleUses returns what a staple eaten once takes out of the pantry: its
+// food's amount, or its recipe's ingredients scaled to its servings
+// without the optional ones, with the foods' names. What can't be weighed
+// is left in, as the pantry is in grams.
+func (s *Service) stapleUses(ctx context.Context, st *plans.Staple) ([]pantry.Use, map[pgtype.UUID]string, error) {
+	names := map[pgtype.UUID]string{}
+	if !st.RecipeID.Valid {
+		list, err := s.foods.ListFoodsByID(ctx, st.HouseholdID, []pgtype.UUID{st.FoodID})
+		if err != nil || len(list) == 0 {
+			return nil, nil, err
+		}
+		f := list[0]
+		g, ok := f.Nutrition().Grams(st.Amount, st.Unit)
+		if !ok {
+			return nil, nil, nil
+		}
+		names[f.ID] = f.Name
+		return []pantry.Use{{FoodID: f.ID, Grams: g}}, names, nil
+	}
+	list, err := s.recipes.ListRecipesByID(ctx, st.HouseholdID, []pgtype.UUID{st.RecipeID})
+	if err != nil || len(list) == 0 {
+		return nil, nil, err
+	}
+	var uses []pantry.Use
+	index := map[pgtype.UUID]int{}
+	for _, in := range list[0].IngredientsWithout(st.Servings, nil) {
+		g, ok := in.Food.Grams(in.Amount, in.Unit)
+		if !ok {
+			continue
+		}
+		names[in.FoodID] = in.FoodName
+		if i, seen := index[in.FoodID]; seen {
+			uses[i].Grams += g
+			continue
+		}
+		index[in.FoodID] = len(uses)
+		uses = append(uses, pantry.Use{FoodID: in.FoodID, Grams: g})
+	}
+	return uses, names, nil
 }
 
 // referenceMessages say what to do about a reference to something that
