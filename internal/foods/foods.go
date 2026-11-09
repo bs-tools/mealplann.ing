@@ -124,6 +124,9 @@ const (
 	MeasureVolume Measure = "volume"
 	// MeasurePieces is in pieces, like onions or garlic cloves.
 	MeasurePieces Measure = "pieces"
+	// MeasureMilliliters is by volume in milliliters, whatever the user's
+	// units, like a 400 ml can of coconut milk.
+	MeasureMilliliters Measure = "milliliters"
 )
 
 // MeasureToDB converts a measure to the database's, nil for MeasureAuto.
@@ -237,12 +240,13 @@ func (r *Repository) GetFood(ctx context.Context, householdID, id pgtype.UUID) (
 
 // ListFoods lists a household's foods whose name contains query, ignoring
 // case, ordered by name: limit of them, after skipping offset.
-func (r *Repository) ListFoods(ctx context.Context, householdID pgtype.UUID, query string, limit, offset int32) ([]*Food, error) {
+func (r *Repository) ListFoods(ctx context.Context, householdID pgtype.UUID, query string, needsMeasure bool, limit, offset int32) ([]*Food, error) {
 	rows, err := r.querier.ListFoods(ctx, &gen.ListFoodsParams{
-		HouseholdID: householdID,
-		Query:       query,
-		RowLimit:    limit,
-		RowOffset:   offset,
+		HouseholdID:  householdID,
+		Query:        query,
+		NeedsMeasure: needsMeasure,
+		RowLimit:     limit,
+		RowOffset:    offset,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list foods: %w", err)

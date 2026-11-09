@@ -228,6 +228,10 @@ export const formatMeasure = (
   if (measure === Measure.VOLUME && milliliters !== undefined) {
     return formatVolume(milliliters, system);
   }
+  // Milliliters are metric whatever the user's units, like a 400 ml can.
+  if (measure === Measure.MILLILITERS && milliliters !== undefined) {
+    return formatVolume(milliliters, UnitSystem.METRIC);
+  }
   if (measure === Measure.PIECES && pieces !== undefined) {
     return formatPieces(pieces);
   }

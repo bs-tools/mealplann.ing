@@ -536,15 +536,17 @@ const listFoods = `-- name: ListFoods :many
 select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date, measure from foods
 where household_id = $1
   and ($2::text = '' or strpos(lower(name), lower($2)) > 0)
+  and (not $3::boolean or (measure is null and grams_per_milliliter is null))
 order by lower(name)
-limit $4 offset $3
+limit $5 offset $4
 `
 
 type ListFoodsParams struct {
-	HouseholdID pgtype.UUID
-	Query       string
-	RowOffset   int32
-	RowLimit    int32
+	HouseholdID  pgtype.UUID
+	Query        string
+	NeedsMeasure bool
+	RowOffset    int32
+	RowLimit     int32
 }
 
 // Foods are ordered by name ignoring case, which the unique index on
@@ -553,6 +555,7 @@ func (q *Queries) ListFoods(ctx context.Context, arg *ListFoodsParams) ([]*Food,
 	rows, err := q.db.Query(ctx, listFoods,
 		arg.HouseholdID,
 		arg.Query,
+		arg.NeedsMeasure,
 		arg.RowOffset,
 		arg.RowLimit,
 	)

@@ -299,7 +299,7 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 	measure, ok := measuresFromProto[p.GetMeasure()]
 	if !ok {
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
-			"invalid measure %v: use MEASURE_WEIGHT, MEASURE_VOLUME, MEASURE_PIECES, or MEASURE_UNSPECIFIED to choose by the amount", p.GetMeasure())
+			"invalid measure %v: use MEASURE_WEIGHT, MEASURE_VOLUME, MEASURE_MILLILITERS, MEASURE_PIECES, or MEASURE_UNSPECIFIED to choose by the amount", p.GetMeasure())
 	}
 	var storeID pgtype.UUID
 	if s := strings.TrimSpace(p.GetPreferredStoreId()); s != "" {
@@ -332,10 +332,11 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 
 // MeasuresToProto converts measures to the API.
 var MeasuresToProto = map[foods.Measure]foodsv1.Measure{
-	foods.MeasureAuto:   foodsv1.Measure_MEASURE_UNSPECIFIED,
-	foods.MeasureWeight: foodsv1.Measure_MEASURE_WEIGHT,
-	foods.MeasureVolume: foodsv1.Measure_MEASURE_VOLUME,
-	foods.MeasurePieces: foodsv1.Measure_MEASURE_PIECES,
+	foods.MeasureAuto:        foodsv1.Measure_MEASURE_UNSPECIFIED,
+	foods.MeasureWeight:      foodsv1.Measure_MEASURE_WEIGHT,
+	foods.MeasureVolume:      foodsv1.Measure_MEASURE_VOLUME,
+	foods.MeasurePieces:      foodsv1.Measure_MEASURE_PIECES,
+	foods.MeasureMilliliters: foodsv1.Measure_MEASURE_MILLILITERS,
 }
 
 // measuresFromProto converts measures from the API.
@@ -344,6 +345,7 @@ var measuresFromProto = map[foodsv1.Measure]foods.Measure{
 	foodsv1.Measure_MEASURE_WEIGHT:      foods.MeasureWeight,
 	foodsv1.Measure_MEASURE_VOLUME:      foods.MeasureVolume,
 	foodsv1.Measure_MEASURE_PIECES:      foods.MeasurePieces,
+	foodsv1.Measure_MEASURE_MILLILITERS: foods.MeasureMilliliters,
 }
 
 // foodFromReference returns a food created from a reference food, with the

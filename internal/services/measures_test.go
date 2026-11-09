@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"connectrpc.com/connect/v2"
@@ -61,6 +62,22 @@ func TestMeasures(t *testing.T) {
 	in := created.GetRecipe().GetIngredients()[0]
 	if in.GetFoodMeasure() != foodsv1.Measure_MEASURE_VOLUME || in.GetFoodGramsPerMilliliter() != 0.92 {
 		t.Errorf("got ingredient measure %v at %v g/ml, want volume at 0.92", in.GetFoodMeasure(), in.GetFoodGramsPerMilliliter())
+	}
+
+	// Ginger has no measure nor density, so it's listed as needing one;
+	// coconut milk in milliliters isn't.
+	customFood(t, e, "Ginger", 80, 2, 18, 2, 1, nil)
+	customFood(t, e, "Coconut milk", 190, 2, 3, 2, 20, func(f *foodsv1.Food) { f.SetMeasure(foodsv1.Measure_MEASURE_MILLILITERS) })
+	needing, err := e.foods.ListFoods(ctx, foodsv1.ListFoodsRequest_builder{NeedsMeasure: true}.Build())
+	if err != nil {
+		t.Fatalf("ListFoods: %v", err)
+	}
+	var names []string
+	for _, f := range needing.GetFoods() {
+		names = append(names, f.GetName())
+	}
+	if !slices.Equal(names, []string{"Ginger"}) {
+		t.Errorf("got %v needing a measure, want the ginger alone", names)
 	}
 
 	// Back to automatic.

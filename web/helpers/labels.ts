@@ -20,6 +20,10 @@ export const MEASURES: { value: Measure; label: string }[] = [
   },
   { label: "By weight, like tofu or pasta", value: Measure.WEIGHT },
   { label: "By volume, like oil, spices or milk", value: Measure.VOLUME },
+  {
+    label: "In milliliters, like a 400 ml can of coconut milk",
+    value: Measure.MILLILITERS,
+  },
   { label: "In pieces, like onions", value: Measure.PIECES },
 ];
 
