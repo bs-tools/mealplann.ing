@@ -212,7 +212,7 @@ type PlanServiceClient interface {
 	// Plan a shared household meal: create a cook of a recipe on a date for a
 	// meal, and a portion of it for each person whose eating pattern eats
 	// from that meal, at that eating time, unless they have a staple there
-	// that day, which they eat instead. Each person gets one serving. If a
+	// that day that replaces_meal, which they eat instead. Each person gets one serving. If a
 	// serving weighs more than a person's max_portion_grams, their portion is
 	// capped at it (less what's already planned at that eating time), and the
 	// rest of their serving goes to their next small eating times that day,
@@ -220,7 +220,7 @@ type PlanServiceClient interface {
 	// fit is left unassigned. Returns the cook, the portions and the warnings
 	// of the eating times and cook it touched. Fails with
 	// FAILED_PRECONDITION if nobody eats from the meal, or everyone who does
-	// has a staple at it that day.
+	// has a staple that replaces it that day.
 	PlanMeal(context.Context, *v1.PlanMealRequest) (*v1.PlanMealResponse, error)
 	// Plan several shared meals, or one person's eating times, at once, like
 	// PlanMeal for each shared meal, in order of date and meal, so each
@@ -317,7 +317,7 @@ type PlanServiceHandler interface {
 	// Plan a shared household meal: create a cook of a recipe on a date for a
 	// meal, and a portion of it for each person whose eating pattern eats
 	// from that meal, at that eating time, unless they have a staple there
-	// that day, which they eat instead. Each person gets one serving. If a
+	// that day that replaces_meal, which they eat instead. Each person gets one serving. If a
 	// serving weighs more than a person's max_portion_grams, their portion is
 	// capped at it (less what's already planned at that eating time), and the
 	// rest of their serving goes to their next small eating times that day,
@@ -325,7 +325,7 @@ type PlanServiceHandler interface {
 	// fit is left unassigned. Returns the cook, the portions and the warnings
 	// of the eating times and cook it touched. Fails with
 	// FAILED_PRECONDITION if nobody eats from the meal, or everyone who does
-	// has a staple at it that day.
+	// has a staple that replaces it that day.
 	PlanMeal(context.Context, *v1.PlanMealRequest) (*v1.PlanMealResponse, error)
 	// Plan several shared meals, or one person's eating times, at once, like
 	// PlanMeal for each shared meal, in order of date and meal, so each

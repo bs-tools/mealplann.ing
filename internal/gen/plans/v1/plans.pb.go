@@ -1270,6 +1270,7 @@ type Staple struct {
 	xxx_hidden_SkippedDates []string               `protobuf:"bytes,11,rep,name=skipped_dates,json=skippedDates,proto3"`
 	xxx_hidden_CreateTime   *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=create_time,json=createTime,proto3"`
 	xxx_hidden_UpdateTime   *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=update_time,json=updateTime,proto3"`
+	xxx_hidden_ReplacesMeal bool                   `protobuf:"varint,14,opt,name=replaces_meal,json=replacesMeal,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1394,6 +1395,13 @@ func (x *Staple) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Staple) GetReplacesMeal() bool {
+	if x != nil {
+		return x.xxx_hidden_ReplacesMeal
+	}
+	return false
+}
+
 func (x *Staple) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -1452,6 +1460,10 @@ func (x *Staple) SetCreateTime(v *timestamppb.Timestamp) {
 
 func (x *Staple) SetUpdateTime(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdateTime = v
+}
+
+func (x *Staple) SetReplacesMeal(v bool) {
+	x.xxx_hidden_ReplacesMeal = v
 }
 
 func (x *Staple) HasWhat() bool {
@@ -1570,6 +1582,11 @@ type Staple_builder struct {
 	CreateTime *timestamppb.Timestamp
 	// When the staple was last changed.
 	UpdateTime *timestamppb.Timestamp
+	// Whether the person eats it instead of the shared meal at its eating
+	// time, like their own breakfast, so the meal isn't planned or suggested
+	// for them on the days it's eaten. False for what's had with the meal,
+	// like a cup of tea at breakfast.
+	ReplacesMeal bool
 }
 
 func (b0 Staple_builder) Build() *Staple {
@@ -1593,6 +1610,7 @@ func (b0 Staple_builder) Build() *Staple {
 	x.xxx_hidden_SkippedDates = b.SkippedDates
 	x.xxx_hidden_CreateTime = b.CreateTime
 	x.xxx_hidden_UpdateTime = b.UpdateTime
+	x.xxx_hidden_ReplacesMeal = b.ReplacesMeal
 	return m0
 }
 
@@ -3339,8 +3357,8 @@ type PlanMealRequest_builder struct {
 	// The shared meal. Required.
 	Meal v1.HouseholdMeal
 	// The people to plan for, each of whom must have an eating time for the
-	// meal, even if they have a staple at it. Empty for everyone who does and
-	// has no staple at it that day.
+	// meal, even if they have a staple that replaces it. Empty for everyone
+	// who does and has no such staple that day.
 	PersonIds []string
 	// How many servings to cook, at least the servings planned for people;
 	// the rest are left over, to plan later with CreatePortion. 0 for the
@@ -5988,7 +6006,7 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\vupdate_time\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"updateTimeB\x06\n" +
-	"\x04what\"\x95\x04\n" +
+	"\x04what\"\xba\x04\n" +
 	"\x06Staple\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tperson_id\x18\x02 \x01(\tR\bpersonId\x12$\n" +
@@ -6006,7 +6024,8 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\vcreate_time\x18\f \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"createTime\x12C\n" +
 	"\vupdate_time\x18\r \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
-	"updateTimeB\x06\n" +
+	"updateTime\x12#\n" +
+	"\rreplaces_meal\x18\x0e \x01(\bR\freplacesMealB\x06\n" +
 	"\x04what\"\xe8\x02\n" +
 	"\aWarning\x12)\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x15.plans.v1.WarningKindR\x04kind\x12.\n" +

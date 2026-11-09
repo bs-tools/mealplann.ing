@@ -258,6 +258,7 @@ func stapleToProto(s *plans.Staple) *plansv1.Staple {
 		StartDate:    store.FormatDate(s.StartDate),
 		EndDate:      store.FormatDate(s.EndDate),
 		Notes:        s.Notes,
+		ReplacesMeal: s.ReplacesMeal,
 		Name:         s.Name,
 		SkippedDates: skipped,
 		CreateTime:   timestamppb.New(s.CreateTime),
@@ -286,7 +287,7 @@ func stapleFromProto(p *plansv1.Staple) (*plans.Staple, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &plans.Staple{PersonID: personID, EatingTimeID: eatingTimeID, Notes: notes}
+	s := &plans.Staple{PersonID: personID, EatingTimeID: eatingTimeID, Notes: notes, ReplacesMeal: p.GetReplacesMeal()}
 	switch {
 	case p.HasRecipe():
 		s.RecipeID, err = parseID("recipe.recipe_id", p.GetRecipe().GetRecipeId(), "find recipes with ListRecipes")

@@ -158,9 +158,9 @@ func (q *Queries) CreatePortion(ctx context.Context, arg *CreatePortionParams) (
 
 const createStaple = `-- name: CreateStaple :execrows
 insert into staples (
-  id, household_id, person_id, eating_time_id, recipe_id, servings, food_id, amount, unit, weekdays, start_date, end_date, notes
+  id, household_id, person_id, eating_time_id, recipe_id, servings, food_id, amount, unit, weekdays, start_date, end_date, notes, replaces_meal
 ) values (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
 )
 `
 
@@ -178,6 +178,7 @@ type CreateStapleParams struct {
 	StartDate    pgtype.Date
 	EndDate      pgtype.Date
 	Notes        string
+	ReplacesMeal bool
 }
 
 func (q *Queries) CreateStaple(ctx context.Context, arg *CreateStapleParams) (int64, error) {
@@ -195,6 +196,7 @@ func (q *Queries) CreateStaple(ctx context.Context, arg *CreateStapleParams) (in
 		arg.StartDate,
 		arg.EndDate,
 		arg.Notes,
+		arg.ReplacesMeal,
 	)
 	if err != nil {
 		return 0, err
@@ -660,7 +662,7 @@ func (q *Queries) ListStapleSkips(ctx context.Context, arg *ListStapleSkipsParam
 
 const listStaples = `-- name: ListStaples :many
 select
-  staples.id, staples.household_id, staples.person_id, staples.eating_time_id, staples.recipe_id, staples.servings, staples.food_id, staples.amount, staples.unit, staples.weekdays, staples.start_date, staples.end_date, staples.notes, staples.create_time, staples.update_time,
+  staples.id, staples.household_id, staples.person_id, staples.eating_time_id, staples.recipe_id, staples.servings, staples.food_id, staples.amount, staples.unit, staples.weekdays, staples.start_date, staples.end_date, staples.notes, staples.create_time, staples.update_time, staples.replaces_meal,
   coalesce(r.name, f.name, '')::text as name
 from staples
 join people pe on pe.id = staples.person_id
@@ -722,6 +724,7 @@ func (q *Queries) ListStaples(ctx context.Context, arg *ListStaplesParams) ([]*L
 			&i.Staple.Notes,
 			&i.Staple.CreateTime,
 			&i.Staple.UpdateTime,
+			&i.Staple.ReplacesMeal,
 			&i.Name,
 		); err != nil {
 			return nil, err
@@ -900,8 +903,9 @@ update staples set
   start_date = $9,
   end_date = $10,
   notes = $11,
+  replaces_meal = $12,
   update_time = now()
-where id = $12 and household_id = $13
+where id = $13 and household_id = $14
 `
 
 type UpdateStapleParams struct {
@@ -916,6 +920,7 @@ type UpdateStapleParams struct {
 	StartDate    pgtype.Date
 	EndDate      pgtype.Date
 	Notes        string
+	ReplacesMeal bool
 	ID           pgtype.UUID
 	HouseholdID  pgtype.UUID
 }
@@ -933,6 +938,7 @@ func (q *Queries) UpdateStaple(ctx context.Context, arg *UpdateStapleParams) (in
 		arg.StartDate,
 		arg.EndDate,
 		arg.Notes,
+		arg.ReplacesMeal,
 		arg.ID,
 		arg.HouseholdID,
 	)

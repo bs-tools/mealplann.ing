@@ -959,6 +959,7 @@ type Staple struct {
 	Notes        string
 	CreateTime   pgtype.Timestamptz
 	UpdateTime   pgtype.Timestamptz
+	ReplacesMeal bool
 }
 
 type StapleSkip struct {

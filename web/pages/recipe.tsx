@@ -128,7 +128,7 @@ const RecipePage: React.FC = () => {
         title={recipe.name}
         subtitle={recipe.description === "" ? undefined : recipe.description}
         actions={
-          <div className="flex items-start gap-2 print:hidden">
+          <div className="flex flex-wrap items-start gap-2 print:hidden">
             <FavoriteButton recipe={recipe} />
             <ConfirmButton
               title="Delete recipe?"

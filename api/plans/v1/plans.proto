@@ -52,7 +52,7 @@ service PlanService {
   // Plan a shared household meal: create a cook of a recipe on a date for a
   // meal, and a portion of it for each person whose eating pattern eats
   // from that meal, at that eating time, unless they have a staple there
-  // that day, which they eat instead. Each person gets one serving. If a
+  // that day that replaces_meal, which they eat instead. Each person gets one serving. If a
   // serving weighs more than a person's max_portion_grams, their portion is
   // capped at it (less what's already planned at that eating time), and the
   // rest of their serving goes to their next small eating times that day,
@@ -60,7 +60,7 @@ service PlanService {
   // fit is left unassigned. Returns the cook, the portions and the warnings
   // of the eating times and cook it touched. Fails with
   // FAILED_PRECONDITION if nobody eats from the meal, or everyone who does
-  // has a staple at it that day.
+  // has a staple that replaces it that day.
   rpc PlanMeal(PlanMealRequest) returns (PlanMealResponse);
   // Plan several shared meals, or one person's eating times, at once, like
   // PlanMeal for each shared meal, in order of date and meal, so each
@@ -299,6 +299,11 @@ message Staple {
   google.protobuf.Timestamp create_time = 12 [(mcp.v1.field).output_only = true];
   // When the staple was last changed.
   google.protobuf.Timestamp update_time = 13 [(mcp.v1.field).output_only = true];
+  // Whether the person eats it instead of the shared meal at its eating
+  // time, like their own breakfast, so the meal isn't planned or suggested
+  // for them on the days it's eaten. False for what's had with the meal,
+  // like a cup of tea at breakfast.
+  bool replaces_meal = 14;
 }
 
 // WarningKind is what a warning is about.
@@ -568,8 +573,8 @@ message PlanMealRequest {
   // The shared meal. Required.
   people.v1.HouseholdMeal meal = 3;
   // The people to plan for, each of whom must have an eating time for the
-  // meal, even if they have a staple at it. Empty for everyone who does and
-  // has no staple at it that day.
+  // meal, even if they have a staple that replaces it. Empty for everyone
+  // who does and has no such staple that day.
   repeated string person_ids = 4;
   // How many servings to cook, at least the servings planned for people;
   // the rest are left over, to plan later with CreatePortion. 0 for the

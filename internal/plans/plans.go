@@ -152,6 +152,9 @@ type Staple struct {
 	StartDate time.Time
 	EndDate   time.Time
 	Notes     string
+	// ReplacesMeal is whether its person eats it instead of the shared meal
+	// at its eating time, so the meal isn't planned for them.
+	ReplacesMeal bool
 	// Name, the name of the recipe or food, and SkippedDates, the dates it's
 	// skipped on in order, are read, and ignored when writing.
 	Name         string
@@ -712,6 +715,7 @@ func (r *Repository) CreateStaple(ctx context.Context, s *Staple) (*Staple, erro
 		StartDate:    store.DateToPG(s.StartDate),
 		EndDate:      store.DateToPG(s.EndDate),
 		Notes:        s.Notes,
+		ReplacesMeal: s.ReplacesMeal,
 	})
 	var created *Staple
 	readStaple(ctx, &b, s.HouseholdID, id, &created)
@@ -744,6 +748,7 @@ func (r *Repository) UpdateStaple(ctx context.Context, s *Staple) (*Staple, erro
 		StartDate:    store.DateToPG(s.StartDate),
 		EndDate:      store.DateToPG(s.EndDate),
 		Notes:        s.Notes,
+		ReplacesMeal: s.ReplacesMeal,
 	})
 	var updated *Staple
 	readStaple(ctx, &b, s.HouseholdID, s.ID, &updated)
@@ -893,6 +898,7 @@ func staplesFromDB(rows []*gen.ListStaplesRow, skips []*gen.StapleSkip) []*Stapl
 			StartDate:    store.DateFromPG(s.StartDate),
 			EndDate:      store.DateFromPG(s.EndDate),
 			Notes:        s.Notes,
+			ReplacesMeal: s.ReplacesMeal,
 			Name:         row.Name,
 			SkippedDates: skipped[s.ID],
 			CreateTime:   s.CreateTime.Time,
