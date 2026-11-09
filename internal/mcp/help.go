@@ -47,21 +47,31 @@ type help struct {
 	// it for a long time after a deploy, so an agent missing a tool can
 	// compare it to tell an old tool list from a server without the tool.
 	version string
+	// tools are the tools, and outputs their responses' schemas, by name.
+	tools   map[string]*mcp.Tool
+	outputs map[string]*jsonschema.Schema
 }
 
-// newHelp returns the help of the services with the tools.
-func newHelp(guides []serviceGuide, tools []*mcp.Tool) *help {
+// newHelp returns the help of the services with the tools, and the
+// schemas of the tools' responses by name.
+func newHelp(guides []serviceGuide, tools []*mcp.Tool, outputs map[string]*jsonschema.Schema) *help {
+	h := &help{guides: guides, tools: map[string]*mcp.Tool{}, outputs: outputs}
 	hash := sha256.New()
 	for _, t := range tools {
-		// Tools marshal deterministically: their schemas' properties are
-		// maps, which encoding/json sorts.
-		data, err := json.Marshal(t)
-		if err != nil {
-			panic(fmt.Sprintf("marshaling tool %s: %v", t.Name, err))
+		h.tools[t.Name] = t
+		// Tools and schemas marshal deterministically: their properties
+		// are maps, which encoding/json sorts. A response's change changes
+		// the version too.
+		for _, v := range []any{t, outputs[t.Name]} {
+			data, err := json.Marshal(v)
+			if err != nil {
+				panic(fmt.Sprintf("marshaling tool %s: %v", t.Name, err))
+			}
+			hash.Write(data)
 		}
-		hash.Write(data)
 	}
-	return &help{guides: guides, version: hex.EncodeToString(hash.Sum(nil))[:12]}
+	h.version = hex.EncodeToString(hash.Sum(nil))[:12]
+	return h
 }
 
 // instructions returns the server instructions: the preamble, a summary of
@@ -73,7 +83,7 @@ func (h *help) instructions() string {
 			parts = append(parts, fmt.Sprintf("## %s\n\n%s", g.name, summary))
 		}
 	}
-	parts = append(parts, fmt.Sprintf("## Tool list\n\nThis server's tool list is version %s. If a tool the guides or the user mention is missing, call GetHelp: it lists the tools the server has now, so a tool it lists that you don't have means your client's tool list is out of date, and reconnecting the server refreshes it.", h.version))
+	parts = append(parts, fmt.Sprintf("## Tool list\n\nThis server's tool list is version %s. If a tool the guides or the user mention is missing, call GetHelp: it lists the tools the server has now, so a tool it lists that you don't have means your client's tool list is out of date, and reconnecting the server refreshes it. GetHelp with a tool gives its current input schema, if yours lacks a field, and the schema of its response, which tools don't list.", h.version))
 	return strings.Join(parts, "\n\n")
 }
 
@@ -88,13 +98,19 @@ func (h *help) tool() *mcp.Tool {
 		Title: "Get help",
 		Description: "Returns the guide of a service: how its tools fit together, with the steps for common tasks. " +
 			"With no service, returns every guide. Each guide lists the service's tools, and the result starts with the version of the tool list, " +
-			"which the server instructions also give: a tool listed here that your client doesn't have means its tool list is out of date.",
+			"which the server instructions also give: a tool listed here that your client doesn't have means its tool list is out of date. " +
+			"With a tool instead, returns its description, its current input schema and the schema of its response, " +
+			"to check a field your client's schema lacks, or what a response's fields mean.",
 		InputSchema: &jsonschema.Schema{
 			Type: "object",
 			Properties: map[string]*jsonschema.Schema{
 				"service": {
 					Type:        "string",
 					Description: "The service, e.g. " + strings.Join(names, ", ") + ". Leave it empty for all of them.",
+				},
+				"tool": {
+					Type:        "string",
+					Description: "A tool, e.g. UpdateRecipe, to get its schemas instead of a guide.",
 				},
 			},
 		},
@@ -111,11 +127,15 @@ func (h *help) tool() *mcp.Tool {
 func (h *help) handle(_ context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var in struct {
 		Service string `json:"service"`
+		Tool    string `json:"tool"`
 	}
 	if args := req.Params.Arguments; len(args) > 0 {
 		if err := json.Unmarshal(args, &in); err != nil {
-			return textResult(true, "Invalid arguments: pass an object with an optional service, e.g. {\"service\": \"PlanService\"}."), nil
+			return textResult(true, "Invalid arguments: pass an object with an optional service, e.g. {\"service\": \"PlanService\"}, or a tool, e.g. {\"tool\": \"UpdateRecipe\"}."), nil
 		}
+	}
+	if in.Tool != "" {
+		return h.describeTool(in.Tool), nil
 	}
 	guides := h.guides
 	if in.Service != "" {
@@ -136,6 +156,30 @@ func (h *help) handle(_ context.Context, req *mcp.CallToolRequest) (*mcp.CallToo
 		parts = append(parts, fmt.Sprintf("## %s\n\n%s\n\nTools: %s.", g.name, g.description, strings.Join(g.tools, ", ")))
 	}
 	return textResult(false, strings.Join(parts, "\n\n")), nil
+}
+
+// describeTool returns a tool's description and its input and response
+// schemas, as JSON.
+func (h *help) describeTool(name string) *mcp.CallToolResult {
+	var t *mcp.Tool
+	for n, tool := range h.tools {
+		if strings.EqualFold(n, name) {
+			t = tool
+		}
+	}
+	if t == nil {
+		return textResult(true, fmt.Sprintf("There's no tool %q: call GetHelp with a service, or none, to list the tools.", name))
+	}
+	data, err := json.MarshalIndent(struct {
+		Name         string `json:"name"`
+		Description  string `json:"description"`
+		InputSchema  any    `json:"inputSchema"`
+		OutputSchema any    `json:"outputSchema,omitempty"`
+	}{t.Name, t.Description, t.InputSchema, h.outputs[t.Name]}, "", " ")
+	if err != nil {
+		return textResult(true, fmt.Sprintf("Failed to describe %s: %v", t.Name, err))
+	}
+	return textResult(false, fmt.Sprintf("Tool list version %s.\n\n%s", h.version, data))
 }
 
 // textResult returns a tool result of a text.

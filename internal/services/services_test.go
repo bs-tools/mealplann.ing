@@ -53,6 +53,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/templates"
 	"github.com/bs-tools/mealplann.ing/internal/users"
 	"github.com/jackc/pgx/v5/pgtype"
+	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // env is a running server for a test, with clients authenticated as a user.
@@ -68,6 +69,8 @@ type env struct {
 	// The other user, whose token is otherToken, in another household.
 	otherUserID pgtype.UUID
 	srv         *httptest.Server
+	// mcpTools are the MCP server's tools.
+	mcpTools []*mcpsdk.Tool
 
 	// The user's settings, and OAuth connections below, are signed in with
 	// the session; the other clients with the API token.
@@ -212,6 +215,7 @@ func newEnv(t *testing.T) *env {
 	if err != nil {
 		t.Fatal(err)
 	}
+	e.mcpTools = mcpServer.Tools()
 	mux.Handle("/mcp", authn.RequireUser(resourceMetadataURL, mcpServer.Handler()))
 	handler, err := authn.NewAuthnMiddleware(ctx, log, report, userRepo, mux, authn.WithResourceMetadata(resourceMetadataURL))
 	if err != nil {
