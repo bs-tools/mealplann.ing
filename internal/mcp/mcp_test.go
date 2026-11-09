@@ -189,8 +189,10 @@ func TestNewServer(t *testing.T) {
 			if tool.InputSchema.(*jsonschema.Schema).Type != "object" {
 				t.Error("input schema is not an object")
 			}
-			if tool.OutputSchema.(*jsonschema.Schema).Type != "object" {
-				t.Error("output schema is not an object")
+			// Output schemas would make the tool list too big for clients
+			// to refresh; GetHelp gives them.
+			if tool.OutputSchema != nil {
+				t.Error("got an output schema, want none")
 			}
 		})
 	}
@@ -398,6 +400,22 @@ func TestInstructions(t *testing.T) {
 	if res.IsError || !strings.Contains(guide, "## pantry.v1.PantryService") || strings.Contains(guide, "FoodService manages") || !strings.Contains(guide, "Tools: ") {
 		t.Errorf("got guide %q, want only the pantry's, with its tools", guide)
 	}
+	// With a tool, it gives the tool's input and response schemas.
+	res, err = session.CallTool(ctx, &mcp.CallToolParams{Name: "GetHelp", Arguments: map[string]any{"tool": "createinvitation"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := res.Content[0].(*mcp.TextContent).Text
+	if res.IsError || !strings.Contains(text, `"name": "CreateInvitation"`) || !strings.Contains(text, `"inputSchema"`) || !strings.Contains(text, `"outputSchema"`) {
+		t.Errorf("got %q, want CreateInvitation's schemas", text)
+	}
+	res, err = session.CallTool(ctx, &mcp.CallToolParams{Name: "GetHelp", Arguments: map[string]any{"tool": "Nope"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !res.IsError {
+		t.Errorf("got %q, want an error for an unknown tool", res.Content[0].(*mcp.TextContent).Text)
+	}
 	res, err = session.CallTool(ctx, &mcp.CallToolParams{Name: "GetHelp", Arguments: map[string]any{"service": "Nope"}})
 	if err != nil {
 		t.Fatal(err)
@@ -544,14 +562,9 @@ func TestCallTool(t *testing.T) {
 			t.Errorf("text content %v != structured content %v", textMsg, got)
 		}
 
-		// The structured content validates against the output schema.
-		var tool *mcp.Tool
-		for _, tl := range srv.Tools() {
-			if tl.Name == "CreateInvitation" {
-				tool = tl
-			}
-		}
-		resolved, err := tool.OutputSchema.(*jsonschema.Schema).Resolve(nil)
+		// The structured content validates against the output schema
+		// GetHelp gives.
+		resolved, err := newOutputSchema((&authv1.CreateInvitationResponse{}).ProtoReflect().Descriptor()).Resolve(nil)
 		if err != nil {
 			t.Fatal(err)
 		}

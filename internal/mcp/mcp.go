@@ -22,6 +22,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/apidesc"
 	"github.com/bs-tools/mealplann.ing/internal/errreport"
 	mcpv1 "github.com/bs-tools/mealplann.ing/internal/gen/mcp/v1"
+	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -85,6 +86,8 @@ func NewServer(log *slog.Logger, report *errreport.Reporter, services ...Service
 		tools        []tool
 		toolServices = map[string]protoreflect.FullName{}
 		guides       []serviceGuide
+		// outputs are the schemas of the tools' responses, by name.
+		outputs = map[string]*jsonschema.Schema{}
 	)
 	for _, svc := range services {
 		sd, err := apidesc.Service(svc.Name)
@@ -112,6 +115,7 @@ func NewServer(log *slog.Logger, report *errreport.Reporter, services ...Service
 				return nil, fmt.Errorf("creating tool handler for %s: %w", md.FullName(), err)
 			}
 			tools = append(tools, tool{tool: newTool(md), handler: handler})
+			outputs[name] = newOutputSchema(md.Output())
 			guide.tools = append(guide.tools, name)
 		}
 		if len(guide.tools) > 0 {
@@ -125,7 +129,7 @@ func NewServer(log *slog.Logger, report *errreport.Reporter, services ...Service
 	for _, t := range tools {
 		defs = append(defs, t.tool)
 	}
-	help := newHelp(guides, defs)
+	help := newHelp(guides, defs, outputs)
 	tools = append(tools, tool{tool: help.tool(), handler: help.handle})
 
 	server := mcp.NewServer(&mcp.Implementation{
@@ -166,16 +170,19 @@ func (s *Server) Tools() []*mcp.Tool {
 	return s.tools
 }
 
-// newTool returns the tool definition for a method.
+// newTool returns the tool definition for a method. It has no output
+// schema: the responses' schemas are most of the tool list's size, which
+// grew past what clients refresh, leaving them with stale tool lists, and
+// responses are self-describing JSON. GetHelp gives a tool's response
+// schema on request.
 func newTool(md protoreflect.MethodDescriptor) *mcp.Tool {
 	name := string(md.Name())
 	readOnly := hasPrefix(name, readOnlyPrefixes...)
 	return &mcp.Tool{
-		Name:         name,
-		Title:        title(name),
-		Description:  apidesc.Comment(md),
-		InputSchema:  newInputSchema(md.Input()),
-		OutputSchema: newOutputSchema(md.Output()),
+		Name:        name,
+		Title:       title(name),
+		Description: apidesc.Comment(md),
+		InputSchema: newInputSchema(md.Input()),
 		Annotations: &mcp.ToolAnnotations{
 			Title:           title(name),
 			ReadOnlyHint:    readOnly,
