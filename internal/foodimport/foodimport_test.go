@@ -36,15 +36,20 @@ func TestIsExcludedCategory(t *testing.T) {
 func TestNormalizeUnit(t *testing.T) {
 	t.Parallel()
 	tests := map[string]string{
-		"µg":     "ug",
-		"μg":     "ug",
-		"UG":     "ug",
-		"mcg":    "ug",
-		"kCal":   "kcal",
-		"KCAL":   "kcal",
-		" g ":    "g",
-		"µg DFE": "ugdfe",
-		"µg_RAE": "ugrae",
+		"µg":          "ug",
+		"μg":          "ug",
+		"UG":          "ug",
+		"mcg":         "ug",
+		"kCal":        "kcal",
+		"KCAL":        "kcal",
+		" g ":         "g",
+		"µg DFE":      "ugdfe",
+		"µg_RAE":      "ugrae",
+		"gram":        "g",
+		"Milligrams":  "mg",
+		"microgram":   "ug",
+		"kilocalorie": "kcal",
+		"kilojoule":   "kj",
 	}
 	for unit, want := range tests {
 		if got := NormalizeUnit(unit); got != want {

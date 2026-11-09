@@ -71,15 +71,30 @@ func IsExcludedCategory(name string) bool {
 
 // NormalizeUnit normalizes the unit of a nutrient, so the sources'
 // spellings compare equal: lowercase, without spaces or underscores, with
-// micrograms as "ug" whether written "µg", "μg", "ug" or "mcg". FDC writes
-// "UG" in its CSV downloads and "µg" in its JSON, CNF "µg" and "kCal".
+// micrograms as "ug" whether written "µg", "μg", "ug" or "mcg", and units
+// spelled out as their symbols. FDC writes "UG" in its CSV downloads and "µg"
+// in its JSON, CNF 2015 "µg" and "kCal", and CNF 2026 "microgram" and
+// "kilocalorie".
 func NormalizeUnit(unit string) string {
 	u := strings.ToLower(strings.TrimSpace(unit))
 	u = strings.NewReplacer("µ", "u", "μ", "u", " ", "", "_", "").Replace(u)
 	if strings.HasPrefix(u, "mcg") {
 		u = "ug" + strings.TrimPrefix(u, "mcg")
 	}
+	if symbol, ok := unitSymbols[strings.TrimSuffix(u, "s")]; ok {
+		return symbol
+	}
 	return u
+}
+
+// unitSymbols are the symbols of the units sources spell out, in the
+// singular.
+var unitSymbols = map[string]string{
+	"gram":        "g",
+	"milligram":   "mg",
+	"microgram":   "ug",
+	"kilocalorie": "kcal",
+	"kilojoule":   "kj",
 }
 
 // Record is a row of a CSV file, with the columns of its header.

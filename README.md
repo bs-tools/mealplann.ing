@@ -79,21 +79,24 @@ Import either or both.
 
 #### Importing the Canadian Nutrient File
 
-Download the CSV files of CNF 2015, a zip file, from
-https://www.canada.ca/en/health-canada/services/food-nutrition/healthy-eating/nutrient-data/canadian-nutrient-file-2015-download-files.html,
-and import them into the local database, as the zip file or extracted, e.g.
-(with the zip file's name):
+Download the CSV files of CNF 2026 (or 2015), a zip file, from the Open
+Government Portal, https://open.canada.ca (search for "Canadian Nutrient
+File"), and import them into the local database, as the zip file or
+extracted, e.g. (with the zip file's name):
 
 ```sh
 $ make import-cnf CNF=cnf-fcen-csv.zip
 ```
 
 That runs `mealplanning import-cnf -database-url <url> <download>`, which
-also imports into other databases. It reads `FOOD NAME.csv`, `FOOD
-GROUP.csv`, `NUTRIENT NAME.csv`, `NUTRIENT AMOUNT.csv`, `CONVERSION
-FACTOR.csv` and `MEASURE NAME.csv`, found ignoring case, spaces and
-underscores, and files in Windows-1252 as well as UTF-8. It skips the food
-groups of meat, fish, dairy and eggs (see `excludedCategories` in
+also imports into other databases. It reads the 2026 edition's `Food Name`,
+`CNF Food Group`, `Nutrient Name`, `Nutrient Amount`, `Measure Weight
+Conversion`, `Measure Type` and `Measure Name` files, or the 2015 edition's
+`FOOD NAME.csv`, `FOOD GROUP.csv`, `NUTRIENT NAME.csv`, `NUTRIENT
+AMOUNT.csv`, `CONVERSION FACTOR.csv` and `MEASURE NAME.csv`, with either
+edition's column names. It finds the files ignoring case, spaces and
+underscores, and reads files in Windows-1252 as well as UTF-8. It skips the
+food groups of meat, fish, dairy and eggs (see `excludedCategories` in
 `internal/foodimport`), and importing again updates the foods. It checks
 that each CNF nutrient it reads has the name and unit it expects (see
 `sources` in `internal/cnf`, which documents the mapping), and fails naming

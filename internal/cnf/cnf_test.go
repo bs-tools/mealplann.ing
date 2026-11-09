@@ -27,6 +27,12 @@ import (
 // NAME.csv in UTF-8 with a byte order mark, and its lines end in CRLF.
 const downloadDir = "testdata/cnf_2015"
 
+// download2026Dir is the same download in CNF 2026's layout, with its files
+// and columns renamed, its units spelled out, its measures' weights in
+// grams, and refuse and yield weights, which aren't portions. Its files
+// are in UTF-8 with a byte order mark.
+const download2026Dir = "testdata/cnf_2026"
+
 // IDs of the fixture's foods.
 const (
 	margarineID = 102
@@ -202,6 +208,57 @@ func TestReadZip(t *testing.T) {
 	checkDownload(t, list, stats)
 }
 
+func TestRead2026(t *testing.T) {
+	t.Parallel()
+	list, stats, err := Read(os.DirFS(download2026Dir))
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	checkDownload(t, list, stats)
+
+	z, err := zip.OpenReader(zipDir(t, download2026Dir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer z.Close()
+	list, stats, err = Read(z)
+	if err != nil {
+		t.Fatalf("Read zip: %v", err)
+	}
+	checkDownload(t, list, stats)
+}
+
+// TestRead2026WithoutMeasureTypes reads CNF 2026 without its Measure Type
+// file, which leaves no way to tell portions from refuse and yield weights,
+// so its foods have no portions.
+func TestRead2026WithoutMeasureTypes(t *testing.T) {
+	t.Parallel()
+	fsys := fstest.MapFS{}
+	entries, err := os.ReadDir(download2026Dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if e.Name() == "Measure Type.csv" {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(download2026Dir, e.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		fsys[e.Name()] = &fstest.MapFile{Data: data}
+	}
+	list, _, err := Read(fsys)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	for _, f := range list {
+		if f.Portions != nil || f.Per100Grams[nutrition.EnergyKcal] == nil {
+			t.Errorf("got %s with portions %+v, want its nutrients and no portions", f.Description, f.Portions)
+		}
+	}
+}
+
 // TestReadOddNames reads the fixture with its files named in other ways,
 // in a directory, and their columns in other cases.
 func TestReadOddNames(t *testing.T) {
@@ -281,7 +338,7 @@ func TestReadErrors(t *testing.T) {
 	}{
 		"not a download": {
 			fsys:    fstest.MapFS{"dl/food.csv": {}, "dl/nutrient.csv": {}},
-			wantErr: "no FOOD NAME.csv or FOOD GROUP.csv or NUTRIENT NAME.csv or NUTRIENT AMOUNT.csv found; give the Canadian Nutrient File's CSV download, as a zip file or extracted (it has food.csv, nutrient.csv)",
+			wantErr: "no FOOD NAME.csv or FOOD GROUP.csv (CNF Food Group.csv in 2026) or NUTRIENT NAME.csv or NUTRIENT AMOUNT.csv found; give the Canadian Nutrient File's CSV download, as a zip file or extracted (it has food.csv, nutrient.csv)",
 		},
 		"no food groups": {
 			fsys: func() fstest.MapFS {
@@ -289,11 +346,11 @@ func TestReadErrors(t *testing.T) {
 				delete(fsys, "FOOD GROUP.csv")
 				return fsys
 			}(),
-			wantErr: "no FOOD GROUP.csv found",
+			wantErr: "no FOOD GROUP.csv (CNF Food Group.csv in 2026) found",
 		},
 		"unknown food group": {
 			fsys:    download(macros, "12,Nuts and Seeds\n"),
-			wantErr: `FOOD NAME.csv, line 2: food 1 is in food group "11", which FOOD GROUP.csv doesn't have`,
+			wantErr: `FOOD NAME.csv, line 2: food 1 is in food group "11", which the food group file doesn't have`,
 		},
 		// A release that numbers its nutrients differently.
 		"renumbered": {
