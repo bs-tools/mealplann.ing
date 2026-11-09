@@ -7,18 +7,24 @@ import {
   listRecipes,
 } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import React from "react";
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 
 /**
- * RecipeEditPage creates a recipe at /recipes/new, or edits one at
- * /recipes/:id/edit.
+ * RecipeEditPage creates a recipe at /recipes/new, optionally as a copy of
+ * another with ?from=its ID, or edits one at /recipes/:id/edit.
  */
 const RecipeEditPage: React.FC = () => {
   const { id } = useParams();
+  const [params] = useSearchParams();
+  // The recipe edited, or else copied.
+  const sourceID = id ?? params.get("from") ?? undefined;
   // The household's tags are offered for reuse, so both start together.
-  const recipe = useQuery(getRecipe, id === undefined ? skipToken : { id });
+  const recipe = useQuery(
+    getRecipe,
+    sourceID === undefined ? skipToken : { id: sourceID }
+  );
   const recipes = useQuery(listRecipes, {});
-  if ((id !== undefined && recipe.isPending) || recipes.isPending) {
+  if ((sourceID !== undefined && recipe.isPending) || recipes.isPending) {
     return <Loading />;
   }
   if (recipe.isError) {
@@ -43,8 +49,9 @@ const RecipeEditPage: React.FC = () => {
   }
   return (
     <RecipeForm
-      key={id ?? "new"}
-      recipe={recipe.data?.recipe}
+      key={id ?? `new-${sourceID ?? ""}`}
+      recipe={id === undefined ? undefined : recipe.data?.recipe}
+      copyOf={id === undefined ? recipe.data?.recipe : undefined}
       allTags={recipes.data.tags}
     />
   );
