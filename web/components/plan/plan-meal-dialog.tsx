@@ -14,14 +14,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Person } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
 import { planMeal } from "gen/plans/v1/plans-PlanService_connectquery";
-import type { PlanMealResponse } from "gen/plans/v1/plans_pb";
+import type { PlanMealResponse, Staple } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
-import { formatDay } from "helpers/format";
+import { formatDay, formatList } from "helpers/format";
 import { HOUSEHOLD_MEALS, formatServings, optionValue } from "helpers/labels";
 import { formatAmount } from "helpers/nutrients";
 import { parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
+import { staplesAt } from "helpers/staples";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
@@ -36,6 +37,8 @@ interface PlanMealDialogProps {
   // The meal chosen first, dinner if undefined.
   meal?: HouseholdMeal | undefined;
   people: Person[];
+  // The household's staples: people with one at the meal eat it instead.
+  staples: Staple[];
   recipes: RecipeSummary[];
   onClose: () => void;
 }
@@ -52,6 +55,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   date: initialDate,
   meal: initialMeal,
   people,
+  staples,
   recipes,
   onClose,
 }) => {
@@ -63,7 +67,19 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   const eaters = people.filter((person) =>
     person.eatingTimes.some((et) => et.meal === meal)
   );
-  const [skipped, setSkipped] = useState<string[]>([]);
+  /*
+   * The people whose choice is flipped from the default: everyone who eats
+   * from the meal, but those with a staple at it, who eat their staple.
+   */
+  const [flipped, setFlipped] = useState<string[]>([]);
+  const stapled = new Map(
+    eaters.map((person) => [
+      person.id,
+      staplesAt(staples, person, meal, date).map((staple) => staple.name),
+    ])
+  );
+  const eatsByDefault = (id: string): boolean =>
+    (stapled.get(id) ?? []).length === 0;
   const [servings, setServings] = useState("");
   const [notes, setNotes] = useState("");
   const [invalid, setInvalid] = useState("");
@@ -88,10 +104,15 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
     );
   }
 
-  const chosen = eaters.filter((person) => !skipped.includes(person.id));
-  // Everyone who eats from the meal is sent as no one, like PlanMeal takes.
+  const chosen = eaters.filter(
+    (person) => eatsByDefault(person.id) !== flipped.includes(person.id)
+  );
+  /*
+   * The default, everyone without a staple at the meal, is sent as no one,
+   * which PlanMeal takes as the same.
+   */
   const personIds =
-    chosen.length === eaters.length ? [] : chosen.map((person) => person.id);
+    flipped.length === 0 ? [] : chosen.map((person) => person.id);
   const save = () => {
     setInvalid("");
     const value = parseOptionalNumber(servings);
@@ -178,13 +199,24 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
               {eaters.map((person) => (
                 <CheckboxField
                   key={person.id}
-                  label={person.name}
-                  checked={!skipped.includes(person.id)}
-                  onChange={(checked) => {
-                    setSkipped(
-                      checked
-                        ? skipped.filter((id) => id !== person.id)
-                        : [...skipped, person.id]
+                  label={
+                    eatsByDefault(person.id) ? (
+                      person.name
+                    ) : (
+                      <>
+                        {person.name}{" "}
+                        <span className="text-xs text-gray-500">
+                          has {formatList(stapled.get(person.id) ?? [])}
+                        </span>
+                      </>
+                    )
+                  }
+                  checked={chosen.includes(person)}
+                  onChange={() => {
+                    setFlipped(
+                      flipped.includes(person.id)
+                        ? flipped.filter((id) => id !== person.id)
+                        : [...flipped, person.id]
                     );
                   }}
                 />

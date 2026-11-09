@@ -233,6 +233,13 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 	if err != nil {
 		return nil, err
 	}
+	// People with a staple at the meal eat it instead, unless they're
+	// asked for.
+	if len(personIDs) == 0 {
+		if eaters, _ = withoutStapled(eaters, d.plan.Staples, meal, date); len(eaters) == 0 {
+			return nil, allStapled(meal, date)
+		}
+	}
 	split, err := plans.SplitMeal(&plans.SplitInput{
 		Date:            date,
 		Meal:            meal,
@@ -302,6 +309,54 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 		UnassignedServings: split.Unassigned,
 		Warnings:           warnings,
 	}.Build(), nil
+}
+
+// stapledAt returns the staples a person has at their eating time for a
+// shared meal on a date: what they always have there, like their own
+// breakfast.
+func stapledAt(staples []*plans.Staple, p *people.Person, meal people.Meal, date time.Time) []*plans.Staple {
+	var found []*plans.Staple
+	for _, et := range p.EatingTimes {
+		if et.Meal != meal {
+			continue
+		}
+		for _, s := range staples {
+			if s.PersonID == p.ID && s.EatingTimeID == et.ID && s.OccursOn(date) {
+				found = append(found, s)
+			}
+		}
+	}
+	return found
+}
+
+// withoutStapled returns the people who eat a shared meal on a date but
+// have no staple at it: those with one eat their staple instead, so the
+// meal isn't planned for them. It also returns the names of the staples
+// of those left out.
+func withoutStapled(eaters []*people.Person, staples []*plans.Staple, meal people.Meal, date time.Time) ([]*people.Person, []string) {
+	kept := make([]*people.Person, 0, len(eaters))
+	var names []string
+	for _, p := range eaters {
+		found := stapledAt(staples, p, meal, date)
+		if len(found) == 0 {
+			kept = append(kept, p)
+			continue
+		}
+		for _, s := range found {
+			if !slices.Contains(names, s.Name) {
+				names = append(names, s.Name)
+			}
+		}
+	}
+	return kept, names
+}
+
+// allStapled says that everyone who eats a shared meal on a date has a
+// staple at it, so it's not planned for anyone.
+func allStapled(meal people.Meal, date time.Time) error {
+	return connect.Errorf(connect.CodeFailedPrecondition,
+		"everyone who eats the shared %s on %s has a staple at it, which they eat instead: skip a staple on that date with SkipStaple, or give person_ids to plan the meal for them too",
+		meal, store.FormatDate(date))
 }
 
 // mealEaters returns the people who eat a shared meal: those of personIDs,

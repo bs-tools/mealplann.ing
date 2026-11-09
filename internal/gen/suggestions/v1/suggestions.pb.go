@@ -469,8 +469,8 @@ type SuggestRecipesRequest_builder struct {
 	EatingTime *EatingTimeSlot
 	// -- end of xxx_hidden_Slot
 	// For a shared meal, the people who eat it, each of whom must have an
-	// eating time for it. Empty for everyone who does. Ignored for an eating
-	// time.
+	// eating time for it. Empty for everyone who does and has no staple at it
+	// that day. Ignored for an eating time.
 	PersonIds []string
 	// How many suggestions to return, from 1 to 50. 0 for 8.
 	MaxSuggestions int32
