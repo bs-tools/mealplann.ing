@@ -106,6 +106,50 @@ func personalEatingTime(all []*people.Person, field, rawPersonID, rawEatingTimeI
 	return all[i], et, nil
 }
 
+// inDayOrder returns slot keys by date, and each day's in the order its
+// people eat them, as the plan shows days, rather than in the order they're
+// planned in, shared meals first: a person's snack between breakfast and
+// lunch is between them. A slot's place is where its eating time is in
+// its person's day, as a fraction of their eating times, and a shared
+// meal's the earliest of its eaters'. Ties keep the planning order, shared
+// meals first.
+func inDayOrder(keys []slotKey, all []*people.Person, eaters map[people.Meal][]*people.Person) []slotKey {
+	// place is where an eating time is in its person's day, from 0 to 1.
+	place := func(p *people.Person, match func(*people.EatingTime) bool) (float64, bool) {
+		for i, et := range p.EatingTimes {
+			if match(et) {
+				return float64(i) / float64(len(p.EatingTimes)), true
+			}
+		}
+		return 0, false
+	}
+	places := map[slotKey]float64{}
+	for _, key := range keys {
+		best, found := 1.0, false
+		if key.personal() {
+			if i := slices.IndexFunc(all, func(p *people.Person) bool { return p.ID == key.personID }); i >= 0 {
+				best, found = place(all[i], func(et *people.EatingTime) bool { return et.ID == key.eatingTimeID })
+			}
+		} else {
+			for _, p := range eaters[key.meal] {
+				if at, ok := place(p, func(et *people.EatingTime) bool { return et.Meal == key.meal }); ok && (!found || at < best) {
+					best, found = at, true
+				}
+			}
+		}
+		if !found {
+			// A meal nobody eats at an eating time goes by its own order.
+			best = float64(slices.Index(mealOrder, key.meal)) / float64(len(mealOrder))
+		}
+		places[key] = best
+	}
+	sorted := slices.Clone(keys)
+	slices.SortStableFunc(sorted, func(a, b slotKey) int {
+		return cmp.Or(a.date.Compare(b.date), cmp.Compare(places[a], places[b]))
+	})
+	return sorted
+}
+
 // personalSlots returns the eating times of one person that eat from no
 // shared meal, by person and in the order of their day.
 func personalSlots(all []*people.Person) []struct {
@@ -377,7 +421,7 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 		planned[ps.Slot] = ps
 	}
 	slots := make([]*suggestionsv1.PlanSlot, 0, len(keys))
-	for _, key := range keys {
+	for _, key := range inDayOrder(keys, d.people, eaters) {
 		b := suggestionsv1.PlanSlot_builder{
 			Date:  store.FormatDate(key.date),
 			Meal:  person.MealsToProto[key.meal],

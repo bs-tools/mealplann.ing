@@ -299,8 +299,8 @@ func TestSuggestPlanPersonalEatingTimes(t *testing.T) {
 		return slices.Contains(allowed[slot], sg.GetRecipeName()) || (slot == "Mid-morning" || slot == "Evening") && sg.HasLeftoverOf()
 	}
 
-	// Two days of the whole household: each day's three shared meals, then
-	// Cleo's two snacks.
+	// Two days of the whole household: each day's three shared meals and
+	// Cleo's two snacks, in the order she eats them.
 	resp, err := e.suggestions.SuggestPlan(ctx, suggestionsv1.SuggestPlanRequest_builder{StartDate: monday, Days: 2, Seed: 7}.Build())
 	if err != nil {
 		t.Fatalf("SuggestPlan: %v", err)
@@ -325,10 +325,10 @@ func TestSuggestPlanPersonalEatingTimes(t *testing.T) {
 		}
 	}
 	want := []string{
-		monday + " HOUSEHOLD_MEAL_BREAKFAST", monday + " HOUSEHOLD_MEAL_LUNCH", monday + " HOUSEHOLD_MEAL_DINNER",
-		monday + " Mid-morning", monday + " Evening",
-		tuesday + " HOUSEHOLD_MEAL_BREAKFAST", tuesday + " HOUSEHOLD_MEAL_LUNCH", tuesday + " HOUSEHOLD_MEAL_DINNER",
-		tuesday + " Mid-morning", tuesday + " Evening",
+		monday + " HOUSEHOLD_MEAL_BREAKFAST", monday + " Mid-morning", monday + " HOUSEHOLD_MEAL_LUNCH",
+		monday + " HOUSEHOLD_MEAL_DINNER", monday + " Evening",
+		tuesday + " HOUSEHOLD_MEAL_BREAKFAST", tuesday + " Mid-morning", tuesday + " HOUSEHOLD_MEAL_LUNCH",
+		tuesday + " HOUSEHOLD_MEAL_DINNER", tuesday + " Evening",
 	}
 	if !slices.Equal(got, want) {
 		t.Fatalf("got slots %v, want %v", got, want)
@@ -346,7 +346,7 @@ func TestSuggestPlanPersonalEatingTimes(t *testing.T) {
 	}
 
 	// Keeping a snack, and leaving another empty.
-	monMorning, monEvening := resp.GetSlots()[3], resp.GetSlots()[4]
+	monMorning, monEvening := resp.GetSlots()[1], resp.GetSlots()[4]
 	kept, err := e.suggestions.SuggestPlan(ctx, suggestionsv1.SuggestPlanRequest_builder{
 		StartDate: monday, Days: 1,
 		Choices: []*suggestionsv1.PlanChoice{
@@ -357,7 +357,7 @@ func TestSuggestPlanPersonalEatingTimes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SuggestPlan: %v", err)
 	}
-	if s := kept.GetSlots()[3]; s.GetState() != suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_KEPT || s.GetSuggestion().GetRecipeName() != "Roasted chickpeas" {
+	if s := kept.GetSlots()[1]; s.GetState() != suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_KEPT || s.GetSuggestion().GetRecipeName() != "Roasted chickpeas" {
 		t.Errorf("got %v, want the kept roasted chickpeas", personalSlotSummary(s))
 	}
 	if s := kept.GetSlots()[4]; s.GetState() != suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_SKIPPED {

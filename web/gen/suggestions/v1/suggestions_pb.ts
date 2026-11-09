@@ -700,8 +700,10 @@ export const PlanSlotSchema: GenMessage<PlanSlot> = /*@__PURE__*/
  */
 export type SuggestPlanResponse = Message<"suggestions.v1.SuggestPlanResponse"> & {
   /**
-   * Every slot of the days, by date: the shared meals, in order, then the
-   * eating times of one person, by person and in the order of their day.
+   * Every slot of the days, by date, each day's in the order they're
+   * eaten: one person's eating time where it is in their day, like a
+   * snack between breakfast and lunch, and a shared meal where its eaters
+   * eat it.
    *
    * @generated from field: repeated suggestions.v1.PlanSlot slots = 1;
    */
