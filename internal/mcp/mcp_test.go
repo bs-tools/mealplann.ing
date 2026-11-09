@@ -22,6 +22,7 @@ import (
 	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
 	"github.com/bs-tools/mealplann.ing/internal/gen/foods/v1/foodsv1connect"
 	"github.com/bs-tools/mealplann.ing/internal/gen/oauth/v1/oauthv1connect"
+	pantryv1 "github.com/bs-tools/mealplann.ing/internal/gen/pantry/v1"
 	"github.com/bs-tools/mealplann.ing/internal/gen/pantry/v1/pantryv1connect"
 	"github.com/bs-tools/mealplann.ing/internal/gen/people/v1/peoplev1connect"
 	"github.com/bs-tools/mealplann.ing/internal/gen/plans/v1/plansv1connect"
@@ -789,6 +790,25 @@ func TestCallToolFieldMaskForms(t *testing.T) {
 		got := recipes.updates[len(recipes.updates)-1].GetUpdateMask().GetPaths()
 		if want := []string{"prep_ahead_days", "nutrition.total_grams"}; !slices.Equal(got, want) {
 			t.Errorf("mask %v: got paths %v, want %v", mask, got, want)
+		}
+	}
+}
+
+// TestWantsSummary checks that requests for a summary are told apart, so
+// their responses leave out fields at their default values.
+func TestWantsSummary(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name string
+		msg  proto.Message
+		want bool
+	}{
+		{"summary", pantryv1.ListPantryRequest_builder{Summary: true}.Build(), true},
+		{"not asked", pantryv1.ListPantryRequest_builder{}.Build(), false},
+		{"no summary field", &authv1.CreateInvitationRequest{}, false},
+	} {
+		if got := wantsSummary(tt.msg.ProtoReflect()); got != tt.want {
+			t.Errorf("%s: got %v, want %v", tt.name, got, tt.want)
 		}
 	}
 }

@@ -497,11 +497,18 @@ message ListFoodsRequest {
   // Only list foods whose name contains this text, ignoring case. Empty to
   // list all.
   string query = 1;
-  // The most foods to return, from 1 to 200. 50 if 0.
+  // The most foods to return, from 1 to 200. 25 if 0.
   int32 page_size = 2;
   // The next_page_token of the previous page, to get the next one. Empty for
   // the first page.
   string page_token = 3;
+  // Whether to return only each food's ID, name, and how it's weighed,
+  // measured and stocked (grams_per_piece, grams_per_milliliter, measure,
+  // package_grams, store_section, preferred_store_id, always_in_stock),
+  // leaving out its nutrients, prices, notes and times, and any fields at
+  // their default values, to look foods up cheaply. Get a food's details
+  // with GetFood.
+  bool summary = 4;
 }
 
 message ListFoodsResponse {

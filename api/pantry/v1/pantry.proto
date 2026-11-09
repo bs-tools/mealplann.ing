@@ -146,13 +146,18 @@ message ListPantryRequest {
   // Only list lots to use within this many days from today (UTC),
   // including those already past their use-by date. Unset to list all.
   optional int32 expiring_within_days = 3;
-  // Whether to leave out the lots' create and update times, to keep a
-  // large pantry's response small.
+  // Whether to return only each lot's ID, food, grams, use-by date, days
+  // to expiry, storage, and whether it's opened or estimated, leaving out
+  // its other fields and any at their default values, to keep a large
+  // pantry's response small. Get a lot's details from a full listing.
   bool summary = 4;
   // Only list lots kept there. STORAGE_UNSPECIFIED to list all.
   Storage storage = 5;
   // Only list lots whose amounts are guesses, for the user to check.
   bool estimated_only = 6;
+  // Only list lots, and foods always in stock, whose food's name contains
+  // this text, ignoring case, e.g. "tofu". Empty to list all.
+  string query = 7;
 }
 
 message ListPantryResponse {

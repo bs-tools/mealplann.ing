@@ -64,7 +64,7 @@ const (
 	maxQueryLength = 200
 	// defaultPageSize and maxPageSize are the default and most foods
 	// ListFoods returns at once.
-	defaultPageSize = 50
+	defaultPageSize = 25
 	maxPageSize     = 200
 )
 
@@ -261,7 +261,21 @@ func (s *Service) ListFoods(ctx context.Context, req *foodsv1.ListFoodsRequest) 
 	}
 	result := make([]*foodsv1.Food, 0, len(list))
 	for _, f := range list {
-		result = append(result, foodToProto(f))
+		p := foodToProto(f)
+		if req.GetSummary() {
+			p = foodsv1.Food_builder{
+				Id:                 p.GetId(),
+				Name:               p.GetName(),
+				GramsPerPiece:      p.GetGramsPerPiece(),
+				GramsPerMilliliter: p.GetGramsPerMilliliter(),
+				Measure:            p.GetMeasure(),
+				PackageGrams:       p.GetPackageGrams(),
+				StoreSection:       p.GetStoreSection(),
+				PreferredStoreId:   p.GetPreferredStoreId(),
+				AlwaysInStock:      p.GetAlwaysInStock(),
+			}.Build()
+		}
+		result = append(result, p)
 	}
 	return foodsv1.ListFoodsResponse_builder{Foods: result, NextPageToken: next}.Build(), nil
 }

@@ -1944,8 +1944,9 @@ type GetRecipeRequest_builder struct {
 	// Whether to return a summary: only the main nutrients (energy_kcal,
 	// protein_grams and carbohydrate_grams), and none of the steps, original
 	// ingredient texts, nutrition per 100 g, incomplete nutrients, ingredient
-	// issues, or create and update times. Use it to scan, and read the full
-	// response only for what needs a closer look.
+	// issues, or create and update times, nor fields at their default
+	// values. Use it to scan, and read the full response only for what needs
+	// a closer look.
 	Summary bool
 }
 
@@ -2034,6 +2035,7 @@ type ListRecipesRequest struct {
 	xxx_hidden_Tags          []string               `protobuf:"bytes,2,rep,name=tags,proto3"`
 	xxx_hidden_FavoritesOnly bool                   `protobuf:"varint,3,opt,name=favorites_only,json=favoritesOnly,proto3"`
 	xxx_hidden_FoodIds       []string               `protobuf:"bytes,4,rep,name=food_ids,json=foodIds,proto3"`
+	xxx_hidden_Summary       bool                   `protobuf:"varint,6,opt,name=summary,proto3"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -2091,6 +2093,13 @@ func (x *ListRecipesRequest) GetFoodIds() []string {
 	return nil
 }
 
+func (x *ListRecipesRequest) GetSummary() bool {
+	if x != nil {
+		return x.xxx_hidden_Summary
+	}
+	return false
+}
+
 func (x *ListRecipesRequest) SetQuery(v string) {
 	x.xxx_hidden_Query = v
 }
@@ -2105,6 +2114,10 @@ func (x *ListRecipesRequest) SetFavoritesOnly(v bool) {
 
 func (x *ListRecipesRequest) SetFoodIds(v []string) {
 	x.xxx_hidden_FoodIds = v
+}
+
+func (x *ListRecipesRequest) SetSummary(v bool) {
+	x.xxx_hidden_Summary = v
 }
 
 type ListRecipesRequest_builder struct {
@@ -2122,6 +2135,11 @@ type ListRecipesRequest_builder struct {
 	// only through a component recipe aren't listed: the component is. Empty
 	// to list all. At most 100.
 	FoodIds []string
+	// Whether to return only each recipe's ID, name, servings, tags,
+	// favorite, and main nutrients and cost per serving, leaving out its
+	// description, times and weight, and any fields at their default values,
+	// to keep a long list small.
+	Summary bool
 }
 
 func (b0 ListRecipesRequest_builder) Build() *ListRecipesRequest {
@@ -2132,6 +2150,7 @@ func (b0 ListRecipesRequest_builder) Build() *ListRecipesRequest {
 	x.xxx_hidden_Tags = b.Tags
 	x.xxx_hidden_FavoritesOnly = b.FavoritesOnly
 	x.xxx_hidden_FoodIds = b.FoodIds
+	x.xxx_hidden_Summary = b.Summary
 	return m0
 }
 
@@ -3284,12 +3303,13 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\asummary\x18\x03 \x01(\bR\asummary\"?\n" +
 	"\x11GetRecipeResponse\x12*\n" +
-	"\x06recipe\x18\x01 \x01(\v2\x12.recipes.v1.RecipeR\x06recipe\"\x9c\x01\n" +
+	"\x06recipe\x18\x01 \x01(\v2\x12.recipes.v1.RecipeR\x06recipe\"\xb6\x01\n" +
 	"\x12ListRecipesRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x12\n" +
 	"\x04tags\x18\x02 \x03(\tR\x04tags\x12%\n" +
 	"\x0efavorites_only\x18\x03 \x01(\bR\rfavoritesOnly\x12\x19\n" +
-	"\bfood_ids\x18\x04 \x03(\tR\afoodIdsJ\x04\b\x05\x10\x06R\x14without_instructions\"^\n" +
+	"\bfood_ids\x18\x04 \x03(\tR\afoodIds\x12\x18\n" +
+	"\asummary\x18\x06 \x01(\bR\asummaryJ\x04\b\x05\x10\x06R\x14without_instructions\"^\n" +
 	"\x13ListRecipesResponse\x123\n" +
 	"\arecipes\x18\x01 \x03(\v2\x19.recipes.v1.RecipeSummaryR\arecipes\x12\x12\n" +
 	"\x04tags\x18\x02 \x03(\tR\x04tags\"~\n" +

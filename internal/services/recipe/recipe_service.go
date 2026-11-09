@@ -204,7 +204,15 @@ func (s *Service) ListRecipes(ctx context.Context, req *recipesv1.ListRecipesReq
 	}
 	summaries := make([]*recipesv1.RecipeSummary, 0, len(list))
 	for _, r := range list {
-		summaries = append(summaries, summaryToProto(r))
+		summary := summaryToProto(r)
+		if req.GetSummary() {
+			summary.SetDescription("")
+			summary.SetPrepSeconds(0)
+			summary.SetCookSeconds(0)
+			summary.SetGramsPerServing(0)
+			summary.ClearUpdateTime()
+		}
+		summaries = append(summaries, summary)
 	}
 	return recipesv1.ListRecipesResponse_builder{Recipes: summaries, Tags: allTags}.Build(), nil
 }

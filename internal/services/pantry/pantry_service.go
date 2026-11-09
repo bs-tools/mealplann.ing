@@ -124,8 +124,10 @@ func (s *Service) ListPantry(ctx context.Context, req *pantryv1.ListPantryReques
 	}
 	// keep reports whether a food is listed. The pantry is read whole and
 	// filtered here: it's a few hundred lots at most, in one round trip.
-	keep := func(foodID string, section foodsv1.StoreSection) bool {
+	query := strings.ToLower(strings.TrimSpace(req.GetQuery()))
+	keep := func(foodID, name string, section foodsv1.StoreSection) bool {
 		return (len(foodIDs) == 0 || foodIDs[foodID]) &&
+			(query == "" || strings.Contains(strings.ToLower(name), query)) &&
 			(req.GetStoreSection() == foodsv1.StoreSection_STORE_SECTION_UNSPECIFIED || section == req.GetStoreSection())
 	}
 	items, err := s.pantry.ListItems(ctx, user.HouseholdID())
@@ -141,7 +143,7 @@ func (s *Service) ListPantry(ctx context.Context, req *pantryv1.ListPantryReques
 	result := make([]*pantryv1.PantryItem, 0, len(items))
 	for _, it := range items {
 		item := ItemToProto(it, today)
-		if !keep(item.GetFoodId(), item.GetStoreSection()) {
+		if !keep(item.GetFoodId(), item.GetFoodName(), item.GetStoreSection()) {
 			continue
 		}
 		if req.HasExpiringWithinDays() && (!item.HasDaysToExpiry() || item.GetDaysToExpiry() > req.GetExpiringWithinDays()) {
@@ -152,8 +154,20 @@ func (s *Service) ListPantry(ctx context.Context, req *pantryv1.ListPantryReques
 			continue
 		}
 		if req.GetSummary() {
-			item.ClearCreateTime()
-			item.ClearUpdateTime()
+			b := pantryv1.PantryItem_builder{
+				Id:        item.GetId(),
+				FoodId:    item.GetFoodId(),
+				FoodName:  item.GetFoodName(),
+				Grams:     item.GetGrams(),
+				UseByDate: item.GetUseByDate(),
+				Storage:   item.GetStorage(),
+				Opened:    item.GetOpened(),
+				Estimated: item.GetEstimated(),
+			}
+			if item.HasDaysToExpiry() {
+				b.DaysToExpiry = new(item.GetDaysToExpiry())
+			}
+			item = b.Build()
 		}
 		result = append(result, item)
 	}
@@ -165,7 +179,7 @@ func (s *Service) ListPantry(ctx context.Context, req *pantryv1.ListPantryReques
 		// Foods always in stock never expire, nor have a storage or an
 		// estimated amount, so they aren't listed with lots filtered by
 		// those.
-		if !keep(store.UUIDToString(f.ID), section) || req.HasExpiringWithinDays() ||
+		if !keep(store.UUIDToString(f.ID), f.Name, section) || req.HasExpiringWithinDays() ||
 			req.GetStorage() != pantryv1.Storage_STORAGE_UNSPECIFIED || req.GetEstimatedOnly() {
 			continue
 		}

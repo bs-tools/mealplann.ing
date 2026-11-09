@@ -263,7 +263,11 @@ func newToolHandler(log *slog.Logger, report *errreport.Reporter, impl any, md p
 		}
 		msg := out[0].Interface().(proto.Message)
 		images := takeImages(msg.ProtoReflect())
-		data, err := outputOptions.Marshal(msg)
+		options := outputOptions
+		if wantsSummary(in.ProtoReflect()) {
+			options = summaryOutputOptions
+		}
+		data, err := options.Marshal(msg)
 		if err != nil {
 			return nil, fmt.Errorf("marshaling %s response: %w", method, err)
 		}
@@ -304,6 +308,18 @@ func validateSignature(fnType reflect.Type, inType, outType protoreflect.Message
 // can tell a draft report from a published one rather than seeing no status.
 // That makes results about 3% larger.
 var outputOptions = protojson.MarshalOptions{EmitDefaultValues: true}
+
+// summaryOutputOptions encode the results of requests for a summary, which
+// leave fields at their default values out, as they're asked for to keep
+// large responses small.
+var summaryOutputOptions = protojson.MarshalOptions{}
+
+// wantsSummary reports whether a request asks for a summary: it has a bool
+// field summary that's set.
+func wantsSummary(m protoreflect.Message) bool {
+	fd := m.Descriptor().Fields().ByName("summary")
+	return fd != nil && fd.Kind() == protoreflect.BoolKind && !fd.IsList() && m.Get(fd).Bool()
+}
 
 // takeImages clears the message's top-level mcp.v1.Image fields, and returns
 // the images they had, to return as image content instead of JSON.

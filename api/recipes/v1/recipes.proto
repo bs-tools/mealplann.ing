@@ -29,6 +29,13 @@ import "mcp/v1/options.proto";
 // chickpeas" the night before. Components can have components of their
 // own, but no deeper, and a recipe can't use itself.
 //
+// To swap one food for another, like super-firm tofu for extra-firm, or
+// canned beans for beans cooked from dry: find the recipes using it with
+// ListRecipes and food_ids (with summary, to keep the list small), and
+// replace it in all of them at once with ReplaceFood, with amount_ratio to
+// scale the amounts. ListRecipes, ListFoods and PantryService.ListPantry
+// all take summary for a smaller response.
+//
 // A recipe's steps are its instructions: each step's text, the ingredients
 // it uses, how long it takes, whether it's waiting time, and the steps it
 // follows. To write them:
@@ -365,8 +372,9 @@ message GetRecipeRequest {
   // Whether to return a summary: only the main nutrients (energy_kcal,
   // protein_grams and carbohydrate_grams), and none of the steps, original
   // ingredient texts, nutrition per 100 g, incomplete nutrients, ingredient
-  // issues, or create and update times. Use it to scan, and read the full
-  // response only for what needs a closer look.
+  // issues, or create and update times, nor fields at their default
+  // values. Use it to scan, and read the full response only for what needs
+  // a closer look.
   bool summary = 3;
 }
 
@@ -390,6 +398,11 @@ message ListRecipesRequest {
   repeated string food_ids = 4;
   reserved 5;
   reserved "without_instructions";
+  // Whether to return only each recipe's ID, name, servings, tags,
+  // favorite, and main nutrients and cost per serving, leaving out its
+  // description, times and weight, and any fields at their default values,
+  // to keep a long list small.
+  bool summary = 6;
 }
 
 message ListRecipesResponse {
