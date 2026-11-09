@@ -1,5 +1,7 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
+import type { PickedRecipe } from "@components/recipes/recipe-picker";
+import RecipePicker from "@components/recipes/recipe-picker";
 import { CheckboxField, SelectField, TextField } from "@components/ui/fields";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
@@ -21,7 +23,6 @@ import {
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type { Staple, Weekday } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
-import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
 import { today } from "helpers/dates";
 import {
   AMOUNT_UNITS,
@@ -40,8 +41,6 @@ interface StapleDialogProps {
   person: Person;
   // The staple to edit, or undefined to create one.
   staple?: Staple | undefined;
-  // The household's recipes, to choose from.
-  recipes: RecipeSummary[];
   onClose: () => void;
 }
 
@@ -53,7 +52,6 @@ interface StapleDialogProps {
 const StapleDialog: React.FC<StapleDialogProps> = ({
   person,
   staple,
-  recipes,
   onClose,
 }) => {
   const queryClient = useQueryClient();
@@ -73,11 +71,12 @@ const StapleDialog: React.FC<StapleDialogProps> = ({
   const [unit, setUnit] = useState(
     staple?.what.case === "food" ? staple.what.value.unit : AmountUnit.GRAMS
   );
-  const [recipeId, setRecipeId] = useState(
+  const [recipe, setRecipe] = useState<PickedRecipe | null>(
     staple?.what.case === "recipe"
-      ? staple.what.value.recipeId
-      : (recipes[0]?.id ?? "")
+      ? { id: staple.what.value.recipeId, name: staple.name }
+      : null
   );
+  const recipeId = recipe?.id ?? "";
   const [servings, setServings] = useState(
     staple?.what.case === "recipe" ? String(staple.what.value.servings) : "1"
   );
@@ -254,15 +253,14 @@ const StapleDialog: React.FC<StapleDialogProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-[1fr_6rem] items-end gap-2">
-            <SelectField
-              label="Recipe"
-              value={recipeId}
-              options={recipes.map((recipe) => ({
-                label: recipe.name,
-                value: recipe.id,
-              }))}
-              onChange={setRecipeId}
-            />
+            <div className="flex flex-col gap-1">
+              <span className={labelClass}>Recipe</span>
+              <RecipePicker
+                value={recipe}
+                onChange={setRecipe}
+                label="Recipe"
+              />
+            </div>
             <TextField
               label="Servings"
               value={servings}
