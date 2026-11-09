@@ -68,11 +68,15 @@ type SuggestionServiceClient interface {
 	//     time, like the minimum protein or the carbohydrate pairing.
 	//   - KEEPING: what it needs bought keeps from the shop until the date, and
 	//     its leftovers keep until they're eaten.
-	//   - FLAVOR: its ingredients are a known good pairing, like chickpeas and
-	//     cumin.
 	//   - VARIETY: it's already planned on nearby days, or is an eater's
 	//     staple that day.
-	//   - MEAL_TAG: its tags say it's for this meal, or for another.
+	//   - MEAL_TAG: its tags say it's for this meal, or for another. At one
+	//     person's small meal, recipes tagged "snack" come first, and others
+	//     have a penalty.
+	//   - LEFTOVER: at one person's small meal, it's a serving more of an
+	//     earlier shared meal's cook (see leftover_of), eaten reheated, with no
+	//     cooking: the latest cook of each recipe, from an earlier day within
+	//     its fridge_days (2 if unknown), or earlier the same day.
 	//   - FAVORITE: the household marked it as a favorite (see
 	//     RecipeService). It's worth about as much as using the rest of a
 	//     pack, so favorites come up more often, but less than having cooked
@@ -88,9 +92,13 @@ type SuggestionServiceClient interface {
 	// time of one person that eats from no shared meal, like a snack
 	// mid-morning, chosen together so the days share ingredients and packs,
 	// use the pantry, vary, and meet everyone's rules and targets. Breakfast
-	// only gets recipes tagged "breakfast"; the other slots take any recipe,
-	// a breakfast for lunch too, preferring those tagged for them. A slot
-	// left without one says why. It's the fastest way to plan a week:
+	// only gets recipes tagged "breakfast"; lunch and dinner take any recipe,
+	// a breakfast for lunch too, preferring those tagged for them. One
+	// person's small meal takes a recipe tagged "snack" that breaks no rule,
+	// if there's any, even if it repeats; otherwise the rest of an earlier
+	// meal of the plan, reheated (see Suggestion.leftover_of), or another
+	// recipe. Its alternatives include the leftovers. A slot left without
+	// one says why. It's the fastest way to plan a week:
 	//
 	//  1. Call SuggestPlan with the first date, the number of days and the
 	//     meals, and criteria from what the user wants, like more variety,
@@ -102,7 +110,8 @@ type SuggestionServiceClient interface {
 	//     those to leave empty. The other slots are planned again around
 	//     them, with a new seed for something different, or the same seed
 	//     for the same plan.
-	//  4. Save it with PlanService.PlanMeals, with the recipe of each slot.
+	//  4. Save it with PlanService.PlanMeals, with the recipe of each slot,
+	//     and its suggestion's leftover_of.
 	//
 	// The search is probabilistic: it tries many plans for about two
 	// seconds, picking each slot's recipe among the best for it given the
@@ -146,11 +155,15 @@ type SuggestionServiceHandler interface {
 	//     time, like the minimum protein or the carbohydrate pairing.
 	//   - KEEPING: what it needs bought keeps from the shop until the date, and
 	//     its leftovers keep until they're eaten.
-	//   - FLAVOR: its ingredients are a known good pairing, like chickpeas and
-	//     cumin.
 	//   - VARIETY: it's already planned on nearby days, or is an eater's
 	//     staple that day.
-	//   - MEAL_TAG: its tags say it's for this meal, or for another.
+	//   - MEAL_TAG: its tags say it's for this meal, or for another. At one
+	//     person's small meal, recipes tagged "snack" come first, and others
+	//     have a penalty.
+	//   - LEFTOVER: at one person's small meal, it's a serving more of an
+	//     earlier shared meal's cook (see leftover_of), eaten reheated, with no
+	//     cooking: the latest cook of each recipe, from an earlier day within
+	//     its fridge_days (2 if unknown), or earlier the same day.
 	//   - FAVORITE: the household marked it as a favorite (see
 	//     RecipeService). It's worth about as much as using the rest of a
 	//     pack, so favorites come up more often, but less than having cooked
@@ -166,9 +179,13 @@ type SuggestionServiceHandler interface {
 	// time of one person that eats from no shared meal, like a snack
 	// mid-morning, chosen together so the days share ingredients and packs,
 	// use the pantry, vary, and meet everyone's rules and targets. Breakfast
-	// only gets recipes tagged "breakfast"; the other slots take any recipe,
-	// a breakfast for lunch too, preferring those tagged for them. A slot
-	// left without one says why. It's the fastest way to plan a week:
+	// only gets recipes tagged "breakfast"; lunch and dinner take any recipe,
+	// a breakfast for lunch too, preferring those tagged for them. One
+	// person's small meal takes a recipe tagged "snack" that breaks no rule,
+	// if there's any, even if it repeats; otherwise the rest of an earlier
+	// meal of the plan, reheated (see Suggestion.leftover_of), or another
+	// recipe. Its alternatives include the leftovers. A slot left without
+	// one says why. It's the fastest way to plan a week:
 	//
 	//  1. Call SuggestPlan with the first date, the number of days and the
 	//     meals, and criteria from what the user wants, like more variety,
@@ -180,7 +197,8 @@ type SuggestionServiceHandler interface {
 	//     those to leave empty. The other slots are planned again around
 	//     them, with a new seed for something different, or the same seed
 	//     for the same plan.
-	//  4. Save it with PlanService.PlanMeals, with the recipe of each slot.
+	//  4. Save it with PlanService.PlanMeals, with the recipe of each slot,
+	//     and its suggestion's leftover_of.
 	//
 	// The search is probabilistic: it tries many plans for about two
 	// seconds, picking each slot's recipe among the best for it given the

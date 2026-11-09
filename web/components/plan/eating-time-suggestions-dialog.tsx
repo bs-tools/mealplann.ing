@@ -9,11 +9,13 @@ import type { Person } from "gen/people/v1/people_pb";
 import {
   createCook,
   createPortion,
+  planMeals,
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import type { Suggestion } from "gen/suggestions/v1/suggestions_pb";
 import { formatDay } from "helpers/format";
 import { invalidateServices } from "helpers/query";
+import { suggestionKey } from "helpers/suggestions";
 import React, { useState } from "react";
 
 interface EatingTimeSuggestionsDialogProps {
@@ -26,7 +28,9 @@ interface EatingTimeSuggestionsDialogProps {
 /**
  * EatingTimeSuggestionsDialog suggests recipes for one person's eating
  * time, like a small meal between main meals, and plans the chosen one: a
- * cook of the suggested servings, and the person's portion of it.
+ * cook of the suggested servings, and the person's portion of it, or for
+ * the rest of an earlier meal, a portion of that meal's cook, which grows
+ * by it.
  */
 const EatingTimeSuggestionsDialog: React.FC<
   EatingTimeSuggestionsDialogProps
@@ -36,14 +40,31 @@ const EatingTimeSuggestionsDialog: React.FC<
   const eatingTime = person?.eatingTimes.find(
     (other) => other.id === slot.eatingTimeId
   );
-  // The recipe being planned, empty if none.
+  // What's being planned, as its suggestionKey, empty if nothing.
   const [planningId, setPlanningId] = useState("");
   const cook = useMutation(createCook);
   const portion = useMutation(createPortion);
+  const leftover = useMutation(planMeals);
 
   const plan = async (suggestion: Suggestion): Promise<void> => {
-    setPlanningId(suggestion.recipeId);
+    setPlanningId(suggestionKey(suggestion));
     try {
+      if (suggestion.leftoverOf !== undefined) {
+        await leftover.mutateAsync({
+          meals: [
+            {
+              date: slot.date,
+              eatingTimeId: slot.eatingTimeId,
+              leftoverOf: suggestion.leftoverOf,
+              personId: slot.personId,
+              recipeId: suggestion.recipeId,
+            },
+          ],
+        });
+        await invalidateServices(queryClient, [PlanService]);
+        onClose();
+        return;
+      }
       const created = await cook.mutateAsync({
         cook: {
           date: slot.date,
@@ -106,7 +127,7 @@ const EatingTimeSuggestionsDialog: React.FC<
             void plan(suggestion);
           }}
         />
-        <ErrorText error={cook.error ?? portion.error} />
+        <ErrorText error={cook.error ?? portion.error ?? leftover.error} />
         <div className="flex justify-end">
           <button type="button" className={secondaryButton} onClick={onClose}>
             Close

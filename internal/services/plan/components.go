@@ -27,7 +27,8 @@ func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes
 			cp.Cook.ID = store.NewUUID()
 		}
 		result = append(result, cp)
-		if r == nil || depth >= recipes.MaxComponentDepth {
+		// An existing cook keeps its supplies.
+		if r == nil || cp.Existing || depth >= recipes.MaxComponentDepth {
 			return
 		}
 		for _, need := range r.ComponentsFor(cp.Cook.Servings) {

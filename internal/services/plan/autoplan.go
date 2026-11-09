@@ -181,6 +181,7 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 		excludeIDs = append(excludeIDs, id)
 	}
 	choices := map[slotKey]pgtype.UUID{}
+	leftoverChoices := map[slotKey]*suggest.LeftoverRef{}
 	var personalChoices []*suggestionsv1.PlanChoice
 	for i, c := range req.GetChoices() {
 		field := fmt.Sprintf("choices[%d]", i)
@@ -225,6 +226,16 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 			}
 		}
 		choices[key] = id
+		if c.HasLeftoverOf() {
+			if !key.personal() || !id.Valid {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.leftover_of is only for one person's eating time, with recipe_id: set them, or leave it out", field)
+			}
+			leftoverChoices[key], err = leftoverFromProto(field+".leftover_of", c.GetLeftoverOf(), id, date)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	d, lists, lots, err := s.loadSuggestionData(ctx, user.HouseholdID(), start, end)
@@ -317,7 +328,11 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 			states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_SKIPPED
 		case chosen:
 			states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_KEPT
-			slot.Fixed = d.recipes[id]
+			if ref, ok := leftoverChoices[key]; ok {
+				slot.FixedLeftover = ref
+			} else {
+				slot.Fixed = d.recipes[id]
+			}
 			in.Slots = append(in.Slots, slot)
 		default:
 			states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_SUGGESTED
@@ -406,9 +421,53 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 	}.Build(), nil
 }
 
+// leftoverFromProto converts and validates the earlier meal of a portion
+// of recipeID on date.
+func leftoverFromProto(field string, p *plansv1.LeftoverOf, recipeID pgtype.UUID, date time.Time) (*suggest.LeftoverRef, error) {
+	from, err := parseDate(field+".date", p.GetDate())
+	if err != nil {
+		return nil, err
+	}
+	if from.After(date) {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.date must be on or before the portion's date, %s",
+			field, store.FormatDate(date))
+	}
+	meal, err := mealFromProto(p.GetMeal())
+	if err != nil {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.%s", field, mealRequired)
+	}
+	return &suggest.LeftoverRef{Date: from, Meal: meal, RecipeID: recipeID}, nil
+}
+
+// leftoverCook returns the cook a leftover of the i-th meal to plan is
+// eaten from: one planned by the request before it, which is grown, or
+// else one planned already, as a new entry to grow it, which isn't in
+// planned yet.
+func leftoverCook(planned []*plans.CookWithPortions, existing []*plans.Cook, ref *suggest.LeftoverRef, i int) (*plans.CookWithPortions, error) {
+	for _, cp := range planned {
+		if ref.Matches(cp.Cook) {
+			return cp, nil
+		}
+	}
+	for _, c := range existing {
+		if ref.Matches(c) {
+			return &plans.CookWithPortions{
+				Cook:     &plans.Cook{ID: c.ID, HouseholdID: c.HouseholdID, RecipeID: c.RecipeID, Date: c.Date, Meal: c.Meal},
+				Existing: true,
+			}, nil
+		}
+	}
+	return nil, connect.Errorf(connect.CodeFailedPrecondition,
+		"meals[%d].leftover_of: there's no cook of its recipe at the %s on %s to eat the rest of: plan that meal first, or leave leftover_of out to cook the recipe",
+		i, ref.Meal, store.FormatDate(ref.Date))
+}
+
 // unfilledReason says why a slot got no recipe.
 func unfilledReason(ps *suggest.PlannedSlot) string {
-	if ps.Eligible > 0 {
+	switch {
+	case ps.Slot.FixedLeftover != nil:
+		return "The meal whose rest was kept here isn't in the plan anymore: choose another."
+	case ps.Eligible > 0:
 		return "No recipe could be planned here."
 	}
 	return `No recipe meeting the criteria is tagged "breakfast": tag the recipes that make a good breakfast.`
@@ -423,7 +482,7 @@ func boolInt(b bool) int {
 }
 
 // planWeights returns the weights of the scores' components for plan
-// criteria. The rules, flavor and meal tags always count fully.
+// criteria. The rules, meal tags and leftovers always count fully.
 func planWeights(c *suggestionsv1.PlanCriteria) (map[suggest.Kind]float64, error) {
 	weights := map[suggest.Kind]float64{}
 	for _, e := range []struct {
@@ -509,6 +568,9 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 	type mealToPlan struct {
 		recipeID pgtype.UUID
 		slotKey
+		// leftover is the earlier meal it's the rest of, nil for a new
+		// cook.
+		leftover *suggest.LeftoverRef
 	}
 	var list []mealToPlan
 	seen := map[slotKey]bool{}
@@ -548,7 +610,18 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 				field, store.FormatDate(date))
 		}
 		seen[key] = true
-		list = append(list, mealToPlan{recipeID, key})
+		var leftover *suggest.LeftoverRef
+		if m.HasLeftoverOf() {
+			if !key.personal() {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.leftover_of is only for one person's eating time: set person_id and eating_time_id, or leave it out", field)
+			}
+			leftover, err = leftoverFromProto(field+".leftover_of", m.GetLeftoverOf(), recipeID, date)
+			if err != nil {
+				return nil, err
+			}
+		}
+		list = append(list, mealToPlan{recipeID, key, leftover})
 		recipeIDs = append(recipeIDs, recipeID)
 	}
 	// The meals are split in order, each given the portions of those
@@ -559,6 +632,12 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 		return cmp.Or(a.date.Compare(b.date), cmp.Compare(boolInt(a.personal()), boolInt(b.personal())), compareMeals(a.meal, b.meal))
 	})
 	from, to := list[0].date, list[len(list)-1].date.AddDate(0, 0, 1)
+	// The plan read has the cooks of the earlier meals eaten as leftovers.
+	for _, m := range list {
+		if m.leftover != nil && m.leftover.Date.Before(from) {
+			from = m.leftover.Date
+		}
+	}
 	d, err := s.loadPlan(ctx, user.HouseholdID(), from, to, unique(recipeIDs)...)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to read plan", "")
@@ -580,6 +659,20 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			slot := plans.Slot{PersonID: p.ID, EatingTimeID: m.eatingTimeID, Date: m.date}
 			servings, cookServings := plans.EatingTimeServings(p, gramsPerServing, planned[slot])
 			planned[slot] += servings * gramsPerServing
+			portion := &plans.Portion{PersonID: p.ID, EatingTimeID: m.eatingTimeID, Date: m.date, Servings: servings}
+			if m.leftover != nil {
+				cp, err := leftoverCook(toCreate, d.plan.Cooks, m.leftover, i)
+				if err != nil {
+					return nil, err
+				}
+				if cp.Existing {
+					toCreate = append(toCreate, cp)
+				}
+				// The cook grows by the portion.
+				cp.Cook.Servings += servings
+				cp.Portions = append(cp.Portions, portion)
+				continue
+			}
 			toCreate = append(toCreate, &plans.CookWithPortions{
 				Cook: &plans.Cook{
 					HouseholdID: user.HouseholdID(),
@@ -587,7 +680,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 					Date:        m.date,
 					Servings:    cookServings,
 				},
-				Portions: []*plans.Portion{{PersonID: p.ID, EatingTimeID: m.eatingTimeID, Date: m.date, Servings: servings}},
+				Portions: []*plans.Portion{portion},
 			})
 			continue
 		}

@@ -2,6 +2,12 @@
 insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done, frozen_servings)
 values (@id, @household_id, @recipe_id, @date, @servings, @meal, @notes, @done, @frozen_servings);
 
+-- name: GrowCook :execrows
+-- Adds servings to a cook, for portions of it planned later, like the rest
+-- of a dinner eaten as a snack.
+update cooks set servings = servings + @servings, update_time = now()
+where id = @id and household_id = @household_id;
+
 -- name: UpdateCook :execrows
 update cooks set
   recipe_id = @recipe_id,

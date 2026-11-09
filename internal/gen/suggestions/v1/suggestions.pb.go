@@ -41,14 +41,14 @@ const (
 	// Whether what it needs keeps from the shop, and its leftovers until
 	// they're eaten.
 	ScoreKind_SCORE_KIND_KEEPING ScoreKind = 6
-	// Ingredients that go well together.
-	ScoreKind_SCORE_KIND_FLAVOR ScoreKind = 7
 	// The same recipe planned on nearby days, or as a staple.
 	ScoreKind_SCORE_KIND_VARIETY ScoreKind = 8
 	// The recipe's tags for meals.
 	ScoreKind_SCORE_KIND_MEAL_TAG ScoreKind = 9
 	// The household's favorite recipes.
 	ScoreKind_SCORE_KIND_FAVORITE ScoreKind = 10
+	// The rest of an earlier shared meal, reheated at a small meal.
+	ScoreKind_SCORE_KIND_LEFTOVER ScoreKind = 11
 )
 
 // Enum value maps for ScoreKind.
@@ -61,10 +61,10 @@ var (
 		4:  "SCORE_KIND_NUTRITION",
 		5:  "SCORE_KIND_RULES",
 		6:  "SCORE_KIND_KEEPING",
-		7:  "SCORE_KIND_FLAVOR",
 		8:  "SCORE_KIND_VARIETY",
 		9:  "SCORE_KIND_MEAL_TAG",
 		10: "SCORE_KIND_FAVORITE",
+		11: "SCORE_KIND_LEFTOVER",
 	}
 	ScoreKind_value = map[string]int32{
 		"SCORE_KIND_UNSPECIFIED":        0,
@@ -74,10 +74,10 @@ var (
 		"SCORE_KIND_NUTRITION":          4,
 		"SCORE_KIND_RULES":              5,
 		"SCORE_KIND_KEEPING":            6,
-		"SCORE_KIND_FLAVOR":             7,
 		"SCORE_KIND_VARIETY":            8,
 		"SCORE_KIND_MEAL_TAG":           9,
 		"SCORE_KIND_FAVORITE":           10,
+		"SCORE_KIND_LEFTOVER":           11,
 	}
 )
 
@@ -973,6 +973,7 @@ type Suggestion struct {
 	xxx_hidden_CookServings float64                `protobuf:"fixed64,8,opt,name=cook_servings,json=cookServings,proto3"`
 	xxx_hidden_NewItemCount int32                  `protobuf:"varint,9,opt,name=new_item_count,json=newItemCount,proto3"`
 	xxx_hidden_ItemsToBuy   *[]*ItemToBuy          `protobuf:"bytes,10,rep,name=items_to_buy,json=itemsToBuy,proto3"`
+	xxx_hidden_LeftoverOf   *v11.LeftoverOf        `protobuf:"bytes,11,opt,name=leftover_of,json=leftoverOf,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1080,6 +1081,13 @@ func (x *Suggestion) GetItemsToBuy() []*ItemToBuy {
 	return nil
 }
 
+func (x *Suggestion) GetLeftoverOf() *v11.LeftoverOf {
+	if x != nil {
+		return x.xxx_hidden_LeftoverOf
+	}
+	return nil
+}
+
 func (x *Suggestion) SetRecipeId(v string) {
 	x.xxx_hidden_RecipeId = v
 }
@@ -1120,6 +1128,21 @@ func (x *Suggestion) SetItemsToBuy(v []*ItemToBuy) {
 	x.xxx_hidden_ItemsToBuy = &v
 }
 
+func (x *Suggestion) SetLeftoverOf(v *v11.LeftoverOf) {
+	x.xxx_hidden_LeftoverOf = v
+}
+
+func (x *Suggestion) HasLeftoverOf() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_LeftoverOf != nil
+}
+
+func (x *Suggestion) ClearLeftoverOf() {
+	x.xxx_hidden_LeftoverOf = nil
+}
+
 type Suggestion_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -1149,6 +1172,11 @@ type Suggestion_builder struct {
 	// What it needs bought beyond the pantry and the week's shopping,
 	// rounded to whole packs, by name.
 	ItemsToBuy []*ItemToBuy
+	// At one person's small meal, the earlier shared meal it's the rest of,
+	// eaten reheated: a serving more of that meal's cook of the recipe,
+	// rather than a new cook, with cook_servings the servings it adds. Unset
+	// for a new cook.
+	LeftoverOf *v11.LeftoverOf
 }
 
 func (b0 Suggestion_builder) Build() *Suggestion {
@@ -1165,6 +1193,7 @@ func (b0 Suggestion_builder) Build() *Suggestion {
 	x.xxx_hidden_CookServings = b.CookServings
 	x.xxx_hidden_NewItemCount = b.NewItemCount
 	x.xxx_hidden_ItemsToBuy = &b.ItemsToBuy
+	x.xxx_hidden_LeftoverOf = b.LeftoverOf
 	return m0
 }
 
@@ -1346,6 +1375,7 @@ type PlanChoice struct {
 	xxx_hidden_RecipeId     string                 `protobuf:"bytes,3,opt,name=recipe_id,json=recipeId,proto3"`
 	xxx_hidden_PersonId     string                 `protobuf:"bytes,4,opt,name=person_id,json=personId,proto3"`
 	xxx_hidden_EatingTimeId string                 `protobuf:"bytes,5,opt,name=eating_time_id,json=eatingTimeId,proto3"`
+	xxx_hidden_LeftoverOf   *v11.LeftoverOf        `protobuf:"bytes,6,opt,name=leftover_of,json=leftoverOf,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1410,6 +1440,13 @@ func (x *PlanChoice) GetEatingTimeId() string {
 	return ""
 }
 
+func (x *PlanChoice) GetLeftoverOf() *v11.LeftoverOf {
+	if x != nil {
+		return x.xxx_hidden_LeftoverOf
+	}
+	return nil
+}
+
 func (x *PlanChoice) SetDate(v string) {
 	x.xxx_hidden_Date = v
 }
@@ -1430,6 +1467,21 @@ func (x *PlanChoice) SetEatingTimeId(v string) {
 	x.xxx_hidden_EatingTimeId = v
 }
 
+func (x *PlanChoice) SetLeftoverOf(v *v11.LeftoverOf) {
+	x.xxx_hidden_LeftoverOf = v
+}
+
+func (x *PlanChoice) HasLeftoverOf() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_LeftoverOf != nil
+}
+
+func (x *PlanChoice) ClearLeftoverOf() {
+	x.xxx_hidden_LeftoverOf = nil
+}
+
 type PlanChoice_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -1445,6 +1497,11 @@ type PlanChoice_builder struct {
 	PersonId string
 	// The person's eating time, with person_id.
 	EatingTimeId string
+	// For one person's eating time, to keep the rest of an earlier shared
+	// meal of recipe_id there rather than a new cook, as a suggestion's
+	// leftover_of says. It's kept if the plan has that meal's cook of the
+	// recipe.
+	LeftoverOf *v11.LeftoverOf
 }
 
 func (b0 PlanChoice_builder) Build() *PlanChoice {
@@ -1456,6 +1513,7 @@ func (b0 PlanChoice_builder) Build() *PlanChoice {
 	x.xxx_hidden_RecipeId = b.RecipeId
 	x.xxx_hidden_PersonId = b.PersonId
 	x.xxx_hidden_EatingTimeId = b.EatingTimeId
+	x.xxx_hidden_LeftoverOf = b.LeftoverOf
 	return m0
 }
 
@@ -2032,7 +2090,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\tfood_name\x18\x02 \x01(\tR\bfoodName\x12\x1f\n" +
 	"\vamount_text\x18\x03 \x01(\tR\n" +
 	"amountText\x12%\n" +
-	"\x0ealready_listed\x18\x04 \x01(\bR\ralreadyListed\"\xb4\x03\n" +
+	"\x0ealready_listed\x18\x04 \x01(\bR\ralreadyListed\"\xeb\x03\n" +
 	"\n" +
 	"Suggestion\x12\x1b\n" +
 	"\trecipe_id\x18\x01 \x01(\tR\brecipeId\x12\x1f\n" +
@@ -2050,7 +2108,9 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x0enew_item_count\x18\t \x01(\x05R\fnewItemCount\x12;\n" +
 	"\fitems_to_buy\x18\n" +
 	" \x03(\v2\x19.suggestions.v1.ItemToBuyR\n" +
-	"itemsToBuy\"\x97\x03\n" +
+	"itemsToBuy\x125\n" +
+	"\vleftover_of\x18\v \x01(\v2\x14.plans.v1.LeftoverOfR\n" +
+	"leftoverOf\"\x97\x03\n" +
 	"\fPlanCriteria\x122\n" +
 	"\avariety\x18\x01 \x01(\x0e2\x18.suggestions.v1.EmphasisR\avariety\x126\n" +
 	"\tfavorites\x18\x02 \x01(\x0e2\x18.suggestions.v1.EmphasisR\tfavorites\x120\n" +
@@ -2059,14 +2119,16 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\tnutrition\x18\x05 \x01(\x0e2\x18.suggestions.v1.EmphasisR\tnutrition\x12*\n" +
 	"\x11max_total_seconds\x18\x06 \x01(\x05R\x0fmaxTotalSeconds\x12!\n" +
 	"\fexclude_tags\x18\a \x03(\tR\vexcludeTags\x12,\n" +
-	"\x12exclude_recipe_ids\x18\b \x03(\tR\x10excludeRecipeIds\"\xae\x01\n" +
+	"\x12exclude_recipe_ids\x18\b \x03(\tR\x10excludeRecipeIds\"\xe5\x01\n" +
 	"\n" +
 	"PlanChoice\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +
 	"\x04meal\x18\x02 \x01(\x0e2\x18.people.v1.HouseholdMealR\x04meal\x12\x1b\n" +
 	"\trecipe_id\x18\x03 \x01(\tR\brecipeId\x12\x1b\n" +
 	"\tperson_id\x18\x04 \x01(\tR\bpersonId\x12$\n" +
-	"\x0eeating_time_id\x18\x05 \x01(\tR\featingTimeId\"\xb8\x02\n" +
+	"\x0eeating_time_id\x18\x05 \x01(\tR\featingTimeId\x125\n" +
+	"\vleftover_of\x18\x06 \x01(\v2\x14.plans.v1.LeftoverOfR\n" +
+	"leftoverOf\"\xb8\x02\n" +
 	"\x12SuggestPlanRequest\x12\x1d\n" +
 	"\n" +
 	"start_date\x18\x01 \x01(\tR\tstartDate\x12\x12\n" +
@@ -2099,7 +2161,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\vplans_tried\x18\x03 \x01(\x05R\n" +
 	"plansTried\x12\x12\n" +
 	"\x04seed\x18\x04 \x01(\x04R\x04seed\x12!\n" +
-	"\frecipe_count\x18\x05 \x01(\x05R\vrecipeCount*\xa9\x02\n" +
+	"\frecipe_count\x18\x05 \x01(\x05R\vrecipeCount*\xc4\x02\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
@@ -2107,12 +2169,12 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x11SCORE_KIND_PANTRY\x10\x03\x12\x18\n" +
 	"\x14SCORE_KIND_NUTRITION\x10\x04\x12\x14\n" +
 	"\x10SCORE_KIND_RULES\x10\x05\x12\x16\n" +
-	"\x12SCORE_KIND_KEEPING\x10\x06\x12\x15\n" +
-	"\x11SCORE_KIND_FLAVOR\x10\a\x12\x16\n" +
+	"\x12SCORE_KIND_KEEPING\x10\x06\x12\x16\n" +
 	"\x12SCORE_KIND_VARIETY\x10\b\x12\x17\n" +
 	"\x13SCORE_KIND_MEAL_TAG\x10\t\x12\x17\n" +
 	"\x13SCORE_KIND_FAVORITE\x10\n" +
-	"*p\n" +
+	"\x12\x17\n" +
+	"\x13SCORE_KIND_LEFTOVER\x10\v\"\x04\b\a\x10\a*\x11SCORE_KIND_FLAVOR*p\n" +
 	"\bEmphasis\x12\x18\n" +
 	"\x14EMPHASIS_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fEMPHASIS_OFF\x10\x01\x12\x10\n" +
@@ -2152,6 +2214,7 @@ var file_suggestions_v1_suggestions_proto_goTypes = []any{
 	(*SuggestPlanResponse)(nil),    // 14: suggestions.v1.SuggestPlanResponse
 	(v1.HouseholdMeal)(0),          // 15: people.v1.HouseholdMeal
 	(*v11.Warning)(nil),            // 16: plans.v1.Warning
+	(*v11.LeftoverOf)(nil),         // 17: plans.v1.LeftoverOf
 }
 var file_suggestions_v1_suggestions_proto_depIdxs = []int32{
 	15, // 0: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
@@ -2162,29 +2225,31 @@ var file_suggestions_v1_suggestions_proto_depIdxs = []int32{
 	16, // 5: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
 	7,  // 6: suggestions.v1.Suggestion.portions:type_name -> suggestions.v1.SuggestedPortion
 	8,  // 7: suggestions.v1.Suggestion.items_to_buy:type_name -> suggestions.v1.ItemToBuy
-	1,  // 8: suggestions.v1.PlanCriteria.variety:type_name -> suggestions.v1.Emphasis
-	1,  // 9: suggestions.v1.PlanCriteria.favorites:type_name -> suggestions.v1.Emphasis
-	1,  // 10: suggestions.v1.PlanCriteria.pantry:type_name -> suggestions.v1.Emphasis
-	1,  // 11: suggestions.v1.PlanCriteria.shopping:type_name -> suggestions.v1.Emphasis
-	1,  // 12: suggestions.v1.PlanCriteria.nutrition:type_name -> suggestions.v1.Emphasis
-	15, // 13: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
-	15, // 14: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
-	10, // 15: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
-	11, // 16: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
-	15, // 17: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
-	2,  // 18: suggestions.v1.PlanSlot.state:type_name -> suggestions.v1.PlanSlotState
-	9,  // 19: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
-	9,  // 20: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
-	13, // 21: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
-	4,  // 22: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
-	12, // 23: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
-	5,  // 24: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
-	14, // 25: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
-	24, // [24:26] is the sub-list for method output_type
-	22, // [22:24] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	17, // 8: suggestions.v1.Suggestion.leftover_of:type_name -> plans.v1.LeftoverOf
+	1,  // 9: suggestions.v1.PlanCriteria.variety:type_name -> suggestions.v1.Emphasis
+	1,  // 10: suggestions.v1.PlanCriteria.favorites:type_name -> suggestions.v1.Emphasis
+	1,  // 11: suggestions.v1.PlanCriteria.pantry:type_name -> suggestions.v1.Emphasis
+	1,  // 12: suggestions.v1.PlanCriteria.shopping:type_name -> suggestions.v1.Emphasis
+	1,  // 13: suggestions.v1.PlanCriteria.nutrition:type_name -> suggestions.v1.Emphasis
+	15, // 14: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
+	17, // 15: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
+	15, // 16: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
+	10, // 17: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
+	11, // 18: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
+	15, // 19: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
+	2,  // 20: suggestions.v1.PlanSlot.state:type_name -> suggestions.v1.PlanSlotState
+	9,  // 21: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
+	9,  // 22: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
+	13, // 23: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
+	4,  // 24: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
+	12, // 25: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
+	5,  // 26: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
+	14, // 27: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
+	26, // [26:28] is the sub-list for method output_type
+	24, // [24:26] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_suggestions_v1_suggestions_proto_init() }

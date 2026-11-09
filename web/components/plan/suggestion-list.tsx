@@ -13,6 +13,7 @@ import type {
 } from "gen/suggestions/v1/suggestions_pb";
 import { formatShortDate, formatList } from "helpers/format";
 import { formatAmount } from "helpers/nutrients";
+import { leftoverLabel, suggestionKey } from "helpers/suggestions";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
@@ -99,6 +100,9 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
             >
               {suggestion.recipeName}
             </Link>
+            {suggestion.leftoverOf !== undefined && (
+              <Badge>{leftoverLabel(suggestion.leftoverOf)}</Badge>
+            )}
             {!suggestion.fitsRules && (
               <Badge className="bg-amber-50 text-amber-900 ring-amber-300">
                 Breaks rules
@@ -168,7 +172,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
 interface SuggestionListProps {
   // The slot to suggest for.
   request: MessageInitShape<typeof SuggestRecipesRequestSchema>;
-  // The recipe being planned, empty if none.
+  // What's being planned, as its suggestionKey, empty if nothing.
   planningId: string;
   // Whether planning is disabled, e.g. while one is being planned.
   disabled: boolean;
@@ -231,10 +235,10 @@ const SuggestionList: React.FC<SuggestionListProps> = ({
       <ul className="flex flex-col gap-2">
         {list.map((suggestion) => (
           <SuggestionCard
-            key={suggestion.recipeId}
+            key={suggestionKey(suggestion)}
             suggestion={suggestion}
             maxScore={maxScore}
-            planning={planningId === suggestion.recipeId}
+            planning={planningId === suggestionKey(suggestion)}
             disabled={disabled}
             onPlan={() => {
               onPlan(suggestion);

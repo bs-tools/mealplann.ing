@@ -281,17 +281,22 @@ func TestSuggestPlanPersonalEatingTimes(t *testing.T) {
 		}
 		recipeIDs[r.name] = resp.GetRecipe().GetId()
 	}
-	// Breakfast only takes breakfasts; the other slots take anything.
+	// Breakfast only takes breakfasts, and snacks snacks, or the rest of
+	// an earlier meal; lunch and dinner take anything.
 	var everything []string
 	for name := range recipeIDs {
 		everything = append(everything, name)
 	}
+	snacks := []string{"Hummus plate", "Roasted chickpeas"}
 	allowed := map[string][]string{
 		breakfast.String(): {"Porridge", "Granola"},
 		lunch.String():     everything,
 		dinner.String():    everything,
-		"Mid-morning":      everything,
-		"Evening":          everything,
+		"Mid-morning":      snacks,
+		"Evening":          snacks,
+	}
+	fits := func(slot string, sg *suggestionsv1.Suggestion) bool {
+		return slices.Contains(allowed[slot], sg.GetRecipeName()) || (slot == "Mid-morning" || slot == "Evening") && sg.HasLeftoverOf()
 	}
 
 	// Two days of the whole household: each day's three shared meals, then
@@ -310,11 +315,11 @@ func TestSuggestPlanPersonalEatingTimes(t *testing.T) {
 			}
 		}
 		got = append(got, s.GetDate()+" "+slot)
-		if name := s.GetSuggestion().GetRecipeName(); !slices.Contains(allowed[slot], name) {
-			t.Errorf("got %s at %s on %s, want one of %v", name, slot, s.GetDate(), allowed[slot])
+		if sg := s.GetSuggestion(); !fits(slot, sg) {
+			t.Errorf("got %s at %s on %s, want one of %v", sg.GetRecipeName(), slot, s.GetDate(), allowed[slot])
 		}
 		for _, alt := range s.GetAlternatives() {
-			if !slices.Contains(allowed[slot], alt.GetRecipeName()) {
+			if !fits(slot, alt) {
 				t.Errorf("got alternative %s at %s, want one of %v", alt.GetRecipeName(), slot, allowed[slot])
 			}
 		}

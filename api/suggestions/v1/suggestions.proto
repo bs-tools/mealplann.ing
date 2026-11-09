@@ -25,7 +25,9 @@ import "plans/v1/plans.proto";
 //    paired with something that fixes it.
 // 4. Plan the chosen recipe: with PlanService.PlanMeal for a shared meal,
 //    or for an eating time with PlanService.CreateCook of cook_servings and
-//    PlanService.CreatePortion of the suggested portion. Then call
+//    PlanService.CreatePortion of the suggested portion. A suggestion with
+//    leftover_of is the rest of an earlier meal: plan it with
+//    PlanService.PlanMeals, giving its leftover_of. Then call
 //    SuggestRecipes for the next slot, as the scores change with the plan.
 // 5. When the week is planned, make the shopping list with
 //    ShoppingService.CreateShoppingList.
@@ -55,11 +57,15 @@ service SuggestionService {
   //   time, like the minimum protein or the carbohydrate pairing.
   // - KEEPING: what it needs bought keeps from the shop until the date, and
   //   its leftovers keep until they're eaten.
-  // - FLAVOR: its ingredients are a known good pairing, like chickpeas and
-  //   cumin.
   // - VARIETY: it's already planned on nearby days, or is an eater's
   //   staple that day.
-  // - MEAL_TAG: its tags say it's for this meal, or for another.
+  // - MEAL_TAG: its tags say it's for this meal, or for another. At one
+  //   person's small meal, recipes tagged "snack" come first, and others
+  //   have a penalty.
+  // - LEFTOVER: at one person's small meal, it's a serving more of an
+  //   earlier shared meal's cook (see leftover_of), eaten reheated, with no
+  //   cooking: the latest cook of each recipe, from an earlier day within
+  //   its fridge_days (2 if unknown), or earlier the same day.
   // - FAVORITE: the household marked it as a favorite (see
   //   RecipeService). It's worth about as much as using the rest of a
   //   pack, so favorites come up more often, but less than having cooked
@@ -75,9 +81,13 @@ service SuggestionService {
   // time of one person that eats from no shared meal, like a snack
   // mid-morning, chosen together so the days share ingredients and packs,
   // use the pantry, vary, and meet everyone's rules and targets. Breakfast
-  // only gets recipes tagged "breakfast"; the other slots take any recipe,
-  // a breakfast for lunch too, preferring those tagged for them. A slot
-  // left without one says why. It's the fastest way to plan a week:
+  // only gets recipes tagged "breakfast"; lunch and dinner take any recipe,
+  // a breakfast for lunch too, preferring those tagged for them. One
+  // person's small meal takes a recipe tagged "snack" that breaks no rule,
+  // if there's any, even if it repeats; otherwise the rest of an earlier
+  // meal of the plan, reheated (see Suggestion.leftover_of), or another
+  // recipe. Its alternatives include the leftovers. A slot left without
+  // one says why. It's the fastest way to plan a week:
   //
   // 1. Call SuggestPlan with the first date, the number of days and the
   //    meals, and criteria from what the user wants, like more variety,
@@ -89,7 +99,8 @@ service SuggestionService {
   //    those to leave empty. The other slots are planned again around
   //    them, with a new seed for something different, or the same seed
   //    for the same plan.
-  // 4. Save it with PlanService.PlanMeals, with the recipe of each slot.
+  // 4. Save it with PlanService.PlanMeals, with the recipe of each slot,
+  //    and its suggestion's leftover_of.
   //
   // The search is probabilistic: it tries many plans for about two
   // seconds, picking each slot's recipe among the best for it given the
@@ -165,14 +176,16 @@ enum ScoreKind {
   // Whether what it needs keeps from the shop, and its leftovers until
   // they're eaten.
   SCORE_KIND_KEEPING = 6;
-  // Ingredients that go well together.
-  SCORE_KIND_FLAVOR = 7;
   // The same recipe planned on nearby days, or as a staple.
   SCORE_KIND_VARIETY = 8;
   // The recipe's tags for meals.
   SCORE_KIND_MEAL_TAG = 9;
   // The household's favorite recipes.
   SCORE_KIND_FAVORITE = 10;
+  // The rest of an earlier shared meal, reheated at a small meal.
+  SCORE_KIND_LEFTOVER = 11;
+  reserved 7;
+  reserved "SCORE_KIND_FLAVOR";
 }
 
 // A part of a suggestion's score.
@@ -247,6 +260,11 @@ message Suggestion {
   // What it needs bought beyond the pantry and the week's shopping,
   // rounded to whole packs, by name.
   repeated ItemToBuy items_to_buy = 10;
+  // At one person's small meal, the earlier shared meal it's the rest of,
+  // eaten reheated: a serving more of that meal's cook of the recipe,
+  // rather than a new cook, with cook_servings the servings it adds. Unset
+  // for a new cook.
+  plans.v1.LeftoverOf leftover_of = 11;
 }
 
 // Emphasis is how much a criterion of a plan counts.
@@ -303,6 +321,11 @@ message PlanChoice {
   string person_id = 4;
   // The person's eating time, with person_id.
   string eating_time_id = 5;
+  // For one person's eating time, to keep the rest of an earlier shared
+  // meal of recipe_id there rather than a new cook, as a suggestion's
+  // leftover_of says. It's kept if the plan has that meal's cook of the
+  // recipe.
+  plans.v1.LeftoverOf leftover_of = 6;
 }
 
 message SuggestPlanRequest {

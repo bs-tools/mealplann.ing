@@ -304,6 +304,27 @@ func (q *Queries) DeleteUnusedCook(ctx context.Context, arg *DeleteUnusedCookPar
 	return result.RowsAffected(), nil
 }
 
+const growCook = `-- name: GrowCook :execrows
+update cooks set servings = servings + $1, update_time = now()
+where id = $2 and household_id = $3
+`
+
+type GrowCookParams struct {
+	Servings    float64
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+}
+
+// Adds servings to a cook, for portions of it planned later, like the rest
+// of a dinner eaten as a snack.
+func (q *Queries) GrowCook(ctx context.Context, arg *GrowCookParams) (int64, error) {
+	result, err := q.db.Exec(ctx, growCook, arg.Servings, arg.ID, arg.HouseholdID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const listCookSupplies = `-- name: ListCookSupplies :many
 select
   s.consumer_cook_id,
