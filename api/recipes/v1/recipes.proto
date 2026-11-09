@@ -35,8 +35,10 @@ import "mcp/v1/options.proto";
 //
 // 1. Split the recipe into one action per step, and keep the amounts out of their texts: cook mode shows the step's ingredients with amounts scaled to the servings cooked.
 // 2. Give each step the ingredients it uses, its duration from the text ("simmer for 20 minutes" is 1200 seconds), and set waiting for time the cook is free, like simmering, baking or resting.
-// 3. Say which steps can run alongside others: from_start for one that can start right away, or after_step_indexes for one that waits for steps other than the one before it.
-// 4. Check the result with GetRecipeTimeline.
+// 3. Where one ingredient line is used in several steps, like salt for the sauce and the pasta water, give each step its part in ingredient_amounts: one amount per entry of ingredient_indexes, in the ingredient's unit, with 0 for all of it or for what the other steps leave. The parts can't add up to more than the line. Cook mode then shows each step its own part, not the whole line.
+// 4. Say which steps can run alongside others: from_start for one that can start right away, or after_step_indexes for one that waits for steps other than the one before it. For a step that starts partway through the steps it follows, like pasta added 10 minutes into a 20 minute simmer, set start_offset_seconds (600) rather than splitting the simmer: it then starts that long after they start, not once they're done. With from_start, the offset counts from the recipe's start.
+// 5. Keep the steps in the order they read best: the timeline doesn't follow it, but puts whichever ready hands-on step leads the longest chain to the end first, so there's no need to reorder steps to get them to overlap.
+// 6. Check the result with GetRecipeTimeline.
 service RecipeService {
   // Get when a recipe's steps happen, for one cook: each starts as soon as
   // the steps it follows are done, or start_offset_seconds into them, and,
