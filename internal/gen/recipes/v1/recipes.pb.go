@@ -606,6 +606,9 @@ type Step struct {
 	xxx_hidden_AfterStepIndexes   []int32                `protobuf:"varint,6,rep,packed,name=after_step_indexes,json=afterStepIndexes,proto3"`
 	xxx_hidden_FromStart          bool                   `protobuf:"varint,7,opt,name=from_start,json=fromStart,proto3"`
 	xxx_hidden_StartOffsetSeconds int32                  `protobuf:"varint,8,opt,name=start_offset_seconds,json=startOffsetSeconds,proto3"`
+	xxx_hidden_EndBeforeSeconds   int32                  `protobuf:"varint,10,opt,name=end_before_seconds,json=endBeforeSeconds,proto3,oneof"`
+	XXX_raceDetectHookData        protoimpl.RaceDetectHookData
+	XXX_presence                  [1]uint32
 	unknownFields                 protoimpl.UnknownFields
 	sizeCache                     protoimpl.SizeCache
 }
@@ -698,6 +701,13 @@ func (x *Step) GetStartOffsetSeconds() int32 {
 	return 0
 }
 
+func (x *Step) GetEndBeforeSeconds() int32 {
+	if x != nil {
+		return x.xxx_hidden_EndBeforeSeconds
+	}
+	return 0
+}
+
 func (x *Step) SetText(v string) {
 	x.xxx_hidden_Text = v
 }
@@ -732,6 +742,23 @@ func (x *Step) SetFromStart(v bool) {
 
 func (x *Step) SetStartOffsetSeconds(v int32) {
 	x.xxx_hidden_StartOffsetSeconds = v
+}
+
+func (x *Step) SetEndBeforeSeconds(v int32) {
+	x.xxx_hidden_EndBeforeSeconds = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 10)
+}
+
+func (x *Step) HasEndBeforeSeconds() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *Step) ClearEndBeforeSeconds() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_EndBeforeSeconds = 0
 }
 
 type Step_builder struct {
@@ -774,9 +801,20 @@ type Step_builder struct {
 	FromStart bool
 	// How long after the steps it follows start it starts, rather than once
 	// they're done, in seconds: e.g. 600 for adding the pasta 10 minutes
-	// into a 20 minute simmer. With from_start, how long after the recipe
-	// starts. 0 to start once the steps it follows are done. At most 172800.
+	// into a 20 minute simmer. It counts from their start, not their end,
+	// and from the latest start if it follows several, which isn't always
+	// the order they're listed in: the timeline may do hands-on steps in
+	// another order. To time a step by when another ends, use
+	// end_before_seconds. With from_start, it counts from the recipe's
+	// start. 0 to start once the steps it follows are done. At most 172800.
 	StartOffsetSeconds int32
+	// Instead of starting once the steps it follows are done, ending this
+	// long before the latest of them ends, in seconds, so it starts its
+	// duration earlier: e.g. 180 to have the oven preheated 3 minutes
+	// before the marinating is done, or 0 to finish as it does. Not before
+	// the recipe starts, nor with start_offset_seconds, and only for a step
+	// that follows others. At most 172800.
+	EndBeforeSeconds *int32
 }
 
 func (b0 Step_builder) Build() *Step {
@@ -792,6 +830,10 @@ func (b0 Step_builder) Build() *Step {
 	x.xxx_hidden_AfterStepIndexes = b.AfterStepIndexes
 	x.xxx_hidden_FromStart = b.FromStart
 	x.xxx_hidden_StartOffsetSeconds = b.StartOffsetSeconds
+	if b.EndBeforeSeconds != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 10)
+		x.xxx_hidden_EndBeforeSeconds = *b.EndBeforeSeconds
+	}
 	return m0
 }
 
@@ -3162,7 +3204,7 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\vtotal_cents\x18\x01 \x01(\x05R\n" +
 	"totalCents\x12*\n" +
 	"\x11cents_per_serving\x18\x02 \x01(\x05R\x0fcentsPerServing\x12.\n" +
-	"\x13unpriced_food_names\x18\x03 \x03(\tR\x11unpricedFoodNames\"\xd6\x02\n" +
+	"\x13unpriced_food_names\x18\x03 \x03(\tR\x11unpricedFoodNames\"\xa0\x03\n" +
 	"\x04Step\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x18\n" +
 	"\asection\x18\x02 \x01(\tR\asection\x12-\n" +
@@ -3173,7 +3215,10 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x12after_step_indexes\x18\x06 \x03(\x05R\x10afterStepIndexes\x12\x1d\n" +
 	"\n" +
 	"from_start\x18\a \x01(\bR\tfromStart\x120\n" +
-	"\x14start_offset_seconds\x18\b \x01(\x05R\x12startOffsetSeconds\"\xe1\x03\n" +
+	"\x14start_offset_seconds\x18\b \x01(\x05R\x12startOffsetSeconds\x121\n" +
+	"\x12end_before_seconds\x18\n" +
+	" \x01(\x05H\x00R\x10endBeforeSeconds\x88\x01\x01B\x15\n" +
+	"\x13_end_before_seconds\"\xe1\x03\n" +
 	"\n" +
 	"Ingredient\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12#\n" +
@@ -3390,6 +3435,7 @@ func file_recipes_v1_recipes_proto_init() {
 		return
 	}
 	file_recipes_v1_recipes_proto_msgTypes[0].OneofWrappers = []any{}
+	file_recipes_v1_recipes_proto_msgTypes[2].OneofWrappers = []any{}
 	file_recipes_v1_recipes_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

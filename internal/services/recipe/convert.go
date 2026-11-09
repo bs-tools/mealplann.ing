@@ -365,6 +365,7 @@ func instructionsToProto(steps []*recipes.Step) []*recipesv1.Step {
 			FromStart:          s.FromStart,
 			StartOffsetSeconds: s.StartOffsetSeconds,
 			IngredientAmounts:  s.Amounts,
+			EndBeforeSeconds:   s.EndBeforeSeconds,
 		}
 		for _, i := range s.Ingredients {
 			b.IngredientIndexes = append(b.IngredientIndexes, int32(i))
@@ -407,6 +408,15 @@ func instructionsFromProto(list []*recipesv1.Step, ingredients []*recipes.Ingred
 		case p.GetStartOffsetSeconds() < 0 || p.GetStartOffsetSeconds() > maxStepSeconds:
 			return nil, connect.Errorf(connect.CodeInvalidArgument,
 				"%s.start_offset_seconds must be from 0 to %d, with 0 to start once the steps it follows are done", field, maxStepSeconds)
+		case p.HasEndBeforeSeconds() && (p.GetEndBeforeSeconds() < 0 || p.GetEndBeforeSeconds() > maxStepSeconds):
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s.end_before_seconds must be from 0 to %d, with 0 to end as the steps it follows do; leave it unset to start after them", field, maxStepSeconds)
+		case p.HasEndBeforeSeconds() && p.GetStartOffsetSeconds() > 0:
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s has both start_offset_seconds and end_before_seconds: time it by when the steps it follows start, or by when they end", field)
+		case p.HasEndBeforeSeconds() && (i == 0 || p.GetFromStart()):
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s.end_before_seconds needs steps to end before: set after_step_indexes, or leave from_start unset, for a step after the first", field)
 		case len(p.GetIngredientAmounts()) > 0 && len(p.GetIngredientAmounts()) != len(p.GetIngredientIndexes()):
 			return nil, connect.Errorf(connect.CodeInvalidArgument,
 				"%s has %d ingredient_amounts for %d ingredient_indexes: give one for each, 0 for all of it, or none",
@@ -419,6 +429,9 @@ func instructionsFromProto(list []*recipesv1.Step, ingredients []*recipes.Ingred
 			Waiting:            p.GetWaiting(),
 			FromStart:          p.GetFromStart(),
 			StartOffsetSeconds: p.GetStartOffsetSeconds(),
+		}
+		if p.HasEndBeforeSeconds() {
+			s.EndBeforeSeconds = new(p.GetEndBeforeSeconds())
 		}
 		var amounts []float64
 		for k, in := range p.GetIngredientIndexes() {

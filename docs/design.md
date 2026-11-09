@@ -122,7 +122,8 @@ A recipe's steps are its instructions: each step's text, without amounts,
 the ingredients it uses by position, its duration, whether it's waiting
 time (simmering, baking) rather than hands-on, its section, the steps it
 follows, and optionally how far into them it starts (pasta 10 minutes into
-a simmer) and how much of an ingredient split between steps it uses (salt
+a simmer, from their latest start) or how long before they end it ends
+(the oven preheated 3 minutes before the marinating is done), and how much of an ingredient split between steps it uses (salt
 for the sauce and for the pasta water). They're stored as JSON on the recipe (`recipes.instructions`), as
 their shape will keep changing as the pages using them do.
 

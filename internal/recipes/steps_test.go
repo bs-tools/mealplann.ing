@@ -89,6 +89,35 @@ func TestTimelineOffset(t *testing.T) {
 	}
 }
 
+// TestTimelineAnchors checks what offsets count from: start_offset_seconds
+// from the latest start of the steps it follows, and end_before_seconds
+// from their latest end, as in the agents' tofu recipe.
+func TestTimelineAnchors(t *testing.T) {
+	t.Parallel()
+	before := int32(180)
+	r := &Recipe{Instructions: []*Step{
+		{Text: "Press the tofu", DurationSeconds: 300},
+		{Text: "Blend the marinade", DurationSeconds: 180, FromStart: true},
+		{Text: "Marinate", DurationSeconds: 900, Waiting: true, After: []int{0, 1}},
+		{Text: "Preheat the oven", DurationSeconds: 600, Waiting: true, After: []int{2}, EndBeforeSeconds: &before},
+		{Text: "Set the table", DurationSeconds: 60, After: []int{0, 1}, StartOffsetSeconds: 720},
+		{Text: "Bake", DurationSeconds: 1500, Waiting: true, After: []int{2, 3}},
+	}}
+	tl := r.Timeline()
+	var got [][2]int32
+	for _, s := range tl.Steps {
+		got = append(got, [2]int32{s.StartSeconds, s.EndSeconds})
+	}
+	// The cook presses (0–5 min) then blends (5–8), the tofu marinates
+	// (8–23), the oven preheats to be ready 3 minutes before (10–20), the
+	// table is set 12 minutes after blending starts (17–18), and baking
+	// follows the marinating (23–48).
+	want := [][2]int32{{0, 300}, {300, 480}, {480, 1380}, {600, 1200}, {1020, 1080}, {1380, 2880}}
+	if !slices.Equal(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
 func TestInstructionsJSON(t *testing.T) {
 	t.Parallel()
 	steps := []*Step{{Text: "Soak", DurationSeconds: 3600, Waiting: true, Ingredients: []int{0}}, {Text: "Cook", After: []int{0}}}
