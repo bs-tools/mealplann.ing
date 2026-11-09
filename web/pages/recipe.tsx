@@ -5,13 +5,19 @@ import Card from "@components/ui/card";
 import ConfirmButton from "@components/ui/confirm-button";
 import { Badge, PageHeader, Stat } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
-import { linkClass, primaryButton } from "@components/ui/styles";
+import {
+  linkClass,
+  primaryButton,
+  secondaryButton,
+} from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
   ArrowLeftIcon,
   ArrowTopRightOnSquareIcon,
+  ChartBarIcon,
   ExclamationTriangleIcon,
   PencilIcon,
+  PlayIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,9 +27,19 @@ import {
 } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import type { Recipe } from "gen/recipes/v1/recipes_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
-import { formatHoursMinutes, formatRedirectTarget } from "helpers/format";
+import {
+  formatHoursMinutes,
+  formatList,
+  formatRedirectTarget,
+} from "helpers/format";
 import { formatIngredientAmount, formatServings } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
+import {
+  formatStepDuration,
+  groupSteps,
+  ingredientName,
+  recipeSteps,
+} from "helpers/steps";
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
@@ -124,9 +140,20 @@ const RecipePage: React.FC = () => {
               <TrashIcon className="size-4" aria-hidden="true" />
               Delete
             </ConfirmButton>
-            <Link to={`/recipes/${recipe.id}/edit`} className={primaryButton}>
+            <Link to={`/recipes/${recipe.id}/edit`} className={secondaryButton}>
               <PencilIcon className="size-4" aria-hidden="true" />
               Edit
+            </Link>
+            <Link
+              to={`/recipes/${recipe.id}/timeline`}
+              className={secondaryButton}
+            >
+              <ChartBarIcon className="size-4" aria-hidden="true" />
+              Timeline
+            </Link>
+            <Link to={`/recipes/${recipe.id}/cook`} className={primaryButton}>
+              <PlayIcon className="size-4" aria-hidden="true" />
+              Cook
             </Link>
           </div>
         }
@@ -236,15 +263,55 @@ const RecipePage: React.FC = () => {
             {recipe.steps.length === 0 ? (
               <p className="text-sm text-gray-500">No steps yet.</p>
             ) : (
-              <ol className="flex list-decimal flex-col gap-3 pl-5 text-sm text-gray-800 marker:font-semibold marker:text-gray-500">
-                {recipe.steps.map((step, index) => (
-                  // Steps are only ever shown in order.
-                  // oxlint-disable-next-line react/no-array-index-key
-                  <li key={index} className="pl-1 whitespace-pre-line">
-                    {step}
-                  </li>
+              <div className="flex flex-col gap-4">
+                {groupSteps(recipeSteps(recipe)).map((group) => (
+                  <div
+                    key={group.steps[0]?.index}
+                    className="flex flex-col gap-2"
+                  >
+                    {group.section !== "" && (
+                      <h3 className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                        {group.section}
+                      </h3>
+                    )}
+                    <ol className="flex flex-col gap-3 text-sm text-gray-800">
+                      {group.steps.map(({ step, index }) => {
+                        const used = step.ingredientIndexes
+                          .map((position) => recipe.ingredients[position])
+                          .filter((ingredient) => ingredient !== undefined)
+                          .map(ingredientName);
+                        const duration = formatStepDuration(
+                          step.durationSeconds
+                        );
+                        return (
+                          <li key={index} className="flex gap-2">
+                            <span className="w-5 shrink-0 text-right font-semibold text-gray-500 tabular-nums">
+                              {index + 1}.
+                            </span>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="whitespace-pre-line">
+                                {step.text}
+                              </span>
+                              {(used.length > 0 || duration !== "") && (
+                                <span className="text-xs text-gray-500">
+                                  {[
+                                    duration === ""
+                                      ? ""
+                                      : `${duration}${step.waiting ? " waiting" : ""}`,
+                                    formatList(used),
+                                  ]
+                                    .filter((part) => part !== "")
+                                    .join(" · ")}
+                                </span>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </div>
                 ))}
-              </ol>
+              </div>
             )}
           </Card>
           {recipe.notes !== "" && (

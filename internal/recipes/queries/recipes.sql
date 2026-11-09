@@ -8,6 +8,7 @@ insert into recipes (
   prep_seconds,
   cook_seconds,
   steps,
+  instructions,
   tags,
   source_url,
   fridge_days,
@@ -26,6 +27,7 @@ insert into recipes (
   @prep_seconds,
   @cook_seconds,
   @steps,
+  @instructions,
   @tags,
   @source_url,
   @fridge_days,
@@ -51,6 +53,7 @@ where r.household_id = @household_id
   )
   and r.tags @> @tags::text[]
   and (not @favorites_only::boolean or r.favorite)
+  and (not @without_instructions::boolean or r.instructions is null)
   and (
     cardinality(@food_ids::uuid[]) = 0
     or r.id in (
@@ -87,6 +90,7 @@ update recipes set
   prep_seconds = @prep_seconds,
   cook_seconds = @cook_seconds,
   steps = @steps,
+  instructions = @instructions,
   tags = @tags,
   source_url = @source_url,
   fridge_days = @fridge_days,

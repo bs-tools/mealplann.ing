@@ -7,6 +7,7 @@ package gen
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -21,6 +22,7 @@ insert into recipes (
   prep_seconds,
   cook_seconds,
   steps,
+  instructions,
   tags,
   source_url,
   fridge_days,
@@ -47,9 +49,10 @@ insert into recipes (
   $14,
   $15,
   $16,
-  $17
+  $17,
+  $18
 )
-returning id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note
+returning id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions
 `
 
 type CreateRecipeParams struct {
@@ -61,6 +64,7 @@ type CreateRecipeParams struct {
 	PrepSeconds   int32
 	CookSeconds   int32
 	Steps         []string
+	Instructions  json.RawMessage
 	Tags          []string
 	SourceURL     string
 	FridgeDays    *int32
@@ -82,6 +86,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*R
 		arg.PrepSeconds,
 		arg.CookSeconds,
 		arg.Steps,
+		arg.Instructions,
 		arg.Tags,
 		arg.SourceURL,
 		arg.FridgeDays,
@@ -113,6 +118,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*R
 		&i.FreezerDays,
 		&i.PrepAheadDays,
 		&i.PrepAheadNote,
+		&i.Instructions,
 	)
 	return &i, err
 }
@@ -248,7 +254,7 @@ func (q *Queries) FindRecipesByName(ctx context.Context, arg *FindRecipesByNameP
 }
 
 const getRecipe = `-- name: GetRecipe :one
-select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note from recipes where id = $1 and household_id = $2
+select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions from recipes where id = $1 and household_id = $2
 `
 
 type GetRecipeParams struct {
@@ -279,6 +285,7 @@ func (q *Queries) GetRecipe(ctx context.Context, arg *GetRecipeParams) (*Recipe,
 		&i.FreezerDays,
 		&i.PrepAheadDays,
 		&i.PrepAheadNote,
+		&i.Instructions,
 	)
 	return &i, err
 }
@@ -480,7 +487,7 @@ func (q *Queries) ListRecipeTags(ctx context.Context, householdID pgtype.UUID) (
 }
 
 const listRecipes = `-- name: ListRecipes :many
-select r.id, r.household_id, r.name, r.description, r.servings, r.prep_seconds, r.cook_seconds, r.steps, r.tags, r.source_url, r.fridge_days, r.freezable, r.notes, r.create_time, r.update_time, r.favorite, r.freezer_days, r.prep_ahead_days, r.prep_ahead_note from recipes r
+select r.id, r.household_id, r.name, r.description, r.servings, r.prep_seconds, r.cook_seconds, r.steps, r.tags, r.source_url, r.fridge_days, r.freezable, r.notes, r.create_time, r.update_time, r.favorite, r.freezer_days, r.prep_ahead_days, r.prep_ahead_note, r.instructions from recipes r
 where r.household_id = $1
   and (
     $2::text = ''
@@ -489,22 +496,24 @@ where r.household_id = $1
   )
   and r.tags @> $3::text[]
   and (not $4::boolean or r.favorite)
+  and (not $5::boolean or r.instructions is null)
   and (
-    cardinality($5::uuid[]) = 0
+    cardinality($6::uuid[]) = 0
     or r.id in (
       select ri.recipe_id from recipe_ingredients ri
-      where ri.household_id = $1 and ri.food_id = any($5::uuid[])
+      where ri.household_id = $1 and ri.food_id = any($6::uuid[])
     )
   )
 order by lower(r.name), r.id
 `
 
 type ListRecipesParams struct {
-	HouseholdID   pgtype.UUID
-	Query         string
-	Tags          []string
-	FavoritesOnly bool
-	FoodIds       []pgtype.UUID
+	HouseholdID         pgtype.UUID
+	Query               string
+	Tags                []string
+	FavoritesOnly       bool
+	WithoutInstructions bool
+	FoodIds             []pgtype.UUID
 }
 
 func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*Recipe, error) {
@@ -513,6 +522,7 @@ func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*R
 		arg.Query,
 		arg.Tags,
 		arg.FavoritesOnly,
+		arg.WithoutInstructions,
 		arg.FoodIds,
 	)
 	if err != nil {
@@ -542,6 +552,7 @@ func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*R
 			&i.FreezerDays,
 			&i.PrepAheadDays,
 			&i.PrepAheadNote,
+			&i.Instructions,
 		); err != nil {
 			return nil, err
 		}
@@ -554,7 +565,7 @@ func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*R
 }
 
 const listRecipesByID = `-- name: ListRecipesByID :many
-select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note from recipes
+select id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions from recipes
 where household_id = $1 and id = any($2::uuid[])
 order by lower(name), id
 `
@@ -593,6 +604,7 @@ func (q *Queries) ListRecipesByID(ctx context.Context, arg *ListRecipesByIDParam
 			&i.FreezerDays,
 			&i.PrepAheadDays,
 			&i.PrepAheadNote,
+			&i.Instructions,
 		); err != nil {
 			return nil, err
 		}
@@ -612,18 +624,19 @@ update recipes set
   prep_seconds = $4,
   cook_seconds = $5,
   steps = $6,
-  tags = $7,
-  source_url = $8,
-  fridge_days = $9,
-  freezable = $10,
-  freezer_days = $11,
-  prep_ahead_days = $12,
-  prep_ahead_note = $13,
-  notes = $14,
-  favorite = $15,
+  instructions = $7,
+  tags = $8,
+  source_url = $9,
+  fridge_days = $10,
+  freezable = $11,
+  freezer_days = $12,
+  prep_ahead_days = $13,
+  prep_ahead_note = $14,
+  notes = $15,
+  favorite = $16,
   update_time = now()
-where id = $16 and household_id = $17
-returning id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note
+where id = $17 and household_id = $18
+returning id, household_id, name, description, servings, prep_seconds, cook_seconds, steps, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions
 `
 
 type UpdateRecipeParams struct {
@@ -633,6 +646,7 @@ type UpdateRecipeParams struct {
 	PrepSeconds   int32
 	CookSeconds   int32
 	Steps         []string
+	Instructions  json.RawMessage
 	Tags          []string
 	SourceURL     string
 	FridgeDays    *int32
@@ -654,6 +668,7 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg *UpdateRecipeParams) (*R
 		arg.PrepSeconds,
 		arg.CookSeconds,
 		arg.Steps,
+		arg.Instructions,
 		arg.Tags,
 		arg.SourceURL,
 		arg.FridgeDays,
@@ -687,6 +702,7 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg *UpdateRecipeParams) (*R
 		&i.FreezerDays,
 		&i.PrepAheadDays,
 		&i.PrepAheadNote,
+		&i.Instructions,
 	)
 	return &i, err
 }

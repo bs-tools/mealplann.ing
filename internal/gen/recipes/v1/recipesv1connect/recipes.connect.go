@@ -24,6 +24,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// RecipeServiceGetRecipeTimelineProcedure is the procedure name of the RecipeService's
+	// GetRecipeTimeline RPC.
+	RecipeServiceGetRecipeTimelineProcedure = "/recipes.v1.RecipeService/GetRecipeTimeline"
 	// RecipeServiceCreateRecipeProcedure is the procedure name of the RecipeService's CreateRecipe RPC.
 	RecipeServiceCreateRecipeProcedure = "/recipes.v1.RecipeService/CreateRecipe"
 	// RecipeServiceGetRecipeProcedure is the procedure name of the RecipeService's GetRecipe RPC.
@@ -42,6 +45,13 @@ const (
 )
 
 var (
+	recipeServiceGetRecipeTimelineSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_recipes_v1_recipes_proto.Services().ByName("RecipeService").Methods().ByName("GetRecipeTimeline"),
+			Procedure:  RecipeServiceGetRecipeTimelineProcedure,
+		}
+	})
 	recipeServiceCreateRecipeSpec = sync.OnceValue(func() connect.Spec {
 		return connect.Spec{
 			StreamType: connect.StreamTypeUnary,
@@ -95,6 +105,13 @@ var (
 
 // RecipeServiceClient is a client for the recipes.v1.RecipeService service.
 type RecipeServiceClient interface {
+	// Get when a recipe's steps happen, for one cook: each starts as soon as
+	// the steps it follows are done and, if it's hands-on, the cook is free,
+	// so hands-on steps fit into waiting time, like chopping while rice
+	// simmers. Steps of unknown duration count as 5 minutes, and are marked
+	// estimated. A recipe in the old format runs its steps one after the
+	// other.
+	GetRecipeTimeline(context.Context, *v1.GetRecipeTimelineRequest) (*v1.GetRecipeTimelineResponse, error)
 	// Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
 	// isn't one of the household's foods.
 	CreateRecipe(context.Context, *v1.CreateRecipeRequest) (*v1.CreateRecipeResponse, error)
@@ -137,6 +154,13 @@ func NewRecipeServiceClient(client *connect.Client) RecipeServiceClient {
 
 // RecipeServiceHandler is an implementation of the recipes.v1.RecipeService service.
 type RecipeServiceHandler interface {
+	// Get when a recipe's steps happen, for one cook: each starts as soon as
+	// the steps it follows are done and, if it's hands-on, the cook is free,
+	// so hands-on steps fit into waiting time, like chopping while rice
+	// simmers. Steps of unknown duration count as 5 minutes, and are marked
+	// estimated. A recipe in the old format runs its steps one after the
+	// other.
+	GetRecipeTimeline(context.Context, *v1.GetRecipeTimelineRequest) (*v1.GetRecipeTimelineResponse, error)
 	// Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
 	// isn't one of the household's foods.
 	CreateRecipe(context.Context, *v1.CreateRecipeRequest) (*v1.CreateRecipeResponse, error)
@@ -176,6 +200,7 @@ type RecipeServiceHandler interface {
 func RegisterRecipeServiceHandler(server *connect.Server, svc RecipeServiceHandler) {
 	adapter := recipeServiceHandler{svc: svc}
 	server.Register(
+		connect.Method{Spec: recipeServiceGetRecipeTimelineSpec(), Handler: adapter.getRecipeTimeline},
 		connect.Method{Spec: recipeServiceCreateRecipeSpec(), Handler: adapter.createRecipe},
 		connect.Method{Spec: recipeServiceGetRecipeSpec(), Handler: adapter.getRecipe},
 		connect.Method{Spec: recipeServiceListRecipesSpec(), Handler: adapter.listRecipes},
@@ -188,6 +213,10 @@ func RegisterRecipeServiceHandler(server *connect.Server, svc RecipeServiceHandl
 
 // UnimplementedRecipeServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedRecipeServiceHandler struct{}
+
+func (UnimplementedRecipeServiceHandler) GetRecipeTimeline(context.Context, *v1.GetRecipeTimelineRequest) (*v1.GetRecipeTimelineResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "recipes.v1.RecipeService.GetRecipeTimeline is not implemented")
+}
 
 func (UnimplementedRecipeServiceHandler) CreateRecipe(context.Context, *v1.CreateRecipeRequest) (*v1.CreateRecipeResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "recipes.v1.RecipeService.CreateRecipe is not implemented")
@@ -219,6 +248,14 @@ func (UnimplementedRecipeServiceHandler) DeleteRecipe(context.Context, *v1.Delet
 
 type recipeServiceClient struct {
 	client *connect.Client
+}
+
+func (c *recipeServiceClient) GetRecipeTimeline(ctx context.Context, req *v1.GetRecipeTimelineRequest) (*v1.GetRecipeTimelineResponse, error) {
+	var res v1.GetRecipeTimelineResponse
+	if err := c.client.CallUnary(ctx, recipeServiceGetRecipeTimelineSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
 }
 
 func (c *recipeServiceClient) CreateRecipe(ctx context.Context, req *v1.CreateRecipeRequest) (*v1.CreateRecipeResponse, error) {
@@ -278,6 +315,18 @@ func (c *recipeServiceClient) DeleteRecipe(ctx context.Context, req *v1.DeleteRe
 }
 
 type recipeServiceHandler struct{ svc RecipeServiceHandler }
+
+func (h recipeServiceHandler) getRecipeTimeline(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetRecipeTimelineRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetRecipeTimeline(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
 
 func (h recipeServiceHandler) createRecipe(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
 	var req v1.CreateRecipeRequest

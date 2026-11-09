@@ -26,13 +26,17 @@ const (
 	maxServings          = 100
 	// maxSeconds is a week, longer than any recipe takes, even with
 	// fermenting or sprouting.
-	maxSeconds         = 7 * 24 * 60 * 60
-	maxIngredients     = 100
-	maxAmount          = 100_000
-	maxNoteLength      = 200
-	maxOriginalLength  = 500
-	maxSteps           = 100
-	maxStepLength      = 2000
+	maxSeconds        = 7 * 24 * 60 * 60
+	maxIngredients    = 100
+	maxAmount         = 100_000
+	maxNoteLength     = 200
+	maxOriginalLength = 500
+	maxSteps          = 100
+	maxStepLength     = 2000
+	maxSectionLength  = 100
+	// maxStepSeconds is two days: longer steps, like soaking, start the
+	// days before with prep_ahead_days.
+	maxStepSeconds     = 2 * 24 * 60 * 60
 	maxTags            = 20
 	maxTagLength       = 40
 	maxSourceURLLength = 2000
@@ -95,6 +99,7 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 		CookSeconds:   r.CookSeconds,
 		Ingredients:   ingredients,
 		Steps:         r.Steps,
+		Instructions:  instructionsToProto(r.Instructions),
 		Tags:          r.Tags,
 		SourceUrl:     r.SourceURL,
 		FridgeDays:    r.FridgeDays,
@@ -164,6 +169,7 @@ func summaryToProto(r *recipes.Recipe) *recipesv1.RecipeSummary {
 		HasIssues:                   len(n.Issues) > 0,
 		UpdateTime:                  timestamppb.New(r.UpdateTime),
 		Favorite:                    r.Favorite,
+		HasInstructions:             r.Instructions != nil,
 	}.Build()
 }
 
@@ -212,9 +218,21 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 	if err != nil {
 		return nil, err
 	}
-	steps, err := stepsFromProto(p.GetSteps())
-	if err != nil {
-		return nil, err
+	// With instructions, the steps are their texts, so the steps given
+	// are ignored: they're what was read, or stale.
+	var steps []string
+	var instructions []*recipes.Step
+	if len(p.GetInstructions()) > 0 {
+		instructions, err = instructionsFromProto(p.GetInstructions(), len(ingredients))
+		if err != nil {
+			return nil, err
+		}
+		steps = recipes.StepTexts(instructions)
+	} else {
+		steps, err = stepsFromProto(p.GetSteps())
+		if err != nil {
+			return nil, err
+		}
 	}
 	tags, err := normalizeTags(p.GetTags())
 	if err != nil {
@@ -239,6 +257,7 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 		CookSeconds:   p.GetCookSeconds(),
 		Ingredients:   ingredients,
 		Steps:         steps,
+		Instructions:  instructions,
 		Tags:          tags,
 		SourceURL:     sourceURL,
 		FridgeDays:    fridgeDays,
@@ -311,6 +330,86 @@ func ingredientsFromProto(list []*recipesv1.Ingredient) ([]*recipes.Ingredient, 
 		})
 	}
 	return ingredients, nil
+}
+
+// instructionsToProto converts instructions, nil for none.
+func instructionsToProto(steps []*recipes.Step) []*recipesv1.Step {
+	if steps == nil {
+		return nil
+	}
+	out := make([]*recipesv1.Step, 0, len(steps))
+	for _, s := range steps {
+		b := recipesv1.Step_builder{
+			Text:            s.Text,
+			Section:         s.Section,
+			DurationSeconds: s.DurationSeconds,
+			Waiting:         s.Waiting,
+			FromStart:       s.FromStart,
+		}
+		for _, i := range s.Ingredients {
+			b.IngredientIndexes = append(b.IngredientIndexes, int32(i))
+		}
+		for _, i := range s.After {
+			b.AfterStepIndexes = append(b.AfterStepIndexes, int32(i))
+		}
+		out = append(out, b.Build())
+	}
+	return out
+}
+
+// instructionsFromProto converts and checks instructions, given how many
+// ingredients the recipe has.
+func instructionsFromProto(list []*recipesv1.Step, ingredientCount int) ([]*recipes.Step, error) {
+	if len(list) > maxSteps {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "a recipe can have at most %d steps", maxSteps)
+	}
+	steps := make([]*recipes.Step, 0, len(list))
+	for i, p := range list {
+		field := fmt.Sprintf("instructions[%d]", i)
+		text := strings.TrimSpace(p.GetText())
+		section := strings.TrimSpace(p.GetSection())
+		switch {
+		case text == "":
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.text is empty: say what to do, or remove the step", field)
+		case utf8.RuneCountInString(text) > maxStepLength:
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.text must be at most %d characters; split it into several steps", field, maxStepLength)
+		case utf8.RuneCountInString(section) > maxSectionLength:
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.section must be at most %d characters", field, maxSectionLength)
+		case p.GetDurationSeconds() < 0 || p.GetDurationSeconds() > maxStepSeconds:
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s.duration_seconds must be from 0 to %d, with 0 for unknown; start longer steps, like soaking, days ahead with prep_ahead_days", field, maxStepSeconds)
+		case p.GetFromStart() && len(p.GetAfterStepIndexes()) > 0:
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s has both from_start and after_step_indexes: a step either starts right away or after others", field)
+		}
+		s := &recipes.Step{
+			Text:            text,
+			Section:         section,
+			DurationSeconds: p.GetDurationSeconds(),
+			Waiting:         p.GetWaiting(),
+			FromStart:       p.GetFromStart(),
+		}
+		for _, in := range p.GetIngredientIndexes() {
+			if in < 0 || int(in) >= ingredientCount {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.ingredient_indexes has %d, but the recipe's ingredients are indexed from 0 to %d", field, in, ingredientCount-1)
+			}
+			if !slices.Contains(s.Ingredients, int(in)) {
+				s.Ingredients = append(s.Ingredients, int(in))
+			}
+		}
+		for _, after := range p.GetAfterStepIndexes() {
+			if after < 0 || int(after) >= i {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.after_step_indexes has %d, but a step can only start after the steps before it, from 0 to %d", field, after, i-1)
+			}
+			if !slices.Contains(s.After, int(after)) {
+				s.After = append(s.After, int(after))
+			}
+		}
+		steps = append(steps, s)
+	}
+	return steps, nil
 }
 
 func stepsFromProto(list []string) ([]string, error) {
