@@ -964,6 +964,16 @@ func (s *scorer) flavor(c *candidate) {
 // variety penalizes the recipe's cooks on nearby days, and its staples of
 // the eaters on the slot's date.
 func (s *scorer) variety(c *candidate) {
+	// People eat the same snacks day after day, so at a snack only the
+	// nearest repeat counts: a few snack recipes over a week would
+	// otherwise each score far below zero, though they repeat by nature.
+	var et *people.EatingTime
+	if s.in.Meal == people.MealNone {
+		et = s.in.People[0].EatingTime(s.in.EatingTimeID)
+	}
+	nearestOnly := slotTag(s.in.Meal, et) == "snack"
+	var nearest *plans.Cook
+	nearestDays := 0
 	for _, cook := range s.in.Cooks {
 		if cook.RecipeID != c.recipe.ID {
 			continue
@@ -975,11 +985,16 @@ func (s *scorer) variety(c *candidate) {
 		if days > VarietyDays {
 			continue
 		}
-		penalty := VarietyPenalty
-		if days <= RecentDays {
-			penalty += RecentPenalty
+		if nearestOnly {
+			if nearest == nil || days < nearestDays || days == nearestDays && cook.Date.Before(nearest.Date) {
+				nearest, nearestDays = cook, days
+			}
+			continue
 		}
-		c.add(Variety, -penalty, "already planned on %s", formatDate(cook.Date))
+		c.add(Variety, -varietyPenalty(days), "already planned on %s", formatDate(cook.Date))
+	}
+	if nearest != nil {
+		c.add(Variety, -varietyPenalty(nearestDays), "already planned on %s", formatDate(nearest.Date))
 	}
 	// A recipe an eater has as a staple that day, like their usual
 	// breakfast, is eaten often enough already.
@@ -997,6 +1012,15 @@ func (s *scorer) variety(c *candidate) {
 		}
 		c.add(Variety, -(VarietyPenalty + RecentPenalty), "already %s's staple at %s", p.Name, name)
 	}
+}
+
+// varietyPenalty returns the penalty for a cook of the same recipe days
+// away from the slot.
+func varietyPenalty(days int) float64 {
+	if days <= RecentDays {
+		return VarietyPenalty + RecentPenalty
+	}
+	return VarietyPenalty
 }
 
 // mealTags are the tags that say which meal a recipe is for. "snack" is
