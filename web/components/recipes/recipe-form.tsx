@@ -71,7 +71,17 @@ interface StepInput {
   waiting: boolean;
   // The keys of the ingredients it uses.
   ingredientKeys: number[];
+  /*
+   * How much of an ingredient it uses, by the ingredient's key, for one
+   * split between steps; empty or missing for all of it, or the rest.
+   */
+  amounts: Record<number, string>;
   start: StepStart;
+  /*
+   * How many minutes into the steps it follows it starts, empty to start
+   * once they're done.
+   */
+  offsetMinutes: string;
 }
 
 // The keys of ingredients and steps added, unique on the page.
@@ -118,9 +128,11 @@ const ingredientInputs = (recipe: Recipe | undefined): IngredientInput[] => {
 };
 
 const emptyStep = (): StepInput => ({
+  amounts: {},
   ingredientKeys: [],
   key: newKey(),
   minutes: "",
+  offsetMinutes: "",
   section: "",
   start: "previous",
   text: "",
@@ -146,21 +158,38 @@ const stepInputs = (
     } else if (step.afterStepIndexes.length > 0) {
       start = step.afterStepIndexes.flatMap((other) => keys[other] ?? []);
     }
+    const amounts: Record<number, string> = {};
+    for (const [at, position] of step.ingredientIndexes.entries()) {
+      const key = ingredients[position]?.key;
+      const amount = step.ingredientAmounts[at] ?? 0;
+      if (key !== undefined && amount > 0) {
+        amounts[key] = String(amount);
+      }
+    }
     return {
+      amounts,
       ingredientKeys: step.ingredientIndexes.flatMap(
         (position) => ingredients[position]?.key ?? []
       ),
       key: keys[index] ?? newKey(),
-      minutes:
-        step.durationSeconds > 0
-          ? String(Math.round((step.durationSeconds / 60) * 100) / 100)
-          : "",
+      minutes: minutesInput(step.durationSeconds),
+      offsetMinutes: minutesInput(step.startOffsetSeconds),
       section: step.section,
       start,
       text: step.text,
       waiting: step.waiting,
     };
   });
+};
+
+// MinutesInput formats seconds as minutes to edit, empty for none.
+const minutesInput = (seconds: number): string =>
+  seconds > 0 ? String(Math.round((seconds / 60) * 100) / 100) : "";
+
+// Seconds parses minutes as seconds, 0 for empty or invalid.
+const seconds = (minutes: string): number => {
+  const value = parseOptionalNumber(minutes) ?? 0;
+  return Math.round(value * 60);
 };
 
 // StepsToSave are the steps with text, as they're saved.
@@ -171,7 +200,9 @@ const stepsToSave = (
   text: string;
   section: string;
   ingredientIndexes: number[];
+  ingredientAmounts: number[];
   durationSeconds: number;
+  startOffsetSeconds: number;
   waiting: boolean;
   fromStart: boolean;
   afterStepIndexes: number[];
@@ -181,7 +212,10 @@ const stepsToSave = (
     ingredients.map((ingredient, position) => [ingredient.key, position])
   );
   return kept.map((step, index) => {
-    const minutes = parseOptionalNumber(step.minutes);
+    const used = step.ingredientKeys.filter((key) => positions.has(key));
+    const amounts = used.map(
+      (key) => parseOptionalNumber(step.amounts[key] ?? "") ?? 0
+    );
     const after =
       typeof step.start === "string"
         ? []
@@ -190,15 +224,12 @@ const stepsToSave = (
             .filter((other) => other >= 0 && other < index);
     return {
       afterStepIndexes: after,
-      durationSeconds:
-        minutes === null || minutes === undefined
-          ? 0
-          : Math.round(minutes * 60),
+      durationSeconds: seconds(step.minutes),
       fromStart: step.start === "start",
-      ingredientIndexes: step.ingredientKeys.flatMap(
-        (key) => positions.get(key) ?? []
-      ),
+      ingredientAmounts: amounts.some((amount) => amount > 0) ? amounts : [],
+      ingredientIndexes: used.flatMap((key) => positions.get(key) ?? []),
       section: step.section.trim(),
+      startOffsetSeconds: seconds(step.offsetMinutes),
       text: step.text.trim(),
       waiting: step.waiting,
     };
@@ -354,6 +385,23 @@ const StepEditor: React.FC<StepEditorProps> = ({
               )}
             </select>
           )}
+          <label
+            className="flex items-center gap-1.5"
+            title="Start this many minutes into the steps it follows, rather than once they're done, like pasta 10 minutes into a simmer"
+          >
+            <span className="text-gray-600">starting</span>
+            <input
+              aria-label={`Minutes in that step ${index + 1} starts`}
+              className={`${inputClass} w-14! py-1`}
+              inputMode="decimal"
+              placeholder="–"
+              value={step.offsetMinutes}
+              onChange={(event) => {
+                onChange({ offsetMinutes: event.target.value });
+              }}
+            />
+            <span className="text-gray-600">min in</span>
+          </label>
           <input
             aria-label={`Section of step ${index + 1}`}
             className={`${inputClass} w-44! py-1`}
@@ -372,7 +420,7 @@ const StepEditor: React.FC<StepEditorProps> = ({
           >
             {named.map((ingredient) => {
               const used = step.ingredientKeys.includes(ingredient.key);
-              return (
+              const chip = (
                 <button
                   key={ingredient.key}
                   type="button"
@@ -394,6 +442,34 @@ const StepEditor: React.FC<StepEditorProps> = ({
                 >
                   {ingredientLabel(ingredient)}
                 </button>
+              );
+              if (!used) {
+                return chip;
+              }
+              // An ingredient split between steps takes this step's part.
+              return (
+                <span
+                  key={ingredient.key}
+                  className="inline-flex items-center gap-1"
+                >
+                  {chip}
+                  <input
+                    aria-label={`Amount of ${ingredientLabel(ingredient)} in step ${index + 1}`}
+                    title="How much this step uses, if the ingredient is split between steps; empty for all of it, or the rest"
+                    className={`${inputClass} w-14! px-1.5! py-0.5 text-xs`}
+                    inputMode="decimal"
+                    placeholder="all"
+                    value={step.amounts[ingredient.key] ?? ""}
+                    onChange={(event) => {
+                      onChange({
+                        amounts: {
+                          ...step.amounts,
+                          [ingredient.key]: event.target.value,
+                        },
+                      });
+                    }}
+                  />
+                </span>
               );
             })}
           </div>

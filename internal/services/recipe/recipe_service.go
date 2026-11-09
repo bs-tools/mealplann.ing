@@ -245,13 +245,6 @@ func (s *Service) UpdateRecipe(ctx context.Context, req *recipesv1.UpdateRecipeR
 	if err := protomask.Apply(merged, req.GetRecipe(), req.GetUpdateMask(), keepFields...); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err.Error())
 	}
-	// Steps of a recipe with instructions are their texts, so an update of
-	// only the steps would change nothing: say so rather than ignore it.
-	if paths := req.GetUpdateMask().GetPaths(); len(merged.GetInstructions()) > 0 &&
-		slices.Contains(paths, "steps") && !slices.Contains(paths, "instructions") {
-		return nil, connect.NewError(connect.CodeInvalidArgument,
-			"the recipe's steps are the texts of its instructions: update instructions instead, with the update_mask \"instructions\"")
-	}
 	recipe, err := recipeFromProto(merged)
 	if err != nil {
 		return nil, err
