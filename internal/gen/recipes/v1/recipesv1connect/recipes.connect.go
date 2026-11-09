@@ -106,9 +106,12 @@ var (
 // RecipeServiceClient is a client for the recipes.v1.RecipeService service.
 type RecipeServiceClient interface {
 	// Get when a recipe's steps happen, for one cook: each starts as soon as
-	// the steps it follows are done and, if it's hands-on, the cook is free,
-	// so hands-on steps fit into waiting time, like chopping while rice
-	// simmers. Steps of unknown duration count as 5 minutes, and are marked
+	// the steps it follows are done, or start_offset_seconds into them, and,
+	// if it's hands-on, the cook is free, so hands-on steps fit into waiting
+	// time, like chopping while rice simmers. When several hands-on steps
+	// could start, the one leading the longest chain of steps to the end
+	// goes first, whatever their order in the recipe, which only breaks
+	// ties. Steps of unknown duration count as 5 minutes, and are marked
 	// estimated.
 	GetRecipeTimeline(context.Context, *v1.GetRecipeTimelineRequest) (*v1.GetRecipeTimelineResponse, error)
 	// Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
@@ -154,9 +157,12 @@ func NewRecipeServiceClient(client *connect.Client) RecipeServiceClient {
 // RecipeServiceHandler is an implementation of the recipes.v1.RecipeService service.
 type RecipeServiceHandler interface {
 	// Get when a recipe's steps happen, for one cook: each starts as soon as
-	// the steps it follows are done and, if it's hands-on, the cook is free,
-	// so hands-on steps fit into waiting time, like chopping while rice
-	// simmers. Steps of unknown duration count as 5 minutes, and are marked
+	// the steps it follows are done, or start_offset_seconds into them, and,
+	// if it's hands-on, the cook is free, so hands-on steps fit into waiting
+	// time, like chopping while rice simmers. When several hands-on steps
+	// could start, the one leading the longest chain of steps to the end
+	// goes first, whatever their order in the recipe, which only breaks
+	// ties. Steps of unknown duration count as 5 minutes, and are marked
 	// estimated.
 	GetRecipeTimeline(context.Context, *v1.GetRecipeTimelineRequest) (*v1.GetRecipeTimelineResponse, error)
 	// Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food

@@ -120,17 +120,24 @@ saying what to change.
 
 A recipe's steps are its instructions: each step's text, without amounts,
 the ingredients it uses by position, its duration, whether it's waiting
-time (simmering, baking) rather than hands-on, its section, and the steps it
-follows. They're stored as JSON on the recipe (`recipes.instructions`), as
+time (simmering, baking) rather than hands-on, its section, the steps it
+follows, and optionally how far into them it starts (pasta 10 minutes into
+a simmer) and how much of an ingredient split between steps it uses (salt
+for the sauce and for the pasta water). They're stored as JSON on the recipe (`recipes.instructions`), as
 their shape will keep changing as the pages using them do.
 
 - **Cook mode** (`/recipes/:id/cook`) shows one step at a time in large
   type, with its ingredients scaled to the servings cooked, timers that
-  chime, and the screen kept on.
+  chime, and the screen kept on. A split ingredient shows each step's
+  part, or the rest.
 - **The timeline** (`/recipes/:id/timeline`, `GetRecipeTimeline`) schedules
-  the steps for one cook: each starts once the steps it follows are done
-  and, if hands-on, once the cook is free, so chopping fits into the rice's
-  simmering. Given when to serve, it says when to start each step.
+  the steps for one cook: each starts once the steps it follows are done,
+  or its offset into them, and, if hands-on, once the cook is free, so
+  chopping fits into the rice's simmering. Whenever the cook is free, the
+  ready hands-on step leading the longest chain to the end goes first, so
+  putting water on to boil isn't stuck behind chopping that can wait; the
+  recipe's order only breaks ties. Given when to serve, it says when to
+  start each step.
 - **Migrating**: recipes from before had only plain texts, which couldn't
   be structured without reading them, so an AI agent rewrote all of them
   as instructions. The old column is gone, and `steps` is derived from the

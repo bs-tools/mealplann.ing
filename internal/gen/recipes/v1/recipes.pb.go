@@ -596,16 +596,18 @@ func (b0 RecipeCost_builder) Build() *RecipeCost {
 
 // A step of a recipe's instructions.
 type Step struct {
-	state                        protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Text              string                 `protobuf:"bytes,1,opt,name=text,proto3"`
-	xxx_hidden_Section           string                 `protobuf:"bytes,2,opt,name=section,proto3"`
-	xxx_hidden_IngredientIndexes []int32                `protobuf:"varint,3,rep,packed,name=ingredient_indexes,json=ingredientIndexes,proto3"`
-	xxx_hidden_DurationSeconds   int32                  `protobuf:"varint,4,opt,name=duration_seconds,json=durationSeconds,proto3"`
-	xxx_hidden_Waiting           bool                   `protobuf:"varint,5,opt,name=waiting,proto3"`
-	xxx_hidden_AfterStepIndexes  []int32                `protobuf:"varint,6,rep,packed,name=after_step_indexes,json=afterStepIndexes,proto3"`
-	xxx_hidden_FromStart         bool                   `protobuf:"varint,7,opt,name=from_start,json=fromStart,proto3"`
-	unknownFields                protoimpl.UnknownFields
-	sizeCache                    protoimpl.SizeCache
+	state                         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Text               string                 `protobuf:"bytes,1,opt,name=text,proto3"`
+	xxx_hidden_Section            string                 `protobuf:"bytes,2,opt,name=section,proto3"`
+	xxx_hidden_IngredientIndexes  []int32                `protobuf:"varint,3,rep,packed,name=ingredient_indexes,json=ingredientIndexes,proto3"`
+	xxx_hidden_IngredientAmounts  []float64              `protobuf:"fixed64,9,rep,packed,name=ingredient_amounts,json=ingredientAmounts,proto3"`
+	xxx_hidden_DurationSeconds    int32                  `protobuf:"varint,4,opt,name=duration_seconds,json=durationSeconds,proto3"`
+	xxx_hidden_Waiting            bool                   `protobuf:"varint,5,opt,name=waiting,proto3"`
+	xxx_hidden_AfterStepIndexes   []int32                `protobuf:"varint,6,rep,packed,name=after_step_indexes,json=afterStepIndexes,proto3"`
+	xxx_hidden_FromStart          bool                   `protobuf:"varint,7,opt,name=from_start,json=fromStart,proto3"`
+	xxx_hidden_StartOffsetSeconds int32                  `protobuf:"varint,8,opt,name=start_offset_seconds,json=startOffsetSeconds,proto3"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *Step) Reset() {
@@ -654,6 +656,13 @@ func (x *Step) GetIngredientIndexes() []int32 {
 	return nil
 }
 
+func (x *Step) GetIngredientAmounts() []float64 {
+	if x != nil {
+		return x.xxx_hidden_IngredientAmounts
+	}
+	return nil
+}
+
 func (x *Step) GetDurationSeconds() int32 {
 	if x != nil {
 		return x.xxx_hidden_DurationSeconds
@@ -682,6 +691,13 @@ func (x *Step) GetFromStart() bool {
 	return false
 }
 
+func (x *Step) GetStartOffsetSeconds() int32 {
+	if x != nil {
+		return x.xxx_hidden_StartOffsetSeconds
+	}
+	return 0
+}
+
 func (x *Step) SetText(v string) {
 	x.xxx_hidden_Text = v
 }
@@ -692,6 +708,10 @@ func (x *Step) SetSection(v string) {
 
 func (x *Step) SetIngredientIndexes(v []int32) {
 	x.xxx_hidden_IngredientIndexes = v
+}
+
+func (x *Step) SetIngredientAmounts(v []float64) {
+	x.xxx_hidden_IngredientAmounts = v
 }
 
 func (x *Step) SetDurationSeconds(v int32) {
@@ -710,6 +730,10 @@ func (x *Step) SetFromStart(v bool) {
 	x.xxx_hidden_FromStart = v
 }
 
+func (x *Step) SetStartOffsetSeconds(v int32) {
+	x.xxx_hidden_StartOffsetSeconds = v
+}
+
 type Step_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -725,6 +749,13 @@ type Step_builder struct {
 	// from 0. Reordering the ingredients changes what the indexes mean:
 	// update the instructions with them.
 	IngredientIndexes []int32
+	// For an ingredient split between steps, like salt for the sauce and
+	// the pasta water, how much of it this step uses, in the ingredient's
+	// unit: one for each of ingredient_indexes, 0 for all of it, or for the
+	// rest of it after the other steps' amounts. Empty to use all of each.
+	// An ingredient's amounts in all steps add up to at most its amount.
+	// Cook mode shows each step's amount, scaled to the servings cooked.
+	IngredientAmounts []float64
 	// How long it takes, in seconds, e.g. 1200 for "simmer for 20 minutes",
 	// 0 if unknown, which the timeline counts as 5 minutes. At most 172800
 	// (2 days); start longer soaking with the recipe's prep_ahead_days.
@@ -741,6 +772,11 @@ type Step_builder struct {
 	// water for pasta while the sauce starts. Leave after_step_indexes
 	// empty.
 	FromStart bool
+	// How long after the steps it follows start it starts, rather than once
+	// they're done, in seconds: e.g. 600 for adding the pasta 10 minutes
+	// into a 20 minute simmer. With from_start, how long after the recipe
+	// starts. 0 to start once the steps it follows are done. At most 172800.
+	StartOffsetSeconds int32
 }
 
 func (b0 Step_builder) Build() *Step {
@@ -750,10 +786,12 @@ func (b0 Step_builder) Build() *Step {
 	x.xxx_hidden_Text = b.Text
 	x.xxx_hidden_Section = b.Section
 	x.xxx_hidden_IngredientIndexes = b.IngredientIndexes
+	x.xxx_hidden_IngredientAmounts = b.IngredientAmounts
 	x.xxx_hidden_DurationSeconds = b.DurationSeconds
 	x.xxx_hidden_Waiting = b.Waiting
 	x.xxx_hidden_AfterStepIndexes = b.AfterStepIndexes
 	x.xxx_hidden_FromStart = b.FromStart
+	x.xxx_hidden_StartOffsetSeconds = b.StartOffsetSeconds
 	return m0
 }
 
@@ -3124,16 +3162,18 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\vtotal_cents\x18\x01 \x01(\x05R\n" +
 	"totalCents\x12*\n" +
 	"\x11cents_per_serving\x18\x02 \x01(\x05R\x0fcentsPerServing\x12.\n" +
-	"\x13unpriced_food_names\x18\x03 \x03(\tR\x11unpricedFoodNames\"\xf5\x01\n" +
+	"\x13unpriced_food_names\x18\x03 \x03(\tR\x11unpricedFoodNames\"\xd6\x02\n" +
 	"\x04Step\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x18\n" +
 	"\asection\x18\x02 \x01(\tR\asection\x12-\n" +
-	"\x12ingredient_indexes\x18\x03 \x03(\x05R\x11ingredientIndexes\x12)\n" +
+	"\x12ingredient_indexes\x18\x03 \x03(\x05R\x11ingredientIndexes\x12-\n" +
+	"\x12ingredient_amounts\x18\t \x03(\x01R\x11ingredientAmounts\x12)\n" +
 	"\x10duration_seconds\x18\x04 \x01(\x05R\x0fdurationSeconds\x12\x18\n" +
 	"\awaiting\x18\x05 \x01(\bR\awaiting\x12,\n" +
 	"\x12after_step_indexes\x18\x06 \x03(\x05R\x10afterStepIndexes\x12\x1d\n" +
 	"\n" +
-	"from_start\x18\a \x01(\bR\tfromStart\"\xe1\x03\n" +
+	"from_start\x18\a \x01(\bR\tfromStart\x120\n" +
+	"\x14start_offset_seconds\x18\b \x01(\x05R\x12startOffsetSeconds\"\xe1\x03\n" +
 	"\n" +
 	"Ingredient\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12#\n" +

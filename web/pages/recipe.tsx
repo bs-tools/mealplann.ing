@@ -34,8 +34,13 @@ import {
   formatRedirectTarget,
 } from "helpers/format";
 import { invalidateServices } from "helpers/query";
-import { ingredientAmount } from "helpers/steps";
-import { formatStepDuration, groupSteps, ingredientName } from "helpers/steps";
+import {
+  formatStepDuration,
+  groupSteps,
+  ingredientAmount,
+  ingredientName,
+  stepStart,
+} from "helpers/steps";
 import { useUnitSystem } from "helpers/user";
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router";
@@ -296,9 +301,12 @@ const RecipePage: React.FC = () => {
                               <span className="whitespace-pre-line">
                                 {step.text}
                               </span>
-                              {(used.length > 0 || duration !== "") && (
+                              {(used.length > 0 ||
+                                duration !== "" ||
+                                stepStart(step, index) !== "") && (
                                 <span className="text-xs text-gray-500">
                                   {[
+                                    stepStart(step, index),
                                     duration === ""
                                       ? ""
                                       : `${duration}${step.waiting ? " waiting" : ""}`,

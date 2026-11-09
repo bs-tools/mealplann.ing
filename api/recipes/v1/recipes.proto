@@ -39,9 +39,12 @@ import "mcp/v1/options.proto";
 // 4. Check the result with GetRecipeTimeline.
 service RecipeService {
   // Get when a recipe's steps happen, for one cook: each starts as soon as
-  // the steps it follows are done and, if it's hands-on, the cook is free,
-  // so hands-on steps fit into waiting time, like chopping while rice
-  // simmers. Steps of unknown duration count as 5 minutes, and are marked
+  // the steps it follows are done, or start_offset_seconds into them, and,
+  // if it's hands-on, the cook is free, so hands-on steps fit into waiting
+  // time, like chopping while rice simmers. When several hands-on steps
+  // could start, the one leading the longest chain of steps to the end
+  // goes first, whatever their order in the recipe, which only breaks
+  // ties. Steps of unknown duration count as 5 minutes, and are marked
   // estimated.
   rpc GetRecipeTimeline(GetRecipeTimelineRequest) returns (GetRecipeTimelineResponse);
   // Create a recipe. Fails with INVALID_ARGUMENT if an ingredient's food
@@ -175,6 +178,13 @@ message Step {
   // from 0. Reordering the ingredients changes what the indexes mean:
   // update the instructions with them.
   repeated int32 ingredient_indexes = 3;
+  // For an ingredient split between steps, like salt for the sauce and
+  // the pasta water, how much of it this step uses, in the ingredient's
+  // unit: one for each of ingredient_indexes, 0 for all of it, or for the
+  // rest of it after the other steps' amounts. Empty to use all of each.
+  // An ingredient's amounts in all steps add up to at most its amount.
+  // Cook mode shows each step's amount, scaled to the servings cooked.
+  repeated double ingredient_amounts = 9;
   // How long it takes, in seconds, e.g. 1200 for "simmer for 20 minutes",
   // 0 if unknown, which the timeline counts as 5 minutes. At most 172800
   // (2 days); start longer soaking with the recipe's prep_ahead_days.
@@ -191,6 +201,11 @@ message Step {
   // water for pasta while the sauce starts. Leave after_step_indexes
   // empty.
   bool from_start = 7;
+  // How long after the steps it follows start it starts, rather than once
+  // they're done, in seconds: e.g. 600 for adding the pasta 10 minutes
+  // into a 20 minute simmer. With from_start, how long after the recipe
+  // starts. 0 to start once the steps it follows are done. At most 172800.
+  int32 start_offset_seconds = 8;
 }
 
 // An ingredient of a recipe: an amount of a food, or servings of another

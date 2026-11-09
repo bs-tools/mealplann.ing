@@ -83,17 +83,18 @@ func TestInstructions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetRecipeTimeline: %v", err)
 	}
-	// Rinse 0–5, chop 5–10 while the rice simmers 5–23, fry 10–18, the
-	// dal simmers 18–38, and serving waits for both.
+	// The dal's chain is the longest, though its steps come second: chop
+	// 0–5, fry 5–13, then rinse the rice 13–18 while the dal simmers
+	// 13–33, the rice simmers 18–36, and serving waits for both.
 	var spans [][2]int32
 	for _, s := range tl.GetSteps() {
 		spans = append(spans, [2]int32{s.GetStartSeconds() / 60, s.GetEndSeconds() / 60})
 	}
-	if want := [][2]int32{{0, 5}, {5, 23}, {5, 10}, {10, 18}, {18, 38}, {38, 43}}; !slices.Equal(spans, want) {
+	if want := [][2]int32{{13, 18}, {18, 36}, {0, 5}, {5, 13}, {13, 33}, {36, 41}}; !slices.Equal(spans, want) {
 		t.Errorf("got %v minutes, want %v", spans, want)
 	}
-	if tl.GetHandsOnSeconds() != (5+5+8+5)*60 || tl.GetTotalSeconds() != 43*60 || tl.GetSteps()[2].GetSection() != "For the dal" {
-		t.Errorf("got %d s hands-on of %d, want %d of %d", tl.GetHandsOnSeconds(), tl.GetTotalSeconds(), (5+5+8+5)*60, 43*60)
+	if tl.GetHandsOnSeconds() != (5+5+8+5)*60 || tl.GetTotalSeconds() != 41*60 || tl.GetSteps()[2].GetSection() != "For the dal" {
+		t.Errorf("got %d s hands-on of %d, want %d of %d", tl.GetHandsOnSeconds(), tl.GetTotalSeconds(), (5+5+8+5)*60, 41*60)
 	}
 
 	// A full update with the recipe as read keeps the instructions, and its
@@ -127,6 +128,38 @@ func TestInstructions(t *testing.T) {
 	bad("both starts", []string{"instructions"}, with(recipesv1.Step_builder{Text: "Go", FromStart: true, AfterStepIndexes: []int32{0}}.Build()))
 	bad("too long", []string{"instructions"}, with(step("Soak", nil, 3*24*3600, true)))
 	bad("empty", []string{"instructions"}, with(step(" ", nil, 0, false)))
+	bad("too much lentils", []string{"instructions"}, recipesv1.Recipe_builder{Id: dal.GetId(), Instructions: []*recipesv1.Step{
+		recipesv1.Step_builder{Text: "Add some", IngredientIndexes: []int32{1}, IngredientAmounts: []float64{200}}.Build(),
+		recipesv1.Step_builder{Text: "Add more", IngredientIndexes: []int32{1}, IngredientAmounts: []float64{100}}.Build(),
+	}}.Build())
+	bad("amounts not matching", []string{"instructions"}, with(recipesv1.Step_builder{
+		Text: "Add", IngredientIndexes: []int32{0, 1}, IngredientAmounts: []float64{10},
+	}.Build()))
+	bad("negative offset", []string{"instructions"}, with(recipesv1.Step_builder{Text: "Go", StartOffsetSeconds: -1}.Build()))
+
+	// The lentils are split between two steps, and the second goes in 10
+	// minutes into the first's simmer.
+	split, err := e.recipes.UpdateRecipe(ctx, recipesv1.UpdateRecipeRequest_builder{
+		Recipe: recipesv1.Recipe_builder{Id: dal.GetId(), Instructions: []*recipesv1.Step{
+			recipesv1.Step_builder{Text: "Simmer most of the lentils", IngredientIndexes: []int32{1, 2}, IngredientAmounts: []float64{200, 0}, DurationSeconds: 1200, Waiting: true}.Build(),
+			recipesv1.Step_builder{Text: "Add the rest", IngredientIndexes: []int32{1}, DurationSeconds: 60, StartOffsetSeconds: 600}.Build(),
+		}}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"instructions"}},
+	}.Build())
+	if err != nil {
+		t.Fatalf("UpdateRecipe: %v", err)
+	}
+	if s := split.GetRecipe().GetInstructions(); !slices.Equal(s[0].GetIngredientAmounts(), []float64{200, 0}) ||
+		len(s[1].GetIngredientAmounts()) != 0 || s[1].GetStartOffsetSeconds() != 600 {
+		t.Errorf("got %v, want the amounts and offset back", s)
+	}
+	tl, err = e.recipes.GetRecipeTimeline(ctx, recipesv1.GetRecipeTimelineRequest_builder{Id: dal.GetId()}.Build())
+	if err != nil {
+		t.Fatalf("GetRecipeTimeline: %v", err)
+	}
+	if s := tl.GetSteps(); s[1].GetStartSeconds() != 600 || tl.GetTotalSeconds() != 1200 {
+		t.Errorf("got %v, want the rest added 10 minutes into the simmer", s)
+	}
 
 	// Replacing a food keeps the instructions.
 	brown := customFood(t, e, "Brown rice", 360, 8, 76, 1, 3, nil)
@@ -137,7 +170,7 @@ func TestInstructions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetRecipe: %v", err)
 	}
-	if len(after.GetRecipe().GetInstructions()) != 6 {
+	if len(after.GetRecipe().GetInstructions()) != 2 {
 		t.Errorf("got %v, want the instructions kept", after.GetRecipe().GetInstructions())
 	}
 }

@@ -6,9 +6,12 @@ import { RecipeService } from "./recipes_pb";
 
 /**
  * Get when a recipe's steps happen, for one cook: each starts as soon as
- * the steps it follows are done and, if it's hands-on, the cook is free,
- * so hands-on steps fit into waiting time, like chopping while rice
- * simmers. Steps of unknown duration count as 5 minutes, and are marked
+ * the steps it follows are done, or start_offset_seconds into them, and,
+ * if it's hands-on, the cook is free, so hands-on steps fit into waiting
+ * time, like chopping while rice simmers. When several hands-on steps
+ * could start, the one leading the longest chain of steps to the end
+ * goes first, whatever their order in the recipe, which only breaks
+ * ties. Steps of unknown duration count as 5 minutes, and are marked
  * estimated.
  *
  * @generated from rpc recipes.v1.RecipeService.GetRecipeTimeline

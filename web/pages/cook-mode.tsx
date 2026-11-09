@@ -23,6 +23,8 @@ import {
   formatStepDuration,
   ingredientAmount,
   ingredientName,
+  stepIngredientAmount,
+  stepStart,
 } from "helpers/steps";
 import { useUnitSystem } from "helpers/user";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -144,12 +146,7 @@ const StepPage: React.FC<StepPageProps> = ({
     return ingredient === undefined ? [] : [{ ingredient, position }];
   });
   const duration = formatStepDuration(step.durationSeconds);
-  let after = "";
-  if (step.fromStart) {
-    after = "Can start right away";
-  } else if (step.afterStepIndexes.length > 0) {
-    after = `After step ${step.afterStepIndexes.map((other) => other + 1).join(" and ")}`;
-  }
+  const after = stepStart(step, index);
   return (
     <div className="flex flex-col gap-5">
       <p className="text-sm font-semibold tracking-wide text-gray-500 uppercase">
@@ -164,7 +161,7 @@ const StepPage: React.FC<StepPageProps> = ({
           {ingredients.map(({ ingredient, position }) => (
             <li key={position} className="flex gap-2">
               <span className="min-w-20 font-semibold text-gray-900 tabular-nums">
-                {ingredientAmount(ingredient, scale, system)}
+                {stepIngredientAmount(recipe, step, position, scale, system)}
               </span>
               <span className="text-gray-800">
                 {ingredientName(ingredient)}

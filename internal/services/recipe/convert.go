@@ -249,7 +249,7 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 		return nil, connect.NewError(connect.CodeInvalidArgument,
 			"steps are read only, the texts of instructions: give the steps as instructions, with each one's text, ingredients and duration")
 	}
-	instructions, err := instructionsFromProto(p.GetInstructions(), len(ingredients))
+	instructions, err := instructionsFromProto(p.GetInstructions(), ingredients)
 	if err != nil {
 		return nil, err
 	}
@@ -358,11 +358,13 @@ func instructionsToProto(steps []*recipes.Step) []*recipesv1.Step {
 	out := make([]*recipesv1.Step, 0, len(steps))
 	for _, s := range steps {
 		b := recipesv1.Step_builder{
-			Text:            s.Text,
-			Section:         s.Section,
-			DurationSeconds: s.DurationSeconds,
-			Waiting:         s.Waiting,
-			FromStart:       s.FromStart,
+			Text:               s.Text,
+			Section:            s.Section,
+			DurationSeconds:    s.DurationSeconds,
+			Waiting:            s.Waiting,
+			FromStart:          s.FromStart,
+			StartOffsetSeconds: s.StartOffsetSeconds,
+			IngredientAmounts:  s.Amounts,
 		}
 		for _, i := range s.Ingredients {
 			b.IngredientIndexes = append(b.IngredientIndexes, int32(i))
@@ -375,9 +377,12 @@ func instructionsToProto(steps []*recipes.Step) []*recipesv1.Step {
 	return out
 }
 
-// instructionsFromProto converts and checks instructions, given how many
-// ingredients the recipe has.
-func instructionsFromProto(list []*recipesv1.Step, ingredientCount int) ([]*recipes.Step, error) {
+// instructionsFromProto converts and checks instructions, given the
+// recipe's ingredients.
+func instructionsFromProto(list []*recipesv1.Step, ingredients []*recipes.Ingredient) ([]*recipes.Step, error) {
+	ingredientCount := len(ingredients)
+	// used is how much of each ingredient the steps use, by position.
+	used := make([]float64, ingredientCount)
 	if len(list) > maxSteps {
 		return nil, connect.Errorf(connect.CodeInvalidArgument, "a recipe can have at most %d steps", maxSteps)
 	}
@@ -399,22 +404,52 @@ func instructionsFromProto(list []*recipesv1.Step, ingredientCount int) ([]*reci
 		case p.GetFromStart() && len(p.GetAfterStepIndexes()) > 0:
 			return nil, connect.Errorf(connect.CodeInvalidArgument,
 				"%s has both from_start and after_step_indexes: a step either starts right away or after others", field)
+		case p.GetStartOffsetSeconds() < 0 || p.GetStartOffsetSeconds() > maxStepSeconds:
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s.start_offset_seconds must be from 0 to %d, with 0 to start once the steps it follows are done", field, maxStepSeconds)
+		case len(p.GetIngredientAmounts()) > 0 && len(p.GetIngredientAmounts()) != len(p.GetIngredientIndexes()):
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s has %d ingredient_amounts for %d ingredient_indexes: give one for each, 0 for all of it, or none",
+				field, len(p.GetIngredientAmounts()), len(p.GetIngredientIndexes()))
 		}
 		s := &recipes.Step{
-			Text:            text,
-			Section:         section,
-			DurationSeconds: p.GetDurationSeconds(),
-			Waiting:         p.GetWaiting(),
-			FromStart:       p.GetFromStart(),
+			Text:               text,
+			Section:            section,
+			DurationSeconds:    p.GetDurationSeconds(),
+			Waiting:            p.GetWaiting(),
+			FromStart:          p.GetFromStart(),
+			StartOffsetSeconds: p.GetStartOffsetSeconds(),
 		}
-		for _, in := range p.GetIngredientIndexes() {
+		var amounts []float64
+		for k, in := range p.GetIngredientIndexes() {
 			if in < 0 || int(in) >= ingredientCount {
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
 					"%s.ingredient_indexes has %d, but the recipe's ingredients are indexed from 0 to %d", field, in, ingredientCount-1)
 			}
-			if !slices.Contains(s.Ingredients, int(in)) {
-				s.Ingredients = append(s.Ingredients, int(in))
+			var amount float64
+			if k < len(p.GetIngredientAmounts()) {
+				amount = p.GetIngredientAmounts()[k]
+				if math.IsNaN(amount) || amount < 0 {
+					return nil, connect.Errorf(connect.CodeInvalidArgument,
+						"%s.ingredient_amounts[%d] must be at least 0, with 0 for all of it or the rest", field, k)
+				}
 			}
+			// An ingredient given twice uses both amounts.
+			if j := slices.Index(s.Ingredients, int(in)); j >= 0 {
+				amounts[j] += amount
+			} else {
+				s.Ingredients = append(s.Ingredients, int(in))
+				amounts = append(amounts, amount)
+			}
+			used[in] += amount
+			if have := ingredients[in].Amount; used[in] > have*(1+1e-9) {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"the steps use %v of %s, but the recipe has %v: lower their ingredient_amounts, or raise the ingredient's amount",
+					used[in], ingredients[in].Name(), have)
+			}
+		}
+		if slices.ContainsFunc(amounts, func(a float64) bool { return a > 0 }) {
+			s.Amounts = amounts
 		}
 		for _, after := range p.GetAfterStepIndexes() {
 			if after < 0 || int(after) >= i {

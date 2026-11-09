@@ -22,9 +22,10 @@ func TestTimeline(t *testing.T) {
 	for _, s := range tl.Steps {
 		got = append(got, [2]int32{s.StartSeconds, s.EndSeconds})
 	}
-	// The cook rinses the rice (0–5 min), chops while it simmers (5–15),
-	// fries (15–23), the curry simmers (23–38), and serving waits for it.
-	want := [][2]int32{{0, 300}, {300, 1500}, {300, 900}, {900, 1380}, {1380, 2280}, {2280, 2580}}
+	// The curry's chain is the longest, so the cook chops first (0–10
+	// min), rinses the rice (10–15), which simmers while the onions fry
+	// (15–23), the curry simmers (23–38), and serving waits for it.
+	want := [][2]int32{{600, 900}, {900, 2100}, {0, 600}, {900, 1380}, {1380, 2280}, {2280, 2580}}
 	if !slices.Equal(got, want) {
 		t.Errorf("got %v, want %v", got, want)
 	}
@@ -39,6 +40,52 @@ func TestTimeline(t *testing.T) {
 	plain := (&Recipe{Instructions: []*Step{{Text: "Mix"}, {Text: "Bake"}}}).Timeline()
 	if plain.TotalSeconds != 2*DefaultStepSeconds || !plain.Steps[1].Estimated || plain.Steps[1].StartSeconds != DefaultStepSeconds {
 		t.Errorf("got %+v, want two estimated steps in a row", plain)
+	}
+}
+
+// TestTimelineFillsGaps checks that a hands-on step that can start right
+// away isn't stuck behind earlier hands-on steps, but fills the cook's
+// time while something waits.
+func TestTimelineFillsGaps(t *testing.T) {
+	t.Parallel()
+	r := &Recipe{Instructions: []*Step{
+		{Text: "Fry the onions", DurationSeconds: 300},
+		{Text: "Simmer the sauce", DurationSeconds: 1800, Waiting: true},
+		{Text: "Stir in the spinach", DurationSeconds: 120},
+		{Text: "Boil water for the pasta", DurationSeconds: 120, FromStart: true},
+		{Text: "Bring it to a boil", DurationSeconds: 600, Waiting: true},
+		{Text: "Cook the pasta", DurationSeconds: 600, Waiting: true},
+		{Text: "Serve", After: []int{2, 5}},
+	}}
+	tl := r.Timeline()
+	// Frying leads the longest chain, so it's first (0–5 min), then the
+	// cook puts the water on (5–7), not after the spinach at 35.
+	if s := tl.Steps[3]; s.StartSeconds != 300 {
+		t.Errorf("got the water on at %d s, want 300, while the sauce simmers", s.StartSeconds)
+	}
+	if tl.TotalSeconds != 300+1800+120+300 {
+		t.Errorf("got %d s in all, want %d", tl.TotalSeconds, 300+1800+120+300)
+	}
+}
+
+// TestTimelineOffset checks that a step can start partway through the step
+// it follows.
+func TestTimelineOffset(t *testing.T) {
+	t.Parallel()
+	r := &Recipe{Instructions: []*Step{
+		{Text: "Simmer the stew", DurationSeconds: 1800, Waiting: true},
+		{Text: "Add the dumplings", DurationSeconds: 120, StartOffsetSeconds: 1200},
+		{Text: "Toast the spices", DurationSeconds: 60, FromStart: true, StartOffsetSeconds: 300},
+		{Text: "Serve", After: []int{0, 1, 2}},
+	}}
+	tl := r.Timeline()
+	var got [][2]int32
+	for _, s := range tl.Steps {
+		got = append(got, [2]int32{s.StartSeconds, s.EndSeconds})
+	}
+	want := [][2]int32{{0, 1800}, {1200, 1320}, {300, 360}, {1800, 2100}}
+	if !slices.Equal(got, want) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 }
 
