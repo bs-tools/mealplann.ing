@@ -9,12 +9,12 @@ select u.id, sqlc.arg(user_handle), sqlc.arg(name) from u
 returning *;
 
 -- name: GetPasskeyUser :one
-select p.*, u.is_admin, u.avatar_key, u.household_id from passkey_users p
+select p.*, u.is_admin, u.avatar_key, u.household_id, u.unit_system from passkey_users p
 join users u on u.id = p.id
 where p.id = $1;
 
 -- name: GetPasskeyUserByHandle :one
-select p.*, u.is_admin, u.avatar_key, u.household_id from passkey_users p
+select p.*, u.is_admin, u.avatar_key, u.household_id, u.unit_system from passkey_users p
 join users u on u.id = p.id
 where p.user_handle = $1;
 

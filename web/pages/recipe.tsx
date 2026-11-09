@@ -33,14 +33,15 @@ import {
   formatList,
   formatRedirectTarget,
 } from "helpers/format";
-import { formatIngredientAmount, formatServings } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
+import { ingredientAmount } from "helpers/steps";
 import {
   formatStepDuration,
   groupSteps,
   ingredientName,
   recipeSteps,
 } from "helpers/steps";
+import { useUnitSystem } from "helpers/user";
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
@@ -80,6 +81,7 @@ const fridgeNote = (recipe: Recipe): string => {
  * serving, with the ingredients whose foods lack data flagged.
  */
 const RecipePage: React.FC = () => {
+  const system = useUnitSystem();
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -225,12 +227,7 @@ const RecipePage: React.FC = () => {
                     className="flex flex-wrap items-baseline gap-x-1.5"
                   >
                     <span className="font-medium text-gray-900 tabular-nums">
-                      {ingredient.recipeId === ""
-                        ? formatIngredientAmount(
-                            ingredient.amount,
-                            ingredient.unit
-                          )
-                        : formatServings(ingredient.amount)}
+                      {ingredientAmount(ingredient, 1, system)}
                     </span>
                     {ingredient.recipeId === "" ? (
                       <Link

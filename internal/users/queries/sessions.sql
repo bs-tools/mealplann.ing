@@ -7,7 +7,7 @@ with expired as (
 insert into sessions (user_id, token_sha256, expiry, passkey_id) values ($1, $2, $3, $4);
 
 -- name: GetSessionUser :one
-select p.*, u.is_admin, u.avatar_key, u.household_id, s.expiry from sessions s
+select p.*, u.is_admin, u.avatar_key, u.household_id, u.unit_system, s.expiry from sessions s
 join passkey_users p on p.id = s.user_id
 join users u on u.id = s.user_id
 where s.token_sha256 = $1 and s.expiry > now();

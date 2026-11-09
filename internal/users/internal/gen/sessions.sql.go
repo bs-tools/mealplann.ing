@@ -86,7 +86,7 @@ func (q *Queries) DeleteSession(ctx context.Context, tokenSha256 []byte) error {
 }
 
 const getSessionUser = `-- name: GetSessionUser :one
-select p.id, p.user_handle, p.name, u.is_admin, u.avatar_key, u.household_id, s.expiry from sessions s
+select p.id, p.user_handle, p.name, u.is_admin, u.avatar_key, u.household_id, u.unit_system, s.expiry from sessions s
 join passkey_users p on p.id = s.user_id
 join users u on u.id = s.user_id
 where s.token_sha256 = $1 and s.expiry > now()
@@ -99,6 +99,7 @@ type GetSessionUserRow struct {
 	IsAdmin     bool
 	AvatarKey   pgtype.Text
 	HouseholdID pgtype.UUID
+	UnitSystem  string
 	Expiry      pgtype.Timestamptz
 }
 
@@ -112,6 +113,7 @@ func (q *Queries) GetSessionUser(ctx context.Context, tokenSha256 []byte) (*GetS
 		&i.IsAdmin,
 		&i.AvatarKey,
 		&i.HouseholdID,
+		&i.UnitSystem,
 		&i.Expiry,
 	)
 	return &i, err

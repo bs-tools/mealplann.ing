@@ -1,7 +1,27 @@
-import { AmountUnit, FoodSource, StoreSection } from "gen/foods/v1/foods_pb";
+import {
+  AmountUnit,
+  FoodSource,
+  Measure,
+  StoreSection,
+} from "gen/foods/v1/foods_pb";
 import { Storage } from "gen/pantry/v1/pantry_pb";
 import { EatingTimeKind, HouseholdMeal } from "gen/people/v1/people_pb";
 import { Weekday } from "gen/plans/v1/plans_pb";
+import type { UnitSystem } from "gen/users/v1/users_pb";
+
+import type { FoodMeasures } from "./measures";
+import { formatMeasure } from "./measures";
+
+// MEASURES are how a food's amounts can show in recipes.
+export const MEASURES: { value: Measure; label: string }[] = [
+  {
+    label: "Automatically: spoons for small amounts",
+    value: Measure.UNSPECIFIED,
+  },
+  { label: "By weight, like tofu or pasta", value: Measure.WEIGHT },
+  { label: "By volume, like oil, spices or milk", value: Measure.VOLUME },
+  { label: "In pieces, like onions", value: Measure.PIECES },
+];
 
 // STORE_SECTIONS are the store sections, in the order of a typical shop.
 export const STORE_SECTIONS: { value: StoreSection; label: string }[] = [
@@ -37,22 +57,15 @@ export const AMOUNT_UNITS: { value: AmountUnit; label: string }[] = [
 ];
 
 /**
- * FormatIngredientAmount formats an amount in a unit, e.g. "400 g", "200 ml"
- * or "2", as pieces read best before the food's name ("2 Onions").
+ * FormatIngredientAmount formats an amount of a food in a unit system,
+ * converting it where it can (see formatMeasure), e.g. "2 tbsp".
  */
 export const formatIngredientAmount = (
   amount: number,
-  unit: AmountUnit
-): string => {
-  const value = amount.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  if (unit === AmountUnit.GRAMS) {
-    return `${value} g`;
-  }
-  if (unit === AmountUnit.MILLILITERS) {
-    return `${value} ml`;
-  }
-  return value;
-};
+  unit: AmountUnit,
+  system: UnitSystem,
+  food?: FoodMeasures
+): string => formatMeasure(amount, unit, system, food);
 
 /**
  * OptionValue returns the value of the option whose value's string is

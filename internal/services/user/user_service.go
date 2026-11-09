@@ -23,6 +23,11 @@ type AvatarRepository interface {
 	SetAvatarKey(ctx context.Context, userID pgtype.UUID, key string) (string, error)
 }
 
+// SettingsRepository stores users' settings.
+type SettingsRepository interface {
+	SetUnitSystem(ctx context.Context, userID pgtype.UUID, system users.UnitSystem) error
+}
+
 // HouseholdRepository stores households.
 type HouseholdRepository interface {
 	GetHousehold(ctx context.Context, id pgtype.UUID) (*users.Household, error)
@@ -36,18 +41,20 @@ type Service struct {
 	tokens     APITokenRepository
 	avatars    AvatarRepository
 	households HouseholdRepository
+	settings   SettingsRepository
 	blobs      blob.Store
 }
 
 // NewService creates a new Service from the provided logger, repositories
 // and the blob store avatar images are stored in.
-func NewService(log *slog.Logger, report *errreport.Reporter, tokens APITokenRepository, avatars AvatarRepository, households HouseholdRepository, blobs blob.Store) *Service {
+func NewService(log *slog.Logger, report *errreport.Reporter, tokens APITokenRepository, avatars AvatarRepository, households HouseholdRepository, settings SettingsRepository, blobs blob.Store) *Service {
 	return &Service{
 		log:        log,
 		report:     report,
 		tokens:     tokens,
 		avatars:    avatars,
 		households: households,
+		settings:   settings,
 		blobs:      blobs,
 	}
 }

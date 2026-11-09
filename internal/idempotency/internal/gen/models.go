@@ -671,6 +671,7 @@ type Food struct {
 	FreezerShelfLifeDays            *int32
 	PriceCentsPerKilogram           *int32
 	PriceDate                       pgtype.Date
+	Measure                         *string
 }
 
 type Household struct {
@@ -983,4 +984,5 @@ type User struct {
 	IsAdmin     bool
 	AvatarKey   *string
 	CreateTime  pgtype.Timestamptz
+	UnitSystem  string
 }

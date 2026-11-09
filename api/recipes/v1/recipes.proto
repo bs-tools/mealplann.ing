@@ -231,6 +231,12 @@ message Ingredient {
   string recipe_id = 8;
   // The name of the component's recipe.
   string recipe_name = 9 [(mcp.v1.field).output_only = true];
+  // How the food's amounts are shown to people (see foods.v1.Food.measure),
+  // and its density and piece weight, to convert them. Unset for a
+  // component.
+  foods.v1.Measure food_measure = 10 [(mcp.v1.field).output_only = true];
+  double food_grams_per_milliliter = 11 [(mcp.v1.field).output_only = true];
+  double food_grams_per_piece = 12 [(mcp.v1.field).output_only = true];
 }
 
 // The nutrition of a recipe, computed from its ingredients' foods, as

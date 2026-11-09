@@ -155,7 +155,7 @@ func newEnv(t *testing.T) *env {
 	if err != nil {
 		t.Fatal(err)
 	}
-	userService := user.NewService(log, report, userRepo, userRepo, userRepo, avatars)
+	userService := user.NewService(log, report, userRepo, userRepo, userRepo, userRepo, avatars)
 	e.foodRepo = foods.NewRepository(log, db)
 	requests := idempotency.NewStore(log, report, db)
 	foodService := food.NewService(log, report, e.foodRepo, requests)

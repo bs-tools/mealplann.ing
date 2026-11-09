@@ -23,13 +23,18 @@ import {
   updateFood,
 } from "gen/foods/v1/foods-FoodService_connectquery";
 import type { Food } from "gen/foods/v1/foods_pb";
-import { FoodService, StoreSection } from "gen/foods/v1/foods_pb";
+import { FoodService, Measure, StoreSection } from "gen/foods/v1/foods_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
 import { listStores } from "gen/shopping/v1/shopping-ShoppingService_connectquery";
 import type { Store } from "gen/shopping/v1/shopping_pb";
 import { today } from "helpers/dates";
 import { formatDollars, formatShortDate } from "helpers/format";
-import { STORE_SECTIONS, foodSourceInfo } from "helpers/labels";
+import {
+  MEASURES,
+  STORE_SECTIONS,
+  foodSourceInfo,
+  optionValue,
+} from "helpers/labels";
 import type { NutrientKey } from "helpers/nutrients";
 import { NUTRIENT_GROUPS, NUTRIENTS } from "helpers/nutrients";
 import { optionalNumberInput, parseOptionalNumber } from "helpers/parse";
@@ -148,6 +153,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
     zeroAsEmpty(food.freezerShelfLifeDays)
   );
   const [storeSection, setStoreSection] = useState(food.storeSection);
+  const [measure, setMeasure] = useState(food.measure);
   const [fastCarb, setFastCarb] = useState(food.fastCarb);
   const [preferredStoreId, setPreferredStoreId] = useState(
     food.preferredStoreId
@@ -234,6 +240,9 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
   if (storeSection !== food.storeSection) {
     paths.push("store_section");
   }
+  if (measure !== food.measure) {
+    paths.push("measure");
+  }
   if (fastCarb !== food.fastCarb) {
     paths.push("fast_carb");
   }
@@ -293,6 +302,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
         gramsPerMilliliter: parsed.grams_per_milliliter ?? 0,
         gramsPerPiece: parsed.grams_per_piece ?? 0,
         id: food.id,
+        measure,
         name,
         notes,
         nutrients: values,
@@ -435,8 +445,20 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
                 label="Density (g/ml)"
                 value={gramsPerMilliliter}
                 inputMode="decimal"
-                hint="To weigh amounts in ml."
+                hint="To weigh amounts in ml, and show weights by volume."
                 onChange={setGramsPerMilliliter}
+              />
+              <SelectField
+                className="col-span-2"
+                label="Show amounts in recipes"
+                value={String(measure)}
+                options={MEASURES.map((option) => ({
+                  label: option.label,
+                  value: String(option.value),
+                }))}
+                onChange={(value) => {
+                  setMeasure(optionValue(MEASURES, value, Measure.UNSPECIFIED));
+                }}
               />
               <TextField
                 label="Pack size (g)"

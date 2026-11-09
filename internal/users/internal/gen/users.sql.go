@@ -23,7 +23,7 @@ func (q *Queries) GetAvatarKeyForUpdate(ctx context.Context, id pgtype.UUID) (pg
 }
 
 const getUser = `-- name: GetUser :one
-select id, household_id, is_admin, avatar_key, create_time from users where id = $1
+select id, household_id, is_admin, avatar_key, create_time, unit_system from users where id = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id pgtype.UUID) (*User, error) {
@@ -35,6 +35,7 @@ func (q *Queries) GetUser(ctx context.Context, id pgtype.UUID) (*User, error) {
 		&i.IsAdmin,
 		&i.AvatarKey,
 		&i.CreateTime,
+		&i.UnitSystem,
 	)
 	return &i, err
 }
@@ -50,5 +51,19 @@ type SetAvatarKeyParams struct {
 
 func (q *Queries) SetAvatarKey(ctx context.Context, arg *SetAvatarKeyParams) error {
 	_, err := q.db.Exec(ctx, setAvatarKey, arg.ID, arg.AvatarKey)
+	return err
+}
+
+const setUnitSystem = `-- name: SetUnitSystem :exec
+update users set unit_system = $2 where id = $1
+`
+
+type SetUnitSystemParams struct {
+	ID         pgtype.UUID
+	UnitSystem string
+}
+
+func (q *Queries) SetUnitSystem(ctx context.Context, arg *SetUnitSystemParams) error {
+	_, err := q.db.Exec(ctx, setUnitSystem, arg.ID, arg.UnitSystem)
 	return err
 }

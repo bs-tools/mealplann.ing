@@ -23,9 +23,12 @@ import type {
 import { Severity, WarningKind } from "gen/plans/v1/plans_pb";
 import type { ScoreComponent } from "gen/suggestions/v1/suggestions_pb";
 import { ScoreKind } from "gen/suggestions/v1/suggestions_pb";
+import type { UnitSystem } from "gen/users/v1/users_pb";
 import { formatShortDate } from "helpers/format";
-import { formatIngredientAmount, formatServings } from "helpers/labels";
+import { formatServings } from "helpers/labels";
+import { formatVolume, formatWeight } from "helpers/measures";
 import { formatAmount, nutrientInfoOf } from "helpers/nutrients";
+import { useUnitSystem } from "helpers/user";
 import React from "react";
 
 interface WarningListProps {
@@ -66,7 +69,7 @@ export const WarningList: React.FC<WarningListProps> = ({ warnings }) => {
 };
 
 // PortionAmount describes how much of a planned portion is eaten.
-const portionAmount = (portion: PlannedPortion): string => {
+const portionAmount = (portion: PlannedPortion, system: UnitSystem): string => {
   const parts: string[] = [];
   if (portion.foodId === "") {
     parts.push(formatServings(portion.servings));
@@ -75,11 +78,11 @@ const portionAmount = (portion: PlannedPortion): string => {
       `${formatAmount(portion.amount)} ${portion.amount === 1 ? "piece" : "pieces"}`
     );
   } else if (portion.unit === AmountUnit.MILLILITERS) {
-    parts.push(formatIngredientAmount(portion.amount, portion.unit));
+    parts.push(formatVolume(portion.amount, system));
   }
   if (portion.grams > 0) {
     parts.push(
-      `${portion.unknownWeight ? "≥ " : ""}${formatAmount(portion.grams)} g`
+      `${portion.unknownWeight ? "≥ " : ""}${formatWeight(portion.grams, system)}`
     );
   } else if (portion.unknownWeight) {
     parts.push("weight unknown");
@@ -108,6 +111,7 @@ export const PortionRow: React.FC<PortionRowProps> = ({
   onSkip,
 }) => {
   const staple = portion.stapleId !== "";
+  const system = useUnitSystem();
   return (
     <li className="group flex items-start gap-1">
       <div className="min-w-0 grow">
@@ -129,7 +133,7 @@ export const PortionRow: React.FC<PortionRowProps> = ({
           )}
         </p>
         <p className="text-xs text-gray-500 tabular-nums">
-          {portionAmount(portion)}
+          {portionAmount(portion, system)}
           {portion.notes !== "" && ` · ${portion.notes}`}
         </p>
       </div>

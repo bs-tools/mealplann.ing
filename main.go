@@ -377,7 +377,7 @@ func run(
 		return err
 	}
 
-	userService := user.NewService(log, report, users, users, users, avatars)
+	userService := user.NewService(log, report, users, users, users, users, avatars)
 	authService, err := auth.NewService(log, report, users, baseURL, adminBootstrapToken)
 	if err != nil {
 		return fmt.Errorf("failed to create auth service: %w", err)

@@ -36,6 +36,8 @@ const (
 	UserServiceUploadAvatarProcedure = "/users.v1.UserService/UploadAvatar"
 	// UserServiceDeleteAvatarProcedure is the procedure name of the UserService's DeleteAvatar RPC.
 	UserServiceDeleteAvatarProcedure = "/users.v1.UserService/DeleteAvatar"
+	// UserServiceUpdateSettingsProcedure is the procedure name of the UserService's UpdateSettings RPC.
+	UserServiceUpdateSettingsProcedure = "/users.v1.UserService/UpdateSettings"
 	// UserServiceGetHouseholdProcedure is the procedure name of the UserService's GetHousehold RPC.
 	UserServiceGetHouseholdProcedure = "/users.v1.UserService/GetHousehold"
 	// UserServiceUpdateHouseholdProcedure is the procedure name of the UserService's UpdateHousehold
@@ -86,6 +88,13 @@ var (
 			Procedure:  UserServiceDeleteAvatarProcedure,
 		}
 	})
+	userServiceUpdateSettingsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_users_v1_users_proto.Services().ByName("UserService").Methods().ByName("UpdateSettings"),
+			Procedure:  UserServiceUpdateSettingsProcedure,
+		}
+	})
 	userServiceGetHouseholdSpec = sync.OnceValue(func() connect.Spec {
 		return connect.Spec{
 			StreamType: connect.StreamTypeUnary,
@@ -118,6 +127,9 @@ type UserServiceClient interface {
 	UploadAvatar(context.Context, *v1.UploadAvatarRequest) (*v1.UploadAvatarResponse, error)
 	// Remove the user's avatar.
 	DeleteAvatar(context.Context, *v1.DeleteAvatarRequest) (*v1.DeleteAvatarResponse, error)
+	// Change the signed in user's settings, like the units they read amounts
+	// in.
+	UpdateSettings(context.Context, *v1.UpdateSettingsRequest) (*v1.UpdateSettingsResponse, error)
 	// Get the signed in user's household: the people who share recipes,
 	// plans, the pantry and the shopping list.
 	GetHousehold(context.Context, *v1.GetHouseholdRequest) (*v1.GetHouseholdResponse, error)
@@ -147,6 +159,9 @@ type UserServiceHandler interface {
 	UploadAvatar(context.Context, *v1.UploadAvatarRequest) (*v1.UploadAvatarResponse, error)
 	// Remove the user's avatar.
 	DeleteAvatar(context.Context, *v1.DeleteAvatarRequest) (*v1.DeleteAvatarResponse, error)
+	// Change the signed in user's settings, like the units they read amounts
+	// in.
+	UpdateSettings(context.Context, *v1.UpdateSettingsRequest) (*v1.UpdateSettingsResponse, error)
 	// Get the signed in user's household: the people who share recipes,
 	// plans, the pantry and the shopping list.
 	GetHousehold(context.Context, *v1.GetHouseholdRequest) (*v1.GetHouseholdResponse, error)
@@ -164,6 +179,7 @@ func RegisterUserServiceHandler(server *connect.Server, svc UserServiceHandler) 
 		connect.Method{Spec: userServiceDeleteAPITokenSpec(), Handler: adapter.deleteAPIToken},
 		connect.Method{Spec: userServiceUploadAvatarSpec(), Handler: adapter.uploadAvatar},
 		connect.Method{Spec: userServiceDeleteAvatarSpec(), Handler: adapter.deleteAvatar},
+		connect.Method{Spec: userServiceUpdateSettingsSpec(), Handler: adapter.updateSettings},
 		connect.Method{Spec: userServiceGetHouseholdSpec(), Handler: adapter.getHousehold},
 		connect.Method{Spec: userServiceUpdateHouseholdSpec(), Handler: adapter.updateHousehold},
 	)
@@ -194,6 +210,10 @@ func (UnimplementedUserServiceHandler) UploadAvatar(context.Context, *v1.UploadA
 
 func (UnimplementedUserServiceHandler) DeleteAvatar(context.Context, *v1.DeleteAvatarRequest) (*v1.DeleteAvatarResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "users.v1.UserService.DeleteAvatar is not implemented")
+}
+
+func (UnimplementedUserServiceHandler) UpdateSettings(context.Context, *v1.UpdateSettingsRequest) (*v1.UpdateSettingsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "users.v1.UserService.UpdateSettings is not implemented")
 }
 
 func (UnimplementedUserServiceHandler) GetHousehold(context.Context, *v1.GetHouseholdRequest) (*v1.GetHouseholdResponse, error) {
@@ -251,6 +271,14 @@ func (c *userServiceClient) UploadAvatar(ctx context.Context, req *v1.UploadAvat
 func (c *userServiceClient) DeleteAvatar(ctx context.Context, req *v1.DeleteAvatarRequest) (*v1.DeleteAvatarResponse, error) {
 	var res v1.DeleteAvatarResponse
 	if err := c.client.CallUnary(ctx, userServiceDeleteAvatarSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *userServiceClient) UpdateSettings(ctx context.Context, req *v1.UpdateSettingsRequest) (*v1.UpdateSettingsResponse, error) {
+	var res v1.UpdateSettingsResponse
+	if err := c.client.CallUnary(ctx, userServiceUpdateSettingsSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -340,6 +368,18 @@ func (h userServiceHandler) deleteAvatar(ctx context.Context, _ connect.Spec, st
 		return err
 	}
 	res, err := h.svc.DeleteAvatar(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h userServiceHandler) updateSettings(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.UpdateSettingsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.UpdateSettings(ctx, &req)
 	if err != nil {
 		return err
 	}

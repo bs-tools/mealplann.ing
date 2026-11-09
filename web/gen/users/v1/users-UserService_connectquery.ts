@@ -49,6 +49,14 @@ export const uploadAvatar = UserService.method.uploadAvatar;
 export const deleteAvatar = UserService.method.deleteAvatar;
 
 /**
+ * Change the signed in user's settings, like the units they read amounts
+ * in.
+ *
+ * @generated from rpc users.v1.UserService.UpdateSettings
+ */
+export const updateSettings = UserService.method.updateSettings;
+
+/**
  * Get the signed in user's household: the people who share recipes,
  * plans, the pantry and the shopping list.
  *

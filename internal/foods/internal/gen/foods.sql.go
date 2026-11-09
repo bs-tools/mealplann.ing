@@ -60,6 +60,7 @@ insert into foods (
   potassium_milligrams_per_100_grams,
   grams_per_piece,
   grams_per_milliliter,
+  measure,
   fast_carb,
   store_section,
   package_grams,
@@ -110,9 +111,10 @@ insert into foods (
   $36,
   $37,
   $38,
-  $39
+  $39,
+  $40
 )
-returning id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date
+returning id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date, measure
 `
 
 type CreateFoodParams struct {
@@ -144,6 +146,7 @@ type CreateFoodParams struct {
 	PotassiumMilligramsPer100Grams  *float64
 	GramsPerPiece                   *float64
 	GramsPerMilliliter              *float64
+	Measure                         *string
 	FastCarb                        bool
 	StoreSection                    *StoreSection
 	PackageGrams                    *float64
@@ -187,6 +190,7 @@ func (q *Queries) CreateFood(ctx context.Context, arg *CreateFoodParams) (*Food,
 		arg.PotassiumMilligramsPer100Grams,
 		arg.GramsPerPiece,
 		arg.GramsPerMilliliter,
+		arg.Measure,
 		arg.FastCarb,
 		arg.StoreSection,
 		arg.PackageGrams,
@@ -243,6 +247,7 @@ func (q *Queries) CreateFood(ctx context.Context, arg *CreateFoodParams) (*Food,
 		&i.FreezerShelfLifeDays,
 		&i.PriceCentsPerKilogram,
 		&i.PriceDate,
+		&i.Measure,
 	)
 	return &i, err
 }
@@ -321,7 +326,7 @@ func (q *Queries) FindFoodsByName(ctx context.Context, arg *FindFoodsByNameParam
 }
 
 const getFood = `-- name: GetFood :one
-select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date from foods where id = $1 and household_id = $2
+select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date, measure from foods where id = $1 and household_id = $2
 `
 
 type GetFoodParams struct {
@@ -375,6 +380,7 @@ func (q *Queries) GetFood(ctx context.Context, arg *GetFoodParams) (*Food, error
 		&i.FreezerShelfLifeDays,
 		&i.PriceCentsPerKilogram,
 		&i.PriceDate,
+		&i.Measure,
 	)
 	return &i, err
 }
@@ -416,7 +422,7 @@ func (q *Queries) GetFoodUsages(ctx context.Context, arg *GetFoodUsagesParams) (
 }
 
 const listAlwaysInStockFoods = `-- name: ListAlwaysInStockFoods :many
-select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date from foods
+select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date, measure from foods
 where household_id = $1 and always_in_stock
 order by lower(name)
 `
@@ -473,6 +479,7 @@ func (q *Queries) ListAlwaysInStockFoods(ctx context.Context, householdID pgtype
 			&i.FreezerShelfLifeDays,
 			&i.PriceCentsPerKilogram,
 			&i.PriceDate,
+			&i.Measure,
 		); err != nil {
 			return nil, err
 		}
@@ -526,7 +533,7 @@ func (q *Queries) ListFoodRecipes(ctx context.Context, arg *ListFoodRecipesParam
 }
 
 const listFoods = `-- name: ListFoods :many
-select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date from foods
+select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date, measure from foods
 where household_id = $1
   and ($2::text = '' or strpos(lower(name), lower($2)) > 0)
 order by lower(name)
@@ -599,6 +606,7 @@ func (q *Queries) ListFoods(ctx context.Context, arg *ListFoodsParams) ([]*Food,
 			&i.FreezerShelfLifeDays,
 			&i.PriceCentsPerKilogram,
 			&i.PriceDate,
+			&i.Measure,
 		); err != nil {
 			return nil, err
 		}
@@ -611,7 +619,7 @@ func (q *Queries) ListFoods(ctx context.Context, arg *ListFoodsParams) ([]*Food,
 }
 
 const listFoodsByID = `-- name: ListFoodsByID :many
-select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date from foods
+select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date, measure from foods
 where household_id = $1 and id = any($2::uuid[])
 order by lower(name)
 `
@@ -673,6 +681,7 @@ func (q *Queries) ListFoodsByID(ctx context.Context, arg *ListFoodsByIDParams) (
 			&i.FreezerShelfLifeDays,
 			&i.PriceCentsPerKilogram,
 			&i.PriceDate,
+			&i.Measure,
 		); err != nil {
 			return nil, err
 		}
@@ -745,20 +754,21 @@ update foods set
   potassium_milligrams_per_100_grams = $22,
   grams_per_piece = $23,
   grams_per_milliliter = $24,
-  fast_carb = $25,
-  store_section = $26,
-  package_grams = $27,
-  shelf_life_days = $28,
-  opened_shelf_life_days = $29,
-  freezer_shelf_life_days = $30,
-  price_cents_per_kilogram = $31,
-  price_date = $32,
-  notes = $33,
-  preferred_store_id = $34,
-  always_in_stock = $35,
+  measure = $25,
+  fast_carb = $26,
+  store_section = $27,
+  package_grams = $28,
+  shelf_life_days = $29,
+  opened_shelf_life_days = $30,
+  freezer_shelf_life_days = $31,
+  price_cents_per_kilogram = $32,
+  price_date = $33,
+  notes = $34,
+  preferred_store_id = $35,
+  always_in_stock = $36,
   update_time = now()
-where id = $36 and household_id = $37
-returning id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date
+where id = $37 and household_id = $38
+returning id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date, measure
 `
 
 type UpdateFoodParams struct {
@@ -786,6 +796,7 @@ type UpdateFoodParams struct {
 	PotassiumMilligramsPer100Grams  *float64
 	GramsPerPiece                   *float64
 	GramsPerMilliliter              *float64
+	Measure                         *string
 	FastCarb                        bool
 	StoreSection                    *StoreSection
 	PackageGrams                    *float64
@@ -827,6 +838,7 @@ func (q *Queries) UpdateFood(ctx context.Context, arg *UpdateFoodParams) (*Food,
 		arg.PotassiumMilligramsPer100Grams,
 		arg.GramsPerPiece,
 		arg.GramsPerMilliliter,
+		arg.Measure,
 		arg.FastCarb,
 		arg.StoreSection,
 		arg.PackageGrams,
@@ -885,6 +897,7 @@ func (q *Queries) UpdateFood(ctx context.Context, arg *UpdateFoodParams) (*Food,
 		&i.FreezerShelfLifeDays,
 		&i.PriceCentsPerKilogram,
 		&i.PriceDate,
+		&i.Measure,
 	)
 	return &i, err
 }

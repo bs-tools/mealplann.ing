@@ -26,6 +26,7 @@ import {
   ingredientName,
   recipeSteps,
 } from "helpers/steps";
+import { useUnitSystem } from "helpers/user";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 
@@ -139,6 +140,7 @@ const StepPage: React.FC<StepPageProps> = ({
   scale,
   onTimer,
 }) => {
+  const system = useUnitSystem();
   const ingredients = step.ingredientIndexes.flatMap((position) => {
     const ingredient = recipe.ingredients[position];
     return ingredient === undefined ? [] : [{ ingredient, position }];
@@ -164,7 +166,7 @@ const StepPage: React.FC<StepPageProps> = ({
           {ingredients.map(({ ingredient, position }) => (
             <li key={position} className="flex gap-2">
               <span className="min-w-20 font-semibold text-gray-900 tabular-nums">
-                {ingredientAmount(ingredient, scale)}
+                {ingredientAmount(ingredient, scale, system)}
               </span>
               <span className="text-gray-800">
                 {ingredientName(ingredient)}
@@ -206,6 +208,7 @@ const StepPage: React.FC<StepPageProps> = ({
  * the screen kept on. Arrow keys and swipes move between steps.
  */
 const CookModePage: React.FC = () => {
+  const system = useUnitSystem();
   const { id = "" } = useParams();
   const [params, setParams] = useSearchParams();
   const recipe = useQuery(getRecipe, { id });
@@ -304,7 +307,7 @@ const CookModePage: React.FC = () => {
                 />
                 <span>
                   <span className="font-semibold text-gray-900 tabular-nums">
-                    {ingredientAmount(ingredient, scale)}
+                    {ingredientAmount(ingredient, scale, system)}
                   </span>{" "}
                   {ingredientName(ingredient)}
                   {ingredient.note !== "" && (

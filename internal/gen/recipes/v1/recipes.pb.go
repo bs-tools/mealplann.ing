@@ -765,18 +765,21 @@ func (b0 Step_builder) Build() *Step {
 // An ingredient of a recipe: an amount of a food, or servings of another
 // recipe, a component.
 type Ingredient struct {
-	state                   protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_FoodId       string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
-	xxx_hidden_FoodName     string                 `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3"`
-	xxx_hidden_Amount       float64                `protobuf:"fixed64,3,opt,name=amount,proto3"`
-	xxx_hidden_Unit         v1.AmountUnit          `protobuf:"varint,4,opt,name=unit,proto3,enum=foods.v1.AmountUnit"`
-	xxx_hidden_Note         string                 `protobuf:"bytes,5,opt,name=note,proto3"`
-	xxx_hidden_OriginalText string                 `protobuf:"bytes,6,opt,name=original_text,json=originalText,proto3"`
-	xxx_hidden_Optional     bool                   `protobuf:"varint,7,opt,name=optional,proto3"`
-	xxx_hidden_RecipeId     string                 `protobuf:"bytes,8,opt,name=recipe_id,json=recipeId,proto3"`
-	xxx_hidden_RecipeName   string                 `protobuf:"bytes,9,opt,name=recipe_name,json=recipeName,proto3"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	state                             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FoodId                 string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
+	xxx_hidden_FoodName               string                 `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3"`
+	xxx_hidden_Amount                 float64                `protobuf:"fixed64,3,opt,name=amount,proto3"`
+	xxx_hidden_Unit                   v1.AmountUnit          `protobuf:"varint,4,opt,name=unit,proto3,enum=foods.v1.AmountUnit"`
+	xxx_hidden_Note                   string                 `protobuf:"bytes,5,opt,name=note,proto3"`
+	xxx_hidden_OriginalText           string                 `protobuf:"bytes,6,opt,name=original_text,json=originalText,proto3"`
+	xxx_hidden_Optional               bool                   `protobuf:"varint,7,opt,name=optional,proto3"`
+	xxx_hidden_RecipeId               string                 `protobuf:"bytes,8,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_RecipeName             string                 `protobuf:"bytes,9,opt,name=recipe_name,json=recipeName,proto3"`
+	xxx_hidden_FoodMeasure            v1.Measure             `protobuf:"varint,10,opt,name=food_measure,json=foodMeasure,proto3,enum=foods.v1.Measure"`
+	xxx_hidden_FoodGramsPerMilliliter float64                `protobuf:"fixed64,11,opt,name=food_grams_per_milliliter,json=foodGramsPerMilliliter,proto3"`
+	xxx_hidden_FoodGramsPerPiece      float64                `protobuf:"fixed64,12,opt,name=food_grams_per_piece,json=foodGramsPerPiece,proto3"`
+	unknownFields                     protoimpl.UnknownFields
+	sizeCache                         protoimpl.SizeCache
 }
 
 func (x *Ingredient) Reset() {
@@ -867,6 +870,27 @@ func (x *Ingredient) GetRecipeName() string {
 	return ""
 }
 
+func (x *Ingredient) GetFoodMeasure() v1.Measure {
+	if x != nil {
+		return x.xxx_hidden_FoodMeasure
+	}
+	return v1.Measure(0)
+}
+
+func (x *Ingredient) GetFoodGramsPerMilliliter() float64 {
+	if x != nil {
+		return x.xxx_hidden_FoodGramsPerMilliliter
+	}
+	return 0
+}
+
+func (x *Ingredient) GetFoodGramsPerPiece() float64 {
+	if x != nil {
+		return x.xxx_hidden_FoodGramsPerPiece
+	}
+	return 0
+}
+
 func (x *Ingredient) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -903,6 +927,18 @@ func (x *Ingredient) SetRecipeName(v string) {
 	x.xxx_hidden_RecipeName = v
 }
 
+func (x *Ingredient) SetFoodMeasure(v v1.Measure) {
+	x.xxx_hidden_FoodMeasure = v
+}
+
+func (x *Ingredient) SetFoodGramsPerMilliliter(v float64) {
+	x.xxx_hidden_FoodGramsPerMilliliter = v
+}
+
+func (x *Ingredient) SetFoodGramsPerPiece(v float64) {
+	x.xxx_hidden_FoodGramsPerPiece = v
+}
+
 type Ingredient_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -932,6 +968,12 @@ type Ingredient_builder struct {
 	RecipeId string
 	// The name of the component's recipe.
 	RecipeName string
+	// How the food's amounts are shown to people (see foods.v1.Food.measure),
+	// and its density and piece weight, to convert them. Unset for a
+	// component.
+	FoodMeasure            v1.Measure
+	FoodGramsPerMilliliter float64
+	FoodGramsPerPiece      float64
 }
 
 func (b0 Ingredient_builder) Build() *Ingredient {
@@ -947,6 +989,9 @@ func (b0 Ingredient_builder) Build() *Ingredient {
 	x.xxx_hidden_Optional = b.Optional
 	x.xxx_hidden_RecipeId = b.RecipeId
 	x.xxx_hidden_RecipeName = b.RecipeName
+	x.xxx_hidden_FoodMeasure = b.FoodMeasure
+	x.xxx_hidden_FoodGramsPerMilliliter = b.FoodGramsPerMilliliter
+	x.xxx_hidden_FoodGramsPerPiece = b.FoodGramsPerPiece
 	return m0
 }
 
@@ -3123,7 +3168,7 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\awaiting\x18\x05 \x01(\bR\awaiting\x12,\n" +
 	"\x12after_step_indexes\x18\x06 \x03(\x05R\x10afterStepIndexes\x12\x1d\n" +
 	"\n" +
-	"from_start\x18\a \x01(\bR\tfromStart\"\xa7\x02\n" +
+	"from_start\x18\a \x01(\bR\tfromStart\"\xe1\x03\n" +
 	"\n" +
 	"Ingredient\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12#\n" +
@@ -3135,7 +3180,11 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\boptional\x18\a \x01(\bR\boptional\x12\x1b\n" +
 	"\trecipe_id\x18\b \x01(\tR\brecipeId\x12'\n" +
 	"\vrecipe_name\x18\t \x01(\tB\x06\xaa\x9f\x19\x02\b\x01R\n" +
-	"recipeName\"\xbd\x02\n" +
+	"recipeName\x12<\n" +
+	"\ffood_measure\x18\n" +
+	" \x01(\x0e2\x11.foods.v1.MeasureB\x06\xaa\x9f\x19\x02\b\x01R\vfoodMeasure\x12A\n" +
+	"\x19food_grams_per_milliliter\x18\v \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x16foodGramsPerMilliliter\x127\n" +
+	"\x14food_grams_per_piece\x18\f \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x11foodGramsPerPiece\"\xbd\x02\n" +
 	"\x0fRecipeNutrition\x12\x1f\n" +
 	"\vtotal_grams\x18\x01 \x01(\x01R\n" +
 	"totalGrams\x12*\n" +
@@ -3280,8 +3329,9 @@ var file_recipes_v1_recipes_proto_goTypes = []any{
 	(*DeleteRecipeResponse)(nil),      // 24: recipes.v1.DeleteRecipeResponse
 	(*timestamppb.Timestamp)(nil),     // 25: google.protobuf.Timestamp
 	(v1.AmountUnit)(0),                // 26: foods.v1.AmountUnit
-	(*v1.Nutrients)(nil),              // 27: foods.v1.Nutrients
-	(*fieldmaskpb.FieldMask)(nil),     // 28: google.protobuf.FieldMask
+	(v1.Measure)(0),                   // 27: foods.v1.Measure
+	(*v1.Nutrients)(nil),              // 28: foods.v1.Nutrients
+	(*fieldmaskpb.FieldMask)(nil),     // 29: google.protobuf.FieldMask
 }
 var file_recipes_v1_recipes_proto_depIdxs = []int32{
 	3,  // 0: recipes.v1.Recipe.ingredients:type_name -> recipes.v1.Ingredient
@@ -3291,43 +3341,44 @@ var file_recipes_v1_recipes_proto_depIdxs = []int32{
 	2,  // 4: recipes.v1.Recipe.instructions:type_name -> recipes.v1.Step
 	1,  // 5: recipes.v1.Recipe.cost:type_name -> recipes.v1.RecipeCost
 	26, // 6: recipes.v1.Ingredient.unit:type_name -> foods.v1.AmountUnit
-	27, // 7: recipes.v1.RecipeNutrition.per_serving:type_name -> foods.v1.Nutrients
-	27, // 8: recipes.v1.RecipeNutrition.per_hundred_grams:type_name -> foods.v1.Nutrients
-	5,  // 9: recipes.v1.RecipeNutrition.issues:type_name -> recipes.v1.IngredientIssue
-	25, // 10: recipes.v1.RecipeSummary.update_time:type_name -> google.protobuf.Timestamp
-	0,  // 11: recipes.v1.CreateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
-	0,  // 12: recipes.v1.CreateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	0,  // 13: recipes.v1.GetRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	6,  // 14: recipes.v1.ListRecipesResponse.recipes:type_name -> recipes.v1.RecipeSummary
-	0,  // 15: recipes.v1.UpdateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
-	28, // 16: recipes.v1.UpdateRecipeRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 17: recipes.v1.UpdateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	17, // 18: recipes.v1.GetRecipeTimelineResponse.steps:type_name -> recipes.v1.TimedStep
-	13, // 19: recipes.v1.UpdateRecipesRequest.requests:type_name -> recipes.v1.UpdateRecipeRequest
-	20, // 20: recipes.v1.UpdateRecipesResponse.results:type_name -> recipes.v1.UpdateRecipeResult
-	0,  // 21: recipes.v1.UpdateRecipeResult.recipe:type_name -> recipes.v1.Recipe
-	6,  // 22: recipes.v1.ReplaceFoodResponse.recipes:type_name -> recipes.v1.RecipeSummary
-	15, // 23: recipes.v1.RecipeService.GetRecipeTimeline:input_type -> recipes.v1.GetRecipeTimelineRequest
-	7,  // 24: recipes.v1.RecipeService.CreateRecipe:input_type -> recipes.v1.CreateRecipeRequest
-	9,  // 25: recipes.v1.RecipeService.GetRecipe:input_type -> recipes.v1.GetRecipeRequest
-	11, // 26: recipes.v1.RecipeService.ListRecipes:input_type -> recipes.v1.ListRecipesRequest
-	13, // 27: recipes.v1.RecipeService.UpdateRecipe:input_type -> recipes.v1.UpdateRecipeRequest
-	18, // 28: recipes.v1.RecipeService.UpdateRecipes:input_type -> recipes.v1.UpdateRecipesRequest
-	21, // 29: recipes.v1.RecipeService.ReplaceFood:input_type -> recipes.v1.ReplaceFoodRequest
-	23, // 30: recipes.v1.RecipeService.DeleteRecipe:input_type -> recipes.v1.DeleteRecipeRequest
-	16, // 31: recipes.v1.RecipeService.GetRecipeTimeline:output_type -> recipes.v1.GetRecipeTimelineResponse
-	8,  // 32: recipes.v1.RecipeService.CreateRecipe:output_type -> recipes.v1.CreateRecipeResponse
-	10, // 33: recipes.v1.RecipeService.GetRecipe:output_type -> recipes.v1.GetRecipeResponse
-	12, // 34: recipes.v1.RecipeService.ListRecipes:output_type -> recipes.v1.ListRecipesResponse
-	14, // 35: recipes.v1.RecipeService.UpdateRecipe:output_type -> recipes.v1.UpdateRecipeResponse
-	19, // 36: recipes.v1.RecipeService.UpdateRecipes:output_type -> recipes.v1.UpdateRecipesResponse
-	22, // 37: recipes.v1.RecipeService.ReplaceFood:output_type -> recipes.v1.ReplaceFoodResponse
-	24, // 38: recipes.v1.RecipeService.DeleteRecipe:output_type -> recipes.v1.DeleteRecipeResponse
-	31, // [31:39] is the sub-list for method output_type
-	23, // [23:31] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	27, // 7: recipes.v1.Ingredient.food_measure:type_name -> foods.v1.Measure
+	28, // 8: recipes.v1.RecipeNutrition.per_serving:type_name -> foods.v1.Nutrients
+	28, // 9: recipes.v1.RecipeNutrition.per_hundred_grams:type_name -> foods.v1.Nutrients
+	5,  // 10: recipes.v1.RecipeNutrition.issues:type_name -> recipes.v1.IngredientIssue
+	25, // 11: recipes.v1.RecipeSummary.update_time:type_name -> google.protobuf.Timestamp
+	0,  // 12: recipes.v1.CreateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
+	0,  // 13: recipes.v1.CreateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	0,  // 14: recipes.v1.GetRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	6,  // 15: recipes.v1.ListRecipesResponse.recipes:type_name -> recipes.v1.RecipeSummary
+	0,  // 16: recipes.v1.UpdateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
+	29, // 17: recipes.v1.UpdateRecipeRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 18: recipes.v1.UpdateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	17, // 19: recipes.v1.GetRecipeTimelineResponse.steps:type_name -> recipes.v1.TimedStep
+	13, // 20: recipes.v1.UpdateRecipesRequest.requests:type_name -> recipes.v1.UpdateRecipeRequest
+	20, // 21: recipes.v1.UpdateRecipesResponse.results:type_name -> recipes.v1.UpdateRecipeResult
+	0,  // 22: recipes.v1.UpdateRecipeResult.recipe:type_name -> recipes.v1.Recipe
+	6,  // 23: recipes.v1.ReplaceFoodResponse.recipes:type_name -> recipes.v1.RecipeSummary
+	15, // 24: recipes.v1.RecipeService.GetRecipeTimeline:input_type -> recipes.v1.GetRecipeTimelineRequest
+	7,  // 25: recipes.v1.RecipeService.CreateRecipe:input_type -> recipes.v1.CreateRecipeRequest
+	9,  // 26: recipes.v1.RecipeService.GetRecipe:input_type -> recipes.v1.GetRecipeRequest
+	11, // 27: recipes.v1.RecipeService.ListRecipes:input_type -> recipes.v1.ListRecipesRequest
+	13, // 28: recipes.v1.RecipeService.UpdateRecipe:input_type -> recipes.v1.UpdateRecipeRequest
+	18, // 29: recipes.v1.RecipeService.UpdateRecipes:input_type -> recipes.v1.UpdateRecipesRequest
+	21, // 30: recipes.v1.RecipeService.ReplaceFood:input_type -> recipes.v1.ReplaceFoodRequest
+	23, // 31: recipes.v1.RecipeService.DeleteRecipe:input_type -> recipes.v1.DeleteRecipeRequest
+	16, // 32: recipes.v1.RecipeService.GetRecipeTimeline:output_type -> recipes.v1.GetRecipeTimelineResponse
+	8,  // 33: recipes.v1.RecipeService.CreateRecipe:output_type -> recipes.v1.CreateRecipeResponse
+	10, // 34: recipes.v1.RecipeService.GetRecipe:output_type -> recipes.v1.GetRecipeResponse
+	12, // 35: recipes.v1.RecipeService.ListRecipes:output_type -> recipes.v1.ListRecipesResponse
+	14, // 36: recipes.v1.RecipeService.UpdateRecipe:output_type -> recipes.v1.UpdateRecipeResponse
+	19, // 37: recipes.v1.RecipeService.UpdateRecipes:output_type -> recipes.v1.UpdateRecipesResponse
+	22, // 38: recipes.v1.RecipeService.ReplaceFood:output_type -> recipes.v1.ReplaceFoodResponse
+	24, // 39: recipes.v1.RecipeService.DeleteRecipe:output_type -> recipes.v1.DeleteRecipeResponse
+	32, // [32:40] is the sub-list for method output_type
+	24, // [24:32] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_recipes_v1_recipes_proto_init() }

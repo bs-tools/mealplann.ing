@@ -1,4 +1,5 @@
 import type { Ingredient, Recipe } from "gen/recipes/v1/recipes_pb";
+import type { UnitSystem } from "gen/users/v1/users_pb";
 
 import { formatIngredientAmount, formatServings } from "./labels";
 
@@ -62,15 +63,26 @@ export const groupSteps = (steps: StepView[]): StepGroup[] => {
 };
 
 /**
- * IngredientAmount formats an ingredient's amount scaled by a factor, e.g.
- * "200 g", or "1 serving" of a component.
+ * IngredientAmount formats an ingredient's amount scaled by a factor, in a
+ * unit system and its food's measure, e.g. "200 g" or "2 tbsp", or
+ * "1 serving" of a component.
  */
 export const ingredientAmount = (
   ingredient: Ingredient,
-  scale: number
+  scale: number,
+  system: UnitSystem
 ): string =>
   ingredient.recipeId === ""
-    ? formatIngredientAmount(ingredient.amount * scale, ingredient.unit)
+    ? formatIngredientAmount(
+        ingredient.amount * scale,
+        ingredient.unit,
+        system,
+        {
+          gramsPerMilliliter: ingredient.foodGramsPerMilliliter,
+          gramsPerPiece: ingredient.foodGramsPerPiece,
+          measure: ingredient.foodMeasure,
+        }
+      )
     : formatServings(ingredient.amount * scale);
 
 // IngredientName names an ingredient's food or component recipe.
