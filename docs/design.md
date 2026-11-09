@@ -286,7 +286,7 @@ roughly 15 to 35:
 | **Keeping**: all fresh foods to buy keep until a date 3 or more days after the shop | +2 |
 | **Keeping**: leftovers on later days within the recipe's fridge days, or to freeze, or that won't keep | +1, −1 or −5 |
 | **Flavor**: each curated pairing, matched on food names (`internal/suggest/pairings.go`) | +1.5, at most +3 |
-| **Variety**: each cook of the recipe within 6 days, or a staple of an eater that day | −6, −3 more within 2 days |
+| **Variety**: each cook of the recipe within 6 days (at a snack, only the nearest), or a staple of an eater that day | −6, −3 more within 2 days |
 | **Meal tag**: tagged for the slot's meal (or "snack" for small eating times) | +2, −6 if tagged only for another meal; lunch and dinner are interchangeable, and any recipe can be a small meal |
 
 The web app shows the suggestions in the plan-a-meal dialog, and for an

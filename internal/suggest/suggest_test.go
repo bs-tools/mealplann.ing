@@ -482,6 +482,20 @@ func TestVariety(t *testing.T) {
 	wantComponents(t, Suggest(in)[0], Variety, "-9 already Ben's staple at Breakfast")
 	in.Date = sunday
 	wantComponents(t, Suggest(in)[0], Variety)
+
+	// At a dinner, every cook of the recipe in the week counts; at Anna's
+	// snack, which people repeat day after day, only the nearest does.
+	a := anna()
+	hummus := recipe("Hummus", 4, ingredient(chickpeas, 200))
+	in = input(thursday, []*people.Person{a})
+	in.cook(hummus, monday, 1)
+	in.cook(hummus, tuesday, 1)
+	in.cook(hummus, saturday, 1)
+	wantComponents(t, Suggest(in)[0], Variety,
+		"-6 already planned on Mon 2 Nov", "-9 already planned on Tue 3 Nov", "-9 already planned on Sat 7 Nov")
+	in.Meal = people.MealNone
+	in.EatingTimeID = etID(a, "Mid-morning")
+	wantComponents(t, Suggest(in)[0], Variety, "-9 already planned on Tue 3 Nov")
 }
 
 func TestMealTag(t *testing.T) {
