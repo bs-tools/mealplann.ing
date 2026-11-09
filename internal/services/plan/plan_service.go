@@ -8,6 +8,7 @@ package plan
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"math"
 	"slices"
@@ -21,6 +22,7 @@ import (
 	plansv1 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
 	"github.com/bs-tools/mealplann.ing/internal/gen/plans/v1/plansv1connect"
 	"github.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1/suggestionsv1connect"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 	"github.com/bs-tools/mealplann.ing/internal/pantry"
 	"github.com/bs-tools/mealplann.ing/internal/people"
 	"github.com/bs-tools/mealplann.ing/internal/plans"
@@ -440,7 +442,10 @@ func (s *Service) CreateCook(ctx context.Context, req *plansv1.CreateCookRequest
 	created := cooks[0]
 	var changes []*plansv1.PantryChange
 	if created.Done && !req.GetFromStock() {
-		changes, err = s.useForCook(ctx, created)
+		uses, names, err := s.cookUses(ctx, created, nil)
+		if err == nil {
+			changes, err = s.useForCook(ctx, created, uses, names, false)
+		}
 		if err != nil {
 			return nil, s.toConnectError(ctx, err, "failed to take the cook's ingredients out of the pantry", cookNotFound)
 		}
@@ -448,34 +453,159 @@ func (s *Service) CreateCook(ctx context.Context, req *plansv1.CreateCookRequest
 	return plansv1.CreateCookResponse_builder{Cook: cookToProto(created), PantryChanges: changes}.Build(), nil
 }
 
-// useForCook takes the ingredients of a cook marked done out of the
-// pantry, scaled to its servings and without the optional ones, and
-// returns what it took out. Ingredients that can't be weighed are left
-// in, as the pantry is in grams.
-func (s *Service) useForCook(ctx context.Context, c *plans.Cook) ([]*plansv1.PantryChange, error) {
-	list, err := s.recipes.ListRecipesByID(ctx, c.HouseholdID, []pgtype.UUID{c.RecipeID})
-	if err != nil {
-		return nil, err
+// foodUse is what was actually used of a food when cooking (see
+// plansv1.FoodUse), parsed.
+type foodUse struct {
+	foodID, substituteID pgtype.UUID
+	// amount and unit are what was used, if hasAmount.
+	hasAmount bool
+	amount    float64
+	unit      nutrition.Unit
+	skipped   bool
+}
+
+// foodUsesFromProto converts and checks what was actually used of foods.
+func foodUsesFromProto(list []*plansv1.FoodUse) ([]foodUse, error) {
+	if len(list) > maxFoodUses {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "food_uses can have at most %d foods", maxFoodUses)
 	}
-	if len(list) == 0 {
-		return nil, nil
+	uses := make([]foodUse, 0, len(list))
+	for i, p := range list {
+		field := fmt.Sprintf("food_uses[%d]", i)
+		id, err := parseID(field+".food_id", p.GetFoodId(), "find the recipe's foods with RecipeService.GetRecipe")
+		if err != nil {
+			return nil, err
+		}
+		if slices.ContainsFunc(uses, func(u foodUse) bool { return u.foodID == id }) {
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s gives a food a second time: give one use per food", field)
+		}
+		u := foodUse{foodID: id, skipped: p.GetSkipped()}
+		if p.GetSubstituteFoodId() != "" {
+			if u.substituteID, err = parseID(field+".substitute_food_id", p.GetSubstituteFoodId(), "find foods with ListFoods"); err != nil {
+				return nil, err
+			}
+		}
+		if p.HasAmount() {
+			unit, ok := unitsFromProto[p.GetUnit()]
+			switch {
+			case math.IsNaN(p.GetAmount()) || p.GetAmount() < 0 || p.GetAmount() > maxFoodAmount:
+				return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.amount must be from 0 to %d", field, maxFoodAmount)
+			case !ok:
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.unit is required with amount: AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES", field)
+			}
+			u.hasAmount, u.amount, u.unit = true, p.GetAmount(), unit
+		}
+		if u.skipped && (u.hasAmount || u.substituteID.Valid) {
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s is skipped, so it takes no amount or substitute_food_id: leave them out, or skipped unset", field)
+		}
+		uses = append(uses, u)
+	}
+	return uses, nil
+}
+
+// cookUses returns what a cook marked done takes out of the pantry: its
+// recipe's ingredients scaled to its servings, without the optional ones,
+// as changed by what was actually used, with the foods' names. Ingredients
+// that can't be weighed are left in, as the pantry is in grams, but an
+// amount actually used that can't be weighed fails, saying why.
+func (s *Service) cookUses(ctx context.Context, c *plans.Cook, actual []foodUse) ([]pantry.Use, map[pgtype.UUID]string, error) {
+	list, err := s.recipes.ListRecipesByID(ctx, c.HouseholdID, []pgtype.UUID{c.RecipeID})
+	if err != nil || len(list) == 0 {
+		return nil, nil, err
 	}
 	names := map[pgtype.UUID]string{}
-	var uses []pantry.Use
+	// grams are what the recipe uses of each food, in order.
+	grams := map[pgtype.UUID]float64{}
+	var order []pgtype.UUID
 	// Components other cooks supply are taken out by those cooks.
 	for _, in := range list[0].IngredientsWithout(c.Servings, shopping.SuppliedComponents(c)) {
-		grams, ok := in.Food.Grams(in.Amount, in.Unit)
+		g, ok := in.Food.Grams(in.Amount, in.Unit)
 		if !ok {
 			continue
 		}
+		if _, seen := grams[in.FoodID]; !seen {
+			order = append(order, in.FoodID)
+		}
 		names[in.FoodID] = in.FoodName
-		uses = append(uses, pantry.Use{FoodID: in.FoodID, Grams: grams})
+		grams[in.FoodID] += g
 	}
+	// The foods used instead, or as well, are read for their names and to
+	// weigh their amounts.
+	var ids []pgtype.UUID
+	for _, u := range actual {
+		ids = append(ids, u.foodID)
+		if u.substituteID.Valid {
+			ids = append(ids, u.substituteID)
+		}
+	}
+	byID := map[pgtype.UUID]*foods.Food{}
+	if len(ids) > 0 {
+		found, err := s.foods.ListFoodsByID(ctx, c.HouseholdID, ids)
+		if err != nil {
+			return nil, nil, err
+		}
+		for _, f := range found {
+			byID[f.ID] = f
+		}
+	}
+	uses := make([]pantry.Use, 0, len(order))
+	replaced := map[pgtype.UUID]bool{}
+	var extra []pantry.Use
+	for i, u := range actual {
+		field := fmt.Sprintf("food_uses[%d]", i)
+		used := u.foodID
+		if u.substituteID.Valid {
+			used = u.substituteID
+		}
+		f, ok := byID[used]
+		if !ok {
+			return nil, nil, connect.Errorf(connect.CodeInvalidArgument, "%s names a food that isn't one of your household's; find foods with ListFoods", field)
+		}
+		_, inRecipe := grams[u.foodID]
+		if !inRecipe && !u.hasAmount {
+			return nil, nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s.food_id isn't one of the recipe's weighed foods: give its amount to take an extra food out, or check the food ID with GetRecipe", field)
+		}
+		replaced[u.foodID] = true
+		if u.skipped {
+			continue
+		}
+		g := grams[u.foodID]
+		if u.hasAmount {
+			if g, ok = f.Nutrition().Grams(u.amount, u.unit); !ok {
+				return nil, nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s: %s can't be weighed in that unit: give its amount in grams, or set its grams_per_piece or grams_per_milliliter", field, f.Name)
+			}
+		}
+		names[used] = f.Name
+		extra = append(extra, pantry.Use{FoodID: used, Grams: g})
+	}
+	for _, id := range order {
+		if !replaced[id] {
+			uses = append(uses, pantry.Use{FoodID: id, Grams: grams[id]})
+		}
+	}
+	return append(uses, extra...), names, nil
+}
+
+// useForCook takes what a cook marked done uses out of the pantry (see
+// cookUses), or with preview, only works it out from what's in stock, and
+// returns it.
+func (s *Service) useForCook(ctx context.Context, c *plans.Cook, uses []pantry.Use, names map[pgtype.UUID]string, preview bool) ([]*plansv1.PantryChange, error) {
 	if len(uses) == 0 {
 		return nil, nil
 	}
-	deductions, err := s.pantry.UseForCook(ctx, c.HouseholdID, c.ID, uses)
-	if err != nil {
+	var deductions []pantry.Deduction
+	var err error
+	if preview {
+		items, err := s.pantry.ListItems(ctx, c.HouseholdID)
+		if err != nil {
+			return nil, err
+		}
+		deductions = pantry.Deduct(items, uses)
+	} else if deductions, err = s.pantry.UseForCook(ctx, c.HouseholdID, c.ID, uses); err != nil {
 		return nil, err
 	}
 	var used []pantry.Use
@@ -551,6 +681,32 @@ func (s *Service) UpdateCook(ctx context.Context, req *plansv1.UpdateCookRequest
 	}
 	c.ID = existing.ID
 	c.HouseholdID = existing.HouseholdID
+	actual, err := foodUsesFromProto(req.GetFoodUses())
+	if err != nil {
+		return nil, err
+	}
+	marking := c.Done && !existing.Done
+	if (len(actual) > 0 || req.GetPreview()) && !marking {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			"food_uses and preview are only for marking a cook done: set done to true, with the update_mask \"done\", on a cook not done yet")
+	}
+	// What marking it done takes out of the pantry is worked out first, so
+	// a mistake in food_uses changes nothing. A preview stops there.
+	var uses []pantry.Use
+	var names map[pgtype.UUID]string
+	if marking {
+		c.Supplies, c.Supplying = existing.Supplies, existing.Supplying
+		if uses, names, err = s.cookUses(ctx, c, actual); err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to work out the cook's pantry changes", cookNotFound)
+		}
+	}
+	if req.GetPreview() {
+		changes, err := s.useForCook(ctx, c, uses, names, true)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to work out the cook's pantry changes", cookNotFound)
+		}
+		return plansv1.UpdateCookResponse_builder{Cook: cookToProto(c), PantryChanges: changes, Previewed: true}.Build(), nil
+	}
 	updated, err := s.plans.UpdateCook(ctx, c)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to update cook", cookNotFound)
@@ -564,7 +720,7 @@ func (s *Service) UpdateCook(ctx context.Context, req *plansv1.UpdateCookRequest
 	var changes []*plansv1.PantryChange
 	switch {
 	case updated.Done && !existing.Done:
-		changes, err = s.useForCook(ctx, updated)
+		changes, err = s.useForCook(ctx, updated, uses, names, false)
 		if err != nil {
 			return nil, s.toConnectError(ctx, err, "failed to take the cook's ingredients out of the pantry", cookNotFound)
 		}

@@ -245,7 +245,10 @@ type PlanServiceClient interface {
 	// ones, out of the pantry (see PantryService), from the lots that expire
 	// first, as far as they're in stock; un-marking it puts back exactly what
 	// was taken out. Changing a done cook's recipe or servings doesn't change
-	// the pantry: un-mark it first, then mark it done again.
+	// the pantry: un-mark it first, then mark it done again. When marking it
+	// done, food_uses say what was actually used where it differs from the
+	// recipe: another amount, a substitute food, or none at all, and preview
+	// returns the pantry changes without making them or marking it done.
 	UpdateCook(context.Context, *v1.UpdateCookRequest) (*v1.UpdateCookResponse, error)
 	// Delete a cook. Its portions are deleted too, and the cooks planned only
 	// to supply its components, if nobody eats them and they aren't done.
@@ -350,7 +353,10 @@ type PlanServiceHandler interface {
 	// ones, out of the pantry (see PantryService), from the lots that expire
 	// first, as far as they're in stock; un-marking it puts back exactly what
 	// was taken out. Changing a done cook's recipe or servings doesn't change
-	// the pantry: un-mark it first, then mark it done again.
+	// the pantry: un-mark it first, then mark it done again. When marking it
+	// done, food_uses say what was actually used where it differs from the
+	// recipe: another amount, a substitute food, or none at all, and preview
+	// returns the pantry changes without making them or marking it done.
 	UpdateCook(context.Context, *v1.UpdateCookRequest) (*v1.UpdateCookResponse, error)
 	// Delete a cook. Its portions are deleted too, and the cooks planned only
 	// to supply its components, if nobody eats them and they aren't done.
