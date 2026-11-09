@@ -13,6 +13,7 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bs-tools/mealplann.ing/internal/services/amounts"
@@ -51,6 +52,7 @@ type PlanRepository interface {
 	CreateCooksWithPortions(ctx context.Context, list []*plans.CookWithPortions) ([]*plans.Cook, [][]*plans.Portion, error)
 	UpdateCook(ctx context.Context, c *plans.Cook) (*plans.Cook, error)
 	ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) ([]*plans.FrozenCook, error)
+	ListLeftoverCooks(ctx context.Context, householdID pgtype.UUID, before time.Time) ([]*plans.Cook, error)
 	SetCookSupply(ctx context.Context, householdID pgtype.UUID, supply *plans.Supply, previous pgtype.UUID) error
 	DeleteCook(ctx context.Context, householdID, id pgtype.UUID) error
 	GetPortion(ctx context.Context, householdID, id pgtype.UUID) (*plans.Portion, error)
@@ -169,10 +171,29 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 	}
 	sunday := monday.AddDate(0, 0, 6)
 	// The week after is read too, as its cooks can start this week, like
-	// beans soaked the night before.
+	// beans soaked the night before. Earlier cooks with leftovers are read
+	// alongside.
+	var earlier []*plans.Cook
+	var earlierErr error
+	var wg sync.WaitGroup
+	wg.Go(func() { earlier, earlierErr = s.plans.ListLeftoverCooks(ctx, user.HouseholdID(), monday) })
 	d, err := s.loadPlan(ctx, user.HouseholdID(), monday, sunday.AddDate(0, 0, maxPrepAheadDays))
+	wg.Wait()
+	if err == nil {
+		err = earlierErr
+	}
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to get week", "")
+	}
+	leftovers := make([]*plansv1.PlannedCook, 0, len(earlier))
+	for _, c := range earlier {
+		if leftServings(c) > servingsSlack {
+			leftovers = append(leftovers, plansv1.PlannedCook_builder{
+				Cook:             cookToProto(c),
+				AssignedServings: round(c.AssignedServings + c.SuppliedServings),
+				LeftServings:     round(leftServings(c)),
+			}.Build())
+		}
 	}
 	cooks := make([]*plansv1.PlannedCook, 0, len(d.plan.Cooks))
 	for _, c := range d.plan.Cooks {
@@ -181,14 +202,23 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 		}
 	}
 	resp := plansv1.GetWeekResponse_builder{
-		Monday: store.FormatDate(monday),
-		Days:   d.days(monday, sunday),
-		Cooks:  cooks,
+		Monday:           store.FormatDate(monday),
+		Days:             d.days(monday, sunday),
+		Cooks:            cooks,
+		EarlierLeftovers: leftovers,
 	}.Build()
 	if req.GetSummary() {
 		summary.Summarize(resp)
 	}
 	return resp, nil
+}
+
+// leftServings returns a cook's servings in the fridge not planned yet:
+// not frozen, nor in portions eaten from the fridge, within the recipe's
+// fridge days, nor supplying other cooks. Portions after the fridge days
+// come from the frozen servings.
+func leftServings(c *plans.Cook) float64 {
+	return c.Servings - c.FrozenServings - (c.AssignedServings - c.LateServings) - c.SuppliedServings
 }
 
 func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*plansv1.PlanMealResponse, error) {

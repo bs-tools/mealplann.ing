@@ -42,7 +42,10 @@ interface PortionDialogProps {
   people: Person[];
   // The dates to choose from, those of the week shown.
   dates: string[];
-  // The week's cooks, to eat leftovers of.
+  /*
+   * The cooks to eat leftovers of: the week's, and earlier ones whose
+   * leftovers still keep. Those with no servings left aren't offered.
+   */
   cooks: PlannedCook[];
   onClose: () => void;
 }
@@ -61,16 +64,21 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
   onClose,
 }) => {
   const queryClient = useQueryClient();
+  // A portion being edited keeps its cook, even with nothing left.
+  const offered = cooks.filter(
+    (planned) =>
+      planned.leftServings > 0 || planned.cook?.id === portion?.cookId
+  );
   const [personId, setPersonId] = useState(slot.personId);
   const [eatingTimeId, setEatingTimeId] = useState(slot.eatingTimeId);
   const [date, setDate] = useState(slot.date);
   const initialWhat: What =
     portion === undefined || portion.foodId !== "" ? "food" : "cook";
   const [what, setWhat] = useState<What>(
-    cooks.length === 0 && portion === undefined ? "food" : initialWhat
+    offered.length === 0 && portion === undefined ? "food" : initialWhat
   );
   const [cookId, setCookId] = useState(
-    portion?.cookId ?? cooks[0]?.cook?.id ?? ""
+    portion?.cookId ?? offered[0]?.cook?.id ?? ""
   );
   const [servings, setServings] = useState(
     portion !== undefined && portion.cookId !== ""
@@ -102,8 +110,8 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
   const pending = create.isPending || update.isPending;
 
   const person = people.find((other) => other.id === personId);
-  const cookOptions = cooks.map((planned) => {
-    const left = (planned.cook?.servings ?? 0) - planned.assignedServings;
+  const cookOptions = offered.map((planned) => {
+    const left = planned.leftServings;
     return {
       label: `${planned.cook?.recipeName ?? ""} · ${formatShortDate(planned.cook?.date ?? "")}${
         left > 0 ? ` · ${formatServings(left)} left` : ""

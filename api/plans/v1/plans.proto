@@ -440,6 +440,12 @@ message GetWeekResponse {
   repeated PlanDay days = 2;
   // The cooks of the week, by date.
   repeated PlannedCook cooks = 3;
+  // Cooks of the weeks before, of up to 14 days before Monday, whose
+  // leftovers still keep in the fridge on Monday, by their recipe's
+  // fridge_days, and have servings not planned yet, by date: like
+  // Sunday's pot of chili, to plan portions of in this week with
+  // CreatePortion.
+  repeated PlannedCook earlier_leftovers = 4;
 }
 
 // A day of the plan.
@@ -551,6 +557,10 @@ message PlannedCook {
   double assigned_servings = 2;
   // The warnings about its servings.
   repeated Warning warnings = 3;
+  // The servings left in the fridge to plan as leftovers: not frozen, nor
+  // planned in portions within the recipe's fridge days, nor supplying
+  // other cooks. 0 if they're all planned.
+  double left_servings = 4;
 }
 
 message GetPlanCostRequest {

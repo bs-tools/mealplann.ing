@@ -114,6 +114,35 @@ where cooks.household_id = @household_id
   )
 order by cooks.date, cooks.create_time, cooks.id;
 
+-- name: ListLeftoverCooks :many
+-- The household's cooks before a date, from up to 14 days before it, whose
+-- leftovers still keep in the fridge on it, by the recipe's fridge_days,
+-- with what ListCooks reads of them, to plan their leftovers.
+select
+  sqlc.embed(cooks),
+  r.name as recipe_name,
+  coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
+  coalesce((
+    select sum(p.servings) from portions p
+    where p.cook_id = cooks.id and p.date > cooks.date + r.fridge_days
+  ), 0)::double precision as late_servings,
+  coalesce((
+    select sum(ri.amount * cc.servings / cr.servings)
+    from cook_supplies s
+    join cooks cc on cc.id = s.consumer_cook_id
+    join recipes cr on cr.id = cc.recipe_id
+    join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+    where s.supplier_cook_id = cooks.id
+  ), 0)::double precision as supplied_servings
+from cooks
+join recipes r on r.id = cooks.recipe_id
+where cooks.household_id = @household_id
+  and cooks.date < sqlc.arg(before)::date
+  and cooks.date >= sqlc.arg(before)::date - 14
+  and r.fridge_days is not null
+  and cooks.date + r.fridge_days >= sqlc.arg(before)::date
+order by cooks.date, cooks.create_time, cooks.id;
+
 -- name: CreatePortion :execrows
 insert into portions (
   id, household_id, person_id, eating_time_id, date, cook_id, servings, food_id, amount, unit, notes
