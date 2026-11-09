@@ -53,11 +53,22 @@ export const STORAGES: { value: Storage; label: string }[] = [
   { label: "Freezer", value: Storage.FREEZER },
 ];
 
-// AMOUNT_UNITS are the units of ingredients' amounts.
+/**
+ * AMOUNT_UNITS are the units of foods' amounts: grams, milliliters and
+ * pieces, then the kitchen units converted to them, which recipes keep to
+ * show their ingredients as entered.
+ */
 export const AMOUNT_UNITS: { value: AmountUnit; label: string }[] = [
   { label: "g", value: AmountUnit.GRAMS },
   { label: "ml", value: AmountUnit.MILLILITERS },
   { label: "pieces", value: AmountUnit.PIECES },
+  { label: "tsp", value: AmountUnit.TEASPOONS },
+  { label: "tbsp", value: AmountUnit.TABLESPOONS },
+  { label: "cups", value: AmountUnit.CUPS },
+  { label: "L", value: AmountUnit.LITERS },
+  { label: "kg", value: AmountUnit.KILOGRAMS },
+  { label: "oz", value: AmountUnit.OUNCES },
+  { label: "lb", value: AmountUnit.POUNDS },
 ];
 
 /**

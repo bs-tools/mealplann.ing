@@ -2,8 +2,8 @@ import Card from "@components/ui/card";
 import { linkClass, tableClass, thClass } from "@components/ui/styles";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import type { Nutrients } from "gen/foods/v1/foods_pb";
-import { AmountUnit } from "gen/foods/v1/foods_pb";
 import type { Recipe } from "gen/recipes/v1/recipes_pb";
+import { isVolumeUnit } from "helpers/measures";
 import type { NutrientInfo } from "helpers/nutrients";
 import {
   NUTRIENT_GROUPS,
@@ -129,7 +129,7 @@ const NutritionPanel: React.FC<NutritionPanelProps> = ({ recipe }) => {
                 let problem = "";
                 if (issue.unknownWeight) {
                   problem =
-                    unit === AmountUnit.MILLILITERS
+                    unit !== undefined && isVolumeUnit(unit)
                       ? "has no density, so it's left out. Set its density."
                       : "has no weight per piece, so it's left out. Set its weight per piece.";
                 } else {

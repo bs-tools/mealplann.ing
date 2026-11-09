@@ -131,7 +131,8 @@ insert into recipe_ingredients (
   unit,
   note,
   original_text,
-  optional
+  optional,
+  kitchen_unit
 )
 select
   @recipe_id,
@@ -143,7 +144,8 @@ select
   nullif((@units::text[])[i], '')::amount_unit,
   (@notes::text[])[i],
   (@original_texts::text[])[i],
-  (@optionals::boolean[])[i]
+  (@optionals::boolean[])[i],
+  nullif((@kitchen_units::text[])[i], '')
 from generate_subscripts(@amounts::double precision[], 1) as i;
 
 -- name: ListRecipeIngredients :many

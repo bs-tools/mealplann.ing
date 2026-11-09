@@ -108,9 +108,15 @@ saying what to change.
 - A recipe has a name, the number of servings it makes, ingredients, steps,
   tags (such as breakfast or batch-friendly), and preparation and cooking
   times.
-- An ingredient is a food with an amount in **grams, milliliters or pieces**
-  (metric only), plus an optional note, such as "finely chopped", and the
-  wording from the original recipe.
+- An ingredient is a food with an amount in **grams, milliliters or pieces**,
+  plus an optional note, such as "finely chopped", and the wording from the
+  original recipe. It can be entered in a **kitchen unit** instead, like 1
+  tablespoon of oil or a pound of potatoes (teaspoons, tablespoons, US cups,
+  liters, kilograms, ounces and pounds), which is stored converted to
+  milliliters or grams, for everything to compute with, and kept to show
+  it as entered. Its amount shows as entered, rather than in the food's
+  measure. Elsewhere, like the pantry and portions, kitchen units are
+  accepted and converted.
 - Nutrition per serving and per 100 g is computed from the ingredients, so
   a portion can be measured in grams for a maximum portion size.
 - Recipes are entered in the web app or by an AI agent through MCP.

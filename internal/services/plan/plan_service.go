@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bs-tools/mealplann.ing/internal/services/amounts"
+
 	"connectrpc.com/connect/v2"
 	"github.com/bs-tools/mealplann.ing/internal/authn"
 	"github.com/bs-tools/mealplann.ing/internal/errreport"
@@ -488,15 +490,15 @@ func foodUsesFromProto(list []*plansv1.FoodUse) ([]foodUse, error) {
 			}
 		}
 		if p.HasAmount() {
-			unit, ok := unitsFromProto[p.GetUnit()]
+			amount, unit, _, ok := amounts.FromProto(p.GetAmount(), p.GetUnit())
 			switch {
-			case math.IsNaN(p.GetAmount()) || p.GetAmount() < 0 || p.GetAmount() > maxFoodAmount:
-				return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.amount must be from 0 to %d", field, maxFoodAmount)
 			case !ok:
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
-					"%s.unit is required with amount: AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES", field)
+					"%s.unit is required with amount: %s", field, amounts.UnitsHelp)
+			case math.IsNaN(amount) || amount < 0 || amount > maxFoodAmount:
+				return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.amount must be from 0 to %d g, ml or pieces", field, maxFoodAmount)
 			}
-			u.hasAmount, u.amount, u.unit = true, p.GetAmount(), unit
+			u.hasAmount, u.amount, u.unit = true, amount, unit
 		}
 		if u.skipped && (u.hasAmount || u.substituteID.Valid) {
 			return nil, connect.Errorf(connect.CodeInvalidArgument,

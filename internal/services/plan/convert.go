@@ -7,6 +7,8 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/bs-tools/mealplann.ing/internal/services/amounts"
+
 	"connectrpc.com/connect/v2"
 	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
 	peoplev1 "github.com/bs-tools/mealplann.ing/internal/gen/people/v1"
@@ -43,12 +45,6 @@ var unitsToProto = map[nutrition.Unit]foodsv1.AmountUnit{
 	nutrition.Grams:       foodsv1.AmountUnit_AMOUNT_UNIT_GRAMS,
 	nutrition.Milliliters: foodsv1.AmountUnit_AMOUNT_UNIT_MILLILITERS,
 	nutrition.Pieces:      foodsv1.AmountUnit_AMOUNT_UNIT_PIECES,
-}
-
-var unitsFromProto = map[foodsv1.AmountUnit]nutrition.Unit{
-	foodsv1.AmountUnit_AMOUNT_UNIT_GRAMS:       nutrition.Grams,
-	foodsv1.AmountUnit_AMOUNT_UNIT_MILLILITERS: nutrition.Milliliters,
-	foodsv1.AmountUnit_AMOUNT_UNIT_PIECES:      nutrition.Pieces,
 }
 
 // parseDate parses a plan's date, naming field in errors.
@@ -172,15 +168,16 @@ func foodAmountFromProto(p *plansv1.FoodAmount) (pgtype.UUID, float64, nutrition
 	if err != nil {
 		return pgtype.UUID{}, 0, 0, err
 	}
-	if a := p.GetAmount(); math.IsNaN(a) || a <= 0 || a > maxFoodAmount {
-		return pgtype.UUID{}, 0, 0, connect.Errorf(connect.CodeInvalidArgument, "food.amount must be more than 0 and at most %d", maxFoodAmount)
-	}
-	unit, ok := unitsFromProto[p.GetUnit()]
+	// Kitchen units are converted to their base unit, which is stored.
+	amount, unit, _, ok := amounts.FromProto(p.GetAmount(), p.GetUnit())
 	if !ok {
-		return pgtype.UUID{}, 0, 0, connect.NewError(connect.CodeInvalidArgument,
-			"food.unit is required: AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES")
+		return pgtype.UUID{}, 0, 0, connect.Errorf(connect.CodeInvalidArgument,
+			"food.unit is required: %s", amounts.UnitsHelp)
 	}
-	return foodID, p.GetAmount(), unit, nil
+	if math.IsNaN(amount) || amount <= 0 || amount > maxFoodAmount {
+		return pgtype.UUID{}, 0, 0, connect.Errorf(connect.CodeInvalidArgument, "food.amount must be more than 0 and at most %d g, ml or pieces", maxFoodAmount)
+	}
+	return foodID, amount, unit, nil
 }
 
 func portionToProto(p *plans.Portion) *plansv1.Portion {

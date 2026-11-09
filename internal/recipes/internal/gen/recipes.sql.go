@@ -129,7 +129,8 @@ insert into recipe_ingredients (
   unit,
   note,
   original_text,
-  optional
+  optional,
+  kitchen_unit
 )
 select
   $1,
@@ -141,7 +142,8 @@ select
   nullif(($6::text[])[i], '')::amount_unit,
   ($7::text[])[i],
   ($8::text[])[i],
-  ($9::boolean[])[i]
+  ($9::boolean[])[i],
+  nullif(($10::text[])[i], '')
 from generate_subscripts($5::double precision[], 1) as i
 `
 
@@ -155,6 +157,7 @@ type CreateRecipeIngredientsParams struct {
 	Notes              []string
 	OriginalTexts      []string
 	Optionals          []bool
+	KitchenUnits       []string
 }
 
 // The ingredients are given as arrays of their fields, to insert them all in
@@ -171,6 +174,7 @@ func (q *Queries) CreateRecipeIngredients(ctx context.Context, arg *CreateRecipe
 		arg.Notes,
 		arg.OriginalTexts,
 		arg.Optionals,
+		arg.KitchenUnits,
 	)
 	return err
 }
@@ -348,7 +352,7 @@ func (q *Queries) ListHouseholdRecipeIDs(ctx context.Context, arg *ListHousehold
 
 const listRecipeIngredients = `-- name: ListRecipeIngredients :many
 select
-  recipe_ingredients.recipe_id, recipe_ingredients.household_id, recipe_ingredients.position, recipe_ingredients.food_id, recipe_ingredients.amount, recipe_ingredients.unit, recipe_ingredients.note, recipe_ingredients.original_text, recipe_ingredients.optional, recipe_ingredients.component_recipe_id,
+  recipe_ingredients.recipe_id, recipe_ingredients.household_id, recipe_ingredients.position, recipe_ingredients.food_id, recipe_ingredients.amount, recipe_ingredients.unit, recipe_ingredients.note, recipe_ingredients.original_text, recipe_ingredients.optional, recipe_ingredients.component_recipe_id, recipe_ingredients.kitchen_unit,
   coalesce(f.name, '')::text as food_name,
   f.energy_kcal_per_100_grams, f.protein_grams_per_100_grams, f.carbohydrate_grams_per_100_grams, f.sugars_grams_per_100_grams, f.fat_grams_per_100_grams, f.fiber_grams_per_100_grams, f.vitamin_b12_micrograms_per_100_grams, f.iron_milligrams_per_100_grams, f.calcium_milligrams_per_100_grams, f.vitamin_d_micrograms_per_100_grams, f.iodine_micrograms_per_100_grams, f.zinc_milligrams_per_100_grams, f.omega3_ala_grams_per_100_grams, f.folate_micrograms_per_100_grams, f.vitamin_a_micrograms_per_100_grams, f.vitamin_e_milligrams_per_100_grams, f.vitamin_k_micrograms_per_100_grams, f.copper_milligrams_per_100_grams, f.magnesium_milligrams_per_100_grams, f.sodium_milligrams_per_100_grams, f.potassium_milligrams_per_100_grams,
   f.grams_per_piece,
@@ -422,6 +426,7 @@ func (q *Queries) ListRecipeIngredients(ctx context.Context, arg *ListRecipeIngr
 			&i.RecipeIngredient.OriginalText,
 			&i.RecipeIngredient.Optional,
 			&i.RecipeIngredient.ComponentRecipeID,
+			&i.RecipeIngredient.KitchenUnit,
 			&i.FoodName,
 			&i.EnergyKcalPer100Grams,
 			&i.ProteinGramsPer100Grams,
