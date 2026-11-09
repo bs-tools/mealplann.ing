@@ -95,18 +95,24 @@ const CookRow: React.FC<CookRowProps> = ({
               ` · ≈ ${formatDollars(costCents)}`}
           </span>
         </span>
-        <button
-          type="button"
-          className={`${iconButton} print:hidden`}
-          aria-label={`Freeze ${cook.recipeName}`}
-          title="Freeze leftovers, to keep them longer"
-          disabled={disabled}
-          onClick={() => {
-            setFreezing(true);
-          }}
-        >
-          <ArchiveBoxArrowDownIcon className="size-4" />
-        </button>
+        {/*
+         * Only a cook with leftovers can freeze them, or one with some
+         * frozen already, to change how many.
+         */}
+        {(planned.leftServings > 0 || cook.frozenServings > 0) && (
+          <button
+            type="button"
+            className={`${iconButton} print:hidden`}
+            aria-label={`Freeze ${cook.recipeName}`}
+            title="Freeze leftovers, to keep them longer"
+            disabled={disabled}
+            onClick={() => {
+              setFreezing(true);
+            }}
+          >
+            <ArchiveBoxArrowDownIcon className="size-4" />
+          </button>
+        )}
         <ConfirmButton
           className={`${iconButton} print:hidden`}
           title={`Delete ${cook.recipeName}?`}
