@@ -93,6 +93,7 @@ select * from foods where id = @id and household_id = @household_id;
 select * from foods
 where household_id = @household_id
   and (@query::text = '' or strpos(lower(name), lower(@query)) > 0)
+  and (not @needs_measure::boolean or (measure is null and grams_per_milliliter is null))
 order by lower(name)
 limit @row_limit offset @row_offset;
 

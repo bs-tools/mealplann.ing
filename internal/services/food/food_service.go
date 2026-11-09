@@ -31,7 +31,7 @@ var _ foodsv1connect.FoodServiceHandler = (*Service)(nil)
 type Repository interface {
 	CreateFood(ctx context.Context, f *foods.Food) (*foods.Food, error)
 	GetFood(ctx context.Context, householdID, id pgtype.UUID) (*foods.Food, error)
-	ListFoods(ctx context.Context, householdID pgtype.UUID, query string, limit, offset int32) ([]*foods.Food, error)
+	ListFoods(ctx context.Context, householdID pgtype.UUID, query string, needsMeasure bool, limit, offset int32) ([]*foods.Food, error)
 	UpdateFood(ctx context.Context, f *foods.Food) (*foods.Food, error)
 	DeleteFood(ctx context.Context, householdID, id pgtype.UUID) error
 	GetUsages(ctx context.Context, householdID, id pgtype.UUID) (*foods.Usages, error)
@@ -250,7 +250,7 @@ func (s *Service) ListFoods(ctx context.Context, req *foodsv1.ListFoodsRequest) 
 		}
 	}
 	// One more food than the page tells whether there's another page.
-	list, err := s.foods.ListFoods(ctx, user.HouseholdID(), query, size+1, int32(offset))
+	list, err := s.foods.ListFoods(ctx, user.HouseholdID(), query, req.GetNeedsMeasure(), size+1, int32(offset))
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to list foods")
 	}

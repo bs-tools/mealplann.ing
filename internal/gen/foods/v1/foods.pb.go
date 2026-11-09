@@ -351,6 +351,10 @@ const (
 	Measure_MEASURE_VOLUME Measure = 2
 	// In pieces, like 2 onions.
 	Measure_MEASURE_PIECES Measure = 3
+	// By volume in milliliters, with spoons for small amounts, whatever the
+	// user's unit system: for liquids sold by the milliliter, like a 400 ml
+	// can of coconut milk, which cups would only approximate.
+	Measure_MEASURE_MILLILITERS Measure = 4
 )
 
 // Enum value maps for Measure.
@@ -360,12 +364,14 @@ var (
 		1: "MEASURE_WEIGHT",
 		2: "MEASURE_VOLUME",
 		3: "MEASURE_PIECES",
+		4: "MEASURE_MILLILITERS",
 	}
 	Measure_value = map[string]int32{
 		"MEASURE_UNSPECIFIED": 0,
 		"MEASURE_WEIGHT":      1,
 		"MEASURE_VOLUME":      2,
 		"MEASURE_PIECES":      3,
+		"MEASURE_MILLILITERS": 4,
 	}
 )
 
@@ -2564,13 +2570,14 @@ func (b0 GetFoodResponse_builder) Build() *GetFoodResponse {
 }
 
 type ListFoodsRequest struct {
-	state                protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Query     string                 `protobuf:"bytes,1,opt,name=query,proto3"`
-	xxx_hidden_PageSize  int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3"`
-	xxx_hidden_PageToken string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3"`
-	xxx_hidden_Summary   bool                   `protobuf:"varint,4,opt,name=summary,proto3"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Query        string                 `protobuf:"bytes,1,opt,name=query,proto3"`
+	xxx_hidden_PageSize     int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3"`
+	xxx_hidden_PageToken    string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3"`
+	xxx_hidden_Summary      bool                   `protobuf:"varint,4,opt,name=summary,proto3"`
+	xxx_hidden_NeedsMeasure bool                   `protobuf:"varint,5,opt,name=needs_measure,json=needsMeasure,proto3"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *ListFoodsRequest) Reset() {
@@ -2626,6 +2633,13 @@ func (x *ListFoodsRequest) GetSummary() bool {
 	return false
 }
 
+func (x *ListFoodsRequest) GetNeedsMeasure() bool {
+	if x != nil {
+		return x.xxx_hidden_NeedsMeasure
+	}
+	return false
+}
+
 func (x *ListFoodsRequest) SetQuery(v string) {
 	x.xxx_hidden_Query = v
 }
@@ -2640,6 +2654,10 @@ func (x *ListFoodsRequest) SetPageToken(v string) {
 
 func (x *ListFoodsRequest) SetSummary(v bool) {
 	x.xxx_hidden_Summary = v
+}
+
+func (x *ListFoodsRequest) SetNeedsMeasure(v bool) {
+	x.xxx_hidden_NeedsMeasure = v
 }
 
 type ListFoodsRequest_builder struct {
@@ -2660,6 +2678,11 @@ type ListFoodsRequest_builder struct {
 	// their default values, to look foods up cheaply. Get a food's details
 	// with GetFood.
 	Summary bool
+	// Only list foods with no measure and no grams_per_milliliter, which
+	// recipes always show in grams: set a measure, with a density for
+	// volume, where grams read oddly, like spices, oils, butter or fresh
+	// herbs.
+	NeedsMeasure bool
 }
 
 func (b0 ListFoodsRequest_builder) Build() *ListFoodsRequest {
@@ -2670,6 +2693,7 @@ func (b0 ListFoodsRequest_builder) Build() *ListFoodsRequest {
 	x.xxx_hidden_PageSize = b.PageSize
 	x.xxx_hidden_PageToken = b.PageToken
 	x.xxx_hidden_Summary = b.Summary
+	x.xxx_hidden_NeedsMeasure = b.NeedsMeasure
 	return m0
 }
 
@@ -3393,13 +3417,14 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"5\n" +
 	"\x0fGetFoodResponse\x12\"\n" +
-	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\"~\n" +
+	"\x04food\x18\x01 \x01(\v2\x0e.foods.v1.FoodR\x04food\"\xa3\x01\n" +
 	"\x10ListFoodsRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x03 \x01(\tR\tpageToken\x12\x18\n" +
-	"\asummary\x18\x04 \x01(\bR\asummary\"a\n" +
+	"\asummary\x18\x04 \x01(\bR\asummary\x12#\n" +
+	"\rneeds_measure\x18\x05 \x01(\bR\fneedsMeasure\"a\n" +
 	"\x11ListFoodsResponse\x12$\n" +
 	"\x05foods\x18\x01 \x03(\v2\x0e.foods.v1.FoodR\x05foods\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"t\n" +
@@ -3471,12 +3496,13 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x17AMOUNT_UNIT_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11AMOUNT_UNIT_GRAMS\x10\x01\x12\x1b\n" +
 	"\x17AMOUNT_UNIT_MILLILITERS\x10\x02\x12\x16\n" +
-	"\x12AMOUNT_UNIT_PIECES\x10\x03*^\n" +
+	"\x12AMOUNT_UNIT_PIECES\x10\x03*w\n" +
 	"\aMeasure\x12\x17\n" +
 	"\x13MEASURE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eMEASURE_WEIGHT\x10\x01\x12\x12\n" +
 	"\x0eMEASURE_VOLUME\x10\x02\x12\x12\n" +
-	"\x0eMEASURE_PIECES\x10\x032\xe4\x04\n" +
+	"\x0eMEASURE_PIECES\x10\x03\x12\x17\n" +
+	"\x13MEASURE_MILLILITERS\x10\x042\xe4\x04\n" +
 	"\vFoodService\x12S\n" +
 	"\x0eSearchFoodData\x12\x1f.foods.v1.SearchFoodDataRequest\x1a .foods.v1.SearchFoodDataResponse\x12G\n" +
 	"\n" +

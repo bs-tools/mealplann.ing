@@ -48,8 +48,11 @@ import "mcp/v1/options.proto";
 // oils, vinegars, sauces, spices, dried herbs, baking powder and plant
 // milks, with grams_per_milliliter, so 30 g of oil shows as 2 tbsp; to
 // MEASURE_PIECES for foods counted, with grams_per_piece; and to
-// MEASURE_WEIGHT for foods weighed. Left unspecified, small amounts show by
-// volume where grams_per_milliliter converts them.
+// MEASURE_WEIGHT for foods weighed. MEASURE_MILLILITERS keeps a liquid in
+// milliliters for users of US units too, like a 400 ml can of coconut milk.
+// Left unspecified, small amounts show by volume where grams_per_milliliter
+// converts them, and otherwise in grams: find those foods with ListFoods'
+// needs_measure.
 //
 // Meals' and plans' costs are estimated from each food's
 // price_cents_per_kilogram: what the household pays at its stores, in
@@ -365,6 +368,10 @@ enum Measure {
   MEASURE_VOLUME = 2;
   // In pieces, like 2 onions.
   MEASURE_PIECES = 3;
+  // By volume in milliliters, with spoons for small amounts, whatever the
+  // user's unit system: for liquids sold by the milliliter, like a 400 ml
+  // can of coconut milk, which cups would only approximate.
+  MEASURE_MILLILITERS = 4;
 }
 
 // A reference food, of the Canadian Nutrient File or USDA FoodData Central.
@@ -509,6 +516,11 @@ message ListFoodsRequest {
   // their default values, to look foods up cheaply. Get a food's details
   // with GetFood.
   bool summary = 4;
+  // Only list foods with no measure and no grams_per_milliliter, which
+  // recipes always show in grams: set a measure, with a density for
+  // volume, where grams read oddly, like spices, oils, butter or fresh
+  // herbs.
+  bool needs_measure = 5;
 }
 
 message ListFoodsResponse {
