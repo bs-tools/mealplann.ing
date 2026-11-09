@@ -35,6 +35,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/shopping"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -821,6 +822,9 @@ func (s *Service) CreatePortion(ctx context.Context, req *plansv1.CreatePortionR
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, "")
 	}
+	if req.HasNewCook() {
+		return s.createPortionWithCook(ctx, user.HouseholdID(), req)
+	}
 	p, err := portionFromProto(req.GetPortion())
 	if err != nil {
 		return nil, err
@@ -831,6 +835,56 @@ func (s *Service) CreatePortion(ctx context.Context, req *plansv1.CreatePortionR
 		return nil, s.toConnectError(ctx, err, "failed to create portion", "")
 	}
 	return plansv1.CreatePortionResponse_builder{Portion: portionToProto(created)}.Build(), nil
+}
+
+// createPortionWithCook creates a portion with a new cook of it, and
+// cooks of its recipe's components, all at once.
+func (s *Service) createPortionWithCook(ctx context.Context, householdID pgtype.UUID, req *plansv1.CreatePortionRequest) (*plansv1.CreatePortionResponse, error) {
+	in := req.GetPortion()
+	if !in.HasCook() || in.GetCook().GetCookId() != "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			"with new_cook, set the portion's cook with its servings, and no cook_id: the portion is a share of the new cook")
+	}
+	recipeID, err := parseID("new_cook.recipe_id", req.GetNewCook().GetRecipeId(), "find recipes with ListRecipes")
+	if err != nil {
+		return nil, err
+	}
+	// The portion is checked as a share of a cook, which is given its ID
+	// once created.
+	withID := proto.CloneOf(in)
+	withID.GetCook().SetCookId(store.UUIDToString(store.NewUUID()))
+	p, err := portionFromProto(withID)
+	if err != nil {
+		return nil, err
+	}
+	servings := req.GetNewCook().GetServings()
+	switch {
+	case servings == 0:
+		servings = p.Servings
+	case math.IsNaN(servings) || servings < p.Servings || servings > maxCookServings:
+		return nil, connect.Errorf(connect.CodeInvalidArgument,
+			"new_cook.servings must be from the portion's %v to %d, or 0 for the portion's", p.Servings, maxCookServings)
+	}
+	list, err := s.recipes.ListRecipesByID(ctx, householdID, []pgtype.UUID{recipeID})
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to read recipe", "")
+	}
+	if len(list) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, referenceMessages["recipe_id"])
+	}
+	if err := checkNotDraft(list[0]); err != nil {
+		return nil, err
+	}
+	p.HouseholdID = householdID
+	// It's one person's cook, not a shared meal's.
+	c := &plans.Cook{HouseholdID: householdID, RecipeID: recipeID, Date: p.Date, Servings: servings, Meal: people.MealNone}
+	toCreate := withSuppliers([]*plans.CookWithPortions{{Cook: c, Portions: []*plans.Portion{p}}},
+		map[pgtype.UUID]*recipes.Recipe{recipeID: list[0]})
+	cooks, portions, err := s.plans.CreateCooksWithPortions(ctx, toCreate)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to create the cook and portion", "")
+	}
+	return plansv1.CreatePortionResponse_builder{Portion: portionToProto(portions[0][0]), Cook: cookToProto(cooks[0])}.Build(), nil
 }
 
 func (s *Service) UpdatePortion(ctx context.Context, req *plansv1.UpdatePortionRequest) (*plansv1.UpdatePortionResponse, error) {

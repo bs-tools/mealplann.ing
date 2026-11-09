@@ -282,7 +282,10 @@ type PlanServiceClient interface {
 	// too, if they'd be too few.
 	SetCookSupplier(context.Context, *v1.SetCookSupplierRequest) (*v1.SetCookSupplierResponse, error)
 	// Create a portion: what a person eats at one of their eating times on a
-	// date, either a share of a cook or an amount of a food.
+	// date, either a share of a cook or an amount of a food. With new_cook,
+	// the cook is created with it, on its date: a recipe cooked for one
+	// person's eating time, like a recipe of one or two servings cooked and
+	// eaten right away.
 	CreatePortion(context.Context, *v1.CreatePortionRequest) (*v1.CreatePortionResponse, error)
 	// Update a portion, e.g. move it to another date or eating time, or
 	// change its servings.
@@ -406,7 +409,10 @@ type PlanServiceHandler interface {
 	// too, if they'd be too few.
 	SetCookSupplier(context.Context, *v1.SetCookSupplierRequest) (*v1.SetCookSupplierResponse, error)
 	// Create a portion: what a person eats at one of their eating times on a
-	// date, either a share of a cook or an amount of a food.
+	// date, either a share of a cook or an amount of a food. With new_cook,
+	// the cook is created with it, on its date: a recipe cooked for one
+	// person's eating time, like a recipe of one or two servings cooked and
+	// eaten right away.
 	CreatePortion(context.Context, *v1.CreatePortionRequest) (*v1.CreatePortionResponse, error)
 	// Update a portion, e.g. move it to another date or eating time, or
 	// change its servings.

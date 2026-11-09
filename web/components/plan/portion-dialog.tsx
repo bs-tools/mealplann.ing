@@ -1,5 +1,7 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
+import type { PickedRecipe } from "@components/recipes/recipe-picker";
+import RecipePicker from "@components/recipes/recipe-picker";
 import { SelectField, TextField } from "@components/ui/fields";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
@@ -25,7 +27,11 @@ import { parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 
-type What = "cook" | "food";
+/*
+ * What is what's eaten: a share of a cook, a food, or a recipe cooked for
+ * it.
+ */
+type What = "cook" | "food" | "recipe";
 
 // Slot is a person's eating time on a date.
 export interface Slot {
@@ -85,6 +91,9 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
       ? String(portion.servings)
       : "1"
   );
+  // The recipe to cook for it, and how many servings to cook.
+  const [recipe, setRecipe] = useState<PickedRecipe | null>(null);
+  const [cookServings, setCookServings] = useState("");
   const [food, setFood] = useState<PickedFood | null>(
     portion !== undefined && portion.foodId !== ""
       ? { id: portion.foodId, name: portion.name }
@@ -139,6 +148,35 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
       !person.eatingTimes.some((et) => et.id === eatingTimeId)
     ) {
       setInvalid("Choose one of the person's eating times.");
+      return;
+    }
+    if (what === "recipe") {
+      const eaten = parseOptionalNumber(servings);
+      const cooked = parseOptionalNumber(cookServings);
+      if (recipe === null) {
+        setInvalid("Choose a recipe.");
+        return;
+      }
+      if (eaten === null || eaten === undefined || eaten <= 0) {
+        setInvalid("The servings must be a number more than 0, like 0.5.");
+        return;
+      }
+      if (cooked === null || (cooked !== undefined && cooked < eaten)) {
+        setInvalid(
+          "The servings to cook must be at least those eaten, or empty to cook just those."
+        );
+        return;
+      }
+      create.mutate({
+        newCook: { recipeId: recipe.id, servings: cooked ?? 0 },
+        portion: {
+          date,
+          eatingTimeId,
+          notes,
+          personId,
+          what: { case: "cook", value: { cookId: "", servings: eaten } },
+        },
+      });
       return;
     }
     let whatMessage;
@@ -273,8 +311,52 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
           >
             A cook or leftovers
           </button>
+          {portion === undefined && (
+            <button
+              type="button"
+              className={choiceClass(what === "recipe")}
+              aria-pressed={what === "recipe"}
+              title="Cook a recipe for this, like one of a serving or two cooked and eaten right away"
+              onClick={() => {
+                setWhat("recipe");
+              }}
+            >
+              A recipe to cook
+            </button>
+          )}
         </div>
-        {what === "food" ? (
+        {what === "recipe" && (
+          <div className="flex flex-col gap-1">
+            <div className="grid grid-cols-[1fr_5.5rem_5.5rem] items-end gap-2">
+              <div className="flex flex-col gap-1">
+                <span className={labelClass}>Recipe</span>
+                <RecipePicker
+                  value={recipe}
+                  onChange={setRecipe}
+                  label="Recipe"
+                />
+              </div>
+              <TextField
+                label="Eaten"
+                value={servings}
+                inputMode="decimal"
+                onChange={setServings}
+              />
+              <TextField
+                label="Cooked"
+                value={cookServings}
+                inputMode="decimal"
+                placeholder={servings}
+                onChange={setCookServings}
+              />
+            </div>
+            <p className="text-xs text-gray-500">
+              In servings. Servings cooked beyond those eaten are left over, to
+              plan later.
+            </p>
+          </div>
+        )}
+        {what === "food" && (
           <div className="grid grid-cols-[1fr_5.5rem_5.5rem] items-end gap-2">
             <div className="flex flex-col gap-1">
               <span className={labelClass}>Food</span>
@@ -298,7 +380,8 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
               }}
             />
           </div>
-        ) : (
+        )}
+        {what === "cook" && (
           <div className="grid grid-cols-[1fr_6rem] items-end gap-2">
             <SelectField
               label="Cook"
