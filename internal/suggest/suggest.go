@@ -595,6 +595,9 @@ func (s *scorer) portion(c *candidate) {
 			GramsPerServing: gramsPerServing,
 			PlannedGrams:    s.plannedGrams,
 			EatingOut:       s.in.Week.EatingOutSlots(),
+			ServingsFor: func(p *people.Person) float64 {
+				return plans.ServingsToward(p, c.nutrition, s.in.Date, s.in.Meal, s.in.Planned)
+			},
 		})
 		if err != nil {
 			// The people are checked to eat from the meal, so this is a

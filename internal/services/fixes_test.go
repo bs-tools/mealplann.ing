@@ -53,14 +53,21 @@ func TestSuggestFixes(t *testing.T) {
 	if _, err := e.pantry.AddToPantry(ctx, pantryv1.AddToPantryRequest_builder{FoodId: tofu.GetId(), Amount: 400, Unit: grams}.Build()); err != nil {
 		t.Fatalf("AddToPantry: %v", err)
 	}
-	var wrapsCook string
-	for _, r := range []*recipesv1.Recipe{soup, wraps} {
-		planned, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: r.GetId(), Date: monday, Meal: lunch}.Build())
-		if err != nil {
-			t.Fatalf("PlanMeal: %v", err)
-		}
-		wrapsCook = planned.GetCook().GetId()
+	if _, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: soup.GetId(), Date: monday, Meal: lunch}.Build()); err != nil {
+		t.Fatalf("PlanMeal: %v", err)
 	}
+	// A whole serving of the wraps, which PlanMeal would size down.
+	created, err := e.plans.CreatePortion(ctx, plansv1.CreatePortionRequest_builder{
+		Portion: plansv1.Portion_builder{
+			PersonId: dana.GetId(), EatingTimeId: eatingTimeID(t, dana, "Lunch"), Date: monday,
+			Cook: plansv1.CookShare_builder{Servings: 1}.Build(),
+		}.Build(),
+		NewCook: plansv1.NewCook_builder{RecipeId: wraps.GetId()}.Build(),
+	}.Build())
+	if err != nil {
+		t.Fatalf("CreatePortion: %v", err)
+	}
+	wrapsCook := created.GetCook().GetId()
 	// An apple for a snack has too little protein.
 	snackID := eatingTimeID(t, dana, "Snack")
 	if _, err := e.plans.CreatePortion(ctx, plansv1.CreatePortionRequest_builder{Portion: plansv1.Portion_builder{
