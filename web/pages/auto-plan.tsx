@@ -17,6 +17,7 @@ import {
   ArrowPathIcon,
   CheckIcon,
   ExclamationTriangleIcon,
+  ScaleIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
@@ -239,6 +240,13 @@ const AutoPlanPage: React.FC = () => {
    */
   const [choices, setChoices] = useState<Map<string, Choice>>(new Map());
   const [replanned, setReplanned] = useState<Map<string, Choice>>(new Map());
+  /*
+   * The day replanned for nutrition, if any, with the other days' meals
+   * pinned as they were, so only that day changes. Pins aren't kept
+   * meals: shuffling or changing the criteria lets them go.
+   */
+  const [focus, setFocus] = useState<string | undefined>(undefined);
+  const [pins, setPins] = useState<Map<string, Choice>>(new Map());
 
   // The meals someone eats, which the meals planned default to.
   const eaten = MEALS.map(([meal]) => meal).filter((meal) =>
@@ -257,7 +265,7 @@ const AutoPlanPage: React.FC = () => {
 
   const request = useDebouncedValue(
     {
-      choices: [...replanned.values()].filter(
+      choices: [...new Map([...pins, ...replanned]).values()].filter(
         (choice) =>
           choice.date >= criteria.start &&
           choice.date <= end &&
@@ -269,9 +277,10 @@ const AutoPlanPage: React.FC = () => {
         excludeTags: criteria.excludeTags,
         favorites: criteria.favorites,
         maxTotalSeconds: criteria.maxMinutes * 60,
-        nutrition: criteria.nutrition,
+        // A day replanned for nutrition weighs it over sharing the shop.
+        nutrition: focus === undefined ? criteria.nutrition : Emphasis.HIGH,
         pantry: criteria.pantry,
-        shopping: criteria.shopping,
+        shopping: focus === undefined ? criteria.shopping : Emphasis.LOW,
         variety: criteria.variety,
       },
       days: criteria.days,
@@ -330,6 +339,8 @@ const AutoPlanPage: React.FC = () => {
     const { start: _start, ...remembered } = next;
     writeStorage(CRITERIA_KEY, JSON.stringify(remembered));
     setReplanned(new Map(choices));
+    setFocus(undefined);
+    setPins(new Map());
   };
   /*
    * Choose keeps a suggestion at a slot, leaves it empty with "", or lets
@@ -355,6 +366,29 @@ const AutoPlanPage: React.FC = () => {
   };
 
   const slots = plan.data?.slots ?? [];
+  /*
+   * ReplanDay plans a day's meals again, putting nutrition first, with the
+   * other days' meals pinned as they are.
+   */
+  const replanDay = (date: string) => {
+    const next = new Map<string, Choice>();
+    for (const slot of slots) {
+      if (slot.date !== date && slot.suggestion !== undefined) {
+        next.set(slotKey(slot), {
+          date: slot.date,
+          eatingTimeId: slot.eatingTimeId,
+          leftoverOf: slot.suggestion.leftoverOf,
+          meal: slot.meal,
+          personId: slot.personId,
+          recipeId: slot.suggestion.recipeId,
+        });
+      }
+    }
+    setPins(next);
+    setFocus(date);
+    setReplanned(new Map(choices));
+    setSeed(randomSeed());
+  };
   const toSave = slots.filter(
     (slot) =>
       slot.suggestion !== undefined &&
@@ -455,12 +489,26 @@ const AutoPlanPage: React.FC = () => {
         >
           {[...byDate.entries()].map(([date, daySlots]) => (
             <section key={date} className="flex flex-col gap-2">
-              <h2 className="text-sm font-semibold text-gray-900">
-                {formatWeekday(date)}{" "}
-                <span className="font-normal text-gray-500">
-                  {formatShortDate(date)}
-                </span>
-              </h2>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-gray-900">
+                  {formatWeekday(date)}{" "}
+                  <span className="font-normal text-gray-500">
+                    {formatShortDate(date)}
+                  </span>
+                </h2>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-0.5 rounded px-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 print:hidden"
+                  disabled={busy}
+                  title="Plan this day's meals again, putting everyone's targets first, and keeping the other days as they are, but for leftovers of this day's meals"
+                  onClick={() => {
+                    replanDay(date);
+                  }}
+                >
+                  <ScaleIcon className="size-3.5" aria-hidden="true" />
+                  Re-plan for nutrition
+                </button>
+              </div>
               <ul className="flex flex-col gap-2">
                 {daySlots.map((slot) => {
                   const key = slotKey(slot);
@@ -565,6 +613,8 @@ const AutoPlanPage: React.FC = () => {
               title="Plan the meals you didn't keep again, differently"
               onClick={() => {
                 setReplanned(new Map(choices));
+                setFocus(undefined);
+                setPins(new Map());
                 setSeed(randomSeed());
               }}
             >

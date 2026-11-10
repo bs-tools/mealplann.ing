@@ -111,8 +111,9 @@ func TestPlanFixed(t *testing.T) {
 	if got := plannedNames(result); !slices.Equal(got, []string{"Curry", "Hummus"}) {
 		t.Errorf("got %v, want the curry, then the kept hummus", got)
 	}
-	if alt := result.Slots[1].Alternatives; len(alt) != 0 {
-		t.Errorf("got alternatives %v for the kept slot, want none", alt)
+	// The kept slot can still be swapped, for the curry.
+	if alt := result.Slots[1].Alternatives; len(alt) != 1 || alt[0].Recipe != curry {
+		t.Errorf("got alternatives %v for the kept slot, want the curry", alt)
 	}
 }
 

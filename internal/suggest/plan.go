@@ -423,11 +423,18 @@ func (p *planner) polish(picks []*Suggestion) ([]*PlannedSlot, float64) {
 		picks[i] = current
 		planned.Suggestion = current
 		total += current.Score
+		// A kept slot offers alternatives too, ranked as if it were free,
+		// so it can still be swapped.
+		if slot.Fixed != nil || slot.FixedLeftover != nil {
+			free := *slot
+			free.Fixed, free.FixedLeftover = nil, nil
+			ranked = Suggest(st.input(&free, p.candidates(&free)))
+		}
 		for _, sg := range fitting(ranked) {
 			if len(planned.Alternatives) == alternatives {
 				break
 			}
-			if sg != current {
+			if !sg.Same(current) {
 				planned.Alternatives = append(planned.Alternatives, sg)
 			}
 		}
