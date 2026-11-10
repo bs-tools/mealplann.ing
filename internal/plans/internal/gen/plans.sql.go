@@ -657,7 +657,8 @@ type ListFrozenCooksRow struct {
 // The household's cooks with frozen servings not all planned or taken off
 // plan yet: those in the freezer, with their recipe's name and keeping
 // days, and the servings of their portions eaten after the recipe's fridge
-// days, by date.
+// days, or from the freezer, and of what they supply from the freezer, by
+// date.
 func (q *Queries) ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) ([]*ListFrozenCooksRow, error) {
 	rows, err := q.db.Query(ctx, listFrozenCooks, householdID)
 	if err != nil {
