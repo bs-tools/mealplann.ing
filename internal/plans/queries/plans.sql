@@ -323,3 +323,12 @@ on conflict (person_id, eating_time_id, date) do update set notes = excluded.not
 delete from eating_out
 where household_id = @household_id and person_id = @person_id
   and eating_time_id = @eating_time_id and date = @date;
+
+-- name: CountDoneCooks :many
+-- How many of the household's cooks of each recipe were marked done in a
+-- range of dates.
+select recipe_id, count(*)::integer as cooks
+from cooks
+where household_id = @household_id and done
+  and date >= sqlc.arg(from_date)::date and date <= sqlc.arg(to_date)::date
+group by recipe_id;

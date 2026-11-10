@@ -148,6 +148,7 @@ func (s *Service) SuggestRecipes(ctx context.Context, req *suggestionsv1.Suggest
 	})
 	in.Foods = d.foods
 	in.Lots = lots
+	in.History = d.history
 	// One person's small meal can be the rest of an earlier meal.
 	in.Leftovers = in.Meal == people.MealNone
 
@@ -184,15 +185,18 @@ func (s *Service) loadSuggestionData(ctx context.Context, householdID pgtype.UUI
 	var recipeList []*recipes.Recipe
 	var lists []*shopping.List
 	var lots []*pantry.Item
-	var planErr, peopleErr, recipesErr, listsErr, lotsErr error
+	var planErr, peopleErr, recipesErr, listsErr, lotsErr, historyErr error
 	var wg sync.WaitGroup
+	wg.Go(func() {
+		d.history, historyErr = s.plans.CountDoneCooks(ctx, householdID, first.AddDate(0, 0, -suggest.HistoryDays), first.AddDate(0, 0, -1))
+	})
 	wg.Go(func() { d.plan, planErr = s.plans.GetPlan(ctx, householdID, from, to) })
 	wg.Go(func() { d.people, peopleErr = s.people.ListPeople(ctx, householdID) })
 	wg.Go(func() { recipeList, _, recipesErr = s.recipes.ListRecipes(ctx, householdID, recipes.ListFilter{}) })
 	wg.Go(func() { lists, listsErr = s.shopping.ListLists(ctx, householdID, shoppingListsRead, 0) })
 	wg.Go(func() { lots, lotsErr = s.pantry.ListItems(ctx, householdID) })
 	wg.Wait()
-	for _, err := range []error{planErr, peopleErr, recipesErr, listsErr, lotsErr} {
+	for _, err := range []error{planErr, peopleErr, recipesErr, listsErr, lotsErr, historyErr} {
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -247,6 +251,7 @@ var scoreKindsToProto = map[suggest.Kind]suggestionsv1.ScoreKind{
 	suggest.MealTag:           suggestionsv1.ScoreKind_SCORE_KIND_MEAL_TAG,
 	suggest.Favorite:          suggestionsv1.ScoreKind_SCORE_KIND_FAVORITE,
 	suggest.Leftover:          suggestionsv1.ScoreKind_SCORE_KIND_LEFTOVER,
+	suggest.Cooked:            suggestionsv1.ScoreKind_SCORE_KIND_COOKED,
 }
 
 // suggestionToProto converts a suggestion to the API.

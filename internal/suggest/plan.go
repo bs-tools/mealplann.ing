@@ -110,6 +110,8 @@ type PlanInput struct {
 	Lots    []*pantry.Item
 	// Candidates are the recipes to pick from, nil for all of Recipes.
 	Candidates []*recipes.Recipe
+	// History is as in Input.
+	History map[pgtype.UUID]int
 	// ShopDate returns the date of the shop of a date's fresh foods.
 	ShopDate func(date time.Time) time.Time
 	// Weights are as in Input.
@@ -206,8 +208,10 @@ func Plan(in *PlanInput) *PlanResult {
 		}
 		p.eligible[tag] = []*recipes.Recipe{}
 		for _, r := range all {
-			// Drafts aren't finished, so they aren't planned.
-			if !r.Draft && FitsMeal(r, tag) {
+			// Drafts aren't finished, so they aren't planned, nor are
+			// recipes the household doesn't want suggested from the
+			// plan's first day.
+			if r.Suggestable(in.Slots[0].Date) && FitsMeal(r, tag) {
 				p.eligible[tag] = append(p.eligible[tag], r)
 			}
 		}
@@ -482,6 +486,7 @@ func (st *state) input(slot *PlanSlot, candidates []*recipes.Recipe) *Input {
 		Candidates:   candidates,
 		Foods:        st.p.in.Foods,
 		Lots:         st.p.in.Lots,
+		History:      st.p.in.History,
 		Weights:      st.p.in.Weights,
 		// A slot of a recipe the user chose takes no leftover.
 		Leftovers:  slot.personal() && slot.Fixed == nil,

@@ -311,7 +311,7 @@ func (d *planData) fixCandidates(p *people.Person, date time.Time, eatingTimeID 
 			}
 			candidates = append(candidates, d.resizes(et, slot, items, i)...)
 			for _, r := range d.recipes {
-				if r.Draft || slices.Contains(there, r.ID) || r.Servings <= 0 {
+				if !r.Suggestable(date) || slices.Contains(there, r.ID) || r.Servings <= 0 {
 					continue
 				}
 				added := &item{portion: &plans.Portion{
@@ -410,7 +410,7 @@ func (d *planData) additions(p *people.Person, et *people.EatingTime, slot plans
 		candidates = append(candidates, c)
 	}
 	for _, r := range d.recipes {
-		if r.Draft || r.Servings <= 0 {
+		if !r.Suggestable(slot.Date) || r.Servings <= 0 {
 			continue
 		}
 		for _, servings := range []float64{0.5, 1} {

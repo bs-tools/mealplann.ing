@@ -89,9 +89,14 @@ type Recipe struct {
 	YieldUnit   nutrition.Unit
 	// Draft is whether it's saved unfinished: its ingredients may be
 	// unmatched, and it isn't planned or suggested.
-	Draft      bool
-	CreateTime time.Time
-	UpdateTime time.Time
+	Draft bool
+	// NotSuggested is whether the household doesn't want it suggested,
+	// though it can still plan it, and SnoozedUntil the date, at midnight
+	// UTC, it's not suggested before, zero for none.
+	NotSuggested bool
+	SnoozedUntil time.Time
+	CreateTime   time.Time
+	UpdateTime   time.Time
 }
 
 // MaxComponentDepth is how deep components can nest: a recipe's component
@@ -136,6 +141,13 @@ type Ingredient struct {
 // IsComponent reports whether the ingredient is another recipe.
 func (in *Ingredient) IsComponent() bool {
 	return in.ComponentRecipeID.Valid
+}
+
+// Suggestable reports whether the recipe can be suggested on a date: it
+// isn't a draft, the household didn't ask not to have it suggested, and it
+// isn't snoozed until after the date.
+func (r *Recipe) Suggestable(date time.Time) bool {
+	return !r.Draft && !r.NotSuggested && !r.SnoozedUntil.After(date)
 }
 
 // IsMatched reports whether the ingredient is a food or a component,
@@ -407,6 +419,8 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			YieldAmount:   yieldAmountToDB(recipe),
 			YieldUnit:     yieldUnitToDB(recipe),
 			Draft:         recipe.Draft,
+			NotSuggested:  recipe.NotSuggested,
+			SnoozedUntil:  store.DateToPG(recipe.SnoozedUntil),
 		})
 		return err
 	})
@@ -630,6 +644,8 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			YieldAmount:   yieldAmountToDB(recipe),
 			YieldUnit:     yieldUnitToDB(recipe),
 			Draft:         recipe.Draft,
+			NotSuggested:  recipe.NotSuggested,
+			SnoozedUntil:  store.DateToPG(recipe.SnoozedUntil),
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return store.ErrNotFound
@@ -847,6 +863,8 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) 
 		Notes:         row.Notes,
 		Favorite:      row.Favorite,
 		Draft:         row.Draft,
+		NotSuggested:  row.NotSuggested,
+		SnoozedUntil:  store.DateFromPG(row.SnoozedUntil),
 		CreateTime:    row.CreateTime.Time,
 		UpdateTime:    row.UpdateTime.Time,
 		Ingredients:   make([]*Ingredient, 0, len(ingredients)),

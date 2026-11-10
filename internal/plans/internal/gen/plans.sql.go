@@ -11,6 +11,47 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countDoneCooks = `-- name: CountDoneCooks :many
+select recipe_id, count(*)::integer as cooks
+from cooks
+where household_id = $1 and done
+  and date >= $2::date and date <= $3::date
+group by recipe_id
+`
+
+type CountDoneCooksParams struct {
+	HouseholdID pgtype.UUID
+	FromDate    pgtype.Date
+	ToDate      pgtype.Date
+}
+
+type CountDoneCooksRow struct {
+	RecipeID pgtype.UUID
+	Cooks    int32
+}
+
+// How many of the household's cooks of each recipe were marked done in a
+// range of dates.
+func (q *Queries) CountDoneCooks(ctx context.Context, arg *CountDoneCooksParams) ([]*CountDoneCooksRow, error) {
+	rows, err := q.db.Query(ctx, countDoneCooks, arg.HouseholdID, arg.FromDate, arg.ToDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*CountDoneCooksRow
+	for rows.Next() {
+		var i CountDoneCooksRow
+		if err := rows.Scan(&i.RecipeID, &i.Cooks); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createCook = `-- name: CreateCook :execrows
 insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done, frozen_servings, off_plan_servings)
 values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)

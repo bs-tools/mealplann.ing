@@ -1,6 +1,7 @@
 import type { Criteria } from "@components/autoplan/criteria-panel";
 import CriteriaPanel, { MEALS } from "@components/autoplan/criteria-panel";
 import PlanSlotCard from "@components/autoplan/plan-slot-card";
+import { useSuggestFeedback } from "@components/recipes/suggest-feedback";
 import Card from "@components/ui/card";
 import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
@@ -303,6 +304,8 @@ const AutoPlanPage: React.FC = () => {
     },
   });
 
+  // Feedback on a recipe is saved on it, and planned around from then on.
+  const feedback = useSuggestFeedback();
   // Eating out is saved in the plan, and planned around from then on.
   const eatOut = useMutation(setEatingOut, {
     onSuccess: async () => {
@@ -365,7 +368,8 @@ const AutoPlanPage: React.FC = () => {
   const breaking = toSave.filter(
     (slot) => slot.suggestion?.fitsRules === false
   ).length;
-  const busy = plan.isFetching || save.isPending || eatOut.isPending;
+  const busy =
+    plan.isFetching || save.isPending || eatOut.isPending || feedback.isPending;
   const repeats = repeatNotes(toSave);
   let content: React.ReactNode = null;
   if (people.isPending) {
@@ -495,6 +499,13 @@ const AutoPlanPage: React.FC = () => {
                       onEatingOut={(eatingOut) => {
                         markEatingOut(slot, eatingOut);
                       }}
+                      onFeedback={(value) => {
+                        if (slot.suggestion !== undefined) {
+                          // A kept recipe is let go, to plan another.
+                          choose(slot, undefined);
+                          feedback.save(slot.suggestion.recipeId, value);
+                        }
+                      }}
                     />
                   );
                 })}
@@ -586,7 +597,7 @@ const AutoPlanPage: React.FC = () => {
           </div>
         }
       />
-      <ErrorText error={save.error ?? eatOut.error} />
+      <ErrorText error={save.error ?? eatOut.error ?? feedback.error} />
       {showCriteria && (
         <Card title="What matters this time">
           <CriteriaPanel

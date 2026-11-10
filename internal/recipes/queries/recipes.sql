@@ -19,7 +19,9 @@ insert into recipes (
   favorite,
   yield_amount,
   yield_unit,
-  draft
+  draft,
+  not_suggested,
+  snoozed_until
 ) values (
   @id,
   @household_id,
@@ -40,7 +42,9 @@ insert into recipes (
   @favorite,
   sqlc.narg(yield_amount),
   sqlc.narg(yield_unit)::amount_unit,
-  @draft
+  @draft,
+  @not_suggested,
+  sqlc.narg(snoozed_until)::date
 )
 returning *;
 
@@ -105,6 +109,8 @@ update recipes set
   yield_amount = sqlc.narg(yield_amount),
   yield_unit = sqlc.narg(yield_unit)::amount_unit,
   draft = @draft,
+  not_suggested = @not_suggested,
+  snoozed_until = sqlc.narg(snoozed_until)::date,
   update_time = now()
 where id = @id and household_id = @household_id
 returning *;

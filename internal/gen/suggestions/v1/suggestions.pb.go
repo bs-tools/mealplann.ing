@@ -50,6 +50,8 @@ const (
 	ScoreKind_SCORE_KIND_FAVORITE ScoreKind = 10
 	// The rest of an earlier shared meal, reheated at a small meal.
 	ScoreKind_SCORE_KIND_LEFTOVER ScoreKind = 11
+	// How often the household cooked it lately.
+	ScoreKind_SCORE_KIND_COOKED ScoreKind = 12
 )
 
 // Enum value maps for ScoreKind.
@@ -66,6 +68,7 @@ var (
 		9:  "SCORE_KIND_MEAL_TAG",
 		10: "SCORE_KIND_FAVORITE",
 		11: "SCORE_KIND_LEFTOVER",
+		12: "SCORE_KIND_COOKED",
 	}
 	ScoreKind_value = map[string]int32{
 		"SCORE_KIND_UNSPECIFIED":        0,
@@ -79,6 +82,7 @@ var (
 		"SCORE_KIND_MEAL_TAG":           9,
 		"SCORE_KIND_FAVORITE":           10,
 		"SCORE_KIND_LEFTOVER":           11,
+		"SCORE_KIND_COOKED":             12,
 	}
 )
 
@@ -2677,7 +2681,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\venergy_kcal\x18\f \x01(\x01R\n" +
 	"energyKcal\x12.\n" +
 	"\x13planned_energy_kcal\x18\r \x01(\x01R\x11plannedEnergyKcal\x12$\n" +
-	"\x0edelete_cook_id\x18\x0e \x01(\tR\fdeleteCookId*\xc4\x02\n" +
+	"\x0edelete_cook_id\x18\x0e \x01(\tR\fdeleteCookId*\xdb\x02\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
@@ -2690,7 +2694,8 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x13SCORE_KIND_MEAL_TAG\x10\t\x12\x17\n" +
 	"\x13SCORE_KIND_FAVORITE\x10\n" +
 	"\x12\x17\n" +
-	"\x13SCORE_KIND_LEFTOVER\x10\v\"\x04\b\a\x10\a*\x11SCORE_KIND_FLAVOR*p\n" +
+	"\x13SCORE_KIND_LEFTOVER\x10\v\x12\x15\n" +
+	"\x11SCORE_KIND_COOKED\x10\f\"\x04\b\a\x10\a*\x11SCORE_KIND_FLAVOR*p\n" +
 	"\bEmphasis\x12\x18\n" +
 	"\x14EMPHASIS_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fEMPHASIS_OFF\x10\x01\x12\x10\n" +

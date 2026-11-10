@@ -191,6 +191,14 @@ message Recipe {
   // it's saved with draft false, which needs every ingredient matched to a
   // food or recipe.
   bool draft = 25;
+  // Whether the household doesn't want it suggested (see
+  // SuggestionService), like a recipe they didn't like. It can still be
+  // planned by hand. Set it with the update_mask "not_suggested".
+  bool not_suggested = 26;
+  // The date (YYYY-MM-DD) it's not suggested before, like a recipe they
+  // had enough of for a while; empty for none. Set it with the
+  // update_mask "snoozed_until".
+  string snoozed_until = 27;
 }
 
 // What a recipe's ingredients cost, from their foods' prices
@@ -400,6 +408,10 @@ message RecipeSummary {
   // Whether it's a draft, which isn't planned or suggested (see
   // Recipe.draft).
   bool draft = 17;
+  // Whether it's not suggested, and the date it's not suggested before
+  // (see Recipe.not_suggested and Recipe.snoozed_until).
+  bool not_suggested = 18;
+  string snoozed_until = 19;
 }
 
 message CreateRecipeRequest {

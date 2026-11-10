@@ -52,6 +52,8 @@ type Recipe struct {
 	xxx_hidden_YieldAmount   float64                `protobuf:"fixed64,23,opt,name=yield_amount,json=yieldAmount,proto3"`
 	xxx_hidden_YieldUnit     v1.AmountUnit          `protobuf:"varint,24,opt,name=yield_unit,json=yieldUnit,proto3,enum=foods.v1.AmountUnit"`
 	xxx_hidden_Draft         bool                   `protobuf:"varint,25,opt,name=draft,proto3"`
+	xxx_hidden_NotSuggested  bool                   `protobuf:"varint,26,opt,name=not_suggested,json=notSuggested,proto3"`
+	xxx_hidden_SnoozedUntil  string                 `protobuf:"bytes,27,opt,name=snoozed_until,json=snoozedUntil,proto3"`
 	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
 	XXX_presence             [1]uint32
 	unknownFields            protoimpl.UnknownFields
@@ -262,6 +264,20 @@ func (x *Recipe) GetDraft() bool {
 	return false
 }
 
+func (x *Recipe) GetNotSuggested() bool {
+	if x != nil {
+		return x.xxx_hidden_NotSuggested
+	}
+	return false
+}
+
+func (x *Recipe) GetSnoozedUntil() string {
+	if x != nil {
+		return x.xxx_hidden_SnoozedUntil
+	}
+	return ""
+}
+
 func (x *Recipe) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -304,7 +320,7 @@ func (x *Recipe) SetSourceUrl(v string) {
 
 func (x *Recipe) SetFridgeDays(v int32) {
 	x.xxx_hidden_FridgeDays = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 25)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 27)
 }
 
 func (x *Recipe) SetFreezable(v bool) {
@@ -333,7 +349,7 @@ func (x *Recipe) SetFavorite(v bool) {
 
 func (x *Recipe) SetFreezerDays(v int32) {
 	x.xxx_hidden_FreezerDays = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 25)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 27)
 }
 
 func (x *Recipe) SetPrepAheadDays(v int32) {
@@ -362,6 +378,14 @@ func (x *Recipe) SetYieldUnit(v v1.AmountUnit) {
 
 func (x *Recipe) SetDraft(v bool) {
 	x.xxx_hidden_Draft = v
+}
+
+func (x *Recipe) SetNotSuggested(v bool) {
+	x.xxx_hidden_NotSuggested = v
+}
+
+func (x *Recipe) SetSnoozedUntil(v string) {
+	x.xxx_hidden_SnoozedUntil = v
 }
 
 func (x *Recipe) HasFridgeDays() bool {
@@ -515,6 +539,14 @@ type Recipe_builder struct {
 	// it's saved with draft false, which needs every ingredient matched to a
 	// food or recipe.
 	Draft bool
+	// Whether the household doesn't want it suggested (see
+	// SuggestionService), like a recipe they didn't like. It can still be
+	// planned by hand. Set it with the update_mask "not_suggested".
+	NotSuggested bool
+	// The date (YYYY-MM-DD) it's not suggested before, like a recipe they
+	// had enough of for a while; empty for none. Set it with the
+	// update_mask "snoozed_until".
+	SnoozedUntil string
 }
 
 func (b0 Recipe_builder) Build() *Recipe {
@@ -532,7 +564,7 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_Tags = b.Tags
 	x.xxx_hidden_SourceUrl = b.SourceUrl
 	if b.FridgeDays != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 25)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 27)
 		x.xxx_hidden_FridgeDays = *b.FridgeDays
 	}
 	x.xxx_hidden_Freezable = b.Freezable
@@ -542,7 +574,7 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_UpdateTime = b.UpdateTime
 	x.xxx_hidden_Favorite = b.Favorite
 	if b.FreezerDays != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 25)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 27)
 		x.xxx_hidden_FreezerDays = *b.FreezerDays
 	}
 	x.xxx_hidden_PrepAheadDays = b.PrepAheadDays
@@ -552,6 +584,8 @@ func (b0 Recipe_builder) Build() *Recipe {
 	x.xxx_hidden_YieldAmount = b.YieldAmount
 	x.xxx_hidden_YieldUnit = b.YieldUnit
 	x.xxx_hidden_Draft = b.Draft
+	x.xxx_hidden_NotSuggested = b.NotSuggested
+	x.xxx_hidden_SnoozedUntil = b.SnoozedUntil
 	return m0
 }
 
@@ -1477,6 +1511,8 @@ type RecipeSummary struct {
 	xxx_hidden_Favorite                    bool                   `protobuf:"varint,14,opt,name=favorite,proto3"`
 	xxx_hidden_CostCentsPerServing         int32                  `protobuf:"varint,16,opt,name=cost_cents_per_serving,json=costCentsPerServing,proto3,oneof"`
 	xxx_hidden_Draft                       bool                   `protobuf:"varint,17,opt,name=draft,proto3"`
+	xxx_hidden_NotSuggested                bool                   `protobuf:"varint,18,opt,name=not_suggested,json=notSuggested,proto3"`
+	xxx_hidden_SnoozedUntil                string                 `protobuf:"bytes,19,opt,name=snoozed_until,json=snoozedUntil,proto3"`
 	XXX_raceDetectHookData                 protoimpl.RaceDetectHookData
 	XXX_presence                           [1]uint32
 	unknownFields                          protoimpl.UnknownFields
@@ -1620,6 +1656,20 @@ func (x *RecipeSummary) GetDraft() bool {
 	return false
 }
 
+func (x *RecipeSummary) GetNotSuggested() bool {
+	if x != nil {
+		return x.xxx_hidden_NotSuggested
+	}
+	return false
+}
+
+func (x *RecipeSummary) GetSnoozedUntil() string {
+	if x != nil {
+		return x.xxx_hidden_SnoozedUntil
+	}
+	return ""
+}
+
 func (x *RecipeSummary) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -1650,17 +1700,17 @@ func (x *RecipeSummary) SetTags(v []string) {
 
 func (x *RecipeSummary) SetEnergyKcalPerServing(v float64) {
 	x.xxx_hidden_EnergyKcalPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 16)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 18)
 }
 
 func (x *RecipeSummary) SetProteinGramsPerServing(v float64) {
 	x.xxx_hidden_ProteinGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 16)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 18)
 }
 
 func (x *RecipeSummary) SetCarbohydrateGramsPerServing(v float64) {
 	x.xxx_hidden_CarbohydrateGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 16)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 18)
 }
 
 func (x *RecipeSummary) SetGramsPerServing(v float64) {
@@ -1681,11 +1731,19 @@ func (x *RecipeSummary) SetFavorite(v bool) {
 
 func (x *RecipeSummary) SetCostCentsPerServing(v int32) {
 	x.xxx_hidden_CostCentsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 16)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 18)
 }
 
 func (x *RecipeSummary) SetDraft(v bool) {
 	x.xxx_hidden_Draft = v
+}
+
+func (x *RecipeSummary) SetNotSuggested(v bool) {
+	x.xxx_hidden_NotSuggested = v
+}
+
+func (x *RecipeSummary) SetSnoozedUntil(v string) {
+	x.xxx_hidden_SnoozedUntil = v
 }
 
 func (x *RecipeSummary) HasEnergyKcalPerServing() bool {
@@ -1786,6 +1844,10 @@ type RecipeSummary_builder struct {
 	// Whether it's a draft, which isn't planned or suggested (see
 	// Recipe.draft).
 	Draft bool
+	// Whether it's not suggested, and the date it's not suggested before
+	// (see Recipe.not_suggested and Recipe.snoozed_until).
+	NotSuggested bool
+	SnoozedUntil string
 }
 
 func (b0 RecipeSummary_builder) Build() *RecipeSummary {
@@ -1800,15 +1862,15 @@ func (b0 RecipeSummary_builder) Build() *RecipeSummary {
 	x.xxx_hidden_CookSeconds = b.CookSeconds
 	x.xxx_hidden_Tags = b.Tags
 	if b.EnergyKcalPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 16)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 18)
 		x.xxx_hidden_EnergyKcalPerServing = *b.EnergyKcalPerServing
 	}
 	if b.ProteinGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 16)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 18)
 		x.xxx_hidden_ProteinGramsPerServing = *b.ProteinGramsPerServing
 	}
 	if b.CarbohydrateGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 16)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 18)
 		x.xxx_hidden_CarbohydrateGramsPerServing = *b.CarbohydrateGramsPerServing
 	}
 	x.xxx_hidden_GramsPerServing = b.GramsPerServing
@@ -1816,10 +1878,12 @@ func (b0 RecipeSummary_builder) Build() *RecipeSummary {
 	x.xxx_hidden_UpdateTime = b.UpdateTime
 	x.xxx_hidden_Favorite = b.Favorite
 	if b.CostCentsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 16)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 18)
 		x.xxx_hidden_CostCentsPerServing = *b.CostCentsPerServing
 	}
 	x.xxx_hidden_Draft = b.Draft
+	x.xxx_hidden_NotSuggested = b.NotSuggested
+	x.xxx_hidden_SnoozedUntil = b.SnoozedUntil
 	return m0
 }
 
@@ -3441,7 +3505,7 @@ var File_recipes_v1_recipes_proto protoreflect.FileDescriptor
 const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\n" +
 	"\x18recipes/v1/recipes.proto\x12\n" +
-	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xef\a\n" +
+	"recipes.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xb9\b\n" +
 	"\x06Recipe\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -3473,7 +3537,9 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\fyield_amount\x18\x17 \x01(\x01R\vyieldAmount\x123\n" +
 	"\n" +
 	"yield_unit\x18\x18 \x01(\x0e2\x14.foods.v1.AmountUnitR\tyieldUnit\x12\x14\n" +
-	"\x05draft\x18\x19 \x01(\bR\x05draftB\x0e\n" +
+	"\x05draft\x18\x19 \x01(\bR\x05draft\x12#\n" +
+	"\rnot_suggested\x18\x1a \x01(\bR\fnotSuggested\x12#\n" +
+	"\rsnoozed_until\x18\x1b \x01(\tR\fsnoozedUntilB\x0e\n" +
 	"\f_fridge_daysB\x0f\n" +
 	"\r_freezer_days\"\x89\x01\n" +
 	"\n" +
@@ -3528,7 +3594,7 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\tfood_name\x18\x03 \x01(\tR\bfoodName\x12%\n" +
 	"\x0eunknown_weight\x18\x04 \x01(\bR\runknownWeight\x12+\n" +
 	"\x11unknown_nutrients\x18\x05 \x03(\tR\x10unknownNutrients\x12\x1c\n" +
-	"\tunmatched\x18\x06 \x01(\bR\tunmatched\"\x95\x06\n" +
+	"\tunmatched\x18\x06 \x01(\bR\tunmatched\"\xdf\x06\n" +
 	"\rRecipeSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -3548,7 +3614,9 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"updateTime\x12\x1a\n" +
 	"\bfavorite\x18\x0e \x01(\bR\bfavorite\x128\n" +
 	"\x16cost_cents_per_serving\x18\x10 \x01(\x05H\x03R\x13costCentsPerServing\x88\x01\x01\x12\x14\n" +
-	"\x05draft\x18\x11 \x01(\bR\x05draftB\x1a\n" +
+	"\x05draft\x18\x11 \x01(\bR\x05draft\x12#\n" +
+	"\rnot_suggested\x18\x12 \x01(\bR\fnotSuggested\x12#\n" +
+	"\rsnoozed_until\x18\x13 \x01(\tR\fsnoozedUntilB\x1a\n" +
 	"\x18_energy_kcal_per_servingB\x1c\n" +
 	"\x1a_protein_grams_per_servingB!\n" +
 	"\x1f_carbohydrate_grams_per_servingB\x19\n" +
