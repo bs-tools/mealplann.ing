@@ -264,6 +264,10 @@ enum AmountUnit {
   AMOUNT_UNIT_MILLILITERS = 2;
   // Pieces, e.g. 2 onions or 3 cloves of garlic.
   AMOUNT_UNIT_PIECES = 3;
+  // Packages, e.g. a block of tofu or a can of beans: the food's
+  // package_grams each. A food without package_grams can't be weighed in
+  // them.
+  AMOUNT_UNIT_PACKAGES = 11;
   // The kitchen units below are converted to milliliters or grams, and a
   // recipe's ingredients keep the one they're entered in, to show them as
   // written, like 1 tablespoon of oil rather than 15 ml. Elsewhere they're

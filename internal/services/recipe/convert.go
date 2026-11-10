@@ -315,6 +315,10 @@ func yieldFromProto(p *recipesv1.Recipe) (float64, nutrition.Unit, error) {
 	switch {
 	case !ok:
 		return 0, 0, connect.Errorf(connect.CodeInvalidArgument, "yield_unit is required with yield_amount: %s", amounts.UnitsHelp)
+	case unit == nutrition.Packages:
+		// A recipe's packages have no size to convert them with.
+		return 0, 0, connect.NewError(connect.CodeInvalidArgument,
+			"yield_unit can't be AMOUNT_UNIT_PACKAGES, as a recipe has no package size: give what it makes in grams, milliliters or pieces")
 	case math.IsNaN(amount) || amount <= 0 || amount > maxAmount:
 		return 0, 0, connect.Errorf(connect.CodeInvalidArgument,
 			"yield_amount must be more than 0 and at most %d g, ml or pieces, or 0 with no yield_unit if unknown", maxAmount)

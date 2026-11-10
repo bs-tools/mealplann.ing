@@ -165,6 +165,13 @@ const formatPieces = (pieces: number): string => {
   return text === "" ? "¼" : text;
 };
 
+/**
+ * FormatPackages formats an amount in packages, like "1 package" of tofu or
+ * "2 packages" of beans.
+ */
+export const formatPackages = (packages: number): string =>
+  `${formatPieces(packages)} ${packages > 1 ? "packages" : "package"}`;
+
 // KitchenUnit is how an amount in a kitchen unit is shown.
 interface KitchenUnit {
   // Singular and plural are its name, like "tbsp" or "cup" and "cups".
@@ -263,8 +270,8 @@ const formatKitchenAmount = (
  * or piece weight, in the user's unit system. An automatic measure shows
  * small amounts by volume, like a teaspoon of cumin or a tablespoon of oil,
  * and the rest as entered. An amount that can't be converted shows as
- * entered. An amount in a kitchen unit, like tablespoons, shows as entered,
- * as the recipe wrote it.
+ * entered. An amount in a kitchen unit, like tablespoons, or in packages,
+ * like a block of tofu, shows as entered, as the recipe wrote it.
  */
 export const formatMeasure = (
   amount: number,
@@ -275,6 +282,9 @@ export const formatMeasure = (
   const kitchen = formatKitchenAmount(amount, unit);
   if (kitchen !== undefined) {
     return kitchen;
+  }
+  if (unit === AmountUnit.PACKAGES) {
+    return formatPackages(amount);
   }
   let grams: number | undefined;
   let milliliters: number | undefined;

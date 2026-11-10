@@ -330,6 +330,12 @@ func Conversion(f *foods.Food, amount float64, unit nutrition.Unit, grams float6
 			piece = "piece"
 		}
 		return fmt.Sprintf("%s %s at %s g each is %s g", number(amount), piece, number(f.GramsPerPiece), number(grams))
+	case nutrition.Packages:
+		pkg := "packages"
+		if amount == 1 {
+			pkg = "package"
+		}
+		return fmt.Sprintf("%s %s at %s g each is %s g", number(amount), pkg, number(f.PackageGrams), number(grams))
 	default:
 		return ""
 	}
@@ -376,9 +382,13 @@ func Grams(f *foods.Food, amount float64, unit nutrition.Unit) (float64, error) 
 	if ok {
 		return grams, nil
 	}
-	if unit == nutrition.Pieces {
+	switch unit {
+	case nutrition.Pieces:
 		return 0, connect.Errorf(connect.CodeFailedPrecondition,
 			"%s has no weight per piece, so pieces can't be weighed: set grams_per_piece on the food with UpdateFood, or give the amount in grams", f.Name)
+	case nutrition.Packages:
+		return 0, connect.Errorf(connect.CodeFailedPrecondition,
+			"%s has no package weight, so packages can't be weighed: set package_grams on the food with UpdateFood, or give the amount in grams", f.Name)
 	}
 	return 0, connect.Errorf(connect.CodeFailedPrecondition,
 		"%s has no density, so milliliters can't be weighed: set grams_per_milliliter on the food with UpdateFood, or give the amount in grams", f.Name)

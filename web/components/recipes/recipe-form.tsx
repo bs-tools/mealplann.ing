@@ -121,16 +121,21 @@ const ingredientUnit = (
 };
 
 /*
+ * YIELD_UNITS are the units of what a recipe makes. A recipe has no package
+ * size, so it can't make packages.
+ */
+const YIELD_UNITS = AMOUNT_UNITS.filter(
+  (option) => option.value !== AmountUnit.PACKAGES
+);
+
+/*
  * COMPONENT_UNITS are the units of a component's amount: servings of its
  * recipe, or what it makes, by weight, volume or pieces.
  */
 const COMPONENT_UNITS: { value: AmountUnit; label: string }[] = [
   { label: "servings", value: AmountUnit.UNSPECIFIED },
-  ...AMOUNT_UNITS,
+  ...YIELD_UNITS,
 ];
-
-// YIELD_UNITS are the units of what a recipe makes.
-const YIELD_UNITS = AMOUNT_UNITS;
 
 const ingredientInputs = (recipe: Recipe | undefined): IngredientInput[] => {
   if (recipe === undefined) {

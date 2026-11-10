@@ -152,6 +152,7 @@ func (f *Food) Nutrition() *nutrition.Food {
 		Per100Grams:        f.Per100Grams,
 		GramsPerPiece:      f.GramsPerPiece,
 		GramsPerMilliliter: f.GramsPerMilliliter,
+		PackageGrams:       f.PackageGrams,
 	}
 }
 

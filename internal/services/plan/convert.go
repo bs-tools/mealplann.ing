@@ -45,6 +45,7 @@ var unitsToProto = map[nutrition.Unit]foodsv1.AmountUnit{
 	nutrition.Grams:       foodsv1.AmountUnit_AMOUNT_UNIT_GRAMS,
 	nutrition.Milliliters: foodsv1.AmountUnit_AMOUNT_UNIT_MILLILITERS,
 	nutrition.Pieces:      foodsv1.AmountUnit_AMOUNT_UNIT_PIECES,
+	nutrition.Packages:    foodsv1.AmountUnit_AMOUNT_UNIT_PACKAGES,
 }
 
 // parseDate parses a plan's date, naming field in errors.

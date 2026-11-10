@@ -40,6 +40,7 @@ func init() {
 	}
 	add(unitWord{base: nutrition.Grams}, "g", "gr", "gram", "grams", "gramme", "grammes")
 	add(unitWord{base: nutrition.Milliliters}, "ml", "milliliter", "milliliters", "millilitre", "millilitres")
+	add(unitWord{base: nutrition.Packages}, "block", "blocks", "package", "packages", "pkg", "pack", "packs", "can", "cans", "tin", "tins")
 	add(unitWord{kitchen: nutrition.Kilograms}, "kg", "kilogram", "kilograms", "kilo", "kilos")
 	add(unitWord{kitchen: nutrition.Liters}, "l", "liter", "liters", "litre", "litres")
 	add(unitWord{kitchen: nutrition.Teaspoons}, "tsp", "tsps", "teaspoon", "teaspoons", "tsp.")

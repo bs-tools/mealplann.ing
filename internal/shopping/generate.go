@@ -111,11 +111,12 @@ type dayNeed struct {
 	// pieces or milliliters, to show the amount to buy in them.
 	inPieces      bool
 	inMilliliters bool
-	// unweighedPieces and unweighedMilliliters are the amounts that can't
-	// be weighed, as the food lacks grams_per_piece or
-	// grams_per_milliliter.
+	// unweighedPieces, unweighedMilliliters and unweighedPackages are the
+	// amounts that can't be weighed, as the food lacks grams_per_piece,
+	// grams_per_milliliter or package_grams.
 	unweighedPieces      float64
 	unweighedMilliliters float64
+	unweighedPackages    float64
 	// shortGrams is what the pantry lacks of grams, and pantryGrams what it
 	// has.
 	shortGrams  float64
@@ -196,6 +197,8 @@ func cover(in *Input) ([]pgtype.UUID, map[pgtype.UUID][]*dayNeed) {
 			d.inMilliliters = d.inMilliliters || n.Unit == nutrition.Milliliters
 		case n.Unit == nutrition.Pieces:
 			d.unweighedPieces += n.Amount
+		case n.Unit == nutrition.Packages:
+			d.unweighedPackages += n.Amount
 		default:
 			d.unweighedMilliliters += n.Amount
 		}
@@ -244,14 +247,15 @@ func coverFromPantry(days []*dayNeed, lots []*pantry.Item) {
 // itemOf returns the item to buy for some days' needs of a food, or nil if
 // the pantry covers them. topUp is whether they won't keep from the shop.
 func itemOf(f *foods.Food, days []*dayNeed, topUp bool) *Item {
-	var short, fromPantry, unweighedPieces, unweighedMilliliters float64
+	var short, fromPantry, unweighedPieces, unweighedMilliliters, unweighedPackages float64
 	var inPieces, inMilliliters bool
 	var neededBy time.Time
 	for _, d := range days {
 		fromPantry += d.pantryGrams
 		unweighedPieces += d.unweighedPieces
 		unweighedMilliliters += d.unweighedMilliliters
-		if d.shortGrams <= crumbGrams && d.unweighedPieces == 0 && d.unweighedMilliliters == 0 {
+		unweighedPackages += d.unweighedPackages
+		if d.shortGrams <= crumbGrams && d.unweighedPieces == 0 && d.unweighedMilliliters == 0 && d.unweighedPackages == 0 {
 			continue
 		}
 		short += d.shortGrams
@@ -288,6 +292,10 @@ func itemOf(f *foods.Food, days []*dayNeed, topUp bool) *Item {
 	if unweighedMilliliters > 0 {
 		parts = append(parts, formatMilliliters(unweighedMilliliters))
 		warnings = append(warnings, "Set the food's density to weigh the milliliters and count the pantry.")
+	}
+	if unweighedPackages > 0 {
+		parts = append(parts, formatCount(unweighedPackages, "package", "packages"))
+		warnings = append(warnings, "Set the food's package weight to weigh the packages and count the pantry.")
 	}
 	it.AmountText = strings.Join(parts, " + ")
 	if topUp {

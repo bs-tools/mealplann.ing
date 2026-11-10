@@ -32,6 +32,8 @@ func TestParseIngredient(t *testing.T) {
 		{"½ lemon", 0.5, nutrition.Pieces, nutrition.NoKitchenUnit, "lemon"},
 		{"Salt and pepper, to taste", 0, 0, nutrition.NoKitchenUnit, "Salt and pepper"},
 		{"1,5 l vegetable stock", 1500, nutrition.Milliliters, nutrition.Liters, "vegetable stock"},
+		{"1 block extra-firm tofu", 1, nutrition.Packages, nutrition.NoKitchenUnit, "extra-firm tofu"},
+		{"2 cans chickpeas, drained", 2, nutrition.Packages, nutrition.NoKitchenUnit, "chickpeas"},
 	}
 	for _, tt := range tests {
 		in, name := ParseIngredient(tt.line)

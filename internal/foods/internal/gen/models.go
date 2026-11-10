@@ -18,6 +18,7 @@ const (
 	AmountUnitGrams       AmountUnit = "grams"
 	AmountUnitMilliliters AmountUnit = "milliliters"
 	AmountUnitPieces      AmountUnit = "pieces"
+	AmountUnitPackages    AmountUnit = "packages"
 )
 
 func (e *AmountUnit) Scan(src interface{}) error {
@@ -59,7 +60,8 @@ func (e AmountUnit) Valid() bool {
 	switch e {
 	case AmountUnitGrams,
 		AmountUnitMilliliters,
-		AmountUnitPieces:
+		AmountUnitPieces,
+		AmountUnitPackages:
 		return true
 	}
 	return false

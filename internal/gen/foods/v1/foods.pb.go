@@ -296,6 +296,10 @@ const (
 	AmountUnit_AMOUNT_UNIT_MILLILITERS AmountUnit = 2
 	// Pieces, e.g. 2 onions or 3 cloves of garlic.
 	AmountUnit_AMOUNT_UNIT_PIECES AmountUnit = 3
+	// Packages, e.g. a block of tofu or a can of beans: the food's
+	// package_grams each. A food without package_grams can't be weighed in
+	// them.
+	AmountUnit_AMOUNT_UNIT_PACKAGES AmountUnit = 11
 	// The kitchen units below are converted to milliliters or grams, and a
 	// recipe's ingredients keep the one they're entered in, to show them as
 	// written, like 1 tablespoon of oil rather than 15 ml. Elsewhere they're
@@ -324,6 +328,7 @@ var (
 		1:  "AMOUNT_UNIT_GRAMS",
 		2:  "AMOUNT_UNIT_MILLILITERS",
 		3:  "AMOUNT_UNIT_PIECES",
+		11: "AMOUNT_UNIT_PACKAGES",
 		4:  "AMOUNT_UNIT_TEASPOONS",
 		5:  "AMOUNT_UNIT_TABLESPOONS",
 		6:  "AMOUNT_UNIT_CUPS",
@@ -337,6 +342,7 @@ var (
 		"AMOUNT_UNIT_GRAMS":       1,
 		"AMOUNT_UNIT_MILLILITERS": 2,
 		"AMOUNT_UNIT_PIECES":      3,
+		"AMOUNT_UNIT_PACKAGES":    11,
 		"AMOUNT_UNIT_TEASPOONS":   4,
 		"AMOUNT_UNIT_TABLESPOONS": 5,
 		"AMOUNT_UNIT_CUPS":        6,
@@ -3522,13 +3528,14 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x14STORE_SECTION_DRINKS\x10\b\x12\x1b\n" +
 	"\x17STORE_SECTION_HOUSEHOLD\x10\t\x12\x17\n" +
 	"\x13STORE_SECTION_OTHER\x10\n" +
-	"*\xa6\x02\n" +
+	"*\xc0\x02\n" +
 	"\n" +
 	"AmountUnit\x12\x1b\n" +
 	"\x17AMOUNT_UNIT_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11AMOUNT_UNIT_GRAMS\x10\x01\x12\x1b\n" +
 	"\x17AMOUNT_UNIT_MILLILITERS\x10\x02\x12\x16\n" +
-	"\x12AMOUNT_UNIT_PIECES\x10\x03\x12\x19\n" +
+	"\x12AMOUNT_UNIT_PIECES\x10\x03\x12\x18\n" +
+	"\x14AMOUNT_UNIT_PACKAGES\x10\v\x12\x19\n" +
 	"\x15AMOUNT_UNIT_TEASPOONS\x10\x04\x12\x1b\n" +
 	"\x17AMOUNT_UNIT_TABLESPOONS\x10\x05\x12\x14\n" +
 	"\x10AMOUNT_UNIT_CUPS\x10\x06\x12\x16\n" +
