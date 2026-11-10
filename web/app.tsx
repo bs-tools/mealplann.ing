@@ -19,6 +19,7 @@ import PlanTemplatesPage from "pages/plan-templates";
 import PrivacyPage from "pages/privacy";
 import RecipePage from "pages/recipe";
 import RecipeEditPage from "pages/recipe-edit";
+import RecipeImportPage from "pages/recipe-import";
 import RecipeTimelinePage from "pages/recipe-timeline";
 import RecipesPage from "pages/recipes";
 import SettingsPage from "pages/settings";
@@ -121,6 +122,7 @@ const App: React.FC = () => {
             <Route path="/pantry" element={<PantryPage />} />
             <Route path="/recipes" element={<RecipesPage />} />
             <Route path="/recipes/new" element={<RecipeEditPage />} />
+            <Route path="/recipes/import" element={<RecipeImportPage />} />
             <Route path="/recipes/:id" element={<RecipePage />} />
             <Route path="/recipes/:id/edit" element={<RecipeEditPage />} />
             <Route path="/recipes/:id/cook" element={<CookModePage />} />

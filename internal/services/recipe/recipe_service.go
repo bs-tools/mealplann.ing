@@ -16,6 +16,7 @@ import (
 	"connectrpc.com/connect/v2"
 	"github.com/bs-tools/mealplann.ing/internal/authn"
 	"github.com/bs-tools/mealplann.ing/internal/errreport"
+	"github.com/bs-tools/mealplann.ing/internal/foodmatch"
 	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
 	"github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1/recipesv1connect"
 	"github.com/bs-tools/mealplann.ing/internal/idempotency"
@@ -41,7 +42,7 @@ type Repository interface {
 	DeleteRecipe(ctx context.Context, householdID, id pgtype.UUID) error
 	ListRecipesByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*recipes.Recipe, error)
 	FindRecipesByName(ctx context.Context, householdID pgtype.UUID, name string, limit int32) ([]recipes.NameMatch, error)
-	MatchFoodNames(ctx context.Context, householdID pgtype.UUID, names []string) (map[string]recipes.FoodMatch, error)
+	ListFoodNames(ctx context.Context, householdID pgtype.UUID) ([]recipes.FoodName, error)
 }
 
 // Service implements the RecipeService.
@@ -72,7 +73,95 @@ func (s *Service) ImportRecipe(ctx context.Context, req *recipesv1.ImportRecipeR
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, "")
 	}
-	pageURL, err := recipeimport.CheckURL(req.GetUrl())
+	imported, err := s.readRecipe(ctx, req.GetUrl())
+	if err != nil {
+		return nil, err
+	}
+	r := imported.Recipe
+	r.HouseholdID = user.HouseholdID()
+	matcher, err := s.foodMatcher(ctx, user.HouseholdID())
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to match the ingredients to foods")
+	}
+	matched := 0
+	for i, in := range r.Ingredients {
+		if in.Unit == 0 {
+			continue
+		}
+		if f, ok := clearMatch(matcher.Match(imported.FoodNames[i], 2)); ok {
+			in.FoodID, in.FoodName = f.ID, f.Name
+			matched++
+		}
+	}
+	created, err := s.recipes.CreateRecipe(ctx, r)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to create recipe")
+	}
+	return recipesv1.ImportRecipeResponse_builder{Recipe: recipeToProto(created), MatchedIngredients: int32(matched)}.Build(), nil
+}
+
+func (s *Service) PreviewImport(ctx context.Context, req *recipesv1.PreviewImportRequest) (*recipesv1.PreviewImportResponse, error) {
+	user, ok := authn.GetUser(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+	}
+	imported, err := s.readRecipe(ctx, req.GetUrl())
+	if err != nil {
+		return nil, err
+	}
+	matcher, err := s.foodMatcher(ctx, user.HouseholdID())
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to match the ingredients to foods")
+	}
+	ingredients := make([]*recipesv1.ImportedIngredient, 0, len(imported.FoodNames))
+	for _, name := range imported.FoodNames {
+		var matches []*recipesv1.FoodMatch
+		for _, c := range matcher.Match(name, maxImportMatches) {
+			matches = append(matches, recipesv1.FoodMatch_builder{
+				FoodId:   store.UUIDToString(c.Value.ID),
+				FoodName: c.Name,
+				Score:    math.Round(c.Score*100) / 100,
+			}.Build())
+		}
+		ingredients = append(ingredients, recipesv1.ImportedIngredient_builder{Name: name, Matches: matches}.Build())
+	}
+	return recipesv1.PreviewImportResponse_builder{
+		Recipe:      recipeToProto(imported.Recipe),
+		Ingredients: ingredients,
+	}.Build(), nil
+}
+
+const (
+	// maxImportMatches is how many foods are offered for an imported
+	// ingredient.
+	maxImportMatches = 5
+	// minClearScore is the least score of a food matched to an imported
+	// ingredient without review, and minClearLead how far ahead of the
+	// next it must be, so "Tofu, firm" isn't taken for "silken tofu".
+	minClearScore = 0.85
+	minClearLead  = 0.1
+)
+
+// clearMatch returns the best of an ingredient's matches if it's clearly
+// the food: the only one with the same words, or alike enough and well
+// ahead of the next.
+func clearMatch(matches []foodmatch.Candidate[recipes.FoodName]) (recipes.FoodName, bool) {
+	if len(matches) == 0 || matches[0].Score < minClearScore {
+		return recipes.FoodName{}, false
+	}
+	if len(matches) > 1 {
+		best, next := matches[0].Score, matches[1].Score
+		sameWords := best >= 1 && next < 1
+		if !sameWords && best-next < minClearLead {
+			return recipes.FoodName{}, false
+		}
+	}
+	return matches[0].Value, true
+}
+
+// readRecipe fetches a page and reads its recipe, failing with what to do.
+func (s *Service) readRecipe(ctx context.Context, rawURL string) (*recipeimport.Imported, error) {
+	pageURL, err := recipeimport.CheckURL(rawURL)
 	if err != nil {
 		return nil, connect.Errorf(connect.CodeInvalidArgument, "url is invalid: %v", err)
 	}
@@ -89,54 +178,20 @@ func (s *Service) ImportRecipe(ctx context.Context, req *recipesv1.ImportRecipeR
 		return nil, connect.Errorf(connect.CodeFailedPrecondition,
 			"%v, so it can't be imported: enter the recipe by hand, or try the recipe's own page", err)
 	}
-	r := imported.Recipe
-	r.HouseholdID = user.HouseholdID()
-	matched, err := s.matchFoods(ctx, imported)
-	if err != nil {
-		return nil, s.toConnectError(ctx, err, "failed to match the ingredients to foods")
-	}
-	created, err := s.recipes.CreateRecipe(ctx, r)
-	if err != nil {
-		return nil, s.toConnectError(ctx, err, "failed to create recipe")
-	}
-	return recipesv1.ImportRecipeResponse_builder{Recipe: recipeToProto(created), MatchedIngredients: int32(matched)}.Build(), nil
+	return imported, nil
 }
 
-// matchFoods matches an imported recipe's ingredients with an amount to
-// the household's foods named like them, ignoring case, also in the
-// singular, like "onion" for "onions", returning how many it matched.
-func (s *Service) matchFoods(ctx context.Context, imported *recipeimport.Imported) (int, error) {
-	r := imported.Recipe
-	candidates := make([][]string, len(r.Ingredients))
-	var names []string
-	for i, name := range imported.FoodNames {
-		if name == "" || r.Ingredients[i].Unit == 0 {
-			continue
-		}
-		lower := strings.ToLower(name)
-		candidates[i] = []string{lower}
-		for _, suffix := range []string{"es", "s"} {
-			if singular, ok := strings.CutSuffix(lower, suffix); ok && singular != "" {
-				candidates[i] = append(candidates[i], singular)
-			}
-		}
-		names = append(names, candidates[i]...)
-	}
-	matches, err := s.recipes.MatchFoodNames(ctx, r.HouseholdID, names)
+// foodMatcher returns a matcher of the household's foods.
+func (s *Service) foodMatcher(ctx context.Context, householdID pgtype.UUID) (*foodmatch.Matcher[recipes.FoodName], error) {
+	foods, err := s.recipes.ListFoodNames(ctx, householdID)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	matched := 0
-	for i, in := range r.Ingredients {
-		for _, name := range candidates[i] {
-			if m, ok := matches[name]; ok {
-				in.FoodID, in.FoodName = m.ID, m.Name
-				matched++
-				break
-			}
-		}
+	names := make([]string, 0, len(foods))
+	for _, f := range foods {
+		names = append(names, f.Name)
 	}
-	return matched, nil
+	return foodmatch.New(names, foods), nil
 }
 
 // checkComponents checks that a recipe's components don't use it, as
