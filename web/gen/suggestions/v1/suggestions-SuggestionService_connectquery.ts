@@ -90,3 +90,22 @@ export const suggestRecipes = SuggestionService.method.suggestRecipes;
  * @generated from rpc suggestions.v1.SuggestionService.SuggestPlan
  */
 export const suggestPlan = SuggestionService.method.suggestPlan;
+
+/**
+ * Suggest changes to a person's planned day, or one of its eating times,
+ * that fix its warnings (see PlanService.GetWeek), or bring it closer
+ * to the rules and targets: leaving a portion out, resizing it,
+ * replacing it with one of the household's recipes, or adding a recipe
+ * or a food in the pantry, like "Replace Wraps with Side salad" for a
+ * day over its energy maximum. Each change is tried against the same
+ * rules and targets GetWeek checks, and the best ones are returned, the
+ * fewest warnings left first, with the warnings they fix and leave.
+ * Apply one with PlanService: DeletePortion, UpdatePortion, or
+ * CreatePortion, with new_cook for a recipe. Shares of shared cooks
+ * that are resized or removed leave servings over, to plan elsewhere or
+ * take off the cook. Staples aren't changed: skip them with SkipStaple.
+ * Nothing is changed. Returns no fixes if nothing helps.
+ *
+ * @generated from rpc suggestions.v1.SuggestionService.SuggestFixes
+ */
+export const suggestFixes = SuggestionService.method.suggestFixes;

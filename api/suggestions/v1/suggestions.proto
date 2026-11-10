@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package suggestions.v1;
 
+import "foods/v1/foods.proto";
 import "people/v1/people.proto";
 import "plans/v1/plans.proto";
 
@@ -117,6 +118,20 @@ service SuggestionService {
   // INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
   // nobody eats from the meals, or no recipe meets the criteria.
   rpc SuggestPlan(SuggestPlanRequest) returns (SuggestPlanResponse);
+  // Suggest changes to a person's planned day, or one of its eating times,
+  // that fix its warnings (see PlanService.GetWeek), or bring it closer
+  // to the rules and targets: leaving a portion out, resizing it,
+  // replacing it with one of the household's recipes, or adding a recipe
+  // or a food in the pantry, like "Replace Wraps with Side salad" for a
+  // day over its energy maximum. Each change is tried against the same
+  // rules and targets GetWeek checks, and the best ones are returned, the
+  // fewest warnings left first, with the warnings they fix and leave.
+  // Apply one with PlanService: DeletePortion, UpdatePortion, or
+  // CreatePortion, with new_cook for a recipe. Shares of shared cooks
+  // that are resized or removed leave servings over, to plan elsewhere or
+  // take off the cook. Staples aren't changed: skip them with SkipStaple.
+  // Nothing is changed. Returns no fixes if nothing helps.
+  rpc SuggestFixes(SuggestFixesRequest) returns (SuggestFixesResponse);
 }
 
 // An eating time of one person, to suggest a recipe for, like a small
@@ -423,4 +438,73 @@ message SuggestPlanResponse {
   uint64 seed = 4;
   // How many recipes meet the criteria.
   int32 recipe_count = 5;
+}
+
+message SuggestFixesRequest {
+  // The ID of the person. Required.
+  string person_id = 1;
+  // The date (YYYY-MM-DD). Required.
+  string date = 2;
+  // The eating time to change, empty for any of the day's: the day's
+  // targets count either way.
+  string eating_time_id = 3;
+}
+
+message SuggestFixesResponse {
+  // The changes, best first: those leaving the fewest warnings, then
+  // closest to the rules and targets, then the smallest.
+  repeated PlanFix fixes = 1;
+  // The warnings of the eating time, or of the day's eating times, and the
+  // day's targets, as planned.
+  repeated plans.v1.Warning warnings = 2;
+}
+
+// What a fix changes.
+enum PlanFixKind {
+  PLAN_FIX_KIND_UNSPECIFIED = 0;
+  // Leave portion_id out: delete it with PlanService.DeletePortion.
+  PLAN_FIX_KIND_REMOVE = 1;
+  // Change portion_id's servings, of a share of a cook, or amount and
+  // unit, of a food, with PlanService.UpdatePortion.
+  PLAN_FIX_KIND_RESIZE = 2;
+  // Replace portion_id with servings of recipe_id, or an amount of
+  // food_id: delete it, and create the new portion at its eating time,
+  // with new_cook for a recipe.
+  PLAN_FIX_KIND_REPLACE = 3;
+  // Add servings of recipe_id, with new_cook, or an amount of food_id, at
+  // eating_time_id, with PlanService.CreatePortion.
+  PLAN_FIX_KIND_ADD = 4;
+}
+
+// A change to a person's planned day.
+message PlanFix {
+  // What to change.
+  PlanFixKind kind = 1;
+  // What it does, for people, e.g. "Replace Wraps with Side salad (1
+  // serving)".
+  string description = 2;
+  // The portion it removes, resizes or replaces.
+  string portion_id = 3;
+  // The eating time it changes or adds to.
+  string eating_time_id = 4;
+  // The recipe to replace the portion with, or to add.
+  string recipe_id = 5;
+  // The food to replace the portion with, or to add.
+  string food_id = 6;
+  // The new servings, of a share of a cook or recipe_id.
+  double servings = 7;
+  // The new amount, of a food portion or food_id, in unit.
+  double amount = 8;
+  foods.v1.AmountUnit unit = 9;
+  // The warnings it fixes, by message, as planned.
+  repeated string fixed_warnings = 10;
+  // The warnings left after it.
+  repeated plans.v1.Warning warnings = 11;
+  // The day's energy after it, in kcal, and as planned.
+  double energy_kcal = 12;
+  double planned_energy_kcal = 13;
+  // The cook to delete with PlanService.DeleteCook after removing or
+  // replacing portion_id, as the portion is all that's planned of it, and
+  // it isn't cooked yet: else its servings are left over.
+  string delete_cook_id = 14;
 }

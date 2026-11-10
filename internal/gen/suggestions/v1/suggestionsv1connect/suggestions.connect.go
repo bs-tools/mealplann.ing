@@ -30,6 +30,9 @@ const (
 	// SuggestionServiceSuggestPlanProcedure is the procedure name of the SuggestionService's
 	// SuggestPlan RPC.
 	SuggestionServiceSuggestPlanProcedure = "/suggestions.v1.SuggestionService/SuggestPlan"
+	// SuggestionServiceSuggestFixesProcedure is the procedure name of the SuggestionService's
+	// SuggestFixes RPC.
+	SuggestionServiceSuggestFixesProcedure = "/suggestions.v1.SuggestionService/SuggestFixes"
 )
 
 var (
@@ -45,6 +48,13 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestPlan"),
 			Procedure:  SuggestionServiceSuggestPlanProcedure,
+		}
+	})
+	suggestionServiceSuggestFixesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestFixes"),
+			Procedure:  SuggestionServiceSuggestFixesProcedure,
 		}
 	})
 )
@@ -128,6 +138,20 @@ type SuggestionServiceClient interface {
 	// INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
 	// nobody eats from the meals, or no recipe meets the criteria.
 	SuggestPlan(context.Context, *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error)
+	// Suggest changes to a person's planned day, or one of its eating times,
+	// that fix its warnings (see PlanService.GetWeek), or bring it closer
+	// to the rules and targets: leaving a portion out, resizing it,
+	// replacing it with one of the household's recipes, or adding a recipe
+	// or a food in the pantry, like "Replace Wraps with Side salad" for a
+	// day over its energy maximum. Each change is tried against the same
+	// rules and targets GetWeek checks, and the best ones are returned, the
+	// fewest warnings left first, with the warnings they fix and leave.
+	// Apply one with PlanService: DeletePortion, UpdatePortion, or
+	// CreatePortion, with new_cook for a recipe. Shares of shared cooks
+	// that are resized or removed leave servings over, to plan elsewhere or
+	// take off the cook. Staples aren't changed: skip them with SkipStaple.
+	// Nothing is changed. Returns no fixes if nothing helps.
+	SuggestFixes(context.Context, *v1.SuggestFixesRequest) (*v1.SuggestFixesResponse, error)
 }
 
 // NewSuggestionServiceClient constructs a client for the suggestions.v1.SuggestionService service.
@@ -215,6 +239,20 @@ type SuggestionServiceHandler interface {
 	// INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
 	// nobody eats from the meals, or no recipe meets the criteria.
 	SuggestPlan(context.Context, *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error)
+	// Suggest changes to a person's planned day, or one of its eating times,
+	// that fix its warnings (see PlanService.GetWeek), or bring it closer
+	// to the rules and targets: leaving a portion out, resizing it,
+	// replacing it with one of the household's recipes, or adding a recipe
+	// or a food in the pantry, like "Replace Wraps with Side salad" for a
+	// day over its energy maximum. Each change is tried against the same
+	// rules and targets GetWeek checks, and the best ones are returned, the
+	// fewest warnings left first, with the warnings they fix and leave.
+	// Apply one with PlanService: DeletePortion, UpdatePortion, or
+	// CreatePortion, with new_cook for a recipe. Shares of shared cooks
+	// that are resized or removed leave servings over, to plan elsewhere or
+	// take off the cook. Staples aren't changed: skip them with SkipStaple.
+	// Nothing is changed. Returns no fixes if nothing helps.
+	SuggestFixes(context.Context, *v1.SuggestFixesRequest) (*v1.SuggestFixesResponse, error)
 }
 
 // RegisterSuggestionServiceHandler registers svc as the suggestions.v1.SuggestionService
@@ -224,6 +262,7 @@ func RegisterSuggestionServiceHandler(server *connect.Server, svc SuggestionServ
 	server.Register(
 		connect.Method{Spec: suggestionServiceSuggestRecipesSpec(), Handler: adapter.suggestRecipes},
 		connect.Method{Spec: suggestionServiceSuggestPlanSpec(), Handler: adapter.suggestPlan},
+		connect.Method{Spec: suggestionServiceSuggestFixesSpec(), Handler: adapter.suggestFixes},
 	)
 }
 
@@ -236,6 +275,10 @@ func (UnimplementedSuggestionServiceHandler) SuggestRecipes(context.Context, *v1
 
 func (UnimplementedSuggestionServiceHandler) SuggestPlan(context.Context, *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestPlan is not implemented")
+}
+
+func (UnimplementedSuggestionServiceHandler) SuggestFixes(context.Context, *v1.SuggestFixesRequest) (*v1.SuggestFixesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestFixes is not implemented")
 }
 
 type suggestionServiceClient struct {
@@ -253,6 +296,14 @@ func (c *suggestionServiceClient) SuggestRecipes(ctx context.Context, req *v1.Su
 func (c *suggestionServiceClient) SuggestPlan(ctx context.Context, req *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error) {
 	var res v1.SuggestPlanResponse
 	if err := c.client.CallUnary(ctx, suggestionServiceSuggestPlanSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *suggestionServiceClient) SuggestFixes(ctx context.Context, req *v1.SuggestFixesRequest) (*v1.SuggestFixesResponse, error) {
+	var res v1.SuggestFixesResponse
+	if err := c.client.CallUnary(ctx, suggestionServiceSuggestFixesSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -278,6 +329,18 @@ func (h suggestionServiceHandler) suggestPlan(ctx context.Context, _ connect.Spe
 		return err
 	}
 	res, err := h.svc.SuggestPlan(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h suggestionServiceHandler) suggestFixes(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SuggestFixesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SuggestFixes(ctx, &req)
 	if err != nil {
 		return err
 	}

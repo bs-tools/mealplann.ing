@@ -9,6 +9,7 @@ import {
   PlusIcon,
   SparklesIcon,
   TrashIcon,
+  WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import type { Nutrients } from "gen/foods/v1/foods_pb";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
@@ -279,6 +280,8 @@ interface EatingTimeBlockProps {
   onUnskip: (staple: Staple) => void;
   // Marks the person eating out at it, or eating at home again.
   onEatingOut: (eatingOut: boolean) => void;
+  // Suggests changes that fix its warnings.
+  onFix: () => void;
 }
 
 /**
@@ -297,6 +300,7 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
   skipped,
   onUnskip,
   onEatingOut,
+  onFix,
 }) => {
   const et = planned.eatingTime;
   const main = et?.kind === EatingTimeKind.MAIN;
@@ -462,20 +466,48 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
           <WarningList warnings={planned.warnings} />
         </div>
       )}
+      {warned && !empty && <FixButton disabled={disabled} onClick={onFix} />}
     </li>
   );
 };
 
+interface FixButtonProps {
+  disabled: boolean;
+  onClick: () => void;
+}
+
+// FixButton opens the changes suggested to fix warnings.
+const FixButton: React.FC<FixButtonProps> = ({ disabled, onClick }) => (
+  <button
+    type="button"
+    className="mt-1 inline-flex items-center gap-0.5 rounded px-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 print:hidden"
+    disabled={disabled}
+    title="Suggest changes that fix the warnings"
+    onClick={onClick}
+  >
+    <WrenchScrewdriverIcon className="size-3.5" aria-hidden="true" />
+    Suggest a fix
+  </button>
+);
+
 interface DayTotalsProps {
   day: PersonDay;
   person: Person | undefined;
+  disabled: boolean;
+  // Suggests changes to the day that fix its warnings.
+  onFix: () => void;
 }
 
 /**
  * DayTotals shows a person's day against their daily targets, compactly:
  * each target with how much is planned, flagged when it's off.
  */
-export const DayTotals: React.FC<DayTotalsProps> = ({ day, person }) => {
+export const DayTotals: React.FC<DayTotalsProps> = ({
+  day,
+  person,
+  disabled,
+  onFix,
+}) => {
   const targets = person?.dailyTargets ?? [];
   const flagged = new Set(
     day.warnings
@@ -533,6 +565,10 @@ export const DayTotals: React.FC<DayTotalsProps> = ({ day, person }) => {
         </ul>
       )}
       <WarningList warnings={day.warnings} />
+      {day.grams > 0 &&
+        day.warnings.some(
+          (warning) => warning.severity === Severity.WARNING
+        ) && <FixButton disabled={disabled} onClick={onFix} />}
     </div>
   );
 };

@@ -237,6 +237,17 @@ const PEOPLE_COLUMNS = [
   "lg:grid-cols-4",
 ];
 
+// FixTarget is what to suggest fixes for: a person's day or eating time.
+export interface FixTarget {
+  personId: string;
+  date: string;
+  // The eating time, "" for the whole day.
+  eatingTimeId: string;
+  title: string;
+  // The portions that can be changed.
+  portions: PlannedPortion[];
+}
+
 interface DayCardProps {
   day: PlanDay;
   // The cooks cooked on the day.
@@ -266,6 +277,11 @@ interface DayCardProps {
   onUnskip: (staple: Staple, date: string) => void;
   // Marks a person eating out at an eating time, or eating at home again.
   onEatingOut: (slot: Slot, eatingOut: boolean) => void;
+  /*
+   * Suggests changes that fix the warnings of a person's day, or of one of
+   * its eating times, with eatingTimeId "" for the day.
+   */
+  onFix: (fix: FixTarget) => void;
   onCookDone: (planned: PlannedCook, done: boolean) => void;
   onCookDelete: (planned: PlannedCook) => void;
 }
@@ -291,6 +307,7 @@ const DayCard: React.FC<DayCardProps> = ({
   staples,
   onUnskip,
   onEatingOut,
+  onFix,
   costs,
   onCookDone,
   onCookDelete,
@@ -417,12 +434,36 @@ const DayCard: React.FC<DayCardProps> = ({
                       onEatingOut={(eatingOut) => {
                         onEatingOut(slot, eatingOut);
                       }}
+                      onFix={() => {
+                        onFix({
+                          date: day.date,
+                          eatingTimeId: slot.eatingTimeId,
+                          personId: personDay.personId,
+                          portions: planned.portions,
+                          title: `${personDay.personName}'s ${planned.eatingTime?.name ?? "meal"}`,
+                        });
+                      }}
                     />
                   );
                 })}
               </ol>
             )}
-            <DayTotals day={personDay} person={person} />
+            <DayTotals
+              day={personDay}
+              person={person}
+              disabled={disabled}
+              onFix={() => {
+                onFix({
+                  date: day.date,
+                  eatingTimeId: "",
+                  personId: personDay.personId,
+                  portions: personDay.eatingTimes.flatMap(
+                    (planned) => planned.portions
+                  ),
+                  title: `${personDay.personName}'s day`,
+                });
+              }}
+            />
           </div>
         );
       })}

@@ -1,6 +1,8 @@
 import Loading from "@components/loading";
+import type { FixTarget } from "@components/plan/day-card";
 import DayCard from "@components/plan/day-card";
 import EatingTimeSuggestionsDialog from "@components/plan/eating-time-suggestions-dialog";
+import FixesDialog from "@components/plan/fixes-dialog";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import type { Slot } from "@components/plan/portion-dialog";
 import PortionDialog from "@components/plan/portion-dialog";
@@ -190,6 +192,8 @@ const PlanPage: React.FC = () => {
   const remove = useMutation(deletePortion, { onSuccess });
   const skip = useMutation(skipStaple, { onSuccess });
   const unskip = useMutation(unskipStaple, { onSuccess });
+  // The day or eating time to suggest fixes for, if any.
+  const [fixing, setFixing] = useState<FixTarget | undefined>(undefined);
   // Eating out changes what Plan for me suggests too.
   const eatOut = useMutation(setEatingOut, {
     onSuccess: async () => {
@@ -366,6 +370,7 @@ const PlanPage: React.FC = () => {
             onUnskip={(staple, date) => {
               unskip.mutate({ date, id: staple.id });
             }}
+            onFix={setFixing}
             onEatingOut={(slot, eatingOut) => {
               eatOut.mutate({
                 date: slot.date,
@@ -531,6 +536,18 @@ const PlanPage: React.FC = () => {
           ]}
           onClose={() => {
             setEditing(null);
+          }}
+        />
+      )}
+      {fixing !== undefined && (
+        <FixesDialog
+          personId={fixing.personId}
+          date={fixing.date}
+          eatingTimeId={fixing.eatingTimeId}
+          title={fixing.title}
+          portions={fixing.portions}
+          onClose={() => {
+            setFixing(undefined);
           }}
         />
       )}
