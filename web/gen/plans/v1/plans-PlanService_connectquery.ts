@@ -110,8 +110,10 @@ export const deleteCook = PlanService.method.deleteCook;
  * Thursday's curry. The supplier must be a cook of the component's
  * recipe. The cook that supplied it before is deleted if nothing uses
  * it any more: nobody eats it, it supplies no other cook, and it isn't
- * done. The supplier's servings are raised to make enough for the cook
- * too, if they'd be too few.
+ * done. A supplier cooked before the cook with enough frozen servings
+ * left supplies it from the freezer (see CookSupply.from_freezer);
+ * otherwise its servings are raised to make enough for the cook too, if
+ * they'd be too few.
  *
  * @generated from rpc plans.v1.PlanService.SetCookSupplier
  */

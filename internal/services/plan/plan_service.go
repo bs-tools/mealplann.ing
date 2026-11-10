@@ -218,10 +218,11 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 
 // leftServings returns a cook's servings in the fridge not planned yet:
 // not frozen, nor in portions eaten from the fridge, within the recipe's
-// fridge days, nor supplying other cooks. Portions after the fridge days
-// come from the frozen servings.
+// fridge days, nor supplying other cooks from the fridge. Portions after
+// the fridge days, and supplies from the freezer, come from the frozen
+// servings: they're its late servings.
 func leftServings(c *plans.Cook) float64 {
-	return c.Servings - c.FrozenServings - (c.AssignedServings - c.LateServings) - c.SuppliedServings
+	return c.Servings - c.FrozenServings - (c.AssignedServings + c.SuppliedServings - c.LateServings)
 }
 
 func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*plansv1.PlanMealResponse, error) {
@@ -309,7 +310,7 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 		})
 	}
 	// The cooks of the recipe's components are planned with it.
-	cooks, createdPortions, err := s.plans.CreateCooksWithPortions(ctx, withSuppliers([]*plans.CookWithPortions{{
+	toCreate, err := s.planSuppliers(ctx, user.HouseholdID(), []*plans.CookWithPortions{{
 		Cook: &plans.Cook{
 			HouseholdID: user.HouseholdID(),
 			RecipeID:    recipe.ID,
@@ -319,7 +320,11 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 			Notes:       notes,
 		},
 		Portions: portions,
-	}}, d.recipes))
+	}}, d.recipes)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to read the freezer", "")
+	}
+	cooks, createdPortions, err := s.plans.CreateCooksWithPortions(ctx, toCreate)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to plan meal", recipeNotFound)
 	}
@@ -495,7 +500,10 @@ func (s *Service) CreateCook(ctx context.Context, req *plansv1.CreateCookRequest
 	}
 	toCreate := []*plans.CookWithPortions{{Cook: c}}
 	if !req.GetFromStock() {
-		toCreate = withSuppliers(toCreate, map[pgtype.UUID]*recipes.Recipe{list[0].ID: list[0]})
+		toCreate, err = s.planSuppliers(ctx, c.HouseholdID, toCreate, map[pgtype.UUID]*recipes.Recipe{list[0].ID: list[0]})
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to read the freezer", "")
+		}
 	}
 	cooks, _, err := s.plans.CreateCooksWithPortions(ctx, toCreate)
 	if err != nil {
@@ -899,8 +907,11 @@ func (s *Service) createPortionWithCook(ctx context.Context, householdID pgtype.
 	p.HouseholdID = householdID
 	// It's one person's cook, not a shared meal's.
 	c := &plans.Cook{HouseholdID: householdID, RecipeID: recipeID, Date: p.Date, Servings: servings, Meal: people.MealNone}
-	toCreate := withSuppliers([]*plans.CookWithPortions{{Cook: c, Portions: []*plans.Portion{p}}},
+	toCreate, err := s.planSuppliers(ctx, householdID, []*plans.CookWithPortions{{Cook: c, Portions: []*plans.Portion{p}}},
 		map[pgtype.UUID]*recipes.Recipe{recipeID: list[0]})
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to read the freezer", "")
+	}
 	cooks, portions, err := s.plans.CreateCooksWithPortions(ctx, toCreate)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to create the cook and portion", "")

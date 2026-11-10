@@ -512,10 +512,11 @@ type Cook_builder struct {
 	// ListFrozenLeftovers), to plan later. 0 if none.
 	FrozenServings float64
 	// The cooks making its recipe's components, e.g. the pot of chickpeas
-	// for a chili. Creating a cook of a recipe with components also creates
-	// a cook of each, on the same date, for the servings it needs, unless
-	// the components are made in it: change the supplier with
-	// SetCookSupplier.
+	// for a chili. Creating a cook of a recipe with components also plans
+	// each: from the freezer, if an earlier cook of it has enough frozen
+	// servings left that keep until then, by the oldest first (see
+	// ListFrozenLeftovers), or else as a new cook of it, on the same date,
+	// for the servings it needs. Change the supplier with SetCookSupplier.
 	Supplies []*CookSupply
 	// The cooks it makes a component of.
 	Supplying []*CookSupply
@@ -559,6 +560,7 @@ type CookSupply struct {
 	xxx_hidden_SupplierRecipeName string                 `protobuf:"bytes,6,opt,name=supplier_recipe_name,json=supplierRecipeName,proto3"`
 	xxx_hidden_SupplierDate       string                 `protobuf:"bytes,7,opt,name=supplier_date,json=supplierDate,proto3"`
 	xxx_hidden_Servings           float64                `protobuf:"fixed64,8,opt,name=servings,proto3"`
+	xxx_hidden_FromFreezer        bool                   `protobuf:"varint,9,opt,name=from_freezer,json=fromFreezer,proto3"`
 	unknownFields                 protoimpl.UnknownFields
 	sizeCache                     protoimpl.SizeCache
 }
@@ -644,6 +646,13 @@ func (x *CookSupply) GetServings() float64 {
 	return 0
 }
 
+func (x *CookSupply) GetFromFreezer() bool {
+	if x != nil {
+		return x.xxx_hidden_FromFreezer
+	}
+	return false
+}
+
 func (x *CookSupply) SetConsumerCookId(v string) {
 	x.xxx_hidden_ConsumerCookId = v
 }
@@ -676,6 +685,10 @@ func (x *CookSupply) SetServings(v float64) {
 	x.xxx_hidden_Servings = v
 }
 
+func (x *CookSupply) SetFromFreezer(v bool) {
+	x.xxx_hidden_FromFreezer = v
+}
+
 type CookSupply_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -696,6 +709,10 @@ type CookSupply_builder struct {
 	// The servings of the component the consumer uses, from its servings
 	// and its recipe's amount of the component.
 	Servings float64
+	// Whether the supplier supplies it from its frozen servings, like beans
+	// cooked weeks ago: they count as taken out of the freezer, and GetWeek
+	// has a prep task to thaw them the day before.
+	FromFreezer bool
 }
 
 func (b0 CookSupply_builder) Build() *CookSupply {
@@ -710,6 +727,7 @@ func (b0 CookSupply_builder) Build() *CookSupply {
 	x.xxx_hidden_SupplierRecipeName = b.SupplierRecipeName
 	x.xxx_hidden_SupplierDate = b.SupplierDate
 	x.xxx_hidden_Servings = b.Servings
+	x.xxx_hidden_FromFreezer = b.FromFreezer
 	return m0
 }
 
@@ -7150,7 +7168,7 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x0ffrozen_servings\x18\v \x01(\x01R\x0efrozenServings\x128\n" +
 	"\bsupplies\x18\f \x03(\v2\x14.plans.v1.CookSupplyB\x06\xaa\x9f\x19\x02\b\x01R\bsupplies\x12:\n" +
 	"\tsupplying\x18\r \x03(\v2\x14.plans.v1.CookSupplyB\x06\xaa\x9f\x19\x02\b\x01R\tsupplying\x12*\n" +
-	"\x11off_plan_servings\x18\x0e \x01(\x01R\x0foffPlanServings\"\xda\x02\n" +
+	"\x11off_plan_servings\x18\x0e \x01(\x01R\x0foffPlanServings\"\xfd\x02\n" +
 	"\n" +
 	"CookSupply\x12(\n" +
 	"\x10consumer_cook_id\x18\x01 \x01(\tR\x0econsumerCookId\x120\n" +
@@ -7160,7 +7178,8 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x10supplier_cook_id\x18\x05 \x01(\tR\x0esupplierCookId\x120\n" +
 	"\x14supplier_recipe_name\x18\x06 \x01(\tR\x12supplierRecipeName\x12#\n" +
 	"\rsupplier_date\x18\a \x01(\tR\fsupplierDate\x12\x1a\n" +
-	"\bservings\x18\b \x01(\x01R\bservings\"@\n" +
+	"\bservings\x18\b \x01(\x01R\bservings\x12!\n" +
+	"\ffrom_freezer\x18\t \x01(\bR\vfromFreezer\"@\n" +
 	"\tCookShare\x12\x17\n" +
 	"\acook_id\x18\x01 \x01(\tR\x06cookId\x12\x1a\n" +
 	"\bservings\x18\x02 \x01(\x01R\bservings\"I\n" +

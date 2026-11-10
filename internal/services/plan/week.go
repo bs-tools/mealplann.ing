@@ -2,8 +2,10 @@ package plan
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -428,7 +430,8 @@ func (d *planData) days(from, to time.Time) []*plansv1.PlanDay {
 
 // prepTasks returns what to start on a date for the cooks of the plan
 // read, by their dates: those whose recipes start prep_ahead_days before
-// they're cooked, and aren't cooked yet.
+// they're cooked, and aren't cooked yet, then the components to take out
+// of the freezer the day before the cooks they supply.
 func (d *planData) prepTasks(date time.Time) []*plansv1.PrepTask {
 	var tasks []*plansv1.PrepTask
 	for _, c := range d.plan.Cooks {
@@ -453,6 +456,24 @@ func (d *planData) prepTasks(date time.Time) []*plansv1.PrepTask {
 			Note:           note,
 			ForRecipeNames: forNames,
 		}.Build())
+	}
+	// Components from the freezer are thawed the day before.
+	for _, c := range d.plan.Cooks {
+		if c.Done || !c.Date.AddDate(0, 0, -1).Equal(date) {
+			continue
+		}
+		for _, supply := range c.Supplies {
+			if !supply.FromFreezer {
+				continue
+			}
+			tasks = append(tasks, plansv1.PrepTask_builder{
+				CookId:         store.UUIDToString(c.ID),
+				RecipeName:     supply.SupplierRecipeName,
+				CookDate:       store.FormatDate(c.Date),
+				Note:           fmt.Sprintf("Take the %s out of the freezer to thaw", strings.ToLower(supply.SupplierRecipeName)),
+				ForRecipeNames: []string{c.RecipeName},
+			}.Build())
+		}
 	}
 	return tasks
 }

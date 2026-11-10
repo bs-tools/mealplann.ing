@@ -130,12 +130,13 @@ func (q *Queries) CreateCookPortions(ctx context.Context, arg *CreateCookPortion
 }
 
 const createCookSupplies = `-- name: CreateCookSupplies :exec
-insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id)
+insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id, from_freezer)
 select
   $1,
   ($2::uuid[])[i],
   ($3::uuid[])[i],
-  ($4::uuid[])[i]
+  ($4::uuid[])[i],
+  ($5::boolean[])[i]
 from generate_subscripts($2::uuid[], 1) as i
 `
 
@@ -144,6 +145,7 @@ type CreateCookSuppliesParams struct {
 	ConsumerCookIds    []pgtype.UUID
 	ComponentRecipeIds []pgtype.UUID
 	SupplierCookIds    []pgtype.UUID
+	FromFreezer        []bool
 }
 
 // Links cooks to the cooks supplying their components, given as arrays.
@@ -153,6 +155,7 @@ func (q *Queries) CreateCookSupplies(ctx context.Context, arg *CreateCookSupplie
 		arg.ConsumerCookIds,
 		arg.ComponentRecipeIds,
 		arg.SupplierCookIds,
+		arg.FromFreezer,
 	)
 	return err
 }
@@ -398,6 +401,7 @@ select
   s.consumer_cook_id,
   s.component_recipe_id,
   s.supplier_cook_id,
+  s.from_freezer,
   cc.date as consumer_date,
   cr.name as consumer_recipe_name,
   sc.date as supplier_date,
@@ -432,6 +436,7 @@ type ListCookSuppliesRow struct {
 	ConsumerCookID     pgtype.UUID
 	ComponentRecipeID  pgtype.UUID
 	SupplierCookID     pgtype.UUID
+	FromFreezer        bool
 	ConsumerDate       pgtype.Date
 	ConsumerRecipeName string
 	SupplierDate       pgtype.Date
@@ -460,6 +465,7 @@ func (q *Queries) ListCookSupplies(ctx context.Context, arg *ListCookSuppliesPar
 			&i.ConsumerCookID,
 			&i.ComponentRecipeID,
 			&i.SupplierCookID,
+			&i.FromFreezer,
 			&i.ConsumerDate,
 			&i.ConsumerRecipeName,
 			&i.SupplierDate,
@@ -481,10 +487,18 @@ select
   cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings, cooks.off_plan_servings,
   r.name as recipe_name,
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
-  coalesce((
+  (coalesce((
     select sum(p.servings) from portions p
     where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
-  ), 0)::double precision as late_servings,
+  ), 0)
+  + coalesce((
+    select sum(ri.amount * cc.servings / cr.servings)
+    from cook_supplies s
+    join cooks cc on cc.id = s.consumer_cook_id
+    join recipes cr on cr.id = cc.recipe_id
+    join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+    where s.supplier_cook_id = cooks.id and s.from_freezer
+  ), 0))::double precision as late_servings,
   coalesce((
     select sum(ri.amount * cc.servings / cr.servings)
     from cook_supplies s
@@ -615,8 +629,18 @@ select
 from cooks
 join recipes r on r.id = cooks.recipe_id
 cross join lateral (
-  select coalesce(sum(p.servings), 0) as servings from portions p
-  where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
+  select coalesce((
+    select sum(p.servings) from portions p
+    where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
+  ), 0)
+    + coalesce((
+      select sum(ri.amount * cc.servings / cr.servings)
+      from cook_supplies s
+      join cooks cc on cc.id = s.consumer_cook_id
+      join recipes cr on cr.id = cc.recipe_id
+      join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+      where s.supplier_cook_id = cooks.id and s.from_freezer
+    ), 0)::double precision as servings
 ) late
 where cooks.household_id = $1 and cooks.frozen_servings > late.servings + cooks.off_plan_servings + 0.01
 order by cooks.date, cooks.id
@@ -676,10 +700,18 @@ select
   cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings, cooks.off_plan_servings,
   r.name as recipe_name,
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
-  coalesce((
+  (coalesce((
     select sum(p.servings) from portions p
     where p.cook_id = cooks.id and (p.from_freezer or p.date > cooks.date + r.fridge_days)
-  ), 0)::double precision as late_servings,
+  ), 0)
+  + coalesce((
+    select sum(ri.amount * cc.servings / cr.servings)
+    from cook_supplies s
+    join cooks cc on cc.id = s.consumer_cook_id
+    join recipes cr on cr.id = cc.recipe_id
+    join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+    where s.supplier_cook_id = cooks.id and s.from_freezer
+  ), 0))::double precision as late_servings,
   coalesce((
     select sum(ri.amount * cc.servings / cr.servings)
     from cook_supplies s
@@ -1000,9 +1032,10 @@ func (q *Queries) ListStaples(ctx context.Context, arg *ListStaplesParams) ([]*L
 }
 
 const setCookSupply = `-- name: SetCookSupply :execrows
-insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id)
-values ($1, $2, $3, $4)
-on conflict (consumer_cook_id, component_recipe_id) do update set supplier_cook_id = excluded.supplier_cook_id
+insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id, from_freezer)
+values ($1, $2, $3, $4, $5)
+on conflict (consumer_cook_id, component_recipe_id) do update
+set supplier_cook_id = excluded.supplier_cook_id, from_freezer = excluded.from_freezer
 `
 
 type SetCookSupplyParams struct {
@@ -1010,6 +1043,7 @@ type SetCookSupplyParams struct {
 	ConsumerCookID    pgtype.UUID
 	ComponentRecipeID pgtype.UUID
 	SupplierCookID    pgtype.UUID
+	FromFreezer       bool
 }
 
 // Sets the cook supplying a component of a cook.
@@ -1019,6 +1053,7 @@ func (q *Queries) SetCookSupply(ctx context.Context, arg *SetCookSupplyParams) (
 		arg.ConsumerCookID,
 		arg.ComponentRecipeID,
 		arg.SupplierCookID,
+		arg.FromFreezer,
 	)
 	if err != nil {
 		return 0, err

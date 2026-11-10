@@ -293,8 +293,10 @@ type PlanServiceClient interface {
 	// Thursday's curry. The supplier must be a cook of the component's
 	// recipe. The cook that supplied it before is deleted if nothing uses
 	// it any more: nobody eats it, it supplies no other cook, and it isn't
-	// done. The supplier's servings are raised to make enough for the cook
-	// too, if they'd be too few.
+	// done. A supplier cooked before the cook with enough frozen servings
+	// left supplies it from the freezer (see CookSupply.from_freezer);
+	// otherwise its servings are raised to make enough for the cook too, if
+	// they'd be too few.
 	SetCookSupplier(context.Context, *v1.SetCookSupplierRequest) (*v1.SetCookSupplierResponse, error)
 	// Create a portion: what a person eats at one of their eating times on a
 	// date, either a share of a cook or an amount of a food. With new_cook,
@@ -442,8 +444,10 @@ type PlanServiceHandler interface {
 	// Thursday's curry. The supplier must be a cook of the component's
 	// recipe. The cook that supplied it before is deleted if nothing uses
 	// it any more: nobody eats it, it supplies no other cook, and it isn't
-	// done. The supplier's servings are raised to make enough for the cook
-	// too, if they'd be too few.
+	// done. A supplier cooked before the cook with enough frozen servings
+	// left supplies it from the freezer (see CookSupply.from_freezer);
+	// otherwise its servings are raised to make enough for the cook too, if
+	// they'd be too few.
 	SetCookSupplier(context.Context, *v1.SetCookSupplierRequest) (*v1.SetCookSupplierResponse, error)
 	// Create a portion: what a person eats at one of their eating times on a
 	// date, either a share of a cook or an amount of a food. With new_cook,

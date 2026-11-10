@@ -108,8 +108,10 @@ service PlanService {
   // Thursday's curry. The supplier must be a cook of the component's
   // recipe. The cook that supplied it before is deleted if nothing uses
   // it any more: nobody eats it, it supplies no other cook, and it isn't
-  // done. The supplier's servings are raised to make enough for the cook
-  // too, if they'd be too few.
+  // done. A supplier cooked before the cook with enough frozen servings
+  // left supplies it from the freezer (see CookSupply.from_freezer);
+  // otherwise its servings are raised to make enough for the cook too, if
+  // they'd be too few.
   rpc SetCookSupplier(SetCookSupplierRequest) returns (SetCookSupplierResponse);
   // Create a portion: what a person eats at one of their eating times on a
   // date, either a share of a cook or an amount of a food. With new_cook,
@@ -212,10 +214,11 @@ message Cook {
   // ListFrozenLeftovers), to plan later. 0 if none.
   double frozen_servings = 11;
   // The cooks making its recipe's components, e.g. the pot of chickpeas
-  // for a chili. Creating a cook of a recipe with components also creates
-  // a cook of each, on the same date, for the servings it needs, unless
-  // the components are made in it: change the supplier with
-  // SetCookSupplier.
+  // for a chili. Creating a cook of a recipe with components also plans
+  // each: from the freezer, if an earlier cook of it has enough frozen
+  // servings left that keep until then, by the oldest first (see
+  // ListFrozenLeftovers), or else as a new cook of it, on the same date,
+  // for the servings it needs. Change the supplier with SetCookSupplier.
   repeated CookSupply supplies = 12 [(mcp.v1.field).output_only = true];
   // The cooks it makes a component of.
   repeated CookSupply supplying = 13 [(mcp.v1.field).output_only = true];
@@ -246,6 +249,10 @@ message CookSupply {
   // The servings of the component the consumer uses, from its servings
   // and its recipe's amount of the component.
   double servings = 8;
+  // Whether the supplier supplies it from its frozen servings, like beans
+  // cooked weeks ago: they count as taken out of the freezer, and GetWeek
+  // has a prep task to thaw them the day before.
+  bool from_freezer = 9;
 }
 
 // A share of a cook, in servings.

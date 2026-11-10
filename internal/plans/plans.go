@@ -72,8 +72,9 @@ type Cook struct {
 	OffPlanServings float64
 	// RecipeName, AssignedServings, the servings of all its portions,
 	// LateServings, those of its portions eaten after the recipe's fridge
-	// days, and SuppliedServings, those it makes for other cooks, are read,
-	// and ignored when writing.
+	// days or from the freezer, and of what it supplies from the freezer,
+	// and SuppliedServings, those it makes for other cooks, are read, and
+	// ignored when writing.
 	RecipeName       string
 	AssignedServings float64
 	LateServings     float64
@@ -93,6 +94,10 @@ type Supply struct {
 	ConsumerCookID    pgtype.UUID
 	ComponentRecipeID pgtype.UUID
 	SupplierCookID    pgtype.UUID
+	// FromFreezer is whether the supplier supplies it from its frozen
+	// servings, which then count as late servings: out of the freezer,
+	// not left in the fridge.
+	FromFreezer bool
 	// The cooks' dates, at midnight UTC, and recipes' names, and the
 	// servings the supplier makes for the consumer, are read, and ignored
 	// when writing.
@@ -413,6 +418,7 @@ func (r *Repository) SetCookSupply(ctx context.Context, householdID pgtype.UUID,
 		HouseholdID:       householdID,
 		ConsumerCookID:    supply.ConsumerCookID,
 		ComponentRecipeID: supply.ComponentRecipeID,
+		FromFreezer:       supply.FromFreezer,
 		SupplierCookID:    supply.SupplierCookID,
 	})
 	if previous.Valid && previous != supply.SupplierCookID {
@@ -432,6 +438,7 @@ func attachSupplies(cooks map[pgtype.UUID]*Cook, rows []*gen.ListCookSuppliesRow
 			ConsumerCookID:     row.ConsumerCookID,
 			ComponentRecipeID:  row.ComponentRecipeID,
 			SupplierCookID:     row.SupplierCookID,
+			FromFreezer:        row.FromFreezer,
 			ConsumerDate:       store.DateFromPG(row.ConsumerDate),
 			ConsumerRecipeName: row.ConsumerRecipeName,
 			SupplierDate:       store.DateFromPG(row.SupplierDate),
@@ -544,6 +551,7 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 			sp.ConsumerCookIds = append(sp.ConsumerCookIds, cookIDs[i])
 			sp.ComponentRecipeIds = append(sp.ComponentRecipeIds, supply.ComponentRecipeID)
 			sp.SupplierCookIds = append(sp.SupplierCookIds, supply.SupplierCookID)
+			sp.FromFreezer = append(sp.FromFreezer, supply.FromFreezer)
 		}
 	}
 	if len(sp.ConsumerCookIds) > 0 {
