@@ -59,6 +59,9 @@ const (
 	// Leftover is eating the rest of an earlier shared meal, reheated,
 	// rather than cooking.
 	Leftover
+	// Cooked is how often the household cooked the recipe lately, as what
+	// they cook again, they like.
+	Cooked
 )
 
 // The weights of the components, in points. A typical good suggestion
@@ -161,6 +164,12 @@ const (
 	// favorite cooked recently still makes way for others, and less than
 	// RuleWarningPenalty, so it doesn't hide a broken rule.
 	FavoritePoints = 5.0
+	// CookedPoints is for each cook of the recipe done in the last
+	// HistoryDays, up to MaxCookedPoints: less than a favorite, as cooking
+	// it again says less than marking it.
+	CookedPoints    = 1.0
+	MaxCookedPoints = 3.0
+	HistoryDays     = 90
 )
 
 const (
@@ -210,6 +219,9 @@ type Input struct {
 	Weights map[Kind]float64
 	// Foods are the foods of the recipes and of the week's plan, by ID.
 	Foods map[pgtype.UUID]*foods.Food
+	// History is how many cooks of each recipe were done in the last
+	// HistoryDays, by recipe ID.
+	History map[pgtype.UUID]int
 	// Lots are the household's pantry.
 	Lots []*pantry.Item
 	// Max is the most suggestions to return.
@@ -329,8 +341,9 @@ func Suggest(in *Input) []*Suggestion {
 	}
 	suggestions := make([]*Suggestion, 0, len(candidates))
 	for _, r := range candidates {
-		// Drafts aren't finished, so they aren't suggested.
-		if !r.Draft {
+		// Drafts aren't finished, so they aren't suggested, nor are recipes
+		// the household doesn't want suggested now.
+		if r.Suggestable(in.Date) {
 			suggestions = append(suggestions, s.score(r, nil))
 		}
 	}
@@ -534,6 +547,14 @@ func (s *scorer) score(r *recipes.Recipe, leftover *plans.Cook) *Suggestion {
 		s.mealTag(c)
 		if r.Favorite {
 			c.add(Favorite, FavoritePoints, "a household favorite")
+		}
+		if n := s.in.History[r.ID]; n > 0 {
+			times := "times"
+			if n == 1 {
+				times = "time"
+			}
+			c.add(Cooked, math.Min(float64(n)*CookedPoints, MaxCookedPoints),
+				"cooked %d %s in the last %d days", n, times, HistoryDays)
 		}
 	}
 

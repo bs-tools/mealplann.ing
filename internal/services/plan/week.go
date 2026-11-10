@@ -37,6 +37,10 @@ type planData struct {
 	foods           map[pgtype.UUID]*foods.Food
 	// items are the portions and staples planned, by slot, staples first.
 	items map[plans.Slot][]*item
+	// history is how many cooks of each recipe were done in the
+	// suggest.HistoryDays before the dates suggested for, read only for
+	// suggestions.
+	history map[pgtype.UUID]int
 }
 
 // item is a portion or a staple on a date, planned at a slot.

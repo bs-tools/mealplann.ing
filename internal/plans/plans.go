@@ -1136,3 +1136,19 @@ func (r *Repository) ListLeftoverCooks(ctx context.Context, householdID pgtype.U
 	}
 	return cooks, nil
 }
+
+// CountDoneCooks returns how many of a household's cooks of each recipe
+// were marked done from one date to another, by recipe ID.
+func (r *Repository) CountDoneCooks(ctx context.Context, householdID pgtype.UUID, from, to time.Time) (map[pgtype.UUID]int, error) {
+	rows, err := gen.New(r.db).CountDoneCooks(ctx, &gen.CountDoneCooksParams{
+		HouseholdID: householdID, FromDate: store.DateToPG(from), ToDate: store.DateToPG(to),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to count cooks: %w", err)
+	}
+	counts := make(map[pgtype.UUID]int, len(rows))
+	for _, row := range rows {
+		counts[row.RecipeID] = int(row.Cooks)
+	}
+	return counts, nil
+}

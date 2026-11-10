@@ -860,6 +860,8 @@ type Recipe struct {
 	YieldAmount   pgtype.Float8
 	YieldUnit     NullAmountUnit
 	Draft         bool
+	NotSuggested  bool
+	SnoozedUntil  pgtype.Date
 }
 
 type RecipeIngredient struct {

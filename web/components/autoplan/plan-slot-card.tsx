@@ -1,4 +1,10 @@
 import { ComponentChip } from "@components/plan/plan-bits";
+import type { Feedback } from "@components/recipes/suggest-feedback";
+import {
+  NEVER,
+  SNOOZES,
+  snoozeFor,
+} from "@components/recipes/suggest-feedback";
 import { Badge } from "@components/ui/misc";
 import { iconButton } from "@components/ui/styles";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
@@ -7,6 +13,7 @@ import {
   ArrowsRightLeftIcon,
   BuildingStorefrontIcon,
   CheckCircleIcon,
+  HandThumbDownIcon,
   LockClosedIcon,
   LockOpenIcon,
   PlusIcon,
@@ -44,6 +51,8 @@ interface PlanSlotCardProps {
   onFill: () => void;
   // Marks everyone at the slot eating out, or eating at home again.
   onEatingOut: (eatingOut: boolean) => void;
+  // Leaves the suggested recipe out of suggestions, for a while or for good.
+  onFeedback: (feedback: Feedback) => void;
 }
 
 /**
@@ -63,6 +72,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
   onSkip,
   onFill,
   onEatingOut,
+  onFeedback,
 }) => {
   const delay = { animationDelay: `${Math.min(index * 40, 800)}ms` };
   const header = (
@@ -259,6 +269,47 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
                     </button>
                   </MenuItem>
                 ))}
+              </MenuItems>
+            </Menu>
+          )}
+          {suggestion.leftoverOf === undefined && (
+            <Menu as="div" className="relative">
+              <MenuButton
+                className={iconButton}
+                aria-label="Don't suggest it"
+                title="Don't suggest this recipe for a while, or ever"
+                disabled={disabled}
+              >
+                <HandThumbDownIcon className="size-4" />
+              </MenuButton>
+              <MenuItems
+                transition
+                className="absolute right-0 z-[1100] mt-1 w-52 origin-top-right rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 transition focus:outline-hidden data-[closed]:scale-95 data-[closed]:opacity-0"
+              >
+                {SNOOZES.map((snooze) => (
+                  <MenuItem key={snooze.days}>
+                    <button
+                      type="button"
+                      className="w-full px-3 py-2 text-left data-[focus]:bg-gray-100"
+                      onClick={() => {
+                        onFeedback(snoozeFor(snooze.days));
+                      }}
+                    >
+                      {snooze.label}
+                    </button>
+                  </MenuItem>
+                ))}
+                <MenuItem>
+                  <button
+                    type="button"
+                    className="w-full px-3 py-2 text-left data-[focus]:bg-gray-100"
+                    onClick={() => {
+                      onFeedback(NEVER);
+                    }}
+                  >
+                    Never suggest it
+                  </button>
+                </MenuItem>
               </MenuItems>
             </Menu>
           )}

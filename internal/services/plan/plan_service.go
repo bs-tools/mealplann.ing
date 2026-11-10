@@ -67,6 +67,7 @@ type PlanRepository interface {
 	DeleteStaple(ctx context.Context, householdID, id pgtype.UUID) error
 	SetStapleSkipped(ctx context.Context, householdID, id pgtype.UUID, date time.Time, skipped bool) (*plans.Staple, error)
 	SetEatingOut(ctx context.Context, householdID pgtype.UUID, slots []plans.Slot, out bool, notes string) error
+	CountDoneCooks(ctx context.Context, householdID pgtype.UUID, from, to time.Time) (map[pgtype.UUID]int, error)
 }
 
 // PeopleRepository reads the people plans are for.

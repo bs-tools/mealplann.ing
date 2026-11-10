@@ -338,6 +338,7 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 		Candidates: candidates,
 		Foods:      d.foods,
 		Lots:       lots,
+		History:    d.history,
 		ShopDate:   func(date time.Time) time.Time { return s.shopDate(lists, date) },
 		Weights:    weights,
 		Done:       ctx.Done(),
@@ -583,7 +584,7 @@ func planWeights(c *suggestionsv1.PlanCriteria) (map[suggest.Kind]float64, error
 		kinds    []suggest.Kind
 	}{
 		{"variety", c.GetVariety(), []suggest.Kind{suggest.Variety}},
-		{"favorites", c.GetFavorites(), []suggest.Kind{suggest.Favorite}},
+		{"favorites", c.GetFavorites(), []suggest.Kind{suggest.Favorite, suggest.Cooked}},
 		{"pantry", c.GetPantry(), []suggest.Kind{suggest.Pantry, suggest.PackLeftovers}},
 		{"shopping", c.GetShopping(), []suggest.Kind{suggest.SharedIngredients, suggest.Keeping}},
 		{"nutrition", c.GetNutrition(), []suggest.Kind{suggest.Nutrition}},

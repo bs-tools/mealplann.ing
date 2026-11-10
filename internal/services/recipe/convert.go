@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/bs-tools/mealplann.ing/internal/services/amounts"
@@ -109,6 +110,8 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 		Notes:         r.Notes,
 		Favorite:      r.Favorite,
 		Draft:         r.Draft,
+		NotSuggested:  r.NotSuggested,
+		SnoozedUntil:  formatOptionalDate(r.SnoozedUntil),
 		YieldAmount:   r.YieldAmount,
 		YieldUnit:     yieldUnitToProto(r),
 		Nutrition:     nutritionToProto(r),
@@ -174,6 +177,8 @@ func summaryToProto(r *recipes.Recipe) *recipesv1.RecipeSummary {
 		Favorite:                    r.Favorite,
 		CostCentsPerServing:         costPerServing(r),
 		Draft:                       r.Draft,
+		NotSuggested:                r.NotSuggested,
+		SnoozedUntil:                formatOptionalDate(r.SnoozedUntil),
 	}.Build()
 }
 
@@ -265,6 +270,13 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 	if err != nil {
 		return nil, err
 	}
+	var snoozedUntil time.Time
+	if raw := strings.TrimSpace(p.GetSnoozedUntil()); raw != "" {
+		if snoozedUntil, err = store.ParseDate(raw); err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument,
+				`snoozed_until must be a date, "YYYY-MM-DD", or empty for none`)
+		}
+	}
 	var fridgeDays, freezerDays *int32
 	if p.HasFridgeDays() {
 		fridgeDays = new(p.GetFridgeDays())
@@ -292,7 +304,17 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 		YieldAmount:   yieldAmount,
 		YieldUnit:     yieldUnit,
 		Draft:         p.GetDraft(),
+		NotSuggested:  p.GetNotSuggested(),
+		SnoozedUntil:  snoozedUntil,
 	}, nil
+}
+
+// formatOptionalDate formats a date, or "" for the zero time.
+func formatOptionalDate(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return store.FormatDate(t)
 }
 
 // yieldUnitToProto returns the unit of what a recipe makes, unspecified if

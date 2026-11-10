@@ -35,6 +35,12 @@ import { SuggestionService } from "./suggestions_pb";
  *   RecipeService). It's worth about as much as using the rest of a
  *   pack, so favorites come up more often, but less than having cooked
  *   it in the last few days or breaking someone's rule.
+ * - COOKED: the household cooked it, marking the cook done, in the last
+ *   90 days, a point a time, up to 3, as what's cooked again is liked.
+ *
+ * Recipes the household doesn't want suggested, or snoozed until after
+ * the slot's date (see Recipe.not_suggested and Recipe.snoozed_until),
+ * aren't suggested, like drafts.
  *
  * Portions are split like PlanMeal does, within each person's
  * max_portion_grams. Nothing is changed. Fails with INVALID_ARGUMENT for
