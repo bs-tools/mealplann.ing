@@ -318,6 +318,36 @@ func (q *Queries) GetRecipe(ctx context.Context, arg *GetRecipeParams) (*Recipe,
 	return &i, err
 }
 
+const listFoodNames = `-- name: ListFoodNames :many
+select id, name from foods where household_id = $1 order by lower(name)
+`
+
+type ListFoodNamesRow struct {
+	ID   pgtype.UUID
+	Name string
+}
+
+// The household's foods' IDs and names, to match imported ingredients to.
+func (q *Queries) ListFoodNames(ctx context.Context, householdID pgtype.UUID) ([]*ListFoodNamesRow, error) {
+	rows, err := q.db.Query(ctx, listFoodNames, householdID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListFoodNamesRow
+	for rows.Next() {
+		var i ListFoodNamesRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listHouseholdFoodIDs = `-- name: ListHouseholdFoodIDs :many
 select id from foods
 where household_id = $1 and id = any($2::uuid[])
@@ -649,46 +679,6 @@ func (q *Queries) ListRecipesByID(ctx context.Context, arg *ListRecipesByIDParam
 			&i.NotSuggested,
 			&i.SnoozedUntil,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const matchFoodNames = `-- name: MatchFoodNames :many
-select n.name::text as matched, f.id, f.name
-from unnest($1::text[]) as n(name)
-join foods f on f.household_id = $2 and lower(f.name) = lower(n.name)
-order by f.id
-`
-
-type MatchFoodNamesParams struct {
-	Names       []string
-	HouseholdID pgtype.UUID
-}
-
-type MatchFoodNamesRow struct {
-	Matched string
-	ID      pgtype.UUID
-	Name    string
-}
-
-// The household's foods named any of the names, ignoring case, with the
-// name each matched, for matching imported ingredients to foods.
-func (q *Queries) MatchFoodNames(ctx context.Context, arg *MatchFoodNamesParams) ([]*MatchFoodNamesRow, error) {
-	rows, err := q.db.Query(ctx, matchFoodNames, arg.Names, arg.HouseholdID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*MatchFoodNamesRow
-	for rows.Next() {
-		var i MatchFoodNamesRow
-		if err := rows.Scan(&i.Matched, &i.ID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

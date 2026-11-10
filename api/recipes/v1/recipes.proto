@@ -97,12 +97,18 @@ service RecipeService {
   // read from the schema.org Recipe in the page's JSON-LD, which most
   // recipe sites have. Ingredients are kept as the page writes them, in
   // original_text, with their amounts and units where they can be read,
-  // and matched to the household's foods with the same name, ignoring
-  // case; the rest are left unmatched. Review the draft, match its
+  // and matched to the household's food whose name is clearly the most
+  // alike, ignoring word order, plurals and small typos (see
+  // PreviewImport); the rest are left unmatched. Review the draft, match its
   // ingredients and give its steps their ingredients and durations, then
   // save it with draft false. Fails with FAILED_PRECONDITION if the page
   // can't be fetched or has no recipe data.
   rpc ImportRecipe(ImportRecipeRequest) returns (ImportRecipeResponse);
+  // Read a recipe from a web page like ImportRecipe, without saving it,
+  // with the household's foods most like each ingredient, to review: the
+  // user picks each ingredient's food, then saves it with CreateRecipe,
+  // as a draft if some are left unmatched. Fails like ImportRecipe.
+  rpc PreviewImport(PreviewImportRequest) returns (PreviewImportResponse);
   // Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
   // the plan (see PlanService), or other recipes as a component, use it:
   // delete or change them first.
@@ -575,6 +581,39 @@ message DeleteRecipeResponse {}
 message ImportRecipeRequest {
   // The address of the page, starting with http:// or https://. Required.
   string url = 1;
+}
+
+message PreviewImportRequest {
+  // The address of the page, starting with http:// or https://. Required.
+  string url = 1;
+}
+
+message PreviewImportResponse {
+  // The recipe read, unsaved: a draft whose ingredients are unmatched,
+  // with their original_text, and their amounts and units where they can
+  // be read.
+  Recipe recipe = 1;
+  // The ingredients' likely foods, in the recipe's order.
+  repeated ImportedIngredient ingredients = 2;
+}
+
+// What an imported ingredient likely is.
+message ImportedIngredient {
+  // The name of its food, read from its text, e.g. "almond milk" of "1
+  // cup almond milk, unsweetened"; empty if none could be read.
+  string name = 1;
+  // The household's foods most like it, best first, at most 5.
+  repeated FoodMatch matches = 2;
+}
+
+// A household's food an ingredient may be.
+message FoodMatch {
+  // The ID of the food.
+  string food_id = 1;
+  // The name of the food.
+  string food_name = 2;
+  // How alike the names are, from 0 to 1 for the same words.
+  double score = 3;
 }
 
 message ImportRecipeResponse {

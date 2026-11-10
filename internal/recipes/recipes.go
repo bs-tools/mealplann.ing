@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/bs-tools/mealplann.ing/internal/foods"
@@ -1007,28 +1006,21 @@ func orZero[T int32 | float64](v *T) T {
 	return *v
 }
 
-// FoodMatch is a household's food matching a name.
-type FoodMatch struct {
+// FoodName is a household's food's ID and name.
+type FoodName struct {
 	ID   pgtype.UUID
 	Name string
 }
 
-// MatchFoodNames returns the household's foods named any of names,
-// ignoring case, by the lowercase name they match.
-func (r *Repository) MatchFoodNames(ctx context.Context, householdID pgtype.UUID, names []string) (map[string]FoodMatch, error) {
-	matches := map[string]FoodMatch{}
-	if len(names) == 0 {
-		return matches, nil
-	}
-	rows, err := r.querier.MatchFoodNames(ctx, &gen.MatchFoodNamesParams{HouseholdID: householdID, Names: names})
+// ListFoodNames returns the household's foods' IDs and names, by name.
+func (r *Repository) ListFoodNames(ctx context.Context, householdID pgtype.UUID) ([]FoodName, error) {
+	rows, err := r.querier.ListFoodNames(ctx, householdID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to match food names: %w", err)
+		return nil, fmt.Errorf("failed to list food names: %w", err)
 	}
+	names := make([]FoodName, 0, len(rows))
 	for _, row := range rows {
-		key := strings.ToLower(row.Matched)
-		if _, ok := matches[key]; !ok {
-			matches[key] = FoodMatch{ID: row.ID, Name: row.Name}
-		}
+		names = append(names, FoodName{ID: row.ID, Name: row.Name})
 	}
-	return matches, nil
+	return names, nil
 }

@@ -82,8 +82,9 @@ export const replaceFood = RecipeService.method.replaceFood;
  * read from the schema.org Recipe in the page's JSON-LD, which most
  * recipe sites have. Ingredients are kept as the page writes them, in
  * original_text, with their amounts and units where they can be read,
- * and matched to the household's foods with the same name, ignoring
- * case; the rest are left unmatched. Review the draft, match its
+ * and matched to the household's food whose name is clearly the most
+ * alike, ignoring word order, plurals and small typos (see
+ * PreviewImport); the rest are left unmatched. Review the draft, match its
  * ingredients and give its steps their ingredients and durations, then
  * save it with draft false. Fails with FAILED_PRECONDITION if the page
  * can't be fetched or has no recipe data.
@@ -91,6 +92,16 @@ export const replaceFood = RecipeService.method.replaceFood;
  * @generated from rpc recipes.v1.RecipeService.ImportRecipe
  */
 export const importRecipe = RecipeService.method.importRecipe;
+
+/**
+ * Read a recipe from a web page like ImportRecipe, without saving it,
+ * with the household's foods most like each ingredient, to review: the
+ * user picks each ingredient's food, then saves it with CreateRecipe,
+ * as a draft if some are left unmatched. Fails like ImportRecipe.
+ *
+ * @generated from rpc recipes.v1.RecipeService.PreviewImport
+ */
+export const previewImport = RecipeService.method.previewImport;
 
 /**
  * Delete a recipe. Fails with FAILED_PRECONDITION if cooks or staples of
