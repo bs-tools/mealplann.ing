@@ -288,6 +288,11 @@ message Suggestion {
   // rather than a new cook, with cook_servings the servings it adds. Unset
   // for a new cook.
   plans.v1.LeftoverOf leftover_of = 11;
+  // The date it's cooked (YYYY-MM-DD), for a meal of a suggested plan on a
+  // day the household doesn't cook (see PlanCriteria.cooking_weekdays):
+  // the latest cooking day before it. Empty to cook it on its day. Plan it
+  // with MealToPlan.cook_date.
+  string cook_date = 12;
 }
 
 // Emphasis is how much a criterion of a plan counts.
@@ -328,6 +333,13 @@ message PlanCriteria {
   repeated string exclude_tags = 7;
   // Don't plan these recipes, e.g. ones the user doesn't want this week.
   repeated string exclude_recipe_ids = 8;
+  // The days of the week the household cooks, from 1 for Monday to 7 for
+  // Sunday; empty for every day. A meal on another day is cooked on the
+  // latest cooking day before it in the days planned, and eaten as
+  // leftovers (see Suggestion.cook_date), so it's a recipe that keeps in
+  // the fridge until then, by its fridge_days, 2 if unknown. A meal before
+  // the first cooking day planned is cooked on its day.
+  repeated int32 cooking_weekdays = 9;
 }
 
 // The user's choice for a slot of a suggested plan.

@@ -3631,6 +3631,7 @@ type MealToPlan struct {
 	xxx_hidden_PersonId     string                 `protobuf:"bytes,4,opt,name=person_id,json=personId,proto3"`
 	xxx_hidden_EatingTimeId string                 `protobuf:"bytes,5,opt,name=eating_time_id,json=eatingTimeId,proto3"`
 	xxx_hidden_LeftoverOf   *LeftoverOf            `protobuf:"bytes,6,opt,name=leftover_of,json=leftoverOf,proto3"`
+	xxx_hidden_CookDate     string                 `protobuf:"bytes,7,opt,name=cook_date,json=cookDate,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -3702,6 +3703,13 @@ func (x *MealToPlan) GetLeftoverOf() *LeftoverOf {
 	return nil
 }
 
+func (x *MealToPlan) GetCookDate() string {
+	if x != nil {
+		return x.xxx_hidden_CookDate
+	}
+	return ""
+}
+
 func (x *MealToPlan) SetRecipeId(v string) {
 	x.xxx_hidden_RecipeId = v
 }
@@ -3724,6 +3732,10 @@ func (x *MealToPlan) SetEatingTimeId(v string) {
 
 func (x *MealToPlan) SetLeftoverOf(v *LeftoverOf) {
 	x.xxx_hidden_LeftoverOf = v
+}
+
+func (x *MealToPlan) SetCookDate(v string) {
+	x.xxx_hidden_CookDate = v
 }
 
 func (x *MealToPlan) HasLeftoverOf() bool {
@@ -3757,6 +3769,11 @@ type MealToPlan_builder struct {
 	// by this request, or else already. SuggestRecipes and SuggestPlan
 	// suggest these as their suggestions' leftover_of.
 	LeftoverOf *LeftoverOf
+	// The date to cook it (YYYY-MM-DD), up to 14 days before date, to batch
+	// cook it ahead and eat it as leftovers, like on the household's cooking
+	// day; empty to cook it on date. A cook made ahead isn't one of its
+	// date's shared meals. SuggestPlan suggests these as cook_date.
+	CookDate string
 }
 
 func (b0 MealToPlan_builder) Build() *MealToPlan {
@@ -3769,6 +3786,7 @@ func (b0 MealToPlan_builder) Build() *MealToPlan {
 	x.xxx_hidden_PersonId = b.PersonId
 	x.xxx_hidden_EatingTimeId = b.EatingTimeId
 	x.xxx_hidden_LeftoverOf = b.LeftoverOf
+	x.xxx_hidden_CookDate = b.CookDate
 	return m0
 }
 
@@ -7299,7 +7317,7 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x04cook\x18\x01 \x01(\v2\x0e.plans.v1.CookR\x04cook\x12-\n" +
 	"\bportions\x18\x02 \x03(\v2\x11.plans.v1.PortionR\bportions\x12/\n" +
 	"\x13unassigned_servings\x18\x03 \x01(\x01R\x12unassignedServings\x12-\n" +
-	"\bwarnings\x18\x04 \x03(\v2\x11.plans.v1.WarningR\bwarnings\"\xe5\x01\n" +
+	"\bwarnings\x18\x04 \x03(\v2\x11.plans.v1.WarningR\bwarnings\"\x82\x02\n" +
 	"\n" +
 	"MealToPlan\x12\x1b\n" +
 	"\trecipe_id\x18\x01 \x01(\tR\brecipeId\x12\x12\n" +
@@ -7308,7 +7326,8 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\tperson_id\x18\x04 \x01(\tR\bpersonId\x12$\n" +
 	"\x0eeating_time_id\x18\x05 \x01(\tR\featingTimeId\x125\n" +
 	"\vleftover_of\x18\x06 \x01(\v2\x14.plans.v1.LeftoverOfR\n" +
-	"leftoverOf\"N\n" +
+	"leftoverOf\x12\x1b\n" +
+	"\tcook_date\x18\a \x01(\tR\bcookDate\"N\n" +
 	"\n" +
 	"LeftoverOf\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +

@@ -1042,6 +1042,7 @@ type Suggestion struct {
 	xxx_hidden_NewItemCount int32                  `protobuf:"varint,9,opt,name=new_item_count,json=newItemCount,proto3"`
 	xxx_hidden_ItemsToBuy   *[]*ItemToBuy          `protobuf:"bytes,10,rep,name=items_to_buy,json=itemsToBuy,proto3"`
 	xxx_hidden_LeftoverOf   *v11.LeftoverOf        `protobuf:"bytes,11,opt,name=leftover_of,json=leftoverOf,proto3"`
+	xxx_hidden_CookDate     string                 `protobuf:"bytes,12,opt,name=cook_date,json=cookDate,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1156,6 +1157,13 @@ func (x *Suggestion) GetLeftoverOf() *v11.LeftoverOf {
 	return nil
 }
 
+func (x *Suggestion) GetCookDate() string {
+	if x != nil {
+		return x.xxx_hidden_CookDate
+	}
+	return ""
+}
+
 func (x *Suggestion) SetRecipeId(v string) {
 	x.xxx_hidden_RecipeId = v
 }
@@ -1198,6 +1206,10 @@ func (x *Suggestion) SetItemsToBuy(v []*ItemToBuy) {
 
 func (x *Suggestion) SetLeftoverOf(v *v11.LeftoverOf) {
 	x.xxx_hidden_LeftoverOf = v
+}
+
+func (x *Suggestion) SetCookDate(v string) {
+	x.xxx_hidden_CookDate = v
 }
 
 func (x *Suggestion) HasLeftoverOf() bool {
@@ -1245,6 +1257,11 @@ type Suggestion_builder struct {
 	// rather than a new cook, with cook_servings the servings it adds. Unset
 	// for a new cook.
 	LeftoverOf *v11.LeftoverOf
+	// The date it's cooked (YYYY-MM-DD), for a meal of a suggested plan on a
+	// day the household doesn't cook (see PlanCriteria.cooking_weekdays):
+	// the latest cooking day before it. Empty to cook it on its day. Plan it
+	// with MealToPlan.cook_date.
+	CookDate string
 }
 
 func (b0 Suggestion_builder) Build() *Suggestion {
@@ -1262,6 +1279,7 @@ func (b0 Suggestion_builder) Build() *Suggestion {
 	x.xxx_hidden_NewItemCount = b.NewItemCount
 	x.xxx_hidden_ItemsToBuy = &b.ItemsToBuy
 	x.xxx_hidden_LeftoverOf = b.LeftoverOf
+	x.xxx_hidden_CookDate = b.CookDate
 	return m0
 }
 
@@ -1277,6 +1295,7 @@ type PlanCriteria struct {
 	xxx_hidden_MaxTotalSeconds  int32                  `protobuf:"varint,6,opt,name=max_total_seconds,json=maxTotalSeconds,proto3"`
 	xxx_hidden_ExcludeTags      []string               `protobuf:"bytes,7,rep,name=exclude_tags,json=excludeTags,proto3"`
 	xxx_hidden_ExcludeRecipeIds []string               `protobuf:"bytes,8,rep,name=exclude_recipe_ids,json=excludeRecipeIds,proto3"`
+	xxx_hidden_CookingWeekdays  []int32                `protobuf:"varint,9,rep,packed,name=cooking_weekdays,json=cookingWeekdays,proto3"`
 	unknownFields               protoimpl.UnknownFields
 	sizeCache                   protoimpl.SizeCache
 }
@@ -1362,6 +1381,13 @@ func (x *PlanCriteria) GetExcludeRecipeIds() []string {
 	return nil
 }
 
+func (x *PlanCriteria) GetCookingWeekdays() []int32 {
+	if x != nil {
+		return x.xxx_hidden_CookingWeekdays
+	}
+	return nil
+}
+
 func (x *PlanCriteria) SetVariety(v Emphasis) {
 	x.xxx_hidden_Variety = v
 }
@@ -1394,6 +1420,10 @@ func (x *PlanCriteria) SetExcludeRecipeIds(v []string) {
 	x.xxx_hidden_ExcludeRecipeIds = v
 }
 
+func (x *PlanCriteria) SetCookingWeekdays(v []int32) {
+	x.xxx_hidden_CookingWeekdays = v
+}
+
 type PlanCriteria_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -1418,6 +1448,13 @@ type PlanCriteria_builder struct {
 	ExcludeTags []string
 	// Don't plan these recipes, e.g. ones the user doesn't want this week.
 	ExcludeRecipeIds []string
+	// The days of the week the household cooks, from 1 for Monday to 7 for
+	// Sunday; empty for every day. A meal on another day is cooked on the
+	// latest cooking day before it in the days planned, and eaten as
+	// leftovers (see Suggestion.cook_date), so it's a recipe that keeps in
+	// the fridge until then, by its fridge_days, 2 if unknown. A meal before
+	// the first cooking day planned is cooked on its day.
+	CookingWeekdays []int32
 }
 
 func (b0 PlanCriteria_builder) Build() *PlanCriteria {
@@ -1432,6 +1469,7 @@ func (b0 PlanCriteria_builder) Build() *PlanCriteria {
 	x.xxx_hidden_MaxTotalSeconds = b.MaxTotalSeconds
 	x.xxx_hidden_ExcludeTags = b.ExcludeTags
 	x.xxx_hidden_ExcludeRecipeIds = b.ExcludeRecipeIds
+	x.xxx_hidden_CookingWeekdays = b.CookingWeekdays
 	return m0
 }
 
@@ -2585,7 +2623,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\tfood_name\x18\x02 \x01(\tR\bfoodName\x12\x1f\n" +
 	"\vamount_text\x18\x03 \x01(\tR\n" +
 	"amountText\x12%\n" +
-	"\x0ealready_listed\x18\x04 \x01(\bR\ralreadyListed\"\xeb\x03\n" +
+	"\x0ealready_listed\x18\x04 \x01(\bR\ralreadyListed\"\x88\x04\n" +
 	"\n" +
 	"Suggestion\x12\x1b\n" +
 	"\trecipe_id\x18\x01 \x01(\tR\brecipeId\x12\x1f\n" +
@@ -2605,7 +2643,8 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	" \x03(\v2\x19.suggestions.v1.ItemToBuyR\n" +
 	"itemsToBuy\x125\n" +
 	"\vleftover_of\x18\v \x01(\v2\x14.plans.v1.LeftoverOfR\n" +
-	"leftoverOf\"\x97\x03\n" +
+	"leftoverOf\x12\x1b\n" +
+	"\tcook_date\x18\f \x01(\tR\bcookDate\"\xc2\x03\n" +
 	"\fPlanCriteria\x122\n" +
 	"\avariety\x18\x01 \x01(\x0e2\x18.suggestions.v1.EmphasisR\avariety\x126\n" +
 	"\tfavorites\x18\x02 \x01(\x0e2\x18.suggestions.v1.EmphasisR\tfavorites\x120\n" +
@@ -2614,7 +2653,8 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\tnutrition\x18\x05 \x01(\x0e2\x18.suggestions.v1.EmphasisR\tnutrition\x12*\n" +
 	"\x11max_total_seconds\x18\x06 \x01(\x05R\x0fmaxTotalSeconds\x12!\n" +
 	"\fexclude_tags\x18\a \x03(\tR\vexcludeTags\x12,\n" +
-	"\x12exclude_recipe_ids\x18\b \x03(\tR\x10excludeRecipeIds\"\xe5\x01\n" +
+	"\x12exclude_recipe_ids\x18\b \x03(\tR\x10excludeRecipeIds\x12)\n" +
+	"\x10cooking_weekdays\x18\t \x03(\x05R\x0fcookingWeekdays\"\xe5\x01\n" +
 	"\n" +
 	"PlanChoice\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +

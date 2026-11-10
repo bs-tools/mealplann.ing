@@ -2,6 +2,7 @@ package suggest
 
 import (
 	"cmp"
+	"fmt"
 	"maps"
 	"math"
 	"math/rand/v2"
@@ -91,6 +92,22 @@ type PlanSlot struct {
 	// FixedLeftover is the leftover the user chose for a small meal of
 	// one person, nil to pick one. It's planned if the plan has its cook.
 	FixedLeftover *LeftoverRef
+	// CookDate is when its meal is cooked, at midnight UTC, if before
+	// Date, as the household doesn't cook on Date: only recipes that keep
+	// in the fridge until Date are picked. Zero to cook on Date.
+	CookDate time.Time
+}
+
+// DefaultFridgeDays is how many days leftovers of a recipe without
+// fridge_days are taken to keep.
+const DefaultFridgeDays = 2
+
+// keepsDays returns how many days ahead of a slot its meal is cooked.
+func (s *PlanSlot) keepsDays() int {
+	if s.CookDate.IsZero() || !s.CookDate.Before(s.Date) {
+		return 0
+	}
+	return int(s.Date.Sub(s.CookDate).Hours() / 24)
 }
 
 // PlanInput is what planning a range of days needs.
@@ -267,8 +284,10 @@ type planner struct {
 	in *PlanInput
 	// nutrition is each recipe's nutrition, by ID.
 	nutrition map[pgtype.UUID]*nutrition.Recipe
-	// eligible are the candidates each meal tag allows.
+	// eligible are the candidates each meal tag allows, and keeping those
+	// that keep a number of days, by tag and days, filled as needed.
 	eligible map[string][]*recipes.Recipe
+	keeping  map[string][]*recipes.Recipe
 }
 
 // rollout plans the slots in order, drawing each slot's recipe if draw,
@@ -304,7 +323,30 @@ func (p *planner) candidates(slot *PlanSlot) []*recipes.Recipe {
 	case slot.FixedLeftover != nil:
 		return []*recipes.Recipe{}
 	}
-	return p.eligible[slot.Tag()]
+	tag := slot.Tag()
+	days := slot.keepsDays()
+	if days == 0 {
+		return p.eligible[tag]
+	}
+	key := fmt.Sprintf("%s|%d", tag, days)
+	if list, ok := p.keeping[key]; ok {
+		return list
+	}
+	list := []*recipes.Recipe{}
+	for _, r := range p.eligible[tag] {
+		fridgeDays := DefaultFridgeDays
+		if r.FridgeDays != nil {
+			fridgeDays = int(*r.FridgeDays)
+		}
+		if days <= fridgeDays {
+			list = append(list, r)
+		}
+	}
+	if p.keeping == nil {
+		p.keeping = map[string][]*recipes.Recipe{}
+	}
+	p.keeping[key] = list
+	return list
 }
 
 // pick picks a slot's recipe from its suggestions, best first: one that

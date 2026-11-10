@@ -54,6 +54,7 @@ const CRITERIA_KEY = "mealplanning.autoPlanCriteria";
  * every criterion at normal.
  */
 const defaultCriteria = (): Criteria => ({
+  cookingWeekdays: [],
   days: 7,
   excludeTags: [],
   favorites: Emphasis.NORMAL,
@@ -274,6 +275,7 @@ const AutoPlanPage: React.FC = () => {
             : ownEatingTimes)
       ),
       criteria: {
+        cookingWeekdays: criteria.cookingWeekdays,
         excludeTags: criteria.excludeTags,
         favorites: criteria.favorites,
         maxTotalSeconds: criteria.maxMinutes * 60,
@@ -631,6 +633,7 @@ const AutoPlanPage: React.FC = () => {
               onClick={() => {
                 save.mutate({
                   meals: toSave.map((slot) => ({
+                    cookDate: slot.suggestion?.cookDate ?? "",
                     date: slot.date,
                     eatingTimeId: slot.eatingTimeId,
                     leftoverOf: slot.suggestion?.leftoverOf,

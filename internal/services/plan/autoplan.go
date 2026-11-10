@@ -40,6 +40,9 @@ const (
 )
 
 // mealRequired says a meal is required, after its field's name.
+// maxCookAheadDays is how far ahead of its date a meal can be cooked.
+const maxCookAheadDays = 14
+
 const mealRequired = "meal is required: HOUSEHOLD_MEAL_BREAKFAST, HOUSEHOLD_MEAL_LUNCH or HOUSEHOLD_MEAL_DINNER"
 
 // mealOrder is the order of the shared meals in a day.
@@ -216,6 +219,28 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 	for _, tag := range criteria.GetExcludeTags() {
 		excludeTags = append(excludeTags, strings.ToLower(strings.TrimSpace(tag)))
 	}
+	cookingDays := map[time.Weekday]bool{}
+	for _, iso := range criteria.GetCookingWeekdays() {
+		if iso < 1 || iso > 7 {
+			return nil, connect.NewError(connect.CodeInvalidArgument,
+				"criteria.cooking_weekdays must be from 1 for Monday to 7 for Sunday, or empty for every day")
+		}
+		cookingDays[time.Weekday(iso%7)] = true
+	}
+	// cookDate returns when a meal on a date is cooked: the latest cooking
+	// day before it in the days planned, if the household doesn't cook on
+	// it, or zero to cook on it.
+	cookDate := func(date time.Time) time.Time {
+		if len(cookingDays) == 0 || cookingDays[date.Weekday()] {
+			return time.Time{}
+		}
+		for d := date.AddDate(0, 0, -1); !d.Before(start); d = d.AddDate(0, 0, -1) {
+			if cookingDays[d.Weekday()] {
+				return d
+			}
+		}
+		return time.Time{}
+	}
 	var excludeIDs []pgtype.UUID
 	for _, raw := range criteria.GetExcludeRecipeIds() {
 		id, err := parseID("criteria.exclude_recipe_ids", raw, "find recipes with ListRecipes")
@@ -370,6 +395,7 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 	slotOf := map[slotKey]*suggest.PlanSlot{}
 	addSlot := func(key slotKey, slot *suggest.PlanSlot) {
 		keys = append(keys, key)
+		slot.CookDate = cookDate(slot.Date)
 		id, chosen := choices[key]
 		switch {
 		case eatingOut[key]:
@@ -468,10 +494,10 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 				b.UnfilledReason = unfilledReason(ps)
 				break
 			}
-			b.Suggestion = suggestionToProto(ps.Suggestion)
+			b.Suggestion = withCookDate(suggestionToProto(ps.Suggestion), ps.Slot.CookDate)
 			b.FittingRecipeCount = int32(ps.Fitting)
 			for _, alt := range ps.Alternatives {
-				b.Alternatives = append(b.Alternatives, suggestionToProto(alt))
+				b.Alternatives = append(b.Alternatives, withCookDate(suggestionToProto(alt), ps.Slot.CookDate))
 			}
 		}
 		slots = append(slots, b.Build())
@@ -514,6 +540,15 @@ func (d *planData) withoutPortions(eaters []*people.Person, meal people.Meal, da
 	return kept, names
 }
 
+// withCookDate sets the date a suggestion of a new cook is cooked, if
+// ahead of its slot; leftovers aren't cooked.
+func withCookDate(sg *suggestionsv1.Suggestion, date time.Time) *suggestionsv1.Suggestion {
+	if !date.IsZero() && !sg.HasLeftoverOf() {
+		sg.SetCookDate(store.FormatDate(date))
+	}
+	return sg
+}
+
 // leftoverFromProto converts and validates the earlier meal of a portion
 // of recipeID on date.
 func leftoverFromProto(field string, p *plansv1.LeftoverOf, recipeID pgtype.UUID, date time.Time) (*suggest.LeftoverRef, error) {
@@ -535,9 +570,13 @@ func leftoverFromProto(field string, p *plansv1.LeftoverOf, recipeID pgtype.UUID
 // leftoverCook returns the cook a leftover of the i-th meal to plan is
 // eaten from: one planned by the request before it, which is grown, or
 // else one planned already, as a new entry to grow it, which isn't in
-// planned yet.
-func leftoverCook(planned []*plans.CookWithPortions, existing []*plans.Cook, ref *suggest.LeftoverRef, i int) (*plans.CookWithPortions, error) {
+// planned yet. served are the meals the planned cooks are for, by cook,
+// which a cook made ahead isn't dated at.
+func leftoverCook(planned []*plans.CookWithPortions, served map[*plans.CookWithPortions]*plans.Cook, existing []*plans.Cook, ref *suggest.LeftoverRef, i int) (*plans.CookWithPortions, error) {
 	for _, cp := range planned {
+		if meal, ok := served[cp]; ok && ref.Matches(meal) {
+			return cp, nil
+		}
 		if ref.Matches(cp.Cook) {
 			return cp, nil
 		}
@@ -687,6 +726,8 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 		// leftover is the earlier meal it's the rest of, nil for a new
 		// cook.
 		leftover *suggest.LeftoverRef
+		// cookDate is the date to cook it, its date unless made ahead.
+		cookDate time.Time
 	}
 	var list []mealToPlan
 	seen := map[slotKey]bool{}
@@ -737,7 +778,21 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 				return nil, err
 			}
 		}
-		list = append(list, mealToPlan{recipeID, key, leftover})
+		cookDate := date
+		if m.GetCookDate() != "" {
+			if cookDate, err = parseDate(field+".cook_date", m.GetCookDate()); err != nil {
+				return nil, err
+			}
+			switch {
+			case leftover != nil:
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.cook_date is for a new cook, and leftover_of eats an earlier one: set one of them", field)
+			case cookDate.After(date) || cookDate.Before(date.AddDate(0, 0, -maxCookAheadDays)):
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.cook_date must be from %d days before its date to its date", field, maxCookAheadDays)
+			}
+		}
+		list = append(list, mealToPlan{recipeID, key, leftover, cookDate})
 		recipeIDs = append(recipeIDs, recipeID)
 	}
 	// The meals are split in order, each given the portions of those
@@ -753,6 +808,9 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 		if m.leftover != nil && m.leftover.Date.Before(from) {
 			from = m.leftover.Date
 		}
+		if m.cookDate.Before(from) {
+			from = m.cookDate
+		}
 	}
 	d, err := s.loadPlan(ctx, user.HouseholdID(), from, to, unique(recipeIDs)...)
 	if err != nil {
@@ -764,6 +822,9 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 	amounts := d.allPlanned()
 	eaters := map[people.Meal][]*people.Person{}
 	toCreate := make([]*plans.CookWithPortions, 0, len(list))
+	// The meals the shared meals' cooks are for, for leftovers of those
+	// made ahead.
+	served := map[*plans.CookWithPortions]*plans.Cook{}
 	for i, m := range list {
 		if _, ok := d.recipes[m.recipeID]; !ok {
 			return nil, connect.Errorf(connect.CodeNotFound, "the recipe for a meal on %s doesn't exist in your household; find recipes with ListRecipes",
@@ -781,7 +842,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			d.addPlanned(amounts, slot, m.recipeID, servings)
 			portion := &plans.Portion{PersonID: p.ID, EatingTimeID: m.eatingTimeID, Date: m.date, Servings: servings}
 			if m.leftover != nil {
-				cp, err := leftoverCook(toCreate, d.plan.Cooks, m.leftover, i)
+				cp, err := leftoverCook(toCreate, served, d.plan.Cooks, m.leftover, i)
 				if err != nil {
 					return nil, err
 				}
@@ -797,7 +858,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 				Cook: &plans.Cook{
 					HouseholdID: user.HouseholdID(),
 					RecipeID:    m.recipeID,
-					Date:        m.date,
+					Date:        m.cookDate,
 					Servings:    cookServings,
 				},
 				Portions: []*plans.Portion{portion},
@@ -837,16 +898,23 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			planned[share.Slot] += share.Servings * gramsPerServing
 			d.addPlanned(amounts, share.Slot, m.recipeID, share.Servings)
 		}
-		toCreate = append(toCreate, &plans.CookWithPortions{
+		// A cook made ahead isn't its cooking day's shared meal.
+		cookMeal := m.meal
+		if !m.cookDate.Equal(m.date) {
+			cookMeal = people.MealNone
+		}
+		cp := &plans.CookWithPortions{
 			Cook: &plans.Cook{
 				HouseholdID: user.HouseholdID(),
 				RecipeID:    m.recipeID,
-				Date:        m.date,
+				Date:        m.cookDate,
 				Servings:    split.Servings,
-				Meal:        m.meal,
+				Meal:        cookMeal,
 			},
 			Portions: portions,
-		})
+		}
+		served[cp] = &plans.Cook{RecipeID: m.recipeID, Date: m.date, Meal: m.meal}
+		toCreate = append(toCreate, cp)
 	}
 	// The cooks of the recipes' components are planned with them.
 	cooks, created, err := s.plans.CreateCooksWithPortions(ctx, withSuppliers(toCreate, d.recipes))
