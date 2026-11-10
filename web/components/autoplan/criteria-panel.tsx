@@ -21,7 +21,23 @@ export interface Criteria {
   maxMinutes: number;
   // The tags of recipes not to plan.
   excludeTags: string[];
+  /*
+   * The days of the week the household cooks, from 1 for Monday to 7 for
+   * Sunday, empty for every day.
+   */
+  cookingWeekdays: number[];
 }
+
+// WEEKDAYS are the days of the week, from Monday, with their initials.
+const WEEKDAYS: [number, string, string][] = [
+  [1, "M", "Monday"],
+  [2, "T", "Tuesday"],
+  [3, "W", "Wednesday"],
+  [4, "T", "Thursday"],
+  [5, "F", "Friday"],
+  [6, "S", "Saturday"],
+  [7, "S", "Sunday"],
+];
 
 // DAY_OPTIONS are the numbers of days to plan offered.
 const DAY_OPTIONS = [3, 5, 7, 10, 14];
@@ -202,6 +218,44 @@ const CriteriaPanel: React.FC<CriteriaPanelProps> = ({
                 Snacks
               </button>
             )}
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <span
+            className={labelClass}
+            title="The days you cook. Other days' meals are cooked on the cooking day before them, and eaten as leftovers. None for every day."
+          >
+            Cook on
+          </span>
+          <div className="flex gap-1" role="group" aria-label="Cooking days">
+            {WEEKDAYS.map(([day, initial, name]) => {
+              const active = criteria.cookingWeekdays.includes(day);
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  aria-pressed={active}
+                  aria-label={name}
+                  title={name}
+                  className={`${segment(active)} min-w-8 py-1.5 text-sm`}
+                  onClick={() => {
+                    set({
+                      cookingWeekdays: active
+                        ? criteria.cookingWeekdays.filter(
+                            (other) => other !== day
+                          )
+                        : WEEKDAYS.map(([other]) => other).filter(
+                            (other) =>
+                              other === day ||
+                              criteria.cookingWeekdays.includes(other)
+                          ),
+                    });
+                  }}
+                >
+                  {initial}
+                </button>
+              );
+            })}
           </div>
         </div>
         <label className="flex flex-col gap-1">

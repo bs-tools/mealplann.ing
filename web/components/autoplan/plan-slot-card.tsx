@@ -21,7 +21,7 @@ import {
 } from "@heroicons/react/24/outline";
 import type { PlanSlot, Suggestion } from "gen/suggestions/v1/suggestions_pb";
 import { PlanSlotState } from "gen/suggestions/v1/suggestions_pb";
-import { formatList } from "helpers/format";
+import { formatList, formatWeekday } from "helpers/format";
 import { formatAmount } from "helpers/nutrients";
 import { leftoverLabel, suggestionKey } from "helpers/suggestions";
 import React from "react";
@@ -198,6 +198,11 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
           {suggestion.leftoverOf !== undefined && (
             <span className="text-xs text-gray-600">
               {leftoverLabel(suggestion.leftoverOf)}, reheated
+            </span>
+          )}
+          {suggestion.cookDate !== "" && (
+            <span className="text-xs text-gray-600">
+              Cooked {formatWeekday(suggestion.cookDate)}, from the fridge
             </span>
           )}
         </div>

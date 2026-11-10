@@ -691,6 +691,11 @@ message MealToPlan {
   // by this request, or else already. SuggestRecipes and SuggestPlan
   // suggest these as their suggestions' leftover_of.
   LeftoverOf leftover_of = 6;
+  // The date to cook it (YYYY-MM-DD), up to 14 days before date, to batch
+  // cook it ahead and eat it as leftovers, like on the household's cooking
+  // day; empty to cook it on date. A cook made ahead isn't one of its
+  // date's shared meals. SuggestPlan suggests these as cook_date.
+  string cook_date = 7;
 }
 
 // LeftoverOf is an earlier shared meal whose cook a portion is the rest
