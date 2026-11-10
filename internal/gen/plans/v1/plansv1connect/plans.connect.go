@@ -67,6 +67,8 @@ const (
 	// PlanServiceTakeFromFreezerProcedure is the procedure name of the PlanService's TakeFromFreezer
 	// RPC.
 	PlanServiceTakeFromFreezerProcedure = "/plans.v1.PlanService/TakeFromFreezer"
+	// PlanServiceSetEatingOutProcedure is the procedure name of the PlanService's SetEatingOut RPC.
+	PlanServiceSetEatingOutProcedure = "/plans.v1.PlanService/SetEatingOut"
 )
 
 var (
@@ -210,6 +212,13 @@ var (
 			Procedure:  PlanServiceTakeFromFreezerProcedure,
 		}
 	})
+	planServiceSetEatingOutSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("SetEatingOut"),
+			Procedure:  PlanServiceSetEatingOutProcedure,
+		}
+	})
 )
 
 // PlanServiceClient is a client for the plans.v1.PlanService service.
@@ -334,6 +343,19 @@ type PlanServiceClient interface {
 	// eaten a few days later, and is marked from_freezer. Fails with
 	// FAILED_PRECONDITION if the freezer has fewer of them.
 	TakeFromFreezer(context.Context, *v1.TakeFromFreezerRequest) (*v1.TakeFromFreezerResponse, error)
+	// Mark that people eat out at a meal on a date, like lunch at a
+	// restaurant or dinner at a friend's, or stop marking it: either a
+	// shared meal, for everyone who eats it or the people given, or one
+	// person's eating time. Nothing is planned there: PlanMeal, PlanMeals
+	// and the suggestions (see SuggestionService) leave them out, their
+	// staples at it are left out of the day's nutrition and shopping, as if
+	// skipped, and GetWeek shows it eaten out, with what it eats unknown, so
+	// the day's minimums are uncertain. Fails with FAILED_PRECONDITION if
+	// something is planned there already, as a portion or a staple marked
+	// eaten: remove it with DeletePortion, or un-mark it with
+	// SetStapleEaten, first. Marking an eating time already eaten out at
+	// changes its notes.
+	SetEatingOut(context.Context, *v1.SetEatingOutRequest) (*v1.SetEatingOutResponse, error)
 }
 
 // NewPlanServiceClient constructs a client for the plans.v1.PlanService service. Multiple service
@@ -464,6 +486,19 @@ type PlanServiceHandler interface {
 	// eaten a few days later, and is marked from_freezer. Fails with
 	// FAILED_PRECONDITION if the freezer has fewer of them.
 	TakeFromFreezer(context.Context, *v1.TakeFromFreezerRequest) (*v1.TakeFromFreezerResponse, error)
+	// Mark that people eat out at a meal on a date, like lunch at a
+	// restaurant or dinner at a friend's, or stop marking it: either a
+	// shared meal, for everyone who eats it or the people given, or one
+	// person's eating time. Nothing is planned there: PlanMeal, PlanMeals
+	// and the suggestions (see SuggestionService) leave them out, their
+	// staples at it are left out of the day's nutrition and shopping, as if
+	// skipped, and GetWeek shows it eaten out, with what it eats unknown, so
+	// the day's minimums are uncertain. Fails with FAILED_PRECONDITION if
+	// something is planned there already, as a portion or a staple marked
+	// eaten: remove it with DeletePortion, or un-mark it with
+	// SetStapleEaten, first. Marking an eating time already eaten out at
+	// changes its notes.
+	SetEatingOut(context.Context, *v1.SetEatingOutRequest) (*v1.SetEatingOutResponse, error)
 }
 
 // RegisterPlanServiceHandler registers svc as the plans.v1.PlanService implementation on server.
@@ -490,6 +525,7 @@ func RegisterPlanServiceHandler(server *connect.Server, svc PlanServiceHandler) 
 		connect.Method{Spec: planServiceSetStapleEatenSpec(), Handler: adapter.setStapleEaten},
 		connect.Method{Spec: planServiceListFrozenLeftoversSpec(), Handler: adapter.listFrozenLeftovers},
 		connect.Method{Spec: planServiceTakeFromFreezerSpec(), Handler: adapter.takeFromFreezer},
+		connect.Method{Spec: planServiceSetEatingOutSpec(), Handler: adapter.setEatingOut},
 	)
 }
 
@@ -574,6 +610,10 @@ func (UnimplementedPlanServiceHandler) ListFrozenLeftovers(context.Context, *v1.
 
 func (UnimplementedPlanServiceHandler) TakeFromFreezer(context.Context, *v1.TakeFromFreezerRequest) (*v1.TakeFromFreezerResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.TakeFromFreezer is not implemented")
+}
+
+func (UnimplementedPlanServiceHandler) SetEatingOut(context.Context, *v1.SetEatingOutRequest) (*v1.SetEatingOutResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.SetEatingOut is not implemented")
 }
 
 type planServiceClient struct {
@@ -735,6 +775,14 @@ func (c *planServiceClient) ListFrozenLeftovers(ctx context.Context, req *v1.Lis
 func (c *planServiceClient) TakeFromFreezer(ctx context.Context, req *v1.TakeFromFreezerRequest) (*v1.TakeFromFreezerResponse, error) {
 	var res v1.TakeFromFreezerResponse
 	if err := c.client.CallUnary(ctx, planServiceTakeFromFreezerSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) SetEatingOut(ctx context.Context, req *v1.SetEatingOutRequest) (*v1.SetEatingOutResponse, error) {
+	var res v1.SetEatingOutResponse
+	if err := c.client.CallUnary(ctx, planServiceSetEatingOutSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -976,6 +1024,18 @@ func (h planServiceHandler) takeFromFreezer(ctx context.Context, _ connect.Spec,
 		return err
 	}
 	res, err := h.svc.TakeFromFreezer(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) setEatingOut(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SetEatingOutRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SetEatingOut(ctx, &req)
 	if err != nil {
 		return err
 	}

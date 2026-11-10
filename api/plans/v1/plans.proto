@@ -158,6 +158,19 @@ service PlanService {
   // eaten a few days later, and is marked from_freezer. Fails with
   // FAILED_PRECONDITION if the freezer has fewer of them.
   rpc TakeFromFreezer(TakeFromFreezerRequest) returns (TakeFromFreezerResponse);
+  // Mark that people eat out at a meal on a date, like lunch at a
+  // restaurant or dinner at a friend's, or stop marking it: either a
+  // shared meal, for everyone who eats it or the people given, or one
+  // person's eating time. Nothing is planned there: PlanMeal, PlanMeals
+  // and the suggestions (see SuggestionService) leave them out, their
+  // staples at it are left out of the day's nutrition and shopping, as if
+  // skipped, and GetWeek shows it eaten out, with what it eats unknown, so
+  // the day's minimums are uncertain. Fails with FAILED_PRECONDITION if
+  // something is planned there already, as a portion or a staple marked
+  // eaten: remove it with DeletePortion, or un-mark it with
+  // SetStapleEaten, first. Marking an eating time already eaten out at
+  // changes its notes.
+  rpc SetEatingOut(SetEatingOutRequest) returns (SetEatingOutResponse);
 }
 
 // A recipe made on a date, for a number of servings.
@@ -525,6 +538,11 @@ message PlannedEatingTime {
   foods.v1.Nutrients nutrients = 4;
   // The warnings of the eating time, including those of its leftovers.
   repeated Warning warnings = 5;
+  // Whether the person eats out at it on the date (see SetEatingOut), so
+  // nothing is planned there, and its staples are left out.
+  bool eating_out = 6;
+  // The notes of eating out, like where.
+  string eating_out_notes = 7;
 }
 
 // A portion or staple planned at an eating time.
@@ -986,3 +1004,26 @@ message SetCookSupplierResponse {
   // The cook using the component, with its supplies.
   Cook cook = 1;
 }
+
+message SetEatingOutRequest {
+  // The date (YYYY-MM-DD). Required.
+  string date = 1;
+  // The shared meal eaten out, for everyone who eats it, or person_ids.
+  // Leave it unset to mark one person's eating time with person_id and
+  // eating_time_id instead.
+  people.v1.HouseholdMeal meal = 2;
+  // The people who eat the shared meal out, of those who eat it; empty
+  // for everyone who does.
+  repeated string person_ids = 3;
+  // The person, with eating_time_id, to mark one eating time of, when meal
+  // is unset.
+  string person_id = 4;
+  // The eating time of person_id, when meal is unset.
+  string eating_time_id = 5;
+  // Whether they eat out: false to stop marking it, to plan it again.
+  bool eating_out = 6;
+  // Where, or anything else to remember, e.g. "Sam's birthday".
+  string notes = 7;
+}
+
+message SetEatingOutResponse {}

@@ -93,7 +93,7 @@ func (s *Service) SuggestRecipes(ctx context.Context, req *suggestionsv1.Suggest
 		// People with a staple at the meal eat it instead, unless they're
 		// asked for.
 		if len(personIDs) == 0 {
-			if in.People, _ = withoutStapled(in.People, d.plan.Staples, in.Meal, date); len(in.People) == 0 {
+			if in.People, _, _ = withoutStapled(in.People, d.plan, in.Meal, date); len(in.People) == 0 {
 				return nil, allStapled(in.Meal, date)
 			}
 		}

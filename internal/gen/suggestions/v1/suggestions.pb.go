@@ -178,6 +178,8 @@ const (
 	// shared meal of the plan there, as it's more than their
 	// max_portion_grams.
 	PlanSlotState_PLAN_SLOT_STATE_FILLED_BY_MEAL PlanSlotState = 6
+	// Nothing, as everyone eats out there (see PlanService.SetEatingOut).
+	PlanSlotState_PLAN_SLOT_STATE_EATING_OUT PlanSlotState = 7
 )
 
 // Enum value maps for PlanSlotState.
@@ -190,6 +192,7 @@ var (
 		4: "PLAN_SLOT_STATE_PLANNED",
 		5: "PLAN_SLOT_STATE_UNFILLED",
 		6: "PLAN_SLOT_STATE_FILLED_BY_MEAL",
+		7: "PLAN_SLOT_STATE_EATING_OUT",
 	}
 	PlanSlotState_value = map[string]int32{
 		"PLAN_SLOT_STATE_UNSPECIFIED":    0,
@@ -199,6 +202,7 @@ var (
 		"PLAN_SLOT_STATE_PLANNED":        4,
 		"PLAN_SLOT_STATE_UNFILLED":       5,
 		"PLAN_SLOT_STATE_FILLED_BY_MEAL": 6,
+		"PLAN_SLOT_STATE_EATING_OUT":     7,
 	}
 )
 
@@ -2182,7 +2186,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\fEMPHASIS_OFF\x10\x01\x12\x10\n" +
 	"\fEMPHASIS_LOW\x10\x02\x12\x13\n" +
 	"\x0fEMPHASIS_NORMAL\x10\x03\x12\x11\n" +
-	"\rEMPHASIS_HIGH\x10\x04*\xe5\x01\n" +
+	"\rEMPHASIS_HIGH\x10\x04*\x85\x02\n" +
 	"\rPlanSlotState\x12\x1f\n" +
 	"\x1bPLAN_SLOT_STATE_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19PLAN_SLOT_STATE_SUGGESTED\x10\x01\x12\x18\n" +
@@ -2190,7 +2194,8 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x17PLAN_SLOT_STATE_SKIPPED\x10\x03\x12\x1b\n" +
 	"\x17PLAN_SLOT_STATE_PLANNED\x10\x04\x12\x1c\n" +
 	"\x18PLAN_SLOT_STATE_UNFILLED\x10\x05\x12\"\n" +
-	"\x1ePLAN_SLOT_STATE_FILLED_BY_MEAL\x10\x062\xcc\x01\n" +
+	"\x1ePLAN_SLOT_STATE_FILLED_BY_MEAL\x10\x06\x12\x1e\n" +
+	"\x1aPLAN_SLOT_STATE_EATING_OUT\x10\a2\xcc\x01\n" +
 	"\x11SuggestionService\x12_\n" +
 	"\x0eSuggestRecipes\x12%.suggestions.v1.SuggestRecipesRequest\x1a&.suggestions.v1.SuggestRecipesResponse\x12V\n" +
 	"\vSuggestPlan\x12\".suggestions.v1.SuggestPlanRequest\x1a#.suggestions.v1.SuggestPlanResponseB\xcc\x01\n" +

@@ -2,6 +2,7 @@ import ConfirmButton from "@components/ui/confirm-button";
 import { iconButton } from "@components/ui/styles";
 import {
   ArrowUturnLeftIcon,
+  BuildingStorefrontIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   PencilIcon,
@@ -274,6 +275,8 @@ interface EatingTimeBlockProps {
   // The staples skipped at it on its date, which can be brought back.
   skipped: Staple[];
   onUnskip: (staple: Staple) => void;
+  // Marks the person eating out at it, or eating at home again.
+  onEatingOut: (eatingOut: boolean) => void;
 }
 
 /**
@@ -291,6 +294,7 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
   onEaten,
   skipped,
   onUnskip,
+  onEatingOut,
 }) => {
   const et = planned.eatingTime;
   const main = et?.kind === EatingTimeKind.MAIN;
@@ -319,18 +323,52 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
             {formatAmount(planned.grams)} g
           </span>
         )}
-        <button
-          type="button"
-          className={`${iconButton} print:hidden`}
-          disabled={disabled}
-          aria-label={`Add to ${et?.name ?? "eating time"}`}
-          title="Add a food or leftovers"
-          onClick={onAdd}
-        >
-          <PlusIcon className="size-4" />
-        </button>
+        {!planned.eatingOut && (
+          <button
+            type="button"
+            className={`${iconButton} print:hidden`}
+            disabled={disabled}
+            aria-label={`Add to ${et?.name ?? "eating time"}`}
+            title="Add a food or leftovers"
+            onClick={onAdd}
+          >
+            <PlusIcon className="size-4" />
+          </button>
+        )}
       </div>
-      {empty ? (
+      {planned.eatingOut && (
+        <div className="flex items-center gap-2">
+          <p className="flex min-w-0 grow items-center gap-1 text-sm text-gray-600">
+            <BuildingStorefrontIcon
+              className="size-4 shrink-0 text-gray-500"
+              aria-hidden="true"
+            />
+            <span>
+              Eating out
+              {planned.eatingOutNotes !== "" && (
+                <span className="text-gray-500">
+                  {" "}
+                  · {planned.eatingOutNotes}
+                </span>
+              )}
+            </span>
+          </p>
+          <button
+            type="button"
+            className="inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 print:hidden"
+            disabled={disabled}
+            aria-label={`Plan ${et?.name ?? "this eating time"} at home`}
+            title="Plan it at home again, with its staples"
+            onClick={() => {
+              onEatingOut(false);
+            }}
+          >
+            <ArrowUturnLeftIcon className="size-3.5" aria-hidden="true" />
+            Eat at home
+          </button>
+        </div>
+      )}
+      {!planned.eatingOut && empty && (
         <div className="flex items-center gap-2">
           <p className="text-xs text-gray-400">Nothing planned</p>
           <button
@@ -343,8 +381,22 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
             <SparklesIcon className="size-3.5" aria-hidden="true" />
             Suggest
           </button>
+          <button
+            type="button"
+            className="inline-flex items-center gap-0.5 rounded px-1 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50 print:hidden"
+            disabled={disabled}
+            title="Eating out: leave it out of the plan, with its staples"
+            aria-label={`Eating out at ${et?.name ?? "this eating time"}`}
+            onClick={() => {
+              onEatingOut(true);
+            }}
+          >
+            <BuildingStorefrontIcon className="size-3.5" aria-hidden="true" />
+            Eating out
+          </button>
         </div>
-      ) : (
+      )}
+      {!empty && (
         <ul className="mt-1 flex flex-col gap-1">
           {planned.portions.map((portion) => (
             <PortionRow

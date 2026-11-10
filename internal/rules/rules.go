@@ -222,6 +222,9 @@ type Day struct {
 	// Unplanned is how many of the person's eating times have nothing
 	// planned.
 	Unplanned int
+	// EatingOut is how many of them the person eats out at, whose food
+	// isn't known.
+	EatingOut int
 }
 
 // CheckDay checks a person's day against their daily targets. A day with
@@ -236,7 +239,7 @@ func CheckDay(targets []Target, day *Day) []Warning {
 		value, complete := a.Value(t.Nutrient)
 		label, unit := t.Nutrient.Label(), t.Nutrient.Unit()
 		if t.Min != nil && value < *t.Min-roundingSlack {
-			uncertain := !complete || day.Unplanned > 0
+			uncertain := !complete || day.Unplanned > 0 || day.EatingOut > 0
 			w := Warning{Kind: TargetLow, Uncertain: uncertain, Nutrient: t.Nutrient, Value: value, Limit: *t.Min}
 			if complete {
 				w.Message = fmt.Sprintf("%s is %s %s, under the daily minimum of %s %s: add foods rich in %s.",
@@ -247,6 +250,9 @@ func CheckDay(targets []Target, day *Day) []Warning {
 			}
 			if day.Unplanned > 0 {
 				w.Message += fmt.Sprintf(" %d eating %s still unplanned.", day.Unplanned, plural(day.Unplanned, "time is", "times are"))
+			}
+			if day.EatingOut > 0 {
+				w.Message += fmt.Sprintf(" %d eating %s eaten out, which isn't counted.", day.EatingOut, plural(day.EatingOut, "time is", "times are"))
 			}
 			warnings = append(warnings, w)
 		}

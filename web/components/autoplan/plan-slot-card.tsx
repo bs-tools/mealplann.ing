@@ -3,7 +3,9 @@ import { Badge } from "@components/ui/misc";
 import { iconButton } from "@components/ui/styles";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import {
+  ArrowUturnLeftIcon,
   ArrowsRightLeftIcon,
+  BuildingStorefrontIcon,
   CheckCircleIcon,
   LockClosedIcon,
   LockOpenIcon,
@@ -40,6 +42,8 @@ interface PlanSlotCardProps {
   onSwap: (alternative: Suggestion) => void;
   onSkip: () => void;
   onFill: () => void;
+  // Marks everyone at the slot eating out, or eating at home again.
+  onEatingOut: (eatingOut: boolean) => void;
 }
 
 /**
@@ -58,6 +62,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
   onSwap,
   onSkip,
   onFill,
+  onEatingOut,
 }) => {
   const delay = { animationDelay: `${Math.min(index * 40, 800)}ms` };
   const header = (
@@ -93,6 +98,31 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
             >
               <PlusIcon className="size-3.5" aria-hidden="true" />
               Suggest one
+            </button>
+          </div>
+        );
+        break;
+      }
+      case PlanSlotState.EATING_OUT: {
+        body = (
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1.5 text-sm text-gray-600">
+              <BuildingStorefrontIcon
+                className="size-4 shrink-0 text-gray-500"
+                aria-hidden="true"
+              />
+              Eating out
+            </span>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+              disabled={disabled}
+              onClick={() => {
+                onEatingOut(false);
+              }}
+            >
+              <ArrowUturnLeftIcon className="size-3.5" aria-hidden="true" />
+              Eat at home
             </button>
           </div>
         );
@@ -232,6 +262,18 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
               </MenuItems>
             </Menu>
           )}
+          <button
+            type="button"
+            className={iconButton}
+            aria-label="Eating out"
+            title="Eating out: leave it out of the plan, and of the next plans too"
+            disabled={disabled}
+            onClick={() => {
+              onEatingOut(true);
+            }}
+          >
+            <BuildingStorefrontIcon className="size-4" />
+          </button>
           <button
             type="button"
             className={iconButton}

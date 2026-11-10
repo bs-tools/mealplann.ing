@@ -223,3 +223,21 @@ export const listFrozenLeftovers = PlanService.method.listFrozenLeftovers;
  * @generated from rpc plans.v1.PlanService.TakeFromFreezer
  */
 export const takeFromFreezer = PlanService.method.takeFromFreezer;
+
+/**
+ * Mark that people eat out at a meal on a date, like lunch at a
+ * restaurant or dinner at a friend's, or stop marking it: either a
+ * shared meal, for everyone who eats it or the people given, or one
+ * person's eating time. Nothing is planned there: PlanMeal, PlanMeals
+ * and the suggestions (see SuggestionService) leave them out, their
+ * staples at it are left out of the day's nutrition and shopping, as if
+ * skipped, and GetWeek shows it eaten out, with what it eats unknown, so
+ * the day's minimums are uncertain. Fails with FAILED_PRECONDITION if
+ * something is planned there already, as a portion or a staple marked
+ * eaten: remove it with DeletePortion, or un-mark it with
+ * SetStapleEaten, first. Marking an eating time already eaten out at
+ * changes its notes.
+ *
+ * @generated from rpc plans.v1.PlanService.SetEatingOut
+ */
+export const setEatingOut = PlanService.method.setEatingOut;
