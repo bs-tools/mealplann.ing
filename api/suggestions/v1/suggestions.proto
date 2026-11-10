@@ -408,7 +408,7 @@ message PlanSlot {
   // for SUGGESTED and KEPT.
   Suggestion suggestion = 4;
   // The next best recipes for the slot, given the rest of the plan, best
-  // first, for SUGGESTED.
+  // first, for SUGGESTED and KEPT.
   repeated Suggestion alternatives = 5;
   // The recipes of the cooks already planned at the slot, for PLANNED.
   repeated string planned_recipe_names = 6;

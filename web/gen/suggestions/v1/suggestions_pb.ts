@@ -628,7 +628,7 @@ export type PlanSlot = Message<"suggestions.v1.PlanSlot"> & {
 
   /**
    * The next best recipes for the slot, given the rest of the plan, best
-   * first, for SUGGESTED.
+   * first, for SUGGESTED and KEPT.
    *
    * @generated from field: repeated suggestions.v1.Suggestion alternatives = 5;
    */

@@ -1955,7 +1955,7 @@ type PlanSlot_builder struct {
 	// for SUGGESTED and KEPT.
 	Suggestion *Suggestion
 	// The next best recipes for the slot, given the rest of the plan, best
-	// first, for SUGGESTED.
+	// first, for SUGGESTED and KEPT.
 	Alternatives []*Suggestion
 	// The recipes of the cooks already planned at the slot, for PLANNED.
 	PlannedRecipeNames []string
