@@ -192,11 +192,65 @@ type Plan struct {
 	// range, by the consumer's date. They're also in the cooks' Supplies
 	// and Supplying.
 	Supplies []*Supply
+	// EatingOut are the eating times people eat out at in the range, by
+	// date.
+	EatingOut []*EatingOut
 }
 
-// StapleOccurrences returns the staples on each date of the plan.
+// EatingOut is a person's eating time on a date that they eat out at, like
+// lunch at a restaurant: nothing is planned there.
+type EatingOut struct {
+	PersonID     pgtype.UUID
+	EatingTimeID pgtype.UUID
+	// Date is the date, at midnight UTC.
+	Date  time.Time
+	Notes string
+}
+
+// Slot returns the slot eaten out at.
+func (e *EatingOut) Slot() Slot {
+	return Slot{PersonID: e.PersonID, EatingTimeID: e.EatingTimeID, Date: e.Date}
+}
+
+// EatingOutAt returns the person's eating out at a slot, or nil if they
+// don't eat out there.
+func (p *Plan) EatingOutAt(slot Slot) *EatingOut {
+	for _, e := range p.EatingOut {
+		if e.Slot() == slot {
+			return e
+		}
+	}
+	return nil
+}
+
+// EatingOutSlots returns the slots people eat out at, or nil for a nil
+// plan.
+func (p *Plan) EatingOutSlots() map[Slot]bool {
+	if p == nil {
+		return nil
+	}
+	slots := map[Slot]bool{}
+	for _, e := range p.EatingOut {
+		slots[e.Slot()] = true
+	}
+	return slots
+}
+
+// StapleOccurrences returns the staples on each date of the plan, but those
+// at eating times eaten out at, which aren't eaten, as if skipped.
 func (p *Plan) StapleOccurrences() []Occurrence {
-	return ExpandStaples(p.Staples, p.From, p.To)
+	all := ExpandStaples(p.Staples, p.From, p.To)
+	if len(p.EatingOut) == 0 {
+		return all
+	}
+	occurrences := all[:0]
+	for _, o := range all {
+		slot := Slot{PersonID: o.Staple.PersonID, EatingTimeID: o.Staple.EatingTimeID, Date: o.Date}
+		if p.EatingOutAt(slot) == nil {
+			occurrences = append(occurrences, o)
+		}
+	}
+	return occurrences
 }
 
 // Repository stores plans.
@@ -217,8 +271,16 @@ func (r *Repository) GetPlan(ctx context.Context, householdID pgtype.UUID, from,
 	var staples []*gen.ListStaplesRow
 	var skips []*gen.StapleSkip
 	var eaten []*gen.ListStapleEatenDatesRow
+	var out []*gen.EatingOut
 	fromDate, toDate := store.DateToPG(from), store.DateToPG(to)
 	var b store.Batch
+	b.Read(func(db store.Querier) error {
+		var err error
+		out, err = gen.New(db).ListEatingOut(ctx, &gen.ListEatingOutParams{
+			HouseholdID: householdID, FromDate: fromDate, ToDate: toDate,
+		})
+		return err
+	})
 	b.Read(func(db store.Querier) error {
 		var err error
 		cooks, err = gen.New(db).ListCooks(ctx, &gen.ListCooksParams{
@@ -277,7 +339,40 @@ func (r *Repository) GetPlan(ctx context.Context, householdID pgtype.UUID, from,
 		plan.Portions = append(plan.Portions, portionFromDB(row))
 	}
 	plan.Staples = staplesFromDB(staples, skips, eaten)
+	for _, row := range out {
+		plan.EatingOut = append(plan.EatingOut, &EatingOut{
+			PersonID:     row.PersonID,
+			EatingTimeID: row.EatingTimeID,
+			Date:         store.DateFromPG(row.Date),
+			Notes:        row.Notes,
+		})
+	}
 	return plan, nil
+}
+
+// SetEatingOut marks the household's people as eating out at slots, with
+// notes, or stops marking them. The slots' people and eating times must be
+// the household's.
+func (r *Repository) SetEatingOut(ctx context.Context, householdID pgtype.UUID, slots []Slot, out bool, notes string) error {
+	var b store.Batch
+	q := gen.New(&b)
+	for _, slot := range slots {
+		if out {
+			_ = q.SetEatingOut(ctx, &gen.SetEatingOutParams{
+				HouseholdID: householdID, PersonID: slot.PersonID, EatingTimeID: slot.EatingTimeID,
+				Date: store.DateToPG(slot.Date), Notes: notes,
+			})
+		} else {
+			_ = q.DeleteEatingOut(ctx, &gen.DeleteEatingOutParams{
+				HouseholdID: householdID, PersonID: slot.PersonID, EatingTimeID: slot.EatingTimeID,
+				Date: store.DateToPG(slot.Date),
+			})
+		}
+	}
+	if err := b.Send(ctx, r.db); err != nil {
+		return writeError("set eating out", err)
+	}
+	return nil
 }
 
 // GetCook gets a household's cook. It returns store.ErrNotFound if the

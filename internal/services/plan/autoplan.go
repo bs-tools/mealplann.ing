@@ -360,12 +360,19 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 			plannedNames[key] = append(plannedNames[key], it.name())
 		}
 	}
+	// A slot everyone eats out at is left out.
+	eatingOut := map[slotKey]bool{}
+	for _, e := range d.plan.EatingOut {
+		eatingOut[personalSlot(e.Date, e.PersonID, e.EatingTimeID)] = true
+	}
 	toChoose := 0
 	slotOf := map[slotKey]*suggest.PlanSlot{}
 	addSlot := func(key slotKey, slot *suggest.PlanSlot) {
 		keys = append(keys, key)
 		id, chosen := choices[key]
 		switch {
+		case eatingOut[key]:
+			states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_EATING_OUT
 		case len(plannedNames[key]) > 0:
 			states[key] = suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_PLANNED
 		case chosen && !id.Valid:
@@ -393,11 +400,14 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 			// People with a staple at the meal eat it instead; with
 			// everyone's, the meal is planned already.
 			key := slotKey{date: date, meal: meal}
-			eating, staples := withoutStapled(eaters[meal], d.plan.Staples, meal, date)
+			eating, staples, out := withoutStapled(eaters[meal], d.plan, meal, date)
 			// People with portions at the meal already, like leftovers or
 			// a frozen serving, have it planned: suggesting a recipe too
 			// would plan them two meals.
 			eating, portions := d.withoutPortions(eating, meal, date)
+			if len(eating) == 0 && out > 0 && len(staples) == 0 && len(portions) == 0 {
+				eatingOut[key] = true
+			}
 			if len(eating) == 0 {
 				plannedNames[key] = append(plannedNames[key], staples...)
 				for _, name := range portions {
@@ -772,7 +782,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 				return nil, err
 			}
 		}
-		eating, _ := withoutStapled(eaters[m.meal], d.plan.Staples, m.meal, m.date)
+		eating, _, _ := withoutStapled(eaters[m.meal], d.plan, m.meal, m.date)
 		if len(eating) == 0 {
 			return nil, allStapled(m.meal, m.date)
 		}
@@ -782,6 +792,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			People:          eating,
 			GramsPerServing: gramsPerServing,
 			PlannedGrams:    planned,
+			EatingOut:       d.plan.EatingOutSlots(),
 		})
 		if err != nil {
 			return nil, s.toConnectError(ctx, err, "failed to split meal", "")

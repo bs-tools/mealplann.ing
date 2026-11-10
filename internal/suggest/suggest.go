@@ -573,6 +573,7 @@ func (s *scorer) portion(c *candidate) {
 			People:          s.in.People,
 			GramsPerServing: gramsPerServing,
 			PlannedGrams:    s.plannedGrams,
+			EatingOut:       s.in.Week.EatingOutSlots(),
 		})
 		if err != nil {
 			// The people are checked to eat from the meal, so this is a

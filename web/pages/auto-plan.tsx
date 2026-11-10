@@ -21,12 +21,19 @@ import {
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
-import { planMeals } from "gen/plans/v1/plans-PlanService_connectquery";
+import {
+  planMeals,
+  setEatingOut,
+} from "gen/plans/v1/plans-PlanService_connectquery";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import { suggestPlan } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
 import type { PlanSlot, Suggestion } from "gen/suggestions/v1/suggestions_pb";
-import { Emphasis, PlanSlotState } from "gen/suggestions/v1/suggestions_pb";
+import {
+  Emphasis,
+  PlanSlotState,
+  SuggestionService,
+} from "gen/suggestions/v1/suggestions_pb";
 import { addDays, startOfWeek, today } from "helpers/dates";
 import { formatShortDate, formatWeekday } from "helpers/format";
 import { useDebouncedValue } from "helpers/hooks";
@@ -296,6 +303,25 @@ const AutoPlanPage: React.FC = () => {
     },
   });
 
+  // Eating out is saved in the plan, and planned around from then on.
+  const eatOut = useMutation(setEatingOut, {
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [PlanService, SuggestionService]);
+    },
+  });
+  const markEatingOut = (slot: PlanSlot, eatingOut: boolean) => {
+    eatOut.mutate(
+      slot.eatingTimeId === ""
+        ? { date: slot.date, eatingOut, meal: slot.meal }
+        : {
+            date: slot.date,
+            eatingOut,
+            eatingTimeId: slot.eatingTimeId,
+            personId: slot.personId,
+          }
+    );
+  };
+
   const changeCriteria = (next: Criteria) => {
     setCriteria(next);
     const { start: _start, ...remembered } = next;
@@ -339,7 +365,7 @@ const AutoPlanPage: React.FC = () => {
   const breaking = toSave.filter(
     (slot) => slot.suggestion?.fitsRules === false
   ).length;
-  const busy = plan.isFetching || save.isPending;
+  const busy = plan.isFetching || save.isPending || eatOut.isPending;
   const repeats = repeatNotes(toSave);
   let content: React.ReactNode = null;
   if (people.isPending) {
@@ -466,6 +492,9 @@ const AutoPlanPage: React.FC = () => {
                       onFill={() => {
                         setReplanned(choose(slot, undefined));
                       }}
+                      onEatingOut={(eatingOut) => {
+                        markEatingOut(slot, eatingOut);
+                      }}
                     />
                   );
                 })}
@@ -557,7 +586,7 @@ const AutoPlanPage: React.FC = () => {
           </div>
         }
       />
-      <ErrorText error={save.error} />
+      <ErrorText error={save.error ?? eatOut.error} />
       {showCriteria && (
         <Card title="What matters this time">
           <CriteriaPanel

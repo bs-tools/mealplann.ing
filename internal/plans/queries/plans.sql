@@ -305,3 +305,21 @@ where cooks.household_id = @household_id
   and not cooks.done
   and not exists (select 1 from portions p where p.cook_id = cooks.id)
   and not exists (select 1 from cook_supplies s where s.supplier_cook_id = cooks.id);
+
+-- name: ListEatingOut :many
+-- The eating times the household's people eat out at, in a range of dates.
+select * from eating_out
+where household_id = @household_id
+  and date >= sqlc.arg(from_date)::date and date <= sqlc.arg(to_date)::date
+order by date, person_id, eating_time_id;
+
+-- name: SetEatingOut :exec
+-- Mark a person's eating time on a date as eaten out, or change its notes.
+insert into eating_out (household_id, person_id, eating_time_id, date, notes)
+values (@household_id, @person_id, @eating_time_id, @date, @notes)
+on conflict (person_id, eating_time_id, date) do update set notes = excluded.notes;
+
+-- name: DeleteEatingOut :exec
+delete from eating_out
+where household_id = @household_id and person_id = @person_id
+  and eating_time_id = @eating_time_id and date = @date;

@@ -264,6 +264,8 @@ interface DayCardProps {
   // The household's staples, to show those skipped on the day.
   staples: Staple[];
   onUnskip: (staple: Staple, date: string) => void;
+  // Marks a person eating out at an eating time, or eating at home again.
+  onEatingOut: (slot: Slot, eatingOut: boolean) => void;
   onCookDone: (planned: PlannedCook, done: boolean) => void;
   onCookDelete: (planned: PlannedCook) => void;
 }
@@ -288,6 +290,7 @@ const DayCard: React.FC<DayCardProps> = ({
   onStapleEaten,
   staples,
   onUnskip,
+  onEatingOut,
   costs,
   onCookDone,
   onCookDelete,
@@ -410,6 +413,9 @@ const DayCard: React.FC<DayCardProps> = ({
                       )}
                       onUnskip={(staple) => {
                         onUnskip(staple, day.date);
+                      }}
+                      onEatingOut={(eatingOut) => {
+                        onEatingOut(slot, eatingOut);
                       }}
                     />
                   );

@@ -40,6 +40,9 @@ type SplitInput struct {
 	PlannedGrams map[Slot]float64
 	// Servings is how many servings to cook, 0 for one per person.
 	Servings float64
+	// EatingOut are the slots people eat out at, which the rest of a
+	// serving doesn't go to.
+	EatingOut map[Slot]bool
 }
 
 // Split is a shared meal split into portions.
@@ -131,6 +134,9 @@ func SplitMeal(in *SplitInput) (*Split, error) {
 		for _, slot := range slots {
 			if remaining < minShare {
 				break
+			}
+			if in.EatingOut[slot] {
+				continue
 			}
 			room := (*limit - planned[slot]) / in.GramsPerServing
 			share := min(remaining, floorStep(room))

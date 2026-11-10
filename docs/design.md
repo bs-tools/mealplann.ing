@@ -241,6 +241,12 @@ concurrent edits make a cycle.
 - Staples aren't copied into each week: reading a plan expands them on
   the dates they're on, less the dates they're skipped, in one place that
   the shopping list reuses.
+- A person can **eat out** at an eating time on a date, like lunch at a
+  restaurant, or a whole shared meal can be marked eaten out for everyone.
+  Nothing is planned there: planning a meal and suggestions leave those
+  people out, the rest of a capped serving doesn't spill into it, and its
+  staples are left out of the nutrition and shopping, as if skipped. What's
+  eaten out is unknown, so the day's minimums are only uncertain.
 - Each day shows, for each person, their eating times, what they eat at
   each, the totals against their daily targets, and any rule warnings.
   Nutrients some foods lack are lower bounds, so a "low" warning on them

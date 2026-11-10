@@ -225,6 +225,29 @@ func (q *Queries) DeleteCook(ctx context.Context, arg *DeleteCookParams) (int64,
 	return result.RowsAffected(), nil
 }
 
+const deleteEatingOut = `-- name: DeleteEatingOut :exec
+delete from eating_out
+where household_id = $1 and person_id = $2
+  and eating_time_id = $3 and date = $4
+`
+
+type DeleteEatingOutParams struct {
+	HouseholdID  pgtype.UUID
+	PersonID     pgtype.UUID
+	EatingTimeID pgtype.UUID
+	Date         pgtype.Date
+}
+
+func (q *Queries) DeleteEatingOut(ctx context.Context, arg *DeleteEatingOutParams) error {
+	_, err := q.db.Exec(ctx, deleteEatingOut,
+		arg.HouseholdID,
+		arg.PersonID,
+		arg.EatingTimeID,
+		arg.Date,
+	)
+	return err
+}
+
 const deleteOrphanSuppliers = `-- name: DeleteOrphanSuppliers :exec
 delete from cooks
 where cooks.household_id = $1
@@ -489,6 +512,47 @@ func (q *Queries) ListCooks(ctx context.Context, arg *ListCooksParams) ([]*ListC
 			&i.AssignedServings,
 			&i.LateServings,
 			&i.SuppliedServings,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listEatingOut = `-- name: ListEatingOut :many
+select household_id, person_id, eating_time_id, date, notes, create_time from eating_out
+where household_id = $1
+  and date >= $2::date and date <= $3::date
+order by date, person_id, eating_time_id
+`
+
+type ListEatingOutParams struct {
+	HouseholdID pgtype.UUID
+	FromDate    pgtype.Date
+	ToDate      pgtype.Date
+}
+
+// The eating times the household's people eat out at, in a range of dates.
+func (q *Queries) ListEatingOut(ctx context.Context, arg *ListEatingOutParams) ([]*EatingOut, error) {
+	rows, err := q.db.Query(ctx, listEatingOut, arg.HouseholdID, arg.FromDate, arg.ToDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*EatingOut
+	for rows.Next() {
+		var i EatingOut
+		if err := rows.Scan(
+			&i.HouseholdID,
+			&i.PersonID,
+			&i.EatingTimeID,
+			&i.Date,
+			&i.Notes,
+			&i.CreateTime,
 		); err != nil {
 			return nil, err
 		}
@@ -919,6 +983,32 @@ func (q *Queries) SetCookSupply(ctx context.Context, arg *SetCookSupplyParams) (
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const setEatingOut = `-- name: SetEatingOut :exec
+insert into eating_out (household_id, person_id, eating_time_id, date, notes)
+values ($1, $2, $3, $4, $5)
+on conflict (person_id, eating_time_id, date) do update set notes = excluded.notes
+`
+
+type SetEatingOutParams struct {
+	HouseholdID  pgtype.UUID
+	PersonID     pgtype.UUID
+	EatingTimeID pgtype.UUID
+	Date         pgtype.Date
+	Notes        string
+}
+
+// Mark a person's eating time on a date as eaten out, or change its notes.
+func (q *Queries) SetEatingOut(ctx context.Context, arg *SetEatingOutParams) error {
+	_, err := q.db.Exec(ctx, setEatingOut,
+		arg.HouseholdID,
+		arg.PersonID,
+		arg.EatingTimeID,
+		arg.Date,
+		arg.Notes,
+	)
+	return err
 }
 
 const skipStaple = `-- name: SkipStaple :exec

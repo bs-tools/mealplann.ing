@@ -587,6 +587,15 @@ type CookSupply struct {
 	SupplierCookID    pgtype.UUID
 }
 
+type EatingOut struct {
+	HouseholdID  pgtype.UUID
+	PersonID     pgtype.UUID
+	EatingTimeID pgtype.UUID
+	Date         pgtype.Date
+	Notes        string
+	CreateTime   pgtype.Timestamptz
+}
+
 type EatingTime struct {
 	ID          pgtype.UUID
 	HouseholdID pgtype.UUID

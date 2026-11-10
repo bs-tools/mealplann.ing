@@ -248,6 +248,8 @@ type slotPlan struct {
 	proto  *plansv1.PlannedEatingTime
 	amount nutrition.Amount
 	empty  bool
+	// eatingOut is whether the person eats out there.
+	eatingOut bool
 }
 
 // slot computes and checks what's planned at a person's eating time on a
@@ -283,13 +285,19 @@ func (d *planData) slot(p *people.Person, et *people.EatingTime, date time.Time)
 		macros[n] = nil
 	}
 	sp.amount = ruleSlot.Amount
-	sp.proto = plansv1.PlannedEatingTime_builder{
+	b := plansv1.PlannedEatingTime_builder{
 		EatingTime: person.EatingTimeToProto(et),
 		Portions:   portions,
 		Grams:      round(ruleSlot.Amount.Grams),
 		Nutrients:  food.NutrientsToProto(&macros, nutritionDigits),
 		Warnings:   warnings,
-	}.Build()
+	}
+	if out := d.plan.EatingOutAt(slot); out != nil {
+		sp.eatingOut = true
+		b.EatingOut = true
+		b.EatingOutNotes = out.Notes
+	}
+	sp.proto = b.Build()
 	return sp
 }
 
@@ -367,7 +375,10 @@ func (d *planData) personDay(p *people.Person, date time.Time) *plansv1.PersonDa
 		sp := d.slot(p, et, date)
 		eatingTimes = append(eatingTimes, sp.proto)
 		day.Amount.Add(&sp.amount)
-		if sp.empty {
+		switch {
+		case sp.eatingOut:
+			day.EatingOut++
+		case sp.empty:
 			day.Unplanned++
 		}
 	}

@@ -34,6 +34,7 @@ import {
   listStaples,
   setStapleEaten,
   skipStaple,
+  setEatingOut,
   unskipStaple,
   updateCook,
 } from "gen/plans/v1/plans-PlanService_connectquery";
@@ -45,6 +46,7 @@ import type {
 } from "gen/plans/v1/plans_pb";
 import { PlanService, Severity } from "gen/plans/v1/plans_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
+import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import {
   WEEKDAY_NAMES,
   addDays,
@@ -188,6 +190,12 @@ const PlanPage: React.FC = () => {
   const remove = useMutation(deletePortion, { onSuccess });
   const skip = useMutation(skipStaple, { onSuccess });
   const unskip = useMutation(unskipStaple, { onSuccess });
+  // Eating out changes what Plan for me suggests too.
+  const eatOut = useMutation(setEatingOut, {
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [PlanService, SuggestionService]);
+    },
+  });
   // The staples, to show those skipped on each day, to bring back.
   const staples = useQuery(listStaples, {});
   const cookDone = useMutation(updateCook, {
@@ -221,6 +229,7 @@ const PlanPage: React.FC = () => {
     remove.isPending ||
     skip.isPending ||
     unskip.isPending ||
+    eatOut.isPending ||
     cookDone.isPending ||
     stapleEaten.isPending ||
     removeCook.isPending;
@@ -357,6 +366,14 @@ const PlanPage: React.FC = () => {
             onUnskip={(staple, date) => {
               unskip.mutate({ date, id: staple.id });
             }}
+            onEatingOut={(slot, eatingOut) => {
+              eatOut.mutate({
+                date: slot.date,
+                eatingOut,
+                eatingTimeId: slot.eatingTimeId,
+                personId: slot.personId,
+              });
+            }}
             onCookDone={(planned, done) => {
               cookDone.mutate({
                 cook: { done, id: planned.cook?.id ?? "" },
@@ -439,7 +456,13 @@ const PlanPage: React.FC = () => {
         }
       />
       <ErrorText
-        error={remove.error ?? skip.error ?? cookDone.error ?? removeCook.error}
+        error={
+          remove.error ??
+          skip.error ??
+          eatOut.error ??
+          cookDone.error ??
+          removeCook.error
+        }
       />
       {pantryNote !== "" && (
         /*

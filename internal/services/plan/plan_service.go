@@ -66,6 +66,7 @@ type PlanRepository interface {
 	UpdateStaple(ctx context.Context, s *plans.Staple) (*plans.Staple, error)
 	DeleteStaple(ctx context.Context, householdID, id pgtype.UUID) error
 	SetStapleSkipped(ctx context.Context, householdID, id pgtype.UUID, date time.Time, skipped bool) (*plans.Staple, error)
+	SetEatingOut(ctx context.Context, householdID pgtype.UUID, slots []plans.Slot, out bool, notes string) error
 }
 
 // PeopleRepository reads the people plans are for.
@@ -276,7 +277,7 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 	// People with a staple at the meal eat it instead, unless they're
 	// asked for.
 	if len(personIDs) == 0 {
-		if eaters, _ = withoutStapled(eaters, d.plan.Staples, meal, date); len(eaters) == 0 {
+		if eaters, _, _ = withoutStapled(eaters, d.plan, meal, date); len(eaters) == 0 {
 			return nil, allStapled(meal, date)
 		}
 	}
@@ -287,6 +288,7 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 		GramsPerServing: d.recipeNutrition[recipeID].GramsPerServing,
 		PlannedGrams:    d.plannedGrams(),
 		Servings:        req.GetServings(),
+		EatingOut:       d.plan.EatingOutSlots(),
 	})
 	if tooFew, ok := errors.AsType[*plans.TooFewServingsError](err); ok {
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
@@ -370,14 +372,20 @@ func stapledAt(staples []*plans.Staple, p *people.Person, meal people.Meal, date
 }
 
 // withoutStapled returns the people who eat a shared meal on a date but
-// have no staple that replaces it: those with one eat it instead, so the
-// meal isn't planned for them. It also returns the names of the staples
-// of those left out.
-func withoutStapled(eaters []*people.Person, staples []*plans.Staple, meal people.Meal, date time.Time) ([]*people.Person, []string) {
+// neither have a staple that replaces it nor eat out: those with one eat
+// it instead, and those eating out eat elsewhere, so the meal isn't planned
+// for them. It also returns the names of the staples of those left out,
+// and how many eat out.
+func withoutStapled(eaters []*people.Person, plan *plans.Plan, meal people.Meal, date time.Time) ([]*people.Person, []string, int) {
 	kept := make([]*people.Person, 0, len(eaters))
 	var names []string
+	out := 0
 	for _, p := range eaters {
-		found := stapledAt(staples, p, meal, date)
+		if eatsOut(plan, p, meal, date) {
+			out++
+			continue
+		}
+		found := stapledAt(plan.Staples, p, meal, date)
 		if len(found) == 0 {
 			kept = append(kept, p)
 			continue
@@ -388,14 +396,25 @@ func withoutStapled(eaters []*people.Person, staples []*plans.Staple, meal peopl
 			}
 		}
 	}
-	return kept, names
+	return kept, names, out
+}
+
+// eatsOut reports whether a person eats out at their eating time for a
+// shared meal on a date.
+func eatsOut(plan *plans.Plan, p *people.Person, meal people.Meal, date time.Time) bool {
+	for _, et := range p.EatingTimes {
+		if et.Meal == meal && plan.EatingOutAt(plans.Slot{PersonID: p.ID, EatingTimeID: et.ID, Date: date}) != nil {
+			return true
+		}
+	}
+	return false
 }
 
 // allStapled says that everyone who eats a shared meal on a date has a
-// staple that replaces it, so it's not planned for anyone.
+// staple that replaces it, or eats out, so it's not planned for anyone.
 func allStapled(meal people.Meal, date time.Time) error {
 	return connect.Errorf(connect.CodeFailedPrecondition,
-		"everyone who eats the shared %s on %s has a staple that replaces it, which they eat instead: skip a staple on that date with SkipStaple, or give person_ids to plan the meal for them too",
+		"everyone who eats the shared %s on %s has a staple that replaces it, which they eat instead, or eats out: skip a staple on that date with SkipStaple, stop eating out with SetEatingOut, or give person_ids to plan the meal for them too",
 		meal, store.FormatDate(date))
 }
 

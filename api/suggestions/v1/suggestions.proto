@@ -367,6 +367,8 @@ enum PlanSlotState {
   // shared meal of the plan there, as it's more than their
   // max_portion_grams.
   PLAN_SLOT_STATE_FILLED_BY_MEAL = 6;
+  // Nothing, as everyone eats out there (see PlanService.SetEatingOut).
+  PLAN_SLOT_STATE_EATING_OUT = 7;
 }
 
 // A slot of a suggested plan: a shared meal on a date, or one person's
