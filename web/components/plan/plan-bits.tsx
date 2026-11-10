@@ -471,6 +471,20 @@ export const EatingTimeBlock: React.FC<EatingTimeBlockProps> = ({
   );
 };
 
+/**
+ * NothingPlanned says why a day has nothing planned: that it's all eaten
+ * out, that only meals out are planned, or that nothing is.
+ */
+const nothingPlanned = (day: PersonDay): string => {
+  const out = day.eatingTimes.filter((planned) => planned.eatingOut).length;
+  if (out === 0) {
+    return "Nothing planned";
+  }
+  return out === day.eatingTimes.length
+    ? "Eating out"
+    : "Nothing planned at home";
+};
+
 interface FixButtonProps {
   disabled: boolean;
   onClick: () => void;
@@ -524,7 +538,7 @@ export const DayTotals: React.FC<DayTotalsProps> = ({
         <span className="font-semibold text-gray-700">Day</span>{" "}
         {day.grams > 0
           ? `${formatAmount(day.grams)} g · ${macroLine(day.nutrients, day.incompleteNutrients)}`
-          : "Nothing planned"}
+          : nothingPlanned(day)}
       </p>
       {targets.length > 0 && day.grams > 0 && (
         <ul className="flex flex-wrap gap-1">

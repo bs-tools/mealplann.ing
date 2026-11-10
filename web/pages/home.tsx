@@ -136,7 +136,9 @@ const PersonToday: React.FC<PersonTodayProps> = ({ day }) => {
                 <span
                   className={`min-w-0 ${planned.portions.length === 0 ? "text-gray-400" : "text-gray-900"}`}
                 >
-                  {planned.portions.length === 0
+                  {planned.eatingOut &&
+                    `Eating out${planned.eatingOutNotes === "" ? "" : ` · ${planned.eatingOutNotes}`}`}
+                  {!planned.eatingOut && planned.portions.length === 0
                     ? "Nothing planned"
                     : planned.portions.map((portion, index) => (
                         <React.Fragment
