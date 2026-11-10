@@ -7,6 +7,7 @@
 package suggestionsv1
 
 import (
+	v12 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
 	v1 "github.com/bs-tools/mealplann.ing/internal/gen/people/v1"
 	v11 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -225,6 +226,65 @@ func (PlanSlotState) Type() protoreflect.EnumType {
 }
 
 func (x PlanSlotState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// What a fix changes.
+type PlanFixKind int32
+
+const (
+	PlanFixKind_PLAN_FIX_KIND_UNSPECIFIED PlanFixKind = 0
+	// Leave portion_id out: delete it with PlanService.DeletePortion.
+	PlanFixKind_PLAN_FIX_KIND_REMOVE PlanFixKind = 1
+	// Change portion_id's servings, of a share of a cook, or amount and
+	// unit, of a food, with PlanService.UpdatePortion.
+	PlanFixKind_PLAN_FIX_KIND_RESIZE PlanFixKind = 2
+	// Replace portion_id with servings of recipe_id, or an amount of
+	// food_id: delete it, and create the new portion at its eating time,
+	// with new_cook for a recipe.
+	PlanFixKind_PLAN_FIX_KIND_REPLACE PlanFixKind = 3
+	// Add servings of recipe_id, with new_cook, or an amount of food_id, at
+	// eating_time_id, with PlanService.CreatePortion.
+	PlanFixKind_PLAN_FIX_KIND_ADD PlanFixKind = 4
+)
+
+// Enum value maps for PlanFixKind.
+var (
+	PlanFixKind_name = map[int32]string{
+		0: "PLAN_FIX_KIND_UNSPECIFIED",
+		1: "PLAN_FIX_KIND_REMOVE",
+		2: "PLAN_FIX_KIND_RESIZE",
+		3: "PLAN_FIX_KIND_REPLACE",
+		4: "PLAN_FIX_KIND_ADD",
+	}
+	PlanFixKind_value = map[string]int32{
+		"PLAN_FIX_KIND_UNSPECIFIED": 0,
+		"PLAN_FIX_KIND_REMOVE":      1,
+		"PLAN_FIX_KIND_RESIZE":      2,
+		"PLAN_FIX_KIND_REPLACE":     3,
+		"PLAN_FIX_KIND_ADD":         4,
+	}
+)
+
+func (x PlanFixKind) Enum() *PlanFixKind {
+	p := new(PlanFixKind)
+	*p = x
+	return p
+}
+
+func (x PlanFixKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PlanFixKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_suggestions_v1_suggestions_proto_enumTypes[3].Descriptor()
+}
+
+func (PlanFixKind) Type() protoreflect.EnumType {
+	return &file_suggestions_v1_suggestions_proto_enumTypes[3]
+}
+
+func (x PlanFixKind) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
@@ -2057,11 +2117,436 @@ func (b0 SuggestPlanResponse_builder) Build() *SuggestPlanResponse {
 	return m0
 }
 
+type SuggestFixesRequest struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_PersonId     string                 `protobuf:"bytes,1,opt,name=person_id,json=personId,proto3"`
+	xxx_hidden_Date         string                 `protobuf:"bytes,2,opt,name=date,proto3"`
+	xxx_hidden_EatingTimeId string                 `protobuf:"bytes,3,opt,name=eating_time_id,json=eatingTimeId,proto3"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *SuggestFixesRequest) Reset() {
+	*x = SuggestFixesRequest{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestFixesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestFixesRequest) ProtoMessage() {}
+
+func (x *SuggestFixesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SuggestFixesRequest) GetPersonId() string {
+	if x != nil {
+		return x.xxx_hidden_PersonId
+	}
+	return ""
+}
+
+func (x *SuggestFixesRequest) GetDate() string {
+	if x != nil {
+		return x.xxx_hidden_Date
+	}
+	return ""
+}
+
+func (x *SuggestFixesRequest) GetEatingTimeId() string {
+	if x != nil {
+		return x.xxx_hidden_EatingTimeId
+	}
+	return ""
+}
+
+func (x *SuggestFixesRequest) SetPersonId(v string) {
+	x.xxx_hidden_PersonId = v
+}
+
+func (x *SuggestFixesRequest) SetDate(v string) {
+	x.xxx_hidden_Date = v
+}
+
+func (x *SuggestFixesRequest) SetEatingTimeId(v string) {
+	x.xxx_hidden_EatingTimeId = v
+}
+
+type SuggestFixesRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The ID of the person. Required.
+	PersonId string
+	// The date (YYYY-MM-DD). Required.
+	Date string
+	// The eating time to change, empty for any of the day's: the day's
+	// targets count either way.
+	EatingTimeId string
+}
+
+func (b0 SuggestFixesRequest_builder) Build() *SuggestFixesRequest {
+	m0 := &SuggestFixesRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_PersonId = b.PersonId
+	x.xxx_hidden_Date = b.Date
+	x.xxx_hidden_EatingTimeId = b.EatingTimeId
+	return m0
+}
+
+type SuggestFixesResponse struct {
+	state               protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Fixes    *[]*PlanFix            `protobuf:"bytes,1,rep,name=fixes,proto3"`
+	xxx_hidden_Warnings *[]*v11.Warning        `protobuf:"bytes,2,rep,name=warnings,proto3"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *SuggestFixesResponse) Reset() {
+	*x = SuggestFixesResponse{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestFixesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestFixesResponse) ProtoMessage() {}
+
+func (x *SuggestFixesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SuggestFixesResponse) GetFixes() []*PlanFix {
+	if x != nil {
+		if x.xxx_hidden_Fixes != nil {
+			return *x.xxx_hidden_Fixes
+		}
+	}
+	return nil
+}
+
+func (x *SuggestFixesResponse) GetWarnings() []*v11.Warning {
+	if x != nil {
+		if x.xxx_hidden_Warnings != nil {
+			return *x.xxx_hidden_Warnings
+		}
+	}
+	return nil
+}
+
+func (x *SuggestFixesResponse) SetFixes(v []*PlanFix) {
+	x.xxx_hidden_Fixes = &v
+}
+
+func (x *SuggestFixesResponse) SetWarnings(v []*v11.Warning) {
+	x.xxx_hidden_Warnings = &v
+}
+
+type SuggestFixesResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The changes, best first: those leaving the fewest warnings, then
+	// closest to the rules and targets, then the smallest.
+	Fixes []*PlanFix
+	// The warnings of the eating time, or of the day's eating times, and the
+	// day's targets, as planned.
+	Warnings []*v11.Warning
+}
+
+func (b0 SuggestFixesResponse_builder) Build() *SuggestFixesResponse {
+	m0 := &SuggestFixesResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Fixes = &b.Fixes
+	x.xxx_hidden_Warnings = &b.Warnings
+	return m0
+}
+
+// A change to a person's planned day.
+type PlanFix struct {
+	state                        protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Kind              PlanFixKind            `protobuf:"varint,1,opt,name=kind,proto3,enum=suggestions.v1.PlanFixKind"`
+	xxx_hidden_Description       string                 `protobuf:"bytes,2,opt,name=description,proto3"`
+	xxx_hidden_PortionId         string                 `protobuf:"bytes,3,opt,name=portion_id,json=portionId,proto3"`
+	xxx_hidden_EatingTimeId      string                 `protobuf:"bytes,4,opt,name=eating_time_id,json=eatingTimeId,proto3"`
+	xxx_hidden_RecipeId          string                 `protobuf:"bytes,5,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_FoodId            string                 `protobuf:"bytes,6,opt,name=food_id,json=foodId,proto3"`
+	xxx_hidden_Servings          float64                `protobuf:"fixed64,7,opt,name=servings,proto3"`
+	xxx_hidden_Amount            float64                `protobuf:"fixed64,8,opt,name=amount,proto3"`
+	xxx_hidden_Unit              v12.AmountUnit         `protobuf:"varint,9,opt,name=unit,proto3,enum=foods.v1.AmountUnit"`
+	xxx_hidden_FixedWarnings     []string               `protobuf:"bytes,10,rep,name=fixed_warnings,json=fixedWarnings,proto3"`
+	xxx_hidden_Warnings          *[]*v11.Warning        `protobuf:"bytes,11,rep,name=warnings,proto3"`
+	xxx_hidden_EnergyKcal        float64                `protobuf:"fixed64,12,opt,name=energy_kcal,json=energyKcal,proto3"`
+	xxx_hidden_PlannedEnergyKcal float64                `protobuf:"fixed64,13,opt,name=planned_energy_kcal,json=plannedEnergyKcal,proto3"`
+	xxx_hidden_DeleteCookId      string                 `protobuf:"bytes,14,opt,name=delete_cook_id,json=deleteCookId,proto3"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
+}
+
+func (x *PlanFix) Reset() {
+	*x = PlanFix{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlanFix) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlanFix) ProtoMessage() {}
+
+func (x *PlanFix) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *PlanFix) GetKind() PlanFixKind {
+	if x != nil {
+		return x.xxx_hidden_Kind
+	}
+	return PlanFixKind_PLAN_FIX_KIND_UNSPECIFIED
+}
+
+func (x *PlanFix) GetDescription() string {
+	if x != nil {
+		return x.xxx_hidden_Description
+	}
+	return ""
+}
+
+func (x *PlanFix) GetPortionId() string {
+	if x != nil {
+		return x.xxx_hidden_PortionId
+	}
+	return ""
+}
+
+func (x *PlanFix) GetEatingTimeId() string {
+	if x != nil {
+		return x.xxx_hidden_EatingTimeId
+	}
+	return ""
+}
+
+func (x *PlanFix) GetRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeId
+	}
+	return ""
+}
+
+func (x *PlanFix) GetFoodId() string {
+	if x != nil {
+		return x.xxx_hidden_FoodId
+	}
+	return ""
+}
+
+func (x *PlanFix) GetServings() float64 {
+	if x != nil {
+		return x.xxx_hidden_Servings
+	}
+	return 0
+}
+
+func (x *PlanFix) GetAmount() float64 {
+	if x != nil {
+		return x.xxx_hidden_Amount
+	}
+	return 0
+}
+
+func (x *PlanFix) GetUnit() v12.AmountUnit {
+	if x != nil {
+		return x.xxx_hidden_Unit
+	}
+	return v12.AmountUnit(0)
+}
+
+func (x *PlanFix) GetFixedWarnings() []string {
+	if x != nil {
+		return x.xxx_hidden_FixedWarnings
+	}
+	return nil
+}
+
+func (x *PlanFix) GetWarnings() []*v11.Warning {
+	if x != nil {
+		if x.xxx_hidden_Warnings != nil {
+			return *x.xxx_hidden_Warnings
+		}
+	}
+	return nil
+}
+
+func (x *PlanFix) GetEnergyKcal() float64 {
+	if x != nil {
+		return x.xxx_hidden_EnergyKcal
+	}
+	return 0
+}
+
+func (x *PlanFix) GetPlannedEnergyKcal() float64 {
+	if x != nil {
+		return x.xxx_hidden_PlannedEnergyKcal
+	}
+	return 0
+}
+
+func (x *PlanFix) GetDeleteCookId() string {
+	if x != nil {
+		return x.xxx_hidden_DeleteCookId
+	}
+	return ""
+}
+
+func (x *PlanFix) SetKind(v PlanFixKind) {
+	x.xxx_hidden_Kind = v
+}
+
+func (x *PlanFix) SetDescription(v string) {
+	x.xxx_hidden_Description = v
+}
+
+func (x *PlanFix) SetPortionId(v string) {
+	x.xxx_hidden_PortionId = v
+}
+
+func (x *PlanFix) SetEatingTimeId(v string) {
+	x.xxx_hidden_EatingTimeId = v
+}
+
+func (x *PlanFix) SetRecipeId(v string) {
+	x.xxx_hidden_RecipeId = v
+}
+
+func (x *PlanFix) SetFoodId(v string) {
+	x.xxx_hidden_FoodId = v
+}
+
+func (x *PlanFix) SetServings(v float64) {
+	x.xxx_hidden_Servings = v
+}
+
+func (x *PlanFix) SetAmount(v float64) {
+	x.xxx_hidden_Amount = v
+}
+
+func (x *PlanFix) SetUnit(v v12.AmountUnit) {
+	x.xxx_hidden_Unit = v
+}
+
+func (x *PlanFix) SetFixedWarnings(v []string) {
+	x.xxx_hidden_FixedWarnings = v
+}
+
+func (x *PlanFix) SetWarnings(v []*v11.Warning) {
+	x.xxx_hidden_Warnings = &v
+}
+
+func (x *PlanFix) SetEnergyKcal(v float64) {
+	x.xxx_hidden_EnergyKcal = v
+}
+
+func (x *PlanFix) SetPlannedEnergyKcal(v float64) {
+	x.xxx_hidden_PlannedEnergyKcal = v
+}
+
+func (x *PlanFix) SetDeleteCookId(v string) {
+	x.xxx_hidden_DeleteCookId = v
+}
+
+type PlanFix_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// What to change.
+	Kind PlanFixKind
+	// What it does, for people, e.g. "Replace Wraps with Side salad (1
+	// serving)".
+	Description string
+	// The portion it removes, resizes or replaces.
+	PortionId string
+	// The eating time it changes or adds to.
+	EatingTimeId string
+	// The recipe to replace the portion with, or to add.
+	RecipeId string
+	// The food to replace the portion with, or to add.
+	FoodId string
+	// The new servings, of a share of a cook or recipe_id.
+	Servings float64
+	// The new amount, of a food portion or food_id, in unit.
+	Amount float64
+	Unit   v12.AmountUnit
+	// The warnings it fixes, by message, as planned.
+	FixedWarnings []string
+	// The warnings left after it.
+	Warnings []*v11.Warning
+	// The day's energy after it, in kcal, and as planned.
+	EnergyKcal        float64
+	PlannedEnergyKcal float64
+	// The cook to delete with PlanService.DeleteCook after removing or
+	// replacing portion_id, as the portion is all that's planned of it, and
+	// it isn't cooked yet: else its servings are left over.
+	DeleteCookId string
+}
+
+func (b0 PlanFix_builder) Build() *PlanFix {
+	m0 := &PlanFix{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Kind = b.Kind
+	x.xxx_hidden_Description = b.Description
+	x.xxx_hidden_PortionId = b.PortionId
+	x.xxx_hidden_EatingTimeId = b.EatingTimeId
+	x.xxx_hidden_RecipeId = b.RecipeId
+	x.xxx_hidden_FoodId = b.FoodId
+	x.xxx_hidden_Servings = b.Servings
+	x.xxx_hidden_Amount = b.Amount
+	x.xxx_hidden_Unit = b.Unit
+	x.xxx_hidden_FixedWarnings = b.FixedWarnings
+	x.xxx_hidden_Warnings = &b.Warnings
+	x.xxx_hidden_EnergyKcal = b.EnergyKcal
+	x.xxx_hidden_PlannedEnergyKcal = b.PlannedEnergyKcal
+	x.xxx_hidden_DeleteCookId = b.DeleteCookId
+	return m0
+}
+
 var File_suggestions_v1_suggestions_proto protoreflect.FileDescriptor
 
 const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\n" +
-	" suggestions/v1/suggestions.proto\x12\x0esuggestions.v1\x1a\x16people/v1/people.proto\x1a\x14plans/v1/plans.proto\"S\n" +
+	" suggestions/v1/suggestions.proto\x12\x0esuggestions.v1\x1a\x14foods/v1/foods.proto\x1a\x16people/v1/people.proto\x1a\x14plans/v1/plans.proto\"S\n" +
 	"\x0eEatingTimeSlot\x12\x1b\n" +
 	"\tperson_id\x18\x01 \x01(\tR\bpersonId\x12$\n" +
 	"\x0eeating_time_id\x18\x02 \x01(\tR\featingTimeId\"\xee\x01\n" +
@@ -2167,7 +2652,32 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\vplans_tried\x18\x03 \x01(\x05R\n" +
 	"plansTried\x12\x12\n" +
 	"\x04seed\x18\x04 \x01(\x04R\x04seed\x12!\n" +
-	"\frecipe_count\x18\x05 \x01(\x05R\vrecipeCount*\xc4\x02\n" +
+	"\frecipe_count\x18\x05 \x01(\x05R\vrecipeCount\"l\n" +
+	"\x13SuggestFixesRequest\x12\x1b\n" +
+	"\tperson_id\x18\x01 \x01(\tR\bpersonId\x12\x12\n" +
+	"\x04date\x18\x02 \x01(\tR\x04date\x12$\n" +
+	"\x0eeating_time_id\x18\x03 \x01(\tR\featingTimeId\"t\n" +
+	"\x14SuggestFixesResponse\x12-\n" +
+	"\x05fixes\x18\x01 \x03(\v2\x17.suggestions.v1.PlanFixR\x05fixes\x12-\n" +
+	"\bwarnings\x18\x02 \x03(\v2\x11.plans.v1.WarningR\bwarnings\"\x82\x04\n" +
+	"\aPlanFix\x12/\n" +
+	"\x04kind\x18\x01 \x01(\x0e2\x1b.suggestions.v1.PlanFixKindR\x04kind\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
+	"\n" +
+	"portion_id\x18\x03 \x01(\tR\tportionId\x12$\n" +
+	"\x0eeating_time_id\x18\x04 \x01(\tR\featingTimeId\x12\x1b\n" +
+	"\trecipe_id\x18\x05 \x01(\tR\brecipeId\x12\x17\n" +
+	"\afood_id\x18\x06 \x01(\tR\x06foodId\x12\x1a\n" +
+	"\bservings\x18\a \x01(\x01R\bservings\x12\x16\n" +
+	"\x06amount\x18\b \x01(\x01R\x06amount\x12(\n" +
+	"\x04unit\x18\t \x01(\x0e2\x14.foods.v1.AmountUnitR\x04unit\x12%\n" +
+	"\x0efixed_warnings\x18\n" +
+	" \x03(\tR\rfixedWarnings\x12-\n" +
+	"\bwarnings\x18\v \x03(\v2\x11.plans.v1.WarningR\bwarnings\x12\x1f\n" +
+	"\venergy_kcal\x18\f \x01(\x01R\n" +
+	"energyKcal\x12.\n" +
+	"\x13planned_energy_kcal\x18\r \x01(\x01R\x11plannedEnergyKcal\x12$\n" +
+	"\x0edelete_cook_id\x18\x0e \x01(\tR\fdeleteCookId*\xc4\x02\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
@@ -2195,68 +2705,87 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x17PLAN_SLOT_STATE_PLANNED\x10\x04\x12\x1c\n" +
 	"\x18PLAN_SLOT_STATE_UNFILLED\x10\x05\x12\"\n" +
 	"\x1ePLAN_SLOT_STATE_FILLED_BY_MEAL\x10\x06\x12\x1e\n" +
-	"\x1aPLAN_SLOT_STATE_EATING_OUT\x10\a2\xcc\x01\n" +
+	"\x1aPLAN_SLOT_STATE_EATING_OUT\x10\a*\x92\x01\n" +
+	"\vPlanFixKind\x12\x1d\n" +
+	"\x19PLAN_FIX_KIND_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14PLAN_FIX_KIND_REMOVE\x10\x01\x12\x18\n" +
+	"\x14PLAN_FIX_KIND_RESIZE\x10\x02\x12\x19\n" +
+	"\x15PLAN_FIX_KIND_REPLACE\x10\x03\x12\x15\n" +
+	"\x11PLAN_FIX_KIND_ADD\x10\x042\xa7\x02\n" +
 	"\x11SuggestionService\x12_\n" +
 	"\x0eSuggestRecipes\x12%.suggestions.v1.SuggestRecipesRequest\x1a&.suggestions.v1.SuggestRecipesResponse\x12V\n" +
-	"\vSuggestPlan\x12\".suggestions.v1.SuggestPlanRequest\x1a#.suggestions.v1.SuggestPlanResponseB\xcc\x01\n" +
+	"\vSuggestPlan\x12\".suggestions.v1.SuggestPlanRequest\x1a#.suggestions.v1.SuggestPlanResponse\x12Y\n" +
+	"\fSuggestFixes\x12#.suggestions.v1.SuggestFixesRequest\x1a$.suggestions.v1.SuggestFixesResponseB\xcc\x01\n" +
 	"\x12com.suggestions.v1B\x10SuggestionsProtoP\x01ZKgithub.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1;suggestionsv1\xa2\x02\x03SXX\xaa\x02\x0eSuggestions.V1\xca\x02\x0eSuggestions\\V1\xe2\x02\x1aSuggestions\\V1\\GPBMetadata\xea\x02\x0fSuggestions::V1b\x06proto3"
 
-var file_suggestions_v1_suggestions_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_suggestions_v1_suggestions_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_suggestions_v1_suggestions_proto_goTypes = []any{
 	(ScoreKind)(0),                 // 0: suggestions.v1.ScoreKind
 	(Emphasis)(0),                  // 1: suggestions.v1.Emphasis
 	(PlanSlotState)(0),             // 2: suggestions.v1.PlanSlotState
-	(*EatingTimeSlot)(nil),         // 3: suggestions.v1.EatingTimeSlot
-	(*SuggestRecipesRequest)(nil),  // 4: suggestions.v1.SuggestRecipesRequest
-	(*SuggestRecipesResponse)(nil), // 5: suggestions.v1.SuggestRecipesResponse
-	(*ScoreComponent)(nil),         // 6: suggestions.v1.ScoreComponent
-	(*SuggestedPortion)(nil),       // 7: suggestions.v1.SuggestedPortion
-	(*ItemToBuy)(nil),              // 8: suggestions.v1.ItemToBuy
-	(*Suggestion)(nil),             // 9: suggestions.v1.Suggestion
-	(*PlanCriteria)(nil),           // 10: suggestions.v1.PlanCriteria
-	(*PlanChoice)(nil),             // 11: suggestions.v1.PlanChoice
-	(*SuggestPlanRequest)(nil),     // 12: suggestions.v1.SuggestPlanRequest
-	(*PlanSlot)(nil),               // 13: suggestions.v1.PlanSlot
-	(*SuggestPlanResponse)(nil),    // 14: suggestions.v1.SuggestPlanResponse
-	(v1.HouseholdMeal)(0),          // 15: people.v1.HouseholdMeal
-	(*v11.Warning)(nil),            // 16: plans.v1.Warning
-	(*v11.LeftoverOf)(nil),         // 17: plans.v1.LeftoverOf
+	(PlanFixKind)(0),               // 3: suggestions.v1.PlanFixKind
+	(*EatingTimeSlot)(nil),         // 4: suggestions.v1.EatingTimeSlot
+	(*SuggestRecipesRequest)(nil),  // 5: suggestions.v1.SuggestRecipesRequest
+	(*SuggestRecipesResponse)(nil), // 6: suggestions.v1.SuggestRecipesResponse
+	(*ScoreComponent)(nil),         // 7: suggestions.v1.ScoreComponent
+	(*SuggestedPortion)(nil),       // 8: suggestions.v1.SuggestedPortion
+	(*ItemToBuy)(nil),              // 9: suggestions.v1.ItemToBuy
+	(*Suggestion)(nil),             // 10: suggestions.v1.Suggestion
+	(*PlanCriteria)(nil),           // 11: suggestions.v1.PlanCriteria
+	(*PlanChoice)(nil),             // 12: suggestions.v1.PlanChoice
+	(*SuggestPlanRequest)(nil),     // 13: suggestions.v1.SuggestPlanRequest
+	(*PlanSlot)(nil),               // 14: suggestions.v1.PlanSlot
+	(*SuggestPlanResponse)(nil),    // 15: suggestions.v1.SuggestPlanResponse
+	(*SuggestFixesRequest)(nil),    // 16: suggestions.v1.SuggestFixesRequest
+	(*SuggestFixesResponse)(nil),   // 17: suggestions.v1.SuggestFixesResponse
+	(*PlanFix)(nil),                // 18: suggestions.v1.PlanFix
+	(v1.HouseholdMeal)(0),          // 19: people.v1.HouseholdMeal
+	(*v11.Warning)(nil),            // 20: plans.v1.Warning
+	(*v11.LeftoverOf)(nil),         // 21: plans.v1.LeftoverOf
+	(v12.AmountUnit)(0),            // 22: foods.v1.AmountUnit
 }
 var file_suggestions_v1_suggestions_proto_depIdxs = []int32{
-	15, // 0: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
-	3,  // 1: suggestions.v1.SuggestRecipesRequest.eating_time:type_name -> suggestions.v1.EatingTimeSlot
-	9,  // 2: suggestions.v1.SuggestRecipesResponse.suggestions:type_name -> suggestions.v1.Suggestion
+	19, // 0: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
+	4,  // 1: suggestions.v1.SuggestRecipesRequest.eating_time:type_name -> suggestions.v1.EatingTimeSlot
+	10, // 2: suggestions.v1.SuggestRecipesResponse.suggestions:type_name -> suggestions.v1.Suggestion
 	0,  // 3: suggestions.v1.ScoreComponent.kind:type_name -> suggestions.v1.ScoreKind
-	6,  // 4: suggestions.v1.Suggestion.components:type_name -> suggestions.v1.ScoreComponent
-	16, // 5: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
-	7,  // 6: suggestions.v1.Suggestion.portions:type_name -> suggestions.v1.SuggestedPortion
-	8,  // 7: suggestions.v1.Suggestion.items_to_buy:type_name -> suggestions.v1.ItemToBuy
-	17, // 8: suggestions.v1.Suggestion.leftover_of:type_name -> plans.v1.LeftoverOf
+	7,  // 4: suggestions.v1.Suggestion.components:type_name -> suggestions.v1.ScoreComponent
+	20, // 5: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
+	8,  // 6: suggestions.v1.Suggestion.portions:type_name -> suggestions.v1.SuggestedPortion
+	9,  // 7: suggestions.v1.Suggestion.items_to_buy:type_name -> suggestions.v1.ItemToBuy
+	21, // 8: suggestions.v1.Suggestion.leftover_of:type_name -> plans.v1.LeftoverOf
 	1,  // 9: suggestions.v1.PlanCriteria.variety:type_name -> suggestions.v1.Emphasis
 	1,  // 10: suggestions.v1.PlanCriteria.favorites:type_name -> suggestions.v1.Emphasis
 	1,  // 11: suggestions.v1.PlanCriteria.pantry:type_name -> suggestions.v1.Emphasis
 	1,  // 12: suggestions.v1.PlanCriteria.shopping:type_name -> suggestions.v1.Emphasis
 	1,  // 13: suggestions.v1.PlanCriteria.nutrition:type_name -> suggestions.v1.Emphasis
-	15, // 14: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
-	17, // 15: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
-	15, // 16: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
-	10, // 17: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
-	11, // 18: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
-	15, // 19: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
+	19, // 14: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
+	21, // 15: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
+	19, // 16: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
+	11, // 17: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
+	12, // 18: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
+	19, // 19: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
 	2,  // 20: suggestions.v1.PlanSlot.state:type_name -> suggestions.v1.PlanSlotState
-	9,  // 21: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
-	9,  // 22: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
-	13, // 23: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
-	4,  // 24: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
-	12, // 25: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
-	5,  // 26: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
-	14, // 27: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
-	26, // [26:28] is the sub-list for method output_type
-	24, // [24:26] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	10, // 21: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
+	10, // 22: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
+	14, // 23: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
+	18, // 24: suggestions.v1.SuggestFixesResponse.fixes:type_name -> suggestions.v1.PlanFix
+	20, // 25: suggestions.v1.SuggestFixesResponse.warnings:type_name -> plans.v1.Warning
+	3,  // 26: suggestions.v1.PlanFix.kind:type_name -> suggestions.v1.PlanFixKind
+	22, // 27: suggestions.v1.PlanFix.unit:type_name -> foods.v1.AmountUnit
+	20, // 28: suggestions.v1.PlanFix.warnings:type_name -> plans.v1.Warning
+	5,  // 29: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
+	13, // 30: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
+	16, // 31: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
+	6,  // 32: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
+	15, // 33: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
+	17, // 34: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
+	32, // [32:35] is the sub-list for method output_type
+	29, // [29:32] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_suggestions_v1_suggestions_proto_init() }
@@ -2273,8 +2802,8 @@ func file_suggestions_v1_suggestions_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_suggestions_v1_suggestions_proto_rawDesc), len(file_suggestions_v1_suggestions_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   12,
+			NumEnums:      4,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
