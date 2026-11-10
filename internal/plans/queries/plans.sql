@@ -40,19 +40,21 @@ delete from cooks where id = @id and household_id = @household_id;
 
 -- name: CreateCookSupplies :exec
 -- Links cooks to the cooks supplying their components, given as arrays.
-insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id)
+insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id, from_freezer)
 select
   @household_id,
   (@consumer_cook_ids::uuid[])[i],
   (@component_recipe_ids::uuid[])[i],
-  (@supplier_cook_ids::uuid[])[i]
+  (@supplier_cook_ids::uuid[])[i],
+  (@from_freezer::boolean[])[i]
 from generate_subscripts(@consumer_cook_ids::uuid[], 1) as i;
 
 -- name: SetCookSupply :execrows
 -- Sets the cook supplying a component of a cook.
-insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id)
-values (@household_id, @consumer_cook_id, @component_recipe_id, @supplier_cook_id)
-on conflict (consumer_cook_id, component_recipe_id) do update set supplier_cook_id = excluded.supplier_cook_id;
+insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id, from_freezer)
+values (@household_id, @consumer_cook_id, @component_recipe_id, @supplier_cook_id, @from_freezer)
+on conflict (consumer_cook_id, component_recipe_id) do update
+set supplier_cook_id = excluded.supplier_cook_id, from_freezer = excluded.from_freezer;
 
 -- name: ListCookSupplies :many
 -- The links between the household's cooks of which either is given by ID
@@ -62,6 +64,7 @@ select
   s.consumer_cook_id,
   s.component_recipe_id,
   s.supplier_cook_id,
+  s.from_freezer,
   cc.date as consumer_date,
   cr.name as consumer_recipe_name,
   sc.date as supplier_date,
@@ -93,10 +96,18 @@ select
   sqlc.embed(cooks),
   r.name as recipe_name,
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
-  coalesce((
+  (coalesce((
     select sum(p.servings) from portions p
     where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
-  ), 0)::double precision as late_servings,
+  ), 0)
+  + coalesce((
+    select sum(ri.amount * cc.servings / cr.servings)
+    from cook_supplies s
+    join cooks cc on cc.id = s.consumer_cook_id
+    join recipes cr on cr.id = cc.recipe_id
+    join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+    where s.supplier_cook_id = cooks.id and s.from_freezer
+  ), 0))::double precision as late_servings,
   coalesce((
     select sum(ri.amount * cc.servings / cr.servings)
     from cook_supplies s
@@ -122,10 +133,18 @@ select
   sqlc.embed(cooks),
   r.name as recipe_name,
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
-  coalesce((
+  (coalesce((
     select sum(p.servings) from portions p
     where p.cook_id = cooks.id and (p.from_freezer or p.date > cooks.date + r.fridge_days)
-  ), 0)::double precision as late_servings,
+  ), 0)
+  + coalesce((
+    select sum(ri.amount * cc.servings / cr.servings)
+    from cook_supplies s
+    join cooks cc on cc.id = s.consumer_cook_id
+    join recipes cr on cr.id = cc.recipe_id
+    join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+    where s.supplier_cook_id = cooks.id and s.from_freezer
+  ), 0))::double precision as late_servings,
   coalesce((
     select sum(ri.amount * cc.servings / cr.servings)
     from cook_supplies s
@@ -280,7 +299,8 @@ order by staple_id, date;
 -- The household's cooks with frozen servings not all planned or taken off
 -- plan yet: those in the freezer, with their recipe's name and keeping
 -- days, and the servings of their portions eaten after the recipe's fridge
--- days, by date.
+-- days, or from the freezer, and of what they supply from the freezer, by
+-- date.
 select
   sqlc.embed(cooks),
   r.name as recipe_name,
@@ -290,8 +310,18 @@ select
 from cooks
 join recipes r on r.id = cooks.recipe_id
 cross join lateral (
-  select coalesce(sum(p.servings), 0) as servings from portions p
-  where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
+  select coalesce((
+    select sum(p.servings) from portions p
+    where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
+  ), 0)
+    + coalesce((
+      select sum(ri.amount * cc.servings / cr.servings)
+      from cook_supplies s
+      join cooks cc on cc.id = s.consumer_cook_id
+      join recipes cr on cr.id = cc.recipe_id
+      join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+      where s.supplier_cook_id = cooks.id and s.from_freezer
+    ), 0)::double precision as servings
 ) late
 where cooks.household_id = @household_id and cooks.frozen_servings > late.servings + cooks.off_plan_servings + 0.01
 order by cooks.date, cooks.id;

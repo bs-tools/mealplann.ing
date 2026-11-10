@@ -587,6 +587,7 @@ type CookSupply struct {
 	ConsumerCookID    pgtype.UUID
 	ComponentRecipeID pgtype.UUID
 	SupplierCookID    pgtype.UUID
+	FromFreezer       bool
 }
 
 type EatingOut struct {

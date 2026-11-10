@@ -191,7 +191,10 @@ const SupplyPicker: React.FC<SupplyPickerProps> = ({
   return (
     <div className="flex flex-col gap-0.5">
       <label className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600">
-        <span>{supply.supplierRecipeName} from</span>
+        <span>
+          {supply.supplierRecipeName}{" "}
+          {supply.fromFreezer ? "from the freezer, cooked" : "from"}
+        </span>
         <select
           className="rounded border border-gray-300 bg-white px-1 py-0.5 text-xs text-gray-800"
           value={supply.supplierCookId}

@@ -917,7 +917,11 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 		toCreate = append(toCreate, cp)
 	}
 	// The cooks of the recipes' components are planned with them.
-	cooks, created, err := s.plans.CreateCooksWithPortions(ctx, withSuppliers(toCreate, d.recipes))
+	toCreate, err = s.planSuppliers(ctx, user.HouseholdID(), toCreate, d.recipes)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to read the freezer", "")
+	}
+	cooks, created, err := s.plans.CreateCooksWithPortions(ctx, toCreate)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to plan meals", recipeNotFound)
 	}

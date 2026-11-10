@@ -204,3 +204,89 @@ func TestRecipeComponents(t *testing.T) {
 		t.Errorf("got cooks %v, want the pot deleted with the last chili it was for", cooks)
 	}
 }
+
+// TestComponentsFromFreezer checks that a cook of a recipe with a component
+// takes it from the freezer, from an earlier cook with enough frozen,
+// rather than planning a new cook of it, and thaws it the day before.
+func TestComponentsFromFreezer(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	createPerson(t, e, ben())
+	dried := customFood(t, e, "Dried pinto beans", 350, 21, 63, 2, 1, nil)
+	tomatoes := customFood(t, e, "Tomatoes", 20, 1, 4, 3, 0.2, nil)
+	create := func(r *recipesv1.Recipe) *recipesv1.Recipe {
+		t.Helper()
+		resp, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: r}.Build())
+		if err != nil {
+			t.Fatalf("CreateRecipe: %v", err)
+		}
+		return resp.GetRecipe()
+	}
+	beans := create(recipesv1.Recipe_builder{
+		Name: "Pinto beans", Servings: 4, FridgeDays: new(int32(3)), Freezable: true, FreezerDays: new(int32(90)),
+		Ingredients: []*recipesv1.Ingredient{ingredient(dried.GetId(), 250, grams)},
+	}.Build())
+	chili := create(recipesv1.Recipe_builder{
+		Name: "Chili", Servings: 4,
+		Ingredients: []*recipesv1.Ingredient{ingredient(tomatoes.GetId(), 400, grams), componentIngredient(beans.GetId(), 2)},
+	}.Build())
+	// A pot of beans cooked on Monday is all in the freezer.
+	frozen, err := e.plans.CreateCook(ctx, plansv1.CreateCookRequest_builder{
+		Cook:      plansv1.Cook_builder{RecipeId: beans.GetId(), Date: monday, Servings: 4, FrozenServings: 4, Done: true}.Build(),
+		FromStock: true,
+	}.Build())
+	if err != nil {
+		t.Fatalf("CreateCook: %v", err)
+	}
+	cookChili := func(date string) *plansv1.Cook {
+		t.Helper()
+		resp, err := e.plans.CreateCook(ctx, plansv1.CreateCookRequest_builder{
+			Cook: plansv1.Cook_builder{RecipeId: chili.GetId(), Date: date, Servings: 4}.Build(),
+		}.Build())
+		if err != nil {
+			t.Fatalf("CreateCook: %v", err)
+		}
+		return resp.GetCook()
+	}
+
+	// Thursday's and Friday's chilis each take half the frozen beans.
+	for _, date := range []string{thursday, friday} {
+		supplies := cookChili(date).GetSupplies()
+		if len(supplies) != 1 || supplies[0].GetSupplierCookId() != frozen.GetCook().GetId() || !supplies[0].GetFromFreezer() {
+			t.Errorf("got %v on %s, want the frozen beans", supplies, date)
+		}
+	}
+	leftovers, err := e.plans.ListFrozenLeftovers(ctx, plansv1.ListFrozenLeftoversRequest_builder{}.Build())
+	if err != nil {
+		t.Fatalf("ListFrozenLeftovers: %v", err)
+	}
+	if got := leftovers.GetLeftovers(); len(got) != 0 {
+		t.Errorf("got %v in the freezer, want the beans all planned", got)
+	}
+	// Saturday's has none left, so it plans a pot of beans.
+	supplies := cookChili(saturday).GetSupplies()
+	if len(supplies) != 1 || supplies[0].GetFromFreezer() || supplies[0].GetSupplierDate() != saturday {
+		t.Errorf("got %v on Saturday, want a new pot of beans", supplies)
+	}
+
+	// The beans are thawed the day before, and none are left over to plan.
+	week, cooks := weekCooks(t, e, monday)
+	var tasks []string
+	for _, day := range week.GetDays() {
+		for _, task := range day.GetPrepTasks() {
+			tasks = append(tasks, day.GetDate()+" "+task.GetNote())
+		}
+	}
+	for _, want := range []string{
+		wednesday + " Take the pinto beans out of the freezer to thaw",
+		thursday + " Take the pinto beans out of the freezer to thaw",
+	} {
+		if !slices.Contains(tasks, want) {
+			t.Errorf("got tasks %q, want %q", tasks, want)
+		}
+	}
+	if c := cooks["Pinto beans "+monday]; c.GetLeftServings() != 0 || len(c.GetWarnings()) != 0 {
+		t.Errorf("got %v, want the frozen beans planned, with no warnings", c)
+	}
+}

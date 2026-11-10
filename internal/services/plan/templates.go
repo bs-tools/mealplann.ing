@@ -322,6 +322,11 @@ func (s *Service) applyTemplate(ctx context.Context, rawID, rawStart string, raw
 	for _, c := range applied.Cooks {
 		c.Cook.HouseholdID = user.HouseholdID()
 	}
+	// Components come from the freezer where it has them.
+	freezer, err := s.freezerFor(ctx, user.HouseholdID(), applied.Cooks, d.recipes)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to read the freezer", "")
+	}
 	// The foods and the pantry are read while the cooks are created, for
 	// what they need bought.
 	var foodList []*foods.Food
@@ -341,7 +346,7 @@ func (s *Service) applyTemplate(ctx context.Context, rawID, rawStart string, raw
 	wg.Go(func() { lots, lotsErr = s.pantry.ListItems(ctx, user.HouseholdID()) })
 	var cooks []*plans.Cook
 	var portions [][]*plans.Portion
-	toCreate := withSuppliers(applied.Cooks, d.recipes)
+	toCreate := withSuppliers(applied.Cooks, d.recipes, freezer)
 	if dryRun {
 		for _, c := range toCreate {
 			cook := *c.Cook
