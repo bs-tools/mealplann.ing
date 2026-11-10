@@ -394,8 +394,17 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 			// everyone's, the meal is planned already.
 			key := slotKey{date: date, meal: meal}
 			eating, staples := withoutStapled(eaters[meal], d.plan.Staples, meal, date)
+			// People with portions at the meal already, like leftovers or
+			// a frozen serving, have it planned: suggesting a recipe too
+			// would plan them two meals.
+			eating, portions := d.withoutPortions(eating, meal, date)
 			if len(eating) == 0 {
 				plannedNames[key] = append(plannedNames[key], staples...)
+				for _, name := range portions {
+					if !slices.Contains(plannedNames[key], name) {
+						plannedNames[key] = append(plannedNames[key], name)
+					}
+				}
 			}
 			addSlot(key, &suggest.PlanSlot{Date: date, Meal: meal, People: eating})
 		}
@@ -463,6 +472,35 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 		Seed:        seed,
 		RecipeCount: int32(len(candidates)),
 	}.Build(), nil
+}
+
+// withoutPortions returns the people who eat a shared meal on a date but
+// have no portion planned at their eating time for it, and the names of
+// the portions of those left out.
+func (d *planData) withoutPortions(eaters []*people.Person, meal people.Meal, date time.Time) ([]*people.Person, []string) {
+	kept := make([]*people.Person, 0, len(eaters))
+	var names []string
+	for _, p := range eaters {
+		found := false
+		for _, et := range p.EatingTimes {
+			if et.Meal != meal {
+				continue
+			}
+			for _, it := range d.items[plans.Slot{PersonID: p.ID, EatingTimeID: et.ID, Date: date}] {
+				if it.portion == nil {
+					continue
+				}
+				found = true
+				if !slices.Contains(names, it.name()) {
+					names = append(names, it.name())
+				}
+			}
+		}
+		if !found {
+			kept = append(kept, p)
+		}
+	}
+	return kept, names
 }
 
 // leftoverFromProto converts and validates the earlier meal of a portion

@@ -45,7 +45,7 @@ func TestSuggestPlan(t *testing.T) {
 	// a breakfast. The curries are quick; the stew is slow.
 	b := ben()
 	b.SetUserId(store.UUIDToString(e.userID))
-	createPerson(t, e, b)
+	b = createPerson(t, e, b)
 	chickpeas := customFood(t, e, "Chickpeas", 139, 7, 23, 0, 2.6, nil)
 	tofu := customFood(t, e, "Tofu", 144, 15, 3, 0.6, 9, nil)
 	oats := customFood(t, e, "Oats", 380, 13, 60, 1, 7, nil)
@@ -171,6 +171,24 @@ func TestSuggestPlan(t *testing.T) {
 	if got := resp.GetSlots(); len(got) != 2 || got[0].GetState() != suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_PLANNED ||
 		got[1].GetState() != suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_SUGGESTED || resp.GetSeed() == 0 {
 		t.Errorf("got %v with seed %d, want Wednesday planned and Thursday suggested, with a new seed", planSummary(resp), resp.GetSeed())
+	}
+	// Leftovers of Monday's dinner at Thursday's lunch plan it, though no
+	// cook is at that meal.
+	if _, err := e.plans.CreatePortion(ctx, plansv1.CreatePortionRequest_builder{Portion: plansv1.Portion_builder{
+		PersonId: b.GetId(), EatingTimeId: eatingTimeID(t, b, "Lunch"), Date: thursday,
+		Cook: plansv1.CookShare_builder{CookId: saved.GetCooks()[0].GetId(), Servings: 1}.Build(),
+	}.Build()}.Build()); err != nil {
+		t.Fatalf("CreatePortion: %v", err)
+	}
+	resp, err = e.suggestions.SuggestPlan(ctx, suggestionsv1.SuggestPlanRequest_builder{
+		StartDate: thursday, Days: 1, Meals: []peoplev1.HouseholdMeal{lunch},
+	}.Build())
+	if err != nil {
+		t.Fatalf("SuggestPlan: %v", err)
+	}
+	if got := resp.GetSlots(); len(got) != 1 || got[0].GetState() != suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_PLANNED ||
+		!slices.Equal(got[0].GetPlannedRecipeNames(), []string{saved.GetCooks()[0].GetRecipeName()}) {
+		t.Errorf("got %v, want Thursday's lunch planned with the leftovers", planSummary(resp))
 	}
 	// Without meals, every meal Ben eats is planned.
 	resp, err = e.suggestions.SuggestPlan(ctx, suggestionsv1.SuggestPlanRequest_builder{StartDate: friday, Days: 1}.Build())
