@@ -290,6 +290,7 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 		PlannedGrams:    d.plannedGrams(),
 		Servings:        req.GetServings(),
 		EatingOut:       d.plan.EatingOutSlots(),
+		ServingsFor:     d.servingsFor(recipeID, date, meal, d.allPlanned()),
 	})
 	if tooFew, ok := errors.AsType[*plans.TooFewServingsError](err); ok {
 		return nil, connect.Errorf(connect.CodeInvalidArgument,

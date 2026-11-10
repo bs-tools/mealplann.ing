@@ -43,6 +43,10 @@ type SplitInput struct {
 	// EatingOut are the slots people eat out at, which the rest of a
 	// serving doesn't go to.
 	EatingOut map[Slot]bool
+	// ServingsFor returns how many servings a person eats, like more for
+	// someone with a higher energy target (see ServingsToward); one each if
+	// nil.
+	ServingsFor func(p *people.Person) float64
 }
 
 // Split is a shared meal split into portions.
@@ -81,8 +85,9 @@ const (
 	minShare = 0.05
 )
 
-// SplitMeal splits a shared meal into portions. Each person eats one
-// serving, at their eating time for the meal. If a serving weighs more
+// SplitMeal splits a shared meal into portions. Each person eats their
+// servings (see SplitInput.ServingsFor), one by default, at their eating
+// time for the meal. If a serving weighs more
 // than a person's maximum portion, less what's already planned there, their
 // share is capped at it, and the rest of their serving goes to their small
 // eating times after it that day, then the next day's, each capped the same
@@ -95,8 +100,13 @@ func SplitMeal(in *SplitInput) (*Split, error) {
 	for slot, grams := range in.PlannedGrams {
 		planned[slot] = grams
 	}
-	var assigned float64
+	var assigned, wanted float64
 	for _, p := range in.People {
+		serving := 1.0
+		if in.ServingsFor != nil {
+			serving = in.ServingsFor(p)
+		}
+		wanted += serving
 		index := -1
 		for i, et := range p.EatingTimes {
 			if et.Meal == in.Meal {
@@ -109,11 +119,11 @@ func SplitMeal(in *SplitInput) (*Split, error) {
 		}
 		at := Slot{PersonID: p.ID, EatingTimeID: p.EatingTimes[index].ID, Date: in.Date}
 		limit := p.Rules.MaxPortionGrams
-		if limit == nil || in.GramsPerServing <= 0 || in.GramsPerServing <= *limit-planned[at] {
+		if limit == nil || in.GramsPerServing <= 0 || serving*in.GramsPerServing <= *limit-planned[at] {
 			// The whole serving fits, or can't be weighed to be capped.
-			split.Shares = append(split.Shares, Share{Slot: at, Servings: 1})
-			planned[at] += in.GramsPerServing
-			assigned++
+			split.Shares = append(split.Shares, Share{Slot: at, Servings: serving})
+			planned[at] += serving * in.GramsPerServing
+			assigned = roundStep(assigned + serving)
 			continue
 		}
 		// The slots the serving can go to: the meal's, then the small
@@ -130,7 +140,7 @@ func SplitMeal(in *SplitInput) (*Split, error) {
 				slots = append(slots, Slot{PersonID: p.ID, EatingTimeID: et.ID, Date: next})
 			}
 		}
-		remaining := 1.0
+		remaining := serving
 		for _, slot := range slots {
 			if remaining < minShare {
 				break
@@ -149,9 +159,10 @@ func SplitMeal(in *SplitInput) (*Split, error) {
 			assigned = roundStep(assigned + share)
 		}
 	}
-	// Each person's serving is cooked, even a part of it that fits in none
-	// of their eating times.
-	servings := float64(len(in.People))
+	// Each person's servings are cooked, even a part that fits in none of
+	// their eating times, in whole servings, as recipes are cooked: the
+	// rest is left over.
+	servings := math.Ceil(roundStep(wanted) - 1e-9)
 	if in.Servings > 0 {
 		if in.Servings < assigned-servingStep/2 {
 			return nil, &TooFewServingsError{Needed: assigned}

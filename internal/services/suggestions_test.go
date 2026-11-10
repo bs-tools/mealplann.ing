@@ -97,9 +97,10 @@ func TestSuggestRecipes(t *testing.T) {
 	newRecipe("Pasta with spinach", []string{"dinner"}, ingredient(pasta.GetId(), 500, grams), ingredient(spinach.GetId(), 100, grams))
 	newRecipe("Juice and rice pudding", []string{"snack"}, ingredient(rice.GetId(), 200, grams), ingredient(juice.GetId(), 200, grams))
 
-	// The week: the curry on Tuesday, which opens a can of coconut milk for
-	// half of it, and the shop on Monday. The pantry has spinach to use by
-	// Wednesday.
+	// The week: the curry on Tuesday, which opens a can of coconut milk,
+	// cooking 3 servings as Ben's is sized up toward his protein, which
+	// leaves 100 g of it, and the shop on Monday. The pantry has spinach to
+	// use by Wednesday.
 	if _, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: curry.GetId(), Date: tuesday, Meal: dinner}.Build()); err != nil {
 		t.Fatalf("PlanMeal: %v", err)
 	}
@@ -123,7 +124,7 @@ func TestSuggestRecipes(t *testing.T) {
 	}
 	dal := resp.GetSuggestions()[0]
 	if got, want := reasons(dal, suggestionsv1.ScoreKind_SCORE_KIND_PACK_LEFTOVERS),
-		[]string{"uses the other 200 g of the 400 g pack of coconut milk bought for Tuesday's Chickpea coconut curry"}; !slices.Equal(got, want) {
+		[]string{"uses the other 100 g of the 400 g pack of coconut milk bought for Tuesday's Chickpea coconut curry"}; !slices.Equal(got, want) {
 		t.Errorf("got pack leftovers %v, want %v", got, want)
 	}
 	if got, want := reasons(dal, suggestionsv1.ScoreKind_SCORE_KIND_PANTRY),
@@ -137,12 +138,13 @@ func TestSuggestRecipes(t *testing.T) {
 	if !dal.GetFitsRules() || len(dal.GetWarnings()) != 0 || dal.GetCookServings() != 2 {
 		t.Errorf("got %v, want the dal to fit Anna's rules, cooking 2 servings", dal)
 	}
-	// It needs lentils and tofu bought, which the week doesn't buy yet.
+	// It needs another can of coconut milk, and lentils and tofu bought,
+	// which the week doesn't buy yet.
 	var toBuy []string
 	for _, it := range dal.GetItemsToBuy() {
 		toBuy = append(toBuy, it.GetFoodName()+" "+it.GetAmountText())
 	}
-	if want := []string{"Lentils, cooked 200 g", "Tofu 1 × 400 g"}; !slices.Equal(toBuy, want) || dal.GetNewItemCount() != 2 {
+	if want := []string{"Coconut milk 1 more × 400 g", "Lentils, cooked 200 g", "Tofu 1 × 400 g"}; !slices.Equal(toBuy, want) || dal.GetNewItemCount() != 2 {
 		t.Errorf("got %v, %d new, want %v", toBuy, dal.GetNewItemCount(), want)
 	}
 	// Anna's serving is split within her maximum portion, like PlanMeal.

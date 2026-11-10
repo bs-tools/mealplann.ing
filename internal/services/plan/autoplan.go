@@ -650,6 +650,29 @@ func (d *planData) allPlanned() map[plans.Slot]*rules.EatingTime {
 	return planned
 }
 
+// servingsFor returns how many servings of a shared meal of a recipe each
+// person eats, toward their targets (see plans.ServingsToward), given the
+// nutrition planned at each slot.
+func (d *planData) servingsFor(recipeID pgtype.UUID, date time.Time, meal people.Meal, planned map[plans.Slot]*rules.EatingTime) func(*people.Person) float64 {
+	return func(p *people.Person) float64 {
+		return plans.ServingsToward(p, d.recipeNutrition[recipeID], date, meal, planned)
+	}
+}
+
+// addPlanned adds servings of a recipe planned at a slot to the nutrition
+// planned at each slot.
+func (d *planData) addPlanned(planned map[plans.Slot]*rules.EatingTime, slot plans.Slot, recipeID pgtype.UUID, servings float64) {
+	n, ok := d.recipeNutrition[recipeID]
+	if !ok {
+		return
+	}
+	if planned[slot] == nil {
+		planned[slot] = &rules.EatingTime{}
+	}
+	a := n.Servings(servings)
+	planned[slot].Amount.Add(&a)
+}
+
 func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) (*plansv1.PlanMealsResponse, error) {
 	user, ok := authn.GetUser(ctx)
 	if !ok {
@@ -736,6 +759,9 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 		return nil, s.toConnectError(ctx, err, "failed to read plan", "")
 	}
 	planned := d.plannedGrams()
+	// The nutrition planned at each slot, as the meals are, to size the
+	// later meals' servings given the earlier ones.
+	amounts := d.allPlanned()
 	eaters := map[people.Meal][]*people.Person{}
 	toCreate := make([]*plans.CookWithPortions, 0, len(list))
 	for i, m := range list {
@@ -752,6 +778,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			slot := plans.Slot{PersonID: p.ID, EatingTimeID: m.eatingTimeID, Date: m.date}
 			servings, cookServings := plans.EatingTimeServings(p, gramsPerServing, planned[slot])
 			planned[slot] += servings * gramsPerServing
+			d.addPlanned(amounts, slot, m.recipeID, servings)
 			portion := &plans.Portion{PersonID: p.ID, EatingTimeID: m.eatingTimeID, Date: m.date, Servings: servings}
 			if m.leftover != nil {
 				cp, err := leftoverCook(toCreate, d.plan.Cooks, m.leftover, i)
@@ -794,6 +821,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			GramsPerServing: gramsPerServing,
 			PlannedGrams:    planned,
 			EatingOut:       d.plan.EatingOutSlots(),
+			ServingsFor:     d.servingsFor(m.recipeID, m.date, m.meal, amounts),
 		})
 		if err != nil {
 			return nil, s.toConnectError(ctx, err, "failed to split meal", "")
@@ -807,6 +835,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 				Servings:     share.Servings,
 			})
 			planned[share.Slot] += share.Servings * gramsPerServing
+			d.addPlanned(amounts, share.Slot, m.recipeID, share.Servings)
 		}
 		toCreate = append(toCreate, &plans.CookWithPortions{
 			Cook: &plans.Cook{

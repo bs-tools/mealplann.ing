@@ -2829,7 +2829,13 @@ export const PlanService: GenService<{
    * Plan a shared household meal: create a cook of a recipe on a date for a
    * meal, and a portion of it for each person whose eating pattern eats
    * from that meal, at that eating time, unless they have a staple there
-   * that day that replaces_meal, which they eat instead. Each person gets one serving. If a
+   * that day that replaces_meal, which they eat instead, nor people
+   * eating out (see SetEatingOut). Each person gets one serving, or
+   * someone with daily targets (see PersonService) from half a serving to
+   * two, in quarters, whichever brings their day closest to them: a
+   * daily minimum counts for the share of their day planned, this meal's
+   * eating time included, and a maximum for the whole day. The cook makes
+   * the servings rounded up to whole ones, leaving the rest over. If a
    * serving weighs more than a person's max_portion_grams, their portion is
    * capped at it (less what's already planned at that eating time), and the
    * rest of their serving goes to their next small eating times that day,
