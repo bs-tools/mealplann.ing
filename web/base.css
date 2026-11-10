@@ -25,8 +25,13 @@
   --color-google-logo-green: #34a853;
   --color-google-logo-yellow: #fbbc05;
   --color-google-logo-red: #ea4335;
-  /* Cards rising into place, like the slots of a suggested plan. */
-  --animate-rise: rise 0.45s ease-out both;
+  /*
+   * Cards rising into place, like the slots of a suggested plan. It fills
+   * backwards, not both: an animation holding its end state keeps each card
+   * its own stacking context, so a card's swap menu went under the cards
+   * after it.
+   */
+  --animate-rise: rise 0.45s ease-out backwards;
 
   @keyframes rise {
     from {
