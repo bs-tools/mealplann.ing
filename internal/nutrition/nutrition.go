@@ -106,6 +106,9 @@ const (
 	Milliliters
 	// Pieces are weighed with the food's weight per piece.
 	Pieces
+	// Packages, like a block of tofu or a can of beans, are weighed with the
+	// food's package weight.
+	Packages
 )
 
 // Food is what weighing and nutrition need of a food.
@@ -116,11 +119,13 @@ type Food struct {
 	GramsPerPiece float64
 	// GramsPerMilliliter is the density, 0 if unknown.
 	GramsPerMilliliter float64
+	// PackageGrams is the weight of a package, 0 if unknown.
+	PackageGrams float64
 }
 
 // Grams returns the weight of an amount of the food in a unit, and false
-// if it can't be weighed, as the food lacks the weight per piece or the
-// density the unit needs.
+// if it can't be weighed, as the food lacks the weight per piece, the
+// density or the package weight the unit needs.
 func (f *Food) Grams(amount float64, unit Unit) (float64, bool) {
 	switch unit {
 	case Grams:
@@ -135,6 +140,11 @@ func (f *Food) Grams(amount float64, unit Unit) (float64, bool) {
 			return 0, false
 		}
 		return amount * f.GramsPerPiece, true
+	case Packages:
+		if f.PackageGrams <= 0 {
+			return 0, false
+		}
+		return amount * f.PackageGrams, true
 	default:
 		return 0, false
 	}

@@ -27,7 +27,7 @@ import { ScoreKind } from "gen/suggestions/v1/suggestions_pb";
 import type { UnitSystem } from "gen/users/v1/users_pb";
 import { formatShortDate } from "helpers/format";
 import { formatServings } from "helpers/labels";
-import { formatVolume, formatWeight } from "helpers/measures";
+import { formatPackages, formatVolume, formatWeight } from "helpers/measures";
 import { formatAmount, nutrientInfoOf } from "helpers/nutrients";
 import { useUnitSystem } from "helpers/user";
 import React from "react";
@@ -81,6 +81,8 @@ const portionAmount = (portion: PlannedPortion, system: UnitSystem): string => {
     );
   } else if (portion.unit === AmountUnit.MILLILITERS) {
     parts.push(formatVolume(portion.amount, system));
+  } else if (portion.unit === AmountUnit.PACKAGES) {
+    parts.push(formatPackages(portion.amount));
   }
   if (portion.grams > 0) {
     parts.push(

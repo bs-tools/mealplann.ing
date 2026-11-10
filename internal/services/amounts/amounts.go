@@ -1,6 +1,6 @@
 // Package amounts converts the API's amounts of foods, in any of its units,
 // to the base units the app stores and computes them in: grams,
-// milliliters or pieces.
+// milliliters, pieces or packages.
 package amounts
 
 import (
@@ -13,6 +13,7 @@ var baseUnits = map[foodsv1.AmountUnit]nutrition.Unit{
 	foodsv1.AmountUnit_AMOUNT_UNIT_GRAMS:       nutrition.Grams,
 	foodsv1.AmountUnit_AMOUNT_UNIT_MILLILITERS: nutrition.Milliliters,
 	foodsv1.AmountUnit_AMOUNT_UNIT_PIECES:      nutrition.Pieces,
+	foodsv1.AmountUnit_AMOUNT_UNIT_PACKAGES:    nutrition.Packages,
 }
 
 // kitchenUnits are the API's kitchen units.
@@ -27,7 +28,7 @@ var kitchenUnits = map[foodsv1.AmountUnit]nutrition.KitchenUnit{
 }
 
 // UnitsHelp lists the units, for errors.
-const UnitsHelp = "AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS or AMOUNT_UNIT_PIECES, " +
+const UnitsHelp = "AMOUNT_UNIT_GRAMS, AMOUNT_UNIT_MILLILITERS, AMOUNT_UNIT_PIECES or AMOUNT_UNIT_PACKAGES, " +
 	"or a kitchen unit like AMOUNT_UNIT_TABLESPOONS"
 
 // FromProto converts an amount in a unit of the API to its base unit,

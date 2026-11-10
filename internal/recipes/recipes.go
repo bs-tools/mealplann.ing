@@ -924,6 +924,7 @@ func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 			},
 			GramsPerPiece:      orZero(row.GramsPerPiece),
 			GramsPerMilliliter: orZero(row.GramsPerMilliliter),
+			PackageGrams:       orZero(row.PackageGrams),
 		},
 		FastCarb: row.FastCarb,
 	}
@@ -951,6 +952,8 @@ func unitToDB(u nutrition.Unit) gen.AmountUnit {
 		return gen.AmountUnitMilliliters
 	case nutrition.Pieces:
 		return gen.AmountUnitPieces
+	case nutrition.Packages:
+		return gen.AmountUnitPackages
 	default:
 		return gen.AmountUnitGrams
 	}
@@ -962,6 +965,8 @@ func unitFromDB(u gen.AmountUnit) nutrition.Unit {
 		return nutrition.Milliliters
 	case gen.AmountUnitPieces:
 		return nutrition.Pieces
+	case gen.AmountUnitPackages:
+		return nutrition.Packages
 	default:
 		return nutrition.Grams
 	}

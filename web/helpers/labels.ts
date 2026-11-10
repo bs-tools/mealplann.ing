@@ -62,6 +62,7 @@ export const AMOUNT_UNITS: { value: AmountUnit; label: string }[] = [
   { label: "g", value: AmountUnit.GRAMS },
   { label: "ml", value: AmountUnit.MILLILITERS },
   { label: "pieces", value: AmountUnit.PIECES },
+  { label: "packages", value: AmountUnit.PACKAGES },
   { label: "tsp", value: AmountUnit.TEASPOONS },
   { label: "tbsp", value: AmountUnit.TABLESPOONS },
   { label: "cups", value: AmountUnit.CUPS },

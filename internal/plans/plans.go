@@ -1079,6 +1079,8 @@ func unitToDB(u nutrition.Unit, set bool) *gen.AmountUnit {
 		return new(gen.AmountUnitMilliliters)
 	case nutrition.Pieces:
 		return new(gen.AmountUnitPieces)
+	case nutrition.Packages:
+		return new(gen.AmountUnitPackages)
 	default:
 		return new(gen.AmountUnitGrams)
 	}
@@ -1093,6 +1095,8 @@ func unitFromDB(u *gen.AmountUnit) nutrition.Unit {
 		return nutrition.Milliliters
 	case gen.AmountUnitPieces:
 		return nutrition.Pieces
+	case gen.AmountUnitPackages:
+		return nutrition.Packages
 	default:
 		return nutrition.Grams
 	}

@@ -5,9 +5,12 @@ import (
 	"math"
 	"testing"
 
+	"connectrpc.com/connect/v2"
 	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
 	pantryv1 "github.com/bs-tools/mealplann.ing/internal/gen/pantry/v1"
+	plansv1 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
 	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // TestKitchenUnits checks that a recipe's ingredients keep the kitchen unit
@@ -59,5 +62,61 @@ func TestKitchenUnits(t *testing.T) {
 	}
 	if got := resp.GetItem().GetGrams(); math.Abs(got-453.59) > 0.01 {
 		t.Errorf("got %v g in the pantry, want 453.59", got)
+	}
+}
+
+// TestPackages checks that an amount in packages, like a block of tofu,
+// weighs the food's package_grams, in recipes, the pantry and cooking.
+func TestPackages(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	const packages = foodsv1.AmountUnit_AMOUNT_UNIT_PACKAGES
+	createPerson(t, e, ben())
+	// 100 kcal in 100 g, so kcal are grams.
+	tofu := customFood(t, e, "Tofu, firm", 100, 0, 0, 0, 0, func(f *foodsv1.Food) { f.SetPackageGrams(454) })
+	loose := customFood(t, e, "Tofu, loose", 100, 0, 0, 0, 0, nil)
+	created, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
+		Name: "Tofu scramble", Servings: 2,
+		Ingredients: []*recipesv1.Ingredient{ingredient(tofu.GetId(), 1, packages)},
+	}.Build()}.Build())
+	if err != nil {
+		t.Fatalf("CreateRecipe: %v", err)
+	}
+	r := created.GetRecipe()
+	if in := r.GetIngredients()[0]; in.GetAmount() != 1 || in.GetUnit() != packages {
+		t.Errorf("got %v %v, want 1 package", in.GetAmount(), in.GetUnit())
+	}
+	if got := r.GetNutrition().GetTotalGrams(); math.Abs(got-454) > 0.01 {
+		t.Errorf("got %v g, want a 454 g block", got)
+	}
+
+	// Two blocks in the pantry are 908 g; a food without a package size
+	// can't be added in packages.
+	if _, err := e.pantry.AddToPantry(ctx, pantryv1.AddToPantryRequest_builder{FoodId: tofu.GetId(), Amount: 2, Unit: packages}.Build()); err != nil {
+		t.Fatalf("AddToPantry: %v", err)
+	}
+	_, err = e.pantry.AddToPantry(ctx, pantryv1.AddToPantryRequest_builder{FoodId: loose.GetId(), Amount: 1, Unit: packages}.Build())
+	if connect.CodeOf(err) != connect.CodeFailedPrecondition {
+		t.Errorf("got %v adding packages of a food without a package size, want FAILED_PRECONDITION", err)
+	}
+
+	// Cooking the recipe takes a block out.
+	planned, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: r.GetId(), Date: monday, Meal: dinner, Servings: 2}.Build())
+	if err != nil {
+		t.Fatalf("PlanMeal: %v", err)
+	}
+	if _, err := e.plans.UpdateCook(ctx, plansv1.UpdateCookRequest_builder{
+		Cook:       plansv1.Cook_builder{Id: planned.GetCook().GetId(), Done: true}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"done"}},
+	}.Build()); err != nil {
+		t.Fatalf("UpdateCook: %v", err)
+	}
+	stock, err := e.pantry.ListPantry(ctx, pantryv1.ListPantryRequest_builder{FoodIds: []string{tofu.GetId()}}.Build())
+	if err != nil {
+		t.Fatalf("ListPantry: %v", err)
+	}
+	if items := stock.GetItems(); len(items) != 1 || math.Abs(items[0].GetGrams()-454) > 0.01 {
+		t.Errorf("got %v left, want one 454 g block", items)
 	}
 }
