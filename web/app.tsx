@@ -6,6 +6,7 @@ import type { User } from "gen/users/v1/users_pb";
 import { hideSplash } from "helpers/splash";
 import AutoPlanPage from "pages/auto-plan";
 import CookModePage from "pages/cook-mode";
+import CooksPage from "pages/cooks";
 import FoodPage from "pages/food";
 import FoodsPage from "pages/foods";
 import HomePage from "pages/home";
@@ -123,6 +124,7 @@ const App: React.FC = () => {
             <Route path="/recipes" element={<RecipesPage />} />
             <Route path="/recipes/new" element={<RecipeEditPage />} />
             <Route path="/recipes/import" element={<RecipeImportPage />} />
+            <Route path="/cooks" element={<CooksPage />} />
             <Route path="/recipes/:id" element={<RecipePage />} />
             <Route path="/recipes/:id/edit" element={<RecipeEditPage />} />
             <Route path="/recipes/:id/cook" element={<CookModePage />} />
