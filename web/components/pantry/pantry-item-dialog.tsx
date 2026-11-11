@@ -1,10 +1,12 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
+import ConfirmButton from "@components/ui/confirm-button";
 import { CheckboxField, SelectField, TextField } from "@components/ui/fields";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
 import {
   labelClass,
+  ghostDangerButton,
   primaryButton,
   secondaryButton,
 } from "@components/ui/styles";
@@ -13,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import {
   addToPantry,
+  removeFromPantry,
   updatePantryItem,
 } from "gen/pantry/v1/pantry-PantryService_connectquery";
 import type { PantryItem } from "gen/pantry/v1/pantry_pb";
@@ -62,6 +65,7 @@ const PantryItemDialog: React.FC<PantryItemDialogProps> = ({
   };
   const add = useMutation(addToPantry, { onSuccess });
   const update = useMutation(updatePantryItem, { onSuccess });
+  const remove = useMutation(removeFromPantry, { onSuccess });
   const dirty =
     item === undefined
       ? food !== null || amount !== ""
@@ -247,8 +251,22 @@ const PantryItemDialog: React.FC<PantryItemDialogProps> = ({
           onChange={setNotes}
         />
         {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
-        <ErrorText error={add.error ?? update.error} />
+        <ErrorText error={add.error ?? update.error ?? remove.error} />
         <div className="flex justify-end gap-2">
+          {item !== undefined && (
+            <ConfirmButton
+              className={`${ghostDangerButton} mr-auto`}
+              title={`Remove ${item.foodName}?`}
+              message="Remove it from the pantry when it's used up or thrown away."
+              confirmLabel="Remove"
+              disabled={remove.isPending}
+              onConfirm={() => {
+                remove.mutate({ id: item.id });
+              }}
+            >
+              Remove
+            </ConfirmButton>
+          )}
           <button type="button" className={secondaryButton} onClick={onClose}>
             Cancel
           </button>

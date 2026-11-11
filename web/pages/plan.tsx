@@ -3,11 +3,14 @@ import type { FixTarget } from "@components/plan/day-card";
 import DayCard from "@components/plan/day-card";
 import EatingTimeSuggestionsDialog from "@components/plan/eating-time-suggestions-dialog";
 import FixesDialog from "@components/plan/fixes-dialog";
+import MonthView from "@components/plan/month-view";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import type { Slot } from "@components/plan/portion-dialog";
 import PortionDialog from "@components/plan/portion-dialog";
+import WeekStrip, { fillOf, openSlotsOf } from "@components/plan/week-strip";
 import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
+import Segmented from "@components/ui/segmented";
 import {
   iconButton,
   linkClass,
@@ -46,14 +49,17 @@ import type {
   SetStapleEatenResponse,
   UpdateCookResponse,
 } from "gen/plans/v1/plans_pb";
-import { PlanService, Severity } from "gen/plans/v1/plans_pb";
+import { PlanService } from "gen/plans/v1/plans_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
+import { listShoppingLists } from "gen/shopping/v1/shopping-ShoppingService_connectquery";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import {
-  WEEKDAY_NAMES,
   addDays,
+  addMonths,
+  daysBetween,
   daysOfWeek,
   isDateString,
+  parseDate,
   startOfWeek,
   today,
 } from "helpers/dates";
@@ -61,6 +67,7 @@ import {
   formatDollars,
   formatGrams,
   formatList,
+  formatMonth,
   formatShortDate,
 } from "helpers/format";
 import { invalidateServices } from "helpers/query";
@@ -96,11 +103,17 @@ const pantryChangeNote = (
     : `${doneLabel}: took ${formatList(amounts)} out of the pantry.`;
 };
 
+// WeekdayOf names a date's day of the week, e.g. "Friday".
+const weekdayOf = (date: string): string =>
+  parseDate(date).toLocaleDateString(undefined, { weekday: "long" });
+
 // MealPlanning is the shared meal being planned.
 interface MealPlanning {
   date: string;
   // The meal, undefined to choose one.
   meal?: HouseholdMeal | undefined;
+  // The recipe, undefined to choose one.
+  recipeId?: string | undefined;
 }
 
 // PortionEdit is the portion being added or changed, and where.
@@ -163,6 +176,8 @@ const PlanPage: React.FC = () => {
   } else if (dates.includes(now)) {
     day = now;
   }
+  const month = params.get("view") === "month";
+  const lists = useQuery(listShoppingLists, { pageSize: 10 });
   const week = useQuery(
     getWeek,
     { monday },
@@ -179,7 +194,11 @@ const PlanPage: React.FC = () => {
   const costs = new Map(
     (cost.data?.cooks ?? []).map((cook) => [cook.cookId, cook.totalCents])
   );
-  const [planning, setPlanning] = useState<MealPlanning | null>(null);
+  // A recipe's "Plan this" links here with ?plan=, to plan that recipe.
+  const [planning, setPlanning] = useState<MealPlanning | null>(() => {
+    const recipeId = params.get("plan") ?? "";
+    return recipeId === "" ? null : { date: day, recipeId };
+  });
   const [editing, setEditing] = useState<PortionEdit | null>(null);
   // The empty eating time recipes are suggested for, or null.
   const [suggesting, setSuggesting] = useState<Slot | null>(null);
@@ -238,8 +257,11 @@ const PlanPage: React.FC = () => {
     stapleEaten.isPending ||
     removeCook.isPending;
 
-  const goTo = (nextWeek: string, nextDay?: string) => {
+  const goTo = (nextWeek: string, nextDay?: string, nextMonth = false) => {
     const next = new URLSearchParams();
+    if (nextMonth) {
+      next.set("view", "month");
+    }
     if (nextWeek !== startOfWeek(now)) {
       next.set("week", nextWeek);
     }
@@ -250,7 +272,18 @@ const PlanPage: React.FC = () => {
   };
 
   let content: React.ReactNode = null;
-  if (week.isPending || people.isPending) {
+  if (month) {
+    content = (
+      <MonthView
+        month={day}
+        today={now}
+        lists={lists.data?.lists ?? []}
+        onChoose={(date) => {
+          goTo(startOfWeek(date), date);
+        }}
+      />
+    );
+  } else if (week.isPending || people.isPending) {
     content = <Loading />;
   } else if (week.isError) {
     content = (
@@ -281,49 +314,66 @@ const PlanPage: React.FC = () => {
       </EmptyState>
     );
   } else {
-    const warned = (date: string): boolean =>
-      week.data.days
-        .find((other) => other.date === date)
-        ?.people.some(
-          (personDay) =>
-            personDay.warnings.some(
-              (warning) => warning.severity === Severity.WARNING
-            ) ||
-            personDay.eatingTimes.some((et) =>
-              et.warnings.some(
-                (warning) => warning.severity === Severity.WARNING
-              )
-            )
-        ) ?? false;
+    /*
+     * The days from today on with eating times left to plan: the banner
+     * offers to plan them, from the first to the last.
+     */
+    const open = week.data.days.filter(
+      (planDay) => planDay.date >= now && openSlotsOf(planDay) > 0
+    );
+    const openSlots = open.reduce(
+      (sum, planDay) => sum + openSlotsOf(planDay),
+      0
+    );
+    const [firstOpen] = open;
+    const lastOpen = open.at(-1);
+    let openTitle = "";
+    if (firstOpen !== undefined && lastOpen !== undefined) {
+      const allEmpty = open.every((planDay) => fillOf(planDay) <= 0);
+      if (!allEmpty) {
+        openTitle = `${openSlots} ${openSlots === 1 ? "meal" : "meals"} to plan`;
+      } else if (firstOpen === lastOpen) {
+        openTitle = `${weekdayOf(firstOpen.date)} is open`;
+      } else {
+        openTitle = `${weekdayOf(firstOpen.date)} to ${weekdayOf(lastOpen.date)} are open`;
+      }
+    }
+    const shop = lists.data?.lists.find(
+      (list) => !list.complete && list.startDate >= now
+    );
     content = (
       <div className="flex flex-col gap-4">
-        <nav
-          className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:hidden print:hidden"
-          aria-label="Days"
-        >
-          {dates.map((date, index) => (
-            <button
-              key={date}
-              type="button"
-              aria-current={date === day ? "date" : undefined}
-              className={`flex min-w-11 grow flex-col items-center rounded-md px-1.5 py-1 text-xs ring-1 ring-inset ${
-                date === day
-                  ? "bg-ink text-white ring-ink"
-                  : "bg-white text-gray-700 ring-gray-200"
-              }`}
-              onClick={() => {
-                goTo(monday, date);
-              }}
+        <WeekStrip
+          dates={dates}
+          today={now}
+          days={week.data.days}
+          chosen={day}
+          onChoose={(date) => {
+            goTo(monday, date);
+            document
+              .querySelector(`#day-${date}`)
+              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
+        {firstOpen !== undefined && lastOpen !== undefined && (
+          <div className="flex flex-col gap-2.5 rounded-2xl bg-ink-soft p-5 text-white print:hidden">
+            <p className="text-lg font-bold">{openTitle}</p>
+            <p className="text-sm text-gray-300">
+              {openSlots} {openSlots === 1 ? "meal" : "meals"}
+              {shop !== undefined &&
+              shop.startDate > firstOpen.date &&
+              daysBetween(now, shop.startDate) <= 7
+                ? `, before ${weekdayOf(shop.startDate)}'s shop.`
+                : " left to plan."}
+            </p>
+            <Link
+              to={`/plan/auto?start=${firstOpen.date}&days=${daysBetween(firstOpen.date, lastOpen.date) + 1}`}
+              className="self-start rounded-xl bg-pine-200 px-4 py-2.5 text-sm font-bold text-pine-dark"
             >
-              <span className="font-medium">{WEEKDAY_NAMES[index]}</span>
-              <span className="tabular-nums">{Number(date.slice(8))}</span>
-              <span
-                className={`mt-0.5 size-1.5 rounded-full ${warned(date) ? "bg-amber-500" : "bg-transparent"}`}
-                aria-label={warned(date) ? "Has warnings" : undefined}
-              />
-            </button>
-          ))}
-        </nav>
+              Plan them for me
+            </Link>
+          </div>
+        )}
         {cost.data !== undefined && cost.data.totalCents > 0 && (
           <WeekCost cost={cost.data} />
         )}
@@ -398,53 +448,28 @@ const PlanPage: React.FC = () => {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Plan"
-        subtitle={`Week of ${formatShortDate(monday)} to ${formatShortDate(addDays(monday, 6))}`}
+        subtitle={
+          month
+            ? formatMonth(day)
+            : `${formatShortDate(monday)} – ${formatShortDate(addDays(monday, 6))}`
+        }
         actions={
           <div className="flex flex-wrap items-center gap-2 print:hidden">
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                className={iconButton}
-                aria-label="Previous week"
-                title="Previous week"
-                onClick={() => {
-                  goTo(addDays(monday, -7));
-                }}
-              >
-                <ChevronLeftIcon className="size-5" />
-              </button>
-              <button
-                type="button"
-                className={secondaryButton}
-                disabled={monday === startOfWeek(now)}
-                onClick={() => {
-                  goTo(startOfWeek(now));
-                }}
-              >
-                This week
-              </button>
-              <button
-                type="button"
-                className={iconButton}
-                aria-label="Next week"
-                title="Next week"
-                onClick={() => {
-                  goTo(addDays(monday, 7));
-                }}
-              >
-                <ChevronRightIcon className="size-5" />
-              </button>
-            </div>
             <Link
               to={`/plan/templates?week=${monday}`}
               className={secondaryButton}
+              title="Templates"
             >
               <BookmarkSquareIcon className="size-4" aria-hidden="true" />
-              Templates
+              <span className="sr-only sm:not-sr-only">Templates</span>
             </Link>
-            <Link to="/plan/auto" className={secondaryButton}>
+            <Link
+              to="/plan/auto"
+              className={secondaryButton}
+              title="Plan for me"
+            >
               <SparklesIcon className="size-4" aria-hidden="true" />
-              Plan for me
+              <span className="sr-only sm:not-sr-only">Plan for me</span>
             </Link>
             <button
               type="button"
@@ -460,6 +485,66 @@ const PlanPage: React.FC = () => {
           </div>
         }
       />
+      <div className="flex items-center gap-2 print:hidden">
+        <Segmented
+          label="View"
+          className="grow sm:max-w-xs"
+          value={month ? "month" : "week"}
+          options={[
+            { label: "Week", value: "week" },
+            { label: "Month", value: "month" },
+          ]}
+          onChange={(view) => {
+            goTo(monday, day, view === "month");
+          }}
+        />
+        <button
+          type="button"
+          className={iconButton}
+          aria-label={month ? "Previous month" : "Previous week"}
+          title={month ? "Previous month" : "Previous week"}
+          onClick={() => {
+            if (month) {
+              const previous = addMonths(day, -1);
+              goTo(startOfWeek(previous), previous, true);
+            } else {
+              goTo(addDays(monday, -7));
+            }
+          }}
+        >
+          <ChevronLeftIcon className="size-5" />
+        </button>
+        <button
+          type="button"
+          className={`${secondaryButton} px-3`}
+          disabled={
+            month
+              ? day.slice(0, 7) === now.slice(0, 7)
+              : monday === startOfWeek(now)
+          }
+          onClick={() => {
+            goTo(startOfWeek(now), undefined, month);
+          }}
+        >
+          {month ? "This month" : "This week"}
+        </button>
+        <button
+          type="button"
+          className={iconButton}
+          aria-label={month ? "Next month" : "Next week"}
+          title={month ? "Next month" : "Next week"}
+          onClick={() => {
+            if (month) {
+              const next = addMonths(day, 1);
+              goTo(startOfWeek(next), next, true);
+            } else {
+              goTo(addDays(monday, 7));
+            }
+          }}
+        >
+          <ChevronRightIcon className="size-5" />
+        </button>
+      </div>
       <ErrorText
         error={
           remove.error ??
@@ -502,19 +587,36 @@ const PlanPage: React.FC = () => {
         </div>
       )}
       {content}
-      {planning !== null && (
-        <PlanMealDialog
-          dates={dates}
-          date={planning.date}
-          meal={planning.meal}
-          people={people.data?.people ?? []}
-          staples={staples.data?.staples ?? []}
-          recipes={recipes.data?.recipes ?? []}
-          onClose={() => {
-            setPlanning(null);
-          }}
-        />
-      )}
+      {planning !== null &&
+        (planning.recipeId === undefined || recipes.data !== undefined) && (
+          <PlanMealDialog
+            dates={dates}
+            date={planning.date}
+            meal={planning.meal}
+            people={people.data?.people ?? []}
+            staples={staples.data?.staples ?? []}
+            recipes={recipes.data?.recipes ?? []}
+            recipe={
+              planning.recipeId === undefined
+                ? undefined
+                : {
+                    id: planning.recipeId,
+                    name:
+                      recipes.data?.recipes.find(
+                        (other) => other.id === planning.recipeId
+                      )?.name ?? "",
+                  }
+            }
+            onClose={() => {
+              setPlanning(null);
+              if (params.has("plan")) {
+                const next = new URLSearchParams(params);
+                next.delete("plan");
+                setParams(next, { replace: true });
+              }
+            }}
+          />
+        )}
       {suggesting !== null && (
         <EatingTimeSuggestionsDialog
           slot={suggesting}

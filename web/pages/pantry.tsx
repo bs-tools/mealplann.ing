@@ -4,136 +4,164 @@ import Loading from "@components/loading";
 import FreezerCard from "@components/pantry/freezer-card";
 import PantryItemDialog from "@components/pantry/pantry-item-dialog";
 import Card from "@components/ui/card";
-import ConfirmButton from "@components/ui/confirm-button";
-import { Badge, EmptyState, PageHeader } from "@components/ui/misc";
+import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
+import Segmented from "@components/ui/segmented";
 import {
-  iconButton,
-  inputClass,
   linkClass,
   primaryButton,
+  sectionLabelClass,
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
-  MagnifyingGlassIcon,
-  PencilSquareIcon,
+  ChevronRightIcon,
+  FireIcon,
   PlusIcon,
-  TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateFood } from "gen/foods/v1/foods-FoodService_connectquery";
-import { FoodService, StoreSection } from "gen/foods/v1/foods_pb";
-import {
-  listPantry,
-  removeFromPantry,
-} from "gen/pantry/v1/pantry-PantryService_connectquery";
+import { FoodService } from "gen/foods/v1/foods_pb";
+import { listPantry } from "gen/pantry/v1/pantry-PantryService_connectquery";
 import type { PantryItem } from "gen/pantry/v1/pantry_pb";
 import { PantryService, Storage } from "gen/pantry/v1/pantry_pb";
-import { daysBetween, today } from "helpers/dates";
-import { formatNearDate, formatStock } from "helpers/format";
-import { STORAGES, STORE_SECTIONS } from "helpers/labels";
+import { suggestFromPantry } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
+import { daysBetween, parseDate, today } from "helpers/dates";
+import { formatGrams, formatNearDate, formatStock } from "helpers/format";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
-import { Link } from "react-router";
-
-/**
- * MatchesSearch reports whether a lot matches a search: whether each of
- * its words is in its food's name, label, notes or place, ignoring case.
- */
-const matchesSearch = (item: PantryItem, search: string): boolean => {
-  const text = [item.foodName, item.label, item.notes, storagePlace(item)]
-    .join(" ")
-    .toLowerCase();
-  return search
-    .toLowerCase()
-    .split(/\s+/u)
-    .every((word) => text.includes(word));
-};
+import { Link, useSearchParams } from "react-router";
 
 // SOON_DAYS is how many days left count as soon to expire.
 const SOON_DAYS = 3;
 
-/**
- * SECTIONS are the store sections in the order of a typical shop, then the
- * foods without one.
- */
-const SECTIONS = [
-  ...STORE_SECTIONS,
-  { label: "Other foods", value: StoreSection.UNSPECIFIED },
+// Place is a tab of the pantry: where food is kept.
+type Place = "fridge" | "freezer" | "cupboard";
+
+const PLACES: { value: Place; label: string }[] = [
+  { label: "Fridge", value: "fridge" },
+  { label: "Freezer", value: "freezer" },
+  { label: "Cupboard", value: "cupboard" },
 ];
 
-/**
- * StoragePlace says where a lot is kept, e.g. "Freezer · chest freezer",
- * or "" if that isn't said.
- */
-const storagePlace = (item: PantryItem): string => {
-  const kept =
-    STORAGES.find(
-      (option) =>
-        option.value === item.storage && option.value !== Storage.UNSPECIFIED
-    )?.label ?? "";
-  return [kept, item.location].filter((part) => part !== "").join(" · ");
+// PlaceOf returns the tab of a lot: the cupboard if it isn't said.
+const placeOf = (item: PantryItem): Place => {
+  switch (item.storage) {
+    case Storage.FRIDGE: {
+      return "fridge";
+    }
+    case Storage.FREEZER: {
+      return "freezer";
+    }
+    default: {
+      return "cupboard";
+    }
+  }
 };
 
-interface ExpiryBadgeProps {
-  item: PantryItem;
-  now: string;
-}
-
-// ExpiryBadge says when a lot should be used by, highlighting it if soon.
-const ExpiryBadge: React.FC<ExpiryBadgeProps> = ({ item, now }) => {
+// UseByText says when a lot is to be used by, e.g. "Use by Friday".
+const useByText = (item: PantryItem, now: string): string => {
   if (item.useByDate === "") {
-    return null;
+    return item.opened ? "Opened" : "";
   }
   const days = daysBetween(now, item.useByDate);
-  const opened = item.opened ? "Opened · " : "";
   if (days < 0) {
-    return (
-      <Badge className="bg-red-50 text-red-800 ring-red-200">
-        {opened}Expired {formatNearDate(item.useByDate)}
-      </Badge>
-    );
+    return `Expired ${formatNearDate(item.useByDate)}`;
   }
-  if (days <= SOON_DAYS) {
-    let when = `in ${days} days`;
-    if (days === 0) {
-      when = "today";
-    } else if (days === 1) {
-      when = "tomorrow";
-    }
-    return (
-      <Badge className="bg-amber-50 text-amber-800 ring-amber-200">
-        {opened}Use {when}
-      </Badge>
-    );
+  if (days === 0) {
+    return "Use today";
   }
+  if (days === 1) {
+    return "Use tomorrow";
+  }
+  if (days < 7) {
+    return `Use by ${parseDate(item.useByDate).toLocaleDateString(undefined, { weekday: "long" })}`;
+  }
+  return `Use by ${formatNearDate(item.useByDate)}`;
+};
+
+interface LotRowProps {
+  item: PantryItem;
+  now: string;
+  onOpen: () => void;
+}
+
+/**
+ * LotRow shows a lot: its food, when to use it by, and how much, in the
+ * units it's bought in. Tapping it opens it, to correct it.
+ */
+const LotRow: React.FC<LotRowProps> = ({ item, now, onOpen }) => {
+  const days =
+    item.useByDate === "" ? Infinity : daysBetween(now, item.useByDate);
+  let marker = "bg-gray-300";
+  if (days <= 0) {
+    marker = "bg-cook";
+  } else if (days <= SOON_DAYS) {
+    marker = "bg-amber-400";
+  }
+  const when = useByText(item, now);
   return (
-    <span className="text-xs text-gray-500">
-      {opened}Until {formatNearDate(item.useByDate)}
-    </span>
+    <li>
+      <button
+        type="button"
+        className="flex w-full items-center gap-3 border-b border-line py-3.5 text-left"
+        onClick={onOpen}
+      >
+        <span
+          className={`h-10 w-1.5 shrink-0 rounded-full ${marker}`}
+          aria-hidden="true"
+        />
+        <span className="flex min-w-0 grow flex-col">
+          <span className="text-base font-bold text-ink-soft">
+            {item.foodName}
+            {item.label !== "" && (
+              <span className="font-normal text-muted"> · {item.label}</span>
+            )}
+          </span>
+          {when !== "" && (
+            <span
+              className={`text-sm ${days <= SOON_DAYS ? "font-bold text-cook-dark" : "text-muted"}`}
+            >
+              {when}
+              {item.notes !== "" && ` · ${item.notes}`}
+            </span>
+          )}
+        </span>
+        <span
+          className="shrink-0 text-base font-bold text-ink-soft tabular-nums"
+          title={
+            item.estimated
+              ? "The amount is a guess: check it"
+              : formatGrams(item.grams)
+          }
+        >
+          {item.estimated ? "≈ " : ""}
+          {formatStock(item.grams, item.gramsPerPiece, item.packageGrams)}
+        </span>
+      </button>
+    </li>
   );
 };
 
 /**
- * PantryPage lists what the household has in stock, by store section, with
- * what to use soon highlighted, and the foods it always has.
+ * PantryPage lists what the household has, by where it's kept: what to use
+ * soon first, with how much and until when. Shopping adds to it and eating
+ * takes from it; a lot is opened to correct it, and Add adds one by hand.
  */
 const PantryPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const [params, setParams] = useSearchParams();
+  const now = today();
+  const place =
+    PLACES.find((option) => option.value === params.get("place"))?.value ??
+    "fridge";
   const pantry = useQuery(listPantry, {});
-  // The lot being edited, null for a new one, undefined if none.
+  const cookable = useQuery(suggestFromPantry, { date: now });
+  // The lot being corrected, null to add one, undefined if none.
   const [editing, setEditing] = useState<PantryItem | null | undefined>(
     undefined
   );
   const [stockedFood, setStockedFood] = useState<PickedFood | null>(null);
-  // The search the lots are filtered by, "" for all.
-  const [search, setSearch] = useState("");
-  const remove = useMutation(removeFromPantry, {
-    onSuccess: async () => {
-      await invalidateServices(queryClient, [PantryService]);
-    },
-  });
   const setAlwaysInStock = useMutation(updateFood, {
     onSuccess: async () => {
       setStockedFood(null);
@@ -146,7 +174,6 @@ const PantryPage: React.FC = () => {
       updateMask: { paths: ["always_in_stock"] },
     });
   };
-  const now = today();
 
   let content: React.ReactNode = null;
   if (pantry.isPending) {
@@ -162,158 +189,94 @@ const PantryPage: React.FC = () => {
     );
   } else {
     const { items: allItems, alwaysInStockFoods } = pantry.data;
-    const trimmed = search.trim();
-    const items =
-      trimmed === ""
-        ? allItems
-        : allItems.filter((item) => matchesSearch(item, trimmed));
-    const soon = items.filter(
-      (item) =>
-        item.useByDate !== "" && daysBetween(now, item.useByDate) <= SOON_DAYS
-    ).length;
+    const here = allItems.filter((item) => placeOf(item) === place);
+    const isSoon = (item: PantryItem): boolean =>
+      item.useByDate !== "" && daysBetween(now, item.useByDate) <= SOON_DAYS;
+    const soon = here.filter(isSoon);
+    // Soonest first, so what to use first is on top.
+    const ordered: PantryItem[] = [];
+    for (const item of soon) {
+      const at = ordered.findIndex((other) => other.useByDate > item.useByDate);
+      ordered.splice(at < 0 ? ordered.length : at, 0, item);
+    }
+    const rest = here.filter((item) => !isSoon(item));
+    let lots: React.ReactNode = null;
+    if (allItems.length === 0) {
+      lots = (
+        <EmptyState title="The pantry is empty">
+          Check items off a{" "}
+          <Link to="/shopping" className={linkClass}>
+            shopping list
+          </Link>{" "}
+          and they come here when you&apos;re done.
+        </EmptyState>
+      );
+    } else if (here.length === 0) {
+      lots = <p className="text-sm text-muted">Nothing here.</p>;
+    } else {
+      lots = (
+        <>
+          {ordered.length > 0 && (
+            <section className="flex flex-col">
+              <h2 className={sectionLabelClass}>Use soon</h2>
+              <ul>
+                {ordered.map((item) => (
+                  <LotRow
+                    key={item.id}
+                    item={item}
+                    now={now}
+                    onOpen={() => {
+                      setEditing(item);
+                    }}
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
+          {rest.length > 0 && (
+            <section className="flex flex-col">
+              {ordered.length > 0 && (
+                <h2 className={sectionLabelClass}>Everything else</h2>
+              )}
+              <ul>
+                {rest.map((item) => (
+                  <LotRow
+                    key={item.id}
+                    item={item}
+                    now={now}
+                    onOpen={() => {
+                      setEditing(item);
+                    }}
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
+      );
+    }
     content = (
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="flex flex-col gap-4 lg:col-span-2">
-          {soon > 0 && (
-            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              {soon === 1
-                ? "1 thing to use soon"
-                : `${soon} things to use soon`}
-              : plan them early in the week.
-            </p>
-          )}
-          {allItems.length > 0 && (
-            <label className="relative block sm:max-w-sm">
-              <span className="sr-only">Search the pantry</span>
-              <MagnifyingGlassIcon className="pointer-events-none absolute top-2 left-2.5 size-4 text-gray-400" />
-              <input
-                type="search"
-                className={`${inputClass} pl-8`}
-                value={search}
-                placeholder="Search the pantry"
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                }}
-              />
-            </label>
-          )}
-          {allItems.length > 0 && items.length === 0 && (
-            <p className="text-sm text-gray-600">
-              Nothing in the pantry matches &quot;{trimmed}&quot;.
-            </p>
-          )}
-          {allItems.length === 0 ? (
-            <EmptyState title="The pantry is empty">
-              Add what you have, or check items off a{" "}
-              <Link to="/shopping" className={linkClass}>
-                shopping list
-              </Link>{" "}
-              and they come here when you&apos;re done.
-            </EmptyState>
-          ) : (
-            SECTIONS.map((section) => {
-              const lots = items.filter(
-                (item) => item.storeSection === section.value
-              );
-              if (lots.length === 0) {
-                return null;
-              }
-              return (
-                <Card key={section.value} title={section.label}>
-                  <ul className="-my-2 divide-y divide-gray-100">
-                    {lots.map((item) => (
-                      <li
-                        key={item.id}
-                        className="flex items-center gap-2 py-2 text-sm"
-                      >
-                        <div className="flex min-w-0 grow flex-col">
-                          <span className="font-medium text-gray-900">
-                            {item.foodName}
-                            {item.label !== "" && (
-                              <span className="font-normal text-gray-600">
-                                {" "}
-                                · {item.label}
-                              </span>
-                            )}
-                          </span>
-                          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <span
-                              className="text-gray-600 tabular-nums"
-                              title={
-                                item.estimated
-                                  ? "The amount is a guess: check it"
-                                  : undefined
-                              }
-                            >
-                              {item.estimated ? "≈ " : ""}
-                              {formatStock(item.grams, item.gramsPerPiece)}
-                            </span>
-                            {storagePlace(item) !== "" && (
-                              <span className="text-xs text-gray-500">
-                                {storagePlace(item)}
-                              </span>
-                            )}
-                            <ExpiryBadge item={item} now={now} />
-                            {item.notes !== "" && (
-                              <span className="text-xs text-gray-500 italic">
-                                {item.notes}
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          className={iconButton}
-                          aria-label={`Edit ${item.foodName}`}
-                          title="Edit"
-                          onClick={() => {
-                            setEditing(item);
-                          }}
-                        >
-                          <PencilSquareIcon className="size-5" />
-                        </button>
-                        <ConfirmButton
-                          className={iconButton}
-                          title={`Remove ${item.foodName}?`}
-                          message="Remove it from the pantry when it's used up or thrown away."
-                          confirmLabel="Remove"
-                          disabled={remove.isPending}
-                          onConfirm={() => {
-                            remove.mutate({ id: item.id });
-                          }}
-                        >
-                          <TrashIcon
-                            className="size-5"
-                            aria-label={`Remove ${item.foodName}`}
-                          />
-                        </ConfirmButton>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              );
-            })
-          )}
-        </div>
-        <div className="flex flex-col gap-4">
-          <FreezerCard />
+      <div className="flex flex-col gap-4">
+        {lots}
+        {place === "freezer" && <FreezerCard />}
+        {place === "cupboard" && (
           <Card title="Always in stock">
             <div className="flex flex-col gap-3 text-sm">
-              <p className="text-gray-600">
+              <p className="text-muted">
                 Things you always have, like salt and spices. They aren&apos;t
-                weighed here, and the shopping list leaves them out.
+                counted here, and the shopping list leaves them out.
               </p>
               {alwaysInStockFoods.length > 0 && (
                 <ul className="flex flex-wrap gap-1.5">
                   {alwaysInStockFoods.map((food) => (
                     <li
                       key={food.foodId}
-                      className="inline-flex items-center gap-1 rounded-full bg-gray-100 py-0.5 pr-1 pl-2.5 text-gray-800"
+                      className="inline-flex items-center gap-1 rounded-full bg-ground-dark py-1 pr-1 pl-3 text-ink-soft"
                     >
                       {food.foodName}
                       <button
                         type="button"
-                        className="rounded-full p-0.5 text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                        className="rounded-full p-0.5 text-muted hover:bg-gray-200 hover:text-ink-soft"
                         aria-label={`Track ${food.foodName} again`}
                         title="Track it again"
                         disabled={setAlwaysInStock.isPending}
@@ -337,30 +300,48 @@ const PantryPage: React.FC = () => {
               />
             </div>
           </Card>
-        </div>
+        )}
       </div>
     );
   }
 
+  const cookableCount = cookable.data?.recipes.length ?? 0;
   return (
-    <div className="flex flex-col gap-2">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <PageHeader
         title="Pantry"
-        subtitle="What's in stock. Shopping adds to it, and cooking takes from it."
         actions={
-          <button
-            type="button"
-            className={primaryButton}
-            onClick={() => {
-              setEditing(null);
-            }}
-          >
+          <Link to="/pantry/add" className={primaryButton}>
             <PlusIcon className="size-4" aria-hidden="true" />
             Add
-          </button>
+          </Link>
         }
       />
-      <ErrorText error={remove.error ?? setAlwaysInStock.error} />
+      <Segmented
+        label="Where it's kept"
+        value={place}
+        options={PLACES}
+        onChange={(next) => {
+          setParams(next === "fridge" ? {} : { place: next }, {
+            replace: true,
+          });
+        }}
+      />
+      {cookableCount > 0 && (
+        <Link
+          to="/pantry/cook"
+          className="flex items-center gap-3 rounded-2xl bg-pine-50 px-4 py-3.5 text-base font-bold text-pine-dark"
+        >
+          <FireIcon className="size-5 shrink-0" aria-hidden="true" />
+          <span className="grow">
+            {cookableCount === 1
+              ? "1 recipe you can cook right now"
+              : `${cookableCount} recipes you can cook right now`}
+          </span>
+          <ChevronRightIcon className="size-5 shrink-0" aria-hidden="true" />
+        </Link>
+      )}
+      <ErrorText error={setAlwaysInStock.error} />
       {content}
       {editing !== undefined && (
         <PantryItemDialog

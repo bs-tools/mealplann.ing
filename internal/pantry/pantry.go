@@ -57,12 +57,13 @@ type Item struct {
 	Estimated bool
 	// Label is its brand or label.
 	Label string
-	// FoodName, StoreSection, GramsPerPiece, OpenedShelfLifeDays and
-	// FreezerShelfLifeDays are read from the food, and ignored when
-	// writing.
+	// FoodName, StoreSection, GramsPerPiece, PackageGrams,
+	// OpenedShelfLifeDays and FreezerShelfLifeDays are read from the food,
+	// and ignored when writing.
 	FoodName             string
 	StoreSection         foods.StoreSection
 	GramsPerPiece        float64
+	PackageGrams         float64
 	OpenedShelfLifeDays  int32
 	FreezerShelfLifeDays int32
 	CreateTime           time.Time
@@ -468,6 +469,9 @@ func itemFromDB(row *gen.ListPantryItemsRow) *Item {
 	}
 	if row.GramsPerPiece != nil {
 		it.GramsPerPiece = *row.GramsPerPiece
+	}
+	if row.PackageGrams != nil {
+		it.PackageGrams = *row.PackageGrams
 	}
 	if row.OpenedShelfLifeDays != nil {
 		it.OpenedShelfLifeDays = *row.OpenedShelfLifeDays

@@ -194,13 +194,28 @@ export const formatGrams = (grams: number): string => {
 };
 
 /**
- * FormatStock formats an amount in stock, with its pieces when the food has
- * a weight per piece, e.g. "450 g (~3 pieces)".
+ * FormatStock formats an amount in stock in the units it's bought in: its
+ * packages when the food has a package size, like "4 packages", else its
+ * pieces, like "3 pieces", else its weight. Partial packages and pieces
+ * are rounded to a quarter, prefixed by "~" when that's a guess.
  */
-export const formatStock = (grams: number, gramsPerPiece: number): string => {
-  if (gramsPerPiece <= 0) {
-    return formatGrams(grams);
+export const formatStock = (
+  grams: number,
+  gramsPerPiece: number,
+  packageGrams = 0
+): string => {
+  const count = (size: number, singular: string, plural: string): string => {
+    const exact = grams / size;
+    const rounded = Math.round(exact * 4) / 4;
+    const text = rounded === 0 ? "¼" : rounded.toLocaleString();
+    const near = Math.abs(exact - rounded) > 0.01 ? "~" : "";
+    return `${near}${text} ${rounded > 1 ? plural : singular}`;
+  };
+  if (packageGrams > 0) {
+    return count(packageGrams, "package", "packages");
   }
-  const pieces = Math.round((grams / gramsPerPiece) * 10) / 10;
-  return `${formatGrams(grams)} (~${pieces.toLocaleString()} ${pieces === 1 ? "piece" : "pieces"})`;
+  if (gramsPerPiece > 0) {
+    return count(gramsPerPiece, "piece", "pieces");
+  }
+  return formatGrams(grams);
 };

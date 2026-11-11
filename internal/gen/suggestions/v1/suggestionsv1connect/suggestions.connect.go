@@ -33,6 +33,9 @@ const (
 	// SuggestionServiceSuggestFixesProcedure is the procedure name of the SuggestionService's
 	// SuggestFixes RPC.
 	SuggestionServiceSuggestFixesProcedure = "/suggestions.v1.SuggestionService/SuggestFixes"
+	// SuggestionServiceSuggestFromPantryProcedure is the procedure name of the SuggestionService's
+	// SuggestFromPantry RPC.
+	SuggestionServiceSuggestFromPantryProcedure = "/suggestions.v1.SuggestionService/SuggestFromPantry"
 )
 
 var (
@@ -55,6 +58,13 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestFixes"),
 			Procedure:  SuggestionServiceSuggestFixesProcedure,
+		}
+	})
+	suggestionServiceSuggestFromPantrySpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestFromPantry"),
+			Procedure:  SuggestionServiceSuggestFromPantryProcedure,
 		}
 	})
 )
@@ -159,6 +169,14 @@ type SuggestionServiceClient interface {
 	// with SkipStaple. Nothing is changed. Returns no fixes if no resize
 	// helps.
 	SuggestFixes(context.Context, *v1.SuggestFixesRequest) (*v1.SuggestFixesResponse, error)
+	// List the recipes the household can cook on a date with only what's in
+	// its pantry, no shopping: every ingredient of a whole batch, as
+	// written, is in stock and usable on the date, or always in stock.
+	// Recipes using food to use within a few days come first, then by name.
+	// What the plan will take from the pantry isn't counted, so plan one
+	// with PlanService.PlanMeal or CreatePortion. Drafts and recipes not to
+	// suggest are left out. Nothing is changed.
+	SuggestFromPantry(context.Context, *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error)
 }
 
 // NewSuggestionServiceClient constructs a client for the suggestions.v1.SuggestionService service.
@@ -267,6 +285,14 @@ type SuggestionServiceHandler interface {
 	// with SkipStaple. Nothing is changed. Returns no fixes if no resize
 	// helps.
 	SuggestFixes(context.Context, *v1.SuggestFixesRequest) (*v1.SuggestFixesResponse, error)
+	// List the recipes the household can cook on a date with only what's in
+	// its pantry, no shopping: every ingredient of a whole batch, as
+	// written, is in stock and usable on the date, or always in stock.
+	// Recipes using food to use within a few days come first, then by name.
+	// What the plan will take from the pantry isn't counted, so plan one
+	// with PlanService.PlanMeal or CreatePortion. Drafts and recipes not to
+	// suggest are left out. Nothing is changed.
+	SuggestFromPantry(context.Context, *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error)
 }
 
 // RegisterSuggestionServiceHandler registers svc as the suggestions.v1.SuggestionService
@@ -277,6 +303,7 @@ func RegisterSuggestionServiceHandler(server *connect.Server, svc SuggestionServ
 		connect.Method{Spec: suggestionServiceSuggestRecipesSpec(), Handler: adapter.suggestRecipes},
 		connect.Method{Spec: suggestionServiceSuggestPlanSpec(), Handler: adapter.suggestPlan},
 		connect.Method{Spec: suggestionServiceSuggestFixesSpec(), Handler: adapter.suggestFixes},
+		connect.Method{Spec: suggestionServiceSuggestFromPantrySpec(), Handler: adapter.suggestFromPantry},
 	)
 }
 
@@ -293,6 +320,10 @@ func (UnimplementedSuggestionServiceHandler) SuggestPlan(context.Context, *v1.Su
 
 func (UnimplementedSuggestionServiceHandler) SuggestFixes(context.Context, *v1.SuggestFixesRequest) (*v1.SuggestFixesResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestFixes is not implemented")
+}
+
+func (UnimplementedSuggestionServiceHandler) SuggestFromPantry(context.Context, *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestFromPantry is not implemented")
 }
 
 type suggestionServiceClient struct {
@@ -318,6 +349,14 @@ func (c *suggestionServiceClient) SuggestPlan(ctx context.Context, req *v1.Sugge
 func (c *suggestionServiceClient) SuggestFixes(ctx context.Context, req *v1.SuggestFixesRequest) (*v1.SuggestFixesResponse, error) {
 	var res v1.SuggestFixesResponse
 	if err := c.client.CallUnary(ctx, suggestionServiceSuggestFixesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *suggestionServiceClient) SuggestFromPantry(ctx context.Context, req *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error) {
+	var res v1.SuggestFromPantryResponse
+	if err := c.client.CallUnary(ctx, suggestionServiceSuggestFromPantrySpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -355,6 +394,18 @@ func (h suggestionServiceHandler) suggestFixes(ctx context.Context, _ connect.Sp
 		return err
 	}
 	res, err := h.svc.SuggestFixes(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h suggestionServiceHandler) suggestFromPantry(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SuggestFromPantryRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SuggestFromPantry(ctx, &req)
 	if err != nil {
 		return err
 	}

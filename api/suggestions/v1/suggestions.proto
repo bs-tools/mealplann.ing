@@ -139,6 +139,14 @@ service SuggestionService {
   // with SkipStaple. Nothing is changed. Returns no fixes if no resize
   // helps.
   rpc SuggestFixes(SuggestFixesRequest) returns (SuggestFixesResponse);
+  // List the recipes the household can cook on a date with only what's in
+  // its pantry, no shopping: every ingredient of a whole batch, as
+  // written, is in stock and usable on the date, or always in stock.
+  // Recipes using food to use within a few days come first, then by name.
+  // What the plan will take from the pantry isn't counted, so plan one
+  // with PlanService.PlanMeal or CreatePortion. Drafts and recipes not to
+  // suggest are left out. Nothing is changed.
+  rpc SuggestFromPantry(SuggestFromPantryRequest) returns (SuggestFromPantryResponse);
 }
 
 // An eating time of one person, to suggest a recipe for, like a small
@@ -536,4 +544,28 @@ message PlanFix {
   // portion_id, as the portion is all that's planned of it, and it isn't
   // cooked yet: else its servings are left over.
   string delete_cook_id = 14;
+}
+
+message SuggestFromPantryRequest {
+  // The date to cook on (YYYY-MM-DD), usually today. Required.
+  string date = 1;
+}
+
+message SuggestFromPantryResponse {
+  // The recipes, those using food to use soon first.
+  repeated PantryRecipe recipes = 1;
+}
+
+// A recipe the pantry has everything for.
+message PantryRecipe {
+  // The ID of the recipe.
+  string recipe_id = 1;
+  // The name of the recipe.
+  string recipe_name = 2;
+  // The servings a batch makes.
+  int32 servings = 3;
+  // Its preparation and cooking time, in seconds, 0 if unknown.
+  int32 total_seconds = 4;
+  // The names of the foods it uses that are to be used within a few days.
+  repeated string use_soon_food_names = 5;
 }
