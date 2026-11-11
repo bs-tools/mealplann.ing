@@ -205,6 +205,23 @@ message Recipe {
   // had enough of for a while; empty for none. Set it with the
   // update_mask "snoozed_until".
   string snoozed_until = 27;
+  // The sides it's served with, like rice, quinoa or bread, in order, at
+  // most 6: not ingredients, but foods a meal of it adds one of, or none,
+  // as a portion of its own (see PlanService.CreatePortion), to fill what
+  // the day is short of. SuggestionService.SuggestSides says which side
+  // fits a planned meal best.
+  repeated RecipeSide served_with = 28;
+}
+
+// A side a recipe is served with.
+message RecipeSide {
+  // The ID of the side's food (see FoodService). Required.
+  string food_id = 1;
+  // How much of it goes with a serving of the recipe, in grams, e.g. 75
+  // for cooked rice. From 1 to 1000.
+  double grams_per_serving = 2;
+  // The food's name.
+  string food_name = 3 [(mcp.v1.field).output_only = true];
 }
 
 // What a recipe's ingredients cost, from their foods' prices

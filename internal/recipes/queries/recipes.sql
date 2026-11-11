@@ -21,7 +21,8 @@ insert into recipes (
   yield_unit,
   draft,
   not_suggested,
-  snoozed_until
+  snoozed_until,
+  served_with
 ) values (
   @id,
   @household_id,
@@ -44,7 +45,8 @@ insert into recipes (
   sqlc.narg(yield_unit)::amount_unit,
   @draft,
   @not_suggested,
-  sqlc.narg(snoozed_until)::date
+  sqlc.narg(snoozed_until)::date,
+  @served_with
 )
 returning *;
 
@@ -111,6 +113,7 @@ update recipes set
   draft = @draft,
   not_suggested = @not_suggested,
   snoozed_until = sqlc.narg(snoozed_until)::date,
+  served_with = @served_with,
   update_time = now()
 where id = @id and household_id = @household_id
 returning *;
@@ -185,3 +188,20 @@ order by recipe_ingredients.recipe_id, recipe_ingredients.position;
 -- name: ListFoodNames :many
 -- The household's foods' IDs and names, to match imported ingredients to.
 select id, name from foods where household_id = @household_id order by lower(name);
+
+-- name: ListRecipeSides :many
+-- The sides of the given recipes, or of all the household's recipes, in
+-- order, with their foods' names. Sides whose food was deleted are left
+-- out.
+select
+  r.id as recipe_id,
+  f.id as food_id,
+  (s.side->>'grams')::double precision as grams,
+  f.name as food_name,
+  s.position::bigint as position
+from recipes r
+cross join lateral jsonb_array_elements(r.served_with) with ordinality as s(side, position)
+join foods f on f.id = (s.side->>'food_id')::uuid and f.household_id = r.household_id
+where r.household_id = @household_id
+  and (@all_recipes::boolean or r.id = any(@recipe_ids::uuid[]))
+order by r.id, s.position;

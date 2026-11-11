@@ -384,6 +384,18 @@ const RecipePage: React.FC = () => {
         </div>
         <div className="order-first flex flex-col gap-4 lg:order-none lg:col-span-2">
           <RecipeBalance perServing={recipe.nutrition?.perServing} />
+          {recipe.servedWith.length > 0 && (
+            <p className="text-sm text-muted">
+              Served with{" "}
+              {recipe.servedWith
+                .map(
+                  (side) =>
+                    `${side.foodName.toLowerCase()} (${side.gramsPerServing} g)`
+                )
+                .join(", ")}
+              : each meal suggests the one that fits the day.
+            </p>
+          )}
           <NutritionPanel recipe={recipe} />
           {(recipe.tags.length > 0 || keeps !== "") && (
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted">

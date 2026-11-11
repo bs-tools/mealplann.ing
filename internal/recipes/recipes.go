@@ -3,6 +3,7 @@ package recipes
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -94,8 +95,21 @@ type Recipe struct {
 	// UTC, it's not suggested before, zero for none.
 	NotSuggested bool
 	SnoozedUntil time.Time
-	CreateTime   time.Time
-	UpdateTime   time.Time
+	// ServedWith are the sides the recipe can be served with, like rice
+	// or quinoa, of which a meal plans one, or none, as a portion of its
+	// own.
+	ServedWith []Side
+	CreateTime time.Time
+	UpdateTime time.Time
+}
+
+// Side is a food a recipe can be served with, in grams per serving of the
+// recipe.
+type Side struct {
+	FoodID pgtype.UUID
+	Grams  float64
+	// FoodName is read from the food, and ignored when writing.
+	FoodName string
 }
 
 // MaxComponentDepth is how deep components can nest: a recipe's component
@@ -389,6 +403,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 	id := store.NewUUID()
 	var row *gen.Recipe
 	var ingredients []*gen.ListRecipeIngredientsRow
+	var sides []*gen.ListRecipeSidesRow
 	// The statements run in a single round trip, in an implicit
 	// transaction: if a food isn't the household's, its foreign key fails
 	// and nothing is created.
@@ -420,11 +435,13 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			Draft:         recipe.Draft,
 			NotSuggested:  recipe.NotSuggested,
 			SnoozedUntil:  store.DateToPG(recipe.SnoozedUntil),
+			ServedWith:    sidesToDB(recipe.ServedWith),
 		})
 		return err
 	})
 	_ = gen.New(&b).CreateRecipeIngredients(ctx, ingredientsToDB(recipe.HouseholdID, id, recipe.Ingredients))
 	readIngredients(ctx, &b, recipe.HouseholdID, id, &ingredients)
+	readSides(ctx, &b, recipe.HouseholdID, []pgtype.UUID{id}, false, &sides)
 	if err := b.Send(ctx, r.db); err != nil {
 		if _, ok := errors.AsType[*UnknownFoodsError](err); ok {
 			return nil, err
@@ -434,7 +451,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 		}
 		return nil, fmt.Errorf("failed to create recipe: %w", err)
 	}
-	return r.resolved(ctx, recipeFromDB(row, ingredients))
+	return r.resolved(ctx, recipeFromDB(row, ingredients, sides))
 }
 
 // GetRecipe gets a household's recipe with its ingredients' foods. It
@@ -442,6 +459,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 func (r *Repository) GetRecipe(ctx context.Context, householdID, id pgtype.UUID) (*Recipe, error) {
 	var row *gen.Recipe
 	var ingredients []*gen.ListRecipeIngredientsRow
+	var sides []*gen.ListRecipeSidesRow
 	var b store.Batch
 	b.Read(func(db store.Querier) error {
 		var err error
@@ -452,13 +470,14 @@ func (r *Repository) GetRecipe(ctx context.Context, householdID, id pgtype.UUID)
 		return err
 	})
 	readIngredients(ctx, &b, householdID, id, &ingredients)
+	readSides(ctx, &b, householdID, []pgtype.UUID{id}, false, &sides)
 	if err := b.Send(ctx, r.db); err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("failed to get recipe: %w", err)
 	}
-	return r.resolved(ctx, recipeFromDB(row, ingredients))
+	return r.resolved(ctx, recipeFromDB(row, ingredients, sides))
 }
 
 // ListFilter selects the recipes to list. Its zero value selects all.
@@ -502,6 +521,7 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, f
 	var rows []*gen.Recipe
 	var allTags []string
 	var ingredients []*gen.ListRecipeIngredientsRow
+	var sides []*gen.ListRecipeSidesRow
 	var b store.Batch
 	b.Read(func(db store.Querier) error {
 		var err error
@@ -529,6 +549,7 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, f
 		})
 		return err
 	})
+	readSides(ctx, &b, householdID, nil, true, &sides)
 	if err := b.Send(ctx, r.db); err != nil {
 		return nil, nil, fmt.Errorf("failed to list recipes: %w", err)
 	}
@@ -536,9 +557,13 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, f
 	for _, in := range ingredients {
 		byRecipe[in.RecipeIngredient.RecipeID] = append(byRecipe[in.RecipeIngredient.RecipeID], in)
 	}
+	sidesByRecipe := map[pgtype.UUID][]*gen.ListRecipeSidesRow{}
+	for _, side := range sides {
+		sidesByRecipe[side.RecipeID] = append(sidesByRecipe[side.RecipeID], side)
+	}
 	recipes := make([]*Recipe, 0, len(rows))
 	for _, row := range rows {
-		recipes = append(recipes, recipeFromDB(row, byRecipe[row.ID]))
+		recipes = append(recipes, recipeFromDB(row, byRecipe[row.ID], sidesByRecipe[row.ID]))
 	}
 	// The ingredients of all recipes are read, so components among the
 	// recipes listed resolve without reading them again.
@@ -577,6 +602,7 @@ func (r *Repository) listRecipesByID(ctx context.Context, householdID pgtype.UUI
 	}
 	var rows []*gen.Recipe
 	var ingredients []*gen.ListRecipeIngredientsRow
+	var sides []*gen.ListRecipeSidesRow
 	var b store.Batch
 	b.Read(func(db store.Querier) error {
 		var err error
@@ -591,6 +617,7 @@ func (r *Repository) listRecipesByID(ctx context.Context, householdID pgtype.UUI
 		})
 		return err
 	})
+	readSides(ctx, &b, householdID, ids, false, &sides)
 	if err := b.Send(ctx, r.db); err != nil {
 		return nil, fmt.Errorf("failed to list recipes: %w", err)
 	}
@@ -598,9 +625,13 @@ func (r *Repository) listRecipesByID(ctx context.Context, householdID pgtype.UUI
 	for _, in := range ingredients {
 		byRecipe[in.RecipeIngredient.RecipeID] = append(byRecipe[in.RecipeIngredient.RecipeID], in)
 	}
+	sidesByRecipe := map[pgtype.UUID][]*gen.ListRecipeSidesRow{}
+	for _, side := range sides {
+		sidesByRecipe[side.RecipeID] = append(sidesByRecipe[side.RecipeID], side)
+	}
 	recipes := make([]*Recipe, 0, len(rows))
 	for _, row := range rows {
-		recipes = append(recipes, recipeFromDB(row, byRecipe[row.ID]))
+		recipes = append(recipes, recipeFromDB(row, byRecipe[row.ID], sidesByRecipe[row.ID]))
 	}
 	return recipes, nil
 }
@@ -616,6 +647,7 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 	}
 	var row *gen.Recipe
 	var ingredients []*gen.ListRecipeIngredientsRow
+	var sides []*gen.ListRecipeSidesRow
 	// As in CreateRecipe, a failed statement leaves the recipe as it was.
 	var b store.Batch
 	checkFoods(ctx, &b, recipe)
@@ -645,6 +677,7 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 			Draft:         recipe.Draft,
 			NotSuggested:  recipe.NotSuggested,
 			SnoozedUntil:  store.DateToPG(recipe.SnoozedUntil),
+			ServedWith:    sidesToDB(recipe.ServedWith),
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return store.ErrNotFound
@@ -655,6 +688,7 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 	_ = q.DeleteRecipeIngredients(ctx, &gen.DeleteRecipeIngredientsParams{RecipeID: recipe.ID, HouseholdID: recipe.HouseholdID})
 	_ = q.CreateRecipeIngredients(ctx, ingredientsToDB(recipe.HouseholdID, recipe.ID, recipe.Ingredients))
 	readIngredients(ctx, &b, recipe.HouseholdID, recipe.ID, &ingredients)
+	readSides(ctx, &b, recipe.HouseholdID, []pgtype.UUID{recipe.ID}, false, &sides)
 	if err := b.Send(ctx, r.db); err != nil {
 		if _, ok := errors.AsType[*UnknownFoodsError](err); ok || errors.Is(err, store.ErrNotFound) {
 			return nil, err
@@ -664,7 +698,7 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe,
 		}
 		return nil, fmt.Errorf("failed to update recipe: %w", err)
 	}
-	return r.resolved(ctx, recipeFromDB(row, ingredients))
+	return r.resolved(ctx, recipeFromDB(row, ingredients, sides))
 }
 
 // DeleteRecipe deletes a household's recipe. It returns store.ErrNotFound
@@ -698,6 +732,9 @@ func checkFoods(ctx context.Context, b *store.Batch, recipe *Recipe) {
 		if in.FoodID.Valid {
 			ids = append(ids, in.FoodID)
 		}
+	}
+	for _, side := range recipe.ServedWith {
+		ids = append(ids, side.FoodID)
 	}
 	b.Read(func(db store.Querier) error {
 		known, err := gen.New(db).ListHouseholdFoodIDs(ctx, &gen.ListHouseholdFoodIDsParams{
@@ -801,6 +838,37 @@ func (r *Repository) resolve(ctx context.Context, householdID pgtype.UUID, list 
 	return nil
 }
 
+// readSides queues reading the sides of recipes, or of all the
+// household's, into rows.
+func readSides(ctx context.Context, b *store.Batch, householdID pgtype.UUID, recipeIDs []pgtype.UUID, all bool, rows *[]*gen.ListRecipeSidesRow) {
+	b.Read(func(db store.Querier) error {
+		var err error
+		*rows, err = gen.New(db).ListRecipeSides(ctx, &gen.ListRecipeSidesParams{
+			HouseholdID: householdID,
+			AllRecipes:  all,
+			RecipeIds:   nonNil(recipeIDs),
+		})
+		return err
+	})
+}
+
+// sideJSON is a side as stored in recipes.served_with.
+type sideJSON struct {
+	FoodID string  `json:"food_id"`
+	Grams  float64 `json:"grams"`
+}
+
+// sidesToDB encodes a recipe's sides for recipes.served_with.
+func sidesToDB(sides []Side) []byte {
+	list := make([]sideJSON, 0, len(sides))
+	for _, side := range sides {
+		list = append(list, sideJSON{FoodID: store.UUIDToString(side.FoodID), Grams: side.Grams})
+	}
+	// A slice of plain structs always encodes.
+	data, _ := json.Marshal(list)
+	return data
+}
+
 // readIngredients queues reading a recipe's ingredients into rows.
 func readIngredients(ctx context.Context, b *store.Batch, householdID, recipeID pgtype.UUID, rows *[]*gen.ListRecipeIngredientsRow) {
 	b.Read(func(db store.Querier) error {
@@ -843,7 +911,7 @@ func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredien
 	return p
 }
 
-func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) *Recipe {
+func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow, sides []*gen.ListRecipeSidesRow) *Recipe {
 	r := &Recipe{
 		ID:            row.ID,
 		HouseholdID:   row.HouseholdID,
@@ -873,6 +941,10 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow) 
 	}
 	for _, in := range ingredients {
 		r.Ingredients = append(r.Ingredients, ingredientFromDB(in))
+	}
+	r.ServedWith = make([]Side, 0, len(sides))
+	for _, side := range sides {
+		r.ServedWith = append(r.ServedWith, Side{FoodID: side.FoodID, Grams: side.Grams, FoodName: side.FoodName})
 	}
 	// Instructions are only written encoded by instructionsToDB, so they
 	// decode; if they somehow don't, the recipe still reads, without

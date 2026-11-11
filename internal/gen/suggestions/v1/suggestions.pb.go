@@ -2862,6 +2862,399 @@ func (b0 PantryRecipe_builder) Build() *PantryRecipe {
 	return m0
 }
 
+type SuggestSidesRequest struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_PersonId     string                 `protobuf:"bytes,1,opt,name=person_id,json=personId,proto3"`
+	xxx_hidden_Date         string                 `protobuf:"bytes,2,opt,name=date,proto3"`
+	xxx_hidden_EatingTimeId string                 `protobuf:"bytes,3,opt,name=eating_time_id,json=eatingTimeId,proto3"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *SuggestSidesRequest) Reset() {
+	*x = SuggestSidesRequest{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestSidesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestSidesRequest) ProtoMessage() {}
+
+func (x *SuggestSidesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SuggestSidesRequest) GetPersonId() string {
+	if x != nil {
+		return x.xxx_hidden_PersonId
+	}
+	return ""
+}
+
+func (x *SuggestSidesRequest) GetDate() string {
+	if x != nil {
+		return x.xxx_hidden_Date
+	}
+	return ""
+}
+
+func (x *SuggestSidesRequest) GetEatingTimeId() string {
+	if x != nil {
+		return x.xxx_hidden_EatingTimeId
+	}
+	return ""
+}
+
+func (x *SuggestSidesRequest) SetPersonId(v string) {
+	x.xxx_hidden_PersonId = v
+}
+
+func (x *SuggestSidesRequest) SetDate(v string) {
+	x.xxx_hidden_Date = v
+}
+
+func (x *SuggestSidesRequest) SetEatingTimeId(v string) {
+	x.xxx_hidden_EatingTimeId = v
+}
+
+type SuggestSidesRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The ID of the person. Required.
+	PersonId string
+	// The date (YYYY-MM-DD). Required.
+	Date string
+	// The ID of the person's eating time. Required.
+	EatingTimeId string
+}
+
+func (b0 SuggestSidesRequest_builder) Build() *SuggestSidesRequest {
+	m0 := &SuggestSidesRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_PersonId = b.PersonId
+	x.xxx_hidden_Date = b.Date
+	x.xxx_hidden_EatingTimeId = b.EatingTimeId
+	return m0
+}
+
+type SuggestSidesResponse struct {
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Sides      *[]*SideSuggestion     `protobuf:"bytes,1,rep,name=sides,proto3"`
+	xxx_hidden_RecipeId   string                 `protobuf:"bytes,2,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_RecipeName string                 `protobuf:"bytes,3,opt,name=recipe_name,json=recipeName,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *SuggestSidesResponse) Reset() {
+	*x = SuggestSidesResponse{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestSidesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestSidesResponse) ProtoMessage() {}
+
+func (x *SuggestSidesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SuggestSidesResponse) GetSides() []*SideSuggestion {
+	if x != nil {
+		if x.xxx_hidden_Sides != nil {
+			return *x.xxx_hidden_Sides
+		}
+	}
+	return nil
+}
+
+func (x *SuggestSidesResponse) GetRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeId
+	}
+	return ""
+}
+
+func (x *SuggestSidesResponse) GetRecipeName() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeName
+	}
+	return ""
+}
+
+func (x *SuggestSidesResponse) SetSides(v []*SideSuggestion) {
+	x.xxx_hidden_Sides = &v
+}
+
+func (x *SuggestSidesResponse) SetRecipeId(v string) {
+	x.xxx_hidden_RecipeId = v
+}
+
+func (x *SuggestSidesResponse) SetRecipeName(v string) {
+	x.xxx_hidden_RecipeName = v
+}
+
+type SuggestSidesResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The sides, best first: those leaving the fewest warnings, then
+	// closest to the rules and targets, then with the most protein.
+	Sides []*SideSuggestion
+	// The recipe the sides are of, empty if none.
+	RecipeId string
+	// The recipe's name.
+	RecipeName string
+}
+
+func (b0 SuggestSidesResponse_builder) Build() *SuggestSidesResponse {
+	m0 := &SuggestSidesResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Sides = &b.Sides
+	x.xxx_hidden_RecipeId = b.RecipeId
+	x.xxx_hidden_RecipeName = b.RecipeName
+	return m0
+}
+
+// A side to serve with a meal.
+type SideSuggestion struct {
+	state                        protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FoodId            string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
+	xxx_hidden_FoodName          string                 `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3"`
+	xxx_hidden_Grams             float64                `protobuf:"fixed64,3,opt,name=grams,proto3"`
+	xxx_hidden_EnergyKcal        float64                `protobuf:"fixed64,4,opt,name=energy_kcal,json=energyKcal,proto3"`
+	xxx_hidden_ProteinGrams      float64                `protobuf:"fixed64,5,opt,name=protein_grams,json=proteinGrams,proto3"`
+	xxx_hidden_CarbohydrateGrams float64                `protobuf:"fixed64,6,opt,name=carbohydrate_grams,json=carbohydrateGrams,proto3"`
+	xxx_hidden_FatGrams          float64                `protobuf:"fixed64,7,opt,name=fat_grams,json=fatGrams,proto3"`
+	xxx_hidden_Reason            string                 `protobuf:"bytes,8,opt,name=reason,proto3"`
+	xxx_hidden_Warnings          *[]*v11.Warning        `protobuf:"bytes,9,rep,name=warnings,proto3"`
+	xxx_hidden_Planned           bool                   `protobuf:"varint,10,opt,name=planned,proto3"`
+	xxx_hidden_PortionId         string                 `protobuf:"bytes,11,opt,name=portion_id,json=portionId,proto3"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
+}
+
+func (x *SideSuggestion) Reset() {
+	*x = SideSuggestion{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SideSuggestion) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SideSuggestion) ProtoMessage() {}
+
+func (x *SideSuggestion) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SideSuggestion) GetFoodId() string {
+	if x != nil {
+		return x.xxx_hidden_FoodId
+	}
+	return ""
+}
+
+func (x *SideSuggestion) GetFoodName() string {
+	if x != nil {
+		return x.xxx_hidden_FoodName
+	}
+	return ""
+}
+
+func (x *SideSuggestion) GetGrams() float64 {
+	if x != nil {
+		return x.xxx_hidden_Grams
+	}
+	return 0
+}
+
+func (x *SideSuggestion) GetEnergyKcal() float64 {
+	if x != nil {
+		return x.xxx_hidden_EnergyKcal
+	}
+	return 0
+}
+
+func (x *SideSuggestion) GetProteinGrams() float64 {
+	if x != nil {
+		return x.xxx_hidden_ProteinGrams
+	}
+	return 0
+}
+
+func (x *SideSuggestion) GetCarbohydrateGrams() float64 {
+	if x != nil {
+		return x.xxx_hidden_CarbohydrateGrams
+	}
+	return 0
+}
+
+func (x *SideSuggestion) GetFatGrams() float64 {
+	if x != nil {
+		return x.xxx_hidden_FatGrams
+	}
+	return 0
+}
+
+func (x *SideSuggestion) GetReason() string {
+	if x != nil {
+		return x.xxx_hidden_Reason
+	}
+	return ""
+}
+
+func (x *SideSuggestion) GetWarnings() []*v11.Warning {
+	if x != nil {
+		if x.xxx_hidden_Warnings != nil {
+			return *x.xxx_hidden_Warnings
+		}
+	}
+	return nil
+}
+
+func (x *SideSuggestion) GetPlanned() bool {
+	if x != nil {
+		return x.xxx_hidden_Planned
+	}
+	return false
+}
+
+func (x *SideSuggestion) GetPortionId() string {
+	if x != nil {
+		return x.xxx_hidden_PortionId
+	}
+	return ""
+}
+
+func (x *SideSuggestion) SetFoodId(v string) {
+	x.xxx_hidden_FoodId = v
+}
+
+func (x *SideSuggestion) SetFoodName(v string) {
+	x.xxx_hidden_FoodName = v
+}
+
+func (x *SideSuggestion) SetGrams(v float64) {
+	x.xxx_hidden_Grams = v
+}
+
+func (x *SideSuggestion) SetEnergyKcal(v float64) {
+	x.xxx_hidden_EnergyKcal = v
+}
+
+func (x *SideSuggestion) SetProteinGrams(v float64) {
+	x.xxx_hidden_ProteinGrams = v
+}
+
+func (x *SideSuggestion) SetCarbohydrateGrams(v float64) {
+	x.xxx_hidden_CarbohydrateGrams = v
+}
+
+func (x *SideSuggestion) SetFatGrams(v float64) {
+	x.xxx_hidden_FatGrams = v
+}
+
+func (x *SideSuggestion) SetReason(v string) {
+	x.xxx_hidden_Reason = v
+}
+
+func (x *SideSuggestion) SetWarnings(v []*v11.Warning) {
+	x.xxx_hidden_Warnings = &v
+}
+
+func (x *SideSuggestion) SetPlanned(v bool) {
+	x.xxx_hidden_Planned = v
+}
+
+func (x *SideSuggestion) SetPortionId(v string) {
+	x.xxx_hidden_PortionId = v
+}
+
+type SideSuggestion_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The ID of the side's food.
+	FoodId string
+	// The food's name.
+	FoodName string
+	// How much of it to add, in grams: the recipe's grams per serving
+	// times the servings planned, rounded to 5 g, less if the maximum
+	// portion leaves less room.
+	Grams float64
+	// What it adds, in kcal and grams.
+	EnergyKcal        float64
+	ProteinGrams      float64
+	CarbohydrateGrams float64
+	FatGrams          float64
+	// Why it fits or not, e.g. "adds 6 g protein: today is 12 g short", or
+	// "goes over the 30 g carbohydrate limit at lunch".
+	Reason string
+	// The warnings it adds to the day, which the meal without a side
+	// doesn't have, as SuggestFixes counts them. Empty if it fits.
+	Warnings []*v11.Warning
+	// Whether it's already planned at the eating time, as a portion of its
+	// food.
+	Planned bool
+	// The planned portion's ID, if planned, to remove it with
+	// PlanService.DeletePortion.
+	PortionId string
+}
+
+func (b0 SideSuggestion_builder) Build() *SideSuggestion {
+	m0 := &SideSuggestion{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_FoodId = b.FoodId
+	x.xxx_hidden_FoodName = b.FoodName
+	x.xxx_hidden_Grams = b.Grams
+	x.xxx_hidden_EnergyKcal = b.EnergyKcal
+	x.xxx_hidden_ProteinGrams = b.ProteinGrams
+	x.xxx_hidden_CarbohydrateGrams = b.CarbohydrateGrams
+	x.xxx_hidden_FatGrams = b.FatGrams
+	x.xxx_hidden_Reason = b.Reason
+	x.xxx_hidden_Warnings = &b.Warnings
+	x.xxx_hidden_Planned = b.Planned
+	x.xxx_hidden_PortionId = b.PortionId
+	return m0
+}
+
 var File_suggestions_v1_suggestions_proto protoreflect.FileDescriptor
 
 const file_suggestions_v1_suggestions_proto_rawDesc = "" +
@@ -3013,7 +3406,31 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"recipeName\x12\x1a\n" +
 	"\bservings\x18\x03 \x01(\x05R\bservings\x12#\n" +
 	"\rtotal_seconds\x18\x04 \x01(\x05R\ftotalSeconds\x12-\n" +
-	"\x13use_soon_food_names\x18\x05 \x03(\tR\x10useSoonFoodNames*\xf2\x02\n" +
+	"\x13use_soon_food_names\x18\x05 \x03(\tR\x10useSoonFoodNames\"l\n" +
+	"\x13SuggestSidesRequest\x12\x1b\n" +
+	"\tperson_id\x18\x01 \x01(\tR\bpersonId\x12\x12\n" +
+	"\x04date\x18\x02 \x01(\tR\x04date\x12$\n" +
+	"\x0eeating_time_id\x18\x03 \x01(\tR\featingTimeId\"\x8a\x01\n" +
+	"\x14SuggestSidesResponse\x124\n" +
+	"\x05sides\x18\x01 \x03(\v2\x1e.suggestions.v1.SideSuggestionR\x05sides\x12\x1b\n" +
+	"\trecipe_id\x18\x02 \x01(\tR\brecipeId\x12\x1f\n" +
+	"\vrecipe_name\x18\x03 \x01(\tR\n" +
+	"recipeName\"\xee\x02\n" +
+	"\x0eSideSuggestion\x12\x17\n" +
+	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x1b\n" +
+	"\tfood_name\x18\x02 \x01(\tR\bfoodName\x12\x14\n" +
+	"\x05grams\x18\x03 \x01(\x01R\x05grams\x12\x1f\n" +
+	"\venergy_kcal\x18\x04 \x01(\x01R\n" +
+	"energyKcal\x12#\n" +
+	"\rprotein_grams\x18\x05 \x01(\x01R\fproteinGrams\x12-\n" +
+	"\x12carbohydrate_grams\x18\x06 \x01(\x01R\x11carbohydrateGrams\x12\x1b\n" +
+	"\tfat_grams\x18\a \x01(\x01R\bfatGrams\x12\x16\n" +
+	"\x06reason\x18\b \x01(\tR\x06reason\x12-\n" +
+	"\bwarnings\x18\t \x03(\v2\x11.plans.v1.WarningR\bwarnings\x12\x18\n" +
+	"\aplanned\x18\n" +
+	" \x01(\bR\aplanned\x12\x1d\n" +
+	"\n" +
+	"portion_id\x18\v \x01(\tR\tportionId*\xf2\x02\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
@@ -3047,16 +3464,17 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\vPlanFixKind\x12\x1d\n" +
 	"\x19PLAN_FIX_KIND_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14PLAN_FIX_KIND_REMOVE\x10\x01\x12\x18\n" +
-	"\x14PLAN_FIX_KIND_RESIZE\x10\x02\"\x04\b\x03\x10\x03\"\x04\b\x04\x10\x04*\x15PLAN_FIX_KIND_REPLACE*\x11PLAN_FIX_KIND_ADD2\x91\x03\n" +
+	"\x14PLAN_FIX_KIND_RESIZE\x10\x02\"\x04\b\x03\x10\x03\"\x04\b\x04\x10\x04*\x15PLAN_FIX_KIND_REPLACE*\x11PLAN_FIX_KIND_ADD2\xec\x03\n" +
 	"\x11SuggestionService\x12_\n" +
 	"\x0eSuggestRecipes\x12%.suggestions.v1.SuggestRecipesRequest\x1a&.suggestions.v1.SuggestRecipesResponse\x12V\n" +
 	"\vSuggestPlan\x12\".suggestions.v1.SuggestPlanRequest\x1a#.suggestions.v1.SuggestPlanResponse\x12Y\n" +
 	"\fSuggestFixes\x12#.suggestions.v1.SuggestFixesRequest\x1a$.suggestions.v1.SuggestFixesResponse\x12h\n" +
-	"\x11SuggestFromPantry\x12(.suggestions.v1.SuggestFromPantryRequest\x1a).suggestions.v1.SuggestFromPantryResponseB\xcc\x01\n" +
+	"\x11SuggestFromPantry\x12(.suggestions.v1.SuggestFromPantryRequest\x1a).suggestions.v1.SuggestFromPantryResponse\x12Y\n" +
+	"\fSuggestSides\x12#.suggestions.v1.SuggestSidesRequest\x1a$.suggestions.v1.SuggestSidesResponseB\xcc\x01\n" +
 	"\x12com.suggestions.v1B\x10SuggestionsProtoP\x01ZKgithub.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1;suggestionsv1\xa2\x02\x03SXX\xaa\x02\x0eSuggestions.V1\xca\x02\x0eSuggestions\\V1\xe2\x02\x1aSuggestions\\V1\\GPBMetadata\xea\x02\x0fSuggestions::V1b\x06proto3"
 
 var file_suggestions_v1_suggestions_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_suggestions_v1_suggestions_proto_goTypes = []any{
 	(ScoreKind)(0),                    // 0: suggestions.v1.ScoreKind
 	(Emphasis)(0),                     // 1: suggestions.v1.Emphasis
@@ -3081,56 +3499,63 @@ var file_suggestions_v1_suggestions_proto_goTypes = []any{
 	(*SuggestFromPantryRequest)(nil),  // 20: suggestions.v1.SuggestFromPantryRequest
 	(*SuggestFromPantryResponse)(nil), // 21: suggestions.v1.SuggestFromPantryResponse
 	(*PantryRecipe)(nil),              // 22: suggestions.v1.PantryRecipe
-	(v1.HouseholdMeal)(0),             // 23: people.v1.HouseholdMeal
-	(*v11.Warning)(nil),               // 24: plans.v1.Warning
-	(*v11.LeftoverOf)(nil),            // 25: plans.v1.LeftoverOf
-	(v12.AmountUnit)(0),               // 26: foods.v1.AmountUnit
+	(*SuggestSidesRequest)(nil),       // 23: suggestions.v1.SuggestSidesRequest
+	(*SuggestSidesResponse)(nil),      // 24: suggestions.v1.SuggestSidesResponse
+	(*SideSuggestion)(nil),            // 25: suggestions.v1.SideSuggestion
+	(v1.HouseholdMeal)(0),             // 26: people.v1.HouseholdMeal
+	(*v11.Warning)(nil),               // 27: plans.v1.Warning
+	(*v11.LeftoverOf)(nil),            // 28: plans.v1.LeftoverOf
+	(v12.AmountUnit)(0),               // 29: foods.v1.AmountUnit
 }
 var file_suggestions_v1_suggestions_proto_depIdxs = []int32{
-	23, // 0: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
+	26, // 0: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
 	4,  // 1: suggestions.v1.SuggestRecipesRequest.eating_time:type_name -> suggestions.v1.EatingTimeSlot
 	10, // 2: suggestions.v1.SuggestRecipesResponse.suggestions:type_name -> suggestions.v1.Suggestion
 	0,  // 3: suggestions.v1.ScoreComponent.kind:type_name -> suggestions.v1.ScoreKind
 	7,  // 4: suggestions.v1.Suggestion.components:type_name -> suggestions.v1.ScoreComponent
-	24, // 5: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
+	27, // 5: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
 	8,  // 6: suggestions.v1.Suggestion.portions:type_name -> suggestions.v1.SuggestedPortion
 	9,  // 7: suggestions.v1.Suggestion.items_to_buy:type_name -> suggestions.v1.ItemToBuy
-	25, // 8: suggestions.v1.Suggestion.leftover_of:type_name -> plans.v1.LeftoverOf
+	28, // 8: suggestions.v1.Suggestion.leftover_of:type_name -> plans.v1.LeftoverOf
 	1,  // 9: suggestions.v1.PlanCriteria.variety:type_name -> suggestions.v1.Emphasis
 	1,  // 10: suggestions.v1.PlanCriteria.favorites:type_name -> suggestions.v1.Emphasis
 	1,  // 11: suggestions.v1.PlanCriteria.pantry:type_name -> suggestions.v1.Emphasis
 	1,  // 12: suggestions.v1.PlanCriteria.shopping:type_name -> suggestions.v1.Emphasis
 	1,  // 13: suggestions.v1.PlanCriteria.nutrition:type_name -> suggestions.v1.Emphasis
-	23, // 14: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
-	25, // 15: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
-	23, // 16: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
+	26, // 14: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
+	28, // 15: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
+	26, // 16: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
 	11, // 17: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
 	12, // 18: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
-	23, // 19: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
+	26, // 19: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
 	2,  // 20: suggestions.v1.PlanSlot.state:type_name -> suggestions.v1.PlanSlotState
 	10, // 21: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
 	10, // 22: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
 	14, // 23: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
 	19, // 24: suggestions.v1.SuggestFixesResponse.fixes:type_name -> suggestions.v1.PlanFix
-	24, // 25: suggestions.v1.SuggestFixesResponse.warnings:type_name -> plans.v1.Warning
-	26, // 26: suggestions.v1.PortionResize.unit:type_name -> foods.v1.AmountUnit
+	27, // 25: suggestions.v1.SuggestFixesResponse.warnings:type_name -> plans.v1.Warning
+	29, // 26: suggestions.v1.PortionResize.unit:type_name -> foods.v1.AmountUnit
 	3,  // 27: suggestions.v1.PlanFix.kind:type_name -> suggestions.v1.PlanFixKind
 	18, // 28: suggestions.v1.PlanFix.resizes:type_name -> suggestions.v1.PortionResize
-	24, // 29: suggestions.v1.PlanFix.warnings:type_name -> plans.v1.Warning
+	27, // 29: suggestions.v1.PlanFix.warnings:type_name -> plans.v1.Warning
 	22, // 30: suggestions.v1.SuggestFromPantryResponse.recipes:type_name -> suggestions.v1.PantryRecipe
-	5,  // 31: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
-	13, // 32: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
-	16, // 33: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
-	20, // 34: suggestions.v1.SuggestionService.SuggestFromPantry:input_type -> suggestions.v1.SuggestFromPantryRequest
-	6,  // 35: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
-	15, // 36: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
-	17, // 37: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
-	21, // 38: suggestions.v1.SuggestionService.SuggestFromPantry:output_type -> suggestions.v1.SuggestFromPantryResponse
-	35, // [35:39] is the sub-list for method output_type
-	31, // [31:35] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	25, // 31: suggestions.v1.SuggestSidesResponse.sides:type_name -> suggestions.v1.SideSuggestion
+	27, // 32: suggestions.v1.SideSuggestion.warnings:type_name -> plans.v1.Warning
+	5,  // 33: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
+	13, // 34: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
+	16, // 35: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
+	20, // 36: suggestions.v1.SuggestionService.SuggestFromPantry:input_type -> suggestions.v1.SuggestFromPantryRequest
+	23, // 37: suggestions.v1.SuggestionService.SuggestSides:input_type -> suggestions.v1.SuggestSidesRequest
+	6,  // 38: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
+	15, // 39: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
+	17, // 40: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
+	21, // 41: suggestions.v1.SuggestionService.SuggestFromPantry:output_type -> suggestions.v1.SuggestFromPantryResponse
+	24, // 42: suggestions.v1.SuggestionService.SuggestSides:output_type -> suggestions.v1.SuggestSidesResponse
+	38, // [38:43] is the sub-list for method output_type
+	33, // [33:38] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_suggestions_v1_suggestions_proto_init() }
@@ -3148,7 +3573,7 @@ func file_suggestions_v1_suggestions_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_suggestions_v1_suggestions_proto_rawDesc), len(file_suggestions_v1_suggestions_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   19,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

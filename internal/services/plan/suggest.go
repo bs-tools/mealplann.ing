@@ -209,6 +209,9 @@ func (s *Service) loadSuggestionData(ctx context.Context, householdID pgtype.UUI
 		for _, in := range r.IngredientsFor(float64(r.Servings)) {
 			foodIDs = append(foodIDs, in.FoodID)
 		}
+		for _, side := range r.ServedWith {
+			foodIDs = append(foodIDs, side.FoodID)
+		}
 	}
 	for _, p := range d.plan.Portions {
 		foodIDs = append(foodIDs, p.FoodID)

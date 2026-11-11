@@ -115,6 +115,7 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 		YieldAmount:   r.YieldAmount,
 		YieldUnit:     yieldUnitToProto(r),
 		Nutrition:     nutritionToProto(r),
+		ServedWith:    sidesToProto(r.ServedWith),
 		CreateTime:    timestamppb.New(r.CreateTime),
 		UpdateTime:    timestamppb.New(r.UpdateTime),
 	}.Build()
@@ -266,6 +267,10 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 	if err != nil {
 		return nil, err
 	}
+	sides, err := sidesFromProto(p.GetServedWith())
+	if err != nil {
+		return nil, err
+	}
 	yieldAmount, yieldUnit, err := yieldFromProto(p)
 	if err != nil {
 		return nil, err
@@ -306,7 +311,53 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 		Draft:         p.GetDraft(),
 		NotSuggested:  p.GetNotSuggested(),
 		SnoozedUntil:  snoozedUntil,
+		ServedWith:    sides,
 	}, nil
+}
+
+// The limits of a recipe's sides.
+const (
+	maxSides     = 6
+	minSideGrams = 1
+	maxSideGrams = 1000
+)
+
+// sidesToProto converts a recipe's sides.
+func sidesToProto(sides []recipes.Side) []*recipesv1.RecipeSide {
+	list := make([]*recipesv1.RecipeSide, 0, len(sides))
+	for _, side := range sides {
+		list = append(list, recipesv1.RecipeSide_builder{
+			FoodId:          store.UUIDToString(side.FoodID),
+			GramsPerServing: side.Grams,
+			FoodName:        side.FoodName,
+		}.Build())
+	}
+	return list
+}
+
+// sidesFromProto converts and validates a recipe's sides.
+func sidesFromProto(list []*recipesv1.RecipeSide) ([]recipes.Side, error) {
+	if len(list) > maxSides {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "served_with can have at most %d sides", maxSides)
+	}
+	sides := make([]recipes.Side, 0, len(list))
+	for i, p := range list {
+		id, err := store.StringToUUID(p.GetFoodId())
+		if err != nil {
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"served_with[%d].food_id must be a food's ID; find foods with ListFoods", i)
+		}
+		if slices.ContainsFunc(sides, func(side recipes.Side) bool { return side.FoodID == id }) {
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "served_with[%d] repeats a side: list each food once", i)
+		}
+		grams := p.GetGramsPerServing()
+		if grams < minSideGrams || grams > maxSideGrams {
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"served_with[%d].grams_per_serving must be from %d to %d grams", i, minSideGrams, maxSideGrams)
+		}
+		sides = append(sides, recipes.Side{FoodID: id, Grams: grams})
+	}
+	return sides, nil
 }
 
 // formatOptionalDate formats a date, or "" for the zero time.

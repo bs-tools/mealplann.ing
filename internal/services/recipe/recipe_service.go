@@ -590,7 +590,7 @@ func (s *Service) toConnectError(ctx context.Context, err error, msg string) err
 			ids = append(ids, store.UUIDToString(id))
 		}
 		return connect.Errorf(connect.CodeInvalidArgument,
-			"the ingredients' foods %s aren't in your household; find the household's foods with ListFoods, or create them with CreateFood",
+			"the foods %s of the ingredients or sides aren't in your household; find the household's foods with ListFoods, or create them with CreateFood",
 			strings.Join(ids, ", "))
 	}
 	if errors.Is(err, recipes.ErrUsedAsComponent) {

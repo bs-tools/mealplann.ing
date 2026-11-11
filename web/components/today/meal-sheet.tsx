@@ -1,5 +1,6 @@
 import { markEaten, scalePortions } from "@components/today/day-change";
 import DisplacedChoice from "@components/today/displaced-choice";
+import { MealWarnings, Plate, SidesCard } from "@components/today/plate";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
 import { choiceClass } from "@components/ui/styles";
@@ -104,6 +105,20 @@ const MealSheet: React.FC<MealSheetProps> = ({
     case "actions": {
       content = (
         <div className="flex flex-col">
+          {portions.length > 0 && (
+            <div className="flex flex-col gap-3 pb-3">
+              <Plate portions={portions} />
+              <MealWarnings warnings={planned.warnings} />
+              {et !== undefined &&
+                portions.some((portion) => portion.cookId !== "") && (
+                  <SidesCard
+                    personId={day.personId}
+                    eatingTimeId={et.id}
+                    date={date}
+                  />
+                )}
+            </div>
+          )}
           <button
             type="button"
             className={actionClass}

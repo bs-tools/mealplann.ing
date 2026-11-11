@@ -129,3 +129,18 @@ export const suggestFixes = SuggestionService.method.suggestFixes;
  * @generated from rpc suggestions.v1.SuggestionService.SuggestFromPantry
  */
 export const suggestFromPantry = SuggestionService.method.suggestFromPantry;
+
+/**
+ * Score the sides a meal can be served with, for one person's eating
+ * time on a date: the sides of its recipe (see Recipe.served_with), each
+ * in proportion to the servings planned, as much as the eating time's
+ * maximum portion leaves room for. Each says what it adds and what that
+ * does to the person's rules and targets, e.g. "adds 6 g protein:
+ * today is 12 g short", best first. Add the one the user picks as a
+ * portion of its food at the eating time with PlanService.CreatePortion,
+ * and remove another side planned there with DeletePortion. Nothing is
+ * changed. Returns no sides if the eating time has no recipe with sides.
+ *
+ * @generated from rpc suggestions.v1.SuggestionService.SuggestSides
+ */
+export const suggestSides = SuggestionService.method.suggestSides;

@@ -1,6 +1,8 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
 import RecipePicker from "@components/recipes/recipe-picker";
+import type { SideInput } from "@components/recipes/served-with";
+import ServedWith, { sidesKey } from "@components/recipes/served-with";
 import Card from "@components/ui/card";
 import { CheckboxField, TextAreaField, TextField } from "@components/ui/fields";
 import { PageHeader } from "@components/ui/misc";
@@ -638,6 +640,14 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
     source?.prepAheadNote ?? ""
   );
   const [notes, setNotes] = useState(source?.notes ?? "");
+  const [initialSides] = useState<SideInput[]>(() =>
+    (source?.servedWith ?? []).map((side) => ({
+      foodId: side.foodId,
+      foodName: side.foodName,
+      grams: String(side.gramsPerServing),
+    }))
+  );
+  const [sides, setSides] = useState(initialSides);
   // What the source makes, for recipes using it by weight or volume.
   const initialYield =
     source === undefined || source.yieldAmount === 0
@@ -694,6 +704,10 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
         (recipe?.freezerDays === undefined ? "" : String(recipe.freezerDays)),
     ],
     ["notes", notes !== (recipe?.notes ?? "")],
+    [
+      "served_with",
+      sidesKey(sides) !== sidesKey(recipe === undefined ? [] : initialSides),
+    ],
     [
       "prep_ahead_days",
       prepAheadDays !==
@@ -846,6 +860,10 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
       prepAheadDays: aheadDays,
       prepAheadNote,
       prepSeconds,
+      servedWith: sides.map((side) => ({
+        foodId: side.foodId,
+        gramsPerServing: Number.parseFloat(side.grams.replace(",", ".")),
+      })),
       servings: servingCount,
       sourceUrl,
       tags: parseTags(tags),
@@ -1071,6 +1089,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                 onChange={setPrepAheadNote}
               />
             </div>
+            <ServedWith sides={sides} onChange={setSides} />
             <TextField
               label="Source"
               value={sourceUrl}

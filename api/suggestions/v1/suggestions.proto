@@ -147,6 +147,16 @@ service SuggestionService {
   // with PlanService.PlanMeal or CreatePortion. Drafts and recipes not to
   // suggest are left out. Nothing is changed.
   rpc SuggestFromPantry(SuggestFromPantryRequest) returns (SuggestFromPantryResponse);
+  // Score the sides a meal can be served with, for one person's eating
+  // time on a date: the sides of its recipe (see Recipe.served_with), each
+  // in proportion to the servings planned, as much as the eating time's
+  // maximum portion leaves room for. Each says what it adds and what that
+  // does to the person's rules and targets, e.g. "adds 6 g protein:
+  // today is 12 g short", best first. Add the one the user picks as a
+  // portion of its food at the eating time with PlanService.CreatePortion,
+  // and remove another side planned there with DeletePortion. Nothing is
+  // changed. Returns no sides if the eating time has no recipe with sides.
+  rpc SuggestSides(SuggestSidesRequest) returns (SuggestSidesResponse);
 }
 
 // An eating time of one person, to suggest a recipe for, like a small
@@ -571,4 +581,52 @@ message PantryRecipe {
   int32 total_seconds = 4;
   // The names of the foods it uses that are to be used within a few days.
   repeated string use_soon_food_names = 5;
+}
+
+message SuggestSidesRequest {
+  // The ID of the person. Required.
+  string person_id = 1;
+  // The date (YYYY-MM-DD). Required.
+  string date = 2;
+  // The ID of the person's eating time. Required.
+  string eating_time_id = 3;
+}
+
+message SuggestSidesResponse {
+  // The sides, best first: those leaving the fewest warnings, then
+  // closest to the rules and targets, then with the most protein.
+  repeated SideSuggestion sides = 1;
+  // The recipe the sides are of, empty if none.
+  string recipe_id = 2;
+  // The recipe's name.
+  string recipe_name = 3;
+}
+
+// A side to serve with a meal.
+message SideSuggestion {
+  // The ID of the side's food.
+  string food_id = 1;
+  // The food's name.
+  string food_name = 2;
+  // How much of it to add, in grams: the recipe's grams per serving
+  // times the servings planned, rounded to 5 g, less if the maximum
+  // portion leaves less room.
+  double grams = 3;
+  // What it adds, in kcal and grams.
+  double energy_kcal = 4;
+  double protein_grams = 5;
+  double carbohydrate_grams = 6;
+  double fat_grams = 7;
+  // Why it fits or not, e.g. "adds 6 g protein: today is 12 g short", or
+  // "goes over the 30 g carbohydrate limit at lunch".
+  string reason = 8;
+  // The warnings it adds to the day, which the meal without a side
+  // doesn't have, as SuggestFixes counts them. Empty if it fits.
+  repeated plans.v1.Warning warnings = 9;
+  // Whether it's already planned at the eating time, as a portion of its
+  // food.
+  bool planned = 10;
+  // The planned portion's ID, if planned, to remove it with
+  // PlanService.DeletePortion.
+  string portion_id = 11;
 }

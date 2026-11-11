@@ -35,7 +35,8 @@ insert into recipes (
   yield_unit,
   draft,
   not_suggested,
-  snoozed_until
+  snoozed_until,
+  served_with
 ) values (
   $1,
   $2,
@@ -58,9 +59,10 @@ insert into recipes (
   $19::amount_unit,
   $20,
   $21,
-  $22::date
+  $22::date,
+  $23
 )
-returning id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft, not_suggested, snoozed_until
+returning id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft, not_suggested, snoozed_until, served_with
 `
 
 type CreateRecipeParams struct {
@@ -86,6 +88,7 @@ type CreateRecipeParams struct {
 	Draft         bool
 	NotSuggested  bool
 	SnoozedUntil  pgtype.Date
+	ServedWith    json.RawMessage
 }
 
 func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*Recipe, error) {
@@ -112,6 +115,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*R
 		arg.Draft,
 		arg.NotSuggested,
 		arg.SnoozedUntil,
+		arg.ServedWith,
 	)
 	var i Recipe
 	err := row.Scan(
@@ -139,6 +143,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg *CreateRecipeParams) (*R
 		&i.Draft,
 		&i.NotSuggested,
 		&i.SnoozedUntil,
+		&i.ServedWith,
 	)
 	return &i, err
 }
@@ -278,7 +283,7 @@ func (q *Queries) FindRecipesByName(ctx context.Context, arg *FindRecipesByNameP
 }
 
 const getRecipe = `-- name: GetRecipe :one
-select id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft, not_suggested, snoozed_until from recipes where id = $1 and household_id = $2
+select id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft, not_suggested, snoozed_until, served_with from recipes where id = $1 and household_id = $2
 `
 
 type GetRecipeParams struct {
@@ -314,6 +319,7 @@ func (q *Queries) GetRecipe(ctx context.Context, arg *GetRecipeParams) (*Recipe,
 		&i.Draft,
 		&i.NotSuggested,
 		&i.SnoozedUntil,
+		&i.ServedWith,
 	)
 	return &i, err
 }
@@ -528,6 +534,64 @@ func (q *Queries) ListRecipeIngredients(ctx context.Context, arg *ListRecipeIngr
 	return items, nil
 }
 
+const listRecipeSides = `-- name: ListRecipeSides :many
+select
+  r.id as recipe_id,
+  f.id as food_id,
+  (s.side->>'grams')::double precision as grams,
+  f.name as food_name,
+  s.position::bigint as position
+from recipes r
+cross join lateral jsonb_array_elements(r.served_with) with ordinality as s(side, position)
+join foods f on f.id = (s.side->>'food_id')::uuid and f.household_id = r.household_id
+where r.household_id = $1
+  and ($2::boolean or r.id = any($3::uuid[]))
+order by r.id, s.position
+`
+
+type ListRecipeSidesParams struct {
+	HouseholdID pgtype.UUID
+	AllRecipes  bool
+	RecipeIds   []pgtype.UUID
+}
+
+type ListRecipeSidesRow struct {
+	RecipeID pgtype.UUID
+	FoodID   pgtype.UUID
+	Grams    float64
+	FoodName string
+	Position int64
+}
+
+// The sides of the given recipes, or of all the household's recipes, in
+// order, with their foods' names. Sides whose food was deleted are left
+// out.
+func (q *Queries) ListRecipeSides(ctx context.Context, arg *ListRecipeSidesParams) ([]*ListRecipeSidesRow, error) {
+	rows, err := q.db.Query(ctx, listRecipeSides, arg.HouseholdID, arg.AllRecipes, arg.RecipeIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListRecipeSidesRow
+	for rows.Next() {
+		var i ListRecipeSidesRow
+		if err := rows.Scan(
+			&i.RecipeID,
+			&i.FoodID,
+			&i.Grams,
+			&i.FoodName,
+			&i.Position,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRecipeTags = `-- name: ListRecipeTags :many
 select distinct tag::text from recipes, unnest(tags) as tag
 where household_id = $1
@@ -555,7 +619,7 @@ func (q *Queries) ListRecipeTags(ctx context.Context, householdID pgtype.UUID) (
 }
 
 const listRecipes = `-- name: ListRecipes :many
-select r.id, r.household_id, r.name, r.description, r.servings, r.prep_seconds, r.cook_seconds, r.tags, r.source_url, r.fridge_days, r.freezable, r.notes, r.create_time, r.update_time, r.favorite, r.freezer_days, r.prep_ahead_days, r.prep_ahead_note, r.instructions, r.yield_amount, r.yield_unit, r.draft, r.not_suggested, r.snoozed_until from recipes r
+select r.id, r.household_id, r.name, r.description, r.servings, r.prep_seconds, r.cook_seconds, r.tags, r.source_url, r.fridge_days, r.freezable, r.notes, r.create_time, r.update_time, r.favorite, r.freezer_days, r.prep_ahead_days, r.prep_ahead_note, r.instructions, r.yield_amount, r.yield_unit, r.draft, r.not_suggested, r.snoozed_until, r.served_with from recipes r
 where r.household_id = $1
   and (
     $2::text = ''
@@ -622,6 +686,7 @@ func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*R
 			&i.Draft,
 			&i.NotSuggested,
 			&i.SnoozedUntil,
+			&i.ServedWith,
 		); err != nil {
 			return nil, err
 		}
@@ -634,7 +699,7 @@ func (q *Queries) ListRecipes(ctx context.Context, arg *ListRecipesParams) ([]*R
 }
 
 const listRecipesByID = `-- name: ListRecipesByID :many
-select id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft, not_suggested, snoozed_until from recipes
+select id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft, not_suggested, snoozed_until, served_with from recipes
 where household_id = $1 and id = any($2::uuid[])
 order by lower(name), id
 `
@@ -678,6 +743,7 @@ func (q *Queries) ListRecipesByID(ctx context.Context, arg *ListRecipesByIDParam
 			&i.Draft,
 			&i.NotSuggested,
 			&i.SnoozedUntil,
+			&i.ServedWith,
 		); err != nil {
 			return nil, err
 		}
@@ -711,9 +777,10 @@ update recipes set
   draft = $18,
   not_suggested = $19,
   snoozed_until = $20::date,
+  served_with = $21,
   update_time = now()
-where id = $21 and household_id = $22
-returning id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft, not_suggested, snoozed_until
+where id = $22 and household_id = $23
+returning id, household_id, name, description, servings, prep_seconds, cook_seconds, tags, source_url, fridge_days, freezable, notes, create_time, update_time, favorite, freezer_days, prep_ahead_days, prep_ahead_note, instructions, yield_amount, yield_unit, draft, not_suggested, snoozed_until, served_with
 `
 
 type UpdateRecipeParams struct {
@@ -737,6 +804,7 @@ type UpdateRecipeParams struct {
 	Draft         bool
 	NotSuggested  bool
 	SnoozedUntil  pgtype.Date
+	ServedWith    json.RawMessage
 	ID            pgtype.UUID
 	HouseholdID   pgtype.UUID
 }
@@ -763,6 +831,7 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg *UpdateRecipeParams) (*R
 		arg.Draft,
 		arg.NotSuggested,
 		arg.SnoozedUntil,
+		arg.ServedWith,
 		arg.ID,
 		arg.HouseholdID,
 	)
@@ -792,6 +861,7 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg *UpdateRecipeParams) (*R
 		&i.Draft,
 		&i.NotSuggested,
 		&i.SnoozedUntil,
+		&i.ServedWith,
 	)
 	return &i, err
 }
