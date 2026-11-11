@@ -63,6 +63,12 @@ func itemToProto(it *shopping.Item) *shoppingv1.ShoppingItem {
 	if it.Checked {
 		checkedBy = it.CheckedByName
 	}
+	recipes := make([]*shoppingv1.ItemRecipe, 0, len(it.Recipes))
+	for _, r := range it.Recipes {
+		recipes = append(recipes, shoppingv1.ItemRecipe_builder{
+			RecipeId: store.UUIDToString(r.ID), RecipeName: r.Name,
+		}.Build())
+	}
 	return shoppingv1.ShoppingItem_builder{
 		Id:           store.UUIDToString(it.ID),
 		FoodId:       optionalID(it.FoodID),
@@ -82,6 +88,7 @@ func itemToProto(it *shopping.Item) *shoppingv1.ShoppingItem {
 		CheckedBy:    checkedBy,
 		Note:         it.Note,
 		Manual:       it.Manual,
+		Recipes:      recipes,
 	}.Build()
 }
 

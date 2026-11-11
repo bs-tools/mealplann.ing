@@ -44,12 +44,12 @@ func TestNeedsOf(t *testing.T) {
 	// A curry of 4 servings, cooked for 2 on Monday and 6 on Wednesday, the
 	// latter already done; a portion of spinach; and a staple of a recipe
 	// of 2 servings, every day, skipped on Tuesday.
-	curry := &recipes.Recipe{ID: id(50), Servings: 4, Ingredients: []*recipes.Ingredient{
+	curry := &recipes.Recipe{ID: id(50), Name: "Curry", Servings: 4, Ingredients: []*recipes.Ingredient{
 		{FoodID: chickpeas.ID, Amount: 800, Unit: nutrition.Grams},
 		{FoodID: onions.ID, Amount: 2, Unit: nutrition.Pieces},
 		{FoodID: spinach.ID, Amount: 50, Unit: nutrition.Grams, Optional: true},
 	}}
-	oats := &recipes.Recipe{ID: id(51), Servings: 2, Ingredients: []*recipes.Ingredient{
+	oats := &recipes.Recipe{ID: id(51), Name: "Oats", Servings: 2, Ingredients: []*recipes.Ingredient{
 		{FoodID: soyMilk.ID, Amount: 400, Unit: nutrition.Milliliters},
 	}}
 	plan := &plans.Plan{
@@ -69,10 +69,11 @@ func TestNeedsOf(t *testing.T) {
 		},
 	}
 	got := NeedsOf(plan, map[pgtype.UUID]*recipes.Recipe{curry.ID: curry, oats.ID: oats})
+	curryRef, oatsRef := RecipeRef{ID: curry.ID, Name: "Curry"}, RecipeRef{ID: oats.ID, Name: "Oats"}
 	want := []Need{
-		{FoodID: chickpeas.ID, Date: date("2026-11-02"), Amount: 400, Unit: nutrition.Grams},
-		{FoodID: onions.ID, Date: date("2026-11-02"), Amount: 1, Unit: nutrition.Pieces},
-		{FoodID: soyMilk.ID, Date: date("2026-11-02"), Amount: 200, Unit: nutrition.Milliliters},
+		{FoodID: chickpeas.ID, Date: date("2026-11-02"), Amount: 400, Unit: nutrition.Grams, Recipe: curryRef},
+		{FoodID: onions.ID, Date: date("2026-11-02"), Amount: 1, Unit: nutrition.Pieces, Recipe: curryRef},
+		{FoodID: soyMilk.ID, Date: date("2026-11-02"), Amount: 200, Unit: nutrition.Milliliters, Recipe: oatsRef},
 		{FoodID: spinach.ID, Date: date("2026-11-03"), Amount: 80, Unit: nutrition.Grams},
 	}
 	if !slices.Equal(got, want) {

@@ -28,6 +28,9 @@ type Need struct {
 	Date   time.Time
 	Amount float64
 	Unit   nutrition.Unit
+	// Recipe is the recipe it's an ingredient of, with an invalid ID for a
+	// food eaten without one.
+	Recipe RecipeRef
 }
 
 // NeedsOf returns what a plan needs bought, in the order of its dates: the
@@ -47,7 +50,10 @@ func NeedsOf(plan *plans.Plan, byID map[pgtype.UUID]*recipes.Recipe) []Need {
 			return
 		}
 		for _, in := range r.IngredientsWithout(servings, supplied) {
-			needs = append(needs, Need{FoodID: in.FoodID, Date: date, Amount: in.Amount, Unit: in.Unit})
+			needs = append(needs, Need{
+				FoodID: in.FoodID, Date: date, Amount: in.Amount, Unit: in.Unit,
+				Recipe: RecipeRef{ID: r.ID, Name: r.Name},
+			})
 		}
 	}
 	for _, c := range plan.Cooks {
@@ -121,6 +127,8 @@ type dayNeed struct {
 	// has.
 	shortGrams  float64
 	pantryGrams float64
+	// recipes are the recipes needing it, without repeats.
+	recipes []RecipeRef
 }
 
 // Generate makes the items of a shopping list: for each food, what the
@@ -189,6 +197,9 @@ func cover(in *Input) ([]pgtype.UUID, map[pgtype.UUID][]*dayNeed) {
 			d = &dayNeed{date: n.Date}
 			byFood[n.FoodID] = append(days, d)
 		}
+		if n.Recipe.ID.Valid && !slices.Contains(d.recipes, n.Recipe) {
+			d.recipes = append(d.recipes, n.Recipe)
+		}
 		grams, ok := f.Nutrition().Grams(n.Amount, n.Unit)
 		switch {
 		case ok:
@@ -250,6 +261,7 @@ func itemOf(f *foods.Food, days []*dayNeed, topUp bool) *Item {
 	var short, fromPantry, unweighedPieces, unweighedMilliliters, unweighedPackages float64
 	var inPieces, inMilliliters bool
 	var neededBy time.Time
+	var recipeRefs []RecipeRef
 	for _, d := range days {
 		fromPantry += d.pantryGrams
 		unweighedPieces += d.unweighedPieces
@@ -257,6 +269,12 @@ func itemOf(f *foods.Food, days []*dayNeed, topUp bool) *Item {
 		unweighedPackages += d.unweighedPackages
 		if d.shortGrams <= crumbGrams && d.unweighedPieces == 0 && d.unweighedMilliliters == 0 && d.unweighedPackages == 0 {
 			continue
+		}
+		// The recipes of the days it's short for are what it's bought for.
+		for _, r := range d.recipes {
+			if !slices.Contains(recipeRefs, r) {
+				recipeRefs = append(recipeRefs, r)
+			}
 		}
 		short += d.shortGrams
 		inPieces = inPieces || d.inPieces
@@ -277,6 +295,7 @@ func itemOf(f *foods.Food, days []*dayNeed, topUp bool) *Item {
 		StoreSection: f.StoreSection,
 		NeededBy:     neededBy,
 		TopUp:        topUp,
+		Recipes:      recipeRefs,
 	}
 	var parts []string
 	if short > crumbGrams {

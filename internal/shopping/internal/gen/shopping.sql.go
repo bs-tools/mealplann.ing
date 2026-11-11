@@ -34,7 +34,7 @@ const createShoppingItems = `-- name: CreateShoppingItems :execrows
 insert into shopping_items (
   id, household_id, list_id, food_id, name, grams, needed_grams, pantry_grams, packages,
   amount_text, store_id, store_section, needed_by, top_up, warning, checked, checked_by,
-  check_time, note, manual
+  check_time, note, manual, recipes
 )
 select
   ($1::uuid[])[i],
@@ -56,7 +56,8 @@ select
   ($17::uuid[])[i],
   ($18::timestamptz[])[i],
   ($19::text[])[i],
-  ($20::boolean[])[i]
+  ($20::boolean[])[i],
+  (($21::text[])[i])::jsonb
 from generate_subscripts($1::uuid[], 1) as i
 `
 
@@ -81,6 +82,7 @@ type CreateShoppingItemsParams struct {
 	CheckTimes    []pgtype.Timestamptz
 	Notes         []string
 	Manual        []bool
+	Recipes       []string
 }
 
 // Creates items of a list, given as arrays of their fields. Store sections
@@ -107,6 +109,7 @@ func (q *Queries) CreateShoppingItems(ctx context.Context, arg *CreateShoppingIt
 		arg.CheckTimes,
 		arg.Notes,
 		arg.Manual,
+		arg.Recipes,
 	)
 	if err != nil {
 		return 0, err
@@ -292,7 +295,7 @@ func (q *Queries) GetStore(ctx context.Context, arg *GetStoreParams) (*Store, er
 
 const listShoppingItems = `-- name: ListShoppingItems :many
 select
-  shopping_items.id, shopping_items.household_id, shopping_items.list_id, shopping_items.food_id, shopping_items.name, shopping_items.grams, shopping_items.needed_grams, shopping_items.pantry_grams, shopping_items.packages, shopping_items.amount_text, shopping_items.store_id, shopping_items.store_section, shopping_items.needed_by, shopping_items.top_up, shopping_items.warning, shopping_items.checked, shopping_items.checked_by, shopping_items.check_time, shopping_items.note, shopping_items.manual, shopping_items.create_time, shopping_items.update_time,
+  shopping_items.id, shopping_items.household_id, shopping_items.list_id, shopping_items.food_id, shopping_items.name, shopping_items.grams, shopping_items.needed_grams, shopping_items.pantry_grams, shopping_items.packages, shopping_items.amount_text, shopping_items.store_id, shopping_items.store_section, shopping_items.needed_by, shopping_items.top_up, shopping_items.warning, shopping_items.checked, shopping_items.checked_by, shopping_items.check_time, shopping_items.note, shopping_items.manual, shopping_items.create_time, shopping_items.update_time, shopping_items.recipes,
   coalesce(pe.name, pu.name, '')::text as checked_by_name,
   st.id as resolved_store_id,
   coalesce(st.name, '')::text as store_name
@@ -359,6 +362,7 @@ func (q *Queries) ListShoppingItems(ctx context.Context, arg *ListShoppingItemsP
 			&i.ShoppingItem.Manual,
 			&i.ShoppingItem.CreateTime,
 			&i.ShoppingItem.UpdateTime,
+			&i.ShoppingItem.Recipes,
 			&i.CheckedByName,
 			&i.ResolvedStoreID,
 			&i.StoreName,
@@ -486,7 +490,7 @@ with updated as (
     check_time = case when not $1::boolean then null when i.checked then i.check_time else now() end,
     update_time = now()
   where i.id = $3 and i.household_id = $4
-  returning i.id, i.household_id, i.list_id, i.food_id, i.name, i.grams, i.needed_grams, i.pantry_grams, i.packages, i.amount_text, i.store_id, i.store_section, i.needed_by, i.top_up, i.warning, i.checked, i.checked_by, i.check_time, i.note, i.manual, i.create_time, i.update_time
+  returning i.id, i.household_id, i.list_id, i.food_id, i.name, i.grams, i.needed_grams, i.pantry_grams, i.packages, i.amount_text, i.store_id, i.store_section, i.needed_by, i.top_up, i.warning, i.checked, i.checked_by, i.check_time, i.note, i.manual, i.create_time, i.update_time, i.recipes
 )
 select
   updated.id, updated.household_id, updated.list_id, updated.food_id, updated.name,

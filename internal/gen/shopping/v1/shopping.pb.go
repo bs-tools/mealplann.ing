@@ -439,6 +439,7 @@ type ShoppingItem struct {
 	xxx_hidden_CheckedBy    string                 `protobuf:"bytes,16,opt,name=checked_by,json=checkedBy,proto3"`
 	xxx_hidden_Note         string                 `protobuf:"bytes,17,opt,name=note,proto3"`
 	xxx_hidden_Manual       bool                   `protobuf:"varint,18,opt,name=manual,proto3"`
+	xxx_hidden_Recipes      *[]*ItemRecipe         `protobuf:"bytes,19,rep,name=recipes,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -594,6 +595,15 @@ func (x *ShoppingItem) GetManual() bool {
 	return false
 }
 
+func (x *ShoppingItem) GetRecipes() []*ItemRecipe {
+	if x != nil {
+		if x.xxx_hidden_Recipes != nil {
+			return *x.xxx_hidden_Recipes
+		}
+	}
+	return nil
+}
+
 func (x *ShoppingItem) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -666,6 +676,10 @@ func (x *ShoppingItem) SetManual(v bool) {
 	x.xxx_hidden_Manual = v
 }
 
+func (x *ShoppingItem) SetRecipes(v []*ItemRecipe) {
+	x.xxx_hidden_Recipes = &v
+}
+
 type ShoppingItem_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -711,6 +725,11 @@ type ShoppingItem_builder struct {
 	Note string
 	// Whether it was added by hand, rather than generated from the plan.
 	Manual bool
+	// The recipes it's bought for: those of the meals the pantry is short
+	// for, by date. Empty for items added by hand, and foods eaten without a
+	// recipe, like a staple of a food. Names are as they were when the list
+	// was made or last regenerated.
+	Recipes []*ItemRecipe
 }
 
 func (b0 ShoppingItem_builder) Build() *ShoppingItem {
@@ -735,6 +754,81 @@ func (b0 ShoppingItem_builder) Build() *ShoppingItem {
 	x.xxx_hidden_CheckedBy = b.CheckedBy
 	x.xxx_hidden_Note = b.Note
 	x.xxx_hidden_Manual = b.Manual
+	x.xxx_hidden_Recipes = &b.Recipes
+	return m0
+}
+
+// A recipe an item is bought for.
+type ItemRecipe struct {
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_RecipeId   string                 `protobuf:"bytes,1,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_RecipeName string                 `protobuf:"bytes,2,opt,name=recipe_name,json=recipeName,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *ItemRecipe) Reset() {
+	*x = ItemRecipe{}
+	mi := &file_shopping_v1_shopping_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ItemRecipe) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ItemRecipe) ProtoMessage() {}
+
+func (x *ItemRecipe) ProtoReflect() protoreflect.Message {
+	mi := &file_shopping_v1_shopping_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ItemRecipe) GetRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeId
+	}
+	return ""
+}
+
+func (x *ItemRecipe) GetRecipeName() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeName
+	}
+	return ""
+}
+
+func (x *ItemRecipe) SetRecipeId(v string) {
+	x.xxx_hidden_RecipeId = v
+}
+
+func (x *ItemRecipe) SetRecipeName(v string) {
+	x.xxx_hidden_RecipeName = v
+}
+
+type ItemRecipe_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The ID of the recipe.
+	RecipeId string
+	// The name of the recipe.
+	RecipeName string
+}
+
+func (b0 ItemRecipe_builder) Build() *ItemRecipe {
+	m0 := &ItemRecipe{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_RecipeId = b.RecipeId
+	x.xxx_hidden_RecipeName = b.RecipeName
 	return m0
 }
 
@@ -747,7 +841,7 @@ type CreateStoreRequest struct {
 
 func (x *CreateStoreRequest) Reset() {
 	*x = CreateStoreRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[3]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -759,7 +853,7 @@ func (x *CreateStoreRequest) String() string {
 func (*CreateStoreRequest) ProtoMessage() {}
 
 func (x *CreateStoreRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[3]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -816,7 +910,7 @@ type CreateStoreResponse struct {
 
 func (x *CreateStoreResponse) Reset() {
 	*x = CreateStoreResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[4]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -828,7 +922,7 @@ func (x *CreateStoreResponse) String() string {
 func (*CreateStoreResponse) ProtoMessage() {}
 
 func (x *CreateStoreResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[4]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -884,7 +978,7 @@ type ListStoresRequest struct {
 
 func (x *ListStoresRequest) Reset() {
 	*x = ListStoresRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[5]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -896,7 +990,7 @@ func (x *ListStoresRequest) String() string {
 func (*ListStoresRequest) ProtoMessage() {}
 
 func (x *ListStoresRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[5]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -928,7 +1022,7 @@ type ListStoresResponse struct {
 
 func (x *ListStoresResponse) Reset() {
 	*x = ListStoresResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[6]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -940,7 +1034,7 @@ func (x *ListStoresResponse) String() string {
 func (*ListStoresResponse) ProtoMessage() {}
 
 func (x *ListStoresResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[6]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -989,7 +1083,7 @@ type UpdateStoreRequest struct {
 
 func (x *UpdateStoreRequest) Reset() {
 	*x = UpdateStoreRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[7]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1001,7 +1095,7 @@ func (x *UpdateStoreRequest) String() string {
 func (*UpdateStoreRequest) ProtoMessage() {}
 
 func (x *UpdateStoreRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[7]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1085,7 +1179,7 @@ type UpdateStoreResponse struct {
 
 func (x *UpdateStoreResponse) Reset() {
 	*x = UpdateStoreResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[8]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1097,7 +1191,7 @@ func (x *UpdateStoreResponse) String() string {
 func (*UpdateStoreResponse) ProtoMessage() {}
 
 func (x *UpdateStoreResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[8]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1154,7 +1248,7 @@ type DeleteStoreRequest struct {
 
 func (x *DeleteStoreRequest) Reset() {
 	*x = DeleteStoreRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[9]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1166,7 +1260,7 @@ func (x *DeleteStoreRequest) String() string {
 func (*DeleteStoreRequest) ProtoMessage() {}
 
 func (x *DeleteStoreRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[9]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1211,7 +1305,7 @@ type DeleteStoreResponse struct {
 
 func (x *DeleteStoreResponse) Reset() {
 	*x = DeleteStoreResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[10]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1223,7 +1317,7 @@ func (x *DeleteStoreResponse) String() string {
 func (*DeleteStoreResponse) ProtoMessage() {}
 
 func (x *DeleteStoreResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[10]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1256,7 +1350,7 @@ type CreateShoppingListRequest struct {
 
 func (x *CreateShoppingListRequest) Reset() {
 	*x = CreateShoppingListRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[11]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1268,7 +1362,7 @@ func (x *CreateShoppingListRequest) String() string {
 func (*CreateShoppingListRequest) ProtoMessage() {}
 
 func (x *CreateShoppingListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[11]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1329,7 +1423,7 @@ type CreateShoppingListResponse struct {
 
 func (x *CreateShoppingListResponse) Reset() {
 	*x = CreateShoppingListResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[12]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1341,7 +1435,7 @@ func (x *CreateShoppingListResponse) String() string {
 func (*CreateShoppingListResponse) ProtoMessage() {}
 
 func (x *CreateShoppingListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[12]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1398,7 +1492,7 @@ type GetShoppingListRequest struct {
 
 func (x *GetShoppingListRequest) Reset() {
 	*x = GetShoppingListRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[13]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1410,7 +1504,7 @@ func (x *GetShoppingListRequest) String() string {
 func (*GetShoppingListRequest) ProtoMessage() {}
 
 func (x *GetShoppingListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[13]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1456,7 +1550,7 @@ type GetShoppingListResponse struct {
 
 func (x *GetShoppingListResponse) Reset() {
 	*x = GetShoppingListResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[14]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1468,7 +1562,7 @@ func (x *GetShoppingListResponse) String() string {
 func (*GetShoppingListResponse) ProtoMessage() {}
 
 func (x *GetShoppingListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[14]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1526,7 +1620,7 @@ type ListShoppingListsRequest struct {
 
 func (x *ListShoppingListsRequest) Reset() {
 	*x = ListShoppingListsRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[15]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1538,7 +1632,7 @@ func (x *ListShoppingListsRequest) String() string {
 func (*ListShoppingListsRequest) ProtoMessage() {}
 
 func (x *ListShoppingListsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[15]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1600,7 +1694,7 @@ type ListShoppingListsResponse struct {
 
 func (x *ListShoppingListsResponse) Reset() {
 	*x = ListShoppingListsResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[16]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1612,7 +1706,7 @@ func (x *ListShoppingListsResponse) String() string {
 func (*ListShoppingListsResponse) ProtoMessage() {}
 
 func (x *ListShoppingListsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[16]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1674,7 +1768,7 @@ type RegenerateShoppingListRequest struct {
 
 func (x *RegenerateShoppingListRequest) Reset() {
 	*x = RegenerateShoppingListRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[17]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1686,7 +1780,7 @@ func (x *RegenerateShoppingListRequest) String() string {
 func (*RegenerateShoppingListRequest) ProtoMessage() {}
 
 func (x *RegenerateShoppingListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[17]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1732,7 +1826,7 @@ type RegenerateShoppingListResponse struct {
 
 func (x *RegenerateShoppingListResponse) Reset() {
 	*x = RegenerateShoppingListResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[18]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1744,7 +1838,7 @@ func (x *RegenerateShoppingListResponse) String() string {
 func (*RegenerateShoppingListResponse) ProtoMessage() {}
 
 func (x *RegenerateShoppingListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[18]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1801,7 +1895,7 @@ type CheckItemRequest struct {
 
 func (x *CheckItemRequest) Reset() {
 	*x = CheckItemRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[19]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1813,7 +1907,7 @@ func (x *CheckItemRequest) String() string {
 func (*CheckItemRequest) ProtoMessage() {}
 
 func (x *CheckItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[19]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1859,7 +1953,7 @@ type CheckItemResponse struct {
 
 func (x *CheckItemResponse) Reset() {
 	*x = CheckItemResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[20]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1871,7 +1965,7 @@ func (x *CheckItemResponse) String() string {
 func (*CheckItemResponse) ProtoMessage() {}
 
 func (x *CheckItemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[20]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1928,7 +2022,7 @@ type UncheckItemRequest struct {
 
 func (x *UncheckItemRequest) Reset() {
 	*x = UncheckItemRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[21]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1940,7 +2034,7 @@ func (x *UncheckItemRequest) String() string {
 func (*UncheckItemRequest) ProtoMessage() {}
 
 func (x *UncheckItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[21]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1986,7 +2080,7 @@ type UncheckItemResponse struct {
 
 func (x *UncheckItemResponse) Reset() {
 	*x = UncheckItemResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[22]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1998,7 +2092,7 @@ func (x *UncheckItemResponse) String() string {
 func (*UncheckItemResponse) ProtoMessage() {}
 
 func (x *UncheckItemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[22]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2060,7 +2154,7 @@ type AddManualItemRequest struct {
 
 func (x *AddManualItemRequest) Reset() {
 	*x = AddManualItemRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[23]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2072,7 +2166,7 @@ func (x *AddManualItemRequest) String() string {
 func (*AddManualItemRequest) ProtoMessage() {}
 
 func (x *AddManualItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[23]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2270,7 +2364,7 @@ func (b0 AddManualItemRequest_builder) Build() *AddManualItemRequest {
 type case_AddManualItemRequest_What protoreflect.FieldNumber
 
 func (x case_AddManualItemRequest_What) String() string {
-	md := file_shopping_v1_shopping_proto_msgTypes[23].Descriptor()
+	md := file_shopping_v1_shopping_proto_msgTypes[24].Descriptor()
 	if x == 0 {
 		return "not set"
 	}
@@ -2306,7 +2400,7 @@ type AddManualItemResponse struct {
 
 func (x *AddManualItemResponse) Reset() {
 	*x = AddManualItemResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[24]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2318,7 +2412,7 @@ func (x *AddManualItemResponse) String() string {
 func (*AddManualItemResponse) ProtoMessage() {}
 
 func (x *AddManualItemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[24]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2375,7 +2469,7 @@ type DeleteItemRequest struct {
 
 func (x *DeleteItemRequest) Reset() {
 	*x = DeleteItemRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[25]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2387,7 +2481,7 @@ func (x *DeleteItemRequest) String() string {
 func (*DeleteItemRequest) ProtoMessage() {}
 
 func (x *DeleteItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[25]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2432,7 +2526,7 @@ type DeleteItemResponse struct {
 
 func (x *DeleteItemResponse) Reset() {
 	*x = DeleteItemResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[26]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2444,7 +2538,7 @@ func (x *DeleteItemResponse) String() string {
 func (*DeleteItemResponse) ProtoMessage() {}
 
 func (x *DeleteItemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[26]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2477,7 +2571,7 @@ type CompleteShoppingRequest struct {
 
 func (x *CompleteShoppingRequest) Reset() {
 	*x = CompleteShoppingRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[27]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2489,7 +2583,7 @@ func (x *CompleteShoppingRequest) String() string {
 func (*CompleteShoppingRequest) ProtoMessage() {}
 
 func (x *CompleteShoppingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[27]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2551,7 +2645,7 @@ type CompleteShoppingResponse struct {
 
 func (x *CompleteShoppingResponse) Reset() {
 	*x = CompleteShoppingResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[28]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2563,7 +2657,7 @@ func (x *CompleteShoppingResponse) String() string {
 func (*CompleteShoppingResponse) ProtoMessage() {}
 
 func (x *CompleteShoppingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[28]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2636,7 +2730,7 @@ type DeleteShoppingListRequest struct {
 
 func (x *DeleteShoppingListRequest) Reset() {
 	*x = DeleteShoppingListRequest{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[29]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2648,7 +2742,7 @@ func (x *DeleteShoppingListRequest) String() string {
 func (*DeleteShoppingListRequest) ProtoMessage() {}
 
 func (x *DeleteShoppingListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[29]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2693,7 +2787,7 @@ type DeleteShoppingListResponse struct {
 
 func (x *DeleteShoppingListResponse) Reset() {
 	*x = DeleteShoppingListResponse{}
-	mi := &file_shopping_v1_shopping_proto_msgTypes[30]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2705,7 +2799,7 @@ func (x *DeleteShoppingListResponse) String() string {
 func (*DeleteShoppingListResponse) ProtoMessage() {}
 
 func (x *DeleteShoppingListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shopping_v1_shopping_proto_msgTypes[30]
+	mi := &file_shopping_v1_shopping_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2758,7 +2852,7 @@ const file_shopping_v1_shopping_proto_rawDesc = "" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\"\x97\x04\n" +
+	"updateTime\"\xd2\x04\n" +
 	"\fShoppingItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\afood_id\x18\x02 \x01(\tR\x06foodId\x12\x12\n" +
@@ -2781,7 +2875,13 @@ const file_shopping_v1_shopping_proto_rawDesc = "" +
 	"\n" +
 	"checked_by\x18\x10 \x01(\tR\tcheckedBy\x12\x12\n" +
 	"\x04note\x18\x11 \x01(\tR\x04note\x12\x16\n" +
-	"\x06manual\x18\x12 \x01(\bR\x06manual\">\n" +
+	"\x06manual\x18\x12 \x01(\bR\x06manual\x129\n" +
+	"\arecipes\x18\x13 \x03(\v2\x17.shopping.v1.ItemRecipeB\x06\xaa\x9f\x19\x02\b\x01R\arecipes\"J\n" +
+	"\n" +
+	"ItemRecipe\x12\x1b\n" +
+	"\trecipe_id\x18\x01 \x01(\tR\brecipeId\x12\x1f\n" +
+	"\vrecipe_name\x18\x02 \x01(\tR\n" +
+	"recipeName\">\n" +
 	"\x12CreateStoreRequest\x12(\n" +
 	"\x05store\x18\x01 \x01(\v2\x12.shopping.v1.StoreR\x05store\"?\n" +
 	"\x13CreateStoreResponse\x12(\n" +
@@ -2870,100 +2970,102 @@ const file_shopping_v1_shopping_proto_rawDesc = "" +
 	"\x12DeleteShoppingList\x12&.shopping.v1.DeleteShoppingListRequest\x1a'.shopping.v1.DeleteShoppingListResponseB\xb4\x01\n" +
 	"\x0fcom.shopping.v1B\rShoppingProtoP\x01ZEgithub.com/bs-tools/mealplann.ing/internal/gen/shopping/v1;shoppingv1\xa2\x02\x03SXX\xaa\x02\vShopping.V1\xca\x02\vShopping\\V1\xe2\x02\x17Shopping\\V1\\GPBMetadata\xea\x02\fShopping::V1b\x06proto3"
 
-var file_shopping_v1_shopping_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_shopping_v1_shopping_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_shopping_v1_shopping_proto_goTypes = []any{
 	(*Store)(nil),                          // 0: shopping.v1.Store
 	(*ShoppingList)(nil),                   // 1: shopping.v1.ShoppingList
 	(*ShoppingItem)(nil),                   // 2: shopping.v1.ShoppingItem
-	(*CreateStoreRequest)(nil),             // 3: shopping.v1.CreateStoreRequest
-	(*CreateStoreResponse)(nil),            // 4: shopping.v1.CreateStoreResponse
-	(*ListStoresRequest)(nil),              // 5: shopping.v1.ListStoresRequest
-	(*ListStoresResponse)(nil),             // 6: shopping.v1.ListStoresResponse
-	(*UpdateStoreRequest)(nil),             // 7: shopping.v1.UpdateStoreRequest
-	(*UpdateStoreResponse)(nil),            // 8: shopping.v1.UpdateStoreResponse
-	(*DeleteStoreRequest)(nil),             // 9: shopping.v1.DeleteStoreRequest
-	(*DeleteStoreResponse)(nil),            // 10: shopping.v1.DeleteStoreResponse
-	(*CreateShoppingListRequest)(nil),      // 11: shopping.v1.CreateShoppingListRequest
-	(*CreateShoppingListResponse)(nil),     // 12: shopping.v1.CreateShoppingListResponse
-	(*GetShoppingListRequest)(nil),         // 13: shopping.v1.GetShoppingListRequest
-	(*GetShoppingListResponse)(nil),        // 14: shopping.v1.GetShoppingListResponse
-	(*ListShoppingListsRequest)(nil),       // 15: shopping.v1.ListShoppingListsRequest
-	(*ListShoppingListsResponse)(nil),      // 16: shopping.v1.ListShoppingListsResponse
-	(*RegenerateShoppingListRequest)(nil),  // 17: shopping.v1.RegenerateShoppingListRequest
-	(*RegenerateShoppingListResponse)(nil), // 18: shopping.v1.RegenerateShoppingListResponse
-	(*CheckItemRequest)(nil),               // 19: shopping.v1.CheckItemRequest
-	(*CheckItemResponse)(nil),              // 20: shopping.v1.CheckItemResponse
-	(*UncheckItemRequest)(nil),             // 21: shopping.v1.UncheckItemRequest
-	(*UncheckItemResponse)(nil),            // 22: shopping.v1.UncheckItemResponse
-	(*AddManualItemRequest)(nil),           // 23: shopping.v1.AddManualItemRequest
-	(*AddManualItemResponse)(nil),          // 24: shopping.v1.AddManualItemResponse
-	(*DeleteItemRequest)(nil),              // 25: shopping.v1.DeleteItemRequest
-	(*DeleteItemResponse)(nil),             // 26: shopping.v1.DeleteItemResponse
-	(*CompleteShoppingRequest)(nil),        // 27: shopping.v1.CompleteShoppingRequest
-	(*CompleteShoppingResponse)(nil),       // 28: shopping.v1.CompleteShoppingResponse
-	(*DeleteShoppingListRequest)(nil),      // 29: shopping.v1.DeleteShoppingListRequest
-	(*DeleteShoppingListResponse)(nil),     // 30: shopping.v1.DeleteShoppingListResponse
-	(*timestamppb.Timestamp)(nil),          // 31: google.protobuf.Timestamp
-	(v1.StoreSection)(0),                   // 32: foods.v1.StoreSection
-	(*fieldmaskpb.FieldMask)(nil),          // 33: google.protobuf.FieldMask
-	(*v11.PantryItem)(nil),                 // 34: pantry.v1.PantryItem
+	(*ItemRecipe)(nil),                     // 3: shopping.v1.ItemRecipe
+	(*CreateStoreRequest)(nil),             // 4: shopping.v1.CreateStoreRequest
+	(*CreateStoreResponse)(nil),            // 5: shopping.v1.CreateStoreResponse
+	(*ListStoresRequest)(nil),              // 6: shopping.v1.ListStoresRequest
+	(*ListStoresResponse)(nil),             // 7: shopping.v1.ListStoresResponse
+	(*UpdateStoreRequest)(nil),             // 8: shopping.v1.UpdateStoreRequest
+	(*UpdateStoreResponse)(nil),            // 9: shopping.v1.UpdateStoreResponse
+	(*DeleteStoreRequest)(nil),             // 10: shopping.v1.DeleteStoreRequest
+	(*DeleteStoreResponse)(nil),            // 11: shopping.v1.DeleteStoreResponse
+	(*CreateShoppingListRequest)(nil),      // 12: shopping.v1.CreateShoppingListRequest
+	(*CreateShoppingListResponse)(nil),     // 13: shopping.v1.CreateShoppingListResponse
+	(*GetShoppingListRequest)(nil),         // 14: shopping.v1.GetShoppingListRequest
+	(*GetShoppingListResponse)(nil),        // 15: shopping.v1.GetShoppingListResponse
+	(*ListShoppingListsRequest)(nil),       // 16: shopping.v1.ListShoppingListsRequest
+	(*ListShoppingListsResponse)(nil),      // 17: shopping.v1.ListShoppingListsResponse
+	(*RegenerateShoppingListRequest)(nil),  // 18: shopping.v1.RegenerateShoppingListRequest
+	(*RegenerateShoppingListResponse)(nil), // 19: shopping.v1.RegenerateShoppingListResponse
+	(*CheckItemRequest)(nil),               // 20: shopping.v1.CheckItemRequest
+	(*CheckItemResponse)(nil),              // 21: shopping.v1.CheckItemResponse
+	(*UncheckItemRequest)(nil),             // 22: shopping.v1.UncheckItemRequest
+	(*UncheckItemResponse)(nil),            // 23: shopping.v1.UncheckItemResponse
+	(*AddManualItemRequest)(nil),           // 24: shopping.v1.AddManualItemRequest
+	(*AddManualItemResponse)(nil),          // 25: shopping.v1.AddManualItemResponse
+	(*DeleteItemRequest)(nil),              // 26: shopping.v1.DeleteItemRequest
+	(*DeleteItemResponse)(nil),             // 27: shopping.v1.DeleteItemResponse
+	(*CompleteShoppingRequest)(nil),        // 28: shopping.v1.CompleteShoppingRequest
+	(*CompleteShoppingResponse)(nil),       // 29: shopping.v1.CompleteShoppingResponse
+	(*DeleteShoppingListRequest)(nil),      // 30: shopping.v1.DeleteShoppingListRequest
+	(*DeleteShoppingListResponse)(nil),     // 31: shopping.v1.DeleteShoppingListResponse
+	(*timestamppb.Timestamp)(nil),          // 32: google.protobuf.Timestamp
+	(v1.StoreSection)(0),                   // 33: foods.v1.StoreSection
+	(*fieldmaskpb.FieldMask)(nil),          // 34: google.protobuf.FieldMask
+	(*v11.PantryItem)(nil),                 // 35: pantry.v1.PantryItem
 }
 var file_shopping_v1_shopping_proto_depIdxs = []int32{
-	31, // 0: shopping.v1.Store.create_time:type_name -> google.protobuf.Timestamp
-	31, // 1: shopping.v1.Store.update_time:type_name -> google.protobuf.Timestamp
+	32, // 0: shopping.v1.Store.create_time:type_name -> google.protobuf.Timestamp
+	32, // 1: shopping.v1.Store.update_time:type_name -> google.protobuf.Timestamp
 	2,  // 2: shopping.v1.ShoppingList.items:type_name -> shopping.v1.ShoppingItem
-	31, // 3: shopping.v1.ShoppingList.complete_time:type_name -> google.protobuf.Timestamp
-	31, // 4: shopping.v1.ShoppingList.create_time:type_name -> google.protobuf.Timestamp
-	31, // 5: shopping.v1.ShoppingList.update_time:type_name -> google.protobuf.Timestamp
-	32, // 6: shopping.v1.ShoppingItem.store_section:type_name -> foods.v1.StoreSection
-	0,  // 7: shopping.v1.CreateStoreRequest.store:type_name -> shopping.v1.Store
-	0,  // 8: shopping.v1.CreateStoreResponse.store:type_name -> shopping.v1.Store
-	0,  // 9: shopping.v1.ListStoresResponse.stores:type_name -> shopping.v1.Store
-	0,  // 10: shopping.v1.UpdateStoreRequest.store:type_name -> shopping.v1.Store
-	33, // 11: shopping.v1.UpdateStoreRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 12: shopping.v1.UpdateStoreResponse.store:type_name -> shopping.v1.Store
-	1,  // 13: shopping.v1.CreateShoppingListResponse.list:type_name -> shopping.v1.ShoppingList
-	1,  // 14: shopping.v1.GetShoppingListResponse.list:type_name -> shopping.v1.ShoppingList
-	1,  // 15: shopping.v1.ListShoppingListsResponse.lists:type_name -> shopping.v1.ShoppingList
-	1,  // 16: shopping.v1.RegenerateShoppingListResponse.list:type_name -> shopping.v1.ShoppingList
-	2,  // 17: shopping.v1.CheckItemResponse.item:type_name -> shopping.v1.ShoppingItem
-	2,  // 18: shopping.v1.UncheckItemResponse.item:type_name -> shopping.v1.ShoppingItem
-	2,  // 19: shopping.v1.AddManualItemResponse.item:type_name -> shopping.v1.ShoppingItem
-	1,  // 20: shopping.v1.CompleteShoppingResponse.list:type_name -> shopping.v1.ShoppingList
-	34, // 21: shopping.v1.CompleteShoppingResponse.pantry_items:type_name -> pantry.v1.PantryItem
-	3,  // 22: shopping.v1.ShoppingService.CreateStore:input_type -> shopping.v1.CreateStoreRequest
-	5,  // 23: shopping.v1.ShoppingService.ListStores:input_type -> shopping.v1.ListStoresRequest
-	7,  // 24: shopping.v1.ShoppingService.UpdateStore:input_type -> shopping.v1.UpdateStoreRequest
-	9,  // 25: shopping.v1.ShoppingService.DeleteStore:input_type -> shopping.v1.DeleteStoreRequest
-	11, // 26: shopping.v1.ShoppingService.CreateShoppingList:input_type -> shopping.v1.CreateShoppingListRequest
-	13, // 27: shopping.v1.ShoppingService.GetShoppingList:input_type -> shopping.v1.GetShoppingListRequest
-	15, // 28: shopping.v1.ShoppingService.ListShoppingLists:input_type -> shopping.v1.ListShoppingListsRequest
-	17, // 29: shopping.v1.ShoppingService.RegenerateShoppingList:input_type -> shopping.v1.RegenerateShoppingListRequest
-	19, // 30: shopping.v1.ShoppingService.CheckItem:input_type -> shopping.v1.CheckItemRequest
-	21, // 31: shopping.v1.ShoppingService.UncheckItem:input_type -> shopping.v1.UncheckItemRequest
-	23, // 32: shopping.v1.ShoppingService.AddManualItem:input_type -> shopping.v1.AddManualItemRequest
-	25, // 33: shopping.v1.ShoppingService.DeleteItem:input_type -> shopping.v1.DeleteItemRequest
-	27, // 34: shopping.v1.ShoppingService.CompleteShopping:input_type -> shopping.v1.CompleteShoppingRequest
-	29, // 35: shopping.v1.ShoppingService.DeleteShoppingList:input_type -> shopping.v1.DeleteShoppingListRequest
-	4,  // 36: shopping.v1.ShoppingService.CreateStore:output_type -> shopping.v1.CreateStoreResponse
-	6,  // 37: shopping.v1.ShoppingService.ListStores:output_type -> shopping.v1.ListStoresResponse
-	8,  // 38: shopping.v1.ShoppingService.UpdateStore:output_type -> shopping.v1.UpdateStoreResponse
-	10, // 39: shopping.v1.ShoppingService.DeleteStore:output_type -> shopping.v1.DeleteStoreResponse
-	12, // 40: shopping.v1.ShoppingService.CreateShoppingList:output_type -> shopping.v1.CreateShoppingListResponse
-	14, // 41: shopping.v1.ShoppingService.GetShoppingList:output_type -> shopping.v1.GetShoppingListResponse
-	16, // 42: shopping.v1.ShoppingService.ListShoppingLists:output_type -> shopping.v1.ListShoppingListsResponse
-	18, // 43: shopping.v1.ShoppingService.RegenerateShoppingList:output_type -> shopping.v1.RegenerateShoppingListResponse
-	20, // 44: shopping.v1.ShoppingService.CheckItem:output_type -> shopping.v1.CheckItemResponse
-	22, // 45: shopping.v1.ShoppingService.UncheckItem:output_type -> shopping.v1.UncheckItemResponse
-	24, // 46: shopping.v1.ShoppingService.AddManualItem:output_type -> shopping.v1.AddManualItemResponse
-	26, // 47: shopping.v1.ShoppingService.DeleteItem:output_type -> shopping.v1.DeleteItemResponse
-	28, // 48: shopping.v1.ShoppingService.CompleteShopping:output_type -> shopping.v1.CompleteShoppingResponse
-	30, // 49: shopping.v1.ShoppingService.DeleteShoppingList:output_type -> shopping.v1.DeleteShoppingListResponse
-	36, // [36:50] is the sub-list for method output_type
-	22, // [22:36] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	32, // 3: shopping.v1.ShoppingList.complete_time:type_name -> google.protobuf.Timestamp
+	32, // 4: shopping.v1.ShoppingList.create_time:type_name -> google.protobuf.Timestamp
+	32, // 5: shopping.v1.ShoppingList.update_time:type_name -> google.protobuf.Timestamp
+	33, // 6: shopping.v1.ShoppingItem.store_section:type_name -> foods.v1.StoreSection
+	3,  // 7: shopping.v1.ShoppingItem.recipes:type_name -> shopping.v1.ItemRecipe
+	0,  // 8: shopping.v1.CreateStoreRequest.store:type_name -> shopping.v1.Store
+	0,  // 9: shopping.v1.CreateStoreResponse.store:type_name -> shopping.v1.Store
+	0,  // 10: shopping.v1.ListStoresResponse.stores:type_name -> shopping.v1.Store
+	0,  // 11: shopping.v1.UpdateStoreRequest.store:type_name -> shopping.v1.Store
+	34, // 12: shopping.v1.UpdateStoreRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 13: shopping.v1.UpdateStoreResponse.store:type_name -> shopping.v1.Store
+	1,  // 14: shopping.v1.CreateShoppingListResponse.list:type_name -> shopping.v1.ShoppingList
+	1,  // 15: shopping.v1.GetShoppingListResponse.list:type_name -> shopping.v1.ShoppingList
+	1,  // 16: shopping.v1.ListShoppingListsResponse.lists:type_name -> shopping.v1.ShoppingList
+	1,  // 17: shopping.v1.RegenerateShoppingListResponse.list:type_name -> shopping.v1.ShoppingList
+	2,  // 18: shopping.v1.CheckItemResponse.item:type_name -> shopping.v1.ShoppingItem
+	2,  // 19: shopping.v1.UncheckItemResponse.item:type_name -> shopping.v1.ShoppingItem
+	2,  // 20: shopping.v1.AddManualItemResponse.item:type_name -> shopping.v1.ShoppingItem
+	1,  // 21: shopping.v1.CompleteShoppingResponse.list:type_name -> shopping.v1.ShoppingList
+	35, // 22: shopping.v1.CompleteShoppingResponse.pantry_items:type_name -> pantry.v1.PantryItem
+	4,  // 23: shopping.v1.ShoppingService.CreateStore:input_type -> shopping.v1.CreateStoreRequest
+	6,  // 24: shopping.v1.ShoppingService.ListStores:input_type -> shopping.v1.ListStoresRequest
+	8,  // 25: shopping.v1.ShoppingService.UpdateStore:input_type -> shopping.v1.UpdateStoreRequest
+	10, // 26: shopping.v1.ShoppingService.DeleteStore:input_type -> shopping.v1.DeleteStoreRequest
+	12, // 27: shopping.v1.ShoppingService.CreateShoppingList:input_type -> shopping.v1.CreateShoppingListRequest
+	14, // 28: shopping.v1.ShoppingService.GetShoppingList:input_type -> shopping.v1.GetShoppingListRequest
+	16, // 29: shopping.v1.ShoppingService.ListShoppingLists:input_type -> shopping.v1.ListShoppingListsRequest
+	18, // 30: shopping.v1.ShoppingService.RegenerateShoppingList:input_type -> shopping.v1.RegenerateShoppingListRequest
+	20, // 31: shopping.v1.ShoppingService.CheckItem:input_type -> shopping.v1.CheckItemRequest
+	22, // 32: shopping.v1.ShoppingService.UncheckItem:input_type -> shopping.v1.UncheckItemRequest
+	24, // 33: shopping.v1.ShoppingService.AddManualItem:input_type -> shopping.v1.AddManualItemRequest
+	26, // 34: shopping.v1.ShoppingService.DeleteItem:input_type -> shopping.v1.DeleteItemRequest
+	28, // 35: shopping.v1.ShoppingService.CompleteShopping:input_type -> shopping.v1.CompleteShoppingRequest
+	30, // 36: shopping.v1.ShoppingService.DeleteShoppingList:input_type -> shopping.v1.DeleteShoppingListRequest
+	5,  // 37: shopping.v1.ShoppingService.CreateStore:output_type -> shopping.v1.CreateStoreResponse
+	7,  // 38: shopping.v1.ShoppingService.ListStores:output_type -> shopping.v1.ListStoresResponse
+	9,  // 39: shopping.v1.ShoppingService.UpdateStore:output_type -> shopping.v1.UpdateStoreResponse
+	11, // 40: shopping.v1.ShoppingService.DeleteStore:output_type -> shopping.v1.DeleteStoreResponse
+	13, // 41: shopping.v1.ShoppingService.CreateShoppingList:output_type -> shopping.v1.CreateShoppingListResponse
+	15, // 42: shopping.v1.ShoppingService.GetShoppingList:output_type -> shopping.v1.GetShoppingListResponse
+	17, // 43: shopping.v1.ShoppingService.ListShoppingLists:output_type -> shopping.v1.ListShoppingListsResponse
+	19, // 44: shopping.v1.ShoppingService.RegenerateShoppingList:output_type -> shopping.v1.RegenerateShoppingListResponse
+	21, // 45: shopping.v1.ShoppingService.CheckItem:output_type -> shopping.v1.CheckItemResponse
+	23, // 46: shopping.v1.ShoppingService.UncheckItem:output_type -> shopping.v1.UncheckItemResponse
+	25, // 47: shopping.v1.ShoppingService.AddManualItem:output_type -> shopping.v1.AddManualItemResponse
+	27, // 48: shopping.v1.ShoppingService.DeleteItem:output_type -> shopping.v1.DeleteItemResponse
+	29, // 49: shopping.v1.ShoppingService.CompleteShopping:output_type -> shopping.v1.CompleteShoppingResponse
+	31, // 50: shopping.v1.ShoppingService.DeleteShoppingList:output_type -> shopping.v1.DeleteShoppingListResponse
+	37, // [37:51] is the sub-list for method output_type
+	23, // [23:37] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_shopping_v1_shopping_proto_init() }
@@ -2971,7 +3073,7 @@ func file_shopping_v1_shopping_proto_init() {
 	if File_shopping_v1_shopping_proto != nil {
 		return
 	}
-	file_shopping_v1_shopping_proto_msgTypes[23].OneofWrappers = []any{
+	file_shopping_v1_shopping_proto_msgTypes[24].OneofWrappers = []any{
 		(*addManualItemRequest_FoodId)(nil),
 		(*addManualItemRequest_Text)(nil),
 	}
@@ -2981,7 +3083,7 @@ func file_shopping_v1_shopping_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shopping_v1_shopping_proto_rawDesc), len(file_shopping_v1_shopping_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

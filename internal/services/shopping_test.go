@@ -212,6 +212,21 @@ func TestShopping(t *testing.T) {
 		onionItem.GetStoreSection() != foodsv1.StoreSection_STORE_SECTION_PRODUCE || onionItem.GetFoodId() != onions.GetId() {
 		t.Errorf("got %v, want 450 g of onions needed on Monday", onionItem)
 	}
+	// The onions are bought for the curry and the dal; the soy milk, for a
+	// staple of a food, for no recipe.
+	recipeNames := func(it *shoppingv1.ShoppingItem) []string {
+		var names []string
+		for _, r := range it.GetRecipes() {
+			names = append(names, r.GetRecipeName())
+		}
+		return names
+	}
+	if got := recipeNames(onionItem); !slices.Equal(got, []string{"Chickpea curry", "Dal"}) || onionItem.GetRecipes()[0].GetRecipeId() != curry.GetId() {
+		t.Errorf("got onions for %v, want the curry and the dal", onionItem.GetRecipes())
+	}
+	if got := recipeNames(itemNamed(t, list, "Soy milk", false)); len(got) != 0 {
+		t.Errorf("got soy milk for %v, want no recipe", got)
+	}
 	topUp := itemNamed(t, list, "Spinach", true)
 	if topUp.GetNeededByDate() != friday || !strings.HasPrefix(topUp.GetWarning(), "Won't keep until Fri, Nov 6, as it keeps 3 days") {
 		t.Errorf("got %v, want spinach to top up for Friday", topUp)

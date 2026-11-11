@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file shopping/v1/shopping.proto.
  */
 export const file_shopping_v1_shopping: GenFile = /*@__PURE__*/
-  fileDesc("ChpzaG9wcGluZy92MS9zaG9wcGluZy5wcm90bxILc2hvcHBpbmcudjEipQEKBVN0b3JlEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEAoIcG9zaXRpb24YAyABKAUSNwoLY3JlYXRlX3RpbWUYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAEi0gIKDFNob3BwaW5nTGlzdBIKCgJpZBgBIAEoCRISCgpzdGFydF9kYXRlGAIgASgJEhAKCGVuZF9kYXRlGAMgASgJEhAKCGNvbXBsZXRlGAQgASgIEigKBWl0ZW1zGAUgAygLMhkuc2hvcHBpbmcudjEuU2hvcHBpbmdJdGVtEhIKCml0ZW1fY291bnQYBiABKAUSFQoNY2hlY2tlZF9jb3VudBgHIAEoBRIUCgx0b3BfdXBfY291bnQYCCABKAUSMQoNY29tcGxldGVfdGltZRgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLY3JlYXRlX3RpbWUYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3VwZGF0ZV90aW1lGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCLsAgoMU2hvcHBpbmdJdGVtEgoKAmlkGAEgASgJEg8KB2Zvb2RfaWQYAiABKAkSDAoEbmFtZRgDIAEoCRITCgthbW91bnRfdGV4dBgEIAEoCRINCgVncmFtcxgFIAEoARIUCgxuZWVkZWRfZ3JhbXMYBiABKAESFAoMcGFudHJ5X2dyYW1zGAcgASgBEhAKCHBhY2thZ2VzGAggASgFEhAKCHN0b3JlX2lkGAkgASgJEhIKCnN0b3JlX25hbWUYCiABKAkSLQoNc3RvcmVfc2VjdGlvbhgLIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbhIWCg5uZWVkZWRfYnlfZGF0ZRgMIAEoCRIOCgZ0b3BfdXAYDSABKAgSDwoHd2FybmluZxgOIAEoCRIPCgdjaGVja2VkGA8gASgIEhIKCmNoZWNrZWRfYnkYECABKAkSDAoEbm90ZRgRIAEoCRIOCgZtYW51YWwYEiABKAgiNwoSQ3JlYXRlU3RvcmVSZXF1ZXN0EiEKBXN0b3JlGAEgASgLMhIuc2hvcHBpbmcudjEuU3RvcmUiOAoTQ3JlYXRlU3RvcmVSZXNwb25zZRIhCgVzdG9yZRgBIAEoCzISLnNob3BwaW5nLnYxLlN0b3JlIhMKEUxpc3RTdG9yZXNSZXF1ZXN0IjgKEkxpc3RTdG9yZXNSZXNwb25zZRIiCgZzdG9yZXMYASADKAsyEi5zaG9wcGluZy52MS5TdG9yZSJoChJVcGRhdGVTdG9yZVJlcXVlc3QSIQoFc3RvcmUYASABKAsyEi5zaG9wcGluZy52MS5TdG9yZRIvCgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2siOAoTVXBkYXRlU3RvcmVSZXNwb25zZRIhCgVzdG9yZRgBIAEoCzISLnNob3BwaW5nLnYxLlN0b3JlIiAKEkRlbGV0ZVN0b3JlUmVxdWVzdBIKCgJpZBgBIAEoCSIVChNEZWxldGVTdG9yZVJlc3BvbnNlIkEKGUNyZWF0ZVNob3BwaW5nTGlzdFJlcXVlc3QSEgoKc3RhcnRfZGF0ZRgBIAEoCRIQCghlbmRfZGF0ZRgCIAEoCSJFChpDcmVhdGVTaG9wcGluZ0xpc3RSZXNwb25zZRInCgRsaXN0GAEgASgLMhkuc2hvcHBpbmcudjEuU2hvcHBpbmdMaXN0IiQKFkdldFNob3BwaW5nTGlzdFJlcXVlc3QSCgoCaWQYASABKAkiQgoXR2V0U2hvcHBpbmdMaXN0UmVzcG9uc2USJwoEbGlzdBgBIAEoCzIZLnNob3BwaW5nLnYxLlNob3BwaW5nTGlzdCJBChhMaXN0U2hvcHBpbmdMaXN0c1JlcXVlc3QSEQoJcGFnZV9zaXplGAEgASgFEhIKCnBhZ2VfdG9rZW4YAiABKAkiXgoZTGlzdFNob3BwaW5nTGlzdHNSZXNwb25zZRIoCgVsaXN0cxgBIAMoCzIZLnNob3BwaW5nLnYxLlNob3BwaW5nTGlzdBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiKwodUmVnZW5lcmF0ZVNob3BwaW5nTGlzdFJlcXVlc3QSCgoCaWQYASABKAkiSQoeUmVnZW5lcmF0ZVNob3BwaW5nTGlzdFJlc3BvbnNlEicKBGxpc3QYASABKAsyGS5zaG9wcGluZy52MS5TaG9wcGluZ0xpc3QiHgoQQ2hlY2tJdGVtUmVxdWVzdBIKCgJpZBgBIAEoCSI8ChFDaGVja0l0ZW1SZXNwb25zZRInCgRpdGVtGAEgASgLMhkuc2hvcHBpbmcudjEuU2hvcHBpbmdJdGVtIiAKElVuY2hlY2tJdGVtUmVxdWVzdBIKCgJpZBgBIAEoCSI+ChNVbmNoZWNrSXRlbVJlc3BvbnNlEicKBGl0ZW0YASABKAsyGS5zaG9wcGluZy52MS5TaG9wcGluZ0l0ZW0ilgEKFEFkZE1hbnVhbEl0ZW1SZXF1ZXN0Eg8KB2xpc3RfaWQYASABKAkSEQoHZm9vZF9pZBgCIAEoCUgAEg4KBHRleHQYAyABKAlIABINCgVncmFtcxgEIAEoARITCgthbW91bnRfdGV4dBgFIAEoCRIQCghzdG9yZV9pZBgGIAEoCRIMCgRub3RlGAcgASgJQgYKBHdoYXQiQAoVQWRkTWFudWFsSXRlbVJlc3BvbnNlEicKBGl0ZW0YASABKAsyGS5zaG9wcGluZy52MS5TaG9wcGluZ0l0ZW0iHwoRRGVsZXRlSXRlbVJlcXVlc3QSCgoCaWQYASABKAkiFAoSRGVsZXRlSXRlbVJlc3BvbnNlIjMKF0NvbXBsZXRlU2hvcHBpbmdSZXF1ZXN0EgoKAmlkGAEgASgJEgwKBGRhdGUYAiABKAkicAoYQ29tcGxldGVTaG9wcGluZ1Jlc3BvbnNlEicKBGxpc3QYASABKAsyGS5zaG9wcGluZy52MS5TaG9wcGluZ0xpc3QSKwoMcGFudHJ5X2l0ZW1zGAIgAygLMhUucGFudHJ5LnYxLlBhbnRyeUl0ZW0iJwoZRGVsZXRlU2hvcHBpbmdMaXN0UmVxdWVzdBIKCgJpZBgBIAEoCSIcChpEZWxldGVTaG9wcGluZ0xpc3RSZXNwb25zZTL/CQoPU2hvcHBpbmdTZXJ2aWNlElAKC0NyZWF0ZVN0b3JlEh8uc2hvcHBpbmcudjEuQ3JlYXRlU3RvcmVSZXF1ZXN0GiAuc2hvcHBpbmcudjEuQ3JlYXRlU3RvcmVSZXNwb25zZRJNCgpMaXN0U3RvcmVzEh4uc2hvcHBpbmcudjEuTGlzdFN0b3Jlc1JlcXVlc3QaHy5zaG9wcGluZy52MS5MaXN0U3RvcmVzUmVzcG9uc2USUAoLVXBkYXRlU3RvcmUSHy5zaG9wcGluZy52MS5VcGRhdGVTdG9yZVJlcXVlc3QaIC5zaG9wcGluZy52MS5VcGRhdGVTdG9yZVJlc3BvbnNlElAKC0RlbGV0ZVN0b3JlEh8uc2hvcHBpbmcudjEuRGVsZXRlU3RvcmVSZXF1ZXN0GiAuc2hvcHBpbmcudjEuRGVsZXRlU3RvcmVSZXNwb25zZRJlChJDcmVhdGVTaG9wcGluZ0xpc3QSJi5zaG9wcGluZy52MS5DcmVhdGVTaG9wcGluZ0xpc3RSZXF1ZXN0Gicuc2hvcHBpbmcudjEuQ3JlYXRlU2hvcHBpbmdMaXN0UmVzcG9uc2USXAoPR2V0U2hvcHBpbmdMaXN0EiMuc2hvcHBpbmcudjEuR2V0U2hvcHBpbmdMaXN0UmVxdWVzdBokLnNob3BwaW5nLnYxLkdldFNob3BwaW5nTGlzdFJlc3BvbnNlEmIKEUxpc3RTaG9wcGluZ0xpc3RzEiUuc2hvcHBpbmcudjEuTGlzdFNob3BwaW5nTGlzdHNSZXF1ZXN0GiYuc2hvcHBpbmcudjEuTGlzdFNob3BwaW5nTGlzdHNSZXNwb25zZRJxChZSZWdlbmVyYXRlU2hvcHBpbmdMaXN0Eiouc2hvcHBpbmcudjEuUmVnZW5lcmF0ZVNob3BwaW5nTGlzdFJlcXVlc3QaKy5zaG9wcGluZy52MS5SZWdlbmVyYXRlU2hvcHBpbmdMaXN0UmVzcG9uc2USSgoJQ2hlY2tJdGVtEh0uc2hvcHBpbmcudjEuQ2hlY2tJdGVtUmVxdWVzdBoeLnNob3BwaW5nLnYxLkNoZWNrSXRlbVJlc3BvbnNlElAKC1VuY2hlY2tJdGVtEh8uc2hvcHBpbmcudjEuVW5jaGVja0l0ZW1SZXF1ZXN0GiAuc2hvcHBpbmcudjEuVW5jaGVja0l0ZW1SZXNwb25zZRJWCg1BZGRNYW51YWxJdGVtEiEuc2hvcHBpbmcudjEuQWRkTWFudWFsSXRlbVJlcXVlc3QaIi5zaG9wcGluZy52MS5BZGRNYW51YWxJdGVtUmVzcG9uc2USTQoKRGVsZXRlSXRlbRIeLnNob3BwaW5nLnYxLkRlbGV0ZUl0ZW1SZXF1ZXN0Gh8uc2hvcHBpbmcudjEuRGVsZXRlSXRlbVJlc3BvbnNlEl8KEENvbXBsZXRlU2hvcHBpbmcSJC5zaG9wcGluZy52MS5Db21wbGV0ZVNob3BwaW5nUmVxdWVzdBolLnNob3BwaW5nLnYxLkNvbXBsZXRlU2hvcHBpbmdSZXNwb25zZRJlChJEZWxldGVTaG9wcGluZ0xpc3QSJi5zaG9wcGluZy52MS5EZWxldGVTaG9wcGluZ0xpc3RSZXF1ZXN0Gicuc2hvcHBpbmcudjEuRGVsZXRlU2hvcHBpbmdMaXN0UmVzcG9uc2VCtAEKD2NvbS5zaG9wcGluZy52MUINU2hvcHBpbmdQcm90b1ABWkVnaXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3Nob3BwaW5nL3YxO3Nob3BwaW5ndjGiAgNTWFiqAgtTaG9wcGluZy5WMcoCC1Nob3BwaW5nXFYx4gIXU2hvcHBpbmdcVjFcR1BCTWV0YWRhdGHqAgxTaG9wcGluZzo6VjFiBnByb3RvMw", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options, file_pantry_v1_pantry]);
+  fileDesc("ChpzaG9wcGluZy92MS9zaG9wcGluZy5wcm90bxILc2hvcHBpbmcudjEipQEKBVN0b3JlEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEAoIcG9zaXRpb24YAyABKAUSNwoLY3JlYXRlX3RpbWUYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAESNwoLdXBkYXRlX3RpbWUYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgaqnxkCCAEi0gIKDFNob3BwaW5nTGlzdBIKCgJpZBgBIAEoCRISCgpzdGFydF9kYXRlGAIgASgJEhAKCGVuZF9kYXRlGAMgASgJEhAKCGNvbXBsZXRlGAQgASgIEigKBWl0ZW1zGAUgAygLMhkuc2hvcHBpbmcudjEuU2hvcHBpbmdJdGVtEhIKCml0ZW1fY291bnQYBiABKAUSFQoNY2hlY2tlZF9jb3VudBgHIAEoBRIUCgx0b3BfdXBfY291bnQYCCABKAUSMQoNY29tcGxldGVfdGltZRgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLY3JlYXRlX3RpbWUYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3VwZGF0ZV90aW1lGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKeAwoMU2hvcHBpbmdJdGVtEgoKAmlkGAEgASgJEg8KB2Zvb2RfaWQYAiABKAkSDAoEbmFtZRgDIAEoCRITCgthbW91bnRfdGV4dBgEIAEoCRINCgVncmFtcxgFIAEoARIUCgxuZWVkZWRfZ3JhbXMYBiABKAESFAoMcGFudHJ5X2dyYW1zGAcgASgBEhAKCHBhY2thZ2VzGAggASgFEhAKCHN0b3JlX2lkGAkgASgJEhIKCnN0b3JlX25hbWUYCiABKAkSLQoNc3RvcmVfc2VjdGlvbhgLIAEoDjIWLmZvb2RzLnYxLlN0b3JlU2VjdGlvbhIWCg5uZWVkZWRfYnlfZGF0ZRgMIAEoCRIOCgZ0b3BfdXAYDSABKAgSDwoHd2FybmluZxgOIAEoCRIPCgdjaGVja2VkGA8gASgIEhIKCmNoZWNrZWRfYnkYECABKAkSDAoEbm90ZRgRIAEoCRIOCgZtYW51YWwYEiABKAgSMAoHcmVjaXBlcxgTIAMoCzIXLnNob3BwaW5nLnYxLkl0ZW1SZWNpcGVCBqqfGQIIASI0CgpJdGVtUmVjaXBlEhEKCXJlY2lwZV9pZBgBIAEoCRITCgtyZWNpcGVfbmFtZRgCIAEoCSI3ChJDcmVhdGVTdG9yZVJlcXVlc3QSIQoFc3RvcmUYASABKAsyEi5zaG9wcGluZy52MS5TdG9yZSI4ChNDcmVhdGVTdG9yZVJlc3BvbnNlEiEKBXN0b3JlGAEgASgLMhIuc2hvcHBpbmcudjEuU3RvcmUiEwoRTGlzdFN0b3Jlc1JlcXVlc3QiOAoSTGlzdFN0b3Jlc1Jlc3BvbnNlEiIKBnN0b3JlcxgBIAMoCzISLnNob3BwaW5nLnYxLlN0b3JlImgKElVwZGF0ZVN0b3JlUmVxdWVzdBIhCgVzdG9yZRgBIAEoCzISLnNob3BwaW5nLnYxLlN0b3JlEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzayI4ChNVcGRhdGVTdG9yZVJlc3BvbnNlEiEKBXN0b3JlGAEgASgLMhIuc2hvcHBpbmcudjEuU3RvcmUiIAoSRGVsZXRlU3RvcmVSZXF1ZXN0EgoKAmlkGAEgASgJIhUKE0RlbGV0ZVN0b3JlUmVzcG9uc2UiQQoZQ3JlYXRlU2hvcHBpbmdMaXN0UmVxdWVzdBISCgpzdGFydF9kYXRlGAEgASgJEhAKCGVuZF9kYXRlGAIgASgJIkUKGkNyZWF0ZVNob3BwaW5nTGlzdFJlc3BvbnNlEicKBGxpc3QYASABKAsyGS5zaG9wcGluZy52MS5TaG9wcGluZ0xpc3QiJAoWR2V0U2hvcHBpbmdMaXN0UmVxdWVzdBIKCgJpZBgBIAEoCSJCChdHZXRTaG9wcGluZ0xpc3RSZXNwb25zZRInCgRsaXN0GAEgASgLMhkuc2hvcHBpbmcudjEuU2hvcHBpbmdMaXN0IkEKGExpc3RTaG9wcGluZ0xpc3RzUmVxdWVzdBIRCglwYWdlX3NpemUYASABKAUSEgoKcGFnZV90b2tlbhgCIAEoCSJeChlMaXN0U2hvcHBpbmdMaXN0c1Jlc3BvbnNlEigKBWxpc3RzGAEgAygLMhkuc2hvcHBpbmcudjEuU2hvcHBpbmdMaXN0EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSIrCh1SZWdlbmVyYXRlU2hvcHBpbmdMaXN0UmVxdWVzdBIKCgJpZBgBIAEoCSJJCh5SZWdlbmVyYXRlU2hvcHBpbmdMaXN0UmVzcG9uc2USJwoEbGlzdBgBIAEoCzIZLnNob3BwaW5nLnYxLlNob3BwaW5nTGlzdCIeChBDaGVja0l0ZW1SZXF1ZXN0EgoKAmlkGAEgASgJIjwKEUNoZWNrSXRlbVJlc3BvbnNlEicKBGl0ZW0YASABKAsyGS5zaG9wcGluZy52MS5TaG9wcGluZ0l0ZW0iIAoSVW5jaGVja0l0ZW1SZXF1ZXN0EgoKAmlkGAEgASgJIj4KE1VuY2hlY2tJdGVtUmVzcG9uc2USJwoEaXRlbRgBIAEoCzIZLnNob3BwaW5nLnYxLlNob3BwaW5nSXRlbSKWAQoUQWRkTWFudWFsSXRlbVJlcXVlc3QSDwoHbGlzdF9pZBgBIAEoCRIRCgdmb29kX2lkGAIgASgJSAASDgoEdGV4dBgDIAEoCUgAEg0KBWdyYW1zGAQgASgBEhMKC2Ftb3VudF90ZXh0GAUgASgJEhAKCHN0b3JlX2lkGAYgASgJEgwKBG5vdGUYByABKAlCBgoEd2hhdCJAChVBZGRNYW51YWxJdGVtUmVzcG9uc2USJwoEaXRlbRgBIAEoCzIZLnNob3BwaW5nLnYxLlNob3BwaW5nSXRlbSIfChFEZWxldGVJdGVtUmVxdWVzdBIKCgJpZBgBIAEoCSIUChJEZWxldGVJdGVtUmVzcG9uc2UiMwoXQ29tcGxldGVTaG9wcGluZ1JlcXVlc3QSCgoCaWQYASABKAkSDAoEZGF0ZRgCIAEoCSJwChhDb21wbGV0ZVNob3BwaW5nUmVzcG9uc2USJwoEbGlzdBgBIAEoCzIZLnNob3BwaW5nLnYxLlNob3BwaW5nTGlzdBIrCgxwYW50cnlfaXRlbXMYAiADKAsyFS5wYW50cnkudjEuUGFudHJ5SXRlbSInChlEZWxldGVTaG9wcGluZ0xpc3RSZXF1ZXN0EgoKAmlkGAEgASgJIhwKGkRlbGV0ZVNob3BwaW5nTGlzdFJlc3BvbnNlMv8JCg9TaG9wcGluZ1NlcnZpY2USUAoLQ3JlYXRlU3RvcmUSHy5zaG9wcGluZy52MS5DcmVhdGVTdG9yZVJlcXVlc3QaIC5zaG9wcGluZy52MS5DcmVhdGVTdG9yZVJlc3BvbnNlEk0KCkxpc3RTdG9yZXMSHi5zaG9wcGluZy52MS5MaXN0U3RvcmVzUmVxdWVzdBofLnNob3BwaW5nLnYxLkxpc3RTdG9yZXNSZXNwb25zZRJQCgtVcGRhdGVTdG9yZRIfLnNob3BwaW5nLnYxLlVwZGF0ZVN0b3JlUmVxdWVzdBogLnNob3BwaW5nLnYxLlVwZGF0ZVN0b3JlUmVzcG9uc2USUAoLRGVsZXRlU3RvcmUSHy5zaG9wcGluZy52MS5EZWxldGVTdG9yZVJlcXVlc3QaIC5zaG9wcGluZy52MS5EZWxldGVTdG9yZVJlc3BvbnNlEmUKEkNyZWF0ZVNob3BwaW5nTGlzdBImLnNob3BwaW5nLnYxLkNyZWF0ZVNob3BwaW5nTGlzdFJlcXVlc3QaJy5zaG9wcGluZy52MS5DcmVhdGVTaG9wcGluZ0xpc3RSZXNwb25zZRJcCg9HZXRTaG9wcGluZ0xpc3QSIy5zaG9wcGluZy52MS5HZXRTaG9wcGluZ0xpc3RSZXF1ZXN0GiQuc2hvcHBpbmcudjEuR2V0U2hvcHBpbmdMaXN0UmVzcG9uc2USYgoRTGlzdFNob3BwaW5nTGlzdHMSJS5zaG9wcGluZy52MS5MaXN0U2hvcHBpbmdMaXN0c1JlcXVlc3QaJi5zaG9wcGluZy52MS5MaXN0U2hvcHBpbmdMaXN0c1Jlc3BvbnNlEnEKFlJlZ2VuZXJhdGVTaG9wcGluZ0xpc3QSKi5zaG9wcGluZy52MS5SZWdlbmVyYXRlU2hvcHBpbmdMaXN0UmVxdWVzdBorLnNob3BwaW5nLnYxLlJlZ2VuZXJhdGVTaG9wcGluZ0xpc3RSZXNwb25zZRJKCglDaGVja0l0ZW0SHS5zaG9wcGluZy52MS5DaGVja0l0ZW1SZXF1ZXN0Gh4uc2hvcHBpbmcudjEuQ2hlY2tJdGVtUmVzcG9uc2USUAoLVW5jaGVja0l0ZW0SHy5zaG9wcGluZy52MS5VbmNoZWNrSXRlbVJlcXVlc3QaIC5zaG9wcGluZy52MS5VbmNoZWNrSXRlbVJlc3BvbnNlElYKDUFkZE1hbnVhbEl0ZW0SIS5zaG9wcGluZy52MS5BZGRNYW51YWxJdGVtUmVxdWVzdBoiLnNob3BwaW5nLnYxLkFkZE1hbnVhbEl0ZW1SZXNwb25zZRJNCgpEZWxldGVJdGVtEh4uc2hvcHBpbmcudjEuRGVsZXRlSXRlbVJlcXVlc3QaHy5zaG9wcGluZy52MS5EZWxldGVJdGVtUmVzcG9uc2USXwoQQ29tcGxldGVTaG9wcGluZxIkLnNob3BwaW5nLnYxLkNvbXBsZXRlU2hvcHBpbmdSZXF1ZXN0GiUuc2hvcHBpbmcudjEuQ29tcGxldGVTaG9wcGluZ1Jlc3BvbnNlEmUKEkRlbGV0ZVNob3BwaW5nTGlzdBImLnNob3BwaW5nLnYxLkRlbGV0ZVNob3BwaW5nTGlzdFJlcXVlc3QaJy5zaG9wcGluZy52MS5EZWxldGVTaG9wcGluZ0xpc3RSZXNwb25zZUK0AQoPY29tLnNob3BwaW5nLnYxQg1TaG9wcGluZ1Byb3RvUAFaRWdpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vc2hvcHBpbmcvdjE7c2hvcHBpbmd2MaICA1NYWKoCC1Nob3BwaW5nLlYxygILU2hvcHBpbmdcVjHiAhdTaG9wcGluZ1xWMVxHUEJNZXRhZGF0YeoCDFNob3BwaW5nOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options, file_pantry_v1_pantry]);
 
 /**
  * A store the household shops at.
@@ -304,6 +304,16 @@ export type ShoppingItem = Message<"shopping.v1.ShoppingItem"> & {
    * @generated from field: bool manual = 18;
    */
   manual: boolean;
+
+  /**
+   * The recipes it's bought for: those of the meals the pantry is short
+   * for, by date. Empty for items added by hand, and foods eaten without a
+   * recipe, like a staple of a food. Names are as they were when the list
+   * was made or last regenerated.
+   *
+   * @generated from field: repeated shopping.v1.ItemRecipe recipes = 19;
+   */
+  recipes: ItemRecipe[];
 };
 
 /**
@@ -312,6 +322,34 @@ export type ShoppingItem = Message<"shopping.v1.ShoppingItem"> & {
  */
 export const ShoppingItemSchema: GenMessage<ShoppingItem> = /*@__PURE__*/
   messageDesc(file_shopping_v1_shopping, 2);
+
+/**
+ * A recipe an item is bought for.
+ *
+ * @generated from message shopping.v1.ItemRecipe
+ */
+export type ItemRecipe = Message<"shopping.v1.ItemRecipe"> & {
+  /**
+   * The ID of the recipe.
+   *
+   * @generated from field: string recipe_id = 1;
+   */
+  recipeId: string;
+
+  /**
+   * The name of the recipe.
+   *
+   * @generated from field: string recipe_name = 2;
+   */
+  recipeName: string;
+};
+
+/**
+ * Describes the message shopping.v1.ItemRecipe.
+ * Use `create(ItemRecipeSchema)` to create a new message.
+ */
+export const ItemRecipeSchema: GenMessage<ItemRecipe> = /*@__PURE__*/
+  messageDesc(file_shopping_v1_shopping, 3);
 
 /**
  * @generated from message shopping.v1.CreateStoreRequest
@@ -330,7 +368,7 @@ export type CreateStoreRequest = Message<"shopping.v1.CreateStoreRequest"> & {
  * Use `create(CreateStoreRequestSchema)` to create a new message.
  */
 export const CreateStoreRequestSchema: GenMessage<CreateStoreRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 3);
+  messageDesc(file_shopping_v1_shopping, 4);
 
 /**
  * @generated from message shopping.v1.CreateStoreResponse
@@ -349,7 +387,7 @@ export type CreateStoreResponse = Message<"shopping.v1.CreateStoreResponse"> & {
  * Use `create(CreateStoreResponseSchema)` to create a new message.
  */
 export const CreateStoreResponseSchema: GenMessage<CreateStoreResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 4);
+  messageDesc(file_shopping_v1_shopping, 5);
 
 /**
  * @generated from message shopping.v1.ListStoresRequest
@@ -362,7 +400,7 @@ export type ListStoresRequest = Message<"shopping.v1.ListStoresRequest"> & {
  * Use `create(ListStoresRequestSchema)` to create a new message.
  */
 export const ListStoresRequestSchema: GenMessage<ListStoresRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 5);
+  messageDesc(file_shopping_v1_shopping, 6);
 
 /**
  * @generated from message shopping.v1.ListStoresResponse
@@ -381,7 +419,7 @@ export type ListStoresResponse = Message<"shopping.v1.ListStoresResponse"> & {
  * Use `create(ListStoresResponseSchema)` to create a new message.
  */
 export const ListStoresResponseSchema: GenMessage<ListStoresResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 6);
+  messageDesc(file_shopping_v1_shopping, 7);
 
 /**
  * @generated from message shopping.v1.UpdateStoreRequest
@@ -409,7 +447,7 @@ export type UpdateStoreRequest = Message<"shopping.v1.UpdateStoreRequest"> & {
  * Use `create(UpdateStoreRequestSchema)` to create a new message.
  */
 export const UpdateStoreRequestSchema: GenMessage<UpdateStoreRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 7);
+  messageDesc(file_shopping_v1_shopping, 8);
 
 /**
  * @generated from message shopping.v1.UpdateStoreResponse
@@ -428,7 +466,7 @@ export type UpdateStoreResponse = Message<"shopping.v1.UpdateStoreResponse"> & {
  * Use `create(UpdateStoreResponseSchema)` to create a new message.
  */
 export const UpdateStoreResponseSchema: GenMessage<UpdateStoreResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 8);
+  messageDesc(file_shopping_v1_shopping, 9);
 
 /**
  * @generated from message shopping.v1.DeleteStoreRequest
@@ -447,7 +485,7 @@ export type DeleteStoreRequest = Message<"shopping.v1.DeleteStoreRequest"> & {
  * Use `create(DeleteStoreRequestSchema)` to create a new message.
  */
 export const DeleteStoreRequestSchema: GenMessage<DeleteStoreRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 9);
+  messageDesc(file_shopping_v1_shopping, 10);
 
 /**
  * @generated from message shopping.v1.DeleteStoreResponse
@@ -460,7 +498,7 @@ export type DeleteStoreResponse = Message<"shopping.v1.DeleteStoreResponse"> & {
  * Use `create(DeleteStoreResponseSchema)` to create a new message.
  */
 export const DeleteStoreResponseSchema: GenMessage<DeleteStoreResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 10);
+  messageDesc(file_shopping_v1_shopping, 11);
 
 /**
  * @generated from message shopping.v1.CreateShoppingListRequest
@@ -487,7 +525,7 @@ export type CreateShoppingListRequest = Message<"shopping.v1.CreateShoppingListR
  * Use `create(CreateShoppingListRequestSchema)` to create a new message.
  */
 export const CreateShoppingListRequestSchema: GenMessage<CreateShoppingListRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 11);
+  messageDesc(file_shopping_v1_shopping, 12);
 
 /**
  * @generated from message shopping.v1.CreateShoppingListResponse
@@ -506,7 +544,7 @@ export type CreateShoppingListResponse = Message<"shopping.v1.CreateShoppingList
  * Use `create(CreateShoppingListResponseSchema)` to create a new message.
  */
 export const CreateShoppingListResponseSchema: GenMessage<CreateShoppingListResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 12);
+  messageDesc(file_shopping_v1_shopping, 13);
 
 /**
  * @generated from message shopping.v1.GetShoppingListRequest
@@ -525,7 +563,7 @@ export type GetShoppingListRequest = Message<"shopping.v1.GetShoppingListRequest
  * Use `create(GetShoppingListRequestSchema)` to create a new message.
  */
 export const GetShoppingListRequestSchema: GenMessage<GetShoppingListRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 13);
+  messageDesc(file_shopping_v1_shopping, 14);
 
 /**
  * @generated from message shopping.v1.GetShoppingListResponse
@@ -544,7 +582,7 @@ export type GetShoppingListResponse = Message<"shopping.v1.GetShoppingListRespon
  * Use `create(GetShoppingListResponseSchema)` to create a new message.
  */
 export const GetShoppingListResponseSchema: GenMessage<GetShoppingListResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 14);
+  messageDesc(file_shopping_v1_shopping, 15);
 
 /**
  * @generated from message shopping.v1.ListShoppingListsRequest
@@ -571,7 +609,7 @@ export type ListShoppingListsRequest = Message<"shopping.v1.ListShoppingListsReq
  * Use `create(ListShoppingListsRequestSchema)` to create a new message.
  */
 export const ListShoppingListsRequestSchema: GenMessage<ListShoppingListsRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 15);
+  messageDesc(file_shopping_v1_shopping, 16);
 
 /**
  * @generated from message shopping.v1.ListShoppingListsResponse
@@ -597,7 +635,7 @@ export type ListShoppingListsResponse = Message<"shopping.v1.ListShoppingListsRe
  * Use `create(ListShoppingListsResponseSchema)` to create a new message.
  */
 export const ListShoppingListsResponseSchema: GenMessage<ListShoppingListsResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 16);
+  messageDesc(file_shopping_v1_shopping, 17);
 
 /**
  * @generated from message shopping.v1.RegenerateShoppingListRequest
@@ -616,7 +654,7 @@ export type RegenerateShoppingListRequest = Message<"shopping.v1.RegenerateShopp
  * Use `create(RegenerateShoppingListRequestSchema)` to create a new message.
  */
 export const RegenerateShoppingListRequestSchema: GenMessage<RegenerateShoppingListRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 17);
+  messageDesc(file_shopping_v1_shopping, 18);
 
 /**
  * @generated from message shopping.v1.RegenerateShoppingListResponse
@@ -635,7 +673,7 @@ export type RegenerateShoppingListResponse = Message<"shopping.v1.RegenerateShop
  * Use `create(RegenerateShoppingListResponseSchema)` to create a new message.
  */
 export const RegenerateShoppingListResponseSchema: GenMessage<RegenerateShoppingListResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 18);
+  messageDesc(file_shopping_v1_shopping, 19);
 
 /**
  * @generated from message shopping.v1.CheckItemRequest
@@ -654,7 +692,7 @@ export type CheckItemRequest = Message<"shopping.v1.CheckItemRequest"> & {
  * Use `create(CheckItemRequestSchema)` to create a new message.
  */
 export const CheckItemRequestSchema: GenMessage<CheckItemRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 19);
+  messageDesc(file_shopping_v1_shopping, 20);
 
 /**
  * @generated from message shopping.v1.CheckItemResponse
@@ -673,7 +711,7 @@ export type CheckItemResponse = Message<"shopping.v1.CheckItemResponse"> & {
  * Use `create(CheckItemResponseSchema)` to create a new message.
  */
 export const CheckItemResponseSchema: GenMessage<CheckItemResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 20);
+  messageDesc(file_shopping_v1_shopping, 21);
 
 /**
  * @generated from message shopping.v1.UncheckItemRequest
@@ -692,7 +730,7 @@ export type UncheckItemRequest = Message<"shopping.v1.UncheckItemRequest"> & {
  * Use `create(UncheckItemRequestSchema)` to create a new message.
  */
 export const UncheckItemRequestSchema: GenMessage<UncheckItemRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 21);
+  messageDesc(file_shopping_v1_shopping, 22);
 
 /**
  * @generated from message shopping.v1.UncheckItemResponse
@@ -711,7 +749,7 @@ export type UncheckItemResponse = Message<"shopping.v1.UncheckItemResponse"> & {
  * Use `create(UncheckItemResponseSchema)` to create a new message.
  */
 export const UncheckItemResponseSchema: GenMessage<UncheckItemResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 22);
+  messageDesc(file_shopping_v1_shopping, 23);
 
 /**
  * @generated from message shopping.v1.AddManualItemRequest
@@ -786,7 +824,7 @@ export type AddManualItemRequest = Message<"shopping.v1.AddManualItemRequest"> &
  * Use `create(AddManualItemRequestSchema)` to create a new message.
  */
 export const AddManualItemRequestSchema: GenMessage<AddManualItemRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 23);
+  messageDesc(file_shopping_v1_shopping, 24);
 
 /**
  * @generated from message shopping.v1.AddManualItemResponse
@@ -805,7 +843,7 @@ export type AddManualItemResponse = Message<"shopping.v1.AddManualItemResponse">
  * Use `create(AddManualItemResponseSchema)` to create a new message.
  */
 export const AddManualItemResponseSchema: GenMessage<AddManualItemResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 24);
+  messageDesc(file_shopping_v1_shopping, 25);
 
 /**
  * @generated from message shopping.v1.DeleteItemRequest
@@ -824,7 +862,7 @@ export type DeleteItemRequest = Message<"shopping.v1.DeleteItemRequest"> & {
  * Use `create(DeleteItemRequestSchema)` to create a new message.
  */
 export const DeleteItemRequestSchema: GenMessage<DeleteItemRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 25);
+  messageDesc(file_shopping_v1_shopping, 26);
 
 /**
  * @generated from message shopping.v1.DeleteItemResponse
@@ -837,7 +875,7 @@ export type DeleteItemResponse = Message<"shopping.v1.DeleteItemResponse"> & {
  * Use `create(DeleteItemResponseSchema)` to create a new message.
  */
 export const DeleteItemResponseSchema: GenMessage<DeleteItemResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 26);
+  messageDesc(file_shopping_v1_shopping, 27);
 
 /**
  * @generated from message shopping.v1.CompleteShoppingRequest
@@ -864,7 +902,7 @@ export type CompleteShoppingRequest = Message<"shopping.v1.CompleteShoppingReque
  * Use `create(CompleteShoppingRequestSchema)` to create a new message.
  */
 export const CompleteShoppingRequestSchema: GenMessage<CompleteShoppingRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 27);
+  messageDesc(file_shopping_v1_shopping, 28);
 
 /**
  * @generated from message shopping.v1.CompleteShoppingResponse
@@ -890,7 +928,7 @@ export type CompleteShoppingResponse = Message<"shopping.v1.CompleteShoppingResp
  * Use `create(CompleteShoppingResponseSchema)` to create a new message.
  */
 export const CompleteShoppingResponseSchema: GenMessage<CompleteShoppingResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 28);
+  messageDesc(file_shopping_v1_shopping, 29);
 
 /**
  * @generated from message shopping.v1.DeleteShoppingListRequest
@@ -909,7 +947,7 @@ export type DeleteShoppingListRequest = Message<"shopping.v1.DeleteShoppingListR
  * Use `create(DeleteShoppingListRequestSchema)` to create a new message.
  */
 export const DeleteShoppingListRequestSchema: GenMessage<DeleteShoppingListRequest> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 29);
+  messageDesc(file_shopping_v1_shopping, 30);
 
 /**
  * @generated from message shopping.v1.DeleteShoppingListResponse
@@ -922,7 +960,7 @@ export type DeleteShoppingListResponse = Message<"shopping.v1.DeleteShoppingList
  * Use `create(DeleteShoppingListResponseSchema)` to create a new message.
  */
 export const DeleteShoppingListResponseSchema: GenMessage<DeleteShoppingListResponse> = /*@__PURE__*/
-  messageDesc(file_shopping_v1_shopping, 30);
+  messageDesc(file_shopping_v1_shopping, 31);
 
 /**
  * ShoppingService makes the household's shopping lists from its meal plan

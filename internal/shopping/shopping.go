@@ -5,6 +5,7 @@ package shopping
 import (
 	"cmp"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -82,6 +83,12 @@ func (l *List) count() {
 }
 
 // Item is an item of a shopping list.
+// RecipeRef is a recipe an item is bought for.
+type RecipeRef struct {
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
+}
+
 type Item struct {
 	ID          pgtype.UUID
 	HouseholdID pgtype.UUID
@@ -110,6 +117,10 @@ type Item struct {
 	StoreSection foods.StoreSection
 	// NeededBy is the first date it's needed, zero for items added by hand.
 	NeededBy time.Time
+	// Recipes are the recipes it's bought for: those of the meals the
+	// pantry is short for, by date, without repeats. Empty for items added
+	// by hand and foods eaten without a recipe.
+	Recipes []RecipeRef
 	// TopUp is whether it won't keep from the shop until it's needed.
 	TopUp bool
 	// Warning is why it should be bought later, or what's missing to weigh
@@ -689,6 +700,7 @@ func itemFromDB(row *gen.ShoppingItem, checkedByName string) *Item {
 		CheckTime:     row.CheckTime.Time,
 		Note:          row.Note,
 		Manual:        row.Manual,
+		Recipes:       recipesFromDB(row.Recipes),
 		CreateTime:    row.CreateTime.Time,
 		UpdateTime:    row.UpdateTime.Time,
 	}
@@ -728,6 +740,29 @@ func itemsToDB(householdID, listID pgtype.UUID, items []*Item) *gen.CreateShoppi
 		p.CheckTimes = append(p.CheckTimes, checkTime)
 		p.Notes = append(p.Notes, it.Note)
 		p.Manual = append(p.Manual, it.Manual)
+		p.Recipes = append(p.Recipes, recipesToDB(it.Recipes))
 	}
 	return p
+}
+
+// recipesToDB encodes an item's recipes as JSON.
+func recipesToDB(refs []RecipeRef) string {
+	if refs == nil {
+		refs = []RecipeRef{}
+	}
+	b, err := json.Marshal(refs)
+	if err != nil {
+		// A list of IDs and names always encodes.
+		return "[]"
+	}
+	return string(b)
+}
+
+// recipesFromDB decodes an item's recipes, none if they can't be read.
+func recipesFromDB(raw json.RawMessage) []RecipeRef {
+	var refs []RecipeRef
+	if len(raw) > 0 {
+		_ = json.Unmarshal(raw, &refs)
+	}
+	return refs
 }
