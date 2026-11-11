@@ -189,6 +189,7 @@ func portionToProto(p *plans.Portion) *plansv1.Portion {
 		Date:         store.FormatDate(p.Date),
 		Notes:        p.Notes,
 		FromFreezer:  p.FromFreezer,
+		Eaten:        p.Eaten,
 		Name:         p.Name,
 		CreateTime:   timestamppb.New(p.CreateTime),
 		UpdateTime:   timestamppb.New(p.UpdateTime),

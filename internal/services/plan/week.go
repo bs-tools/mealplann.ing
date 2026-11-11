@@ -345,6 +345,7 @@ func (d *planData) plannedPortion(it *item, e *eaten) *plansv1.PlannedPortion {
 	if p := it.portion; p != nil {
 		b.PortionId = store.UUIDToString(p.ID)
 		b.Notes = p.Notes
+		b.Eaten = p.Eaten
 		if p.CookID.Valid {
 			b.CookId = store.UUIDToString(p.CookID)
 			b.RecipeId = store.UUIDToString(p.CookRecipeID)

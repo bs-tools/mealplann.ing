@@ -47,6 +47,11 @@ const (
 	PlanServiceUpdatePortionProcedure = "/plans.v1.PlanService/UpdatePortion"
 	// PlanServiceDeletePortionProcedure is the procedure name of the PlanService's DeletePortion RPC.
 	PlanServiceDeletePortionProcedure = "/plans.v1.PlanService/DeletePortion"
+	// PlanServiceSetPortionEatenProcedure is the procedure name of the PlanService's SetPortionEaten
+	// RPC.
+	PlanServiceSetPortionEatenProcedure = "/plans.v1.PlanService/SetPortionEaten"
+	// PlanServiceMoveCookProcedure is the procedure name of the PlanService's MoveCook RPC.
+	PlanServiceMoveCookProcedure = "/plans.v1.PlanService/MoveCook"
 	// PlanServiceCreateStapleProcedure is the procedure name of the PlanService's CreateStaple RPC.
 	PlanServiceCreateStapleProcedure = "/plans.v1.PlanService/CreateStaple"
 	// PlanServiceListStaplesProcedure is the procedure name of the PlanService's ListStaples RPC.
@@ -147,6 +152,20 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("DeletePortion"),
 			Procedure:  PlanServiceDeletePortionProcedure,
+		}
+	})
+	planServiceSetPortionEatenSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("SetPortionEaten"),
+			Procedure:  PlanServiceSetPortionEatenProcedure,
+		}
+	})
+	planServiceMoveCookSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_plans_v1_plans_proto.Services().ByName("PlanService").Methods().ByName("MoveCook"),
+			Procedure:  PlanServiceMoveCookProcedure,
 		}
 	})
 	planServiceCreateStapleSpec = sync.OnceValue(func() connect.Spec {
@@ -309,6 +328,23 @@ type PlanServiceClient interface {
 	UpdatePortion(context.Context, *v1.UpdatePortionRequest) (*v1.UpdatePortionResponse, error)
 	// Delete a portion.
 	DeletePortion(context.Context, *v1.DeletePortionRequest) (*v1.DeletePortionResponse, error)
+	// Mark a portion eaten, or not, as the day goes, so the day shows
+	// what's eaten and what's left. A portion of a food is taken out of the
+	// pantry, from the lots that expire first, as far as it's in stock, and
+	// un-marking it puts back what it took; shopping lists don't buy it. A
+	// share of a cook is only marked: the cook took its ingredients when it
+	// was marked done (see UpdateCook). Marking a portion already marked
+	// does nothing.
+	SetPortionEaten(context.Context, *v1.SetPortionEatenRequest) (*v1.SetPortionEatenResponse, error)
+	// Move a cook to another date and shared meal, like tonight's dinner to
+	// tomorrow's when plans change. Its portions at its own date and meal
+	// move with it, to each person's eating time of the new meal, or are
+	// removed for people without one. Its other portions eaten before it's
+	// now cooked, on an earlier date or earlier on the same date, are
+	// removed, as they can't come from it any more. With preview, nothing
+	// changes, and the response says what would. Fails with
+	// FAILED_PRECONDITION if the cook is done: un-mark it first.
+	MoveCook(context.Context, *v1.MoveCookRequest) (*v1.MoveCookResponse, error)
 	// Create a staple: a portion a person eats regularly at one of their
 	// eating times, on chosen weekdays.
 	CreateStaple(context.Context, *v1.CreateStapleRequest) (*v1.CreateStapleResponse, error)
@@ -460,6 +496,23 @@ type PlanServiceHandler interface {
 	UpdatePortion(context.Context, *v1.UpdatePortionRequest) (*v1.UpdatePortionResponse, error)
 	// Delete a portion.
 	DeletePortion(context.Context, *v1.DeletePortionRequest) (*v1.DeletePortionResponse, error)
+	// Mark a portion eaten, or not, as the day goes, so the day shows
+	// what's eaten and what's left. A portion of a food is taken out of the
+	// pantry, from the lots that expire first, as far as it's in stock, and
+	// un-marking it puts back what it took; shopping lists don't buy it. A
+	// share of a cook is only marked: the cook took its ingredients when it
+	// was marked done (see UpdateCook). Marking a portion already marked
+	// does nothing.
+	SetPortionEaten(context.Context, *v1.SetPortionEatenRequest) (*v1.SetPortionEatenResponse, error)
+	// Move a cook to another date and shared meal, like tonight's dinner to
+	// tomorrow's when plans change. Its portions at its own date and meal
+	// move with it, to each person's eating time of the new meal, or are
+	// removed for people without one. Its other portions eaten before it's
+	// now cooked, on an earlier date or earlier on the same date, are
+	// removed, as they can't come from it any more. With preview, nothing
+	// changes, and the response says what would. Fails with
+	// FAILED_PRECONDITION if the cook is done: un-mark it first.
+	MoveCook(context.Context, *v1.MoveCookRequest) (*v1.MoveCookResponse, error)
 	// Create a staple: a portion a person eats regularly at one of their
 	// eating times, on chosen weekdays.
 	CreateStaple(context.Context, *v1.CreateStapleRequest) (*v1.CreateStapleResponse, error)
@@ -532,6 +585,8 @@ func RegisterPlanServiceHandler(server *connect.Server, svc PlanServiceHandler) 
 		connect.Method{Spec: planServiceCreatePortionSpec(), Handler: adapter.createPortion},
 		connect.Method{Spec: planServiceUpdatePortionSpec(), Handler: adapter.updatePortion},
 		connect.Method{Spec: planServiceDeletePortionSpec(), Handler: adapter.deletePortion},
+		connect.Method{Spec: planServiceSetPortionEatenSpec(), Handler: adapter.setPortionEaten},
+		connect.Method{Spec: planServiceMoveCookSpec(), Handler: adapter.moveCook},
 		connect.Method{Spec: planServiceCreateStapleSpec(), Handler: adapter.createStaple},
 		connect.Method{Spec: planServiceListStaplesSpec(), Handler: adapter.listStaples},
 		connect.Method{Spec: planServiceUpdateStapleSpec(), Handler: adapter.updateStaple},
@@ -590,6 +645,14 @@ func (UnimplementedPlanServiceHandler) UpdatePortion(context.Context, *v1.Update
 
 func (UnimplementedPlanServiceHandler) DeletePortion(context.Context, *v1.DeletePortionRequest) (*v1.DeletePortionResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.DeletePortion is not implemented")
+}
+
+func (UnimplementedPlanServiceHandler) SetPortionEaten(context.Context, *v1.SetPortionEatenRequest) (*v1.SetPortionEatenResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.SetPortionEaten is not implemented")
+}
+
+func (UnimplementedPlanServiceHandler) MoveCook(context.Context, *v1.MoveCookRequest) (*v1.MoveCookResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "plans.v1.PlanService.MoveCook is not implemented")
 }
 
 func (UnimplementedPlanServiceHandler) CreateStaple(context.Context, *v1.CreateStapleRequest) (*v1.CreateStapleResponse, error) {
@@ -719,6 +782,22 @@ func (c *planServiceClient) UpdatePortion(ctx context.Context, req *v1.UpdatePor
 func (c *planServiceClient) DeletePortion(ctx context.Context, req *v1.DeletePortionRequest) (*v1.DeletePortionResponse, error) {
 	var res v1.DeletePortionResponse
 	if err := c.client.CallUnary(ctx, planServiceDeletePortionSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) SetPortionEaten(ctx context.Context, req *v1.SetPortionEatenRequest) (*v1.SetPortionEatenResponse, error) {
+	var res v1.SetPortionEatenResponse
+	if err := c.client.CallUnary(ctx, planServiceSetPortionEatenSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *planServiceClient) MoveCook(ctx context.Context, req *v1.MoveCookRequest) (*v1.MoveCookResponse, error) {
+	var res v1.MoveCookResponse
+	if err := c.client.CallUnary(ctx, planServiceMoveCookSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -932,6 +1011,30 @@ func (h planServiceHandler) deletePortion(ctx context.Context, _ connect.Spec, s
 		return err
 	}
 	res, err := h.svc.DeletePortion(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) setPortionEaten(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SetPortionEatenRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SetPortionEaten(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h planServiceHandler) moveCook(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.MoveCookRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.MoveCook(ctx, &req)
 	if err != nil {
 		return err
 	}

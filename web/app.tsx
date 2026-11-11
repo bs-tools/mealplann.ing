@@ -29,6 +29,7 @@ import RecipesPage from "pages/recipes";
 import SettingsPage from "pages/settings";
 import ShoppingPage from "pages/shopping";
 import SignInPage from "pages/sign-in";
+import TodayChangePage from "pages/today-change";
 import React from "react";
 import { Link, Outlet, Route, Routes } from "react-router";
 
@@ -123,6 +124,7 @@ const App: React.FC = () => {
         {user !== null && (
           <>
             <Route path="/" element={<HomePage user={user} />} />
+            <Route path="/today/change" element={<TodayChangePage />} />
             <Route path="/plan" element={<PlanPage />} />
             <Route path="/plan/auto" element={<AutoPlanPage />} />
             <Route path="/plan/templates" element={<PlanTemplatesPage />} />

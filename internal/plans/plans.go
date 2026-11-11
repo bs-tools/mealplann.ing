@@ -131,6 +131,9 @@ type Portion struct {
 	// servings, whatever its date. Portions after the recipe's fridge
 	// days are too, without it.
 	FromFreezer bool
+	// Eaten is whether it was marked eaten, which only SetPortionEaten
+	// changes: writing a portion leaves it as it is.
+	Eaten bool
 	// Name, the name of the recipe or food, and CookDate, CookRecipeID and
 	// CookFrozenServings, of a share of a cook, are read, and ignored when
 	// writing.
@@ -780,6 +783,86 @@ func (r *Repository) UpdatePortion(ctx context.Context, p *Portion) (*Portion, e
 	return portionFromDB(rows[0]), nil
 }
 
+// ListCookPortions returns a household's portions of a cook, by date.
+func (r *Repository) ListCookPortions(ctx context.Context, householdID, cookID pgtype.UUID) ([]*Portion, error) {
+	ids, err := gen.New(r.db).ListCookPortionIDs(ctx, &gen.ListCookPortionIDsParams{HouseholdID: householdID, CookID: cookID})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list a cook's portions: %w", err)
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	rows, err := gen.New(r.db).ListPortions(ctx, &gen.ListPortionsParams{HouseholdID: householdID, Ids: ids})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list a cook's portions: %w", err)
+	}
+	portions := make([]*Portion, 0, len(rows))
+	for _, row := range rows {
+		portions = append(portions, portionFromDB(row))
+	}
+	return portions, nil
+}
+
+// PortionMove is where a portion moves to: a date and an eating time of
+// its person.
+type PortionMove struct {
+	ID           pgtype.UUID
+	EatingTimeID pgtype.UUID
+	Date         time.Time
+}
+
+// MoveCook updates a cook, moving and deleting some of its portions with
+// it, at once. It returns store.ErrNotFound if the household has no such
+// cook.
+func (r *Repository) MoveCook(ctx context.Context, c *Cook, moves []PortionMove, deletes []pgtype.UUID) (*Cook, error) {
+	var updated int64
+	var rows []*gen.ListCooksRow
+	err := r.db.Transact(ctx, func(b *store.Batch) error {
+		q := gen.New(b)
+		for _, m := range moves {
+			_ = q.MovePortion(ctx, &gen.MovePortionParams{ID: m.ID, HouseholdID: c.HouseholdID, Date: store.DateToPG(m.Date), EatingTimeID: m.EatingTimeID})
+		}
+		for _, id := range deletes {
+			_, _ = q.DeletePortion(ctx, &gen.DeletePortionParams{ID: id, HouseholdID: c.HouseholdID})
+		}
+		b.Read(func(db store.Querier) error {
+			var err error
+			updated, err = gen.New(db).UpdateCook(ctx, &gen.UpdateCookParams{
+				ID: c.ID, HouseholdID: c.HouseholdID, RecipeID: c.RecipeID, Date: store.DateToPG(c.Date),
+				Servings: c.Servings, Meal: mealToDB(c.Meal), Notes: c.Notes, Done: c.Done,
+				FrozenServings: c.FrozenServings, OffPlanServings: c.OffPlanServings,
+			})
+			return err
+		})
+		b.Read(func(db store.Querier) error {
+			var err error
+			rows, err = gen.New(db).ListCooks(ctx, &gen.ListCooksParams{HouseholdID: c.HouseholdID, Ids: []pgtype.UUID{c.ID}})
+			return err
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, writeError("move cook", err)
+	}
+	if updated == 0 || len(rows) == 0 {
+		return nil, store.ErrNotFound
+	}
+	return cookFromDB(rows[0]), nil
+}
+
+// SetPortionEaten marks a household's portion eaten, or not. It returns
+// store.ErrNotFound if the household has no such portion.
+func (r *Repository) SetPortionEaten(ctx context.Context, householdID, id pgtype.UUID, eaten bool) error {
+	n, err := gen.New(r.db).SetPortionEaten(ctx, &gen.SetPortionEatenParams{ID: id, HouseholdID: householdID, Eaten: eaten})
+	if err != nil {
+		return fmt.Errorf("failed to mark portion eaten: %w", err)
+	}
+	if n == 0 {
+		return store.ErrNotFound
+	}
+	return nil
+}
+
 // DeletePortion deletes a household's portion. It returns
 // store.ErrNotFound if the household has no such portion.
 func (r *Repository) DeletePortion(ctx context.Context, householdID, id pgtype.UUID) error {
@@ -1000,6 +1083,7 @@ func portionFromDB(row *gen.ListPortionsRow) *Portion {
 		Unit:               unitFromDB(p.Unit),
 		Notes:              p.Notes,
 		FromFreezer:        p.FromFreezer,
+		Eaten:              p.Eaten,
 		Name:               row.Name,
 		CookDate:           store.DateFromPG(row.CookDate),
 		CookRecipeID:       row.CookRecipeID,

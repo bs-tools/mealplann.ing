@@ -109,8 +109,8 @@ export const suggestPlan = SuggestionService.method.suggestPlan;
  * left first, with the warnings they fix and leave. Apply one with
  * PlanService: UpdatePortion for each resize, or DeletePortion. Shares
  * of shared cooks that are resized or removed leave servings over, to
- * plan elsewhere or take off the cook. Staples aren't changed: skip them
- * with SkipStaple. Nothing is changed. Returns no fixes if no resize
+ * plan elsewhere or take off the cook. Staples, and portions marked
+ * eaten, aren't changed: skip staples with SkipStaple. Nothing is changed. Returns no fixes if no resize
  * helps.
  *
  * @generated from rpc suggestions.v1.SuggestionService.SuggestFixes

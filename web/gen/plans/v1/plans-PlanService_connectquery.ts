@@ -146,6 +146,33 @@ export const updatePortion = PlanService.method.updatePortion;
 export const deletePortion = PlanService.method.deletePortion;
 
 /**
+ * Mark a portion eaten, or not, as the day goes, so the day shows
+ * what's eaten and what's left. A portion of a food is taken out of the
+ * pantry, from the lots that expire first, as far as it's in stock, and
+ * un-marking it puts back what it took; shopping lists don't buy it. A
+ * share of a cook is only marked: the cook took its ingredients when it
+ * was marked done (see UpdateCook). Marking a portion already marked
+ * does nothing.
+ *
+ * @generated from rpc plans.v1.PlanService.SetPortionEaten
+ */
+export const setPortionEaten = PlanService.method.setPortionEaten;
+
+/**
+ * Move a cook to another date and shared meal, like tonight's dinner to
+ * tomorrow's when plans change. Its portions at its own date and meal
+ * move with it, to each person's eating time of the new meal, or are
+ * removed for people without one. Its other portions eaten before it's
+ * now cooked, on an earlier date or earlier on the same date, are
+ * removed, as they can't come from it any more. With preview, nothing
+ * changes, and the response says what would. Fails with
+ * FAILED_PRECONDITION if the cook is done: un-mark it first.
+ *
+ * @generated from rpc plans.v1.PlanService.MoveCook
+ */
+export const moveCook = PlanService.method.moveCook;
+
+/**
  * Create a staple: a portion a person eats regularly at one of their
  * eating times, on chosen weekdays.
  *

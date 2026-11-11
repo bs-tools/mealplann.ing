@@ -396,6 +396,38 @@ func (q *Queries) GrowCook(ctx context.Context, arg *GrowCookParams) (int64, err
 	return result.RowsAffected(), nil
 }
 
+const listCookPortionIDs = `-- name: ListCookPortionIDs :many
+select id from portions
+where household_id = $1 and cook_id = $2
+order by date, create_time, id
+`
+
+type ListCookPortionIDsParams struct {
+	HouseholdID pgtype.UUID
+	CookID      pgtype.UUID
+}
+
+// The IDs of a cook's portions.
+func (q *Queries) ListCookPortionIDs(ctx context.Context, arg *ListCookPortionIDsParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listCookPortionIDs, arg.HouseholdID, arg.CookID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var id pgtype.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCookSupplies = `-- name: ListCookSupplies :many
 select
   s.consumer_cook_id,
@@ -786,7 +818,7 @@ func (q *Queries) ListLeftoverCooks(ctx context.Context, arg *ListLeftoverCooksP
 
 const listPortions = `-- name: ListPortions :many
 select
-  portions.id, portions.household_id, portions.person_id, portions.eating_time_id, portions.date, portions.cook_id, portions.servings, portions.food_id, portions.amount, portions.unit, portions.notes, portions.create_time, portions.update_time, portions.from_freezer,
+  portions.id, portions.household_id, portions.person_id, portions.eating_time_id, portions.date, portions.cook_id, portions.servings, portions.food_id, portions.amount, portions.unit, portions.notes, portions.create_time, portions.update_time, portions.from_freezer, portions.eaten,
   coalesce(r.name, f.name, '')::text as name,
   c.date as cook_date,
   c.recipe_id as cook_recipe_id,
@@ -849,6 +881,7 @@ func (q *Queries) ListPortions(ctx context.Context, arg *ListPortionsParams) ([]
 			&i.Portion.CreateTime,
 			&i.Portion.UpdateTime,
 			&i.Portion.FromFreezer,
+			&i.Portion.Eaten,
 			&i.Name,
 			&i.CookDate,
 			&i.CookRecipeID,
@@ -1032,6 +1065,29 @@ func (q *Queries) ListStaples(ctx context.Context, arg *ListStaplesParams) ([]*L
 	return items, nil
 }
 
+const movePortion = `-- name: MovePortion :exec
+update portions set date = $1, eating_time_id = $2, update_time = now()
+where id = $3 and household_id = $4
+`
+
+type MovePortionParams struct {
+	Date         pgtype.Date
+	EatingTimeID pgtype.UUID
+	ID           pgtype.UUID
+	HouseholdID  pgtype.UUID
+}
+
+// Moves a portion to another date and eating time of its person.
+func (q *Queries) MovePortion(ctx context.Context, arg *MovePortionParams) error {
+	_, err := q.db.Exec(ctx, movePortion,
+		arg.Date,
+		arg.EatingTimeID,
+		arg.ID,
+		arg.HouseholdID,
+	)
+	return err
+}
+
 const setCookSupply = `-- name: SetCookSupply :execrows
 insert into cook_supplies (household_id, consumer_cook_id, component_recipe_id, supplier_cook_id, from_freezer)
 values ($1, $2, $3, $4, $5)
@@ -1086,6 +1142,26 @@ func (q *Queries) SetEatingOut(ctx context.Context, arg *SetEatingOutParams) err
 		arg.Notes,
 	)
 	return err
+}
+
+const setPortionEaten = `-- name: SetPortionEaten :execrows
+update portions set eaten = $1, update_time = now()
+where id = $2 and household_id = $3
+`
+
+type SetPortionEatenParams struct {
+	Eaten       bool
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+}
+
+// Marks a portion eaten, or not.
+func (q *Queries) SetPortionEaten(ctx context.Context, arg *SetPortionEatenParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setPortionEaten, arg.Eaten, arg.ID, arg.HouseholdID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const skipStaple = `-- name: SkipStaple :exec
