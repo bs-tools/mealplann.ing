@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file suggestions/v1/suggestions.proto.
  */
 export const file_suggestions_v1_suggestions: GenFile = /*@__PURE__*/
-  fileDesc("CiBzdWdnZXN0aW9ucy92MS9zdWdnZXN0aW9ucy5wcm90bxIOc3VnZ2VzdGlvbnMudjEiOwoORWF0aW5nVGltZVNsb3QSEQoJcGVyc29uX2lkGAEgASgJEhYKDmVhdGluZ190aW1lX2lkGAIgASgJIrsBChVTdWdnZXN0UmVjaXBlc1JlcXVlc3QSDAoEZGF0ZRgBIAEoCRIoCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWxIABI1CgtlYXRpbmdfdGltZRgDIAEoCzIeLnN1Z2dlc3Rpb25zLnYxLkVhdGluZ1RpbWVTbG90SAASEgoKcGVyc29uX2lkcxgEIAMoCRIXCg9tYXhfc3VnZ2VzdGlvbnMYBSABKAVCBgoEc2xvdCJyChZTdWdnZXN0UmVjaXBlc1Jlc3BvbnNlEi8KC3N1Z2dlc3Rpb25zGAEgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIRCglzaG9wX2RhdGUYAiABKAkSFAoMcmVjaXBlX2NvdW50GAMgASgFIlkKDlNjb3JlQ29tcG9uZW50EicKBGtpbmQYASABKA4yGS5zdWdnZXN0aW9ucy52MS5TY29yZUtpbmQSDgoGcG9pbnRzGAIgASgBEg4KBnJlYXNvbhgDIAEoCSKbAQoQU3VnZ2VzdGVkUG9ydGlvbhIRCglwZXJzb25faWQYASABKAkSEwoLcGVyc29uX25hbWUYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSGAoQZWF0aW5nX3RpbWVfbmFtZRgEIAEoCRIMCgRkYXRlGAUgASgJEhAKCHNlcnZpbmdzGAYgASgBEg0KBWdyYW1zGAcgASgBIlwKCUl0ZW1Ub0J1eRIPCgdmb29kX2lkGAEgASgJEhEKCWZvb2RfbmFtZRgCIAEoCRITCgthbW91bnRfdGV4dBgDIAEoCRIWCg5hbHJlYWR5X2xpc3RlZBgEIAEoCCKCAwoKU3VnZ2VzdGlvbhIRCglyZWNpcGVfaWQYASABKAkSEwoLcmVjaXBlX25hbWUYAiABKAkSDQoFc2NvcmUYAyABKAESMgoKY29tcG9uZW50cxgEIAMoCzIeLnN1Z2dlc3Rpb25zLnYxLlNjb3JlQ29tcG9uZW50EhIKCmZpdHNfcnVsZXMYBSABKAgSIwoId2FybmluZ3MYBiADKAsyES5wbGFucy52MS5XYXJuaW5nEjIKCHBvcnRpb25zGAcgAygLMiAuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGVkUG9ydGlvbhIVCg1jb29rX3NlcnZpbmdzGAggASgBEhYKDm5ld19pdGVtX2NvdW50GAkgASgFEi8KDGl0ZW1zX3RvX2J1eRgKIAMoCzIZLnN1Z2dlc3Rpb25zLnYxLkl0ZW1Ub0J1eRIpCgtsZWZ0b3Zlcl9vZhgLIAEoCzIULnBsYW5zLnYxLkxlZnRvdmVyT2YSEQoJY29va19kYXRlGAwgASgJItACCgxQbGFuQ3JpdGVyaWESKQoHdmFyaWV0eRgBIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEisKCWZhdm9yaXRlcxgCIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEigKBnBhbnRyeRgDIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEioKCHNob3BwaW5nGAQgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSKwoJbnV0cml0aW9uGAUgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSGQoRbWF4X3RvdGFsX3NlY29uZHMYBiABKAUSFAoMZXhjbHVkZV90YWdzGAcgAygJEhoKEmV4Y2x1ZGVfcmVjaXBlX2lkcxgIIAMoCRIYChBjb29raW5nX3dlZWtkYXlzGAkgAygFIqsBCgpQbGFuQ2hvaWNlEgwKBGRhdGUYASABKAkSJgoEbWVhbBgCIAEoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsEhEKCXJlY2lwZV9pZBgDIAEoCRIRCglwZXJzb25faWQYBCABKAkSFgoOZWF0aW5nX3RpbWVfaWQYBSABKAkSKQoLbGVmdG92ZXJfb2YYBiABKAsyFC5wbGFucy52MS5MZWZ0b3Zlck9mIu4BChJTdWdnZXN0UGxhblJlcXVlc3QSEgoKc3RhcnRfZGF0ZRgBIAEoCRIMCgRkYXlzGAIgASgFEicKBW1lYWxzGAMgAygOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSLgoIY3JpdGVyaWEYBCABKAsyHC5zdWdnZXN0aW9ucy52MS5QbGFuQ3JpdGVyaWESKwoHY2hvaWNlcxgFIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlBsYW5DaG9pY2USDAoEc2VlZBgGIAEoBBIiChpza2lwX3BlcnNvbmFsX2VhdGluZ190aW1lcxgHIAEoCCL/AgoIUGxhblNsb3QSDAoEZGF0ZRgBIAEoCRImCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSLAoFc3RhdGUYAyABKA4yHS5zdWdnZXN0aW9ucy52MS5QbGFuU2xvdFN0YXRlEi4KCnN1Z2dlc3Rpb24YBCABKAsyGi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0aW9uEjAKDGFsdGVybmF0aXZlcxgFIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3Rpb24SHAoUcGxhbm5lZF9yZWNpcGVfbmFtZXMYBiADKAkSHAoUZml0dGluZ19yZWNpcGVfY291bnQYByABKAUSEQoJcGVyc29uX2lkGAggASgJEhMKC3BlcnNvbl9uYW1lGAkgASgJEhYKDmVhdGluZ190aW1lX2lkGAogASgJEhgKEGVhdGluZ190aW1lX25hbWUYCyABKAkSFwoPdW5maWxsZWRfcmVhc29uGAwgASgJIoYBChNTdWdnZXN0UGxhblJlc3BvbnNlEicKBXNsb3RzGAEgAygLMhguc3VnZ2VzdGlvbnMudjEuUGxhblNsb3QSDQoFc2NvcmUYAiABKAESEwoLcGxhbnNfdHJpZWQYAyABKAUSDAoEc2VlZBgEIAEoBBIUCgxyZWNpcGVfY291bnQYBSABKAUiTgoTU3VnZ2VzdEZpeGVzUmVxdWVzdBIRCglwZXJzb25faWQYASABKAkSDAoEZGF0ZRgCIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgDIAEoCSJjChRTdWdnZXN0Rml4ZXNSZXNwb25zZRImCgVmaXhlcxgBIAMoCzIXLnN1Z2dlc3Rpb25zLnYxLlBsYW5GaXgSIwoId2FybmluZ3MYAiADKAsyES5wbGFucy52MS5XYXJuaW5nImkKDVBvcnRpb25SZXNpemUSEgoKcG9ydGlvbl9pZBgBIAEoCRIQCghzZXJ2aW5ncxgCIAEoARIOCgZhbW91bnQYAyABKAESIgoEdW5pdBgEIAEoDjIULmZvb2RzLnYxLkFtb3VudFVuaXQi9gIKB1BsYW5GaXgSKQoEa2luZBgBIAEoDjIbLnN1Z2dlc3Rpb25zLnYxLlBsYW5GaXhLaW5kEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhIKCnBvcnRpb25faWQYAyABKAkSFgoOZWF0aW5nX3RpbWVfaWQYBCABKAkSLgoHcmVzaXplcxgPIAMoCzIdLnN1Z2dlc3Rpb25zLnYxLlBvcnRpb25SZXNpemUSFgoOZml4ZWRfd2FybmluZ3MYCiADKAkSIwoId2FybmluZ3MYCyADKAsyES5wbGFucy52MS5XYXJuaW5nEhMKC2VuZXJneV9rY2FsGAwgASgBEhsKE3BsYW5uZWRfZW5lcmd5X2tjYWwYDSABKAESFgoOZGVsZXRlX2Nvb2tfaWQYDiABKAlKBAgFEAZKBAgGEAdKBAgHEAhKBAgIEAlKBAgJEApSCXJlY2lwZV9pZFIHZm9vZF9pZFIIc2VydmluZ3NSBmFtb3VudFIEdW5pdCIoChhTdWdnZXN0RnJvbVBhbnRyeVJlcXVlc3QSDAoEZGF0ZRgBIAEoCSJKChlTdWdnZXN0RnJvbVBhbnRyeVJlc3BvbnNlEi0KB3JlY2lwZXMYASADKAsyHC5zdWdnZXN0aW9ucy52MS5QYW50cnlSZWNpcGUifAoMUGFudHJ5UmVjaXBlEhEKCXJlY2lwZV9pZBgBIAEoCRITCgtyZWNpcGVfbmFtZRgCIAEoCRIQCghzZXJ2aW5ncxgDIAEoBRIVCg10b3RhbF9zZWNvbmRzGAQgASgFEhsKE3VzZV9zb29uX2Zvb2RfbmFtZXMYBSADKAkq8gIKCVNjb3JlS2luZBIaChZTQ09SRV9LSU5EX1VOU1BFQ0lGSUVEEAASIQodU0NPUkVfS0lORF9TSEFSRURfSU5HUkVESUVOVFMQARIdChlTQ09SRV9LSU5EX1BBQ0tfTEVGVE9WRVJTEAISFQoRU0NPUkVfS0lORF9QQU5UUlkQAxIYChRTQ09SRV9LSU5EX05VVFJJVElPThAEEhQKEFNDT1JFX0tJTkRfUlVMRVMQBRIWChJTQ09SRV9LSU5EX0tFRVBJTkcQBhIWChJTQ09SRV9LSU5EX1ZBUklFVFkQCBIXChNTQ09SRV9LSU5EX01FQUxfVEFHEAkSFwoTU0NPUkVfS0lORF9GQVZPUklURRAKEhcKE1NDT1JFX0tJTkRfTEVGVE9WRVIQCxIVChFTQ09SRV9LSU5EX0NPT0tFRBAMEhUKEVNDT1JFX0tJTkRfVEFTVEVTEA0iBAgHEAcqEVNDT1JFX0tJTkRfRkxBVk9SKnAKCEVtcGhhc2lzEhgKFEVNUEhBU0lTX1VOU1BFQ0lGSUVEEAASEAoMRU1QSEFTSVNfT0ZGEAESEAoMRU1QSEFTSVNfTE9XEAISEwoPRU1QSEFTSVNfTk9STUFMEAMSEQoNRU1QSEFTSVNfSElHSBAEKoUCCg1QbGFuU2xvdFN0YXRlEh8KG1BMQU5fU0xPVF9TVEFURV9VTlNQRUNJRklFRBAAEh0KGVBMQU5fU0xPVF9TVEFURV9TVUdHRVNURUQQARIYChRQTEFOX1NMT1RfU1RBVEVfS0VQVBACEhsKF1BMQU5fU0xPVF9TVEFURV9TS0lQUEVEEAMSGwoXUExBTl9TTE9UX1NUQVRFX1BMQU5ORUQQBBIcChhQTEFOX1NMT1RfU1RBVEVfVU5GSUxMRUQQBRIiCh5QTEFOX1NMT1RfU1RBVEVfRklMTEVEX0JZX01FQUwQBhIeChpQTEFOX1NMT1RfU1RBVEVfRUFUSU5HX09VVBAHKpYBCgtQbGFuRml4S2luZBIdChlQTEFOX0ZJWF9LSU5EX1VOU1BFQ0lGSUVEEAASGAoUUExBTl9GSVhfS0lORF9SRU1PVkUQARIYChRQTEFOX0ZJWF9LSU5EX1JFU0laRRACIgQIAxADIgQIBBAEKhVQTEFOX0ZJWF9LSU5EX1JFUExBQ0UqEVBMQU5fRklYX0tJTkRfQUREMpEDChFTdWdnZXN0aW9uU2VydmljZRJfCg5TdWdnZXN0UmVjaXBlcxIlLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RSZWNpcGVzUmVxdWVzdBomLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RSZWNpcGVzUmVzcG9uc2USVgoLU3VnZ2VzdFBsYW4SIi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UGxhblJlcXVlc3QaIy5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UGxhblJlc3BvbnNlElkKDFN1Z2dlc3RGaXhlcxIjLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RGaXhlc1JlcXVlc3QaJC5zdWdnZXN0aW9ucy52MS5TdWdnZXN0Rml4ZXNSZXNwb25zZRJoChFTdWdnZXN0RnJvbVBhbnRyeRIoLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RGcm9tUGFudHJ5UmVxdWVzdBopLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RGcm9tUGFudHJ5UmVzcG9uc2VCzAEKEmNvbS5zdWdnZXN0aW9ucy52MUIQU3VnZ2VzdGlvbnNQcm90b1ABWktnaXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3N1Z2dlc3Rpb25zL3YxO3N1Z2dlc3Rpb25zdjGiAgNTWFiqAg5TdWdnZXN0aW9ucy5WMcoCDlN1Z2dlc3Rpb25zXFYx4gIaU3VnZ2VzdGlvbnNcVjFcR1BCTWV0YWRhdGHqAg9TdWdnZXN0aW9uczo6VjFiBnByb3RvMw", [file_foods_v1_foods, file_people_v1_people, file_plans_v1_plans]);
+  fileDesc("CiBzdWdnZXN0aW9ucy92MS9zdWdnZXN0aW9ucy5wcm90bxIOc3VnZ2VzdGlvbnMudjEiOwoORWF0aW5nVGltZVNsb3QSEQoJcGVyc29uX2lkGAEgASgJEhYKDmVhdGluZ190aW1lX2lkGAIgASgJIrsBChVTdWdnZXN0UmVjaXBlc1JlcXVlc3QSDAoEZGF0ZRgBIAEoCRIoCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWxIABI1CgtlYXRpbmdfdGltZRgDIAEoCzIeLnN1Z2dlc3Rpb25zLnYxLkVhdGluZ1RpbWVTbG90SAASEgoKcGVyc29uX2lkcxgEIAMoCRIXCg9tYXhfc3VnZ2VzdGlvbnMYBSABKAVCBgoEc2xvdCJyChZTdWdnZXN0UmVjaXBlc1Jlc3BvbnNlEi8KC3N1Z2dlc3Rpb25zGAEgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIRCglzaG9wX2RhdGUYAiABKAkSFAoMcmVjaXBlX2NvdW50GAMgASgFIlkKDlNjb3JlQ29tcG9uZW50EicKBGtpbmQYASABKA4yGS5zdWdnZXN0aW9ucy52MS5TY29yZUtpbmQSDgoGcG9pbnRzGAIgASgBEg4KBnJlYXNvbhgDIAEoCSKbAQoQU3VnZ2VzdGVkUG9ydGlvbhIRCglwZXJzb25faWQYASABKAkSEwoLcGVyc29uX25hbWUYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSGAoQZWF0aW5nX3RpbWVfbmFtZRgEIAEoCRIMCgRkYXRlGAUgASgJEhAKCHNlcnZpbmdzGAYgASgBEg0KBWdyYW1zGAcgASgBIlwKCUl0ZW1Ub0J1eRIPCgdmb29kX2lkGAEgASgJEhEKCWZvb2RfbmFtZRgCIAEoCRITCgthbW91bnRfdGV4dBgDIAEoCRIWCg5hbHJlYWR5X2xpc3RlZBgEIAEoCCKCAwoKU3VnZ2VzdGlvbhIRCglyZWNpcGVfaWQYASABKAkSEwoLcmVjaXBlX25hbWUYAiABKAkSDQoFc2NvcmUYAyABKAESMgoKY29tcG9uZW50cxgEIAMoCzIeLnN1Z2dlc3Rpb25zLnYxLlNjb3JlQ29tcG9uZW50EhIKCmZpdHNfcnVsZXMYBSABKAgSIwoId2FybmluZ3MYBiADKAsyES5wbGFucy52MS5XYXJuaW5nEjIKCHBvcnRpb25zGAcgAygLMiAuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGVkUG9ydGlvbhIVCg1jb29rX3NlcnZpbmdzGAggASgBEhYKDm5ld19pdGVtX2NvdW50GAkgASgFEi8KDGl0ZW1zX3RvX2J1eRgKIAMoCzIZLnN1Z2dlc3Rpb25zLnYxLkl0ZW1Ub0J1eRIpCgtsZWZ0b3Zlcl9vZhgLIAEoCzIULnBsYW5zLnYxLkxlZnRvdmVyT2YSEQoJY29va19kYXRlGAwgASgJItACCgxQbGFuQ3JpdGVyaWESKQoHdmFyaWV0eRgBIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEisKCWZhdm9yaXRlcxgCIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEigKBnBhbnRyeRgDIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEioKCHNob3BwaW5nGAQgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSKwoJbnV0cml0aW9uGAUgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSGQoRbWF4X3RvdGFsX3NlY29uZHMYBiABKAUSFAoMZXhjbHVkZV90YWdzGAcgAygJEhoKEmV4Y2x1ZGVfcmVjaXBlX2lkcxgIIAMoCRIYChBjb29raW5nX3dlZWtkYXlzGAkgAygFIqsBCgpQbGFuQ2hvaWNlEgwKBGRhdGUYASABKAkSJgoEbWVhbBgCIAEoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsEhEKCXJlY2lwZV9pZBgDIAEoCRIRCglwZXJzb25faWQYBCABKAkSFgoOZWF0aW5nX3RpbWVfaWQYBSABKAkSKQoLbGVmdG92ZXJfb2YYBiABKAsyFC5wbGFucy52MS5MZWZ0b3Zlck9mIu4BChJTdWdnZXN0UGxhblJlcXVlc3QSEgoKc3RhcnRfZGF0ZRgBIAEoCRIMCgRkYXlzGAIgASgFEicKBW1lYWxzGAMgAygOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSLgoIY3JpdGVyaWEYBCABKAsyHC5zdWdnZXN0aW9ucy52MS5QbGFuQ3JpdGVyaWESKwoHY2hvaWNlcxgFIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlBsYW5DaG9pY2USDAoEc2VlZBgGIAEoBBIiChpza2lwX3BlcnNvbmFsX2VhdGluZ190aW1lcxgHIAEoCCL/AgoIUGxhblNsb3QSDAoEZGF0ZRgBIAEoCRImCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSLAoFc3RhdGUYAyABKA4yHS5zdWdnZXN0aW9ucy52MS5QbGFuU2xvdFN0YXRlEi4KCnN1Z2dlc3Rpb24YBCABKAsyGi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0aW9uEjAKDGFsdGVybmF0aXZlcxgFIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3Rpb24SHAoUcGxhbm5lZF9yZWNpcGVfbmFtZXMYBiADKAkSHAoUZml0dGluZ19yZWNpcGVfY291bnQYByABKAUSEQoJcGVyc29uX2lkGAggASgJEhMKC3BlcnNvbl9uYW1lGAkgASgJEhYKDmVhdGluZ190aW1lX2lkGAogASgJEhgKEGVhdGluZ190aW1lX25hbWUYCyABKAkSFwoPdW5maWxsZWRfcmVhc29uGAwgASgJIoYBChNTdWdnZXN0UGxhblJlc3BvbnNlEicKBXNsb3RzGAEgAygLMhguc3VnZ2VzdGlvbnMudjEuUGxhblNsb3QSDQoFc2NvcmUYAiABKAESEwoLcGxhbnNfdHJpZWQYAyABKAUSDAoEc2VlZBgEIAEoBBIUCgxyZWNpcGVfY291bnQYBSABKAUiTgoTU3VnZ2VzdEZpeGVzUmVxdWVzdBIRCglwZXJzb25faWQYASABKAkSDAoEZGF0ZRgCIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgDIAEoCSJjChRTdWdnZXN0Rml4ZXNSZXNwb25zZRImCgVmaXhlcxgBIAMoCzIXLnN1Z2dlc3Rpb25zLnYxLlBsYW5GaXgSIwoId2FybmluZ3MYAiADKAsyES5wbGFucy52MS5XYXJuaW5nImkKDVBvcnRpb25SZXNpemUSEgoKcG9ydGlvbl9pZBgBIAEoCRIQCghzZXJ2aW5ncxgCIAEoARIOCgZhbW91bnQYAyABKAESIgoEdW5pdBgEIAEoDjIULmZvb2RzLnYxLkFtb3VudFVuaXQi9gIKB1BsYW5GaXgSKQoEa2luZBgBIAEoDjIbLnN1Z2dlc3Rpb25zLnYxLlBsYW5GaXhLaW5kEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhIKCnBvcnRpb25faWQYAyABKAkSFgoOZWF0aW5nX3RpbWVfaWQYBCABKAkSLgoHcmVzaXplcxgPIAMoCzIdLnN1Z2dlc3Rpb25zLnYxLlBvcnRpb25SZXNpemUSFgoOZml4ZWRfd2FybmluZ3MYCiADKAkSIwoId2FybmluZ3MYCyADKAsyES5wbGFucy52MS5XYXJuaW5nEhMKC2VuZXJneV9rY2FsGAwgASgBEhsKE3BsYW5uZWRfZW5lcmd5X2tjYWwYDSABKAESFgoOZGVsZXRlX2Nvb2tfaWQYDiABKAlKBAgFEAZKBAgGEAdKBAgHEAhKBAgIEAlKBAgJEApSCXJlY2lwZV9pZFIHZm9vZF9pZFIIc2VydmluZ3NSBmFtb3VudFIEdW5pdCIoChhTdWdnZXN0RnJvbVBhbnRyeVJlcXVlc3QSDAoEZGF0ZRgBIAEoCSJKChlTdWdnZXN0RnJvbVBhbnRyeVJlc3BvbnNlEi0KB3JlY2lwZXMYASADKAsyHC5zdWdnZXN0aW9ucy52MS5QYW50cnlSZWNpcGUifAoMUGFudHJ5UmVjaXBlEhEKCXJlY2lwZV9pZBgBIAEoCRITCgtyZWNpcGVfbmFtZRgCIAEoCRIQCghzZXJ2aW5ncxgDIAEoBRIVCg10b3RhbF9zZWNvbmRzGAQgASgFEhsKE3VzZV9zb29uX2Zvb2RfbmFtZXMYBSADKAkiTgoTU3VnZ2VzdFNpZGVzUmVxdWVzdBIRCglwZXJzb25faWQYASABKAkSDAoEZGF0ZRgCIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgDIAEoCSJtChRTdWdnZXN0U2lkZXNSZXNwb25zZRItCgVzaWRlcxgBIAMoCzIeLnN1Z2dlc3Rpb25zLnYxLlNpZGVTdWdnZXN0aW9uEhEKCXJlY2lwZV9pZBgCIAEoCRITCgtyZWNpcGVfbmFtZRgDIAEoCSL4AQoOU2lkZVN1Z2dlc3Rpb24SDwoHZm9vZF9pZBgBIAEoCRIRCglmb29kX25hbWUYAiABKAkSDQoFZ3JhbXMYAyABKAESEwoLZW5lcmd5X2tjYWwYBCABKAESFQoNcHJvdGVpbl9ncmFtcxgFIAEoARIaChJjYXJib2h5ZHJhdGVfZ3JhbXMYBiABKAESEQoJZmF0X2dyYW1zGAcgASgBEg4KBnJlYXNvbhgIIAEoCRIjCgh3YXJuaW5ncxgJIAMoCzIRLnBsYW5zLnYxLldhcm5pbmcSDwoHcGxhbm5lZBgKIAEoCBISCgpwb3J0aW9uX2lkGAsgASgJKvICCglTY29yZUtpbmQSGgoWU0NPUkVfS0lORF9VTlNQRUNJRklFRBAAEiEKHVNDT1JFX0tJTkRfU0hBUkVEX0lOR1JFRElFTlRTEAESHQoZU0NPUkVfS0lORF9QQUNLX0xFRlRPVkVSUxACEhUKEVNDT1JFX0tJTkRfUEFOVFJZEAMSGAoUU0NPUkVfS0lORF9OVVRSSVRJT04QBBIUChBTQ09SRV9LSU5EX1JVTEVTEAUSFgoSU0NPUkVfS0lORF9LRUVQSU5HEAYSFgoSU0NPUkVfS0lORF9WQVJJRVRZEAgSFwoTU0NPUkVfS0lORF9NRUFMX1RBRxAJEhcKE1NDT1JFX0tJTkRfRkFWT1JJVEUQChIXChNTQ09SRV9LSU5EX0xFRlRPVkVSEAsSFQoRU0NPUkVfS0lORF9DT09LRUQQDBIVChFTQ09SRV9LSU5EX1RBU1RFUxANIgQIBxAHKhFTQ09SRV9LSU5EX0ZMQVZPUipwCghFbXBoYXNpcxIYChRFTVBIQVNJU19VTlNQRUNJRklFRBAAEhAKDEVNUEhBU0lTX09GRhABEhAKDEVNUEhBU0lTX0xPVxACEhMKD0VNUEhBU0lTX05PUk1BTBADEhEKDUVNUEhBU0lTX0hJR0gQBCqFAgoNUGxhblNsb3RTdGF0ZRIfChtQTEFOX1NMT1RfU1RBVEVfVU5TUEVDSUZJRUQQABIdChlQTEFOX1NMT1RfU1RBVEVfU1VHR0VTVEVEEAESGAoUUExBTl9TTE9UX1NUQVRFX0tFUFQQAhIbChdQTEFOX1NMT1RfU1RBVEVfU0tJUFBFRBADEhsKF1BMQU5fU0xPVF9TVEFURV9QTEFOTkVEEAQSHAoYUExBTl9TTE9UX1NUQVRFX1VORklMTEVEEAUSIgoeUExBTl9TTE9UX1NUQVRFX0ZJTExFRF9CWV9NRUFMEAYSHgoaUExBTl9TTE9UX1NUQVRFX0VBVElOR19PVVQQByqWAQoLUGxhbkZpeEtpbmQSHQoZUExBTl9GSVhfS0lORF9VTlNQRUNJRklFRBAAEhgKFFBMQU5fRklYX0tJTkRfUkVNT1ZFEAESGAoUUExBTl9GSVhfS0lORF9SRVNJWkUQAiIECAMQAyIECAQQBCoVUExBTl9GSVhfS0lORF9SRVBMQUNFKhFQTEFOX0ZJWF9LSU5EX0FERDLsAwoRU3VnZ2VzdGlvblNlcnZpY2USXwoOU3VnZ2VzdFJlY2lwZXMSJS5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1JlcXVlc3QaJi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1Jlc3BvbnNlElYKC1N1Z2dlc3RQbGFuEiIuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXF1ZXN0GiMuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXNwb25zZRJZCgxTdWdnZXN0Rml4ZXMSIy5zdWdnZXN0aW9ucy52MS5TdWdnZXN0Rml4ZXNSZXF1ZXN0GiQuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdEZpeGVzUmVzcG9uc2USaAoRU3VnZ2VzdEZyb21QYW50cnkSKC5zdWdnZXN0aW9ucy52MS5TdWdnZXN0RnJvbVBhbnRyeVJlcXVlc3QaKS5zdWdnZXN0aW9ucy52MS5TdWdnZXN0RnJvbVBhbnRyeVJlc3BvbnNlElkKDFN1Z2dlc3RTaWRlcxIjLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RTaWRlc1JlcXVlc3QaJC5zdWdnZXN0aW9ucy52MS5TdWdnZXN0U2lkZXNSZXNwb25zZULMAQoSY29tLnN1Z2dlc3Rpb25zLnYxQhBTdWdnZXN0aW9uc1Byb3RvUAFaS2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vc3VnZ2VzdGlvbnMvdjE7c3VnZ2VzdGlvbnN2MaICA1NYWKoCDlN1Z2dlc3Rpb25zLlYxygIOU3VnZ2VzdGlvbnNcVjHiAhpTdWdnZXN0aW9uc1xWMVxHUEJNZXRhZGF0YeoCD1N1Z2dlc3Rpb25zOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_people_v1_people, file_plans_v1_plans]);
 
 /**
  * An eating time of one person, to suggest a recipe for, like a small
@@ -1045,6 +1045,164 @@ export const PantryRecipeSchema: GenMessage<PantryRecipe> = /*@__PURE__*/
   messageDesc(file_suggestions_v1_suggestions, 18);
 
 /**
+ * @generated from message suggestions.v1.SuggestSidesRequest
+ */
+export type SuggestSidesRequest = Message<"suggestions.v1.SuggestSidesRequest"> & {
+  /**
+   * The ID of the person. Required.
+   *
+   * @generated from field: string person_id = 1;
+   */
+  personId: string;
+
+  /**
+   * The date (YYYY-MM-DD). Required.
+   *
+   * @generated from field: string date = 2;
+   */
+  date: string;
+
+  /**
+   * The ID of the person's eating time. Required.
+   *
+   * @generated from field: string eating_time_id = 3;
+   */
+  eatingTimeId: string;
+};
+
+/**
+ * Describes the message suggestions.v1.SuggestSidesRequest.
+ * Use `create(SuggestSidesRequestSchema)` to create a new message.
+ */
+export const SuggestSidesRequestSchema: GenMessage<SuggestSidesRequest> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 19);
+
+/**
+ * @generated from message suggestions.v1.SuggestSidesResponse
+ */
+export type SuggestSidesResponse = Message<"suggestions.v1.SuggestSidesResponse"> & {
+  /**
+   * The sides, best first: those leaving the fewest warnings, then
+   * closest to the rules and targets, then with the most protein.
+   *
+   * @generated from field: repeated suggestions.v1.SideSuggestion sides = 1;
+   */
+  sides: SideSuggestion[];
+
+  /**
+   * The recipe the sides are of, empty if none.
+   *
+   * @generated from field: string recipe_id = 2;
+   */
+  recipeId: string;
+
+  /**
+   * The recipe's name.
+   *
+   * @generated from field: string recipe_name = 3;
+   */
+  recipeName: string;
+};
+
+/**
+ * Describes the message suggestions.v1.SuggestSidesResponse.
+ * Use `create(SuggestSidesResponseSchema)` to create a new message.
+ */
+export const SuggestSidesResponseSchema: GenMessage<SuggestSidesResponse> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 20);
+
+/**
+ * A side to serve with a meal.
+ *
+ * @generated from message suggestions.v1.SideSuggestion
+ */
+export type SideSuggestion = Message<"suggestions.v1.SideSuggestion"> & {
+  /**
+   * The ID of the side's food.
+   *
+   * @generated from field: string food_id = 1;
+   */
+  foodId: string;
+
+  /**
+   * The food's name.
+   *
+   * @generated from field: string food_name = 2;
+   */
+  foodName: string;
+
+  /**
+   * How much of it to add, in grams: the recipe's grams per serving
+   * times the servings planned, rounded to 5 g, less if the maximum
+   * portion leaves less room.
+   *
+   * @generated from field: double grams = 3;
+   */
+  grams: number;
+
+  /**
+   * What it adds, in kcal and grams.
+   *
+   * @generated from field: double energy_kcal = 4;
+   */
+  energyKcal: number;
+
+  /**
+   * @generated from field: double protein_grams = 5;
+   */
+  proteinGrams: number;
+
+  /**
+   * @generated from field: double carbohydrate_grams = 6;
+   */
+  carbohydrateGrams: number;
+
+  /**
+   * @generated from field: double fat_grams = 7;
+   */
+  fatGrams: number;
+
+  /**
+   * Why it fits or not, e.g. "adds 6 g protein: today is 12 g short", or
+   * "goes over the 30 g carbohydrate limit at lunch".
+   *
+   * @generated from field: string reason = 8;
+   */
+  reason: string;
+
+  /**
+   * The warnings it adds to the day, which the meal without a side
+   * doesn't have, as SuggestFixes counts them. Empty if it fits.
+   *
+   * @generated from field: repeated plans.v1.Warning warnings = 9;
+   */
+  warnings: Warning[];
+
+  /**
+   * Whether it's already planned at the eating time, as a portion of its
+   * food.
+   *
+   * @generated from field: bool planned = 10;
+   */
+  planned: boolean;
+
+  /**
+   * The planned portion's ID, if planned, to remove it with
+   * PlanService.DeletePortion.
+   *
+   * @generated from field: string portion_id = 11;
+   */
+  portionId: string;
+};
+
+/**
+ * Describes the message suggestions.v1.SideSuggestion.
+ * Use `create(SideSuggestionSchema)` to create a new message.
+ */
+export const SideSuggestionSchema: GenMessage<SideSuggestion> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 21);
+
+/**
  * ScoreKind is what a component of a suggestion's score is about.
  *
  * @generated from enum suggestions.v1.ScoreKind
@@ -1475,6 +1633,24 @@ export const SuggestionService: GenService<{
     methodKind: "unary";
     input: typeof SuggestFromPantryRequestSchema;
     output: typeof SuggestFromPantryResponseSchema;
+  },
+  /**
+   * Score the sides a meal can be served with, for one person's eating
+   * time on a date: the sides of its recipe (see Recipe.served_with), each
+   * in proportion to the servings planned, as much as the eating time's
+   * maximum portion leaves room for. Each says what it adds and what that
+   * does to the person's rules and targets, e.g. "adds 6 g protein:
+   * today is 12 g short", best first. Add the one the user picks as a
+   * portion of its food at the eating time with PlanService.CreatePortion,
+   * and remove another side planned there with DeletePortion. Nothing is
+   * changed. Returns no sides if the eating time has no recipe with sides.
+   *
+   * @generated from rpc suggestions.v1.SuggestionService.SuggestSides
+   */
+  suggestSides: {
+    methodKind: "unary";
+    input: typeof SuggestSidesRequestSchema;
+    output: typeof SuggestSidesResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_suggestions_v1_suggestions, 0);

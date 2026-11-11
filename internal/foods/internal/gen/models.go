@@ -888,6 +888,7 @@ type Recipe struct {
 	Draft         bool
 	NotSuggested  bool
 	SnoozedUntil  pgtype.Date
+	ServedWith    json.RawMessage
 }
 
 type RecipeIngredient struct {

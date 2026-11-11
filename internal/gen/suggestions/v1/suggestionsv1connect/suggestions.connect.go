@@ -36,6 +36,9 @@ const (
 	// SuggestionServiceSuggestFromPantryProcedure is the procedure name of the SuggestionService's
 	// SuggestFromPantry RPC.
 	SuggestionServiceSuggestFromPantryProcedure = "/suggestions.v1.SuggestionService/SuggestFromPantry"
+	// SuggestionServiceSuggestSidesProcedure is the procedure name of the SuggestionService's
+	// SuggestSides RPC.
+	SuggestionServiceSuggestSidesProcedure = "/suggestions.v1.SuggestionService/SuggestSides"
 )
 
 var (
@@ -65,6 +68,13 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestFromPantry"),
 			Procedure:  SuggestionServiceSuggestFromPantryProcedure,
+		}
+	})
+	suggestionServiceSuggestSidesSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestSides"),
+			Procedure:  SuggestionServiceSuggestSidesProcedure,
 		}
 	})
 )
@@ -177,6 +187,16 @@ type SuggestionServiceClient interface {
 	// with PlanService.PlanMeal or CreatePortion. Drafts and recipes not to
 	// suggest are left out. Nothing is changed.
 	SuggestFromPantry(context.Context, *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error)
+	// Score the sides a meal can be served with, for one person's eating
+	// time on a date: the sides of its recipe (see Recipe.served_with), each
+	// in proportion to the servings planned, as much as the eating time's
+	// maximum portion leaves room for. Each says what it adds and what that
+	// does to the person's rules and targets, e.g. "adds 6 g protein:
+	// today is 12 g short", best first. Add the one the user picks as a
+	// portion of its food at the eating time with PlanService.CreatePortion,
+	// and remove another side planned there with DeletePortion. Nothing is
+	// changed. Returns no sides if the eating time has no recipe with sides.
+	SuggestSides(context.Context, *v1.SuggestSidesRequest) (*v1.SuggestSidesResponse, error)
 }
 
 // NewSuggestionServiceClient constructs a client for the suggestions.v1.SuggestionService service.
@@ -293,6 +313,16 @@ type SuggestionServiceHandler interface {
 	// with PlanService.PlanMeal or CreatePortion. Drafts and recipes not to
 	// suggest are left out. Nothing is changed.
 	SuggestFromPantry(context.Context, *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error)
+	// Score the sides a meal can be served with, for one person's eating
+	// time on a date: the sides of its recipe (see Recipe.served_with), each
+	// in proportion to the servings planned, as much as the eating time's
+	// maximum portion leaves room for. Each says what it adds and what that
+	// does to the person's rules and targets, e.g. "adds 6 g protein:
+	// today is 12 g short", best first. Add the one the user picks as a
+	// portion of its food at the eating time with PlanService.CreatePortion,
+	// and remove another side planned there with DeletePortion. Nothing is
+	// changed. Returns no sides if the eating time has no recipe with sides.
+	SuggestSides(context.Context, *v1.SuggestSidesRequest) (*v1.SuggestSidesResponse, error)
 }
 
 // RegisterSuggestionServiceHandler registers svc as the suggestions.v1.SuggestionService
@@ -304,6 +334,7 @@ func RegisterSuggestionServiceHandler(server *connect.Server, svc SuggestionServ
 		connect.Method{Spec: suggestionServiceSuggestPlanSpec(), Handler: adapter.suggestPlan},
 		connect.Method{Spec: suggestionServiceSuggestFixesSpec(), Handler: adapter.suggestFixes},
 		connect.Method{Spec: suggestionServiceSuggestFromPantrySpec(), Handler: adapter.suggestFromPantry},
+		connect.Method{Spec: suggestionServiceSuggestSidesSpec(), Handler: adapter.suggestSides},
 	)
 }
 
@@ -324,6 +355,10 @@ func (UnimplementedSuggestionServiceHandler) SuggestFixes(context.Context, *v1.S
 
 func (UnimplementedSuggestionServiceHandler) SuggestFromPantry(context.Context, *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestFromPantry is not implemented")
+}
+
+func (UnimplementedSuggestionServiceHandler) SuggestSides(context.Context, *v1.SuggestSidesRequest) (*v1.SuggestSidesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestSides is not implemented")
 }
 
 type suggestionServiceClient struct {
@@ -357,6 +392,14 @@ func (c *suggestionServiceClient) SuggestFixes(ctx context.Context, req *v1.Sugg
 func (c *suggestionServiceClient) SuggestFromPantry(ctx context.Context, req *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error) {
 	var res v1.SuggestFromPantryResponse
 	if err := c.client.CallUnary(ctx, suggestionServiceSuggestFromPantrySpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *suggestionServiceClient) SuggestSides(ctx context.Context, req *v1.SuggestSidesRequest) (*v1.SuggestSidesResponse, error) {
+	var res v1.SuggestSidesResponse
+	if err := c.client.CallUnary(ctx, suggestionServiceSuggestSidesSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -406,6 +449,18 @@ func (h suggestionServiceHandler) suggestFromPantry(ctx context.Context, _ conne
 		return err
 	}
 	res, err := h.svc.SuggestFromPantry(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h suggestionServiceHandler) suggestSides(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SuggestSidesRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SuggestSides(ctx, &req)
 	if err != nil {
 		return err
 	}
