@@ -10,7 +10,7 @@ interface EmptyStateProps {
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ title, children }) => (
-  <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-gray-300 bg-white/60 px-4 py-8 text-center">
+  <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-white/60 px-4 py-8 text-center">
     <p className="font-medium text-gray-700">{title}</p>
     {children !== undefined && (
       <div className="text-sm text-gray-500">{children}</div>
@@ -31,9 +31,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 }) => (
   <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
     <div className="min-w-0">
-      <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+      <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink-soft">
+        {title}
+      </h1>
       {subtitle !== undefined && (
-        <div className="mt-1 text-sm text-gray-600">{subtitle}</div>
+        <div className="mt-1 text-sm text-muted">{subtitle}</div>
       )}
     </div>
     {actions !== undefined && (

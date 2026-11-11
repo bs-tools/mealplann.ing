@@ -1,3 +1,4 @@
+import BottomNav from "@components/header/bottom-nav";
 import Header from "@components/header/header";
 import { Code } from "@connectrpc/connect";
 import { useQuery } from "@connectrpc/connect-query";
@@ -29,15 +30,21 @@ import SignInPage from "pages/sign-in";
 import React from "react";
 import { Link, Outlet, Route, Routes } from "react-router";
 
-// Layout is the header above the page.
+/**
+ * Layout is the header above the page, and on phones the tab bar below it,
+ * which the page leaves room for.
+ */
 const Layout: React.FC<{ user: User | null }> = ({ user }) => (
   <div className="flex min-h-full flex-col">
     <Header user={user} />
-    <main className="flex grow justify-center bg-stone-50 print:bg-white">
-      <div className="flex w-full max-w-7xl min-w-0 grow flex-col px-3 py-5 sm:px-4 print:px-0 print:py-0">
+    <main
+      className={`flex grow justify-center bg-ground print:bg-white ${user === null ? "" : "pb-20 lg:pb-0 print:pb-0"}`}
+    >
+      <div className="flex w-full max-w-7xl min-w-0 grow flex-col px-4 py-5 sm:px-5 print:px-0 print:py-0">
         <Outlet />
       </div>
     </main>
+    {user !== null && <BottomNav />}
   </div>
 );
 

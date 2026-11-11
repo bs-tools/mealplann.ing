@@ -38,6 +38,7 @@ interface NavGroup {
 
 // The pages linked directly from the header.
 const TOP_ITEMS: NavItem[] = [
+  { end: true, label: "Today", to: "/" },
   { label: "Plan", to: "/plan" },
   { label: "Cooks", to: "/cooks" },
   { label: "Shopping", to: "/shopping" },

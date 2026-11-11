@@ -49,13 +49,18 @@ const Modal: React.FC<ModalProps> = ({
         className="fixed inset-0 bg-gray-900/50 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150"
       />
       <div className="fixed inset-0 w-screen overflow-y-auto">
-        <div className="flex min-h-full items-start justify-center p-2 sm:items-center sm:p-4">
+        <div className="flex min-h-full items-end justify-center sm:items-center sm:p-4">
           <DialogPanel
             transition
-            className={`relative w-full ${wide ? "max-w-3xl" : "max-w-lg"} rounded-lg bg-white shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150`}
+            className={`relative w-full ${wide ? "max-w-3xl" : "max-w-lg"} rounded-t-3xl bg-ground pb-[env(safe-area-inset-bottom)] shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150 sm:rounded-2xl sm:pb-0`}
           >
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-              <DialogTitle as="h3" className="text-base font-semibold">
+            {/* On phones, the modal is a sheet from the bottom, with a grip. */}
+            <div
+              className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-gray-300 sm:hidden"
+              aria-hidden="true"
+            />
+            <div className="flex items-center justify-between px-5 pt-3 pb-1 sm:pt-4">
+              <DialogTitle as="h3" className="text-lg font-bold text-ink-soft">
                 {title}
               </DialogTitle>
               <button
@@ -67,7 +72,7 @@ const Modal: React.FC<ModalProps> = ({
                 <XMarkIcon className="size-5" />
               </button>
             </div>
-            <div className="px-4 py-4">{children}</div>
+            <div className="px-5 pt-2 pb-6">{children}</div>
             {/*
              * The confirmation is nested in the panel, so that Headless UI
              * treats it as a child dialog: Escape and clicks on it then

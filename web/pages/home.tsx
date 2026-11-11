@@ -1,370 +1,341 @@
 import Loading from "@components/loading";
-import { PortionName } from "@components/plan/plan-bits";
-import Card from "@components/ui/card";
-import { PageHeader, ProgressBar } from "@components/ui/misc";
-import QueryError from "@components/ui/query-error";
-import { linkClass } from "@components/ui/styles";
-import { useQuery } from "@connectrpc/connect-query";
 import {
-  ArchiveBoxIcon,
-  BookOpenIcon,
-  CalendarDaysIcon,
-  ChevronRightIcon,
-  Cog6ToothIcon,
-  ExclamationTriangleIcon,
-  ShoppingCartIcon,
-  Squares2X2Icon,
-  UserGroupIcon,
-} from "@heroicons/react/24/outline";
-import { listPantry } from "gen/pantry/v1/pantry-PantryService_connectquery";
-import type { PantryItem } from "gen/pantry/v1/pantry_pb";
-import { EatingTimeKind } from "gen/people/v1/people_pb";
+  CookDot,
+  EffortDot,
+  effortOf,
+  warningTitle,
+} from "@components/today/today-bits";
+import type { Effort } from "@components/today/today-bits";
+import WarningSheet from "@components/today/warning-sheet";
+import { EmptyState } from "@components/ui/misc";
+import QueryError from "@components/ui/query-error";
+import Segmented from "@components/ui/segmented";
+import { linkClass, primaryButton } from "@components/ui/styles";
+import { useQuery } from "@connectrpc/connect-query";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
+import type { EatingTime } from "gen/people/v1/people_pb";
+import { HouseholdMeal } from "gen/people/v1/people_pb";
 import { getWeek } from "gen/plans/v1/plans-PlanService_connectquery";
-import type { PersonDay } from "gen/plans/v1/plans_pb";
+import type {
+  PersonDay,
+  PlannedCook,
+  PlannedEatingTime,
+  Warning,
+} from "gen/plans/v1/plans_pb";
 import { Severity } from "gen/plans/v1/plans_pb";
+import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import { listShoppingLists } from "gen/shopping/v1/shopping-ShoppingService_connectquery";
 import type { User } from "gen/users/v1/users_pb";
-import { daysBetween, startOfWeek, today } from "helpers/dates";
 import {
-  formatDay,
-  formatNearDate,
-  formatShortDate,
-  formatStock,
-} from "helpers/format";
-import React from "react";
-import { Link } from "react-router";
+  addDays,
+  daysBetween,
+  parseDate,
+  startOfWeek,
+  today,
+} from "helpers/dates";
+import { formatWeekday } from "helpers/format";
+import { formatServings } from "helpers/labels";
+import React, { useState } from "react";
+import { Link, useSearchParams } from "react-router";
 
-// SOON_DAYS is how many days left count as soon to use, like the pantry's.
-const SOON_DAYS = 3;
+// A warning opened in the sheet, with the eating time it's about.
+interface OpenWarning {
+  warning: Warning;
+  eatingTimeId: string;
+}
 
-// The parts of the app, to go to.
-const PARTS: {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  title: string;
-  description: string;
-  to: string;
-}[] = [
-  {
-    description:
-      "The week's meals with suggestions, split into the right portions for everyone.",
-    icon: CalendarDaysIcon,
-    title: "Plan",
-    to: "/plan",
-  },
-  {
-    description: "One shop a week, by store and aisle, ticked off together.",
-    icon: ShoppingCartIcon,
-    title: "Shopping",
-    to: "/shopping",
-  },
-  {
-    description: "What's in stock and what to use soon.",
-    icon: ArchiveBoxIcon,
-    title: "Pantry",
-    to: "/pantry",
-  },
-  {
-    description: "When everyone eats, with their care team's rules.",
-    icon: UserGroupIcon,
-    title: "People",
-    to: "/people",
-  },
-  {
-    description: "Your recipes, with nutrition per serving.",
-    icon: BookOpenIcon,
-    title: "Recipes",
-    to: "/recipes",
-  },
-  {
-    description: "The ingredients you cook with.",
-    icon: Squares2X2Icon,
-    title: "Foods",
-    to: "/foods",
-  },
-  {
-    description:
-      "Your household, invitations, and connecting your AI agent over MCP.",
-    icon: Cog6ToothIcon,
-    title: "Settings",
-    to: "/settings",
-  },
-];
+// A cook of the day, with when to start it and how long it takes.
+interface CookBlock {
+  cook: PlannedCook;
+  name: string;
+  minutes: number;
+  // When to start, "HH:MM", or "" if unknown.
+  start: string;
+}
 
-interface PersonTodayProps {
+// An entry of the day's line: an eating time, or time spent cooking.
+type Entry =
+  | { kind: "meal"; time: string; planned: PlannedEatingTime }
+  | { kind: "cook"; time: string; block: CookBlock };
+
+// MinutesOf returns the minutes since midnight of "HH:MM", or -1.
+const minutesOf = (time: string): number => {
+  const [hours, minutes] = time.split(":").map(Number);
+  if (hours === undefined || minutes === undefined || Number.isNaN(hours)) {
+    return -1;
+  }
+  return hours * 60 + minutes;
+};
+
+/**
+ * ByTime returns items in order of their time of day, "HH:MM", keeping the
+ * order of items at the same time, or without one, which go first.
+ */
+const byTime = <Item,>(
+  items: Item[],
+  timeOfItem: (item: Item) => string
+): Item[] => {
+  const ordered: Item[] = [];
+  for (const item of items) {
+    const at = minutesOf(timeOfItem(item));
+    const index = ordered.findIndex(
+      (other) => minutesOf(timeOfItem(other)) > at
+    );
+    ordered.splice(index < 0 ? ordered.length : index, 0, item);
+  }
+  return ordered;
+};
+
+// TimeOf formats minutes since midnight as "HH:MM".
+const timeOf = (minutes: number): string => {
+  const at = Math.max(minutes, 0);
+  return `${String(Math.floor(at / 60)).padStart(2, "0")}:${String(at % 60).padStart(2, "0")}`;
+};
+
+// EffortText says how much work a meal is, e.g. "Heat · leftovers".
+const effortText = (effort: Effort, planned: PlannedEatingTime): string => {
+  switch (effort) {
+    case "ready": {
+      return "Ready to eat";
+    }
+    case "heat": {
+      return "Heat · leftovers";
+    }
+    case "cook": {
+      return "Freshly cooked";
+    }
+    case "out": {
+      return planned.eatingOutNotes === ""
+        ? "Eating out"
+        : `Eating out · ${planned.eatingOutNotes}`;
+    }
+    default: {
+      return "Nothing planned";
+    }
+  }
+};
+
+// EFFORT_TEXT_CLASS colors each effort's words.
+const EFFORT_TEXT_CLASS: Record<Effort, string> = {
+  cook: "text-cook-dark",
+  heat: "text-heat",
+  none: "text-muted",
+  out: "text-muted",
+  ready: "text-ready",
+};
+
+/**
+ * WarningsOf returns the warnings of each eating time of a day, by eating
+ * time ID, with the day's own warnings on the eating time with the most
+ * energy, as it's the one to change.
+ */
+const warningsOf = (day: PersonDay): Map<string, Warning[]> => {
+  const byEatingTime = new Map<string, Warning[]>();
+  let biggest = "";
+  let biggestEnergy = -1;
+  for (const planned of day.eatingTimes) {
+    const id = planned.eatingTime?.id ?? "";
+    byEatingTime.set(
+      id,
+      planned.warnings.filter(
+        (warning) => warning.severity === Severity.WARNING
+      )
+    );
+    const energy = planned.nutrients?.energyKcal ?? 0;
+    if (planned.portions.length > 0 && energy > biggestEnergy) {
+      biggest = id;
+      biggestEnergy = energy;
+    }
+  }
+  const dayWarnings = day.warnings.filter(
+    (warning) => warning.severity === Severity.WARNING
+  );
+  if (dayWarnings.length > 0) {
+    byEatingTime.set(biggest, [
+      ...(byEatingTime.get(biggest) ?? []),
+      ...dayWarnings,
+    ]);
+  }
+  return byEatingTime;
+};
+
+/**
+ * CookBlocksOf returns the day's cooks for a person's meals, with when to
+ * start them: their total time before the eating time of their meal, or
+ * unknown for cooks made ahead.
+ */
+const cookBlocksOf = (
+  cooks: PlannedCook[],
+  date: string,
+  eatingTimes: EatingTime[],
+  minutesOfRecipe: Map<string, { minutes: number; name: string }>
+): CookBlock[] => {
+  const blocks: CookBlock[] = [];
+  for (const planned of cooks) {
+    const { cook } = planned;
+    if (cook === undefined || cook.date !== date || cook.done) {
+      continue;
+    }
+    const recipe = minutesOfRecipe.get(cook.recipeId);
+    const minutes = recipe?.minutes ?? 0;
+    const eatingTime =
+      cook.meal === HouseholdMeal.UNSPECIFIED
+        ? undefined
+        : eatingTimes.find((et) => et.meal === cook.meal);
+    const mealAt = minutesOf(eatingTime?.time ?? "");
+    blocks.push({
+      cook: planned,
+      minutes,
+      name: recipe?.name ?? "A recipe",
+      start: mealAt < 0 ? "" : timeOf(mealAt - Math.max(minutes, 15)),
+    });
+  }
+  return blocks;
+};
+
+interface DayLineProps {
   day: PersonDay;
+  blocks: CookBlock[];
+  date: string;
+  onWarning: (open: OpenWarning) => void;
 }
 
 /**
- * PersonToday lists what a person eats today, by eating time, with how many
- * warnings their day has.
+ * DayLine is a person's day as a vertical line of their meals and the
+ * cooking before them, in time order, each marked with how much work it is.
  */
-const PersonToday: React.FC<PersonTodayProps> = ({ day }) => {
-  const warnings =
-    day.warnings.filter((warning) => warning.severity === Severity.WARNING)
-      .length +
-    day.eatingTimes
-      .flatMap((et) => et.warnings)
-      .filter((warning) => warning.severity === Severity.WARNING).length;
+const DayLine: React.FC<DayLineProps> = ({ day, blocks, date, onWarning }) => {
+  const warnings = warningsOf(day);
+  let entries: Entry[] = [
+    ...day.eatingTimes.map((planned): Entry => ({
+      kind: "meal",
+      planned,
+      time: planned.eatingTime?.time ?? "",
+    })),
+    ...blocks.map((block): Entry => ({
+      block,
+      kind: "cook",
+      time: block.start,
+    })),
+  ];
+  // Entries go in time order; those without a time keep their place.
+  entries = byTime(entries, (entry) => entry.time);
   return (
-    <div className="flex flex-col gap-1">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-        {day.personName}
-        {warnings > 0 && (
-          <span className="inline-flex items-center gap-0.5 text-xs font-normal text-amber-800">
-            <ExclamationTriangleIcon
-              className="size-3.5 text-amber-600"
-              aria-hidden="true"
-            />
-            {warnings === 1 ? "1 warning" : `${warnings} warnings`}
-          </span>
-        )}
-      </h3>
-      {day.eatingTimes.length === 0 ? (
-        <p className="text-sm text-gray-500">No eating times yet.</p>
-      ) : (
-        <ul className="flex flex-col gap-0.5 text-sm">
-          {day.eatingTimes.map((planned) => {
-            const et = planned.eatingTime;
-
-            return (
-              <li key={et?.id} className="flex gap-2">
-                <span
-                  className={`w-28 shrink-0 truncate text-gray-500 ${et?.kind === EatingTimeKind.SMALL ? "pl-3" : ""}`}
+    <ol className="relative flex flex-col">
+      {/* The line runs through the middle of the markers' column. */}
+      <span
+        className="absolute top-4 bottom-4 left-[calc(3rem+0.75rem+0.75rem-1px)] w-0.5 bg-line"
+        aria-hidden="true"
+      />
+      {entries.map((entry) => {
+        if (entry.kind === "cook") {
+          const { block } = entry;
+          return (
+            <li
+              key={`cook-${block.cook.cook?.id ?? ""}`}
+              className="flex items-start gap-3 py-2.5"
+            >
+              <span className="w-12 shrink-0 pt-3.5 text-sm text-muted tabular-nums">
+                {block.start}
+              </span>
+              <span className="flex w-6 justify-center pt-3">
+                <CookDot />
+              </span>
+              <div className="flex min-w-0 grow flex-col gap-1.5 rounded-2xl bg-cook-tint p-3.5">
+                <span className="text-xs font-bold tracking-[0.08em] text-cook-dark uppercase">
+                  Cooking
+                  {block.minutes > 0 && ` · ${block.minutes} min`}
+                </span>
+                <span className="font-medium text-ink-soft">
+                  {block.name}
+                  {block.cook.cook !== undefined &&
+                    `, ${formatServings(block.cook.cook.servings)}`}
+                </span>
+                <Link
+                  to={`/recipes/${block.cook.cook?.recipeId ?? ""}/cook`}
+                  className={`${primaryButton} mt-1 self-start`}
                 >
-                  {et?.name}
+                  Start cooking
+                </Link>
+              </div>
+            </li>
+          );
+        }
+        const { planned } = entry;
+        const et = planned.eatingTime;
+        const effort = effortOf(planned, date);
+        const eaten =
+          planned.portions.length > 0 &&
+          planned.portions.every((portion) => portion.eaten);
+        const own = warnings.get(et?.id ?? "") ?? [];
+        return (
+          <li key={et?.id} className="flex items-start gap-3 py-2.5">
+            <span className="w-12 shrink-0 pt-0.5 text-sm text-muted tabular-nums">
+              {et?.time}
+            </span>
+            <span className="flex w-6 justify-center">
+              <EffortDot effort={effort} eaten={eaten} />
+            </span>
+            <div className="flex min-w-0 grow flex-col gap-1">
+              <span className="text-xs font-medium text-muted">{et?.name}</span>
+              {planned.portions.length === 0 ? (
+                <span className="text-base text-muted">
+                  {effortText(effort, planned)}
                 </span>
-                <span
-                  className={`min-w-0 ${planned.portions.length === 0 ? "text-gray-400" : "text-gray-900"}`}
+              ) : (
+                <>
+                  <span
+                    className={`text-base font-medium ${eaten ? "text-muted line-through" : "text-ink-soft"}`}
+                  >
+                    {planned.portions.map((portion, index) => (
+                      <React.Fragment
+                        key={
+                          portion.portionId === ""
+                            ? `staple-${portion.stapleId}`
+                            : portion.portionId
+                        }
+                      >
+                        {index > 0 && ", "}
+                        {portion.recipeId === "" ? (
+                          portion.name
+                        ) : (
+                          <Link
+                            to={`/recipes/${portion.recipeId}`}
+                            className="hover:underline"
+                          >
+                            {portion.name}
+                          </Link>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </span>
+                  <span className={`text-sm ${EFFORT_TEXT_CLASS[effort]}`}>
+                    {eaten ? "Eaten" : effortText(effort, planned)}
+                  </span>
+                </>
+              )}
+              {own.map((warning) => (
+                <button
+                  key={`${warning.kind}-${warning.nutrient}-${warning.message}`}
+                  type="button"
+                  className="mt-1 inline-flex items-center gap-1.5 self-start rounded-xl bg-warn-tint px-2.5 py-1.5 text-left text-sm font-bold text-warn-dark"
+                  onClick={() => {
+                    onWarning({ eatingTimeId: et?.id ?? "", warning });
+                  }}
                 >
-                  {planned.eatingOut &&
-                    `Eating out${planned.eatingOutNotes === "" ? "" : ` · ${planned.eatingOutNotes}`}`}
-                  {!planned.eatingOut && planned.portions.length === 0
-                    ? "Nothing planned"
-                    : planned.portions.map((portion, index) => (
-                        <React.Fragment
-                          key={
-                            portion.portionId === ""
-                              ? `staple-${portion.stapleId}`
-                              : portion.portionId
-                          }
-                        >
-                          {index > 0 && ", "}
-                          <PortionName portion={portion} />
-                        </React.Fragment>
-                      ))}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-};
-
-/**
- * TodayCard shows what everyone eats today, from the week's plan.
- */
-const TodayCard: React.FC = () => {
-  const now = today();
-  const week = useQuery(getWeek, { monday: startOfWeek(now) });
-  let content: React.ReactNode = null;
-  if (week.isPending) {
-    content = <Loading />;
-  } else if (week.isError) {
-    content = (
-      <QueryError
-        error={week.error}
-        onRetry={() => {
-          void week.refetch();
-        }}
-      />
-    );
-  } else {
-    const people = week.data.days.find((day) => day.date === now)?.people ?? [];
-    content =
-      people.length === 0 ? (
-        <p className="text-sm text-gray-700">
-          Add the people you cook for, with when they eat, on the{" "}
-          <Link to="/people" className={linkClass}>
-            People
-          </Link>{" "}
-          page, then plan the week.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {people.map((day) => (
-            <PersonToday key={day.personId} day={day} />
-          ))}
-        </div>
-      );
-  }
-  return (
-    <Card
-      title={`Today, ${formatDay(now)}`}
-      actions={
-        <Link to="/plan" className={`${linkClass} text-sm`}>
-          Plan the week
-        </Link>
-      }
-    >
-      {content}
-    </Card>
-  );
-};
-
-/**
- * ShoppingCard shows the state of the current shopping list: the latest
- * whose shopping isn't complete and whose meals aren't all past.
- */
-const ShoppingCard: React.FC = () => {
-  const now = today();
-  const lists = useQuery(listShoppingLists, { pageSize: 10 });
-  let content: React.ReactNode = null;
-  if (lists.isPending) {
-    content = <Loading />;
-  } else if (lists.isError) {
-    content = (
-      <QueryError
-        error={lists.error}
-        onRetry={() => {
-          void lists.refetch();
-        }}
-      />
-    );
-  } else {
-    const list = lists.data.lists.find(
-      (other) => !other.complete && other.endDate >= now
-    );
-    if (list === undefined) {
-      content = (
-        <p className="text-sm text-gray-700">
-          No list to shop for yet.{" "}
-          <Link to="/shopping" className={linkClass}>
-            Make one from the plan
-          </Link>
-          .
-        </p>
-      );
-    } else {
-      const left = list.itemCount - list.checkedCount;
-      content = (
-        <div className="flex flex-col gap-2 text-sm text-gray-700">
-          <p>
-            Shop on{" "}
-            <span className="font-medium text-gray-900">
-              {formatDay(list.startDate)}
-            </span>{" "}
-            for the meals to {formatShortDate(list.endDate)}.
-          </p>
-          <ProgressBar value={list.checkedCount} target={list.itemCount} />
-          <p className="tabular-nums">
-            {list.checkedCount} of {list.itemCount} items checked
-            {left === 0 && list.itemCount > 0 ? ": ready to complete" : ""}
-            {list.topUpCount > 0 &&
-              ` · ${list.topUpCount} to top up later in the week`}
-          </p>
-        </div>
-      );
-    }
-  }
-  return (
-    <Card
-      title="Shopping"
-      actions={
-        <Link to="/shopping" className={`${linkClass} text-sm`}>
-          Open the list
-        </Link>
-      }
-    >
-      {content}
-    </Card>
-  );
-};
-
-// DescribeUseBy says when a lot is to be used by, e.g. "use by tomorrow".
-const describeUseBy = (item: PantryItem, now: string): string => {
-  const days = daysBetween(now, item.useByDate);
-  if (days < 0) {
-    return `expired ${formatNearDate(item.useByDate)}`;
-  }
-  if (days === 0) {
-    return "use today";
-  }
-  if (days === 1) {
-    return "use tomorrow";
-  }
-  return `use by ${formatDay(item.useByDate)}`;
-};
-
-/**
- * UseSoonCard lists the pantry's lots to use within a few days, soonest
- * first, which the plan's suggestions favor.
- */
-const UseSoonCard: React.FC = () => {
-  const now = today();
-  const pantry = useQuery(listPantry, {});
-  let content: React.ReactNode = null;
-  if (pantry.isPending) {
-    content = <Loading />;
-  } else if (pantry.isError) {
-    content = (
-      <QueryError
-        error={pantry.error}
-        onRetry={() => {
-          void pantry.refetch();
-        }}
-      />
-    );
-  } else {
-    // The pantry is by food: insert the lots by use-by date, soonest first.
-    const soon: PantryItem[] = [];
-    for (const item of pantry.data.items) {
-      if (
-        item.useByDate !== "" &&
-        daysBetween(now, item.useByDate) <= SOON_DAYS
-      ) {
-        const at = soon.findIndex((other) => other.useByDate > item.useByDate);
-        soon.splice(at < 0 ? soon.length : at, 0, item);
-      }
-    }
-    content =
-      soon.length === 0 ? (
-        <p className="text-sm text-gray-700">
-          Nothing to use in the next {SOON_DAYS} days.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-1 text-sm">
-          {soon.map((item) => {
-            const expired = daysBetween(now, item.useByDate) < 0;
-            return (
-              <li key={item.id} className="flex flex-wrap gap-x-2">
-                <span className="font-medium text-gray-900">
-                  {item.foodName}
-                </span>
-                <span className="text-gray-600 tabular-nums">
-                  {formatStock(item.grams, item.gramsPerPiece)}
-                </span>
-                <span className={expired ? "text-red-700" : "text-amber-800"}>
-                  {describeUseBy(item, now)}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      );
-  }
-  return (
-    <Card
-      title="Use soon"
-      actions={
-        <Link to="/pantry" className={`${linkClass} text-sm`}>
-          Pantry
-        </Link>
-      }
-    >
-      {content}
-    </Card>
+                  <ExclamationTriangleIcon
+                    className="size-4 shrink-0"
+                    aria-hidden="true"
+                  />
+                  {warningTitle(warning)}: see the fix
+                </button>
+              ))}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 };
 
@@ -373,49 +344,186 @@ interface HomePageProps {
 }
 
 /**
- * HomePage is the household's week at a glance: what everyone eats today,
- * the shopping list, and what to use soon from the pantry, with the parts
- * of the app to go to.
+ * HomePage is today: one person's day as a line of meals and the cooking
+ * before them, with when the household shops next. Warnings open a sheet
+ * that explains them and offers a fix.
  */
-const HomePage: React.FC<HomePageProps> = ({ user }) => (
-  <div className="flex flex-col gap-4">
-    <PageHeader
-      title={`Hi, ${user.name}`}
-      subtitle="Vegan meal planning for the whole household."
-    />
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <TodayCard />
-      <div className="flex flex-col gap-4">
-        <ShoppingCard />
-        <UseSoonCard />
-      </div>
-      <Card title="Plan, shop and cook" className="lg:col-span-2">
-        <ul className="-my-1 grid grid-cols-1 gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
-          {PARTS.map(({ icon: Icon, title, description, to }) => (
-            <li key={to}>
-              <Link
-                to={to}
-                className="-mx-2 flex items-center gap-3 rounded px-2 py-2 hover:bg-gray-50"
-              >
-                <Icon
-                  className="size-5 shrink-0 text-brand-600"
-                  aria-hidden="true"
-                />
-                <div className="grow">
-                  <p className="font-medium text-gray-900">{title}</p>
-                  <p className="text-sm text-gray-600">{description}</p>
-                </div>
-                <ChevronRightIcon
-                  className="size-4 shrink-0 text-gray-400"
-                  aria-hidden="true"
-                />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </Card>
+const HomePage: React.FC<HomePageProps> = ({ user }) => {
+  const now = today();
+  const [params, setParams] = useSearchParams();
+  const [openWarning, setOpenWarning] = useState<OpenWarning | null>(null);
+  const week = useQuery(getWeek, { monday: startOfWeek(now) });
+  const people = useQuery(listPeople, {});
+  const recipes = useQuery(listRecipes, {});
+  const lists = useQuery(listShoppingLists, { pageSize: 10 });
+
+  const title = (
+    <div className="flex flex-col gap-1">
+      <p className="text-sm font-medium text-muted">
+        {parseDate(now).toLocaleDateString(undefined, {
+          day: "numeric",
+          month: "long",
+          weekday: "long",
+        })}
+      </p>
+      <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink-soft">
+        Today
+      </h1>
     </div>
-  </div>
-);
+  );
+
+  if (week.isPending || people.isPending) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+        {title}
+        <Loading />
+      </div>
+    );
+  }
+  const failed = week.isError ? week.error : people.error;
+  if (week.isError || people.isError) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+        {title}
+        {failed !== null && (
+          <QueryError
+            error={failed}
+            onRetry={() => {
+              void week.refetch();
+              void people.refetch();
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  const days = week.data.days.find((day) => day.date === now)?.people ?? [];
+  // The signed in user's own day comes first, unless another is chosen.
+  const mine = people.data.people.find((person) => person.userId === user.id);
+  const chosen = params.get("person") ?? mine?.id ?? days[0]?.personId ?? "";
+  const day = days.find((other) => other.personId === chosen) ?? days[0];
+  const person = people.data.people.find((other) => other.id === day?.personId);
+
+  const minutesOfRecipe = new Map<string, { minutes: number; name: string }>();
+  for (const recipe of recipes.data?.recipes ?? []) {
+    minutesOfRecipe.set(recipe.id, {
+      minutes: Math.round((recipe.prepSeconds + recipe.cookSeconds) / 60),
+      name: recipe.name,
+    });
+  }
+  const blocks =
+    day === undefined
+      ? []
+      : cookBlocksOf(
+          week.data.cooks,
+          now,
+          person?.eatingTimes ?? [],
+          minutesOfRecipe
+        ).filter((block) => {
+          // A shared meal's cook is on the line of those who eat from it.
+          const meal = block.cook.cook?.meal ?? HouseholdMeal.UNSPECIFIED;
+          return (
+            meal === HouseholdMeal.UNSPECIFIED ||
+            (person?.eatingTimes ?? []).some((et) => et.meal === meal)
+          );
+        });
+  const cookingMinutes = blocks.reduce((sum, block) => sum + block.minutes, 0);
+  const [firstBlock] = byTime(
+    blocks.filter((block) => block.start !== ""),
+    (block) => block.start
+  );
+  const list = lists.data?.lists.find(
+    (other) => !other.complete && other.startDate >= now
+  );
+  let shopText = "";
+  if (list !== undefined && daysBetween(now, list.startDate) <= 7) {
+    shopText =
+      list.startDate === now
+        ? "Shop today"
+        : `Shop ${list.startDate === addDays(now, 1) ? "tomorrow" : formatWeekday(list.startDate)}`;
+  }
+
+  return (
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+      {title}
+      {(cookingMinutes > 0 || shopText !== "") && (
+        <div className="-mt-1 flex flex-wrap gap-2">
+          {cookingMinutes > 0 && (
+            <span className="rounded-full bg-cook-tint px-3 py-1.5 text-sm font-medium text-cook-dark">
+              {cookingMinutes} min cooking
+              {firstBlock !== undefined && ` at ${firstBlock.start}`}
+            </span>
+          )}
+          {shopText !== "" && (
+            <Link
+              to="/shopping"
+              className="rounded-full bg-heat-tint px-3 py-1.5 text-sm font-medium text-heat"
+            >
+              {shopText}
+            </Link>
+          )}
+        </div>
+      )}
+      {days.length > 1 && (
+        <Segmented
+          label="Whose day"
+          value={day?.personId ?? ""}
+          options={days.map((other) => ({
+            label: other.personName,
+            value: other.personId,
+          }))}
+          onChange={(personId) => {
+            setParams({ person: personId }, { replace: true });
+          }}
+        />
+      )}
+      {day === undefined ? (
+        <EmptyState title="Nobody to plan for yet">
+          Add the people you cook for, with when they eat, on the{" "}
+          <Link to="/people" className={linkClass}>
+            People
+          </Link>{" "}
+          page, then plan the week.
+        </EmptyState>
+      ) : (
+        <>
+          <DayLine
+            day={day}
+            blocks={blocks}
+            date={now}
+            onWarning={setOpenWarning}
+          />
+          {day.eatingTimes.some(
+            (planned) => planned.portions.length === 0 && !planned.eatingOut
+          ) && (
+            <Link
+              to="/plan"
+              className="rounded-2xl border-2 border-dashed border-gray-400 px-4 py-3.5 text-center text-base text-ink-soft"
+            >
+              Plan the rest of today
+            </Link>
+          )}
+        </>
+      )}
+      {openWarning !== null && day !== undefined && (
+        <WarningSheet
+          warning={openWarning.warning}
+          personId={day.personId}
+          date={now}
+          eatingTimeId={
+            openWarning.warning.eatingTimeId === ""
+              ? ""
+              : openWarning.eatingTimeId
+          }
+          portions={day.eatingTimes.flatMap((planned) => planned.portions)}
+          onClose={() => {
+            setOpenWarning(null);
+          }}
+        />
+      )}
+    </div>
+  );
+};
 
 export default HomePage;

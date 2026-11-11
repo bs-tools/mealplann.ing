@@ -231,8 +231,8 @@ esbuild:
 .PHONY: fonts
 fonts: ## Copy the self-hosted fonts from web/node_modules into web/dist/fonts
 	mkdir -p web/dist/fonts
-	cp web/node_modules/@fontsource-variable/lexend/files/lexend-latin-wght-normal.woff2 web/dist/fonts/
 	cp web/node_modules/@fontsource/lexend-giga/files/lexend-giga-latin-700-normal.woff2 web/dist/fonts/
+	cp web/node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2 web/dist/fonts/
 
 .PHONY: tailwindcss
 tailwindcss:
