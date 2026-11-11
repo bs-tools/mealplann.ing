@@ -1,22 +1,13 @@
 import Loading from "@components/loading";
+import { useApplyFix } from "@components/plan/apply-fix";
 import Modal from "@components/ui/modal";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import { secondaryButton } from "@components/ui/styles";
-import { Code, ConnectError, createClient } from "@connectrpc/connect";
-import { useQuery, useTransport } from "@connectrpc/connect-query";
+import { useQuery } from "@connectrpc/connect-query";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { PantryService } from "gen/pantry/v1/pantry_pb";
 import type { PlannedPortion } from "gen/plans/v1/plans_pb";
-import { PlanService } from "gen/plans/v1/plans_pb";
 import { suggestFixes } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
-import type { PlanFix } from "gen/suggestions/v1/suggestions_pb";
-import {
-  PlanFixKind,
-  SuggestionService,
-} from "gen/suggestions/v1/suggestions_pb";
 import { formatAmount } from "helpers/nutrients";
-import { invalidateServices } from "helpers/query";
 import React from "react";
 
 interface FixesDialogProps {
@@ -44,74 +35,8 @@ const FixesDialog: React.FC<FixesDialogProps> = ({
   portions,
   onClose,
 }) => {
-  const queryClient = useQueryClient();
-  const transport = useTransport();
   const fixes = useQuery(suggestFixes, { date, eatingTimeId, personId });
-  const apply = useMutation<void, ConnectError, PlanFix>({
-    mutationFn: async (fix: PlanFix) => {
-      const client = createClient(PlanService, transport);
-      if (fix.kind === PlanFixKind.REMOVE) {
-        await client.deletePortion({ id: fix.portionId });
-        if (fix.deleteCookId !== "") {
-          await client.deleteCook({ id: fix.deleteCookId });
-        }
-        return;
-      }
-      // Every portion is found before any is resized.
-      const resizes = fix.resizes.map((resize) => {
-        const portion = portions.find(
-          (other) => other.portionId === resize.portionId
-        );
-        if (portion === undefined) {
-          throw new ConnectError(
-            "The portion was changed: reload the plan.",
-            Code.FailedPrecondition
-          );
-        }
-        return { portion, resize };
-      });
-      await Promise.all(
-        resizes.map(async ({ portion, resize }) =>
-          portion.cookId === ""
-            ? client.updatePortion({
-                portion: {
-                  id: resize.portionId,
-                  what: {
-                    case: "food",
-                    value: {
-                      amount: resize.amount,
-                      foodId: portion.foodId,
-                      unit: resize.unit,
-                    },
-                  },
-                },
-                updateMask: { paths: ["food"] },
-              })
-            : client.updatePortion({
-                portion: {
-                  id: resize.portionId,
-                  what: {
-                    case: "cook",
-                    value: {
-                      cookId: portion.cookId,
-                      servings: resize.servings,
-                    },
-                  },
-                },
-                updateMask: { paths: ["cook"] },
-              })
-        )
-      );
-    },
-    onSuccess: async () => {
-      await invalidateServices(queryClient, [
-        PlanService,
-        PantryService,
-        SuggestionService,
-      ]);
-      onClose();
-    },
-  });
+  const apply = useApplyFix(portions, onClose);
 
   let content: React.ReactNode = null;
   if (fixes.isPending) {

@@ -1,37 +1,37 @@
 // Shared Tailwind class names for common elements.
 
 export const primaryButton =
-  "inline-flex items-center justify-center gap-1.5 rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1.5 rounded-xl bg-ink-soft px-4 py-2.5 text-sm font-bold text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50";
 
 export const secondaryButton =
-  "inline-flex items-center justify-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-800 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-ink-soft ring-1 ring-line ring-inset hover:bg-ground-dark/50 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const dangerButton =
-  "inline-flex items-center justify-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const ghostButton =
-  "inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-muted hover:bg-ground-dark hover:text-ink-soft disabled:cursor-not-allowed disabled:opacity-50";
 
 // Destructive actions, such as deleting, in the secondary and ghost styles.
 export const secondaryDangerButton =
-  "inline-flex items-center justify-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm ring-1 ring-red-300 ring-inset hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-red-300 ring-inset hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const ghostDangerButton =
-  "inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const iconButton =
-  "inline-flex items-center justify-center rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex items-center justify-center rounded-lg p-1.5 text-muted hover:bg-ground-dark hover:text-ink-soft disabled:cursor-not-allowed disabled:opacity-40";
 
 export const inputClass =
-  "block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none";
+  "block w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-ink-soft placeholder:text-gray-500 focus:border-pine focus:ring-1 focus:ring-pine focus:outline-none";
 
-export const labelClass = "block text-xs font-medium text-gray-600";
+export const labelClass = "block text-xs font-medium text-muted";
 
 export const linkClass =
-  "font-medium text-brand-600 hover:text-brand-800 hover:underline";
+  "font-medium text-pine hover:text-pine-dark hover:underline";
 
 export const cardClass =
-  "rounded-lg border border-gray-200 bg-white shadow-sm print:shadow-none";
+  "rounded-2xl border border-line bg-white print:border-gray-300";
 
 export const tableClass = "min-w-full divide-y divide-gray-200 text-sm";
 
@@ -45,8 +45,26 @@ export const tdClass = "px-2 py-2 align-top text-gray-800";
  * week, filled when chosen.
  */
 export const choiceClass = (active: boolean): string =>
-  `rounded-md px-3 py-1 text-sm font-medium ring-1 ring-inset ${
+  `rounded-full px-3 py-1.5 text-sm font-medium ring-1 ring-inset ${
     active
-      ? "bg-ink text-white ring-ink"
-      : "bg-white text-gray-700 ring-gray-300 hover:bg-gray-50"
+      ? "bg-ink-soft font-bold text-white ring-ink-soft"
+      : "bg-white text-ink-soft ring-line hover:bg-ground-dark/50"
   }`;
+
+// SegmentedClass styles the track of a segmented control.
+export const segmentedClass = "flex rounded-xl bg-ground-dark p-[3px]";
+
+/**
+ * SegmentClass styles a segment of a segmented control, a white tab
+ * sliding over the track when chosen.
+ */
+export const segmentClass = (active: boolean): string =>
+  `flex-1 rounded-[10px] px-2 py-2 text-sm whitespace-nowrap ${
+    active
+      ? "bg-white font-bold text-ink-soft shadow-sm"
+      : "text-muted hover:text-ink-soft"
+  }`;
+
+// SectionLabelClass styles the small uppercase label above a section.
+export const sectionLabelClass =
+  "text-xs font-bold tracking-[0.08em] text-muted uppercase";
