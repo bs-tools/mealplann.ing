@@ -284,7 +284,7 @@ func (d *planData) fixCandidates(p *people.Person, date time.Time, eatingTimeID 
 		has := false
 		for i, it := range items {
 			portion := it.portion
-			if portion == nil {
+			if portion == nil || portion.Eaten {
 				continue
 			}
 			has = true
@@ -342,7 +342,7 @@ func (d *planData) fixCandidates(p *people.Person, date time.Time, eatingTimeID 
 			}
 			items := slices.Clone(d.items[s.slot])
 			for i, it := range items {
-				if it.portion == nil {
+				if it.portion == nil || it.portion.Eaten {
 					continue
 				}
 				resized, text, ok := resizePortion(it.portion, factor)

@@ -124,6 +124,23 @@ service PlanService {
   rpc UpdatePortion(UpdatePortionRequest) returns (UpdatePortionResponse);
   // Delete a portion.
   rpc DeletePortion(DeletePortionRequest) returns (DeletePortionResponse);
+  // Mark a portion eaten, or not, as the day goes, so the day shows
+  // what's eaten and what's left. A portion of a food is taken out of the
+  // pantry, from the lots that expire first, as far as it's in stock, and
+  // un-marking it puts back what it took; shopping lists don't buy it. A
+  // share of a cook is only marked: the cook took its ingredients when it
+  // was marked done (see UpdateCook). Marking a portion already marked
+  // does nothing.
+  rpc SetPortionEaten(SetPortionEatenRequest) returns (SetPortionEatenResponse);
+  // Move a cook to another date and shared meal, like tonight's dinner to
+  // tomorrow's when plans change. Its portions at its own date and meal
+  // move with it, to each person's eating time of the new meal, or are
+  // removed for people without one. Its other portions eaten before it's
+  // now cooked, on an earlier date or earlier on the same date, are
+  // removed, as they can't come from it any more. With preview, nothing
+  // changes, and the response says what would. Fails with
+  // FAILED_PRECONDITION if the cook is done: un-mark it first.
+  rpc MoveCook(MoveCookRequest) returns (MoveCookResponse);
   // Create a staple: a portion a person eats regularly at one of their
   // eating times, on chosen weekdays.
   rpc CreateStaple(CreateStapleRequest) returns (CreateStapleResponse);
@@ -313,6 +330,8 @@ message Portion {
   // out of the freezer with TakeFromFreezer, whatever its date. Portions
   // after the recipe's fridge_days come from the freezer too.
   bool from_freezer = 11 [(mcp.v1.field).output_only = true];
+  // Whether it was marked eaten, with SetPortionEaten.
+  bool eaten = 12 [(mcp.v1.field).output_only = true];
 }
 
 // Weekday is a day of the week.
@@ -588,8 +607,8 @@ message PlannedPortion {
   bool leftover = 13;
   // The notes of the portion or staple.
   string notes = 14;
-  // Whether the staple was marked eaten on the date (see SetStapleEaten),
-  // which took its food out of the pantry. False for a portion.
+  // Whether it was marked eaten: a staple on the date, with
+  // SetStapleEaten, or a portion, with SetPortionEaten.
   bool eaten = 15;
 }
 
@@ -868,6 +887,46 @@ message DeletePortionRequest {
 }
 
 message DeletePortionResponse {}
+
+message SetPortionEatenRequest {
+  // The ID of the portion. Required.
+  string id = 1;
+  // Whether it was eaten: false to un-mark it.
+  bool eaten = 2;
+}
+
+message SetPortionEatenResponse {
+  // The portion.
+  Portion portion = 1;
+  // What marking it took out of the pantry, or un-marking it put back.
+  repeated PantryChange pantry_changes = 2;
+  // Whether un-marking it put something back.
+  bool pantry_restored = 3;
+}
+
+message MoveCookRequest {
+  // The ID of the cook. Required.
+  string id = 1;
+  // The date to cook it on (YYYY-MM-DD). Required.
+  string date = 2;
+  // The shared meal it's for, HOUSEHOLD_MEAL_UNSPECIFIED for none, like a
+  // cook made ahead.
+  people.v1.HouseholdMeal meal = 3;
+  // Whether to only say what moving it would do, changing nothing.
+  bool preview = 4;
+}
+
+message MoveCookResponse {
+  // The cook, moved, or as it would be.
+  Cook cook = 1;
+  // The portions moving with it, where they move to.
+  repeated Portion moved_portions = 2;
+  // The portions removed, as they'd be eaten before it's cooked, or
+  // their person doesn't eat the new meal.
+  repeated Portion removed_portions = 3;
+  // Whether it's a preview, and nothing changed.
+  bool previewed = 4;
+}
 
 message CreateStapleRequest {
   // The staple.

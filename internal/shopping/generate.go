@@ -37,7 +37,8 @@ type Need struct {
 // ingredients of the cooks not yet done, scaled to their servings, with
 // their components made of their own ingredients unless another cook
 // supplies them, which buys its own, the
-// portions of foods, and the staples on each date not marked eaten, with
+// portions of foods not marked eaten, and the staples on each date not
+// marked eaten, with
 // recipe staples contributing their scaled ingredients. Optional ingredients are left
 // out. Shares of cooks aren't counted, as the cook is bought for once.
 // recipes are the plan's recipes by ID; a recipe missing from it is left
@@ -62,7 +63,8 @@ func NeedsOf(plan *plans.Plan, byID map[pgtype.UUID]*recipes.Recipe) []Need {
 		}
 	}
 	for _, p := range plan.Portions {
-		if p.FoodID.Valid {
+		// A portion of a food marked eaten is out of the pantry already.
+		if p.FoodID.Valid && !p.Eaten {
 			needs = append(needs, Need{FoodID: p.FoodID, Date: p.Date, Amount: p.Amount, Unit: p.Unit})
 		}
 	}

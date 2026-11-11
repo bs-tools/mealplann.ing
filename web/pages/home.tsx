@@ -1,4 +1,5 @@
 import Loading from "@components/loading";
+import MealSheet from "@components/today/meal-sheet";
 import {
   CookDot,
   EffortDot,
@@ -199,13 +200,21 @@ interface DayLineProps {
   blocks: CookBlock[];
   date: string;
   onWarning: (open: OpenWarning) => void;
+  // Opens a meal, to change it.
+  onMeal: (planned: PlannedEatingTime) => void;
 }
 
 /**
  * DayLine is a person's day as a vertical line of their meals and the
  * cooking before them, in time order, each marked with how much work it is.
  */
-const DayLine: React.FC<DayLineProps> = ({ day, blocks, date, onWarning }) => {
+const DayLine: React.FC<DayLineProps> = ({
+  day,
+  blocks,
+  date,
+  onWarning,
+  onMeal,
+}) => {
   const warnings = warningsOf(day);
   let entries: Entry[] = [
     ...day.eatingTimes.map((planned): Entry => ({
@@ -278,43 +287,37 @@ const DayLine: React.FC<DayLineProps> = ({ day, blocks, date, onWarning }) => {
               <EffortDot effort={effort} eaten={eaten} />
             </span>
             <div className="flex min-w-0 grow flex-col gap-1">
-              <span className="text-xs font-medium text-muted">{et?.name}</span>
-              {planned.portions.length === 0 ? (
-                <span className="text-base text-muted">
-                  {effortText(effort, planned)}
+              <button
+                type="button"
+                className="flex flex-col gap-1 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-pine"
+                onClick={() => {
+                  onMeal(planned);
+                }}
+              >
+                <span className="text-xs font-medium text-muted">
+                  {et?.name}
                 </span>
-              ) : (
-                <>
-                  <span
-                    className={`text-base font-medium ${eaten ? "text-muted line-through" : "text-ink-soft"}`}
-                  >
-                    {planned.portions.map((portion, index) => (
-                      <React.Fragment
-                        key={
-                          portion.portionId === ""
-                            ? `staple-${portion.stapleId}`
-                            : portion.portionId
-                        }
-                      >
-                        {index > 0 && ", "}
-                        {portion.recipeId === "" ? (
-                          portion.name
-                        ) : (
-                          <Link
-                            to={`/recipes/${portion.recipeId}`}
-                            className="hover:underline"
-                          >
-                            {portion.name}
-                          </Link>
-                        )}
-                      </React.Fragment>
-                    ))}
+                {planned.portions.length === 0 ? (
+                  <span className="text-base text-muted">
+                    {effortText(effort, planned)}
                   </span>
-                  <span className={`text-sm ${EFFORT_TEXT_CLASS[effort]}`}>
-                    {eaten ? "Eaten" : effortText(effort, planned)}
-                  </span>
-                </>
-              )}
+                ) : (
+                  <>
+                    <span
+                      className={`text-base font-medium ${eaten ? "text-muted line-through" : "text-ink-soft"}`}
+                    >
+                      {planned.portions
+                        .map((portion) => portion.name)
+                        .join(", ")}
+                    </span>
+                    <span
+                      className={`text-sm ${eaten ? "text-ready" : EFFORT_TEXT_CLASS[effort]}`}
+                    >
+                      {eaten ? "Eaten" : effortText(effort, planned)}
+                    </span>
+                  </>
+                )}
+              </button>
               {own.map((warning) => (
                 <button
                   key={`${warning.kind}-${warning.nutrient}-${warning.message}`}
@@ -352,6 +355,8 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
   const now = today();
   const [params, setParams] = useSearchParams();
   const [openWarning, setOpenWarning] = useState<OpenWarning | null>(null);
+  // The meal opened, to change it, by its eating time's ID.
+  const [openMeal, setOpenMeal] = useState("");
   const week = useQuery(getWeek, { monday: startOfWeek(now) });
   const people = useQuery(listPeople, {});
   const recipes = useQuery(listRecipes, {});
@@ -423,9 +428,16 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
         ).filter((block) => {
           // A shared meal's cook is on the line of those who eat from it.
           const meal = block.cook.cook?.meal ?? HouseholdMeal.UNSPECIFIED;
-          return (
+          const eats =
             meal === HouseholdMeal.UNSPECIFIED ||
-            (person?.eatingTimes ?? []).some((et) => et.meal === meal)
+            (person?.eatingTimes ?? []).some((et) => et.meal === meal);
+          // Once its portions today are eaten, there's no cooking left.
+          const todays = day.eatingTimes
+            .flatMap((planned) => planned.portions)
+            .filter((portion) => portion.cookId === block.cook.cook?.id);
+          return (
+            eats &&
+            (todays.length === 0 || todays.some((portion) => !portion.eaten))
           );
         });
   const cookingMinutes = blocks.reduce((sum, block) => sum + block.minutes, 0);
@@ -493,6 +505,9 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
             blocks={blocks}
             date={now}
             onWarning={setOpenWarning}
+            onMeal={(planned) => {
+              setOpenMeal(planned.eatingTime?.id ?? "");
+            }}
           />
           {day.eatingTimes.some(
             (planned) => planned.portions.length === 0 && !planned.eatingOut
@@ -504,8 +519,33 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
               Plan the rest of today
             </Link>
           )}
+          <Link
+            to={`/today/change?person=${day.personId}&date=${now}`}
+            className="rounded-2xl border-2 border-dashed border-gray-400 px-4 py-3.5 text-center text-base text-ink-soft"
+          >
+            + I ate something else
+          </Link>
         </>
       )}
+      {openMeal !== "" &&
+        day !== undefined &&
+        (() => {
+          const planned = day.eatingTimes.find(
+            (other) => other.eatingTime?.id === openMeal
+          );
+          return planned === undefined ? null : (
+            <MealSheet
+              week={week.data}
+              day={day}
+              planned={planned}
+              date={now}
+              today={now}
+              onClose={() => {
+                setOpenMeal("");
+              }}
+            />
+          );
+        })()}
       {openWarning !== null && day !== undefined && (
         <WarningSheet
           warning={openWarning.warning}

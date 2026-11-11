@@ -287,6 +287,28 @@ func (r *Repository) UseForStaple(ctx context.Context, householdID, stapleID pgt
 	return deductions, nil
 }
 
+// UseForPortion takes a portion of a food marked eaten out of a
+// household's pantry, like UseForStaple, so RestoreForPortion can put it
+// back. It returns nothing if the portion was already marked eaten.
+func (r *Repository) UseForPortion(ctx context.Context, householdID, portionID pgtype.UUID, uses []Use) ([]Deduction, error) {
+	deductions, err := r.use(ctx, householdID, uses,
+		func(q *gen.Queries) (int64, error) {
+			return q.CreatePortionPantryUse(ctx, &gen.CreatePortionPantryUseParams{PortionID: portionID, HouseholdID: householdID})
+		},
+		func(q *gen.Queries, l *lotDetails) {
+			_ = q.CreatePortionPantryDeductions(ctx, &gen.CreatePortionPantryDeductionsParams{
+				PortionID: portionID, HouseholdID: householdID,
+				PantryItemIds: l.ids, FoodIds: l.foodIDs, Grams: l.grams, ExpiryDates: l.expiryDates,
+				OpenedDates: l.openedDates, Notes: l.notes, Storages: l.storages, Locations: l.locations,
+				FrozenDates: l.frozenDates, Opened: l.opened, Estimated: l.estimated, Labels: l.labels,
+			})
+		})
+	if err != nil {
+		return nil, fmt.Errorf("failed to take a portion's food out of the pantry: %w", err)
+	}
+	return deductions, nil
+}
+
 // lotDetails are what was taken out of lots, with the lots' details to
 // recreate them, as the arrays the queries recording it take.
 type lotDetails struct {
@@ -416,6 +438,22 @@ func (r *Repository) RestoreForStaple(ctx context.Context, householdID, stapleID
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to put a staple's food back into the pantry: %w", err)
+	}
+	deducted := make([]Use, 0, len(rows))
+	for _, row := range rows {
+		deducted = append(deducted, Use(*row))
+	}
+	return byFood(deducted), nil
+}
+
+// RestoreForPortion puts back what a portion marked eaten took out of a
+// household's pantry, like RestoreForStaple.
+func (r *Repository) RestoreForPortion(ctx context.Context, householdID, portionID pgtype.UUID) ([]Use, error) {
+	rows, err := gen.New(r.db).RestorePortionPantryUse(ctx, &gen.RestorePortionPantryUseParams{
+		PortionID: portionID, HouseholdID: householdID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to put a portion's food back into the pantry: %w", err)
 	}
 	deducted := make([]Use, 0, len(rows))
 	for _, row := range rows {

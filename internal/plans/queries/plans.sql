@@ -199,6 +199,22 @@ where id = @id and household_id = @household_id;
 -- name: DeletePortion :execrows
 delete from portions where id = @id and household_id = @household_id;
 
+-- name: ListCookPortionIDs :many
+-- The IDs of a cook's portions.
+select id from portions
+where household_id = @household_id and cook_id = @cook_id
+order by date, create_time, id;
+
+-- name: MovePortion :exec
+-- Moves a portion to another date and eating time of its person.
+update portions set date = @date, eating_time_id = @eating_time_id, update_time = now()
+where id = @id and household_id = @household_id;
+
+-- name: SetPortionEaten :execrows
+-- Marks a portion eaten, or not.
+update portions set eaten = @eaten, update_time = now()
+where id = @id and household_id = @household_id;
+
 -- name: ListPortions :many
 -- The household's portions, given by ID or eaten in a range of dates, with
 -- the name of their recipe or food, and their cook's date and recipe.

@@ -836,6 +836,30 @@ type Portion struct {
 	CreateTime   pgtype.Timestamptz
 	UpdateTime   pgtype.Timestamptz
 	FromFreezer  bool
+	Eaten        bool
+}
+
+type PortionPantryDeduction struct {
+	PortionID    pgtype.UUID
+	HouseholdID  pgtype.UUID
+	PantryItemID pgtype.UUID
+	FoodID       pgtype.UUID
+	Grams        float64
+	ExpiryDate   pgtype.Date
+	OpenedDate   pgtype.Date
+	Notes        string
+	Storage      NullPantryStorage
+	Location     string
+	FrozenDate   pgtype.Date
+	Opened       bool
+	Estimated    bool
+	Label        string
+}
+
+type PortionPantryUse struct {
+	PortionID   pgtype.UUID
+	HouseholdID pgtype.UUID
+	CreateTime  pgtype.Timestamptz
 }
 
 type Recipe struct {

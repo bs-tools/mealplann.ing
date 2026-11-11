@@ -156,6 +156,90 @@ func (q *Queries) CreatePantryItems(ctx context.Context, arg *CreatePantryItemsP
 	return result.RowsAffected(), nil
 }
 
+const createPortionPantryDeductions = `-- name: CreatePortionPantryDeductions :exec
+insert into portion_pantry_deductions (
+  portion_id, household_id, pantry_item_id, food_id, grams, expiry_date, opened_date, notes,
+  storage, location, frozen_date, opened, estimated, label
+)
+select
+  $1,
+  $2,
+  ($3::uuid[])[i],
+  ($4::uuid[])[i],
+  ($5::double precision[])[i],
+  ($6::date[])[i],
+  ($7::date[])[i],
+  ($8::text[])[i],
+  nullif(($9::text[])[i], '')::pantry_storage,
+  ($10::text[])[i],
+  ($11::date[])[i],
+  ($12::boolean[])[i],
+  ($13::boolean[])[i],
+  ($14::text[])[i]
+from generate_subscripts($3::uuid[], 1) as i
+`
+
+type CreatePortionPantryDeductionsParams struct {
+	PortionID     pgtype.UUID
+	HouseholdID   pgtype.UUID
+	PantryItemIds []pgtype.UUID
+	FoodIds       []pgtype.UUID
+	Grams         []float64
+	ExpiryDates   []pgtype.Date
+	OpenedDates   []pgtype.Date
+	Notes         []string
+	Storages      []string
+	Locations     []string
+	FrozenDates   []pgtype.Date
+	Opened        []bool
+	Estimated     []bool
+	Labels        []string
+}
+
+// Records what a portion marked eaten took out of each lot, given as
+// arrays.
+func (q *Queries) CreatePortionPantryDeductions(ctx context.Context, arg *CreatePortionPantryDeductionsParams) error {
+	_, err := q.db.Exec(ctx, createPortionPantryDeductions,
+		arg.PortionID,
+		arg.HouseholdID,
+		arg.PantryItemIds,
+		arg.FoodIds,
+		arg.Grams,
+		arg.ExpiryDates,
+		arg.OpenedDates,
+		arg.Notes,
+		arg.Storages,
+		arg.Locations,
+		arg.FrozenDates,
+		arg.Opened,
+		arg.Estimated,
+		arg.Labels,
+	)
+	return err
+}
+
+const createPortionPantryUse = `-- name: CreatePortionPantryUse :execrows
+insert into portion_pantry_uses (portion_id, household_id)
+select p.id, p.household_id from portions p
+where p.id = $1 and p.household_id = $2
+on conflict do nothing
+`
+
+type CreatePortionPantryUseParams struct {
+	PortionID   pgtype.UUID
+	HouseholdID pgtype.UUID
+}
+
+// Records that a portion of a food marked eaten took it out of the pantry,
+// unless it already did, which affects no rows.
+func (q *Queries) CreatePortionPantryUse(ctx context.Context, arg *CreatePortionPantryUseParams) (int64, error) {
+	result, err := q.db.Exec(ctx, createPortionPantryUse, arg.PortionID, arg.HouseholdID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const createStaplePantryDeductions = `-- name: CreateStaplePantryDeductions :exec
 insert into staple_pantry_deductions (
   staple_id, date, household_id, pantry_item_id, food_id, grams, expiry_date, opened_date, notes,
@@ -477,6 +561,65 @@ func (q *Queries) RestoreCookPantryUse(ctx context.Context, arg *RestoreCookPant
 	var items []*RestoreCookPantryUseRow
 	for rows.Next() {
 		var i RestoreCookPantryUseRow
+		if err := rows.Scan(&i.FoodID, &i.Grams); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const restorePortionPantryUse = `-- name: RestorePortionPantryUse :many
+with used as (
+  delete from portion_pantry_uses u
+  where u.portion_id = $1 and u.household_id = $2
+  returning u.portion_id
+), restored as (
+  select d.portion_id, d.household_id, d.pantry_item_id, d.food_id, d.grams, d.expiry_date, d.opened_date, d.notes, d.storage, d.location, d.frozen_date, d.opened, d.estimated, d.label from portion_pantry_deductions d
+  join used on used.portion_id = d.portion_id
+), put_back as (
+  insert into pantry_items (
+    id, household_id, food_id, grams, expiry_date, opened_date, notes,
+    storage, location, frozen_date, opened, estimated, label
+  )
+  select
+    r.pantry_item_id, r.household_id, r.food_id, r.grams, r.expiry_date, r.opened_date, r.notes,
+    r.storage, r.location, r.frozen_date, r.opened, r.estimated, r.label
+  from restored r
+  on conflict (id) do update set
+    grams = pantry_items.grams + excluded.grams,
+    update_time = now()
+  returning pantry_items.id
+)
+select r.food_id, r.grams from restored r
+order by r.food_id, r.pantry_item_id
+`
+
+type RestorePortionPantryUseParams struct {
+	PortionID   pgtype.UUID
+	HouseholdID pgtype.UUID
+}
+
+type RestorePortionPantryUseRow struct {
+	FoodID pgtype.UUID
+	Grams  float64
+}
+
+// Puts back what a portion marked eaten took out of the pantry, like
+// RestoreStaplePantryUse, and forgets that it took it. Returns the
+// deductions put back, none if it took nothing out.
+func (q *Queries) RestorePortionPantryUse(ctx context.Context, arg *RestorePortionPantryUseParams) ([]*RestorePortionPantryUseRow, error) {
+	rows, err := q.db.Query(ctx, restorePortionPantryUse, arg.PortionID, arg.HouseholdID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*RestorePortionPantryUseRow
+	for rows.Next() {
+		var i RestorePortionPantryUseRow
 		if err := rows.Scan(&i.FoodID, &i.Grams); err != nil {
 			return nil, err
 		}

@@ -60,6 +60,9 @@ type PlanRepository interface {
 	CreatePortion(ctx context.Context, p *plans.Portion) (*plans.Portion, error)
 	UpdatePortion(ctx context.Context, p *plans.Portion) (*plans.Portion, error)
 	DeletePortion(ctx context.Context, householdID, id pgtype.UUID) error
+	SetPortionEaten(ctx context.Context, householdID, id pgtype.UUID, eaten bool) error
+	ListCookPortions(ctx context.Context, householdID, cookID pgtype.UUID) ([]*plans.Portion, error)
+	MoveCook(ctx context.Context, c *plans.Cook, moves []plans.PortionMove, deletes []pgtype.UUID) (*plans.Cook, error)
 	GetStaple(ctx context.Context, householdID, id pgtype.UUID) (*plans.Staple, error)
 	ListStaples(ctx context.Context, householdID, personID pgtype.UUID) ([]*plans.Staple, error)
 	CreateStaple(ctx context.Context, s *plans.Staple) (*plans.Staple, error)
@@ -95,6 +98,8 @@ type PantryRepository interface {
 	RestoreForCook(ctx context.Context, householdID, cookID pgtype.UUID) ([]pantry.Use, error)
 	UseForStaple(ctx context.Context, householdID, stapleID pgtype.UUID, date time.Time, uses []pantry.Use) ([]pantry.Deduction, error)
 	RestoreForStaple(ctx context.Context, householdID, stapleID pgtype.UUID, date time.Time) ([]pantry.Use, error)
+	UseForPortion(ctx context.Context, householdID, portionID pgtype.UUID, uses []pantry.Use) ([]pantry.Deduction, error)
+	RestoreForPortion(ctx context.Context, householdID, portionID pgtype.UUID) ([]pantry.Use, error)
 }
 
 // ShoppingRepository reads the shopping lists, whose shop suggestions
@@ -142,7 +147,7 @@ func NewService(log *slog.Logger, report *errreport.Reporter, plans PlanReposito
 // The fields of the plan's resources updates don't change.
 var (
 	cookKeepFields    = []protoreflect.Name{"id", "recipe_name", "create_time", "update_time"}
-	portionKeepFields = []protoreflect.Name{"id", "name", "create_time", "update_time"}
+	portionKeepFields = []protoreflect.Name{"id", "name", "eaten", "create_time", "update_time"}
 	stapleKeepFields  = []protoreflect.Name{"id", "name", "skipped_dates", "create_time", "update_time"}
 )
 
