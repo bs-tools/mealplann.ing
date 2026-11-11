@@ -6,15 +6,14 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect/v2"
 	"github.com/bs-tools/mealplann.ing/internal/authn"
-	"github.com/bs-tools/mealplann.ing/internal/foods"
 	plansv1 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
 	suggestionsv1 "github.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1"
 	"github.com/bs-tools/mealplann.ing/internal/nutrition"
-	"github.com/bs-tools/mealplann.ing/internal/pantry"
 	"github.com/bs-tools/mealplann.ing/internal/people"
 	"github.com/bs-tools/mealplann.ing/internal/plans"
 	"github.com/bs-tools/mealplann.ing/internal/rules"
@@ -23,24 +22,24 @@ import (
 )
 
 const (
-	// maxFixes is the most fixes returned, and maxFixesPerKind the most of
-	// one kind, so a few resizes don't crowd out a replacement.
-	maxFixes        = 6
-	maxFixesPerKind = 2
-	// maxFixFoods is the most pantry foods tried as additions, those to
-	// use first.
-	maxFixFoods = 40
-	// fixGrams are the amounts of a pantry food tried as an addition.
-	fixGramsSmall  = 50
-	fixGramsMedium = 100
-	fixGramsLarge  = 150
+	// maxFixes is the most fixes returned, and maxRemovals the most that
+	// leave a portion out, so resizes, which keep what's planned, come
+	// first.
+	maxFixes    = 6
+	maxRemovals = 2
 	// maxWarningDistance caps how far past its limit a warning counts, so
 	// one far-off value doesn't outweigh the rest.
 	maxWarningDistance = 3
+	// resizeStep is the step of the factors portions are tried resized by:
+	// one portion from minPortionFactor to maxPortionFactor of its size,
+	// or all of them together, from minScaleFactor to maxScaleFactor. All
+	// together changes each less, so it's kept closer to as planned.
+	resizeStep       = 0.05
+	minPortionFactor = 0.4
+	maxPortionFactor = 2
+	minScaleFactor   = 0.5
+	maxScaleFactor   = 1.5
 )
-
-// fixResizes are the factors portions are tried resized by.
-var fixResizes = []float64{0.5, 2.0 / 3, 0.75, 1.25, 1.5}
 
 // fixWarning is a warning of a person's day, with the eating time it's
 // about, invalid for the day's targets.
@@ -58,23 +57,17 @@ func (w *fixWarning) key() string {
 type candidateFix struct {
 	kind        suggestionsv1.PlanFixKind
 	description string
-	// slot is the eating time it changes, and items what's planned there
-	// after it.
-	slot  plans.Slot
-	items []*item
-	// portion is the portion it removes, resizes or replaces.
+	// changes are what it plans at each eating time it changes, after it.
+	changes map[plans.Slot][]*item
+	// portion is the portion it removes, and resizes the portions it
+	// resizes, at their new sizes.
 	portion *plans.Portion
-	// recipe or food, with servings or amount and unit, is what it adds,
-	// replaces with, or resizes to.
-	recipe   pgtype.UUID
-	food     pgtype.UUID
-	servings float64
-	amount   float64
-	unit     nutrition.Unit
+	resizes []*plans.Portion
+	// eatingTimeID is the eating time it changes, if only one.
+	eatingTimeID pgtype.UUID
 	// gramsChanged is how much it changes, for ties.
 	gramsChanged float64
-	// deleteCook is the cook to delete with the portion it removes or
-	// replaces.
+	// deleteCook is the cook to delete with the portion it removes.
 	deleteCook pgtype.UUID
 
 	warnings []fixWarning
@@ -101,7 +94,7 @@ func (s *Service) SuggestFixes(ctx context.Context, req *suggestionsv1.SuggestFi
 			return nil, err
 		}
 	}
-	d, _, lots, err := s.loadSuggestionData(ctx, user.HouseholdID(), date, date)
+	d, _, _, err := s.loadSuggestionData(ctx, user.HouseholdID(), date, date)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to read plan", "")
 	}
@@ -114,11 +107,6 @@ func (s *Service) SuggestFixes(ctx context.Context, req *suggestionsv1.SuggestFi
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
 			"eating_time_id isn't one of %s's eating times; find them with ListPeople", p.Name)
 	}
-	pantryFoods, err := s.fixFoods(ctx, d, user.HouseholdID(), lots)
-	if err != nil {
-		return nil, s.toConnectError(ctx, err, "failed to read foods", "")
-	}
-
 	planned, plannedEnergy := d.dayWarnings(p, date)
 	resp := suggestionsv1.SuggestFixesResponse_builder{}
 	for _, w := range planned {
@@ -130,74 +118,22 @@ func (s *Service) SuggestFixes(ctx context.Context, req *suggestionsv1.SuggestFi
 		return resp.Build(), nil
 	}
 	base := badness(planned)
-	var fixes []*candidateFix
-	for _, cand := range d.fixCandidates(p, date, eatingTimeID, planned, pantryFoods) {
-		original := d.items[cand.slot]
-		d.items[cand.slot] = cand.items
-		cand.warnings, cand.energy = d.dayWarnings(p, date)
-		d.items[cand.slot] = original
-		cand.badness = badness(cand.warnings)
-		if cand.badness < base-1e-6 {
-			fixes = append(fixes, cand)
-		}
-	}
-	slices.SortStableFunc(fixes, func(a, b *candidateFix) int {
-		if c := cmp.Compare(len(a.warnings), len(b.warnings)); c != 0 {
-			return c
-		}
-		if c := cmp.Compare(math.Round(a.badness*100), math.Round(b.badness*100)); c != 0 {
-			return c
-		}
-		return cmp.Compare(a.gramsChanged, b.gramsChanged)
-	})
-	perKind := map[suggestionsv1.PlanFixKind]int{}
+	fixes := d.fixCandidates(p, date, eatingTimeID, planned, base)
+	sortFixes(fixes)
+	removals := 0
 	for _, f := range fixes {
 		if len(resp.Fixes) == maxFixes {
 			break
 		}
-		if perKind[f.kind] == maxFixesPerKind {
-			continue
+		if f.kind == suggestionsv1.PlanFixKind_PLAN_FIX_KIND_REMOVE {
+			if removals == maxRemovals {
+				continue
+			}
+			removals++
 		}
-		perKind[f.kind]++
 		resp.Fixes = append(resp.Fixes, f.toProto(planned, p.ID, date, plannedEnergy))
 	}
 	return resp.Build(), nil
-}
-
-// fixFoods returns the pantry's foods to try adding, those to use first
-// first, reading the foods the plan read doesn't have.
-func (s *Service) fixFoods(ctx context.Context, d *planData, householdID pgtype.UUID, lots []*pantry.Item) ([]*foods.Food, error) {
-	sorted := slices.Clone(lots)
-	pantry.SortByUseBy(sorted)
-	var ids, missing []pgtype.UUID
-	for _, lot := range sorted {
-		if slices.Contains(ids, lot.FoodID) {
-			continue
-		}
-		ids = append(ids, lot.FoodID)
-		if _, ok := d.foods[lot.FoodID]; !ok {
-			missing = append(missing, lot.FoodID)
-		}
-		if len(ids) == maxFixFoods {
-			break
-		}
-	}
-	if len(missing) > 0 {
-		found, err := s.foods.ListFoodsByID(ctx, householdID, missing)
-		if err != nil {
-			return nil, err
-		}
-		for _, f := range found {
-			d.foods[f.ID] = f
-		}
-	}
-	list := make([]*foods.Food, 0, len(ids))
-	for _, id := range ids {
-		if f, ok := d.foods[id]; ok {
-			list = append(list, f)
-		}
-	}
-	return list, nil
 }
 
 // dayWarnings checks a person's day as planned in d.items: each eating
@@ -256,8 +192,8 @@ func badness(warnings []fixWarning) float64 {
 	return total
 }
 
-// lowWarning reports whether a warning is fixed by eating more: a
-// minimum, or carbohydrate needing protein or fat with it.
+// lowWarning reports whether a warning wants more food: a minimum, or
+// carbohydrate needing protein or fat with it.
 func lowWarning(w *fixWarning) bool {
 	switch w.Kind {
 	case rules.ProteinLow, rules.CarbohydrateUnpaired, rules.TargetLow:
@@ -267,75 +203,174 @@ func lowWarning(w *fixWarning) bool {
 	}
 }
 
-// fixCandidates returns the changes to try at a person's eating time, or
-// at each of the day's eating times with portions: leaving out, resizing
-// or replacing each portion, and if some warning wants more food, adding
-// a recipe or a pantry food.
-func (d *planData) fixCandidates(p *people.Person, date time.Time, eatingTimeID pgtype.UUID, planned []fixWarning, pantryFoods []*foods.Food) []*candidateFix {
-	wantsMore := slices.ContainsFunc(planned, func(w fixWarning) bool {
-		return lowWarning(&w) && (!w.eatingTimeID.Valid || !eatingTimeID.Valid || w.eatingTimeID == eatingTimeID)
+// sortFixes sorts fixes best first: those leaving the fewest warnings,
+// then resizes before leaving portions out, as they keep what's planned,
+// then closest to the rules and targets, then the smallest.
+func sortFixes(fixes []*candidateFix) {
+	removes := func(f *candidateFix) bool { return f.kind == suggestionsv1.PlanFixKind_PLAN_FIX_KIND_REMOVE }
+	slices.SortStableFunc(fixes, func(a, b *candidateFix) int {
+		if c := cmp.Compare(len(a.warnings), len(b.warnings)); c != 0 {
+			return c
+		}
+		if a, b := removes(a), removes(b); a != b {
+			if a {
+				return 1
+			}
+			return -1
+		}
+		if c := cmp.Compare(math.Round(a.badness*100), math.Round(b.badness*100)); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.gramsChanged, b.gramsChanged)
 	})
-	var candidates []*candidateFix
+}
+
+// try checks a person's day with a candidate's changes, and reports
+// whether it's better than base.
+func (d *planData) try(p *people.Person, date time.Time, c *candidateFix, base float64) bool {
+	original := make(map[plans.Slot][]*item, len(c.changes))
+	for slot, items := range c.changes {
+		original[slot] = d.items[slot]
+		d.items[slot] = items
+	}
+	c.warnings, c.energy = d.dayWarnings(p, date)
+	for slot, items := range original {
+		d.items[slot] = items
+	}
+	c.badness = badness(c.warnings)
+	return c.badness < base-1e-6
+}
+
+// best returns the best of candidates better than base, or nil.
+func (d *planData) best(p *people.Person, date time.Time, candidates []*candidateFix, base float64) *candidateFix {
+	var better []*candidateFix
+	for _, c := range candidates {
+		if d.try(p, date, c, base) {
+			better = append(better, c)
+		}
+	}
+	if len(better) == 0 {
+		return nil
+	}
+	sortFixes(better)
+	return better[0]
+}
+
+// fixCandidates returns the changes better than base at a person's eating
+// time, or at the day's eating times with portions: for each portion, the
+// best resize of it and leaving it out, and the best scaling of all of
+// them together, smaller or larger. Scaling leaves out the eating times
+// whose own warnings want the other way, like a snack short of protein
+// when the day is over its energy maximum. Only portion sizes change: swapping in other recipes or
+// foods suggested things nobody would eat at that meal, like a pot of
+// beans for breakfast.
+func (d *planData) fixCandidates(p *people.Person, date time.Time, eatingTimeID pgtype.UUID, planned []fixWarning, base float64) []*candidateFix {
+	var fixes []*candidateFix
+	// scalable are the portions to scale together, by eating time.
+	type scalable struct {
+		et   *people.EatingTime
+		slot plans.Slot
+		// more and less are whether its warnings want more or less food.
+		more, less bool
+	}
+	var all []scalable
+	portions := 0
 	for _, et := range p.EatingTimes {
 		if eatingTimeID.Valid && et.ID != eatingTimeID {
 			continue
 		}
 		slot := plans.Slot{PersonID: p.ID, EatingTimeID: et.ID, Date: date}
 		items := d.items[slot]
-		if len(items) == 0 {
-			continue
-		}
-		// Recipes at the eating time already aren't added again.
-		var there []pgtype.UUID
-		for _, it := range items {
-			there = append(there, it.recipeID())
-		}
+		has := false
 		for i, it := range items {
 			portion := it.portion
 			if portion == nil {
 				continue
 			}
-			without := slices.Delete(slices.Clone(items), i, i+1)
-			grams := d.eaten(it).amount.Grams
-			deleteCook := d.soleCook(portion)
-			if len(without) > 0 {
-				candidates = append(candidates, &candidateFix{
-					kind:         suggestionsv1.PlanFixKind_PLAN_FIX_KIND_REMOVE,
-					description:  fmt.Sprintf("Leave out %s at %s", portion.Name, et.Name),
-					slot:         slot,
-					items:        without,
-					portion:      portion,
-					gramsChanged: grams,
-					deleteCook:   deleteCook,
-				})
-			}
-			candidates = append(candidates, d.resizes(et, slot, items, i)...)
-			for _, r := range d.recipes {
-				if !r.Suggestable(date) || slices.Contains(there, r.ID) || r.Servings <= 0 {
-					continue
+			has = true
+			portions++
+			var resizes []*candidateFix
+			for factor := minPortionFactor; factor <= maxPortionFactor+1e-9; factor += resizeStep {
+				if c := d.resize(et, slot, items, i, factor); c != nil {
+					resizes = append(resizes, c)
 				}
-				added := &item{portion: &plans.Portion{
-					PersonID: p.ID, EatingTimeID: et.ID, Date: date,
-					Servings: 1, CookRecipeID: r.ID, Name: r.Name,
-				}, date: date}
-				candidates = append(candidates, &candidateFix{
-					kind:         suggestionsv1.PlanFixKind_PLAN_FIX_KIND_REPLACE,
-					description:  fmt.Sprintf("Replace %s with %s (1 serving) at %s", portion.Name, r.Name, et.Name),
-					slot:         slot,
-					items:        append(slices.Clone(without), added),
-					portion:      portion,
-					recipe:       r.ID,
-					servings:     1,
-					gramsChanged: math.Abs(d.eaten(added).amount.Grams - grams),
-					deleteCook:   deleteCook,
-				})
+			}
+			if c := d.best(p, date, resizes, base); c != nil {
+				fixes = append(fixes, c)
+			}
+			without := slices.Delete(slices.Clone(items), i, i+1)
+			if len(without) == 0 {
+				continue
+			}
+			c := &candidateFix{
+				kind:         suggestionsv1.PlanFixKind_PLAN_FIX_KIND_REMOVE,
+				description:  fmt.Sprintf("Leave out %s at %s", portion.Name, et.Name),
+				changes:      map[plans.Slot][]*item{slot: without},
+				portion:      portion,
+				eatingTimeID: et.ID,
+				gramsChanged: d.eaten(it).amount.Grams,
+				deleteCook:   d.soleCook(portion),
+			}
+			if d.try(p, date, c, base) {
+				fixes = append(fixes, c)
 			}
 		}
-		if wantsMore {
-			candidates = append(candidates, d.additions(p, et, slot, items, pantryFoods)...)
+		if has {
+			sc := scalable{et: et, slot: slot}
+			for _, w := range planned {
+				if w.eatingTimeID == et.ID {
+					sc.more = sc.more || lowWarning(&w)
+					sc.less = sc.less || !lowWarning(&w)
+				}
+			}
+			all = append(all, sc)
 		}
 	}
-	return candidates
+	if portions < 2 {
+		return fixes
+	}
+	var scales []*candidateFix
+	for factor := minScaleFactor; factor <= maxScaleFactor+1e-9; factor += resizeStep {
+		if math.Abs(factor-1) < 1e-9 {
+			continue
+		}
+		c := &candidateFix{kind: suggestionsv1.PlanFixKind_PLAN_FIX_KIND_RESIZE, changes: map[plans.Slot][]*item{}}
+		var parts []string
+		for _, s := range all {
+			if (factor < 1 && s.more) || (factor > 1 && s.less) {
+				continue
+			}
+			items := slices.Clone(d.items[s.slot])
+			for i, it := range items {
+				if it.portion == nil {
+					continue
+				}
+				resized, text, ok := resizePortion(it.portion, factor)
+				if !ok {
+					continue
+				}
+				items[i] = &item{portion: resized, date: it.date}
+				c.resizes = append(c.resizes, resized)
+				c.gramsChanged += math.Abs(d.eaten(items[i]).amount.Grams - d.eaten(it).amount.Grams)
+				parts = append(parts, fmt.Sprintf("%s of %s at %s", text, it.portion.Name, s.et.Name))
+			}
+			c.changes[s.slot] = items
+		}
+		if len(c.resizes) < 2 {
+			continue
+		}
+		size := "smaller"
+		if factor > 1 {
+			size = "larger"
+		}
+		c.description = fmt.Sprintf("Have each portion %s, at %s%%: %s",
+			size, formatNumber(factor*100), strings.Join(parts, ", "))
+		scales = append(scales, c)
+	}
+	if c := d.best(p, date, scales, base); c != nil {
+		fixes = append(fixes, c)
+	}
+	return fixes
 }
 
 // soleCook returns a portion's cook if the portion is all that's planned
@@ -357,87 +392,48 @@ func (d *planData) soleCook(portion *plans.Portion) pgtype.UUID {
 	return c.ID
 }
 
-// resizes returns a portion's resizes, by each of fixResizes.
-func (d *planData) resizes(et *people.EatingTime, slot plans.Slot, items []*item, i int) []*candidateFix {
-	portion := items[i].portion
-	grams := d.eaten(items[i]).amount.Grams
-	var candidates []*candidateFix
-	for _, factor := range fixResizes {
-		resized := *portion
-		var description string
-		if portion.CookID.Valid {
-			resized.Servings = math.Max(math.Round(portion.Servings*factor*20)/20, 0.1)
-			if resized.Servings == portion.Servings {
-				continue
-			}
-			description = fmt.Sprintf("Have %s of %s at %s, not %s",
-				servingsText(resized.Servings), portion.Name, et.Name, servingsText(portion.Servings))
-		} else {
-			resized.Amount = roundAmount(portion.Amount*factor, portion.Unit)
-			if resized.Amount <= 0 || resized.Amount == portion.Amount {
-				continue
-			}
-			description = fmt.Sprintf("Have %s of %s at %s, not %s",
-				amountText(resized.Amount, resized.Unit), portion.Name, et.Name, amountText(portion.Amount, portion.Unit))
+// resizePortion returns a portion resized by a factor, rounded to what
+// people measure, with its new size said, or false if rounding leaves it
+// as it was.
+func resizePortion(portion *plans.Portion, factor float64) (*plans.Portion, string, bool) {
+	resized := *portion
+	if portion.CookID.Valid {
+		resized.Servings = math.Max(math.Round(portion.Servings*factor*20)/20, 0.05)
+		if resized.Servings == portion.Servings {
+			return nil, "", false
 		}
-		it := &item{portion: &resized, date: items[i].date}
-		changed := slices.Clone(items)
-		changed[i] = it
-		candidates = append(candidates, &candidateFix{
-			kind:         suggestionsv1.PlanFixKind_PLAN_FIX_KIND_RESIZE,
-			description:  description,
-			slot:         slot,
-			items:        changed,
-			portion:      portion,
-			servings:     resized.Servings,
-			amount:       resized.Amount,
-			unit:         resized.Unit,
-			gramsChanged: math.Abs(d.eaten(it).amount.Grams - grams),
-		})
+		return &resized, servingsText(resized.Servings), true
 	}
-	return candidates
+	resized.Amount = roundAmount(portion.Amount*factor, portion.Unit)
+	if resized.Amount <= 0 || resized.Amount == portion.Amount {
+		return nil, "", false
+	}
+	return &resized, amountText(resized.Amount, resized.Unit), true
 }
 
-// additions returns the recipes and pantry foods to try adding at an
-// eating time.
-func (d *planData) additions(p *people.Person, et *people.EatingTime, slot plans.Slot, items []*item, pantryFoods []*foods.Food) []*candidateFix {
-	var candidates []*candidateFix
-	add := func(c *candidateFix, it *item) {
-		c.kind = suggestionsv1.PlanFixKind_PLAN_FIX_KIND_ADD
-		c.slot = slot
-		c.items = append(slices.Clone(items), it)
-		c.gramsChanged = d.eaten(it).amount.Grams
-		candidates = append(candidates, c)
+// resize returns a portion's resize by a factor, or nil if rounding
+// leaves it as it was.
+func (d *planData) resize(et *people.EatingTime, slot plans.Slot, items []*item, i int, factor float64) *candidateFix {
+	portion := items[i].portion
+	resized, text, ok := resizePortion(portion, factor)
+	if !ok {
+		return nil
 	}
-	for _, r := range d.recipes {
-		if !r.Suggestable(slot.Date) || r.Servings <= 0 {
-			continue
-		}
-		for _, servings := range []float64{0.5, 1} {
-			add(&candidateFix{
-				description: fmt.Sprintf("Add %s of %s at %s", servingsText(servings), r.Name, et.Name),
-				recipe:      r.ID,
-				servings:    servings,
-			}, &item{portion: &plans.Portion{
-				PersonID: p.ID, EatingTimeID: et.ID, Date: slot.Date,
-				Servings: servings, CookRecipeID: r.ID, Name: r.Name,
-			}, date: slot.Date})
-		}
+	was := amountText(portion.Amount, portion.Unit)
+	if portion.CookID.Valid {
+		was = servingsText(portion.Servings)
 	}
-	for _, f := range pantryFoods {
-		for _, grams := range []float64{fixGramsSmall, fixGramsMedium, fixGramsLarge} {
-			add(&candidateFix{
-				description: fmt.Sprintf("Add %s of %s at %s", amountText(grams, nutrition.Grams), f.Name, et.Name),
-				food:        f.ID,
-				amount:      grams,
-				unit:        nutrition.Grams,
-			}, &item{portion: &plans.Portion{
-				PersonID: p.ID, EatingTimeID: et.ID, Date: slot.Date,
-				FoodID: f.ID, Amount: grams, Unit: nutrition.Grams, Name: f.Name,
-			}, date: slot.Date})
-		}
+	it := &item{portion: resized, date: items[i].date}
+	changed := slices.Clone(items)
+	changed[i] = it
+	return &candidateFix{
+		kind:         suggestionsv1.PlanFixKind_PLAN_FIX_KIND_RESIZE,
+		description:  fmt.Sprintf("Have %s of %s at %s, not %s", text, portion.Name, et.Name, was),
+		changes:      map[plans.Slot][]*item{slot: changed},
+		resizes:      []*plans.Portion{resized},
+		eatingTimeID: et.ID,
+		gramsChanged: math.Abs(d.eaten(it).amount.Grams - d.eaten(items[i]).amount.Grams),
 	}
-	return candidates
 }
 
 // roundAmount rounds a resized amount to what people measure: whole grams
@@ -500,19 +496,22 @@ func (c *candidateFix) toProto(planned []fixWarning, personID pgtype.UUID, date 
 	b := suggestionsv1.PlanFix_builder{
 		Kind:              c.kind,
 		Description:       c.description,
-		EatingTimeId:      store.UUIDToString(c.slot.EatingTimeID),
-		RecipeId:          optionalID(c.recipe),
-		FoodId:            optionalID(c.food),
-		Servings:          c.servings,
-		Amount:            c.amount,
+		EatingTimeId:      optionalID(c.eatingTimeID),
 		EnergyKcal:        math.Round(c.energy),
 		PlannedEnergyKcal: math.Round(plannedEnergy),
 	}
-	if c.amount > 0 {
-		b.Unit = unitsToProto[c.unit]
-	}
 	if c.portion != nil {
 		b.PortionId = store.UUIDToString(c.portion.ID)
+	}
+	for _, r := range c.resizes {
+		rb := suggestionsv1.PortionResize_builder{PortionId: store.UUIDToString(r.ID)}
+		if r.CookID.Valid {
+			rb.Servings = r.Servings
+		} else {
+			rb.Amount = r.Amount
+			rb.Unit = unitsToProto[r.Unit]
+		}
+		b.Resizes = append(b.Resizes, rb.Build())
 	}
 	b.DeleteCookId = optionalID(c.deleteCook)
 	for _, w := range planned {

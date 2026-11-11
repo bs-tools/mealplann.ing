@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file suggestions/v1/suggestions.proto.
  */
 export const file_suggestions_v1_suggestions: GenFile = /*@__PURE__*/
-  fileDesc("CiBzdWdnZXN0aW9ucy92MS9zdWdnZXN0aW9ucy5wcm90bxIOc3VnZ2VzdGlvbnMudjEiOwoORWF0aW5nVGltZVNsb3QSEQoJcGVyc29uX2lkGAEgASgJEhYKDmVhdGluZ190aW1lX2lkGAIgASgJIrsBChVTdWdnZXN0UmVjaXBlc1JlcXVlc3QSDAoEZGF0ZRgBIAEoCRIoCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWxIABI1CgtlYXRpbmdfdGltZRgDIAEoCzIeLnN1Z2dlc3Rpb25zLnYxLkVhdGluZ1RpbWVTbG90SAASEgoKcGVyc29uX2lkcxgEIAMoCRIXCg9tYXhfc3VnZ2VzdGlvbnMYBSABKAVCBgoEc2xvdCJyChZTdWdnZXN0UmVjaXBlc1Jlc3BvbnNlEi8KC3N1Z2dlc3Rpb25zGAEgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIRCglzaG9wX2RhdGUYAiABKAkSFAoMcmVjaXBlX2NvdW50GAMgASgFIlkKDlNjb3JlQ29tcG9uZW50EicKBGtpbmQYASABKA4yGS5zdWdnZXN0aW9ucy52MS5TY29yZUtpbmQSDgoGcG9pbnRzGAIgASgBEg4KBnJlYXNvbhgDIAEoCSKbAQoQU3VnZ2VzdGVkUG9ydGlvbhIRCglwZXJzb25faWQYASABKAkSEwoLcGVyc29uX25hbWUYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSGAoQZWF0aW5nX3RpbWVfbmFtZRgEIAEoCRIMCgRkYXRlGAUgASgJEhAKCHNlcnZpbmdzGAYgASgBEg0KBWdyYW1zGAcgASgBIlwKCUl0ZW1Ub0J1eRIPCgdmb29kX2lkGAEgASgJEhEKCWZvb2RfbmFtZRgCIAEoCRITCgthbW91bnRfdGV4dBgDIAEoCRIWCg5hbHJlYWR5X2xpc3RlZBgEIAEoCCKCAwoKU3VnZ2VzdGlvbhIRCglyZWNpcGVfaWQYASABKAkSEwoLcmVjaXBlX25hbWUYAiABKAkSDQoFc2NvcmUYAyABKAESMgoKY29tcG9uZW50cxgEIAMoCzIeLnN1Z2dlc3Rpb25zLnYxLlNjb3JlQ29tcG9uZW50EhIKCmZpdHNfcnVsZXMYBSABKAgSIwoId2FybmluZ3MYBiADKAsyES5wbGFucy52MS5XYXJuaW5nEjIKCHBvcnRpb25zGAcgAygLMiAuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGVkUG9ydGlvbhIVCg1jb29rX3NlcnZpbmdzGAggASgBEhYKDm5ld19pdGVtX2NvdW50GAkgASgFEi8KDGl0ZW1zX3RvX2J1eRgKIAMoCzIZLnN1Z2dlc3Rpb25zLnYxLkl0ZW1Ub0J1eRIpCgtsZWZ0b3Zlcl9vZhgLIAEoCzIULnBsYW5zLnYxLkxlZnRvdmVyT2YSEQoJY29va19kYXRlGAwgASgJItACCgxQbGFuQ3JpdGVyaWESKQoHdmFyaWV0eRgBIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEisKCWZhdm9yaXRlcxgCIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEigKBnBhbnRyeRgDIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEioKCHNob3BwaW5nGAQgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSKwoJbnV0cml0aW9uGAUgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSGQoRbWF4X3RvdGFsX3NlY29uZHMYBiABKAUSFAoMZXhjbHVkZV90YWdzGAcgAygJEhoKEmV4Y2x1ZGVfcmVjaXBlX2lkcxgIIAMoCRIYChBjb29raW5nX3dlZWtkYXlzGAkgAygFIqsBCgpQbGFuQ2hvaWNlEgwKBGRhdGUYASABKAkSJgoEbWVhbBgCIAEoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsEhEKCXJlY2lwZV9pZBgDIAEoCRIRCglwZXJzb25faWQYBCABKAkSFgoOZWF0aW5nX3RpbWVfaWQYBSABKAkSKQoLbGVmdG92ZXJfb2YYBiABKAsyFC5wbGFucy52MS5MZWZ0b3Zlck9mIu4BChJTdWdnZXN0UGxhblJlcXVlc3QSEgoKc3RhcnRfZGF0ZRgBIAEoCRIMCgRkYXlzGAIgASgFEicKBW1lYWxzGAMgAygOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSLgoIY3JpdGVyaWEYBCABKAsyHC5zdWdnZXN0aW9ucy52MS5QbGFuQ3JpdGVyaWESKwoHY2hvaWNlcxgFIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlBsYW5DaG9pY2USDAoEc2VlZBgGIAEoBBIiChpza2lwX3BlcnNvbmFsX2VhdGluZ190aW1lcxgHIAEoCCL/AgoIUGxhblNsb3QSDAoEZGF0ZRgBIAEoCRImCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSLAoFc3RhdGUYAyABKA4yHS5zdWdnZXN0aW9ucy52MS5QbGFuU2xvdFN0YXRlEi4KCnN1Z2dlc3Rpb24YBCABKAsyGi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0aW9uEjAKDGFsdGVybmF0aXZlcxgFIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3Rpb24SHAoUcGxhbm5lZF9yZWNpcGVfbmFtZXMYBiADKAkSHAoUZml0dGluZ19yZWNpcGVfY291bnQYByABKAUSEQoJcGVyc29uX2lkGAggASgJEhMKC3BlcnNvbl9uYW1lGAkgASgJEhYKDmVhdGluZ190aW1lX2lkGAogASgJEhgKEGVhdGluZ190aW1lX25hbWUYCyABKAkSFwoPdW5maWxsZWRfcmVhc29uGAwgASgJIoYBChNTdWdnZXN0UGxhblJlc3BvbnNlEicKBXNsb3RzGAEgAygLMhguc3VnZ2VzdGlvbnMudjEuUGxhblNsb3QSDQoFc2NvcmUYAiABKAESEwoLcGxhbnNfdHJpZWQYAyABKAUSDAoEc2VlZBgEIAEoBBIUCgxyZWNpcGVfY291bnQYBSABKAUiTgoTU3VnZ2VzdEZpeGVzUmVxdWVzdBIRCglwZXJzb25faWQYASABKAkSDAoEZGF0ZRgCIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgDIAEoCSJjChRTdWdnZXN0Rml4ZXNSZXNwb25zZRImCgVmaXhlcxgBIAMoCzIXLnN1Z2dlc3Rpb25zLnYxLlBsYW5GaXgSIwoId2FybmluZ3MYAiADKAsyES5wbGFucy52MS5XYXJuaW5nIuYCCgdQbGFuRml4EikKBGtpbmQYASABKA4yGy5zdWdnZXN0aW9ucy52MS5QbGFuRml4S2luZBITCgtkZXNjcmlwdGlvbhgCIAEoCRISCgpwb3J0aW9uX2lkGAMgASgJEhYKDmVhdGluZ190aW1lX2lkGAQgASgJEhEKCXJlY2lwZV9pZBgFIAEoCRIPCgdmb29kX2lkGAYgASgJEhAKCHNlcnZpbmdzGAcgASgBEg4KBmFtb3VudBgIIAEoARIiCgR1bml0GAkgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdBIWCg5maXhlZF93YXJuaW5ncxgKIAMoCRIjCgh3YXJuaW5ncxgLIAMoCzIRLnBsYW5zLnYxLldhcm5pbmcSEwoLZW5lcmd5X2tjYWwYDCABKAESGwoTcGxhbm5lZF9lbmVyZ3lfa2NhbBgNIAEoARIWCg5kZWxldGVfY29va19pZBgOIAEoCSrbAgoJU2NvcmVLaW5kEhoKFlNDT1JFX0tJTkRfVU5TUEVDSUZJRUQQABIhCh1TQ09SRV9LSU5EX1NIQVJFRF9JTkdSRURJRU5UUxABEh0KGVNDT1JFX0tJTkRfUEFDS19MRUZUT1ZFUlMQAhIVChFTQ09SRV9LSU5EX1BBTlRSWRADEhgKFFNDT1JFX0tJTkRfTlVUUklUSU9OEAQSFAoQU0NPUkVfS0lORF9SVUxFUxAFEhYKElNDT1JFX0tJTkRfS0VFUElORxAGEhYKElNDT1JFX0tJTkRfVkFSSUVUWRAIEhcKE1NDT1JFX0tJTkRfTUVBTF9UQUcQCRIXChNTQ09SRV9LSU5EX0ZBVk9SSVRFEAoSFwoTU0NPUkVfS0lORF9MRUZUT1ZFUhALEhUKEVNDT1JFX0tJTkRfQ09PS0VEEAwiBAgHEAcqEVNDT1JFX0tJTkRfRkxBVk9SKnAKCEVtcGhhc2lzEhgKFEVNUEhBU0lTX1VOU1BFQ0lGSUVEEAASEAoMRU1QSEFTSVNfT0ZGEAESEAoMRU1QSEFTSVNfTE9XEAISEwoPRU1QSEFTSVNfTk9STUFMEAMSEQoNRU1QSEFTSVNfSElHSBAEKoUCCg1QbGFuU2xvdFN0YXRlEh8KG1BMQU5fU0xPVF9TVEFURV9VTlNQRUNJRklFRBAAEh0KGVBMQU5fU0xPVF9TVEFURV9TVUdHRVNURUQQARIYChRQTEFOX1NMT1RfU1RBVEVfS0VQVBACEhsKF1BMQU5fU0xPVF9TVEFURV9TS0lQUEVEEAMSGwoXUExBTl9TTE9UX1NUQVRFX1BMQU5ORUQQBBIcChhQTEFOX1NMT1RfU1RBVEVfVU5GSUxMRUQQBRIiCh5QTEFOX1NMT1RfU1RBVEVfRklMTEVEX0JZX01FQUwQBhIeChpQTEFOX1NMT1RfU1RBVEVfRUFUSU5HX09VVBAHKpIBCgtQbGFuRml4S2luZBIdChlQTEFOX0ZJWF9LSU5EX1VOU1BFQ0lGSUVEEAASGAoUUExBTl9GSVhfS0lORF9SRU1PVkUQARIYChRQTEFOX0ZJWF9LSU5EX1JFU0laRRACEhkKFVBMQU5fRklYX0tJTkRfUkVQTEFDRRADEhUKEVBMQU5fRklYX0tJTkRfQUREEAQypwIKEVN1Z2dlc3Rpb25TZXJ2aWNlEl8KDlN1Z2dlc3RSZWNpcGVzEiUuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFJlY2lwZXNSZXF1ZXN0GiYuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFJlY2lwZXNSZXNwb25zZRJWCgtTdWdnZXN0UGxhbhIiLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RQbGFuUmVxdWVzdBojLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RQbGFuUmVzcG9uc2USWQoMU3VnZ2VzdEZpeGVzEiMuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdEZpeGVzUmVxdWVzdBokLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RGaXhlc1Jlc3BvbnNlQswBChJjb20uc3VnZ2VzdGlvbnMudjFCEFN1Z2dlc3Rpb25zUHJvdG9QAVpLZ2l0aHViLmNvbS9icy10b29scy9tZWFscGxhbm4uaW5nL2ludGVybmFsL2dlbi9zdWdnZXN0aW9ucy92MTtzdWdnZXN0aW9uc3YxogIDU1hYqgIOU3VnZ2VzdGlvbnMuVjHKAg5TdWdnZXN0aW9uc1xWMeICGlN1Z2dlc3Rpb25zXFYxXEdQQk1ldGFkYXRh6gIPU3VnZ2VzdGlvbnM6OlYxYgZwcm90bzM", [file_foods_v1_foods, file_people_v1_people, file_plans_v1_plans]);
+  fileDesc("CiBzdWdnZXN0aW9ucy92MS9zdWdnZXN0aW9ucy5wcm90bxIOc3VnZ2VzdGlvbnMudjEiOwoORWF0aW5nVGltZVNsb3QSEQoJcGVyc29uX2lkGAEgASgJEhYKDmVhdGluZ190aW1lX2lkGAIgASgJIrsBChVTdWdnZXN0UmVjaXBlc1JlcXVlc3QSDAoEZGF0ZRgBIAEoCRIoCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWxIABI1CgtlYXRpbmdfdGltZRgDIAEoCzIeLnN1Z2dlc3Rpb25zLnYxLkVhdGluZ1RpbWVTbG90SAASEgoKcGVyc29uX2lkcxgEIAMoCRIXCg9tYXhfc3VnZ2VzdGlvbnMYBSABKAVCBgoEc2xvdCJyChZTdWdnZXN0UmVjaXBlc1Jlc3BvbnNlEi8KC3N1Z2dlc3Rpb25zGAEgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIRCglzaG9wX2RhdGUYAiABKAkSFAoMcmVjaXBlX2NvdW50GAMgASgFIlkKDlNjb3JlQ29tcG9uZW50EicKBGtpbmQYASABKA4yGS5zdWdnZXN0aW9ucy52MS5TY29yZUtpbmQSDgoGcG9pbnRzGAIgASgBEg4KBnJlYXNvbhgDIAEoCSKbAQoQU3VnZ2VzdGVkUG9ydGlvbhIRCglwZXJzb25faWQYASABKAkSEwoLcGVyc29uX25hbWUYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSGAoQZWF0aW5nX3RpbWVfbmFtZRgEIAEoCRIMCgRkYXRlGAUgASgJEhAKCHNlcnZpbmdzGAYgASgBEg0KBWdyYW1zGAcgASgBIlwKCUl0ZW1Ub0J1eRIPCgdmb29kX2lkGAEgASgJEhEKCWZvb2RfbmFtZRgCIAEoCRITCgthbW91bnRfdGV4dBgDIAEoCRIWCg5hbHJlYWR5X2xpc3RlZBgEIAEoCCKCAwoKU3VnZ2VzdGlvbhIRCglyZWNpcGVfaWQYASABKAkSEwoLcmVjaXBlX25hbWUYAiABKAkSDQoFc2NvcmUYAyABKAESMgoKY29tcG9uZW50cxgEIAMoCzIeLnN1Z2dlc3Rpb25zLnYxLlNjb3JlQ29tcG9uZW50EhIKCmZpdHNfcnVsZXMYBSABKAgSIwoId2FybmluZ3MYBiADKAsyES5wbGFucy52MS5XYXJuaW5nEjIKCHBvcnRpb25zGAcgAygLMiAuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGVkUG9ydGlvbhIVCg1jb29rX3NlcnZpbmdzGAggASgBEhYKDm5ld19pdGVtX2NvdW50GAkgASgFEi8KDGl0ZW1zX3RvX2J1eRgKIAMoCzIZLnN1Z2dlc3Rpb25zLnYxLkl0ZW1Ub0J1eRIpCgtsZWZ0b3Zlcl9vZhgLIAEoCzIULnBsYW5zLnYxLkxlZnRvdmVyT2YSEQoJY29va19kYXRlGAwgASgJItACCgxQbGFuQ3JpdGVyaWESKQoHdmFyaWV0eRgBIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEisKCWZhdm9yaXRlcxgCIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEigKBnBhbnRyeRgDIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEioKCHNob3BwaW5nGAQgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSKwoJbnV0cml0aW9uGAUgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSGQoRbWF4X3RvdGFsX3NlY29uZHMYBiABKAUSFAoMZXhjbHVkZV90YWdzGAcgAygJEhoKEmV4Y2x1ZGVfcmVjaXBlX2lkcxgIIAMoCRIYChBjb29raW5nX3dlZWtkYXlzGAkgAygFIqsBCgpQbGFuQ2hvaWNlEgwKBGRhdGUYASABKAkSJgoEbWVhbBgCIAEoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsEhEKCXJlY2lwZV9pZBgDIAEoCRIRCglwZXJzb25faWQYBCABKAkSFgoOZWF0aW5nX3RpbWVfaWQYBSABKAkSKQoLbGVmdG92ZXJfb2YYBiABKAsyFC5wbGFucy52MS5MZWZ0b3Zlck9mIu4BChJTdWdnZXN0UGxhblJlcXVlc3QSEgoKc3RhcnRfZGF0ZRgBIAEoCRIMCgRkYXlzGAIgASgFEicKBW1lYWxzGAMgAygOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSLgoIY3JpdGVyaWEYBCABKAsyHC5zdWdnZXN0aW9ucy52MS5QbGFuQ3JpdGVyaWESKwoHY2hvaWNlcxgFIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlBsYW5DaG9pY2USDAoEc2VlZBgGIAEoBBIiChpza2lwX3BlcnNvbmFsX2VhdGluZ190aW1lcxgHIAEoCCL/AgoIUGxhblNsb3QSDAoEZGF0ZRgBIAEoCRImCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSLAoFc3RhdGUYAyABKA4yHS5zdWdnZXN0aW9ucy52MS5QbGFuU2xvdFN0YXRlEi4KCnN1Z2dlc3Rpb24YBCABKAsyGi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0aW9uEjAKDGFsdGVybmF0aXZlcxgFIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3Rpb24SHAoUcGxhbm5lZF9yZWNpcGVfbmFtZXMYBiADKAkSHAoUZml0dGluZ19yZWNpcGVfY291bnQYByABKAUSEQoJcGVyc29uX2lkGAggASgJEhMKC3BlcnNvbl9uYW1lGAkgASgJEhYKDmVhdGluZ190aW1lX2lkGAogASgJEhgKEGVhdGluZ190aW1lX25hbWUYCyABKAkSFwoPdW5maWxsZWRfcmVhc29uGAwgASgJIoYBChNTdWdnZXN0UGxhblJlc3BvbnNlEicKBXNsb3RzGAEgAygLMhguc3VnZ2VzdGlvbnMudjEuUGxhblNsb3QSDQoFc2NvcmUYAiABKAESEwoLcGxhbnNfdHJpZWQYAyABKAUSDAoEc2VlZBgEIAEoBBIUCgxyZWNpcGVfY291bnQYBSABKAUiTgoTU3VnZ2VzdEZpeGVzUmVxdWVzdBIRCglwZXJzb25faWQYASABKAkSDAoEZGF0ZRgCIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgDIAEoCSJjChRTdWdnZXN0Rml4ZXNSZXNwb25zZRImCgVmaXhlcxgBIAMoCzIXLnN1Z2dlc3Rpb25zLnYxLlBsYW5GaXgSIwoId2FybmluZ3MYAiADKAsyES5wbGFucy52MS5XYXJuaW5nImkKDVBvcnRpb25SZXNpemUSEgoKcG9ydGlvbl9pZBgBIAEoCRIQCghzZXJ2aW5ncxgCIAEoARIOCgZhbW91bnQYAyABKAESIgoEdW5pdBgEIAEoDjIULmZvb2RzLnYxLkFtb3VudFVuaXQi9gIKB1BsYW5GaXgSKQoEa2luZBgBIAEoDjIbLnN1Z2dlc3Rpb25zLnYxLlBsYW5GaXhLaW5kEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhIKCnBvcnRpb25faWQYAyABKAkSFgoOZWF0aW5nX3RpbWVfaWQYBCABKAkSLgoHcmVzaXplcxgPIAMoCzIdLnN1Z2dlc3Rpb25zLnYxLlBvcnRpb25SZXNpemUSFgoOZml4ZWRfd2FybmluZ3MYCiADKAkSIwoId2FybmluZ3MYCyADKAsyES5wbGFucy52MS5XYXJuaW5nEhMKC2VuZXJneV9rY2FsGAwgASgBEhsKE3BsYW5uZWRfZW5lcmd5X2tjYWwYDSABKAESFgoOZGVsZXRlX2Nvb2tfaWQYDiABKAlKBAgFEAZKBAgGEAdKBAgHEAhKBAgIEAlKBAgJEApSCXJlY2lwZV9pZFIHZm9vZF9pZFIIc2VydmluZ3NSBmFtb3VudFIEdW5pdCrbAgoJU2NvcmVLaW5kEhoKFlNDT1JFX0tJTkRfVU5TUEVDSUZJRUQQABIhCh1TQ09SRV9LSU5EX1NIQVJFRF9JTkdSRURJRU5UUxABEh0KGVNDT1JFX0tJTkRfUEFDS19MRUZUT1ZFUlMQAhIVChFTQ09SRV9LSU5EX1BBTlRSWRADEhgKFFNDT1JFX0tJTkRfTlVUUklUSU9OEAQSFAoQU0NPUkVfS0lORF9SVUxFUxAFEhYKElNDT1JFX0tJTkRfS0VFUElORxAGEhYKElNDT1JFX0tJTkRfVkFSSUVUWRAIEhcKE1NDT1JFX0tJTkRfTUVBTF9UQUcQCRIXChNTQ09SRV9LSU5EX0ZBVk9SSVRFEAoSFwoTU0NPUkVfS0lORF9MRUZUT1ZFUhALEhUKEVNDT1JFX0tJTkRfQ09PS0VEEAwiBAgHEAcqEVNDT1JFX0tJTkRfRkxBVk9SKnAKCEVtcGhhc2lzEhgKFEVNUEhBU0lTX1VOU1BFQ0lGSUVEEAASEAoMRU1QSEFTSVNfT0ZGEAESEAoMRU1QSEFTSVNfTE9XEAISEwoPRU1QSEFTSVNfTk9STUFMEAMSEQoNRU1QSEFTSVNfSElHSBAEKoUCCg1QbGFuU2xvdFN0YXRlEh8KG1BMQU5fU0xPVF9TVEFURV9VTlNQRUNJRklFRBAAEh0KGVBMQU5fU0xPVF9TVEFURV9TVUdHRVNURUQQARIYChRQTEFOX1NMT1RfU1RBVEVfS0VQVBACEhsKF1BMQU5fU0xPVF9TVEFURV9TS0lQUEVEEAMSGwoXUExBTl9TTE9UX1NUQVRFX1BMQU5ORUQQBBIcChhQTEFOX1NMT1RfU1RBVEVfVU5GSUxMRUQQBRIiCh5QTEFOX1NMT1RfU1RBVEVfRklMTEVEX0JZX01FQUwQBhIeChpQTEFOX1NMT1RfU1RBVEVfRUFUSU5HX09VVBAHKpYBCgtQbGFuRml4S2luZBIdChlQTEFOX0ZJWF9LSU5EX1VOU1BFQ0lGSUVEEAASGAoUUExBTl9GSVhfS0lORF9SRU1PVkUQARIYChRQTEFOX0ZJWF9LSU5EX1JFU0laRRACIgQIAxADIgQIBBAEKhVQTEFOX0ZJWF9LSU5EX1JFUExBQ0UqEVBMQU5fRklYX0tJTkRfQUREMqcCChFTdWdnZXN0aW9uU2VydmljZRJfCg5TdWdnZXN0UmVjaXBlcxIlLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RSZWNpcGVzUmVxdWVzdBomLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RSZWNpcGVzUmVzcG9uc2USVgoLU3VnZ2VzdFBsYW4SIi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UGxhblJlcXVlc3QaIy5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UGxhblJlc3BvbnNlElkKDFN1Z2dlc3RGaXhlcxIjLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RGaXhlc1JlcXVlc3QaJC5zdWdnZXN0aW9ucy52MS5TdWdnZXN0Rml4ZXNSZXNwb25zZULMAQoSY29tLnN1Z2dlc3Rpb25zLnYxQhBTdWdnZXN0aW9uc1Byb3RvUAFaS2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vc3VnZ2VzdGlvbnMvdjE7c3VnZ2VzdGlvbnN2MaICA1NYWKoCDlN1Z2dlc3Rpb25zLlYxygIOU3VnZ2VzdGlvbnNcVjHiAhpTdWdnZXN0aW9uc1xWMVxHUEJNZXRhZGF0YeoCD1N1Z2dlc3Rpb25zOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_people_v1_people, file_plans_v1_plans]);
 
 /**
  * An eating time of one person, to suggest a recipe for, like a small
@@ -809,7 +809,8 @@ export const SuggestFixesRequestSchema: GenMessage<SuggestFixesRequest> = /*@__P
 export type SuggestFixesResponse = Message<"suggestions.v1.SuggestFixesResponse"> & {
   /**
    * The changes, best first: those leaving the fewest warnings, then
-   * closest to the rules and targets, then the smallest.
+   * resizes before leaving portions out, then closest to the rules and
+   * targets, then the smallest.
    *
    * @generated from field: repeated suggestions.v1.PlanFix fixes = 1;
    */
@@ -832,6 +833,46 @@ export const SuggestFixesResponseSchema: GenMessage<SuggestFixesResponse> = /*@_
   messageDesc(file_suggestions_v1_suggestions, 13);
 
 /**
+ * A new size of a planned portion.
+ *
+ * @generated from message suggestions.v1.PortionResize
+ */
+export type PortionResize = Message<"suggestions.v1.PortionResize"> & {
+  /**
+   * The portion to resize.
+   *
+   * @generated from field: string portion_id = 1;
+   */
+  portionId: string;
+
+  /**
+   * The new servings, of a share of a cook.
+   *
+   * @generated from field: double servings = 2;
+   */
+  servings: number;
+
+  /**
+   * The new amount, of a food portion, in unit.
+   *
+   * @generated from field: double amount = 3;
+   */
+  amount: number;
+
+  /**
+   * @generated from field: foods.v1.AmountUnit unit = 4;
+   */
+  unit: AmountUnit;
+};
+
+/**
+ * Describes the message suggestions.v1.PortionResize.
+ * Use `create(PortionResizeSchema)` to create a new message.
+ */
+export const PortionResizeSchema: GenMessage<PortionResize> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 14);
+
+/**
  * A change to a person's planned day.
  *
  * @generated from message suggestions.v1.PlanFix
@@ -845,59 +886,33 @@ export type PlanFix = Message<"suggestions.v1.PlanFix"> & {
   kind: PlanFixKind;
 
   /**
-   * What it does, for people, e.g. "Replace Wraps with Side salad (1
-   * serving)".
+   * What it does, for people, e.g. "Have 0.75 servings of Curry at Dinner,
+   * not 1 serving".
    *
    * @generated from field: string description = 2;
    */
   description: string;
 
   /**
-   * The portion it removes, resizes or replaces.
+   * The portion it removes.
    *
    * @generated from field: string portion_id = 3;
    */
   portionId: string;
 
   /**
-   * The eating time it changes or adds to.
+   * The eating time it changes, unset for a resize of several.
    *
    * @generated from field: string eating_time_id = 4;
    */
   eatingTimeId: string;
 
   /**
-   * The recipe to replace the portion with, or to add.
+   * The portions it resizes, with their new sizes.
    *
-   * @generated from field: string recipe_id = 5;
+   * @generated from field: repeated suggestions.v1.PortionResize resizes = 15;
    */
-  recipeId: string;
-
-  /**
-   * The food to replace the portion with, or to add.
-   *
-   * @generated from field: string food_id = 6;
-   */
-  foodId: string;
-
-  /**
-   * The new servings, of a share of a cook or recipe_id.
-   *
-   * @generated from field: double servings = 7;
-   */
-  servings: number;
-
-  /**
-   * The new amount, of a food portion or food_id, in unit.
-   *
-   * @generated from field: double amount = 8;
-   */
-  amount: number;
-
-  /**
-   * @generated from field: foods.v1.AmountUnit unit = 9;
-   */
-  unit: AmountUnit;
+  resizes: PortionResize[];
 
   /**
    * The warnings it fixes, by message, as planned.
@@ -926,9 +941,9 @@ export type PlanFix = Message<"suggestions.v1.PlanFix"> & {
   plannedEnergyKcal: number;
 
   /**
-   * The cook to delete with PlanService.DeleteCook after removing or
-   * replacing portion_id, as the portion is all that's planned of it, and
-   * it isn't cooked yet: else its servings are left over.
+   * The cook to delete with PlanService.DeleteCook after removing
+   * portion_id, as the portion is all that's planned of it, and it isn't
+   * cooked yet: else its servings are left over.
    *
    * @generated from field: string delete_cook_id = 14;
    */
@@ -940,7 +955,7 @@ export type PlanFix = Message<"suggestions.v1.PlanFix"> & {
  * Use `create(PlanFixSchema)` to create a new message.
  */
 export const PlanFixSchema: GenMessage<PlanFix> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 14);
+  messageDesc(file_suggestions_v1_suggestions, 15);
 
 /**
  * ScoreKind is what a component of a suggestion's score is about.
@@ -1175,29 +1190,12 @@ export enum PlanFixKind {
   REMOVE = 1,
 
   /**
-   * Change portion_id's servings, of a share of a cook, or amount and
-   * unit, of a food, with PlanService.UpdatePortion.
+   * Resize each of resizes' portions, one or several together, with
+   * PlanService.UpdatePortion.
    *
    * @generated from enum value: PLAN_FIX_KIND_RESIZE = 2;
    */
   RESIZE = 2,
-
-  /**
-   * Replace portion_id with servings of recipe_id, or an amount of
-   * food_id: delete it, and create the new portion at its eating time,
-   * with new_cook for a recipe.
-   *
-   * @generated from enum value: PLAN_FIX_KIND_REPLACE = 3;
-   */
-  REPLACE = 3,
-
-  /**
-   * Add servings of recipe_id, with new_cook, or an amount of food_id, at
-   * eating_time_id, with PlanService.CreatePortion.
-   *
-   * @generated from enum value: PLAN_FIX_KIND_ADD = 4;
-   */
-  ADD = 4,
 }
 
 /**
@@ -1345,19 +1343,20 @@ export const SuggestionService: GenService<{
     output: typeof SuggestPlanResponseSchema;
   },
   /**
-   * Suggest changes to a person's planned day, or one of its eating times,
-   * that fix its warnings (see PlanService.GetWeek), or bring it closer
-   * to the rules and targets: leaving a portion out, resizing it,
-   * replacing it with one of the household's recipes, or adding a recipe
-   * or a food in the pantry, like "Replace Wraps with Side salad" for a
-   * day over its energy maximum. Each change is tried against the same
-   * rules and targets GetWeek checks, and the best ones are returned, the
-   * fewest warnings left first, with the warnings they fix and leave.
-   * Apply one with PlanService: DeletePortion, UpdatePortion, or
-   * CreatePortion, with new_cook for a recipe. Shares of shared cooks
-   * that are resized or removed leave servings over, to plan elsewhere or
-   * take off the cook. Staples aren't changed: skip them with SkipStaple.
-   * Nothing is changed. Returns no fixes if nothing helps.
+   * Suggest changes to the portion sizes of a person's planned day, or one
+   * of its eating times, that fix its warnings (see PlanService.GetWeek),
+   * or bring it closer to the rules and targets: resizing one portion by
+   * as little as fixes it, scaling all the portions together, like 85% of
+   * each for a day over its energy maximum, or leaving a portion out. It
+   * never swaps in other recipes or foods: what's planned stays, in the
+   * right amounts. Each change is tried against the same rules and targets
+   * GetWeek checks, and the best ones are returned, the fewest warnings
+   * left first, with the warnings they fix and leave. Apply one with
+   * PlanService: UpdatePortion for each resize, or DeletePortion. Shares
+   * of shared cooks that are resized or removed leave servings over, to
+   * plan elsewhere or take off the cook. Staples aren't changed: skip them
+   * with SkipStaple. Nothing is changed. Returns no fixes if no resize
+   * helps.
    *
    * @generated from rpc suggestions.v1.SuggestionService.SuggestFixes
    */

@@ -144,19 +144,20 @@ type SuggestionServiceClient interface {
 	// INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
 	// nobody eats from the meals, or no recipe meets the criteria.
 	SuggestPlan(context.Context, *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error)
-	// Suggest changes to a person's planned day, or one of its eating times,
-	// that fix its warnings (see PlanService.GetWeek), or bring it closer
-	// to the rules and targets: leaving a portion out, resizing it,
-	// replacing it with one of the household's recipes, or adding a recipe
-	// or a food in the pantry, like "Replace Wraps with Side salad" for a
-	// day over its energy maximum. Each change is tried against the same
-	// rules and targets GetWeek checks, and the best ones are returned, the
-	// fewest warnings left first, with the warnings they fix and leave.
-	// Apply one with PlanService: DeletePortion, UpdatePortion, or
-	// CreatePortion, with new_cook for a recipe. Shares of shared cooks
-	// that are resized or removed leave servings over, to plan elsewhere or
-	// take off the cook. Staples aren't changed: skip them with SkipStaple.
-	// Nothing is changed. Returns no fixes if nothing helps.
+	// Suggest changes to the portion sizes of a person's planned day, or one
+	// of its eating times, that fix its warnings (see PlanService.GetWeek),
+	// or bring it closer to the rules and targets: resizing one portion by
+	// as little as fixes it, scaling all the portions together, like 85% of
+	// each for a day over its energy maximum, or leaving a portion out. It
+	// never swaps in other recipes or foods: what's planned stays, in the
+	// right amounts. Each change is tried against the same rules and targets
+	// GetWeek checks, and the best ones are returned, the fewest warnings
+	// left first, with the warnings they fix and leave. Apply one with
+	// PlanService: UpdatePortion for each resize, or DeletePortion. Shares
+	// of shared cooks that are resized or removed leave servings over, to
+	// plan elsewhere or take off the cook. Staples aren't changed: skip them
+	// with SkipStaple. Nothing is changed. Returns no fixes if no resize
+	// helps.
 	SuggestFixes(context.Context, *v1.SuggestFixesRequest) (*v1.SuggestFixesResponse, error)
 }
 
@@ -251,19 +252,20 @@ type SuggestionServiceHandler interface {
 	// INVALID_ARGUMENT for bad dates or criteria, and FAILED_PRECONDITION if
 	// nobody eats from the meals, or no recipe meets the criteria.
 	SuggestPlan(context.Context, *v1.SuggestPlanRequest) (*v1.SuggestPlanResponse, error)
-	// Suggest changes to a person's planned day, or one of its eating times,
-	// that fix its warnings (see PlanService.GetWeek), or bring it closer
-	// to the rules and targets: leaving a portion out, resizing it,
-	// replacing it with one of the household's recipes, or adding a recipe
-	// or a food in the pantry, like "Replace Wraps with Side salad" for a
-	// day over its energy maximum. Each change is tried against the same
-	// rules and targets GetWeek checks, and the best ones are returned, the
-	// fewest warnings left first, with the warnings they fix and leave.
-	// Apply one with PlanService: DeletePortion, UpdatePortion, or
-	// CreatePortion, with new_cook for a recipe. Shares of shared cooks
-	// that are resized or removed leave servings over, to plan elsewhere or
-	// take off the cook. Staples aren't changed: skip them with SkipStaple.
-	// Nothing is changed. Returns no fixes if nothing helps.
+	// Suggest changes to the portion sizes of a person's planned day, or one
+	// of its eating times, that fix its warnings (see PlanService.GetWeek),
+	// or bring it closer to the rules and targets: resizing one portion by
+	// as little as fixes it, scaling all the portions together, like 85% of
+	// each for a day over its energy maximum, or leaving a portion out. It
+	// never swaps in other recipes or foods: what's planned stays, in the
+	// right amounts. Each change is tried against the same rules and targets
+	// GetWeek checks, and the best ones are returned, the fewest warnings
+	// left first, with the warnings they fix and leave. Apply one with
+	// PlanService: UpdatePortion for each resize, or DeletePortion. Shares
+	// of shared cooks that are resized or removed leave servings over, to
+	// plan elsewhere or take off the cook. Staples aren't changed: skip them
+	// with SkipStaple. Nothing is changed. Returns no fixes if no resize
+	// helps.
 	SuggestFixes(context.Context, *v1.SuggestFixesRequest) (*v1.SuggestFixesResponse, error)
 }
 
