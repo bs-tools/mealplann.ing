@@ -32,8 +32,8 @@ interface FixesDialogProps {
 }
 
 /**
- * FixesDialog suggests changes to a person's day, or one of its eating
- * times, that fix its warnings or bring it closer to its rules and
+ * FixesDialog suggests portion sizes for a person's day, or one of its
+ * eating times, that fix its warnings or bring it closer to its rules and
  * targets, and applies the one picked.
  */
 const FixesDialog: React.FC<FixesDialogProps> = ({
@@ -50,67 +50,38 @@ const FixesDialog: React.FC<FixesDialogProps> = ({
   const apply = useMutation<void, ConnectError, PlanFix>({
     mutationFn: async (fix: PlanFix) => {
       const client = createClient(PlanService, transport);
-      // AddPortion creates the fix's new portion, of a recipe or a food.
-      const addPortion = async () => {
-        if (fix.recipeId === "") {
-          await client.createPortion({
-            portion: {
-              date,
-              eatingTimeId: fix.eatingTimeId,
-              personId,
-              what: {
-                case: "food",
-                value: {
-                  amount: fix.amount,
-                  foodId: fix.foodId,
-                  unit: fix.unit,
-                },
-              },
-            },
-          });
-          return;
+      if (fix.kind === PlanFixKind.REMOVE) {
+        await client.deletePortion({ id: fix.portionId });
+        if (fix.deleteCookId !== "") {
+          await client.deleteCook({ id: fix.deleteCookId });
         }
-        await client.createPortion({
-          newCook: { recipeId: fix.recipeId, servings: 0 },
-          portion: {
-            date,
-            eatingTimeId: fix.eatingTimeId,
-            personId,
-            what: {
-              case: "cook",
-              value: { cookId: "", servings: fix.servings },
-            },
-          },
-        });
-      };
-      switch (fix.kind) {
-        case PlanFixKind.REMOVE: {
-          await client.deletePortion({ id: fix.portionId });
-          if (fix.deleteCookId !== "") {
-            await client.deleteCook({ id: fix.deleteCookId });
-          }
-          break;
-        }
-        case PlanFixKind.RESIZE: {
-          const portion = portions.find(
-            (other) => other.portionId === fix.portionId
+        return;
+      }
+      // Every portion is found before any is resized.
+      const resizes = fix.resizes.map((resize) => {
+        const portion = portions.find(
+          (other) => other.portionId === resize.portionId
+        );
+        if (portion === undefined) {
+          throw new ConnectError(
+            "The portion was changed: reload the plan.",
+            Code.FailedPrecondition
           );
-          if (portion === undefined) {
-            throw new ConnectError(
-              "The portion was changed: reload the plan.",
-              Code.FailedPrecondition
-            );
-          }
-          await (portion.cookId === ""
+        }
+        return { portion, resize };
+      });
+      await Promise.all(
+        resizes.map(async ({ portion, resize }) =>
+          portion.cookId === ""
             ? client.updatePortion({
                 portion: {
-                  id: fix.portionId,
+                  id: resize.portionId,
                   what: {
                     case: "food",
                     value: {
-                      amount: fix.amount,
+                      amount: resize.amount,
                       foodId: portion.foodId,
-                      unit: fix.unit,
+                      unit: resize.unit,
                     },
                   },
                 },
@@ -118,30 +89,19 @@ const FixesDialog: React.FC<FixesDialogProps> = ({
               })
             : client.updatePortion({
                 portion: {
-                  id: fix.portionId,
+                  id: resize.portionId,
                   what: {
                     case: "cook",
-                    value: { cookId: portion.cookId, servings: fix.servings },
+                    value: {
+                      cookId: portion.cookId,
+                      servings: resize.servings,
+                    },
                   },
                 },
                 updateMask: { paths: ["cook"] },
-              }));
-          break;
-        }
-        case PlanFixKind.REPLACE: {
-          await client.deletePortion({ id: fix.portionId });
-          if (fix.deleteCookId !== "") {
-            await client.deleteCook({ id: fix.deleteCookId });
-          }
-          await addPortion();
-          break;
-        }
-        case PlanFixKind.ADD:
-        case PlanFixKind.UNSPECIFIED: {
-          await addPortion();
-          break;
-        }
-      }
+              })
+        )
+      );
     },
     onSuccess: async () => {
       await invalidateServices(queryClient, [
@@ -170,7 +130,7 @@ const FixesDialog: React.FC<FixesDialogProps> = ({
       <p className="text-sm text-gray-600">
         {fixes.data.warnings.length === 0
           ? "Nothing to fix: it meets the rules and targets."
-          : "No change to a portion, nor a recipe or pantry food to add, helps. Try planning something else, or check the rules and targets on the People page."}
+          : "No change to the portion sizes helps. Try planning something else, or check the rules and targets on the People page."}
       </p>
     );
   } else {
@@ -234,8 +194,8 @@ const FixesDialog: React.FC<FixesDialogProps> = ({
     <Modal open onClose={onClose} title={`Fix ${title}`}>
       <div className="flex flex-col gap-3">
         <p className="text-sm text-gray-600">
-          Changes that fix the warnings, or bring them closer to the rules and
-          targets, from your recipes and what&apos;s in the pantry.
+          Portion sizes that fix the warnings, or bring them closer to the rules
+          and targets, keeping what&apos;s planned.
         </p>
         {content}
         <ErrorText error={apply.error} />
