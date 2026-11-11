@@ -951,6 +951,7 @@ type ShoppingItem struct {
 	Manual       bool
 	CreateTime   pgtype.Timestamptz
 	UpdateTime   pgtype.Timestamptz
+	Recipes      json.RawMessage
 }
 
 type ShoppingList struct {

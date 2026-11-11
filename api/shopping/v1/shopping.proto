@@ -177,6 +177,19 @@ message ShoppingItem {
   string note = 17;
   // Whether it was added by hand, rather than generated from the plan.
   bool manual = 18;
+  // The recipes it's bought for: those of the meals the pantry is short
+  // for, by date. Empty for items added by hand, and foods eaten without a
+  // recipe, like a staple of a food. Names are as they were when the list
+  // was made or last regenerated.
+  repeated ItemRecipe recipes = 19 [(mcp.v1.field).output_only = true];
+}
+
+// A recipe an item is bought for.
+message ItemRecipe {
+  // The ID of the recipe.
+  string recipe_id = 1;
+  // The name of the recipe.
+  string recipe_name = 2;
 }
 
 message CreateStoreRequest {

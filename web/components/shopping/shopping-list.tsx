@@ -9,6 +9,7 @@ import type { ShoppingItem, ShoppingList } from "gen/shopping/v1/shopping_pb";
 import { formatWeekday } from "helpers/format";
 import { storeSectionLabel } from "helpers/labels";
 import React from "react";
+import { Link } from "react-router";
 
 // SectionGroup is the items of a store section.
 interface SectionGroup {
@@ -88,64 +89,83 @@ const ItemRow: React.FC<ItemRowProps> = ({
   onDelete,
 }) => (
   <li className="flex items-stretch">
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={checked}
-      disabled={disabled}
-      className={`flex min-h-14 grow items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-50 active:bg-gray-100 disabled:cursor-not-allowed ${checked ? "text-gray-400" : "text-gray-900"}`}
-      onClick={onToggle}
-    >
-      <span
-        className={`flex size-7 shrink-0 items-center justify-center rounded-full ring-2 ring-inset ${checked ? "bg-brand-600 text-white ring-brand-600" : "bg-white ring-gray-300"}`}
-        aria-hidden="true"
+    <div className="flex min-w-0 grow flex-col">
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={checked}
+        disabled={disabled}
+        className={`flex min-h-14 grow items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-50 active:bg-gray-100 disabled:cursor-not-allowed ${checked ? "text-gray-400" : "text-gray-900"}`}
+        onClick={onToggle}
       >
-        {checked && <CheckIcon className="size-4 stroke-[3]" />}
-      </span>
-      <span className="flex min-w-0 grow flex-col">
-        <span className="flex flex-wrap items-baseline gap-x-2">
-          <span
-            className={`text-base font-medium ${checked ? "line-through decoration-gray-400" : ""}`}
-          >
-            {item.name}
-          </span>
-          {item.amountText !== "" && (
+        <span
+          className={`flex size-7 shrink-0 items-center justify-center rounded-full ring-2 ring-inset ${checked ? "bg-brand-600 text-white ring-brand-600" : "bg-white ring-gray-300"}`}
+          aria-hidden="true"
+        >
+          {checked && <CheckIcon className="size-4 stroke-[3]" />}
+        </span>
+        <span className="flex min-w-0 grow flex-col">
+          <span className="flex flex-wrap items-baseline gap-x-2">
             <span
-              className={`text-sm tabular-nums ${checked ? "" : "text-gray-600"}`}
+              className={`text-base font-medium ${checked ? "line-through decoration-gray-400" : ""}`}
             >
-              {item.amountText}
+              {item.name}
+            </span>
+            {item.amountText !== "" && (
+              <span
+                className={`text-sm tabular-nums ${checked ? "" : "text-gray-600"}`}
+              >
+                {item.amountText}
+              </span>
+            )}
+          </span>
+          {item.note !== "" && (
+            <span className="text-sm text-gray-500 italic">{item.note}</span>
+          )}
+          {!checked && item.warning !== "" && (
+            <span className="mt-0.5 flex items-start gap-1 text-xs text-amber-800">
+              <ExclamationTriangleIcon
+                className="mt-px size-3.5 shrink-0"
+                aria-hidden="true"
+              />
+              {item.warning}
             </span>
           )}
         </span>
-        {item.note !== "" && (
-          <span className="text-sm text-gray-500 italic">{item.note}</span>
-        )}
-        {!checked && item.warning !== "" && (
-          <span className="mt-0.5 flex items-start gap-1 text-xs text-amber-800">
-            <ExclamationTriangleIcon
-              className="mt-px size-3.5 shrink-0"
-              aria-hidden="true"
-            />
-            {item.warning}
-          </span>
-        )}
-      </span>
-      <span className="flex shrink-0 flex-col items-end gap-0.5 text-xs">
-        {item.topUp && !checked && (
-          <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-800 ring-1 ring-amber-200 ring-inset">
-            Top-up
-          </span>
-        )}
-        {checked && item.checkedBy !== "" && (
-          <span className="text-gray-400">{item.checkedBy}</span>
-        )}
-        {!checked && item.neededByDate !== "" && (
-          <span className="text-gray-500">
-            {formatWeekday(item.neededByDate)}
-          </span>
-        )}
-      </span>
-    </button>
+        <span className="flex shrink-0 flex-col items-end gap-0.5 text-xs">
+          {item.topUp && !checked && (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-800 ring-1 ring-amber-200 ring-inset">
+              Top-up
+            </span>
+          )}
+          {checked && item.checkedBy !== "" && (
+            <span className="text-gray-400">{item.checkedBy}</span>
+          )}
+          {!checked && item.neededByDate !== "" && (
+            <span className="text-gray-500">
+              {formatWeekday(item.neededByDate)}
+            </span>
+          )}
+        </span>
+      </button>
+      {/* The recipes are links, so they sit below the row's button, not in it. */}
+      {!checked && item.recipes.length > 0 && (
+        <p className="-mt-1 pb-2 pl-12 text-xs text-gray-500">
+          For{" "}
+          {item.recipes.map((recipe, index) => (
+            <React.Fragment key={recipe.recipeId}>
+              {index > 0 && ", "}
+              <Link
+                to={`/recipes/${recipe.recipeId}`}
+                className="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+              >
+                {recipe.recipeName}
+              </Link>
+            </React.Fragment>
+          ))}
+        </p>
+      )}
+    </div>
     {!disabled && (
       <button
         type="button"
