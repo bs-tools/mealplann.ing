@@ -100,7 +100,7 @@ func ben() *people.Person {
 }
 
 // anna eats small portions of the shared meals with small meals between,
-// with her care team's rules.
+// with her own rules.
 func anna() *people.Person {
 	return &people.Person{
 		ID:   store.NewUUID(),
@@ -661,4 +661,32 @@ func TestSuggest(t *testing.T) {
 	if all := Suggest(in); len(all) != 4 || all[0].Score != list[0].Score {
 		t.Errorf("got %d suggestions, want all 4", len(all))
 	}
+}
+
+func TestTastes(t *testing.T) {
+	t.Parallel()
+	b := ben()
+	b.Profile.Dislikes = []string{"Coconut"}
+	b.Profile.Likes = []string{"tofu"}
+	b.Profile.Spice = people.SpiceMild
+	curry := recipe("Coconut curry", 2, ingredient(coconutMilk, 400), ingredient(chickpeas, 400))
+	stirFry := recipe("Stir-fry", 2, ingredient(tofu, 400), ingredient(rice, 150))
+	stirFry.Tags = []string{"flavor: Spicy"}
+	plain := recipe("Licorice rice", 2, ingredient(rice, 150))
+	list := Suggest(input(wednesday, []*people.Person{b}, curry, stirFry, plain))
+	wantComponents(t, suggestionOf(t, list, curry), Tastes, "-8 Ben dislikes Coconut")
+	wantComponents(t, suggestionOf(t, list, stirFry), Tastes, "2 Ben likes tofu", "-4 spicy, and Ben likes food mild")
+	wantComponents(t, suggestionOf(t, list, plain), Tastes)
+
+	// At a small meal, one sweet, by its sugars, or savory, as preferred.
+	a := anna()
+	a.Profile.SmallMeals = people.TasteSavory
+	sweet := recipe("Juice", 1, ingredient(juice, 200))
+	savory := recipe("Chickpea snack", 1, ingredient(chickpeas, 100))
+	in := input(wednesday, []*people.Person{a}, sweet, savory)
+	in.Meal = people.MealNone
+	in.EatingTimeID = etID(a, "Mid-afternoon")
+	list = Suggest(in)
+	wantComponents(t, suggestionOf(t, list, sweet), Tastes, "-3 Anna likes small meals savory")
+	wantComponents(t, suggestionOf(t, list, savory), Tastes, "2 Anna likes small meals savory")
 }

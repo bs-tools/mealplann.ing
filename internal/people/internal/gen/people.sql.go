@@ -7,6 +7,7 @@ package gen
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -23,7 +24,8 @@ insert into people (
   min_pairing_ratio,
   max_sugars_grams,
   warn_fast_carbs,
-  notes
+  notes,
+  profile
 ) values (
   $1,
   $2,
@@ -35,9 +37,10 @@ insert into people (
   $8,
   $9,
   $10,
-  $11
+  $11,
+  $12
 )
-returning id, household_id, name, user_id, max_portion_grams, min_protein_grams, max_carbohydrate_grams, min_pairing_ratio, max_sugars_grams, warn_fast_carbs, notes, create_time, update_time
+returning id, household_id, name, user_id, max_portion_grams, min_protein_grams, max_carbohydrate_grams, min_pairing_ratio, max_sugars_grams, warn_fast_carbs, notes, create_time, update_time, profile
 `
 
 type CreatePersonParams struct {
@@ -52,6 +55,7 @@ type CreatePersonParams struct {
 	MaxSugarsGrams       *float64
 	WarnFastCarbs        bool
 	Notes                string
+	Profile              json.RawMessage
 }
 
 func (q *Queries) CreatePerson(ctx context.Context, arg *CreatePersonParams) (*Person, error) {
@@ -67,6 +71,7 @@ func (q *Queries) CreatePerson(ctx context.Context, arg *CreatePersonParams) (*P
 		arg.MaxSugarsGrams,
 		arg.WarnFastCarbs,
 		arg.Notes,
+		arg.Profile,
 	)
 	var i Person
 	err := row.Scan(
@@ -83,6 +88,7 @@ func (q *Queries) CreatePerson(ctx context.Context, arg *CreatePersonParams) (*P
 		&i.Notes,
 		&i.CreateTime,
 		&i.UpdateTime,
+		&i.Profile,
 	)
 	return &i, err
 }
@@ -172,7 +178,7 @@ func (q *Queries) DeleteTargets(ctx context.Context, arg *DeleteTargetsParams) e
 }
 
 const getPerson = `-- name: GetPerson :one
-select id, household_id, name, user_id, max_portion_grams, min_protein_grams, max_carbohydrate_grams, min_pairing_ratio, max_sugars_grams, warn_fast_carbs, notes, create_time, update_time from people where id = $1 and household_id = $2
+select id, household_id, name, user_id, max_portion_grams, min_protein_grams, max_carbohydrate_grams, min_pairing_ratio, max_sugars_grams, warn_fast_carbs, notes, create_time, update_time, profile from people where id = $1 and household_id = $2
 `
 
 type GetPersonParams struct {
@@ -197,6 +203,7 @@ func (q *Queries) GetPerson(ctx context.Context, arg *GetPersonParams) (*Person,
 		&i.Notes,
 		&i.CreateTime,
 		&i.UpdateTime,
+		&i.Profile,
 	)
 	return &i, err
 }
@@ -246,7 +253,7 @@ func (q *Queries) ListEatingTimes(ctx context.Context, arg *ListEatingTimesParam
 }
 
 const listPeople = `-- name: ListPeople :many
-select id, household_id, name, user_id, max_portion_grams, min_protein_grams, max_carbohydrate_grams, min_pairing_ratio, max_sugars_grams, warn_fast_carbs, notes, create_time, update_time from people
+select id, household_id, name, user_id, max_portion_grams, min_protein_grams, max_carbohydrate_grams, min_pairing_ratio, max_sugars_grams, warn_fast_carbs, notes, create_time, update_time, profile from people
 where household_id = $1
 order by lower(name), id
 `
@@ -274,6 +281,7 @@ func (q *Queries) ListPeople(ctx context.Context, householdID pgtype.UUID) ([]*P
 			&i.Notes,
 			&i.CreateTime,
 			&i.UpdateTime,
+			&i.Profile,
 		); err != nil {
 			return nil, err
 		}
@@ -335,9 +343,10 @@ update people set
   max_sugars_grams = $7,
   warn_fast_carbs = $8,
   notes = $9,
+  profile = $10,
   update_time = now()
-where id = $10 and household_id = $11
-returning id, household_id, name, user_id, max_portion_grams, min_protein_grams, max_carbohydrate_grams, min_pairing_ratio, max_sugars_grams, warn_fast_carbs, notes, create_time, update_time
+where id = $11 and household_id = $12
+returning id, household_id, name, user_id, max_portion_grams, min_protein_grams, max_carbohydrate_grams, min_pairing_ratio, max_sugars_grams, warn_fast_carbs, notes, create_time, update_time, profile
 `
 
 type UpdatePersonParams struct {
@@ -350,6 +359,7 @@ type UpdatePersonParams struct {
 	MaxSugarsGrams       *float64
 	WarnFastCarbs        bool
 	Notes                string
+	Profile              json.RawMessage
 	ID                   pgtype.UUID
 	HouseholdID          pgtype.UUID
 }
@@ -365,6 +375,7 @@ func (q *Queries) UpdatePerson(ctx context.Context, arg *UpdatePersonParams) (*P
 		arg.MaxSugarsGrams,
 		arg.WarnFastCarbs,
 		arg.Notes,
+		arg.Profile,
 		arg.ID,
 		arg.HouseholdID,
 	)
@@ -383,6 +394,7 @@ func (q *Queries) UpdatePerson(ctx context.Context, arg *UpdatePersonParams) (*P
 		&i.Notes,
 		&i.CreateTime,
 		&i.UpdateTime,
+		&i.Profile,
 	)
 	return &i, err
 }

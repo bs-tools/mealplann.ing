@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file people/v1/people.proto.
  */
 export const file_people_v1_people: GenFile = /*@__PURE__*/
-  fileDesc("ChZwZW9wbGUvdjEvcGVvcGxlLnByb3RvEglwZW9wbGUudjEiugIKBlBlcnNvbhIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEg8KB3VzZXJfaWQYAyABKAkSKwoMZWF0aW5nX3RpbWVzGAQgAygLMhUucGVvcGxlLnYxLkVhdGluZ1RpbWUSJQoFcnVsZXMYBSABKAsyFi5wZW9wbGUudjEuRWF0aW5nUnVsZXMSMAoNZGFpbHlfdGFyZ2V0cxgGIAMoCzIZLnBlb3BsZS52MS5OdXRyaWVudFRhcmdldBINCgVub3RlcxgHIAEoCRI3CgtjcmVhdGVfdGltZRgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIASKFAQoKRWF0aW5nVGltZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEicKBGtpbmQYAyABKA4yGS5wZW9wbGUudjEuRWF0aW5nVGltZUtpbmQSDAoEdGltZRgEIAEoCRImCgRtZWFsGAUgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwivAIKC0VhdGluZ1J1bGVzEh4KEW1heF9wb3J0aW9uX2dyYW1zGAEgASgBSACIAQESHgoRbWluX3Byb3RlaW5fZ3JhbXMYAiABKAFIAYgBARIjChZtYXhfY2FyYm9oeWRyYXRlX2dyYW1zGAMgASgBSAKIAQESHgoRbWluX3BhaXJpbmdfcmF0aW8YBCABKAFIA4gBARIdChBtYXhfc3VnYXJzX2dyYW1zGAUgASgBSASIAQESFwoPd2Fybl9mYXN0X2NhcmJzGAYgASgIQhQKEl9tYXhfcG9ydGlvbl9ncmFtc0IUChJfbWluX3Byb3RlaW5fZ3JhbXNCGQoXX21heF9jYXJib2h5ZHJhdGVfZ3JhbXNCFAoSX21pbl9wYWlyaW5nX3JhdGlvQhMKEV9tYXhfc3VnYXJzX2dyYW1zIooBCg5OdXRyaWVudFRhcmdldBIkCghudXRyaWVudBgBIAEoDjISLmZvb2RzLnYxLk51dHJpZW50EhgKC21pbl9wZXJfZGF5GAIgASgBSACIAQESGAoLbWF4X3Blcl9kYXkYAyABKAFIAYgBAUIOCgxfbWluX3Blcl9kYXlCDgoMX21heF9wZXJfZGF5IjgKE0NyZWF0ZVBlcnNvblJlcXVlc3QSIQoGcGVyc29uGAEgASgLMhEucGVvcGxlLnYxLlBlcnNvbiI5ChRDcmVhdGVQZXJzb25SZXNwb25zZRIhCgZwZXJzb24YASABKAsyES5wZW9wbGUudjEuUGVyc29uIh4KEEdldFBlcnNvblJlcXVlc3QSCgoCaWQYASABKAkiNgoRR2V0UGVyc29uUmVzcG9uc2USIQoGcGVyc29uGAEgASgLMhEucGVvcGxlLnYxLlBlcnNvbiITChFMaXN0UGVvcGxlUmVxdWVzdCI3ChJMaXN0UGVvcGxlUmVzcG9uc2USIQoGcGVvcGxlGAEgAygLMhEucGVvcGxlLnYxLlBlcnNvbiJpChNVcGRhdGVQZXJzb25SZXF1ZXN0EiEKBnBlcnNvbhgBIAEoCzIRLnBlb3BsZS52MS5QZXJzb24SLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIjkKFFVwZGF0ZVBlcnNvblJlc3BvbnNlEiEKBnBlcnNvbhgBIAEoCzIRLnBlb3BsZS52MS5QZXJzb24iIQoTRGVsZXRlUGVyc29uUmVxdWVzdBIKCgJpZBgBIAEoCSIWChREZWxldGVQZXJzb25SZXNwb25zZSppCg5FYXRpbmdUaW1lS2luZBIgChxFQVRJTkdfVElNRV9LSU5EX1VOU1BFQ0lGSUVEEAASGQoVRUFUSU5HX1RJTUVfS0lORF9NQUlOEAESGgoWRUFUSU5HX1RJTUVfS0lORF9TTUFMTBACKoIBCg1Ib3VzZWhvbGRNZWFsEh4KGkhPVVNFSE9MRF9NRUFMX1VOU1BFQ0lGSUVEEAASHAoYSE9VU0VIT0xEX01FQUxfQlJFQUtGQVNUEAESGAoUSE9VU0VIT0xEX01FQUxfTFVOQ0gQAhIZChVIT1VTRUhPTERfTUVBTF9ESU5ORVIQAzKVAwoNUGVyc29uU2VydmljZRJPCgxDcmVhdGVQZXJzb24SHi5wZW9wbGUudjEuQ3JlYXRlUGVyc29uUmVxdWVzdBofLnBlb3BsZS52MS5DcmVhdGVQZXJzb25SZXNwb25zZRJGCglHZXRQZXJzb24SGy5wZW9wbGUudjEuR2V0UGVyc29uUmVxdWVzdBocLnBlb3BsZS52MS5HZXRQZXJzb25SZXNwb25zZRJJCgpMaXN0UGVvcGxlEhwucGVvcGxlLnYxLkxpc3RQZW9wbGVSZXF1ZXN0Gh0ucGVvcGxlLnYxLkxpc3RQZW9wbGVSZXNwb25zZRJPCgxVcGRhdGVQZXJzb24SHi5wZW9wbGUudjEuVXBkYXRlUGVyc29uUmVxdWVzdBofLnBlb3BsZS52MS5VcGRhdGVQZXJzb25SZXNwb25zZRJPCgxEZWxldGVQZXJzb24SHi5wZW9wbGUudjEuRGVsZXRlUGVyc29uUmVxdWVzdBofLnBlb3BsZS52MS5EZWxldGVQZXJzb25SZXNwb25zZUKkAQoNY29tLnBlb3BsZS52MUILUGVvcGxlUHJvdG9QAVpBZ2l0aHViLmNvbS9icy10b29scy9tZWFscGxhbm4uaW5nL2ludGVybmFsL2dlbi9wZW9wbGUvdjE7cGVvcGxldjGiAgNQWFiqAglQZW9wbGUuVjHKAglQZW9wbGVcVjHiAhVQZW9wbGVcVjFcR1BCTWV0YWRhdGHqAgpQZW9wbGU6OlYxYgZwcm90bzM", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChZwZW9wbGUvdjEvcGVvcGxlLnByb3RvEglwZW9wbGUudjEiugMKBlBlcnNvbhIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEg8KB3VzZXJfaWQYAyABKAkSKwoMZWF0aW5nX3RpbWVzGAQgAygLMhUucGVvcGxlLnYxLkVhdGluZ1RpbWUSJQoFcnVsZXMYBSABKAsyFi5wZW9wbGUudjEuRWF0aW5nUnVsZXMSMAoNZGFpbHlfdGFyZ2V0cxgGIAMoCzIZLnBlb3BsZS52MS5OdXRyaWVudFRhcmdldBINCgVub3RlcxgHIAEoCRI3CgtjcmVhdGVfdGltZRgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARI3Cgt1cGRhdGVfdGltZRgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBqqfGQIIARIjCgdwcm9maWxlGAogASgLMhIucGVvcGxlLnYxLlByb2ZpbGUSIQoGdGFzdGVzGAsgASgLMhEucGVvcGxlLnYxLlRhc3RlcxI2CgtyZWNvbW1lbmRlZBgMIAEoCzIZLnBlb3BsZS52MS5SZWNvbW1lbmRhdGlvbkIGqp8ZAggBIswBCgdQcm9maWxlEhYKCWhlaWdodF9jbRgBIAEoAUgAiAEBEhYKCXdlaWdodF9rZxgCIAEoAUgBiAEBEhIKCmJpcnRoX3llYXIYAyABKAUSGwoDc2V4GAQgASgOMg4ucGVvcGxlLnYxLlNleBIlCghhY3Rpdml0eRgFIAEoDjITLnBlb3BsZS52MS5BY3Rpdml0eRIdCgRnb2FsGAYgASgOMg8ucGVvcGxlLnYxLkdvYWxCDAoKX2hlaWdodF9jbUIMCgpfd2VpZ2h0X2tnIn8KBlRhc3RlcxIuCgtzbWFsbF9tZWFscxgBIAEoDjIZLnBlb3BsZS52MS5TbWFsbE1lYWxUYXN0ZRIkCgVzcGljZRgCIAEoDjIVLnBlb3BsZS52MS5TcGljZUxldmVsEg0KBWxpa2VzGAMgAygJEhAKCGRpc2xpa2VzGAQgAygJImsKDlJlY29tbWVuZGF0aW9uEhMKC2VuZXJneV9rY2FsGAEgASgBEhUKDXByb3RlaW5fZ3JhbXMYAiABKAESGgoSY2FyYm9oeWRyYXRlX2dyYW1zGAMgASgBEhEKCWZhdF9ncmFtcxgEIAEoASKFAQoKRWF0aW5nVGltZRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEicKBGtpbmQYAyABKA4yGS5wZW9wbGUudjEuRWF0aW5nVGltZUtpbmQSDAoEdGltZRgEIAEoCRImCgRtZWFsGAUgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwivAIKC0VhdGluZ1J1bGVzEh4KEW1heF9wb3J0aW9uX2dyYW1zGAEgASgBSACIAQESHgoRbWluX3Byb3RlaW5fZ3JhbXMYAiABKAFIAYgBARIjChZtYXhfY2FyYm9oeWRyYXRlX2dyYW1zGAMgASgBSAKIAQESHgoRbWluX3BhaXJpbmdfcmF0aW8YBCABKAFIA4gBARIdChBtYXhfc3VnYXJzX2dyYW1zGAUgASgBSASIAQESFwoPd2Fybl9mYXN0X2NhcmJzGAYgASgIQhQKEl9tYXhfcG9ydGlvbl9ncmFtc0IUChJfbWluX3Byb3RlaW5fZ3JhbXNCGQoXX21heF9jYXJib2h5ZHJhdGVfZ3JhbXNCFAoSX21pbl9wYWlyaW5nX3JhdGlvQhMKEV9tYXhfc3VnYXJzX2dyYW1zIooBCg5OdXRyaWVudFRhcmdldBIkCghudXRyaWVudBgBIAEoDjISLmZvb2RzLnYxLk51dHJpZW50EhgKC21pbl9wZXJfZGF5GAIgASgBSACIAQESGAoLbWF4X3Blcl9kYXkYAyABKAFIAYgBAUIOCgxfbWluX3Blcl9kYXlCDgoMX21heF9wZXJfZGF5IjgKE0NyZWF0ZVBlcnNvblJlcXVlc3QSIQoGcGVyc29uGAEgASgLMhEucGVvcGxlLnYxLlBlcnNvbiI5ChRDcmVhdGVQZXJzb25SZXNwb25zZRIhCgZwZXJzb24YASABKAsyES5wZW9wbGUudjEuUGVyc29uIh4KEEdldFBlcnNvblJlcXVlc3QSCgoCaWQYASABKAkiNgoRR2V0UGVyc29uUmVzcG9uc2USIQoGcGVyc29uGAEgASgLMhEucGVvcGxlLnYxLlBlcnNvbiITChFMaXN0UGVvcGxlUmVxdWVzdCI3ChJMaXN0UGVvcGxlUmVzcG9uc2USIQoGcGVvcGxlGAEgAygLMhEucGVvcGxlLnYxLlBlcnNvbiJpChNVcGRhdGVQZXJzb25SZXF1ZXN0EiEKBnBlcnNvbhgBIAEoCzIRLnBlb3BsZS52MS5QZXJzb24SLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrIjkKFFVwZGF0ZVBlcnNvblJlc3BvbnNlEiEKBnBlcnNvbhgBIAEoCzIRLnBlb3BsZS52MS5QZXJzb24iIQoTRGVsZXRlUGVyc29uUmVxdWVzdBIKCgJpZBgBIAEoCSIWChREZWxldGVQZXJzb25SZXNwb25zZSppCg5FYXRpbmdUaW1lS2luZBIgChxFQVRJTkdfVElNRV9LSU5EX1VOU1BFQ0lGSUVEEAASGQoVRUFUSU5HX1RJTUVfS0lORF9NQUlOEAESGgoWRUFUSU5HX1RJTUVfS0lORF9TTUFMTBACKoIBCg1Ib3VzZWhvbGRNZWFsEh4KGkhPVVNFSE9MRF9NRUFMX1VOU1BFQ0lGSUVEEAASHAoYSE9VU0VIT0xEX01FQUxfQlJFQUtGQVNUEAESGAoUSE9VU0VIT0xEX01FQUxfTFVOQ0gQAhIZChVIT1VTRUhPTERfTUVBTF9ESU5ORVIQAyo4CgNTZXgSEwoPU0VYX1VOU1BFQ0lGSUVEEAASDgoKU0VYX0ZFTUFMRRABEgwKCFNFWF9NQUxFEAIqcgoIQWN0aXZpdHkSGAoUQUNUSVZJVFlfVU5TUEVDSUZJRUQQABIQCgxBQ1RJVklUWV9MT1cQARISCg5BQ1RJVklUWV9MSUdIVBACEhMKD0FDVElWSVRZX0FDVElWRRADEhEKDUFDVElWSVRZX1ZFUlkQBCpgCgRHb2FsEhQKEEdPQUxfVU5TUEVDSUZJRUQQABIRCg1HT0FMX01BSU5UQUlOEAESFwoTR09BTF9CVUlMRF9TVFJFTkdUSBACEhYKEkdPQUxfTE9TRV9CT0RZX0ZBVBADKmsKDlNtYWxsTWVhbFRhc3RlEiAKHFNNQUxMX01FQUxfVEFTVEVfVU5TUEVDSUZJRUQQABIbChdTTUFMTF9NRUFMX1RBU1RFX1NBVk9SWRABEhoKFlNNQUxMX01FQUxfVEFTVEVfU1dFRVQQAipsCgpTcGljZUxldmVsEhsKF1NQSUNFX0xFVkVMX1VOU1BFQ0lGSUVEEAASFAoQU1BJQ0VfTEVWRUxfTUlMRBABEhYKElNQSUNFX0xFVkVMX01FRElVTRACEhMKD1NQSUNFX0xFVkVMX0hPVBADMpUDCg1QZXJzb25TZXJ2aWNlEk8KDENyZWF0ZVBlcnNvbhIeLnBlb3BsZS52MS5DcmVhdGVQZXJzb25SZXF1ZXN0Gh8ucGVvcGxlLnYxLkNyZWF0ZVBlcnNvblJlc3BvbnNlEkYKCUdldFBlcnNvbhIbLnBlb3BsZS52MS5HZXRQZXJzb25SZXF1ZXN0GhwucGVvcGxlLnYxLkdldFBlcnNvblJlc3BvbnNlEkkKCkxpc3RQZW9wbGUSHC5wZW9wbGUudjEuTGlzdFBlb3BsZVJlcXVlc3QaHS5wZW9wbGUudjEuTGlzdFBlb3BsZVJlc3BvbnNlEk8KDFVwZGF0ZVBlcnNvbhIeLnBlb3BsZS52MS5VcGRhdGVQZXJzb25SZXF1ZXN0Gh8ucGVvcGxlLnYxLlVwZGF0ZVBlcnNvblJlc3BvbnNlEk8KDERlbGV0ZVBlcnNvbhIeLnBlb3BsZS52MS5EZWxldGVQZXJzb25SZXF1ZXN0Gh8ucGVvcGxlLnYxLkRlbGV0ZVBlcnNvblJlc3BvbnNlQqQBCg1jb20ucGVvcGxlLnYxQgtQZW9wbGVQcm90b1ABWkFnaXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3Blb3BsZS92MTtwZW9wbGV2MaICA1BYWKoCCVBlb3BsZS5WMcoCCVBlb3BsZVxWMeICFVBlb3BsZVxWMVxHUEJNZXRhZGF0YeoCClBlb3BsZTo6VjFiBnByb3RvMw", [file_foods_v1_foods, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A person the household plans meals for.
@@ -70,8 +70,8 @@ export type Person = Message<"people.v1.Person"> & {
   dailyTargets: NutrientTarget[];
 
   /**
-   * Notes about the person, e.g. what their care team said, or foods they
-   * don't like. At most 2000 characters.
+   * Notes about the person, e.g. advice they were given, or anything else
+   * to remember. At most 2000 characters.
    *
    * @generated from field: string notes = 7;
    */
@@ -90,6 +90,32 @@ export type Person = Message<"people.v1.Person"> & {
    * @generated from field: google.protobuf.Timestamp update_time = 9;
    */
   updateTime?: Timestamp | undefined;
+
+  /**
+   * The person's body, activity and goal, to recommend how much they eat.
+   * Unset if they haven't said.
+   *
+   * @generated from field: people.v1.Profile profile = 10;
+   */
+  profile?: Profile | undefined;
+
+  /**
+   * What the person likes, which suggestions favor. Unset if they haven't
+   * said.
+   *
+   * @generated from field: people.v1.Tastes tastes = 11;
+   */
+  tastes?: Tastes | undefined;
+
+  /**
+   * How much the person eats a day for their goal, estimated from their
+   * profile, once it has their height, weight, birth year, sex, activity
+   * and goal. It's a general estimate, not a target: only make it their
+   * daily targets (with UpdatePerson) when the user asks to.
+   *
+   * @generated from field: people.v1.Recommendation recommended = 12;
+   */
+  recommended?: Recommendation | undefined;
 };
 
 /**
@@ -98,6 +124,157 @@ export type Person = Message<"people.v1.Person"> & {
  */
 export const PersonSchema: GenMessage<Person> = /*@__PURE__*/
   messageDesc(file_people_v1_people, 0);
+
+/**
+ * A person's body, activity and goal.
+ *
+ * @generated from message people.v1.Profile
+ */
+export type Profile = Message<"people.v1.Profile"> & {
+  /**
+   * Their height in centimeters, from 50 to 250. Unset if unknown.
+   *
+   * @generated from field: optional double height_cm = 1;
+   */
+  heightCm?: number | undefined;
+
+  /**
+   * Their weight in kilograms, from 20 to 300. Unset if unknown.
+   *
+   * @generated from field: optional double weight_kg = 2;
+   */
+  weightKg?: number | undefined;
+
+  /**
+   * The year they were born, 0 if unknown.
+   *
+   * @generated from field: int32 birth_year = 3;
+   */
+  birthYear: number;
+
+  /**
+   * Their sex, for the energy estimate. Unspecified if unknown.
+   *
+   * @generated from field: people.v1.Sex sex = 4;
+   */
+  sex: Sex;
+
+  /**
+   * How active they are. Unspecified if unknown.
+   *
+   * @generated from field: people.v1.Activity activity = 5;
+   */
+  activity: Activity;
+
+  /**
+   * What they want their eating to do for them. Unspecified if unknown.
+   *
+   * @generated from field: people.v1.Goal goal = 6;
+   */
+  goal: Goal;
+};
+
+/**
+ * Describes the message people.v1.Profile.
+ * Use `create(ProfileSchema)` to create a new message.
+ */
+export const ProfileSchema: GenMessage<Profile> = /*@__PURE__*/
+  messageDesc(file_people_v1_people, 1);
+
+/**
+ * What a person likes, which suggestions favor: a recipe is scored up
+ * for what they like and down for what they don't, matching its name,
+ * tags and ingredients' foods, ignoring case.
+ *
+ * @generated from message people.v1.Tastes
+ */
+export type Tastes = Message<"people.v1.Tastes"> & {
+  /**
+   * Whether their small meals are better sweet or savory. A recipe is
+   * sweet if it's tagged "sweet" or "dessert", or half or more of its
+   * carbohydrate is sugars.
+   *
+   * @generated from field: people.v1.SmallMealTaste small_meals = 1;
+   */
+  smallMeals: SmallMealTaste;
+
+  /**
+   * How spicy they like it. A recipe is spicy if it's tagged "spicy" or
+   * "hot".
+   *
+   * @generated from field: people.v1.SpiceLevel spice = 2;
+   */
+  spice: SpiceLevel;
+
+  /**
+   * Foods or dishes they like, e.g. "noodles". At most 20, each at most
+   * 50 characters.
+   *
+   * @generated from field: repeated string likes = 3;
+   */
+  likes: string[];
+
+  /**
+   * Foods or dishes they don't like, e.g. "mushrooms". At most 20, each
+   * at most 50 characters.
+   *
+   * @generated from field: repeated string dislikes = 4;
+   */
+  dislikes: string[];
+};
+
+/**
+ * Describes the message people.v1.Tastes.
+ * Use `create(TastesSchema)` to create a new message.
+ */
+export const TastesSchema: GenMessage<Tastes> = /*@__PURE__*/
+  messageDesc(file_people_v1_people, 2);
+
+/**
+ * How much a person eats a day, estimated from their profile: the energy
+ * they use (Mifflin-St Jeor, times their activity), more or less for their
+ * goal, with protein by their weight for their goal, about a quarter to a
+ * third of the energy from fat, and the rest from carbohydrate. Rounded to
+ * 10 kcal and 5 g.
+ *
+ * @generated from message people.v1.Recommendation
+ */
+export type Recommendation = Message<"people.v1.Recommendation"> & {
+  /**
+   * The energy a day, in kilocalories.
+   *
+   * @generated from field: double energy_kcal = 1;
+   */
+  energyKcal: number;
+
+  /**
+   * The protein a day, in grams: the least for the goal.
+   *
+   * @generated from field: double protein_grams = 2;
+   */
+  proteinGrams: number;
+
+  /**
+   * The carbohydrate a day, in grams.
+   *
+   * @generated from field: double carbohydrate_grams = 3;
+   */
+  carbohydrateGrams: number;
+
+  /**
+   * The fat a day, in grams.
+   *
+   * @generated from field: double fat_grams = 4;
+   */
+  fatGrams: number;
+};
+
+/**
+ * Describes the message people.v1.Recommendation.
+ * Use `create(RecommendationSchema)` to create a new message.
+ */
+export const RecommendationSchema: GenMessage<Recommendation> = /*@__PURE__*/
+  messageDesc(file_people_v1_people, 3);
 
 /**
  * A time of day a person eats at.
@@ -153,7 +330,7 @@ export type EatingTime = Message<"people.v1.EatingTime"> & {
  * Use `create(EatingTimeSchema)` to create a new message.
  */
 export const EatingTimeSchema: GenMessage<EatingTime> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 1);
+  messageDesc(file_people_v1_people, 4);
 
 /**
  * The rules each of a person's eating times is checked against: the sum of
@@ -221,7 +398,7 @@ export type EatingRules = Message<"people.v1.EatingRules"> & {
  * Use `create(EatingRulesSchema)` to create a new message.
  */
 export const EatingRulesSchema: GenMessage<EatingRules> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 2);
+  messageDesc(file_people_v1_people, 5);
 
 /**
  * A target for how much of a nutrient a person has in a day.
@@ -259,7 +436,7 @@ export type NutrientTarget = Message<"people.v1.NutrientTarget"> & {
  * Use `create(NutrientTargetSchema)` to create a new message.
  */
 export const NutrientTargetSchema: GenMessage<NutrientTarget> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 3);
+  messageDesc(file_people_v1_people, 6);
 
 /**
  * @generated from message people.v1.CreatePersonRequest
@@ -278,7 +455,7 @@ export type CreatePersonRequest = Message<"people.v1.CreatePersonRequest"> & {
  * Use `create(CreatePersonRequestSchema)` to create a new message.
  */
 export const CreatePersonRequestSchema: GenMessage<CreatePersonRequest> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 4);
+  messageDesc(file_people_v1_people, 7);
 
 /**
  * @generated from message people.v1.CreatePersonResponse
@@ -297,7 +474,7 @@ export type CreatePersonResponse = Message<"people.v1.CreatePersonResponse"> & {
  * Use `create(CreatePersonResponseSchema)` to create a new message.
  */
 export const CreatePersonResponseSchema: GenMessage<CreatePersonResponse> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 5);
+  messageDesc(file_people_v1_people, 8);
 
 /**
  * @generated from message people.v1.GetPersonRequest
@@ -316,7 +493,7 @@ export type GetPersonRequest = Message<"people.v1.GetPersonRequest"> & {
  * Use `create(GetPersonRequestSchema)` to create a new message.
  */
 export const GetPersonRequestSchema: GenMessage<GetPersonRequest> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 6);
+  messageDesc(file_people_v1_people, 9);
 
 /**
  * @generated from message people.v1.GetPersonResponse
@@ -335,7 +512,7 @@ export type GetPersonResponse = Message<"people.v1.GetPersonResponse"> & {
  * Use `create(GetPersonResponseSchema)` to create a new message.
  */
 export const GetPersonResponseSchema: GenMessage<GetPersonResponse> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 7);
+  messageDesc(file_people_v1_people, 10);
 
 /**
  * @generated from message people.v1.ListPeopleRequest
@@ -348,7 +525,7 @@ export type ListPeopleRequest = Message<"people.v1.ListPeopleRequest"> & {
  * Use `create(ListPeopleRequestSchema)` to create a new message.
  */
 export const ListPeopleRequestSchema: GenMessage<ListPeopleRequest> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 8);
+  messageDesc(file_people_v1_people, 11);
 
 /**
  * @generated from message people.v1.ListPeopleResponse
@@ -367,7 +544,7 @@ export type ListPeopleResponse = Message<"people.v1.ListPeopleResponse"> & {
  * Use `create(ListPeopleResponseSchema)` to create a new message.
  */
 export const ListPeopleResponseSchema: GenMessage<ListPeopleResponse> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 9);
+  messageDesc(file_people_v1_people, 12);
 
 /**
  * @generated from message people.v1.UpdatePersonRequest
@@ -398,7 +575,7 @@ export type UpdatePersonRequest = Message<"people.v1.UpdatePersonRequest"> & {
  * Use `create(UpdatePersonRequestSchema)` to create a new message.
  */
 export const UpdatePersonRequestSchema: GenMessage<UpdatePersonRequest> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 10);
+  messageDesc(file_people_v1_people, 13);
 
 /**
  * @generated from message people.v1.UpdatePersonResponse
@@ -417,7 +594,7 @@ export type UpdatePersonResponse = Message<"people.v1.UpdatePersonResponse"> & {
  * Use `create(UpdatePersonResponseSchema)` to create a new message.
  */
 export const UpdatePersonResponseSchema: GenMessage<UpdatePersonResponse> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 11);
+  messageDesc(file_people_v1_people, 14);
 
 /**
  * @generated from message people.v1.DeletePersonRequest
@@ -436,7 +613,7 @@ export type DeletePersonRequest = Message<"people.v1.DeletePersonRequest"> & {
  * Use `create(DeletePersonRequestSchema)` to create a new message.
  */
 export const DeletePersonRequestSchema: GenMessage<DeletePersonRequest> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 12);
+  messageDesc(file_people_v1_people, 15);
 
 /**
  * @generated from message people.v1.DeletePersonResponse
@@ -449,7 +626,7 @@ export type DeletePersonResponse = Message<"people.v1.DeletePersonResponse"> & {
  * Use `create(DeletePersonResponseSchema)` to create a new message.
  */
 export const DeletePersonResponseSchema: GenMessage<DeletePersonResponse> = /*@__PURE__*/
-  messageDesc(file_people_v1_people, 13);
+  messageDesc(file_people_v1_people, 16);
 
 /**
  * EatingTimeKind is whether an eating time is a main meal or a small one.
@@ -525,6 +702,191 @@ export enum HouseholdMeal {
  */
 export const HouseholdMealSchema: GenEnum<HouseholdMeal> = /*@__PURE__*/
   enumDesc(file_people_v1_people, 1);
+
+/**
+ * A person's sex, for the estimate of the energy they need.
+ *
+ * @generated from enum people.v1.Sex
+ */
+export enum Sex {
+  /**
+   * Not said.
+   *
+   * @generated from enum value: SEX_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: SEX_FEMALE = 1;
+   */
+  FEMALE = 1,
+
+  /**
+   * @generated from enum value: SEX_MALE = 2;
+   */
+  MALE = 2,
+}
+
+/**
+ * Describes the enum people.v1.Sex.
+ */
+export const SexSchema: GenEnum<Sex> = /*@__PURE__*/
+  enumDesc(file_people_v1_people, 2);
+
+/**
+ * How active a person is through a week.
+ *
+ * @generated from enum people.v1.Activity
+ */
+export enum Activity {
+  /**
+   * Not said.
+   *
+   * @generated from enum value: ACTIVITY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Mostly sitting, with little exercise.
+   *
+   * @generated from enum value: ACTIVITY_LOW = 1;
+   */
+  LOW = 1,
+
+  /**
+   * Light exercise one to three days a week.
+   *
+   * @generated from enum value: ACTIVITY_LIGHT = 2;
+   */
+  LIGHT = 2,
+
+  /**
+   * Moderate exercise three to five days a week.
+   *
+   * @generated from enum value: ACTIVITY_ACTIVE = 3;
+   */
+  ACTIVE = 3,
+
+  /**
+   * Hard exercise most days.
+   *
+   * @generated from enum value: ACTIVITY_VERY = 4;
+   */
+  VERY = 4,
+}
+
+/**
+ * Describes the enum people.v1.Activity.
+ */
+export const ActivitySchema: GenEnum<Activity> = /*@__PURE__*/
+  enumDesc(file_people_v1_people, 3);
+
+/**
+ * What a person wants their eating to do for them.
+ *
+ * @generated from enum people.v1.Goal
+ */
+export enum Goal {
+  /**
+   * Not said.
+   *
+   * @generated from enum value: GOAL_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Keep their weight.
+   *
+   * @generated from enum value: GOAL_MAINTAIN = 1;
+   */
+  MAINTAIN = 1,
+
+  /**
+   * Build strength and muscle: a little more energy, and more protein.
+   *
+   * @generated from enum value: GOAL_BUILD_STRENGTH = 2;
+   */
+  BUILD_STRENGTH = 2,
+
+  /**
+   * Lose body fat rather than muscle: less energy, more protein, and a
+   * little less carbohydrate and fat.
+   *
+   * @generated from enum value: GOAL_LOSE_BODY_FAT = 3;
+   */
+  LOSE_BODY_FAT = 3,
+}
+
+/**
+ * Describes the enum people.v1.Goal.
+ */
+export const GoalSchema: GenEnum<Goal> = /*@__PURE__*/
+  enumDesc(file_people_v1_people, 4);
+
+/**
+ * Whether a person likes their small meals sweet or savory.
+ *
+ * @generated from enum people.v1.SmallMealTaste
+ */
+export enum SmallMealTaste {
+  /**
+   * Either.
+   *
+   * @generated from enum value: SMALL_MEAL_TASTE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: SMALL_MEAL_TASTE_SAVORY = 1;
+   */
+  SAVORY = 1,
+
+  /**
+   * @generated from enum value: SMALL_MEAL_TASTE_SWEET = 2;
+   */
+  SWEET = 2,
+}
+
+/**
+ * Describes the enum people.v1.SmallMealTaste.
+ */
+export const SmallMealTasteSchema: GenEnum<SmallMealTaste> = /*@__PURE__*/
+  enumDesc(file_people_v1_people, 5);
+
+/**
+ * How spicy a person likes their food.
+ *
+ * @generated from enum people.v1.SpiceLevel
+ */
+export enum SpiceLevel {
+  /**
+   * Any.
+   *
+   * @generated from enum value: SPICE_LEVEL_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: SPICE_LEVEL_MILD = 1;
+   */
+  MILD = 1,
+
+  /**
+   * @generated from enum value: SPICE_LEVEL_MEDIUM = 2;
+   */
+  MEDIUM = 2,
+
+  /**
+   * @generated from enum value: SPICE_LEVEL_HOT = 3;
+   */
+  HOT = 3,
+}
+
+/**
+ * Describes the enum people.v1.SpiceLevel.
+ */
+export const SpiceLevelSchema: GenEnum<SpiceLevel> = /*@__PURE__*/
+  enumDesc(file_people_v1_people, 6);
 
 /**
  * PersonService manages the people the household plans meals for. People

@@ -85,13 +85,127 @@ message Person {
   EatingRules rules = 5;
   // The person's daily targets, at most one per nutrient. Empty if none.
   repeated NutrientTarget daily_targets = 6;
-  // Notes about the person, e.g. what their care team said, or foods they
-  // don't like. At most 2000 characters.
+  // Notes about the person, e.g. advice they were given, or anything else
+  // to remember. At most 2000 characters.
   string notes = 7;
   // When the person was created.
   google.protobuf.Timestamp create_time = 8 [(mcp.v1.field).output_only = true];
   // When the person was last changed.
   google.protobuf.Timestamp update_time = 9 [(mcp.v1.field).output_only = true];
+  // The person's body, activity and goal, to recommend how much they eat.
+  // Unset if they haven't said.
+  Profile profile = 10;
+  // What the person likes, which suggestions favor. Unset if they haven't
+  // said.
+  Tastes tastes = 11;
+  // How much the person eats a day for their goal, estimated from their
+  // profile, once it has their height, weight, birth year, sex, activity
+  // and goal. It's a general estimate, not a target: only make it their
+  // daily targets (with UpdatePerson) when the user asks to.
+  Recommendation recommended = 12 [(mcp.v1.field).output_only = true];
+}
+
+// A person's sex, for the estimate of the energy they need.
+enum Sex {
+  // Not said.
+  SEX_UNSPECIFIED = 0;
+  SEX_FEMALE = 1;
+  SEX_MALE = 2;
+}
+
+// How active a person is through a week.
+enum Activity {
+  // Not said.
+  ACTIVITY_UNSPECIFIED = 0;
+  // Mostly sitting, with little exercise.
+  ACTIVITY_LOW = 1;
+  // Light exercise one to three days a week.
+  ACTIVITY_LIGHT = 2;
+  // Moderate exercise three to five days a week.
+  ACTIVITY_ACTIVE = 3;
+  // Hard exercise most days.
+  ACTIVITY_VERY = 4;
+}
+
+// What a person wants their eating to do for them.
+enum Goal {
+  // Not said.
+  GOAL_UNSPECIFIED = 0;
+  // Keep their weight.
+  GOAL_MAINTAIN = 1;
+  // Build strength and muscle: a little more energy, and more protein.
+  GOAL_BUILD_STRENGTH = 2;
+  // Lose body fat rather than muscle: less energy, more protein, and a
+  // little less carbohydrate and fat.
+  GOAL_LOSE_BODY_FAT = 3;
+}
+
+// Whether a person likes their small meals sweet or savory.
+enum SmallMealTaste {
+  // Either.
+  SMALL_MEAL_TASTE_UNSPECIFIED = 0;
+  SMALL_MEAL_TASTE_SAVORY = 1;
+  SMALL_MEAL_TASTE_SWEET = 2;
+}
+
+// How spicy a person likes their food.
+enum SpiceLevel {
+  // Any.
+  SPICE_LEVEL_UNSPECIFIED = 0;
+  SPICE_LEVEL_MILD = 1;
+  SPICE_LEVEL_MEDIUM = 2;
+  SPICE_LEVEL_HOT = 3;
+}
+
+// A person's body, activity and goal.
+message Profile {
+  // Their height in centimeters, from 50 to 250. Unset if unknown.
+  optional double height_cm = 1;
+  // Their weight in kilograms, from 20 to 300. Unset if unknown.
+  optional double weight_kg = 2;
+  // The year they were born, 0 if unknown.
+  int32 birth_year = 3;
+  // Their sex, for the energy estimate. Unspecified if unknown.
+  Sex sex = 4;
+  // How active they are. Unspecified if unknown.
+  Activity activity = 5;
+  // What they want their eating to do for them. Unspecified if unknown.
+  Goal goal = 6;
+}
+
+// What a person likes, which suggestions favor: a recipe is scored up
+// for what they like and down for what they don't, matching its name,
+// tags and ingredients' foods, ignoring case.
+message Tastes {
+  // Whether their small meals are better sweet or savory. A recipe is
+  // sweet if it's tagged "sweet" or "dessert", or half or more of its
+  // carbohydrate is sugars.
+  SmallMealTaste small_meals = 1;
+  // How spicy they like it. A recipe is spicy if it's tagged "spicy" or
+  // "hot".
+  SpiceLevel spice = 2;
+  // Foods or dishes they like, e.g. "noodles". At most 20, each at most
+  // 50 characters.
+  repeated string likes = 3;
+  // Foods or dishes they don't like, e.g. "mushrooms". At most 20, each
+  // at most 50 characters.
+  repeated string dislikes = 4;
+}
+
+// How much a person eats a day, estimated from their profile: the energy
+// they use (Mifflin-St Jeor, times their activity), more or less for their
+// goal, with protein by their weight for their goal, about a quarter to a
+// third of the energy from fat, and the rest from carbohydrate. Rounded to
+// 10 kcal and 5 g.
+message Recommendation {
+  // The energy a day, in kilocalories.
+  double energy_kcal = 1;
+  // The protein a day, in grams: the least for the goal.
+  double protein_grams = 2;
+  // The carbohydrate a day, in grams.
+  double carbohydrate_grams = 3;
+  // The fat a day, in grams.
+  double fat_grams = 4;
 }
 
 // A time of day a person eats at.

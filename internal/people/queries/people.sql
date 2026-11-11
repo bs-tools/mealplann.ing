@@ -10,7 +10,8 @@ insert into people (
   min_pairing_ratio,
   max_sugars_grams,
   warn_fast_carbs,
-  notes
+  notes,
+  profile
 ) values (
   @id,
   @household_id,
@@ -22,7 +23,8 @@ insert into people (
   @min_pairing_ratio,
   @max_sugars_grams,
   @warn_fast_carbs,
-  @notes
+  @notes,
+  @profile
 )
 returning *;
 
@@ -45,6 +47,7 @@ update people set
   max_sugars_grams = @max_sugars_grams,
   warn_fast_carbs = @warn_fast_carbs,
   notes = @notes,
+  profile = @profile,
   update_time = now()
 where id = @id and household_id = @household_id
 returning *;

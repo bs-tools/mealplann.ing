@@ -39,7 +39,7 @@ import "plans/v1/plans.proto";
 // use-by date, the rest of a pack, or more of a nutrient someone is short
 // of, and create it with RecipeService.CreateRecipe once the user agrees.
 // Never change a person's rules or targets to make a suggestion fit: they
-// come from the person's care team.
+// are the person's own.
 service SuggestionService {
   // Score the household's recipes for an open slot of the plan, and return
   // the best, best first. Each suggestion has its total score and the
@@ -216,6 +216,9 @@ enum ScoreKind {
   SCORE_KIND_LEFTOVER = 11;
   // How often the household cooked it lately.
   SCORE_KIND_COOKED = 12;
+  // The eaters' tastes (see people.v1.Tastes): what they like and dislike,
+  // sweet or savory small meals, and spice.
+  SCORE_KIND_TASTES = 13;
   reserved 7;
   reserved "SCORE_KIND_FLAVOR";
 }
@@ -319,7 +322,7 @@ enum Emphasis {
 }
 
 // What the user wants of a suggested plan. Someone's rules always count
-// fully, as they come from their care team.
+// fully, as they are their own.
 message PlanCriteria {
   // How much to avoid repeating recipes on nearby days (VARIETY).
   Emphasis variety = 1;
@@ -436,8 +439,8 @@ message PlanSlot {
   // How many of the recipes meeting the criteria break nobody's rules at
   // the slot, given the rest of the plan, for SUGGESTED and KEPT. If it's
   // fewer than the days planned, the plan repeats them, or breaks a rule:
-  // suggest adding recipes that fit, or checking that the rules are the
-  // care team's.
+  // suggest adding recipes that fit, or checking that the rules are what
+  // the person wants.
   int32 fitting_recipe_count = 7;
   // The person, for one person's eating time.
   string person_id = 8;

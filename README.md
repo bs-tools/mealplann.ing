@@ -19,8 +19,8 @@ Version 1 is done, milestones 1 to 5:
 - Foods from Health Canada's Canadian Nutrient File or USDA FoodData
   Central, or entered by hand, and recipes with
   their nutrition per serving.
-- The people you plan for, with their eating patterns and their care team's
-  rules, and weekly plans of shared meals, leftovers and staples, checked
+- The people you plan for, with their eating patterns, rules, goals and
+  tastes, and weekly plans of shared meals, leftovers and staples, checked
   against those rules.
 - The pantry, which cooks marked done take from, and a shared shopping list
   for one shop a week, by store and aisle, which puts what's bought into the

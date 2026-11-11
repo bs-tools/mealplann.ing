@@ -62,6 +62,9 @@ const (
 	// Cooked is how often the household cooked the recipe lately, as what
 	// they cook again, they like.
 	Cooked
+	// Tastes is the eaters' tastes: their likes and dislikes, sweet or
+	// savory small meals, and spice.
+	Tastes
 )
 
 // The weights of the components, in points. A typical good suggestion
@@ -535,6 +538,7 @@ func (s *scorer) score(r *recipes.Recipe, leftover *plans.Cook) *Suggestion {
 	s.nutrition(c)
 	s.rules(c)
 	s.keeping(c)
+	s.tastes(c)
 	if leftover != nil {
 		// A leftover adds to a cook the week has already: it shares all of
 		// that cook's ingredients and repeats it by nature, and its meal

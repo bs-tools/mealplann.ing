@@ -14,6 +14,7 @@ import {
   PencilIcon,
   PlusIcon,
   TrashIcon,
+  UserCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
@@ -40,6 +41,7 @@ import { formatAmount, nutrientInfoOf } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
 import { useUnitSystem } from "helpers/user";
 import React, { useState } from "react";
+import { Link } from "react-router";
 
 // RuleFacts describes a person's rules, e.g. "Portions up to 200 g".
 const ruleFacts = (person: Person): string[] => {
@@ -155,6 +157,10 @@ const PersonCard: React.FC<PersonCardProps> = ({
             <TrashIcon className="size-4" aria-hidden="true" />
             Delete
           </ConfirmButton>
+          <Link to={`/people/${person.id}/profile`} className={secondaryButton}>
+            <UserCircleIcon className="size-4" aria-hidden="true" />
+            Profile
+          </Link>
           <button type="button" className={secondaryButton} onClick={onEdit}>
             <PencilIcon className="size-4" aria-hidden="true" />
             Edit

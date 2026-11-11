@@ -2957,8 +2957,7 @@ export const SeveritySchema: GenEnum<Severity> = /*@__PURE__*/
  * each person's eating times with what they eat, their daily totals, and
  * warnings where the plan breaks their rules or targets, or a leftover
  * won't keep, each saying what to change. The rules and targets are the
- * user's, from the person's care team: change the plan to meet them, never
- * the rules.
+ * person's own: change the plan to meet them, never the rules.
  *
  * @generated from service plans.v1.PlanService
  */

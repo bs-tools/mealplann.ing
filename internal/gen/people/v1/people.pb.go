@@ -125,6 +125,256 @@ func (x HouseholdMeal) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
+// A person's sex, for the estimate of the energy they need.
+type Sex int32
+
+const (
+	// Not said.
+	Sex_SEX_UNSPECIFIED Sex = 0
+	Sex_SEX_FEMALE      Sex = 1
+	Sex_SEX_MALE        Sex = 2
+)
+
+// Enum value maps for Sex.
+var (
+	Sex_name = map[int32]string{
+		0: "SEX_UNSPECIFIED",
+		1: "SEX_FEMALE",
+		2: "SEX_MALE",
+	}
+	Sex_value = map[string]int32{
+		"SEX_UNSPECIFIED": 0,
+		"SEX_FEMALE":      1,
+		"SEX_MALE":        2,
+	}
+)
+
+func (x Sex) Enum() *Sex {
+	p := new(Sex)
+	*p = x
+	return p
+}
+
+func (x Sex) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Sex) Descriptor() protoreflect.EnumDescriptor {
+	return file_people_v1_people_proto_enumTypes[2].Descriptor()
+}
+
+func (Sex) Type() protoreflect.EnumType {
+	return &file_people_v1_people_proto_enumTypes[2]
+}
+
+func (x Sex) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// How active a person is through a week.
+type Activity int32
+
+const (
+	// Not said.
+	Activity_ACTIVITY_UNSPECIFIED Activity = 0
+	// Mostly sitting, with little exercise.
+	Activity_ACTIVITY_LOW Activity = 1
+	// Light exercise one to three days a week.
+	Activity_ACTIVITY_LIGHT Activity = 2
+	// Moderate exercise three to five days a week.
+	Activity_ACTIVITY_ACTIVE Activity = 3
+	// Hard exercise most days.
+	Activity_ACTIVITY_VERY Activity = 4
+)
+
+// Enum value maps for Activity.
+var (
+	Activity_name = map[int32]string{
+		0: "ACTIVITY_UNSPECIFIED",
+		1: "ACTIVITY_LOW",
+		2: "ACTIVITY_LIGHT",
+		3: "ACTIVITY_ACTIVE",
+		4: "ACTIVITY_VERY",
+	}
+	Activity_value = map[string]int32{
+		"ACTIVITY_UNSPECIFIED": 0,
+		"ACTIVITY_LOW":         1,
+		"ACTIVITY_LIGHT":       2,
+		"ACTIVITY_ACTIVE":      3,
+		"ACTIVITY_VERY":        4,
+	}
+)
+
+func (x Activity) Enum() *Activity {
+	p := new(Activity)
+	*p = x
+	return p
+}
+
+func (x Activity) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Activity) Descriptor() protoreflect.EnumDescriptor {
+	return file_people_v1_people_proto_enumTypes[3].Descriptor()
+}
+
+func (Activity) Type() protoreflect.EnumType {
+	return &file_people_v1_people_proto_enumTypes[3]
+}
+
+func (x Activity) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// What a person wants their eating to do for them.
+type Goal int32
+
+const (
+	// Not said.
+	Goal_GOAL_UNSPECIFIED Goal = 0
+	// Keep their weight.
+	Goal_GOAL_MAINTAIN Goal = 1
+	// Build strength and muscle: a little more energy, and more protein.
+	Goal_GOAL_BUILD_STRENGTH Goal = 2
+	// Lose body fat rather than muscle: less energy, more protein, and a
+	// little less carbohydrate and fat.
+	Goal_GOAL_LOSE_BODY_FAT Goal = 3
+)
+
+// Enum value maps for Goal.
+var (
+	Goal_name = map[int32]string{
+		0: "GOAL_UNSPECIFIED",
+		1: "GOAL_MAINTAIN",
+		2: "GOAL_BUILD_STRENGTH",
+		3: "GOAL_LOSE_BODY_FAT",
+	}
+	Goal_value = map[string]int32{
+		"GOAL_UNSPECIFIED":    0,
+		"GOAL_MAINTAIN":       1,
+		"GOAL_BUILD_STRENGTH": 2,
+		"GOAL_LOSE_BODY_FAT":  3,
+	}
+)
+
+func (x Goal) Enum() *Goal {
+	p := new(Goal)
+	*p = x
+	return p
+}
+
+func (x Goal) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Goal) Descriptor() protoreflect.EnumDescriptor {
+	return file_people_v1_people_proto_enumTypes[4].Descriptor()
+}
+
+func (Goal) Type() protoreflect.EnumType {
+	return &file_people_v1_people_proto_enumTypes[4]
+}
+
+func (x Goal) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Whether a person likes their small meals sweet or savory.
+type SmallMealTaste int32
+
+const (
+	// Either.
+	SmallMealTaste_SMALL_MEAL_TASTE_UNSPECIFIED SmallMealTaste = 0
+	SmallMealTaste_SMALL_MEAL_TASTE_SAVORY      SmallMealTaste = 1
+	SmallMealTaste_SMALL_MEAL_TASTE_SWEET       SmallMealTaste = 2
+)
+
+// Enum value maps for SmallMealTaste.
+var (
+	SmallMealTaste_name = map[int32]string{
+		0: "SMALL_MEAL_TASTE_UNSPECIFIED",
+		1: "SMALL_MEAL_TASTE_SAVORY",
+		2: "SMALL_MEAL_TASTE_SWEET",
+	}
+	SmallMealTaste_value = map[string]int32{
+		"SMALL_MEAL_TASTE_UNSPECIFIED": 0,
+		"SMALL_MEAL_TASTE_SAVORY":      1,
+		"SMALL_MEAL_TASTE_SWEET":       2,
+	}
+)
+
+func (x SmallMealTaste) Enum() *SmallMealTaste {
+	p := new(SmallMealTaste)
+	*p = x
+	return p
+}
+
+func (x SmallMealTaste) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SmallMealTaste) Descriptor() protoreflect.EnumDescriptor {
+	return file_people_v1_people_proto_enumTypes[5].Descriptor()
+}
+
+func (SmallMealTaste) Type() protoreflect.EnumType {
+	return &file_people_v1_people_proto_enumTypes[5]
+}
+
+func (x SmallMealTaste) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// How spicy a person likes their food.
+type SpiceLevel int32
+
+const (
+	// Any.
+	SpiceLevel_SPICE_LEVEL_UNSPECIFIED SpiceLevel = 0
+	SpiceLevel_SPICE_LEVEL_MILD        SpiceLevel = 1
+	SpiceLevel_SPICE_LEVEL_MEDIUM      SpiceLevel = 2
+	SpiceLevel_SPICE_LEVEL_HOT         SpiceLevel = 3
+)
+
+// Enum value maps for SpiceLevel.
+var (
+	SpiceLevel_name = map[int32]string{
+		0: "SPICE_LEVEL_UNSPECIFIED",
+		1: "SPICE_LEVEL_MILD",
+		2: "SPICE_LEVEL_MEDIUM",
+		3: "SPICE_LEVEL_HOT",
+	}
+	SpiceLevel_value = map[string]int32{
+		"SPICE_LEVEL_UNSPECIFIED": 0,
+		"SPICE_LEVEL_MILD":        1,
+		"SPICE_LEVEL_MEDIUM":      2,
+		"SPICE_LEVEL_HOT":         3,
+	}
+)
+
+func (x SpiceLevel) Enum() *SpiceLevel {
+	p := new(SpiceLevel)
+	*p = x
+	return p
+}
+
+func (x SpiceLevel) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SpiceLevel) Descriptor() protoreflect.EnumDescriptor {
+	return file_people_v1_people_proto_enumTypes[6].Descriptor()
+}
+
+func (SpiceLevel) Type() protoreflect.EnumType {
+	return &file_people_v1_people_proto_enumTypes[6]
+}
+
+func (x SpiceLevel) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
 // A person the household plans meals for.
 type Person struct {
 	state                   protoimpl.MessageState `protogen:"opaque.v1"`
@@ -137,6 +387,9 @@ type Person struct {
 	xxx_hidden_Notes        string                 `protobuf:"bytes,7,opt,name=notes,proto3"`
 	xxx_hidden_CreateTime   *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=create_time,json=createTime,proto3"`
 	xxx_hidden_UpdateTime   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=update_time,json=updateTime,proto3"`
+	xxx_hidden_Profile      *Profile               `protobuf:"bytes,10,opt,name=profile,proto3"`
+	xxx_hidden_Tastes       *Tastes                `protobuf:"bytes,11,opt,name=tastes,proto3"`
+	xxx_hidden_Recommended  *Recommendation        `protobuf:"bytes,12,opt,name=recommended,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -233,6 +486,27 @@ func (x *Person) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Person) GetProfile() *Profile {
+	if x != nil {
+		return x.xxx_hidden_Profile
+	}
+	return nil
+}
+
+func (x *Person) GetTastes() *Tastes {
+	if x != nil {
+		return x.xxx_hidden_Tastes
+	}
+	return nil
+}
+
+func (x *Person) GetRecommended() *Recommendation {
+	if x != nil {
+		return x.xxx_hidden_Recommended
+	}
+	return nil
+}
+
 func (x *Person) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -269,6 +543,18 @@ func (x *Person) SetUpdateTime(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdateTime = v
 }
 
+func (x *Person) SetProfile(v *Profile) {
+	x.xxx_hidden_Profile = v
+}
+
+func (x *Person) SetTastes(v *Tastes) {
+	x.xxx_hidden_Tastes = v
+}
+
+func (x *Person) SetRecommended(v *Recommendation) {
+	x.xxx_hidden_Recommended = v
+}
+
 func (x *Person) HasRules() bool {
 	if x == nil {
 		return false
@@ -290,6 +576,27 @@ func (x *Person) HasUpdateTime() bool {
 	return x.xxx_hidden_UpdateTime != nil
 }
 
+func (x *Person) HasProfile() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Profile != nil
+}
+
+func (x *Person) HasTastes() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Tastes != nil
+}
+
+func (x *Person) HasRecommended() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Recommended != nil
+}
+
 func (x *Person) ClearRules() {
 	x.xxx_hidden_Rules = nil
 }
@@ -300,6 +607,18 @@ func (x *Person) ClearCreateTime() {
 
 func (x *Person) ClearUpdateTime() {
 	x.xxx_hidden_UpdateTime = nil
+}
+
+func (x *Person) ClearProfile() {
+	x.xxx_hidden_Profile = nil
+}
+
+func (x *Person) ClearTastes() {
+	x.xxx_hidden_Tastes = nil
+}
+
+func (x *Person) ClearRecommended() {
+	x.xxx_hidden_Recommended = nil
 }
 
 type Person_builder struct {
@@ -321,13 +640,24 @@ type Person_builder struct {
 	Rules *EatingRules
 	// The person's daily targets, at most one per nutrient. Empty if none.
 	DailyTargets []*NutrientTarget
-	// Notes about the person, e.g. what their care team said, or foods they
-	// don't like. At most 2000 characters.
+	// Notes about the person, e.g. advice they were given, or anything else
+	// to remember. At most 2000 characters.
 	Notes string
 	// When the person was created.
 	CreateTime *timestamppb.Timestamp
 	// When the person was last changed.
 	UpdateTime *timestamppb.Timestamp
+	// The person's body, activity and goal, to recommend how much they eat.
+	// Unset if they haven't said.
+	Profile *Profile
+	// What the person likes, which suggestions favor. Unset if they haven't
+	// said.
+	Tastes *Tastes
+	// How much the person eats a day for their goal, estimated from their
+	// profile, once it has their height, weight, birth year, sex, activity
+	// and goal. It's a general estimate, not a target: only make it their
+	// daily targets (with UpdatePerson) when the user asks to.
+	Recommended *Recommendation
 }
 
 func (b0 Person_builder) Build() *Person {
@@ -343,6 +673,396 @@ func (b0 Person_builder) Build() *Person {
 	x.xxx_hidden_Notes = b.Notes
 	x.xxx_hidden_CreateTime = b.CreateTime
 	x.xxx_hidden_UpdateTime = b.UpdateTime
+	x.xxx_hidden_Profile = b.Profile
+	x.xxx_hidden_Tastes = b.Tastes
+	x.xxx_hidden_Recommended = b.Recommended
+	return m0
+}
+
+// A person's body, activity and goal.
+type Profile struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_HeightCm    float64                `protobuf:"fixed64,1,opt,name=height_cm,json=heightCm,proto3,oneof"`
+	xxx_hidden_WeightKg    float64                `protobuf:"fixed64,2,opt,name=weight_kg,json=weightKg,proto3,oneof"`
+	xxx_hidden_BirthYear   int32                  `protobuf:"varint,3,opt,name=birth_year,json=birthYear,proto3"`
+	xxx_hidden_Sex         Sex                    `protobuf:"varint,4,opt,name=sex,proto3,enum=people.v1.Sex"`
+	xxx_hidden_Activity    Activity               `protobuf:"varint,5,opt,name=activity,proto3,enum=people.v1.Activity"`
+	xxx_hidden_Goal        Goal                   `protobuf:"varint,6,opt,name=goal,proto3,enum=people.v1.Goal"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *Profile) Reset() {
+	*x = Profile{}
+	mi := &file_people_v1_people_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Profile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Profile) ProtoMessage() {}
+
+func (x *Profile) ProtoReflect() protoreflect.Message {
+	mi := &file_people_v1_people_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Profile) GetHeightCm() float64 {
+	if x != nil {
+		return x.xxx_hidden_HeightCm
+	}
+	return 0
+}
+
+func (x *Profile) GetWeightKg() float64 {
+	if x != nil {
+		return x.xxx_hidden_WeightKg
+	}
+	return 0
+}
+
+func (x *Profile) GetBirthYear() int32 {
+	if x != nil {
+		return x.xxx_hidden_BirthYear
+	}
+	return 0
+}
+
+func (x *Profile) GetSex() Sex {
+	if x != nil {
+		return x.xxx_hidden_Sex
+	}
+	return Sex_SEX_UNSPECIFIED
+}
+
+func (x *Profile) GetActivity() Activity {
+	if x != nil {
+		return x.xxx_hidden_Activity
+	}
+	return Activity_ACTIVITY_UNSPECIFIED
+}
+
+func (x *Profile) GetGoal() Goal {
+	if x != nil {
+		return x.xxx_hidden_Goal
+	}
+	return Goal_GOAL_UNSPECIFIED
+}
+
+func (x *Profile) SetHeightCm(v float64) {
+	x.xxx_hidden_HeightCm = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 6)
+}
+
+func (x *Profile) SetWeightKg(v float64) {
+	x.xxx_hidden_WeightKg = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 6)
+}
+
+func (x *Profile) SetBirthYear(v int32) {
+	x.xxx_hidden_BirthYear = v
+}
+
+func (x *Profile) SetSex(v Sex) {
+	x.xxx_hidden_Sex = v
+}
+
+func (x *Profile) SetActivity(v Activity) {
+	x.xxx_hidden_Activity = v
+}
+
+func (x *Profile) SetGoal(v Goal) {
+	x.xxx_hidden_Goal = v
+}
+
+func (x *Profile) HasHeightCm() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *Profile) HasWeightKg() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *Profile) ClearHeightCm() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_HeightCm = 0
+}
+
+func (x *Profile) ClearWeightKg() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_WeightKg = 0
+}
+
+type Profile_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// Their height in centimeters, from 50 to 250. Unset if unknown.
+	HeightCm *float64
+	// Their weight in kilograms, from 20 to 300. Unset if unknown.
+	WeightKg *float64
+	// The year they were born, 0 if unknown.
+	BirthYear int32
+	// Their sex, for the energy estimate. Unspecified if unknown.
+	Sex Sex
+	// How active they are. Unspecified if unknown.
+	Activity Activity
+	// What they want their eating to do for them. Unspecified if unknown.
+	Goal Goal
+}
+
+func (b0 Profile_builder) Build() *Profile {
+	m0 := &Profile{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.HeightCm != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 6)
+		x.xxx_hidden_HeightCm = *b.HeightCm
+	}
+	if b.WeightKg != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 6)
+		x.xxx_hidden_WeightKg = *b.WeightKg
+	}
+	x.xxx_hidden_BirthYear = b.BirthYear
+	x.xxx_hidden_Sex = b.Sex
+	x.xxx_hidden_Activity = b.Activity
+	x.xxx_hidden_Goal = b.Goal
+	return m0
+}
+
+// What a person likes, which suggestions favor: a recipe is scored up
+// for what they like and down for what they don't, matching its name,
+// tags and ingredients' foods, ignoring case.
+type Tastes struct {
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_SmallMeals SmallMealTaste         `protobuf:"varint,1,opt,name=small_meals,json=smallMeals,proto3,enum=people.v1.SmallMealTaste"`
+	xxx_hidden_Spice      SpiceLevel             `protobuf:"varint,2,opt,name=spice,proto3,enum=people.v1.SpiceLevel"`
+	xxx_hidden_Likes      []string               `protobuf:"bytes,3,rep,name=likes,proto3"`
+	xxx_hidden_Dislikes   []string               `protobuf:"bytes,4,rep,name=dislikes,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *Tastes) Reset() {
+	*x = Tastes{}
+	mi := &file_people_v1_people_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tastes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tastes) ProtoMessage() {}
+
+func (x *Tastes) ProtoReflect() protoreflect.Message {
+	mi := &file_people_v1_people_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Tastes) GetSmallMeals() SmallMealTaste {
+	if x != nil {
+		return x.xxx_hidden_SmallMeals
+	}
+	return SmallMealTaste_SMALL_MEAL_TASTE_UNSPECIFIED
+}
+
+func (x *Tastes) GetSpice() SpiceLevel {
+	if x != nil {
+		return x.xxx_hidden_Spice
+	}
+	return SpiceLevel_SPICE_LEVEL_UNSPECIFIED
+}
+
+func (x *Tastes) GetLikes() []string {
+	if x != nil {
+		return x.xxx_hidden_Likes
+	}
+	return nil
+}
+
+func (x *Tastes) GetDislikes() []string {
+	if x != nil {
+		return x.xxx_hidden_Dislikes
+	}
+	return nil
+}
+
+func (x *Tastes) SetSmallMeals(v SmallMealTaste) {
+	x.xxx_hidden_SmallMeals = v
+}
+
+func (x *Tastes) SetSpice(v SpiceLevel) {
+	x.xxx_hidden_Spice = v
+}
+
+func (x *Tastes) SetLikes(v []string) {
+	x.xxx_hidden_Likes = v
+}
+
+func (x *Tastes) SetDislikes(v []string) {
+	x.xxx_hidden_Dislikes = v
+}
+
+type Tastes_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// Whether their small meals are better sweet or savory. A recipe is
+	// sweet if it's tagged "sweet" or "dessert", or half or more of its
+	// carbohydrate is sugars.
+	SmallMeals SmallMealTaste
+	// How spicy they like it. A recipe is spicy if it's tagged "spicy" or
+	// "hot".
+	Spice SpiceLevel
+	// Foods or dishes they like, e.g. "noodles". At most 20, each at most
+	// 50 characters.
+	Likes []string
+	// Foods or dishes they don't like, e.g. "mushrooms". At most 20, each
+	// at most 50 characters.
+	Dislikes []string
+}
+
+func (b0 Tastes_builder) Build() *Tastes {
+	m0 := &Tastes{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_SmallMeals = b.SmallMeals
+	x.xxx_hidden_Spice = b.Spice
+	x.xxx_hidden_Likes = b.Likes
+	x.xxx_hidden_Dislikes = b.Dislikes
+	return m0
+}
+
+// How much a person eats a day, estimated from their profile: the energy
+// they use (Mifflin-St Jeor, times their activity), more or less for their
+// goal, with protein by their weight for their goal, about a quarter to a
+// third of the energy from fat, and the rest from carbohydrate. Rounded to
+// 10 kcal and 5 g.
+type Recommendation struct {
+	state                        protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_EnergyKcal        float64                `protobuf:"fixed64,1,opt,name=energy_kcal,json=energyKcal,proto3"`
+	xxx_hidden_ProteinGrams      float64                `protobuf:"fixed64,2,opt,name=protein_grams,json=proteinGrams,proto3"`
+	xxx_hidden_CarbohydrateGrams float64                `protobuf:"fixed64,3,opt,name=carbohydrate_grams,json=carbohydrateGrams,proto3"`
+	xxx_hidden_FatGrams          float64                `protobuf:"fixed64,4,opt,name=fat_grams,json=fatGrams,proto3"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
+}
+
+func (x *Recommendation) Reset() {
+	*x = Recommendation{}
+	mi := &file_people_v1_people_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Recommendation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Recommendation) ProtoMessage() {}
+
+func (x *Recommendation) ProtoReflect() protoreflect.Message {
+	mi := &file_people_v1_people_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Recommendation) GetEnergyKcal() float64 {
+	if x != nil {
+		return x.xxx_hidden_EnergyKcal
+	}
+	return 0
+}
+
+func (x *Recommendation) GetProteinGrams() float64 {
+	if x != nil {
+		return x.xxx_hidden_ProteinGrams
+	}
+	return 0
+}
+
+func (x *Recommendation) GetCarbohydrateGrams() float64 {
+	if x != nil {
+		return x.xxx_hidden_CarbohydrateGrams
+	}
+	return 0
+}
+
+func (x *Recommendation) GetFatGrams() float64 {
+	if x != nil {
+		return x.xxx_hidden_FatGrams
+	}
+	return 0
+}
+
+func (x *Recommendation) SetEnergyKcal(v float64) {
+	x.xxx_hidden_EnergyKcal = v
+}
+
+func (x *Recommendation) SetProteinGrams(v float64) {
+	x.xxx_hidden_ProteinGrams = v
+}
+
+func (x *Recommendation) SetCarbohydrateGrams(v float64) {
+	x.xxx_hidden_CarbohydrateGrams = v
+}
+
+func (x *Recommendation) SetFatGrams(v float64) {
+	x.xxx_hidden_FatGrams = v
+}
+
+type Recommendation_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The energy a day, in kilocalories.
+	EnergyKcal float64
+	// The protein a day, in grams: the least for the goal.
+	ProteinGrams float64
+	// The carbohydrate a day, in grams.
+	CarbohydrateGrams float64
+	// The fat a day, in grams.
+	FatGrams float64
+}
+
+func (b0 Recommendation_builder) Build() *Recommendation {
+	m0 := &Recommendation{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_EnergyKcal = b.EnergyKcal
+	x.xxx_hidden_ProteinGrams = b.ProteinGrams
+	x.xxx_hidden_CarbohydrateGrams = b.CarbohydrateGrams
+	x.xxx_hidden_FatGrams = b.FatGrams
 	return m0
 }
 
@@ -360,7 +1080,7 @@ type EatingTime struct {
 
 func (x *EatingTime) Reset() {
 	*x = EatingTime{}
-	mi := &file_people_v1_people_proto_msgTypes[1]
+	mi := &file_people_v1_people_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -372,7 +1092,7 @@ func (x *EatingTime) String() string {
 func (*EatingTime) ProtoMessage() {}
 
 func (x *EatingTime) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[1]
+	mi := &file_people_v1_people_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -492,7 +1212,7 @@ type EatingRules struct {
 
 func (x *EatingRules) Reset() {
 	*x = EatingRules{}
-	mi := &file_people_v1_people_proto_msgTypes[2]
+	mi := &file_people_v1_people_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -504,7 +1224,7 @@ func (x *EatingRules) String() string {
 func (*EatingRules) ProtoMessage() {}
 
 func (x *EatingRules) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[2]
+	mi := &file_people_v1_people_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -714,7 +1434,7 @@ type NutrientTarget struct {
 
 func (x *NutrientTarget) Reset() {
 	*x = NutrientTarget{}
-	mi := &file_people_v1_people_proto_msgTypes[3]
+	mi := &file_people_v1_people_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -726,7 +1446,7 @@ func (x *NutrientTarget) String() string {
 func (*NutrientTarget) ProtoMessage() {}
 
 func (x *NutrientTarget) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[3]
+	mi := &file_people_v1_people_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -835,7 +1555,7 @@ type CreatePersonRequest struct {
 
 func (x *CreatePersonRequest) Reset() {
 	*x = CreatePersonRequest{}
-	mi := &file_people_v1_people_proto_msgTypes[4]
+	mi := &file_people_v1_people_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -847,7 +1567,7 @@ func (x *CreatePersonRequest) String() string {
 func (*CreatePersonRequest) ProtoMessage() {}
 
 func (x *CreatePersonRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[4]
+	mi := &file_people_v1_people_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -904,7 +1624,7 @@ type CreatePersonResponse struct {
 
 func (x *CreatePersonResponse) Reset() {
 	*x = CreatePersonResponse{}
-	mi := &file_people_v1_people_proto_msgTypes[5]
+	mi := &file_people_v1_people_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -916,7 +1636,7 @@ func (x *CreatePersonResponse) String() string {
 func (*CreatePersonResponse) ProtoMessage() {}
 
 func (x *CreatePersonResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[5]
+	mi := &file_people_v1_people_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -973,7 +1693,7 @@ type GetPersonRequest struct {
 
 func (x *GetPersonRequest) Reset() {
 	*x = GetPersonRequest{}
-	mi := &file_people_v1_people_proto_msgTypes[6]
+	mi := &file_people_v1_people_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -985,7 +1705,7 @@ func (x *GetPersonRequest) String() string {
 func (*GetPersonRequest) ProtoMessage() {}
 
 func (x *GetPersonRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[6]
+	mi := &file_people_v1_people_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1031,7 +1751,7 @@ type GetPersonResponse struct {
 
 func (x *GetPersonResponse) Reset() {
 	*x = GetPersonResponse{}
-	mi := &file_people_v1_people_proto_msgTypes[7]
+	mi := &file_people_v1_people_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1043,7 +1763,7 @@ func (x *GetPersonResponse) String() string {
 func (*GetPersonResponse) ProtoMessage() {}
 
 func (x *GetPersonResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[7]
+	mi := &file_people_v1_people_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1099,7 +1819,7 @@ type ListPeopleRequest struct {
 
 func (x *ListPeopleRequest) Reset() {
 	*x = ListPeopleRequest{}
-	mi := &file_people_v1_people_proto_msgTypes[8]
+	mi := &file_people_v1_people_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1111,7 +1831,7 @@ func (x *ListPeopleRequest) String() string {
 func (*ListPeopleRequest) ProtoMessage() {}
 
 func (x *ListPeopleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[8]
+	mi := &file_people_v1_people_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1143,7 +1863,7 @@ type ListPeopleResponse struct {
 
 func (x *ListPeopleResponse) Reset() {
 	*x = ListPeopleResponse{}
-	mi := &file_people_v1_people_proto_msgTypes[9]
+	mi := &file_people_v1_people_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1155,7 +1875,7 @@ func (x *ListPeopleResponse) String() string {
 func (*ListPeopleResponse) ProtoMessage() {}
 
 func (x *ListPeopleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[9]
+	mi := &file_people_v1_people_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1204,7 +1924,7 @@ type UpdatePersonRequest struct {
 
 func (x *UpdatePersonRequest) Reset() {
 	*x = UpdatePersonRequest{}
-	mi := &file_people_v1_people_proto_msgTypes[10]
+	mi := &file_people_v1_people_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1216,7 +1936,7 @@ func (x *UpdatePersonRequest) String() string {
 func (*UpdatePersonRequest) ProtoMessage() {}
 
 func (x *UpdatePersonRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[10]
+	mi := &file_people_v1_people_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1303,7 +2023,7 @@ type UpdatePersonResponse struct {
 
 func (x *UpdatePersonResponse) Reset() {
 	*x = UpdatePersonResponse{}
-	mi := &file_people_v1_people_proto_msgTypes[11]
+	mi := &file_people_v1_people_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1315,7 +2035,7 @@ func (x *UpdatePersonResponse) String() string {
 func (*UpdatePersonResponse) ProtoMessage() {}
 
 func (x *UpdatePersonResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[11]
+	mi := &file_people_v1_people_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1372,7 +2092,7 @@ type DeletePersonRequest struct {
 
 func (x *DeletePersonRequest) Reset() {
 	*x = DeletePersonRequest{}
-	mi := &file_people_v1_people_proto_msgTypes[12]
+	mi := &file_people_v1_people_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1384,7 +2104,7 @@ func (x *DeletePersonRequest) String() string {
 func (*DeletePersonRequest) ProtoMessage() {}
 
 func (x *DeletePersonRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[12]
+	mi := &file_people_v1_people_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1429,7 +2149,7 @@ type DeletePersonResponse struct {
 
 func (x *DeletePersonResponse) Reset() {
 	*x = DeletePersonResponse{}
-	mi := &file_people_v1_people_proto_msgTypes[13]
+	mi := &file_people_v1_people_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1441,7 +2161,7 @@ func (x *DeletePersonResponse) String() string {
 func (*DeletePersonResponse) ProtoMessage() {}
 
 func (x *DeletePersonResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_people_v1_people_proto_msgTypes[13]
+	mi := &file_people_v1_people_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1468,7 +2188,7 @@ var File_people_v1_people_proto protoreflect.FileDescriptor
 
 const file_people_v1_people_proto_rawDesc = "" +
 	"\n" +
-	"\x16people/v1/people.proto\x12\tpeople.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\x8d\x03\n" +
+	"\x16people/v1/people.proto\x12\tpeople.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xab\x04\n" +
 	"\x06Person\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x17\n" +
@@ -1480,7 +2200,35 @@ const file_people_v1_people_proto_rawDesc = "" +
 	"\vcreate_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
 	"createTime\x12C\n" +
 	"\vupdate_time\x18\t \x01(\v2\x1a.google.protobuf.TimestampB\x06\xaa\x9f\x19\x02\b\x01R\n" +
-	"updateTime\"\xa1\x01\n" +
+	"updateTime\x12,\n" +
+	"\aprofile\x18\n" +
+	" \x01(\v2\x12.people.v1.ProfileR\aprofile\x12)\n" +
+	"\x06tastes\x18\v \x01(\v2\x11.people.v1.TastesR\x06tastes\x12C\n" +
+	"\vrecommended\x18\f \x01(\v2\x19.people.v1.RecommendationB\x06\xaa\x9f\x19\x02\b\x01R\vrecommended\"\x80\x02\n" +
+	"\aProfile\x12 \n" +
+	"\theight_cm\x18\x01 \x01(\x01H\x00R\bheightCm\x88\x01\x01\x12 \n" +
+	"\tweight_kg\x18\x02 \x01(\x01H\x01R\bweightKg\x88\x01\x01\x12\x1d\n" +
+	"\n" +
+	"birth_year\x18\x03 \x01(\x05R\tbirthYear\x12 \n" +
+	"\x03sex\x18\x04 \x01(\x0e2\x0e.people.v1.SexR\x03sex\x12/\n" +
+	"\bactivity\x18\x05 \x01(\x0e2\x13.people.v1.ActivityR\bactivity\x12#\n" +
+	"\x04goal\x18\x06 \x01(\x0e2\x0f.people.v1.GoalR\x04goalB\f\n" +
+	"\n" +
+	"_height_cmB\f\n" +
+	"\n" +
+	"_weight_kg\"\xa3\x01\n" +
+	"\x06Tastes\x12:\n" +
+	"\vsmall_meals\x18\x01 \x01(\x0e2\x19.people.v1.SmallMealTasteR\n" +
+	"smallMeals\x12+\n" +
+	"\x05spice\x18\x02 \x01(\x0e2\x15.people.v1.SpiceLevelR\x05spice\x12\x14\n" +
+	"\x05likes\x18\x03 \x03(\tR\x05likes\x12\x1a\n" +
+	"\bdislikes\x18\x04 \x03(\tR\bdislikes\"\xa2\x01\n" +
+	"\x0eRecommendation\x12\x1f\n" +
+	"\venergy_kcal\x18\x01 \x01(\x01R\n" +
+	"energyKcal\x12#\n" +
+	"\rprotein_grams\x18\x02 \x01(\x01R\fproteinGrams\x12-\n" +
+	"\x12carbohydrate_grams\x18\x03 \x01(\x01R\x11carbohydrateGrams\x12\x1b\n" +
+	"\tfat_grams\x18\x04 \x01(\x01R\bfatGrams\"\xa1\x01\n" +
 	"\n" +
 	"EatingTime\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -1534,7 +2282,33 @@ const file_people_v1_people_proto_rawDesc = "" +
 	"\x1aHOUSEHOLD_MEAL_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18HOUSEHOLD_MEAL_BREAKFAST\x10\x01\x12\x18\n" +
 	"\x14HOUSEHOLD_MEAL_LUNCH\x10\x02\x12\x19\n" +
-	"\x15HOUSEHOLD_MEAL_DINNER\x10\x032\x95\x03\n" +
+	"\x15HOUSEHOLD_MEAL_DINNER\x10\x03*8\n" +
+	"\x03Sex\x12\x13\n" +
+	"\x0fSEX_UNSPECIFIED\x10\x00\x12\x0e\n" +
+	"\n" +
+	"SEX_FEMALE\x10\x01\x12\f\n" +
+	"\bSEX_MALE\x10\x02*r\n" +
+	"\bActivity\x12\x18\n" +
+	"\x14ACTIVITY_UNSPECIFIED\x10\x00\x12\x10\n" +
+	"\fACTIVITY_LOW\x10\x01\x12\x12\n" +
+	"\x0eACTIVITY_LIGHT\x10\x02\x12\x13\n" +
+	"\x0fACTIVITY_ACTIVE\x10\x03\x12\x11\n" +
+	"\rACTIVITY_VERY\x10\x04*`\n" +
+	"\x04Goal\x12\x14\n" +
+	"\x10GOAL_UNSPECIFIED\x10\x00\x12\x11\n" +
+	"\rGOAL_MAINTAIN\x10\x01\x12\x17\n" +
+	"\x13GOAL_BUILD_STRENGTH\x10\x02\x12\x16\n" +
+	"\x12GOAL_LOSE_BODY_FAT\x10\x03*k\n" +
+	"\x0eSmallMealTaste\x12 \n" +
+	"\x1cSMALL_MEAL_TASTE_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17SMALL_MEAL_TASTE_SAVORY\x10\x01\x12\x1a\n" +
+	"\x16SMALL_MEAL_TASTE_SWEET\x10\x02*l\n" +
+	"\n" +
+	"SpiceLevel\x12\x1b\n" +
+	"\x17SPICE_LEVEL_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10SPICE_LEVEL_MILD\x10\x01\x12\x16\n" +
+	"\x12SPICE_LEVEL_MEDIUM\x10\x02\x12\x13\n" +
+	"\x0fSPICE_LEVEL_HOT\x10\x032\x95\x03\n" +
 	"\rPersonService\x12O\n" +
 	"\fCreatePerson\x12\x1e.people.v1.CreatePersonRequest\x1a\x1f.people.v1.CreatePersonResponse\x12F\n" +
 	"\tGetPerson\x12\x1b.people.v1.GetPersonRequest\x1a\x1c.people.v1.GetPersonResponse\x12I\n" +
@@ -1545,60 +2319,76 @@ const file_people_v1_people_proto_rawDesc = "" +
 	"\rcom.people.v1B\vPeopleProtoP\x01ZAgithub.com/bs-tools/mealplann.ing/internal/gen/people/v1;peoplev1\xa2\x02\x03PXX\xaa\x02\tPeople.V1\xca\x02\tPeople\\V1\xe2\x02\x15People\\V1\\GPBMetadata\xea\x02\n" +
 	"People::V1b\x06proto3"
 
-var file_people_v1_people_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_people_v1_people_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_people_v1_people_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
+var file_people_v1_people_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_people_v1_people_proto_goTypes = []any{
 	(EatingTimeKind)(0),           // 0: people.v1.EatingTimeKind
 	(HouseholdMeal)(0),            // 1: people.v1.HouseholdMeal
-	(*Person)(nil),                // 2: people.v1.Person
-	(*EatingTime)(nil),            // 3: people.v1.EatingTime
-	(*EatingRules)(nil),           // 4: people.v1.EatingRules
-	(*NutrientTarget)(nil),        // 5: people.v1.NutrientTarget
-	(*CreatePersonRequest)(nil),   // 6: people.v1.CreatePersonRequest
-	(*CreatePersonResponse)(nil),  // 7: people.v1.CreatePersonResponse
-	(*GetPersonRequest)(nil),      // 8: people.v1.GetPersonRequest
-	(*GetPersonResponse)(nil),     // 9: people.v1.GetPersonResponse
-	(*ListPeopleRequest)(nil),     // 10: people.v1.ListPeopleRequest
-	(*ListPeopleResponse)(nil),    // 11: people.v1.ListPeopleResponse
-	(*UpdatePersonRequest)(nil),   // 12: people.v1.UpdatePersonRequest
-	(*UpdatePersonResponse)(nil),  // 13: people.v1.UpdatePersonResponse
-	(*DeletePersonRequest)(nil),   // 14: people.v1.DeletePersonRequest
-	(*DeletePersonResponse)(nil),  // 15: people.v1.DeletePersonResponse
-	(*timestamppb.Timestamp)(nil), // 16: google.protobuf.Timestamp
-	(v1.Nutrient)(0),              // 17: foods.v1.Nutrient
-	(*fieldmaskpb.FieldMask)(nil), // 18: google.protobuf.FieldMask
+	(Sex)(0),                      // 2: people.v1.Sex
+	(Activity)(0),                 // 3: people.v1.Activity
+	(Goal)(0),                     // 4: people.v1.Goal
+	(SmallMealTaste)(0),           // 5: people.v1.SmallMealTaste
+	(SpiceLevel)(0),               // 6: people.v1.SpiceLevel
+	(*Person)(nil),                // 7: people.v1.Person
+	(*Profile)(nil),               // 8: people.v1.Profile
+	(*Tastes)(nil),                // 9: people.v1.Tastes
+	(*Recommendation)(nil),        // 10: people.v1.Recommendation
+	(*EatingTime)(nil),            // 11: people.v1.EatingTime
+	(*EatingRules)(nil),           // 12: people.v1.EatingRules
+	(*NutrientTarget)(nil),        // 13: people.v1.NutrientTarget
+	(*CreatePersonRequest)(nil),   // 14: people.v1.CreatePersonRequest
+	(*CreatePersonResponse)(nil),  // 15: people.v1.CreatePersonResponse
+	(*GetPersonRequest)(nil),      // 16: people.v1.GetPersonRequest
+	(*GetPersonResponse)(nil),     // 17: people.v1.GetPersonResponse
+	(*ListPeopleRequest)(nil),     // 18: people.v1.ListPeopleRequest
+	(*ListPeopleResponse)(nil),    // 19: people.v1.ListPeopleResponse
+	(*UpdatePersonRequest)(nil),   // 20: people.v1.UpdatePersonRequest
+	(*UpdatePersonResponse)(nil),  // 21: people.v1.UpdatePersonResponse
+	(*DeletePersonRequest)(nil),   // 22: people.v1.DeletePersonRequest
+	(*DeletePersonResponse)(nil),  // 23: people.v1.DeletePersonResponse
+	(*timestamppb.Timestamp)(nil), // 24: google.protobuf.Timestamp
+	(v1.Nutrient)(0),              // 25: foods.v1.Nutrient
+	(*fieldmaskpb.FieldMask)(nil), // 26: google.protobuf.FieldMask
 }
 var file_people_v1_people_proto_depIdxs = []int32{
-	3,  // 0: people.v1.Person.eating_times:type_name -> people.v1.EatingTime
-	4,  // 1: people.v1.Person.rules:type_name -> people.v1.EatingRules
-	5,  // 2: people.v1.Person.daily_targets:type_name -> people.v1.NutrientTarget
-	16, // 3: people.v1.Person.create_time:type_name -> google.protobuf.Timestamp
-	16, // 4: people.v1.Person.update_time:type_name -> google.protobuf.Timestamp
-	0,  // 5: people.v1.EatingTime.kind:type_name -> people.v1.EatingTimeKind
-	1,  // 6: people.v1.EatingTime.meal:type_name -> people.v1.HouseholdMeal
-	17, // 7: people.v1.NutrientTarget.nutrient:type_name -> foods.v1.Nutrient
-	2,  // 8: people.v1.CreatePersonRequest.person:type_name -> people.v1.Person
-	2,  // 9: people.v1.CreatePersonResponse.person:type_name -> people.v1.Person
-	2,  // 10: people.v1.GetPersonResponse.person:type_name -> people.v1.Person
-	2,  // 11: people.v1.ListPeopleResponse.people:type_name -> people.v1.Person
-	2,  // 12: people.v1.UpdatePersonRequest.person:type_name -> people.v1.Person
-	18, // 13: people.v1.UpdatePersonRequest.update_mask:type_name -> google.protobuf.FieldMask
-	2,  // 14: people.v1.UpdatePersonResponse.person:type_name -> people.v1.Person
-	6,  // 15: people.v1.PersonService.CreatePerson:input_type -> people.v1.CreatePersonRequest
-	8,  // 16: people.v1.PersonService.GetPerson:input_type -> people.v1.GetPersonRequest
-	10, // 17: people.v1.PersonService.ListPeople:input_type -> people.v1.ListPeopleRequest
-	12, // 18: people.v1.PersonService.UpdatePerson:input_type -> people.v1.UpdatePersonRequest
-	14, // 19: people.v1.PersonService.DeletePerson:input_type -> people.v1.DeletePersonRequest
-	7,  // 20: people.v1.PersonService.CreatePerson:output_type -> people.v1.CreatePersonResponse
-	9,  // 21: people.v1.PersonService.GetPerson:output_type -> people.v1.GetPersonResponse
-	11, // 22: people.v1.PersonService.ListPeople:output_type -> people.v1.ListPeopleResponse
-	13, // 23: people.v1.PersonService.UpdatePerson:output_type -> people.v1.UpdatePersonResponse
-	15, // 24: people.v1.PersonService.DeletePerson:output_type -> people.v1.DeletePersonResponse
-	20, // [20:25] is the sub-list for method output_type
-	15, // [15:20] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	11, // 0: people.v1.Person.eating_times:type_name -> people.v1.EatingTime
+	12, // 1: people.v1.Person.rules:type_name -> people.v1.EatingRules
+	13, // 2: people.v1.Person.daily_targets:type_name -> people.v1.NutrientTarget
+	24, // 3: people.v1.Person.create_time:type_name -> google.protobuf.Timestamp
+	24, // 4: people.v1.Person.update_time:type_name -> google.protobuf.Timestamp
+	8,  // 5: people.v1.Person.profile:type_name -> people.v1.Profile
+	9,  // 6: people.v1.Person.tastes:type_name -> people.v1.Tastes
+	10, // 7: people.v1.Person.recommended:type_name -> people.v1.Recommendation
+	2,  // 8: people.v1.Profile.sex:type_name -> people.v1.Sex
+	3,  // 9: people.v1.Profile.activity:type_name -> people.v1.Activity
+	4,  // 10: people.v1.Profile.goal:type_name -> people.v1.Goal
+	5,  // 11: people.v1.Tastes.small_meals:type_name -> people.v1.SmallMealTaste
+	6,  // 12: people.v1.Tastes.spice:type_name -> people.v1.SpiceLevel
+	0,  // 13: people.v1.EatingTime.kind:type_name -> people.v1.EatingTimeKind
+	1,  // 14: people.v1.EatingTime.meal:type_name -> people.v1.HouseholdMeal
+	25, // 15: people.v1.NutrientTarget.nutrient:type_name -> foods.v1.Nutrient
+	7,  // 16: people.v1.CreatePersonRequest.person:type_name -> people.v1.Person
+	7,  // 17: people.v1.CreatePersonResponse.person:type_name -> people.v1.Person
+	7,  // 18: people.v1.GetPersonResponse.person:type_name -> people.v1.Person
+	7,  // 19: people.v1.ListPeopleResponse.people:type_name -> people.v1.Person
+	7,  // 20: people.v1.UpdatePersonRequest.person:type_name -> people.v1.Person
+	26, // 21: people.v1.UpdatePersonRequest.update_mask:type_name -> google.protobuf.FieldMask
+	7,  // 22: people.v1.UpdatePersonResponse.person:type_name -> people.v1.Person
+	14, // 23: people.v1.PersonService.CreatePerson:input_type -> people.v1.CreatePersonRequest
+	16, // 24: people.v1.PersonService.GetPerson:input_type -> people.v1.GetPersonRequest
+	18, // 25: people.v1.PersonService.ListPeople:input_type -> people.v1.ListPeopleRequest
+	20, // 26: people.v1.PersonService.UpdatePerson:input_type -> people.v1.UpdatePersonRequest
+	22, // 27: people.v1.PersonService.DeletePerson:input_type -> people.v1.DeletePersonRequest
+	15, // 28: people.v1.PersonService.CreatePerson:output_type -> people.v1.CreatePersonResponse
+	17, // 29: people.v1.PersonService.GetPerson:output_type -> people.v1.GetPersonResponse
+	19, // 30: people.v1.PersonService.ListPeople:output_type -> people.v1.ListPeopleResponse
+	21, // 31: people.v1.PersonService.UpdatePerson:output_type -> people.v1.UpdatePersonResponse
+	23, // 32: people.v1.PersonService.DeletePerson:output_type -> people.v1.DeletePersonResponse
+	28, // [28:33] is the sub-list for method output_type
+	23, // [23:28] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_people_v1_people_proto_init() }
@@ -1606,15 +2396,16 @@ func file_people_v1_people_proto_init() {
 	if File_people_v1_people_proto != nil {
 		return
 	}
-	file_people_v1_people_proto_msgTypes[2].OneofWrappers = []any{}
-	file_people_v1_people_proto_msgTypes[3].OneofWrappers = []any{}
+	file_people_v1_people_proto_msgTypes[1].OneofWrappers = []any{}
+	file_people_v1_people_proto_msgTypes[5].OneofWrappers = []any{}
+	file_people_v1_people_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_people_v1_people_proto_rawDesc), len(file_people_v1_people_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   14,
+			NumEnums:      7,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

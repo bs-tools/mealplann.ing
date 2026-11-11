@@ -86,8 +86,8 @@ const PeoplePage: React.FC = () => {
           className="mt-0.5 size-4 shrink-0 text-sky-700"
           aria-hidden="true"
         />
-        Rules and targets come from each person&apos;s care team. mealplann.ing
-        checks the plan against them and warns; it never suggests them.
+        Each person&apos;s rules and targets are their own. mealplann.ing checks
+        the plan against them and warns.
       </p>
       {content}
       {editing !== undefined && (

@@ -43,7 +43,7 @@ func NewService(log *slog.Logger, report *errreport.Reporter, people Repository)
 }
 
 // keepFields are the fields of a person updates don't change.
-var keepFields = []protoreflect.Name{"id", "create_time", "update_time"}
+var keepFields = []protoreflect.Name{"id", "recommended", "create_time", "update_time"}
 
 func (s *Service) CreatePerson(ctx context.Context, req *peoplev1.CreatePersonRequest) (*peoplev1.CreatePersonResponse, error) {
 	user, ok := authn.GetUser(ctx)
