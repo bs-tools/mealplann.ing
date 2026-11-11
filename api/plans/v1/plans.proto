@@ -35,8 +35,7 @@ import "people/v1/people.proto";
 // each person's eating times with what they eat, their daily totals, and
 // warnings where the plan breaks their rules or targets, or a leftover
 // won't keep, each saying what to change. The rules and targets are the
-// user's, from the person's care team: change the plan to meet them, never
-// the rules.
+// person's own: change the plan to meet them, never the rules.
 service PlanService {
   // Estimate what a range of the plan costs, from the foods' prices
   // (FoodService's Food.price_cents_per_kilogram): each cook, the foods

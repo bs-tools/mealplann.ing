@@ -61,8 +61,10 @@ type Person struct {
 	// Rules are the rules each eating time is checked against.
 	Rules rules.Rules
 	// Targets are the daily targets, in the order of the nutrients.
-	Targets    []rules.Target
-	Notes      string
+	Targets []rules.Target
+	Notes   string
+	// Profile is their body, goal and tastes.
+	Profile    Profile
 	CreateTime time.Time
 	UpdateTime time.Time
 }
@@ -127,6 +129,7 @@ func (r *Repository) CreatePerson(ctx context.Context, p *Person) (*Person, erro
 			MaxSugarsGrams:       p.Rules.MaxSugarsGrams,
 			WarnFastCarbs:        p.Rules.WarnFastCarbs,
 			Notes:                p.Notes,
+			Profile:              profileToDB(p.Profile),
 		})
 		return err
 	})
@@ -218,6 +221,7 @@ func (r *Repository) UpdatePerson(ctx context.Context, p *Person) (*Person, erro
 			MaxSugarsGrams:       p.Rules.MaxSugarsGrams,
 			WarnFastCarbs:        p.Rules.WarnFastCarbs,
 			Notes:                p.Notes,
+			Profile:              profileToDB(p.Profile),
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return store.ErrNotFound
@@ -344,6 +348,7 @@ func personFromDB(row *gen.Person, eatingTimes []*gen.EatingTime, targets []*gen
 		},
 		Targets:    make([]rules.Target, 0, len(targets)),
 		Notes:      row.Notes,
+		Profile:    profileFromDB(row.Profile),
 		CreateTime: row.CreateTime.Time,
 		UpdateTime: row.UpdateTime.Time,
 	}

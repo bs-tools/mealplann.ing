@@ -52,6 +52,9 @@ const (
 	ScoreKind_SCORE_KIND_LEFTOVER ScoreKind = 11
 	// How often the household cooked it lately.
 	ScoreKind_SCORE_KIND_COOKED ScoreKind = 12
+	// The eaters' tastes (see people.v1.Tastes): what they like and dislike,
+	// sweet or savory small meals, and spice.
+	ScoreKind_SCORE_KIND_TASTES ScoreKind = 13
 )
 
 // Enum value maps for ScoreKind.
@@ -69,6 +72,7 @@ var (
 		10: "SCORE_KIND_FAVORITE",
 		11: "SCORE_KIND_LEFTOVER",
 		12: "SCORE_KIND_COOKED",
+		13: "SCORE_KIND_TASTES",
 	}
 	ScoreKind_value = map[string]int32{
 		"SCORE_KIND_UNSPECIFIED":        0,
@@ -83,6 +87,7 @@ var (
 		"SCORE_KIND_FAVORITE":           10,
 		"SCORE_KIND_LEFTOVER":           11,
 		"SCORE_KIND_COOKED":             12,
+		"SCORE_KIND_TASTES":             13,
 	}
 )
 
@@ -1273,7 +1278,7 @@ func (b0 Suggestion_builder) Build() *Suggestion {
 }
 
 // What the user wants of a suggested plan. Someone's rules always count
-// fully, as they come from their care team.
+// fully, as they are their own.
 type PlanCriteria struct {
 	state                       protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Variety          Emphasis               `protobuf:"varint,1,opt,name=variety,proto3,enum=suggestions.v1.Emphasis"`
@@ -1989,8 +1994,8 @@ type PlanSlot_builder struct {
 	// How many of the recipes meeting the criteria break nobody's rules at
 	// the slot, given the rest of the plan, for SUGGESTED and KEPT. If it's
 	// fewer than the days planned, the plan repeats them, or breaks a rule:
-	// suggest adding recipes that fit, or checking that the rules are the
-	// care team's.
+	// suggest adding recipes that fit, or checking that the rules are what
+	// the person wants.
 	FittingRecipeCount int32
 	// The person, for one person's eating time.
 	PersonId string
@@ -3008,7 +3013,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"recipeName\x12\x1a\n" +
 	"\bservings\x18\x03 \x01(\x05R\bservings\x12#\n" +
 	"\rtotal_seconds\x18\x04 \x01(\x05R\ftotalSeconds\x12-\n" +
-	"\x13use_soon_food_names\x18\x05 \x03(\tR\x10useSoonFoodNames*\xdb\x02\n" +
+	"\x13use_soon_food_names\x18\x05 \x03(\tR\x10useSoonFoodNames*\xf2\x02\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
@@ -3022,7 +3027,8 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x13SCORE_KIND_FAVORITE\x10\n" +
 	"\x12\x17\n" +
 	"\x13SCORE_KIND_LEFTOVER\x10\v\x12\x15\n" +
-	"\x11SCORE_KIND_COOKED\x10\f\"\x04\b\a\x10\a*\x11SCORE_KIND_FLAVOR*p\n" +
+	"\x11SCORE_KIND_COOKED\x10\f\x12\x15\n" +
+	"\x11SCORE_KIND_TASTES\x10\r\"\x04\b\a\x10\a*\x11SCORE_KIND_FLAVOR*p\n" +
 	"\bEmphasis\x12\x18\n" +
 	"\x14EMPHASIS_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fEMPHASIS_OFF\x10\x01\x12\x10\n" +

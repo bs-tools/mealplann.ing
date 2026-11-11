@@ -71,7 +71,7 @@ for an agent that knows nothing about the app:
 - Field comments give the meaning, unit, format, defaults and limits, with
   examples in quotes. Comment every field, including each of a pair.
 - Tell agents when to do or not do something, e.g. "only set a person's
-  targets to what the user says their care team advised".
+  targets to what the user asks for".
 
 ## MCP options
 

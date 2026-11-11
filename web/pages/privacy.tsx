@@ -71,13 +71,14 @@ const PrivacyPage: React.FC = () => (
 
       <Section title="Health information">
         <p>
-          Nutrition targets, portion limits and eating patterns can reveal
-          things about someone&apos;s health, like a medical condition or a diet
-          a care team recommended. Only enter what you&apos;re comfortable
-          storing, and only about people who agreed to it. The app uses this
-          information only to check meal plans against it. It doesn&apos;t give
-          medical advice: the targets are the ones you enter, from the person or
-          their care team.
+          Nutrition targets, portion limits, eating patterns and body
+          measurements can reveal things about someone&apos;s health, like a
+          medical condition. Only enter what you&apos;re comfortable storing,
+          and only about people who agreed to it. The app uses this information
+          only to check meal plans against it, and to recommend daily energy and
+          macronutrients from a profile with standard formulas. It doesn&apos;t
+          give medical advice: the targets are the ones you enter or choose to
+          use.
         </p>
       </Section>
 

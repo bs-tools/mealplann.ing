@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"connectrpc.com/connect/v2"
@@ -99,7 +100,188 @@ func PersonToProto(p *people.Person) *peoplev1.Person {
 		Notes:        p.Notes,
 		CreateTime:   timestamppb.New(p.CreateTime),
 		UpdateTime:   timestamppb.New(p.UpdateTime),
+		Profile:      profileToProto(&p.Profile),
+		Tastes:       tastesToProto(&p.Profile),
+		Recommended:  recommendationToProto(&p.Profile),
 	}.Build()
+}
+
+// The profile's enums to and from the API.
+var (
+	sexes = map[people.Sex]peoplev1.Sex{
+		people.SexUnknown: peoplev1.Sex_SEX_UNSPECIFIED,
+		people.SexFemale:  peoplev1.Sex_SEX_FEMALE,
+		people.SexMale:    peoplev1.Sex_SEX_MALE,
+	}
+	activities = map[people.Activity]peoplev1.Activity{
+		people.ActivityUnknown: peoplev1.Activity_ACTIVITY_UNSPECIFIED,
+		people.ActivityLow:     peoplev1.Activity_ACTIVITY_LOW,
+		people.ActivityLight:   peoplev1.Activity_ACTIVITY_LIGHT,
+		people.ActivityActive:  peoplev1.Activity_ACTIVITY_ACTIVE,
+		people.ActivityVery:    peoplev1.Activity_ACTIVITY_VERY,
+	}
+	goals = map[people.Goal]peoplev1.Goal{
+		people.GoalUnknown:       peoplev1.Goal_GOAL_UNSPECIFIED,
+		people.GoalMaintain:      peoplev1.Goal_GOAL_MAINTAIN,
+		people.GoalBuildStrength: peoplev1.Goal_GOAL_BUILD_STRENGTH,
+		people.GoalLoseBodyFat:   peoplev1.Goal_GOAL_LOSE_BODY_FAT,
+	}
+	smallMealTastes = map[people.SmallMealTaste]peoplev1.SmallMealTaste{
+		people.TasteEither: peoplev1.SmallMealTaste_SMALL_MEAL_TASTE_UNSPECIFIED,
+		people.TasteSavory: peoplev1.SmallMealTaste_SMALL_MEAL_TASTE_SAVORY,
+		people.TasteSweet:  peoplev1.SmallMealTaste_SMALL_MEAL_TASTE_SWEET,
+	}
+	spices = map[people.Spice]peoplev1.SpiceLevel{
+		people.SpiceAny:    peoplev1.SpiceLevel_SPICE_LEVEL_UNSPECIFIED,
+		people.SpiceMild:   peoplev1.SpiceLevel_SPICE_LEVEL_MILD,
+		people.SpiceMedium: peoplev1.SpiceLevel_SPICE_LEVEL_MEDIUM,
+		people.SpiceHot:    peoplev1.SpiceLevel_SPICE_LEVEL_HOT,
+	}
+)
+
+// reverse returns a map's keys by value.
+func reverse[K, V comparable](m map[K]V) map[V]K {
+	r := make(map[V]K, len(m))
+	for k, v := range m {
+		r[v] = k
+	}
+	return r
+}
+
+var (
+	sexesFromProto           = reverse(sexes)
+	activitiesFromProto      = reverse(activities)
+	goalsFromProto           = reverse(goals)
+	smallMealTastesFromProto = reverse(smallMealTastes)
+	spicesFromProto          = reverse(spices)
+)
+
+// Limits of a profile, which only keep out values that can't be meant.
+const (
+	minHeightCm    = 50
+	maxHeightCm    = 250
+	minWeightKg    = 20
+	maxWeightKg    = 300
+	minBirthYear   = 1900
+	maxTastes      = 20
+	maxTasteLength = 50
+)
+
+// profileToProto converts a person's body, activity and goal, nil if none
+// is said.
+func profileToProto(p *people.Profile) *peoplev1.Profile {
+	if p.HeightCm == 0 && p.WeightKg == 0 && p.BirthYear == 0 && p.Sex == people.SexUnknown &&
+		p.Activity == people.ActivityUnknown && p.Goal == people.GoalUnknown {
+		return nil
+	}
+	b := peoplev1.Profile_builder{
+		BirthYear: p.BirthYear,
+		Sex:       sexes[p.Sex],
+		Activity:  activities[p.Activity],
+		Goal:      goals[p.Goal],
+	}
+	if p.HeightCm > 0 {
+		b.HeightCm = &p.HeightCm
+	}
+	if p.WeightKg > 0 {
+		b.WeightKg = &p.WeightKg
+	}
+	return b.Build()
+}
+
+// tastesToProto converts a person's tastes, nil if none is said.
+func tastesToProto(p *people.Profile) *peoplev1.Tastes {
+	if p.SmallMeals == people.TasteEither && p.Spice == people.SpiceAny && len(p.Likes) == 0 && len(p.Dislikes) == 0 {
+		return nil
+	}
+	return peoplev1.Tastes_builder{
+		SmallMeals: smallMealTastes[p.SmallMeals],
+		Spice:      spices[p.Spice],
+		Likes:      p.Likes,
+		Dislikes:   p.Dislikes,
+	}.Build()
+}
+
+// recommendationToProto converts what a profile recommends, nil if it
+// doesn't say enough.
+func recommendationToProto(p *people.Profile) *peoplev1.Recommendation {
+	r, ok := p.Recommend(time.Now().Year())
+	if !ok {
+		return nil
+	}
+	return peoplev1.Recommendation_builder{
+		EnergyKcal:        r.EnergyKcal,
+		ProteinGrams:      r.ProteinGrams,
+		CarbohydrateGrams: r.CarbohydrateGrams,
+		FatGrams:          r.FatGrams,
+	}.Build()
+}
+
+// profileFromProto converts and validates a person's profile and tastes.
+func profileFromProto(body *peoplev1.Profile, tastes *peoplev1.Tastes) (people.Profile, error) {
+	var p people.Profile
+	if h := body.GetHeightCm(); body.HasHeightCm() {
+		if h < minHeightCm || h > maxHeightCm {
+			return p, connect.Errorf(connect.CodeInvalidArgument, "profile.height_cm must be from %d to %d centimeters", minHeightCm, maxHeightCm)
+		}
+		p.HeightCm = h
+	}
+	if w := body.GetWeightKg(); body.HasWeightKg() {
+		if w < minWeightKg || w > maxWeightKg {
+			return p, connect.Errorf(connect.CodeInvalidArgument, "profile.weight_kg must be from %d to %d kilograms", minWeightKg, maxWeightKg)
+		}
+		p.WeightKg = w
+	}
+	if y := body.GetBirthYear(); y != 0 {
+		if y < minBirthYear || int(y) > time.Now().Year() {
+			return p, connect.Errorf(connect.CodeInvalidArgument, "profile.birth_year must be from %d to this year, or 0 if unknown", minBirthYear)
+		}
+		p.BirthYear = y
+	}
+	var ok bool
+	if p.Sex, ok = sexesFromProto[body.GetSex()]; !ok {
+		return p, connect.NewError(connect.CodeInvalidArgument, "profile.sex is unknown: SEX_FEMALE, SEX_MALE or unspecified")
+	}
+	if p.Activity, ok = activitiesFromProto[body.GetActivity()]; !ok {
+		return p, connect.NewError(connect.CodeInvalidArgument, "profile.activity is unknown: use one of the Activity values")
+	}
+	if p.Goal, ok = goalsFromProto[body.GetGoal()]; !ok {
+		return p, connect.NewError(connect.CodeInvalidArgument, "profile.goal is unknown: use one of the Goal values")
+	}
+	if p.SmallMeals, ok = smallMealTastesFromProto[tastes.GetSmallMeals()]; !ok {
+		return p, connect.NewError(connect.CodeInvalidArgument, "tastes.small_meals is unknown: use one of the SmallMealTaste values")
+	}
+	if p.Spice, ok = spicesFromProto[tastes.GetSpice()]; !ok {
+		return p, connect.NewError(connect.CodeInvalidArgument, "tastes.spice is unknown: use one of the SpiceLevel values")
+	}
+	var err error
+	if p.Likes, err = tasteList("tastes.likes", tastes.GetLikes()); err != nil {
+		return p, err
+	}
+	if p.Dislikes, err = tasteList("tastes.dislikes", tastes.GetDislikes()); err != nil {
+		return p, err
+	}
+	return p, nil
+}
+
+// tasteList validates likes or dislikes, trimmed, without blanks or
+// repeats.
+func tasteList(field string, list []string) ([]string, error) {
+	var out []string
+	for _, item := range list {
+		item = strings.TrimSpace(item)
+		if item == "" || slices.ContainsFunc(out, func(other string) bool { return strings.EqualFold(other, item) }) {
+			continue
+		}
+		if utf8.RuneCountInString(item) > maxTasteLength {
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "each of %s must be at most %d characters", field, maxTasteLength)
+		}
+		out = append(out, item)
+	}
+	if len(out) > maxTastes {
+		return nil, connect.Errorf(connect.CodeInvalidArgument, "%s can have at most %d", field, maxTastes)
+	}
+	return out, nil
 }
 
 // EatingTimeToProto converts an eating time to the API.
@@ -148,7 +330,12 @@ func PersonFromProto(p *peoplev1.Person, existing *people.Person) (*people.Perso
 	if err != nil {
 		return nil, err
 	}
+	profile, err := profileFromProto(p.GetProfile(), p.GetTastes())
+	if err != nil {
+		return nil, err
+	}
 	return &people.Person{
+		Profile:     profile,
 		Name:        name,
 		UserID:      userID,
 		EatingTimes: eatingTimes,

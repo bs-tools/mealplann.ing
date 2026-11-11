@@ -167,6 +167,36 @@ func TestPeople(t *testing.T) {
 		t.Errorf("got rules %v, want no maximum of sugars", r)
 	}
 
+	// A profile and tastes are kept, and the profile gives a recommendation.
+	updated, err = e.people.UpdatePerson(ctx, peoplev1.UpdatePersonRequest_builder{
+		Person: peoplev1.Person_builder{
+			Id: createdAnna.GetId(),
+			Profile: peoplev1.Profile_builder{
+				HeightCm: new(168.0), WeightKg: new(62.0), BirthYear: 1990,
+				Sex: peoplev1.Sex_SEX_FEMALE, Activity: peoplev1.Activity_ACTIVITY_LIGHT, Goal: peoplev1.Goal_GOAL_LOSE_BODY_FAT,
+			}.Build(),
+			Tastes: peoplev1.Tastes_builder{
+				SmallMeals: peoplev1.SmallMealTaste_SMALL_MEAL_TASTE_SAVORY,
+				Dislikes:   []string{" mushrooms ", "Mushrooms", ""},
+			}.Build(),
+		}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"profile", "tastes"}},
+	}.Build())
+	if err != nil {
+		t.Fatalf("UpdatePerson: %v", err)
+	}
+	if p := updated.GetPerson(); p.GetProfile().GetWeightKg() != 62 || p.GetRecommended().GetProteinGrams() == 0 ||
+		!slices.Equal(p.GetTastes().GetDislikes(), []string{"mushrooms"}) || p.GetRules().GetMinProteinGrams() != 12 {
+		t.Errorf("got %v, want the profile, a recommendation and one dislike", p)
+	}
+	_, err = e.people.UpdatePerson(ctx, peoplev1.UpdatePersonRequest_builder{
+		Person:     peoplev1.Person_builder{Id: createdAnna.GetId(), Profile: peoplev1.Profile_builder{WeightKg: new(2.0)}.Build()}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"profile.weight_kg"}},
+	}.Build())
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("got %v for a weight of 2 kg, want invalid argument", err)
+	}
+
 	// Eating times keep their IDs when renamed and reordered, and new ones
 	// get new IDs.
 	ets := updated.GetPerson().GetEatingTimes()

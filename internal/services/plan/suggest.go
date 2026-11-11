@@ -252,6 +252,7 @@ var scoreKindsToProto = map[suggest.Kind]suggestionsv1.ScoreKind{
 	suggest.Favorite:          suggestionsv1.ScoreKind_SCORE_KIND_FAVORITE,
 	suggest.Leftover:          suggestionsv1.ScoreKind_SCORE_KIND_LEFTOVER,
 	suggest.Cooked:            suggestionsv1.ScoreKind_SCORE_KIND_COOKED,
+	suggest.Tastes:            suggestionsv1.ScoreKind_SCORE_KIND_TASTES,
 }
 
 // suggestionToProto converts a suggestion to the API.

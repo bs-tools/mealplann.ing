@@ -799,6 +799,7 @@ type Person struct {
 	Notes                string
 	CreateTime           pgtype.Timestamptz
 	UpdateTime           pgtype.Timestamptz
+	Profile              json.RawMessage
 }
 
 type PersonTarget struct {
