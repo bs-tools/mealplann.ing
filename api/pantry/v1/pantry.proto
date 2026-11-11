@@ -123,6 +123,9 @@ message PantryItem {
   // The brand or label of the lot, e.g. "Sriracha" for one of several hot
   // sauces sharing a food. At most 100 characters.
   string label = 19;
+  // The weight of the food's package, to show the amount in packages, like
+  // "4 packages" rather than "800 g", 0 if unknown.
+  double package_grams = 20 [(mcp.v1.field).output_only = true];
 }
 
 // Where a lot is kept.

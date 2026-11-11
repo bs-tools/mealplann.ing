@@ -14,6 +14,8 @@ import HomePage from "pages/home";
 import InvitePage from "pages/invite";
 import OAuthConsentPage from "pages/oauth-consent";
 import PantryPage from "pages/pantry";
+import PantryAddPage from "pages/pantry-add";
+import PantryCookPage from "pages/pantry-cook";
 import PeoplePage from "pages/people";
 import PlanPage from "pages/plan";
 import PlanTemplatePage from "pages/plan-template";
@@ -128,6 +130,8 @@ const App: React.FC = () => {
             <Route path="/people" element={<PeoplePage />} />
             <Route path="/shopping" element={<ShoppingPage />} />
             <Route path="/pantry" element={<PantryPage />} />
+            <Route path="/pantry/add" element={<PantryAddPage />} />
+            <Route path="/pantry/cook" element={<PantryCookPage />} />
             <Route path="/recipes" element={<RecipesPage />} />
             <Route path="/recipes/new" element={<RecipeEditPage />} />
             <Route path="/recipes/import" element={<RecipeImportPage />} />

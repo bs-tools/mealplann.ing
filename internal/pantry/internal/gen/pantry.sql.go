@@ -280,6 +280,7 @@ select
   f.name as food_name,
   f.store_section,
   f.grams_per_piece,
+  f.package_grams,
   f.opened_shelf_life_days,
   f.freezer_shelf_life_days
 from pantry_items
@@ -301,6 +302,7 @@ type ListPantryItemsRow struct {
 	FoodName             string
 	StoreSection         *StoreSection
 	GramsPerPiece        *float64
+	PackageGrams         *float64
 	OpenedShelfLifeDays  *int32
 	FreezerShelfLifeDays *int32
 }
@@ -335,6 +337,7 @@ func (q *Queries) ListPantryItems(ctx context.Context, arg *ListPantryItemsParam
 			&i.FoodName,
 			&i.StoreSection,
 			&i.GramsPerPiece,
+			&i.PackageGrams,
 			&i.OpenedShelfLifeDays,
 			&i.FreezerShelfLifeDays,
 		); err != nil {
@@ -354,6 +357,7 @@ select
   f.name as food_name,
   f.store_section,
   f.grams_per_piece,
+  f.package_grams,
   f.opened_shelf_life_days,
   f.freezer_shelf_life_days
 from pantry_items
@@ -374,6 +378,7 @@ type LockPantryItemsRow struct {
 	FoodName             string
 	StoreSection         *StoreSection
 	GramsPerPiece        *float64
+	PackageGrams         *float64
 	OpenedShelfLifeDays  *int32
 	FreezerShelfLifeDays *int32
 }
@@ -408,6 +413,7 @@ func (q *Queries) LockPantryItems(ctx context.Context, arg *LockPantryItemsParam
 			&i.FoodName,
 			&i.StoreSection,
 			&i.GramsPerPiece,
+			&i.PackageGrams,
 			&i.OpenedShelfLifeDays,
 			&i.FreezerShelfLifeDays,
 		); err != nil {

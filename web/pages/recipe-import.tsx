@@ -81,6 +81,17 @@ const Review: React.FC<ReviewProps> = ({ preview }) => {
       };
     })
   );
+  /*
+   * The ingredients matched to a food on their own: they're folded into a
+   * line, to review only if wanted, so the list shows what needs a choice.
+   */
+  const [autoMatched] = useState(
+    () =>
+      new Set(
+        rows.flatMap((row, index) => (row.choice === NONE ? [] : [index]))
+      )
+  );
+  const [reviewing, setReviewing] = useState(false);
   const [invalid, setInvalid] = useState("");
   const create = useMutation(createRecipe, {
     onSuccess: async (response) => {
@@ -195,9 +206,42 @@ const Review: React.FC<ReviewProps> = ({ preview }) => {
           </p>
         )}
       </Card>
-      <Card title={`Ingredients · ${matched} of ${rows.length} matched`}>
+      {autoMatched.size > 0 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl bg-pine-50 px-4 py-3 text-sm text-pine-dark">
+          <CheckCircleIcon className="size-5 shrink-0" aria-hidden="true" />
+          <span className="grow font-medium">
+            {autoMatched.size}{" "}
+            {autoMatched.size === 1 ? "ingredient" : "ingredients"} matched your
+            foods
+          </span>
+          <button
+            type="button"
+            className={linkClass}
+            onClick={() => {
+              setReviewing(!reviewing);
+            }}
+          >
+            {reviewing ? "Hide them" : "Review them"}
+          </button>
+        </div>
+      )}
+      <Card
+        title={
+          autoMatched.size === rows.length && !reviewing
+            ? "Ingredients"
+            : `Choose the food for ${rows.length - autoMatched.size === 0 ? "each" : rows.length - autoMatched.size} more`
+        }
+      >
+        {autoMatched.size === rows.length && !reviewing ? (
+          <p className="text-sm text-muted">
+            Every ingredient has a food: save the recipe.
+          </p>
+        ) : null}
         <ul className="-my-2 divide-y divide-gray-100">
           {rows.map((row, index) => {
+            if (autoMatched.has(index) && !reviewing) {
+              return null;
+            }
             const matches = preview.ingredients[index]?.matches ?? [];
             const foodId = foodOf(row);
             return (

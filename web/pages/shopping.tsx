@@ -25,6 +25,7 @@ import {
   ArrowPathIcon,
   BuildingStorefrontIcon,
   CheckCircleIcon,
+  ReceiptPercentIcon,
   ExclamationTriangleIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
@@ -481,17 +482,50 @@ interface DoneBannerProps {
   message: string;
 }
 
-// DoneBanner says the shopping is done, with a link to the pantry.
-const DoneBanner: React.FC<DoneBannerProps> = ({ message }) => (
-  <p className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-    <CheckCircleIcon className="size-5 shrink-0" aria-hidden="true" />
-    <span>
-      {message}{" "}
-      <Link to="/pantry" className={linkClass}>
-        See the pantry
-      </Link>
-    </span>
-  </p>
-);
+/*
+ * RECEIPT_REQUEST is what to ask an agent with a photo of the receipt: it
+ * reads it through the MCP server, to record prices and correct the lots.
+ */
+const RECEIPT_REQUEST =
+  "Here's the receipt from today's shop. Record what each food cost, and correct what went into the pantry to what we actually bought: the brands, sizes and amounts.";
+
+/**
+ * DoneBanner says the shopping is done, with a link to the pantry, and a
+ * reminder to have an agent read the receipt, which records the prices and
+ * corrects the amounts and details of what was bought.
+ */
+const DoneBanner: React.FC<DoneBannerProps> = ({ message }) => {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="flex items-center gap-3 rounded-2xl bg-pine-50 px-4 py-3 text-base font-bold text-pine-dark">
+        <CheckCircleIcon className="size-6 shrink-0" aria-hidden="true" />
+        <span>
+          {message}{" "}
+          <Link to="/pantry" className={`${linkClass} font-medium`}>
+            See the pantry
+          </Link>
+        </span>
+      </p>
+      <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <p className="flex items-center gap-2 text-base font-bold text-ink-soft">
+          <ReceiptPercentIcon className="size-6 shrink-0" aria-hidden="true" />
+          Scan the receipt with your agent
+        </p>
+        <button
+          type="button"
+          className={`${primaryButton} self-start`}
+          onClick={() => {
+            void navigator.clipboard.writeText(RECEIPT_REQUEST).then(() => {
+              setCopied(true);
+            });
+          }}
+        >
+          {copied ? "Copied: send it with a photo" : "Copy the request"}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default ShoppingPage;

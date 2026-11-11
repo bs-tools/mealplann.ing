@@ -1,12 +1,14 @@
 import Loading from "@components/loading";
+import RecipeBalance from "@components/recipes/balance";
 import FavoriteButton from "@components/recipes/favorite-button";
 import NutritionPanel from "@components/recipes/nutrition-panel";
 import SuggestMenu from "@components/recipes/suggest-feedback";
 import Card from "@components/ui/card";
 import ConfirmButton from "@components/ui/confirm-button";
-import { Badge, PageHeader, Stat } from "@components/ui/misc";
+import { Badge, PageHeader } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
+  iconButton,
   linkClass,
   primaryButton,
   secondaryButton,
@@ -15,6 +17,7 @@ import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
   ArrowLeftIcon,
   ArrowTopRightOnSquareIcon,
+  CalendarDaysIcon,
   ChartBarIcon,
   ExclamationTriangleIcon,
   DocumentDuplicateIcon,
@@ -119,12 +122,26 @@ const RecipePage: React.FC = () => {
     recipe.nutrition?.issues.map((issue) => issue.ingredientIndex) ?? []
   );
   const keeps = fridgeNote(recipe);
+  const totalSeconds = recipe.prepSeconds + recipe.cookSeconds;
+  const meta = [
+    totalSeconds > 0 ? formatHoursMinutes(totalSeconds) : "",
+    formatServings(recipe.servings),
+    recipe.yieldAmount > 0
+      ? `makes ${formatIngredientAmount(recipe.yieldAmount, recipe.yieldUnit, system)}`
+      : "",
+    recipe.nutrition?.perServing?.energyKcal === undefined
+      ? ""
+      : `${Math.round(recipe.nutrition.perServing.energyKcal)} kcal a serving`,
+    recipe.cost !== undefined && recipe.cost.totalCents > 0
+      ? `≈ ${formatDollars(recipe.cost.centsPerServing)} a serving`
+      : "",
+  ].filter((part) => part !== "");
   return (
     <div className="flex flex-col gap-4">
       <div>
         <Link
           to="/recipes"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 print:hidden"
+          className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink-soft print:hidden"
         >
           <ArrowLeftIcon className="size-4" aria-hidden="true" />
           Recipes
@@ -132,12 +149,61 @@ const RecipePage: React.FC = () => {
       </div>
       <PageHeader
         title={recipe.name}
-        subtitle={recipe.description === "" ? undefined : recipe.description}
+        subtitle={
+          <span className="flex flex-col gap-1">
+            <span className="tabular-nums">
+              {meta.join(" · ")}
+              {recipe.sourceUrl !== "" && (
+                <>
+                  {" · "}
+                  <a
+                    href={recipe.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`${linkClass} inline-flex items-center gap-1`}
+                  >
+                    {formatRedirectTarget(recipe.sourceUrl)}
+                    <ArrowTopRightOnSquareIcon
+                      className="size-3.5"
+                      aria-hidden="true"
+                    />
+                  </a>
+                </>
+              )}
+            </span>
+            {recipe.description !== "" && (
+              <span className="text-ink-soft">{recipe.description}</span>
+            )}
+          </span>
+        }
         actions={
-          <div className="flex flex-wrap items-start gap-2 print:hidden">
-            <FavoriteButton recipe={recipe} />
-            <SuggestMenu recipe={recipe} />
+          <div className="flex items-center gap-1 print:hidden">
+            <Link
+              to={`/recipes/${recipe.id}/edit`}
+              className={iconButton}
+              aria-label="Edit"
+              title="Edit"
+            >
+              <PencilIcon className="size-5" />
+            </Link>
+            <Link
+              to={`/recipes/new?from=${recipe.id}`}
+              className={iconButton}
+              aria-label="Duplicate"
+              title="Start a new recipe from this one, to make a variation of it"
+            >
+              <DocumentDuplicateIcon className="size-5" />
+            </Link>
+            <Link
+              to={`/recipes/${recipe.id}/timeline`}
+              className={iconButton}
+              aria-label="Timeline"
+              title="Timeline"
+            >
+              <ChartBarIcon className="size-5" />
+            </Link>
             <ConfirmButton
+              className={iconButton}
               title="Delete recipe?"
               message={`"${recipe.name}" will be deleted. Its foods are kept.`}
               disabled={remove.isPending}
@@ -145,104 +211,34 @@ const RecipePage: React.FC = () => {
                 remove.mutate({ id: recipe.id });
               }}
             >
-              <TrashIcon className="size-4" aria-hidden="true" />
-              Delete
+              <TrashIcon className="size-5" aria-label="Delete" />
             </ConfirmButton>
-            <Link to={`/recipes/${recipe.id}/edit`} className={secondaryButton}>
-              <PencilIcon className="size-4" aria-hidden="true" />
-              Edit
-            </Link>
-            <Link
-              to={`/recipes/new?from=${recipe.id}`}
-              className={secondaryButton}
-              title="Start a new recipe from this one, to make a variation of it"
-            >
-              <DocumentDuplicateIcon className="size-4" aria-hidden="true" />
-              Duplicate
-            </Link>
-            <Link
-              to={`/recipes/${recipe.id}/timeline`}
-              className={secondaryButton}
-            >
-              <ChartBarIcon className="size-4" aria-hidden="true" />
-              Timeline
-            </Link>
-            <Link to={`/recipes/${recipe.id}/cook`} className={primaryButton}>
-              <PlayIcon className="size-4" aria-hidden="true" />
-              Cook
-            </Link>
           </div>
         }
       />
+      <div className="-mt-2 flex flex-wrap items-center gap-2 print:hidden">
+        {!recipe.draft && (
+          <Link to={`/plan?plan=${recipe.id}`} className={primaryButton}>
+            <CalendarDaysIcon className="size-4" aria-hidden="true" />
+            Plan this
+          </Link>
+        )}
+        <Link to={`/recipes/${recipe.id}/cook`} className={secondaryButton}>
+          <PlayIcon className="size-4" aria-hidden="true" />
+          Cook now
+        </Link>
+        <FavoriteButton recipe={recipe} />
+        <SuggestMenu recipe={recipe} />
+      </div>
       <ErrorText error={remove.error} />
       {recipe.draft && (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <p className="rounded-xl bg-warn-tint px-3 py-2 text-sm text-warn-dark">
           This is a draft: it isn&apos;t planned or suggested.{" "}
           <Link to={`/recipes/${recipe.id}/edit`} className={linkClass}>
             Edit it
           </Link>{" "}
           to choose a food for each ingredient, and save it to finish it.
         </p>
-      )}
-      <div className="flex flex-wrap gap-x-8 gap-y-3">
-        <Stat label="Servings" value={recipe.servings} />
-        {recipe.yieldAmount > 0 && (
-          <Stat
-            label="Makes"
-            value={formatIngredientAmount(
-              recipe.yieldAmount,
-              recipe.yieldUnit,
-              system
-            )}
-          />
-        )}
-        {recipe.prepSeconds > 0 && (
-          <Stat label="Prep" value={formatHoursMinutes(recipe.prepSeconds)} />
-        )}
-        {recipe.cookSeconds > 0 && (
-          <Stat label="Cook" value={formatHoursMinutes(recipe.cookSeconds)} />
-        )}
-        {recipe.nutrition?.perServing?.energyKcal !== undefined && (
-          <Stat
-            label="Per serving"
-            value={`${Math.round(recipe.nutrition.perServing.energyKcal)} kcal`}
-          />
-        )}
-        {recipe.cost !== undefined && recipe.cost.totalCents > 0 && (
-          <Stat
-            label="Cost per serving"
-            value={`≈ ${formatDollars(recipe.cost.centsPerServing)}`}
-            {...(recipe.cost.unpricedFoodNames.length > 0
-              ? {
-                  sub: `Without ${formatList(recipe.cost.unpricedFoodNames)}, which ${recipe.cost.unpricedFoodNames.length === 1 ? "has" : "have"} no price`,
-                }
-              : {})}
-          />
-        )}
-      </div>
-      {(recipe.tags.length > 0 || keeps !== "" || recipe.sourceUrl !== "") && (
-        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-          {recipe.tags.map((tag) => (
-            <Link key={tag} to={`/recipes?tag=${encodeURIComponent(tag)}`}>
-              <Badge>{tag}</Badge>
-            </Link>
-          ))}
-          {keeps !== "" && <span>{keeps}</span>}
-          {recipe.sourceUrl !== "" && (
-            <a
-              href={recipe.sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              className={`${linkClass} inline-flex items-center gap-1`}
-            >
-              {formatRedirectTarget(recipe.sourceUrl)}
-              <ArrowTopRightOnSquareIcon
-                className="size-3.5"
-                aria-hidden="true"
-              />
-            </a>
-          )}
-        </div>
       )}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="flex flex-col gap-4 lg:col-span-3">
@@ -386,8 +382,23 @@ const RecipePage: React.FC = () => {
             </Card>
           )}
         </div>
-        <div className="lg:col-span-2">
+        <div className="order-first flex flex-col gap-4 lg:order-none lg:col-span-2">
+          <RecipeBalance perServing={recipe.nutrition?.perServing} />
           <NutritionPanel recipe={recipe} />
+          {(recipe.tags.length > 0 || keeps !== "") && (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+              {recipe.tags.map((tag) => (
+                <Link
+                  key={tag}
+                  to={`/recipes?tag=${encodeURIComponent(tag)}`}
+                  className="rounded-full bg-ground-dark px-3 py-1 text-sm text-ink-soft hover:bg-gray-200"
+                >
+                  {tag}
+                </Link>
+              ))}
+              {keeps !== "" && <span>{keeps}</span>}
+            </div>
+          )}
         </div>
       </div>
     </div>

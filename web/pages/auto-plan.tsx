@@ -36,7 +36,7 @@ import {
   PlanSlotState,
   SuggestionService,
 } from "gen/suggestions/v1/suggestions_pb";
-import { addDays, startOfWeek, today } from "helpers/dates";
+import { addDays, isDateString, startOfWeek, today } from "helpers/dates";
 import { formatShortDate, formatWeekday } from "helpers/format";
 import { useDebouncedValue } from "helpers/hooks";
 import { invalidateServices } from "helpers/query";
@@ -44,7 +44,7 @@ import { readStorage, writeStorage } from "helpers/storage";
 import type { Leftover } from "helpers/suggestions";
 import { planKey, suggestionKey } from "helpers/suggestions";
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 
 // CRITERIA_KEY is where the criteria are remembered, but for the start.
 const CRITERIA_KEY = "mealplanning.autoPlanCriteria";
@@ -229,7 +229,23 @@ const AutoPlanPage: React.FC = () => {
   const queryClient = useQueryClient();
   const people = useQuery(listPeople, {});
   const recipes = useQuery(listRecipes, {});
-  const [criteria, setCriteria] = useState<Criteria>(loadCriteria);
+  const [params] = useSearchParams();
+  /*
+   * The plan's start and days can come from the link that opened the page,
+   * like the plan's "Plan them for me" for the week's open days.
+   */
+  const [criteria, setCriteria] = useState<Criteria>(() => {
+    const loaded = loadCriteria();
+    const start = params.get("start") ?? "";
+    if (isDateString(start) && start >= today()) {
+      loaded.start = start;
+    }
+    const days = Number(params.get("days") ?? "");
+    if (Number.isInteger(days) && days >= 1 && days <= 14) {
+      loaded.days = days;
+    }
+    return loaded;
+  });
   const [showCriteria, setShowCriteria] = useState(false);
   const [seed, setSeed] = useState<bigint>(randomSeed);
   /*

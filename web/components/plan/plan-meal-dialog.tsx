@@ -42,6 +42,8 @@ interface PlanMealDialogProps {
   // The household's staples: people with one at the meal eat it instead.
   staples: Staple[];
   recipes: RecipeSummary[];
+  // The recipe chosen first, like the one whose page "Plan this" was on.
+  recipe?: PickedRecipe | undefined;
   onClose: () => void;
 }
 
@@ -59,11 +61,16 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   people,
   staples,
   recipes,
+  recipe: initialRecipe,
   onClose,
 }) => {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<Tab>("suggestions");
-  const [recipe, setRecipe] = useState<PickedRecipe | null>(null);
+  const [tab, setTab] = useState<Tab>(
+    initialRecipe === undefined ? "suggestions" : "recipe"
+  );
+  const [recipe, setRecipe] = useState<PickedRecipe | null>(
+    initialRecipe ?? null
+  );
   const recipeId = recipe?.id ?? "";
   const [date, setDate] = useState(initialDate);
   const [meal, setMeal] = useState(initialMeal ?? HouseholdMeal.DINNER);

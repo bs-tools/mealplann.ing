@@ -116,3 +116,16 @@ export const suggestPlan = SuggestionService.method.suggestPlan;
  * @generated from rpc suggestions.v1.SuggestionService.SuggestFixes
  */
 export const suggestFixes = SuggestionService.method.suggestFixes;
+
+/**
+ * List the recipes the household can cook on a date with only what's in
+ * its pantry, no shopping: every ingredient of a whole batch, as
+ * written, is in stock and usable on the date, or always in stock.
+ * Recipes using food to use within a few days come first, then by name.
+ * What the plan will take from the pantry isn't counted, so plan one
+ * with PlanService.PlanMeal or CreatePortion. Drafts and recipes not to
+ * suggest are left out. Nothing is changed.
+ *
+ * @generated from rpc suggestions.v1.SuggestionService.SuggestFromPantry
+ */
+export const suggestFromPantry = SuggestionService.method.suggestFromPantry;

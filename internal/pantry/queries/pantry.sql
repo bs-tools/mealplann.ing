@@ -6,6 +6,7 @@ select
   f.name as food_name,
   f.store_section,
   f.grams_per_piece,
+  f.package_grams,
   f.opened_shelf_life_days,
   f.freezer_shelf_life_days
 from pantry_items
@@ -23,6 +24,7 @@ select
   f.name as food_name,
   f.store_section,
   f.grams_per_piece,
+  f.package_grams,
   f.opened_shelf_life_days,
   f.freezer_shelf_life_days
 from pantry_items

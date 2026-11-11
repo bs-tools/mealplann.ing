@@ -97,6 +97,7 @@ type PantryItem struct {
 	xxx_hidden_Opened        bool                   `protobuf:"varint,17,opt,name=opened,proto3"`
 	xxx_hidden_Estimated     bool                   `protobuf:"varint,18,opt,name=estimated,proto3"`
 	xxx_hidden_Label         string                 `protobuf:"bytes,19,opt,name=label,proto3"`
+	xxx_hidden_PackageGrams  float64                `protobuf:"fixed64,20,opt,name=package_grams,json=packageGrams,proto3"`
 	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
 	XXX_presence             [1]uint32
 	unknownFields            protoimpl.UnknownFields
@@ -261,6 +262,13 @@ func (x *PantryItem) GetLabel() string {
 	return ""
 }
 
+func (x *PantryItem) GetPackageGrams() float64 {
+	if x != nil {
+		return x.xxx_hidden_PackageGrams
+	}
+	return 0
+}
+
 func (x *PantryItem) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -299,7 +307,7 @@ func (x *PantryItem) SetUseByDate(v string) {
 
 func (x *PantryItem) SetDaysToExpiry(v int32) {
 	x.xxx_hidden_DaysToExpiry = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 20)
 }
 
 func (x *PantryItem) SetNotes(v string) {
@@ -336,6 +344,10 @@ func (x *PantryItem) SetEstimated(v bool) {
 
 func (x *PantryItem) SetLabel(v string) {
 	x.xxx_hidden_Label = v
+}
+
+func (x *PantryItem) SetPackageGrams(v float64) {
+	x.xxx_hidden_PackageGrams = v
 }
 
 func (x *PantryItem) HasDaysToExpiry() bool {
@@ -430,6 +442,9 @@ type PantryItem_builder struct {
 	// The brand or label of the lot, e.g. "Sriracha" for one of several hot
 	// sauces sharing a food. At most 100 characters.
 	Label string
+	// The weight of the food's package, to show the amount in packages, like
+	// "4 packages" rather than "800 g", 0 if unknown.
+	PackageGrams float64
 }
 
 func (b0 PantryItem_builder) Build() *PantryItem {
@@ -446,7 +461,7 @@ func (b0 PantryItem_builder) Build() *PantryItem {
 	x.xxx_hidden_OpenedDate = b.OpenedDate
 	x.xxx_hidden_UseByDate = b.UseByDate
 	if b.DaysToExpiry != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 20)
 		x.xxx_hidden_DaysToExpiry = *b.DaysToExpiry
 	}
 	x.xxx_hidden_Notes = b.Notes
@@ -458,6 +473,7 @@ func (b0 PantryItem_builder) Build() *PantryItem {
 	x.xxx_hidden_Opened = b.Opened
 	x.xxx_hidden_Estimated = b.Estimated
 	x.xxx_hidden_Label = b.Label
+	x.xxx_hidden_PackageGrams = b.PackageGrams
 	return m0
 }
 
@@ -1696,7 +1712,7 @@ var File_pantry_v1_pantry_proto protoreflect.FileDescriptor
 
 const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"\n" +
-	"\x16pantry/v1/pantry.proto\x12\tpantry.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xf4\x05\n" +
+	"\x16pantry/v1/pantry.proto\x12\tpantry.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\"\xa1\x06\n" +
 	"\n" +
 	"PantryItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
@@ -1723,7 +1739,8 @@ const file_pantry_v1_pantry_proto_rawDesc = "" +
 	"frozenDate\x12\x16\n" +
 	"\x06opened\x18\x11 \x01(\bR\x06opened\x12\x1c\n" +
 	"\testimated\x18\x12 \x01(\bR\testimated\x12\x14\n" +
-	"\x05label\x18\x13 \x01(\tR\x05labelB\x11\n" +
+	"\x05label\x18\x13 \x01(\tR\x05label\x12+\n" +
+	"\rpackage_grams\x18\x14 \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\fpackageGramsB\x11\n" +
 	"\x0f_days_to_expiry\"\x86\x01\n" +
 	"\x11AlwaysInStockFood\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x1b\n" +

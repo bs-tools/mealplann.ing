@@ -88,7 +88,7 @@ const (
 
 // keepFields are the fields of a lot updates don't change.
 var keepFields = []protoreflect.Name{
-	"id", "food_id", "food_name", "store_section", "grams_per_piece", "use_by_date", "days_to_expiry", "create_time", "update_time",
+	"id", "food_id", "food_name", "store_section", "grams_per_piece", "package_grams", "use_by_date", "days_to_expiry", "create_time", "update_time",
 }
 
 const (
@@ -484,6 +484,7 @@ func ItemToProto(it *pantry.Item, today time.Time) *pantryv1.PantryItem {
 		StoreSection:  food.StoreSectionToProto(it.StoreSection),
 		Grams:         math.Round(it.Grams*1000) / 1000,
 		GramsPerPiece: it.GramsPerPiece,
+		PackageGrams:  it.PackageGrams,
 		ExpiryDate:    store.FormatDate(it.ExpiryDate),
 		OpenedDate:    store.FormatDate(it.OpenedDate),
 		Notes:         it.Notes,
