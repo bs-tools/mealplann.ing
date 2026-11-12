@@ -1,6 +1,6 @@
 import CookActions from "@components/plan/cook-actions";
 import type { MealRow, RowSlot } from "@components/plan/plan-rows";
-import type { Slot } from "@components/plan/portion-dialog";
+import PortionDialog from "@components/plan/portion-dialog";
 import { Plate, PortionList, SidesCard } from "@components/today/plate";
 import WarningFix from "@components/today/warning-fix";
 import Modal from "@components/ui/modal";
@@ -12,9 +12,10 @@ import {
   ghostDangerButton,
   sectionLabelClass,
 } from "@components/ui/styles";
-import { useMutation } from "@connectrpc/connect-query";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
+import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import {
   deletePortion,
   setEatingOut,
@@ -147,23 +148,30 @@ interface PlannedMealSheetProps {
   week: GetWeekResponse;
   day: PlanDay;
   row: MealRow;
-  onEdit: (slot: Slot, portion: PlannedPortion) => void;
   onClose: () => void;
 }
 
 /**
  * PlannedMealSheet shows a planned meal: as a plate, with the sides it's
  * served with, its warnings and their fixes, and what its cook's servings
- * go to, for each person who eats it.
+ * go to, for each person who eats it. Each portion opens to change or
+ * remove it, and more can be added to the meal.
  */
 const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
   week,
   day,
   row,
-  onEdit,
   onClose,
 }) => {
   const queryClient = useQueryClient();
+  const people = useQuery(listPeople, {});
+  /*
+   * The portion being changed, null to add one, or undefined while
+   * neither: its dialog takes the sheet's place until it's closed.
+   */
+  const [editing, setEditing] = useState<PlannedPortion | null | undefined>(
+    undefined
+  );
   const eaters = row.slots.filter(
     (slot) => slot.planned.eatingOut || slot.planned.portions.length > 0
   );
@@ -254,7 +262,13 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
     ];
     content = (
       <div className="flex flex-col gap-5">
-        <PortionList portions={portions} />
+        <PortionList
+          portions={portions}
+          onSelect={setEditing}
+          onAdd={() => {
+            setEditing(null);
+          }}
+        />
         <Plate nutrients={slot.planned.nutrients} />
         {main !== undefined && (
           <SidesCard
@@ -285,24 +299,6 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
           />
         )}
         <div className="-mx-2 -mb-2 flex flex-wrap gap-x-1 gap-y-1">
-          {main !== undefined && (
-            <button
-              type="button"
-              className={ghostButton}
-              onClick={() => {
-                onEdit(
-                  {
-                    date: day.date,
-                    eatingTimeId,
-                    personId: slot.person.personId,
-                  },
-                  main
-                );
-              }}
-            >
-              Change the portion
-            </button>
-          )}
           {main !== undefined && main.recipeId !== "" && (
             <Link to={`/recipes/${main.recipeId}`} className={ghostButton}>
               The recipe
@@ -327,6 +323,30 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
         </div>
         <ErrorText error={remove.error} />
       </div>
+    );
+  }
+
+  if (editing !== undefined && slot !== undefined) {
+    return (
+      <PortionDialog
+        slot={{
+          date: day.date,
+          eatingTimeId: slot.planned.eatingTime?.id ?? "",
+          personId: slot.person.personId,
+        }}
+        portion={editing ?? undefined}
+        people={people.data?.people ?? []}
+        dates={week.days.map((other) => other.date)}
+        cooks={[...week.earlierLeftovers, ...week.cooks]}
+        mealName={
+          eaters.length > 1
+            ? `${slot.person.personName}'s ${(slot.planned.eatingTime?.name ?? "meal").toLowerCase()}`
+            : (slot.planned.eatingTime?.name ?? "this meal")
+        }
+        onClose={() => {
+          setEditing(undefined);
+        }}
+      />
     );
   }
 

@@ -4,7 +4,9 @@ import type { ConnectError } from "@connectrpc/connect";
 import { createClient } from "@connectrpc/connect";
 import { useQuery, useTransport } from "@connectrpc/connect-query";
 import {
+  ChevronRightIcon,
   ExclamationTriangleIcon,
+  PlusIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -112,27 +114,78 @@ export const Plate: React.FC<PlateProps> = ({ nutrients }) => {
 
 interface PortionListProps {
   portions: PlannedPortion[];
+  // Opens a portion to change or remove it, if the list allows it.
+  onSelect?: (portion: PlannedPortion) => void;
+  // Adds something to the meal, if the list allows it.
+  onAdd?: (() => void) | undefined;
 }
 
 /**
  * PortionList lists what a meal is: each recipe or food, with its weight,
- * so the sheet's title can be just the meal, like "Breakfast".
+ * so the sheet's title can be just the meal, like "Breakfast". Given
+ * onSelect and onAdd, each portion opens to change it, and a last row adds
+ * more, like a piece of fruit to a light lunch. Staples are changed on the
+ * People page, so they don't open.
  */
-export const PortionList: React.FC<PortionListProps> = ({ portions }) => (
+export const PortionList: React.FC<PortionListProps> = ({
+  portions,
+  onSelect,
+  onAdd,
+}) => (
   <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line bg-white">
-    {portions.map((portion) => (
-      <li
-        key={portion.portionId === "" ? portion.stapleId : portion.portionId}
-        className="flex items-baseline justify-between gap-3 px-4 py-2.5 text-sm"
-      >
-        <span className="min-w-0 text-ink-soft">{portion.name}</span>
-        {portion.grams > 0 && (
-          <span className="shrink-0 text-muted tabular-nums">
-            {formatGrams(portion.grams)}
-          </span>
-        )}
+    {portions.map((portion) => {
+      const row = (
+        <>
+          <span className="min-w-0 grow text-ink-soft">{portion.name}</span>
+          {portion.grams > 0 && (
+            <span className="shrink-0 text-muted tabular-nums">
+              {formatGrams(portion.grams)}
+            </span>
+          )}
+        </>
+      );
+      return (
+        <li
+          key={portion.portionId === "" ? portion.stapleId : portion.portionId}
+        >
+          {onSelect === undefined || portion.portionId === "" ? (
+            <div className="flex items-baseline gap-3 px-4 py-2.5 text-sm">
+              {row}
+              {onSelect !== undefined && (
+                <span className="shrink-0 text-xs text-muted">Staple</span>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-ground/60"
+              aria-label={`Change ${portion.name}`}
+              onClick={() => {
+                onSelect(portion);
+              }}
+            >
+              {row}
+              <ChevronRightIcon
+                className="size-4 shrink-0 text-muted/70"
+                aria-hidden="true"
+              />
+            </button>
+          )}
+        </li>
+      );
+    })}
+    {onAdd !== undefined && (
+      <li>
+        <button
+          type="button"
+          className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-bold text-pine hover:bg-pine-50/60"
+          onClick={onAdd}
+        >
+          <PlusIcon className="size-4" aria-hidden="true" />
+          Add to this meal
+        </button>
       </li>
-    ))}
+    )}
   </ul>
 );
 
