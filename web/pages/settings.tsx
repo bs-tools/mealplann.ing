@@ -1,5 +1,6 @@
 import Loading from "@components/loading";
 import AvatarCard from "@components/settings/avatar-card";
+import CalendarFeed from "@components/settings/calendar-feed";
 import Connections from "@components/settings/connections";
 import HouseholdCard from "@components/settings/household";
 import Invitations from "@components/settings/invitations";
@@ -251,7 +252,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => (
     <PageHeader
       kicker="Your account"
       title="Settings"
-      subtitle="Your picture and units, the household, sign-in, and connecting AI agents."
+      subtitle="Your picture and units, the household, sign-in, your calendar, and connecting AI agents."
     />
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div className="flex flex-col gap-4">
@@ -262,6 +263,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => (
         <Invitations admin={user.admin} />
       </div>
       <div className="flex flex-col gap-4">
+        <CalendarFeed />
         <ApiTokens />
         <Connections />
         <McpInstructions />

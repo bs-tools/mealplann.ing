@@ -32,6 +32,15 @@ const (
 	UserServiceListAPITokensProcedure = "/users.v1.UserService/ListAPITokens"
 	// UserServiceDeleteAPITokenProcedure is the procedure name of the UserService's DeleteAPIToken RPC.
 	UserServiceDeleteAPITokenProcedure = "/users.v1.UserService/DeleteAPIToken"
+	// UserServiceGetCalendarFeedProcedure is the procedure name of the UserService's GetCalendarFeed
+	// RPC.
+	UserServiceGetCalendarFeedProcedure = "/users.v1.UserService/GetCalendarFeed"
+	// UserServiceCreateCalendarFeedProcedure is the procedure name of the UserService's
+	// CreateCalendarFeed RPC.
+	UserServiceCreateCalendarFeedProcedure = "/users.v1.UserService/CreateCalendarFeed"
+	// UserServiceDeleteCalendarFeedProcedure is the procedure name of the UserService's
+	// DeleteCalendarFeed RPC.
+	UserServiceDeleteCalendarFeedProcedure = "/users.v1.UserService/DeleteCalendarFeed"
 	// UserServiceUploadAvatarProcedure is the procedure name of the UserService's UploadAvatar RPC.
 	UserServiceUploadAvatarProcedure = "/users.v1.UserService/UploadAvatar"
 	// UserServiceDeleteAvatarProcedure is the procedure name of the UserService's DeleteAvatar RPC.
@@ -72,6 +81,27 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_users_v1_users_proto.Services().ByName("UserService").Methods().ByName("DeleteAPIToken"),
 			Procedure:  UserServiceDeleteAPITokenProcedure,
+		}
+	})
+	userServiceGetCalendarFeedSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_users_v1_users_proto.Services().ByName("UserService").Methods().ByName("GetCalendarFeed"),
+			Procedure:  UserServiceGetCalendarFeedProcedure,
+		}
+	})
+	userServiceCreateCalendarFeedSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_users_v1_users_proto.Services().ByName("UserService").Methods().ByName("CreateCalendarFeed"),
+			Procedure:  UserServiceCreateCalendarFeedProcedure,
+		}
+	})
+	userServiceDeleteCalendarFeedSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_users_v1_users_proto.Services().ByName("UserService").Methods().ByName("DeleteCalendarFeed"),
+			Procedure:  UserServiceDeleteCalendarFeedProcedure,
 		}
 	})
 	userServiceUploadAvatarSpec = sync.OnceValue(func() connect.Spec {
@@ -123,6 +153,15 @@ type UserServiceClient interface {
 	ListAPITokens(context.Context, *v1.ListAPITokensRequest) (*v1.ListAPITokensResponse, error)
 	// Delete an API token.
 	DeleteAPIToken(context.Context, *v1.DeleteAPITokenRequest) (*v1.DeleteAPITokenResponse, error)
+	// Get whether the user has a calendar feed: a secret URL a calendar app
+	// subscribes to, for the cooks, prep and meals of the person the user
+	// is. Its URL is only returned by CreateCalendarFeed.
+	GetCalendarFeed(context.Context, *v1.GetCalendarFeedRequest) (*v1.GetCalendarFeedResponse, error)
+	// Create the user's calendar feed, returning its URL. An old feed is
+	// replaced, and its URL stops working.
+	CreateCalendarFeed(context.Context, *v1.CreateCalendarFeedRequest) (*v1.CreateCalendarFeedResponse, error)
+	// Delete the user's calendar feed, so its URL stops working.
+	DeleteCalendarFeed(context.Context, *v1.DeleteCalendarFeedRequest) (*v1.DeleteCalendarFeedResponse, error)
 	// Upload a picture to use as the user's avatar, replacing any previous
 	// one. The middle square of the picture is used.
 	UploadAvatar(context.Context, *v1.UploadAvatarRequest) (*v1.UploadAvatarResponse, error)
@@ -156,6 +195,15 @@ type UserServiceHandler interface {
 	ListAPITokens(context.Context, *v1.ListAPITokensRequest) (*v1.ListAPITokensResponse, error)
 	// Delete an API token.
 	DeleteAPIToken(context.Context, *v1.DeleteAPITokenRequest) (*v1.DeleteAPITokenResponse, error)
+	// Get whether the user has a calendar feed: a secret URL a calendar app
+	// subscribes to, for the cooks, prep and meals of the person the user
+	// is. Its URL is only returned by CreateCalendarFeed.
+	GetCalendarFeed(context.Context, *v1.GetCalendarFeedRequest) (*v1.GetCalendarFeedResponse, error)
+	// Create the user's calendar feed, returning its URL. An old feed is
+	// replaced, and its URL stops working.
+	CreateCalendarFeed(context.Context, *v1.CreateCalendarFeedRequest) (*v1.CreateCalendarFeedResponse, error)
+	// Delete the user's calendar feed, so its URL stops working.
+	DeleteCalendarFeed(context.Context, *v1.DeleteCalendarFeedRequest) (*v1.DeleteCalendarFeedResponse, error)
 	// Upload a picture to use as the user's avatar, replacing any previous
 	// one. The middle square of the picture is used.
 	UploadAvatar(context.Context, *v1.UploadAvatarRequest) (*v1.UploadAvatarResponse, error)
@@ -179,6 +227,9 @@ func RegisterUserServiceHandler(server *connect.Server, svc UserServiceHandler) 
 		connect.Method{Spec: userServiceCreateAPITokenSpec(), Handler: adapter.createAPIToken},
 		connect.Method{Spec: userServiceListAPITokensSpec(), Handler: adapter.listAPITokens},
 		connect.Method{Spec: userServiceDeleteAPITokenSpec(), Handler: adapter.deleteAPIToken},
+		connect.Method{Spec: userServiceGetCalendarFeedSpec(), Handler: adapter.getCalendarFeed},
+		connect.Method{Spec: userServiceCreateCalendarFeedSpec(), Handler: adapter.createCalendarFeed},
+		connect.Method{Spec: userServiceDeleteCalendarFeedSpec(), Handler: adapter.deleteCalendarFeed},
 		connect.Method{Spec: userServiceUploadAvatarSpec(), Handler: adapter.uploadAvatar},
 		connect.Method{Spec: userServiceDeleteAvatarSpec(), Handler: adapter.deleteAvatar},
 		connect.Method{Spec: userServiceUpdateSettingsSpec(), Handler: adapter.updateSettings},
@@ -204,6 +255,18 @@ func (UnimplementedUserServiceHandler) ListAPITokens(context.Context, *v1.ListAP
 
 func (UnimplementedUserServiceHandler) DeleteAPIToken(context.Context, *v1.DeleteAPITokenRequest) (*v1.DeleteAPITokenResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "users.v1.UserService.DeleteAPIToken is not implemented")
+}
+
+func (UnimplementedUserServiceHandler) GetCalendarFeed(context.Context, *v1.GetCalendarFeedRequest) (*v1.GetCalendarFeedResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "users.v1.UserService.GetCalendarFeed is not implemented")
+}
+
+func (UnimplementedUserServiceHandler) CreateCalendarFeed(context.Context, *v1.CreateCalendarFeedRequest) (*v1.CreateCalendarFeedResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "users.v1.UserService.CreateCalendarFeed is not implemented")
+}
+
+func (UnimplementedUserServiceHandler) DeleteCalendarFeed(context.Context, *v1.DeleteCalendarFeedRequest) (*v1.DeleteCalendarFeedResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "users.v1.UserService.DeleteCalendarFeed is not implemented")
 }
 
 func (UnimplementedUserServiceHandler) UploadAvatar(context.Context, *v1.UploadAvatarRequest) (*v1.UploadAvatarResponse, error) {
@@ -257,6 +320,30 @@ func (c *userServiceClient) ListAPITokens(ctx context.Context, req *v1.ListAPITo
 func (c *userServiceClient) DeleteAPIToken(ctx context.Context, req *v1.DeleteAPITokenRequest) (*v1.DeleteAPITokenResponse, error) {
 	var res v1.DeleteAPITokenResponse
 	if err := c.client.CallUnary(ctx, userServiceDeleteAPITokenSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *userServiceClient) GetCalendarFeed(ctx context.Context, req *v1.GetCalendarFeedRequest) (*v1.GetCalendarFeedResponse, error) {
+	var res v1.GetCalendarFeedResponse
+	if err := c.client.CallUnary(ctx, userServiceGetCalendarFeedSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *userServiceClient) CreateCalendarFeed(ctx context.Context, req *v1.CreateCalendarFeedRequest) (*v1.CreateCalendarFeedResponse, error) {
+	var res v1.CreateCalendarFeedResponse
+	if err := c.client.CallUnary(ctx, userServiceCreateCalendarFeedSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *userServiceClient) DeleteCalendarFeed(ctx context.Context, req *v1.DeleteCalendarFeedRequest) (*v1.DeleteCalendarFeedResponse, error) {
+	var res v1.DeleteCalendarFeedResponse
+	if err := c.client.CallUnary(ctx, userServiceDeleteCalendarFeedSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -346,6 +433,42 @@ func (h userServiceHandler) deleteAPIToken(ctx context.Context, _ connect.Spec, 
 		return err
 	}
 	res, err := h.svc.DeleteAPIToken(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h userServiceHandler) getCalendarFeed(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetCalendarFeedRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetCalendarFeed(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h userServiceHandler) createCalendarFeed(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.CreateCalendarFeedRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.CreateCalendarFeed(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h userServiceHandler) deleteCalendarFeed(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.DeleteCalendarFeedRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.DeleteCalendarFeed(ctx, &req)
 	if err != nil {
 		return err
 	}

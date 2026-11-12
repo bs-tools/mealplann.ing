@@ -1377,6 +1377,428 @@ func (b0 DeleteAPITokenResponse_builder) Build() *DeleteAPITokenResponse {
 	return m0
 }
 
+// A user's calendar feed.
+type CalendarFeed struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_CreateTime   *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=create_time,json=createTime,proto3"`
+	xxx_hidden_LastUsedTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=last_used_time,json=lastUsedTime,proto3"`
+	xxx_hidden_Url          string                 `protobuf:"bytes,3,opt,name=url,proto3"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *CalendarFeed) Reset() {
+	*x = CalendarFeed{}
+	mi := &file_users_v1_users_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CalendarFeed) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CalendarFeed) ProtoMessage() {}
+
+func (x *CalendarFeed) ProtoReflect() protoreflect.Message {
+	mi := &file_users_v1_users_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *CalendarFeed) GetCreateTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_CreateTime
+	}
+	return nil
+}
+
+func (x *CalendarFeed) GetLastUsedTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_LastUsedTime
+	}
+	return nil
+}
+
+func (x *CalendarFeed) GetUrl() string {
+	if x != nil {
+		return x.xxx_hidden_Url
+	}
+	return ""
+}
+
+func (x *CalendarFeed) SetCreateTime(v *timestamppb.Timestamp) {
+	x.xxx_hidden_CreateTime = v
+}
+
+func (x *CalendarFeed) SetLastUsedTime(v *timestamppb.Timestamp) {
+	x.xxx_hidden_LastUsedTime = v
+}
+
+func (x *CalendarFeed) SetUrl(v string) {
+	x.xxx_hidden_Url = v
+}
+
+func (x *CalendarFeed) HasCreateTime() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_CreateTime != nil
+}
+
+func (x *CalendarFeed) HasLastUsedTime() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_LastUsedTime != nil
+}
+
+func (x *CalendarFeed) ClearCreateTime() {
+	x.xxx_hidden_CreateTime = nil
+}
+
+func (x *CalendarFeed) ClearLastUsedTime() {
+	x.xxx_hidden_LastUsedTime = nil
+}
+
+type CalendarFeed_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// When it was created.
+	CreateTime *timestamppb.Timestamp
+	// When a calendar app last read it, unset if none has.
+	LastUsedTime *timestamppb.Timestamp
+	// The URL to subscribe to, only set when it's created: only a hash of
+	// its secret is kept.
+	Url string
+}
+
+func (b0 CalendarFeed_builder) Build() *CalendarFeed {
+	m0 := &CalendarFeed{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_CreateTime = b.CreateTime
+	x.xxx_hidden_LastUsedTime = b.LastUsedTime
+	x.xxx_hidden_Url = b.Url
+	return m0
+}
+
+type GetCalendarFeedRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCalendarFeedRequest) Reset() {
+	*x = GetCalendarFeedRequest{}
+	mi := &file_users_v1_users_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCalendarFeedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCalendarFeedRequest) ProtoMessage() {}
+
+func (x *GetCalendarFeedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_v1_users_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type GetCalendarFeedRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 GetCalendarFeedRequest_builder) Build() *GetCalendarFeedRequest {
+	m0 := &GetCalendarFeedRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type GetCalendarFeedResponse struct {
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Feed *CalendarFeed          `protobuf:"bytes,1,opt,name=feed,proto3"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *GetCalendarFeedResponse) Reset() {
+	*x = GetCalendarFeedResponse{}
+	mi := &file_users_v1_users_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCalendarFeedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCalendarFeedResponse) ProtoMessage() {}
+
+func (x *GetCalendarFeedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_users_v1_users_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GetCalendarFeedResponse) GetFeed() *CalendarFeed {
+	if x != nil {
+		return x.xxx_hidden_Feed
+	}
+	return nil
+}
+
+func (x *GetCalendarFeedResponse) SetFeed(v *CalendarFeed) {
+	x.xxx_hidden_Feed = v
+}
+
+func (x *GetCalendarFeedResponse) HasFeed() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Feed != nil
+}
+
+func (x *GetCalendarFeedResponse) ClearFeed() {
+	x.xxx_hidden_Feed = nil
+}
+
+type GetCalendarFeedResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The feed, unset if the user has none.
+	Feed *CalendarFeed
+}
+
+func (b0 GetCalendarFeedResponse_builder) Build() *GetCalendarFeedResponse {
+	m0 := &GetCalendarFeedResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Feed = b.Feed
+	return m0
+}
+
+type CreateCalendarFeedRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCalendarFeedRequest) Reset() {
+	*x = CreateCalendarFeedRequest{}
+	mi := &file_users_v1_users_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCalendarFeedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCalendarFeedRequest) ProtoMessage() {}
+
+func (x *CreateCalendarFeedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_v1_users_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type CreateCalendarFeedRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 CreateCalendarFeedRequest_builder) Build() *CreateCalendarFeedRequest {
+	m0 := &CreateCalendarFeedRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type CreateCalendarFeedResponse struct {
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Feed *CalendarFeed          `protobuf:"bytes,1,opt,name=feed,proto3"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *CreateCalendarFeedResponse) Reset() {
+	*x = CreateCalendarFeedResponse{}
+	mi := &file_users_v1_users_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCalendarFeedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCalendarFeedResponse) ProtoMessage() {}
+
+func (x *CreateCalendarFeedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_users_v1_users_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *CreateCalendarFeedResponse) GetFeed() *CalendarFeed {
+	if x != nil {
+		return x.xxx_hidden_Feed
+	}
+	return nil
+}
+
+func (x *CreateCalendarFeedResponse) SetFeed(v *CalendarFeed) {
+	x.xxx_hidden_Feed = v
+}
+
+func (x *CreateCalendarFeedResponse) HasFeed() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Feed != nil
+}
+
+func (x *CreateCalendarFeedResponse) ClearFeed() {
+	x.xxx_hidden_Feed = nil
+}
+
+type CreateCalendarFeedResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The feed, with its URL.
+	Feed *CalendarFeed
+}
+
+func (b0 CreateCalendarFeedResponse_builder) Build() *CreateCalendarFeedResponse {
+	m0 := &CreateCalendarFeedResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Feed = b.Feed
+	return m0
+}
+
+type DeleteCalendarFeedRequest struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteCalendarFeedRequest) Reset() {
+	*x = DeleteCalendarFeedRequest{}
+	mi := &file_users_v1_users_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteCalendarFeedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteCalendarFeedRequest) ProtoMessage() {}
+
+func (x *DeleteCalendarFeedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_users_v1_users_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type DeleteCalendarFeedRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 DeleteCalendarFeedRequest_builder) Build() *DeleteCalendarFeedRequest {
+	m0 := &DeleteCalendarFeedRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type DeleteCalendarFeedResponse struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteCalendarFeedResponse) Reset() {
+	*x = DeleteCalendarFeedResponse{}
+	mi := &file_users_v1_users_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteCalendarFeedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteCalendarFeedResponse) ProtoMessage() {}
+
+func (x *DeleteCalendarFeedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_users_v1_users_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type DeleteCalendarFeedResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 DeleteCalendarFeedResponse_builder) Build() *DeleteCalendarFeedResponse {
+	m0 := &DeleteCalendarFeedResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
 type UploadAvatarRequest struct {
 	state           protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Data []byte                 `protobuf:"bytes,1,opt,name=data,proto3"`
@@ -1386,7 +1808,7 @@ type UploadAvatarRequest struct {
 
 func (x *UploadAvatarRequest) Reset() {
 	*x = UploadAvatarRequest{}
-	mi := &file_users_v1_users_proto_msgTypes[18]
+	mi := &file_users_v1_users_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1398,7 +1820,7 @@ func (x *UploadAvatarRequest) String() string {
 func (*UploadAvatarRequest) ProtoMessage() {}
 
 func (x *UploadAvatarRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[18]
+	mi := &file_users_v1_users_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1447,7 +1869,7 @@ type UploadAvatarResponse struct {
 
 func (x *UploadAvatarResponse) Reset() {
 	*x = UploadAvatarResponse{}
-	mi := &file_users_v1_users_proto_msgTypes[19]
+	mi := &file_users_v1_users_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1459,7 +1881,7 @@ func (x *UploadAvatarResponse) String() string {
 func (*UploadAvatarResponse) ProtoMessage() {}
 
 func (x *UploadAvatarResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[19]
+	mi := &file_users_v1_users_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1515,7 +1937,7 @@ type DeleteAvatarRequest struct {
 
 func (x *DeleteAvatarRequest) Reset() {
 	*x = DeleteAvatarRequest{}
-	mi := &file_users_v1_users_proto_msgTypes[20]
+	mi := &file_users_v1_users_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1527,7 +1949,7 @@ func (x *DeleteAvatarRequest) String() string {
 func (*DeleteAvatarRequest) ProtoMessage() {}
 
 func (x *DeleteAvatarRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[20]
+	mi := &file_users_v1_users_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1559,7 +1981,7 @@ type DeleteAvatarResponse struct {
 
 func (x *DeleteAvatarResponse) Reset() {
 	*x = DeleteAvatarResponse{}
-	mi := &file_users_v1_users_proto_msgTypes[21]
+	mi := &file_users_v1_users_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1571,7 +1993,7 @@ func (x *DeleteAvatarResponse) String() string {
 func (*DeleteAvatarResponse) ProtoMessage() {}
 
 func (x *DeleteAvatarResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_users_proto_msgTypes[21]
+	mi := &file_users_v1_users_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1678,7 +2100,20 @@ const file_users_v1_users_proto_rawDesc = "" +
 	"\x06tokens\x18\x01 \x03(\v2\x12.users.v1.APITokenR\x06tokens\"'\n" +
 	"\x15DeleteAPITokenRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x18\n" +
-	"\x16DeleteAPITokenResponse\")\n" +
+	"\x16DeleteAPITokenResponse\"\x9f\x01\n" +
+	"\fCalendarFeed\x12;\n" +
+	"\vcreate_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"createTime\x12@\n" +
+	"\x0elast_used_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\flastUsedTime\x12\x10\n" +
+	"\x03url\x18\x03 \x01(\tR\x03url\"\x18\n" +
+	"\x16GetCalendarFeedRequest\"E\n" +
+	"\x17GetCalendarFeedResponse\x12*\n" +
+	"\x04feed\x18\x01 \x01(\v2\x16.users.v1.CalendarFeedR\x04feed\"\x1b\n" +
+	"\x19CreateCalendarFeedRequest\"H\n" +
+	"\x1aCreateCalendarFeedResponse\x12*\n" +
+	"\x04feed\x18\x01 \x01(\v2\x16.users.v1.CalendarFeedR\x04feed\"\x1b\n" +
+	"\x19DeleteCalendarFeedRequest\"\x1c\n" +
+	"\x1aDeleteCalendarFeedResponse\")\n" +
 	"\x13UploadAvatarRequest\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\":\n" +
 	"\x14UploadAvatarResponse\x12\"\n" +
@@ -1690,12 +2125,15 @@ const file_users_v1_users_proto_rawDesc = "" +
 	"UnitSystem\x12\x1b\n" +
 	"\x17UNIT_SYSTEM_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12UNIT_SYSTEM_METRIC\x10\x01\x12\x18\n" +
-	"\x14UNIT_SYSTEM_IMPERIAL\x10\x022\xa8\x06\n" +
+	"\x14UNIT_SYSTEM_IMPERIAL\x10\x022\xda\b\n" +
 	"\vUserService\x12S\n" +
 	"\x0eGetCurrentUser\x12\x1f.users.v1.GetCurrentUserRequest\x1a .users.v1.GetCurrentUserResponse\x12[\n" +
 	"\x0eCreateAPIToken\x12\x1f.users.v1.CreateAPITokenRequest\x1a .users.v1.CreateAPITokenResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12X\n" +
 	"\rListAPITokens\x12\x1e.users.v1.ListAPITokensRequest\x1a\x1f.users.v1.ListAPITokensResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12[\n" +
-	"\x0eDeleteAPIToken\x12\x1f.users.v1.DeleteAPITokenRequest\x1a .users.v1.DeleteAPITokenResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12U\n" +
+	"\x0eDeleteAPIToken\x12\x1f.users.v1.DeleteAPITokenRequest\x1a .users.v1.DeleteAPITokenResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12^\n" +
+	"\x0fGetCalendarFeed\x12 .users.v1.GetCalendarFeedRequest\x1a!.users.v1.GetCalendarFeedResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12g\n" +
+	"\x12CreateCalendarFeed\x12#.users.v1.CreateCalendarFeedRequest\x1a$.users.v1.CreateCalendarFeedResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12g\n" +
+	"\x12DeleteCalendarFeed\x12#.users.v1.DeleteCalendarFeedRequest\x1a$.users.v1.DeleteCalendarFeedResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12U\n" +
 	"\fUploadAvatar\x12\x1d.users.v1.UploadAvatarRequest\x1a\x1e.users.v1.UploadAvatarResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12U\n" +
 	"\fDeleteAvatar\x12\x1d.users.v1.DeleteAvatarRequest\x1a\x1e.users.v1.DeleteAvatarResponse\"\x06\xa2\x9f\x19\x02\b\x01\x12S\n" +
 	"\x0eUpdateSettings\x12\x1f.users.v1.UpdateSettingsRequest\x1a .users.v1.UpdateSettingsResponse\x12M\n" +
@@ -1705,32 +2143,39 @@ const file_users_v1_users_proto_rawDesc = "" +
 	"UsersProtoP\x01Z?github.com/bs-tools/mealplann.ing/internal/gen/users/v1;usersv1\xa2\x02\x03UXX\xaa\x02\bUsers.V1\xca\x02\bUsers\\V1\xe2\x02\x14Users\\V1\\GPBMetadata\xea\x02\tUsers::V1b\x06proto3"
 
 var file_users_v1_users_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_users_v1_users_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_users_v1_users_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_users_v1_users_proto_goTypes = []any{
-	(UnitSystem)(0),                 // 0: users.v1.UnitSystem
-	(*Household)(nil),               // 1: users.v1.Household
-	(*HouseholdMember)(nil),         // 2: users.v1.HouseholdMember
-	(*GetHouseholdRequest)(nil),     // 3: users.v1.GetHouseholdRequest
-	(*GetHouseholdResponse)(nil),    // 4: users.v1.GetHouseholdResponse
-	(*UpdateHouseholdRequest)(nil),  // 5: users.v1.UpdateHouseholdRequest
-	(*UpdateHouseholdResponse)(nil), // 6: users.v1.UpdateHouseholdResponse
-	(*User)(nil),                    // 7: users.v1.User
-	(*UpdateSettingsRequest)(nil),   // 8: users.v1.UpdateSettingsRequest
-	(*UpdateSettingsResponse)(nil),  // 9: users.v1.UpdateSettingsResponse
-	(*GetCurrentUserRequest)(nil),   // 10: users.v1.GetCurrentUserRequest
-	(*GetCurrentUserResponse)(nil),  // 11: users.v1.GetCurrentUserResponse
-	(*APIToken)(nil),                // 12: users.v1.APIToken
-	(*CreateAPITokenRequest)(nil),   // 13: users.v1.CreateAPITokenRequest
-	(*CreateAPITokenResponse)(nil),  // 14: users.v1.CreateAPITokenResponse
-	(*ListAPITokensRequest)(nil),    // 15: users.v1.ListAPITokensRequest
-	(*ListAPITokensResponse)(nil),   // 16: users.v1.ListAPITokensResponse
-	(*DeleteAPITokenRequest)(nil),   // 17: users.v1.DeleteAPITokenRequest
-	(*DeleteAPITokenResponse)(nil),  // 18: users.v1.DeleteAPITokenResponse
-	(*UploadAvatarRequest)(nil),     // 19: users.v1.UploadAvatarRequest
-	(*UploadAvatarResponse)(nil),    // 20: users.v1.UploadAvatarResponse
-	(*DeleteAvatarRequest)(nil),     // 21: users.v1.DeleteAvatarRequest
-	(*DeleteAvatarResponse)(nil),    // 22: users.v1.DeleteAvatarResponse
-	(*timestamppb.Timestamp)(nil),   // 23: google.protobuf.Timestamp
+	(UnitSystem)(0),                    // 0: users.v1.UnitSystem
+	(*Household)(nil),                  // 1: users.v1.Household
+	(*HouseholdMember)(nil),            // 2: users.v1.HouseholdMember
+	(*GetHouseholdRequest)(nil),        // 3: users.v1.GetHouseholdRequest
+	(*GetHouseholdResponse)(nil),       // 4: users.v1.GetHouseholdResponse
+	(*UpdateHouseholdRequest)(nil),     // 5: users.v1.UpdateHouseholdRequest
+	(*UpdateHouseholdResponse)(nil),    // 6: users.v1.UpdateHouseholdResponse
+	(*User)(nil),                       // 7: users.v1.User
+	(*UpdateSettingsRequest)(nil),      // 8: users.v1.UpdateSettingsRequest
+	(*UpdateSettingsResponse)(nil),     // 9: users.v1.UpdateSettingsResponse
+	(*GetCurrentUserRequest)(nil),      // 10: users.v1.GetCurrentUserRequest
+	(*GetCurrentUserResponse)(nil),     // 11: users.v1.GetCurrentUserResponse
+	(*APIToken)(nil),                   // 12: users.v1.APIToken
+	(*CreateAPITokenRequest)(nil),      // 13: users.v1.CreateAPITokenRequest
+	(*CreateAPITokenResponse)(nil),     // 14: users.v1.CreateAPITokenResponse
+	(*ListAPITokensRequest)(nil),       // 15: users.v1.ListAPITokensRequest
+	(*ListAPITokensResponse)(nil),      // 16: users.v1.ListAPITokensResponse
+	(*DeleteAPITokenRequest)(nil),      // 17: users.v1.DeleteAPITokenRequest
+	(*DeleteAPITokenResponse)(nil),     // 18: users.v1.DeleteAPITokenResponse
+	(*CalendarFeed)(nil),               // 19: users.v1.CalendarFeed
+	(*GetCalendarFeedRequest)(nil),     // 20: users.v1.GetCalendarFeedRequest
+	(*GetCalendarFeedResponse)(nil),    // 21: users.v1.GetCalendarFeedResponse
+	(*CreateCalendarFeedRequest)(nil),  // 22: users.v1.CreateCalendarFeedRequest
+	(*CreateCalendarFeedResponse)(nil), // 23: users.v1.CreateCalendarFeedResponse
+	(*DeleteCalendarFeedRequest)(nil),  // 24: users.v1.DeleteCalendarFeedRequest
+	(*DeleteCalendarFeedResponse)(nil), // 25: users.v1.DeleteCalendarFeedResponse
+	(*UploadAvatarRequest)(nil),        // 26: users.v1.UploadAvatarRequest
+	(*UploadAvatarResponse)(nil),       // 27: users.v1.UploadAvatarResponse
+	(*DeleteAvatarRequest)(nil),        // 28: users.v1.DeleteAvatarRequest
+	(*DeleteAvatarResponse)(nil),       // 29: users.v1.DeleteAvatarResponse
+	(*timestamppb.Timestamp)(nil),      // 30: google.protobuf.Timestamp
 }
 var file_users_v1_users_proto_depIdxs = []int32{
 	2,  // 0: users.v1.Household.members:type_name -> users.v1.HouseholdMember
@@ -1740,35 +2185,45 @@ var file_users_v1_users_proto_depIdxs = []int32{
 	0,  // 4: users.v1.UpdateSettingsRequest.unit_system:type_name -> users.v1.UnitSystem
 	7,  // 5: users.v1.UpdateSettingsResponse.user:type_name -> users.v1.User
 	7,  // 6: users.v1.GetCurrentUserResponse.user:type_name -> users.v1.User
-	23, // 7: users.v1.APIToken.create_time:type_name -> google.protobuf.Timestamp
-	23, // 8: users.v1.APIToken.last_used_time:type_name -> google.protobuf.Timestamp
+	30, // 7: users.v1.APIToken.create_time:type_name -> google.protobuf.Timestamp
+	30, // 8: users.v1.APIToken.last_used_time:type_name -> google.protobuf.Timestamp
 	12, // 9: users.v1.CreateAPITokenResponse.token:type_name -> users.v1.APIToken
 	12, // 10: users.v1.ListAPITokensResponse.tokens:type_name -> users.v1.APIToken
-	7,  // 11: users.v1.UploadAvatarResponse.user:type_name -> users.v1.User
-	7,  // 12: users.v1.DeleteAvatarResponse.user:type_name -> users.v1.User
-	10, // 13: users.v1.UserService.GetCurrentUser:input_type -> users.v1.GetCurrentUserRequest
-	13, // 14: users.v1.UserService.CreateAPIToken:input_type -> users.v1.CreateAPITokenRequest
-	15, // 15: users.v1.UserService.ListAPITokens:input_type -> users.v1.ListAPITokensRequest
-	17, // 16: users.v1.UserService.DeleteAPIToken:input_type -> users.v1.DeleteAPITokenRequest
-	19, // 17: users.v1.UserService.UploadAvatar:input_type -> users.v1.UploadAvatarRequest
-	21, // 18: users.v1.UserService.DeleteAvatar:input_type -> users.v1.DeleteAvatarRequest
-	8,  // 19: users.v1.UserService.UpdateSettings:input_type -> users.v1.UpdateSettingsRequest
-	3,  // 20: users.v1.UserService.GetHousehold:input_type -> users.v1.GetHouseholdRequest
-	5,  // 21: users.v1.UserService.UpdateHousehold:input_type -> users.v1.UpdateHouseholdRequest
-	11, // 22: users.v1.UserService.GetCurrentUser:output_type -> users.v1.GetCurrentUserResponse
-	14, // 23: users.v1.UserService.CreateAPIToken:output_type -> users.v1.CreateAPITokenResponse
-	16, // 24: users.v1.UserService.ListAPITokens:output_type -> users.v1.ListAPITokensResponse
-	18, // 25: users.v1.UserService.DeleteAPIToken:output_type -> users.v1.DeleteAPITokenResponse
-	20, // 26: users.v1.UserService.UploadAvatar:output_type -> users.v1.UploadAvatarResponse
-	22, // 27: users.v1.UserService.DeleteAvatar:output_type -> users.v1.DeleteAvatarResponse
-	9,  // 28: users.v1.UserService.UpdateSettings:output_type -> users.v1.UpdateSettingsResponse
-	4,  // 29: users.v1.UserService.GetHousehold:output_type -> users.v1.GetHouseholdResponse
-	6,  // 30: users.v1.UserService.UpdateHousehold:output_type -> users.v1.UpdateHouseholdResponse
-	22, // [22:31] is the sub-list for method output_type
-	13, // [13:22] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	30, // 11: users.v1.CalendarFeed.create_time:type_name -> google.protobuf.Timestamp
+	30, // 12: users.v1.CalendarFeed.last_used_time:type_name -> google.protobuf.Timestamp
+	19, // 13: users.v1.GetCalendarFeedResponse.feed:type_name -> users.v1.CalendarFeed
+	19, // 14: users.v1.CreateCalendarFeedResponse.feed:type_name -> users.v1.CalendarFeed
+	7,  // 15: users.v1.UploadAvatarResponse.user:type_name -> users.v1.User
+	7,  // 16: users.v1.DeleteAvatarResponse.user:type_name -> users.v1.User
+	10, // 17: users.v1.UserService.GetCurrentUser:input_type -> users.v1.GetCurrentUserRequest
+	13, // 18: users.v1.UserService.CreateAPIToken:input_type -> users.v1.CreateAPITokenRequest
+	15, // 19: users.v1.UserService.ListAPITokens:input_type -> users.v1.ListAPITokensRequest
+	17, // 20: users.v1.UserService.DeleteAPIToken:input_type -> users.v1.DeleteAPITokenRequest
+	20, // 21: users.v1.UserService.GetCalendarFeed:input_type -> users.v1.GetCalendarFeedRequest
+	22, // 22: users.v1.UserService.CreateCalendarFeed:input_type -> users.v1.CreateCalendarFeedRequest
+	24, // 23: users.v1.UserService.DeleteCalendarFeed:input_type -> users.v1.DeleteCalendarFeedRequest
+	26, // 24: users.v1.UserService.UploadAvatar:input_type -> users.v1.UploadAvatarRequest
+	28, // 25: users.v1.UserService.DeleteAvatar:input_type -> users.v1.DeleteAvatarRequest
+	8,  // 26: users.v1.UserService.UpdateSettings:input_type -> users.v1.UpdateSettingsRequest
+	3,  // 27: users.v1.UserService.GetHousehold:input_type -> users.v1.GetHouseholdRequest
+	5,  // 28: users.v1.UserService.UpdateHousehold:input_type -> users.v1.UpdateHouseholdRequest
+	11, // 29: users.v1.UserService.GetCurrentUser:output_type -> users.v1.GetCurrentUserResponse
+	14, // 30: users.v1.UserService.CreateAPIToken:output_type -> users.v1.CreateAPITokenResponse
+	16, // 31: users.v1.UserService.ListAPITokens:output_type -> users.v1.ListAPITokensResponse
+	18, // 32: users.v1.UserService.DeleteAPIToken:output_type -> users.v1.DeleteAPITokenResponse
+	21, // 33: users.v1.UserService.GetCalendarFeed:output_type -> users.v1.GetCalendarFeedResponse
+	23, // 34: users.v1.UserService.CreateCalendarFeed:output_type -> users.v1.CreateCalendarFeedResponse
+	25, // 35: users.v1.UserService.DeleteCalendarFeed:output_type -> users.v1.DeleteCalendarFeedResponse
+	27, // 36: users.v1.UserService.UploadAvatar:output_type -> users.v1.UploadAvatarResponse
+	29, // 37: users.v1.UserService.DeleteAvatar:output_type -> users.v1.DeleteAvatarResponse
+	9,  // 38: users.v1.UserService.UpdateSettings:output_type -> users.v1.UpdateSettingsResponse
+	4,  // 39: users.v1.UserService.GetHousehold:output_type -> users.v1.GetHouseholdResponse
+	6,  // 40: users.v1.UserService.UpdateHousehold:output_type -> users.v1.UpdateHouseholdResponse
+	29, // [29:41] is the sub-list for method output_type
+	17, // [17:29] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_users_v1_users_proto_init() }
@@ -1782,7 +2237,7 @@ func file_users_v1_users_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_v1_users_proto_rawDesc), len(file_users_v1_users_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   22,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

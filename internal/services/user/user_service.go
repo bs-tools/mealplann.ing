@@ -19,6 +19,13 @@ type APITokenRepository interface {
 	DeleteAPIToken(ctx context.Context, userID pgtype.UUID, tokenID pgtype.UUID) error
 }
 
+// CalendarFeedRepository stores users' calendar feeds.
+type CalendarFeedRepository interface {
+	CreateCalendarFeed(ctx context.Context, userID pgtype.UUID) (*users.CalendarFeed, string, error)
+	GetCalendarFeed(ctx context.Context, userID pgtype.UUID) (*users.CalendarFeed, error)
+	DeleteCalendarFeed(ctx context.Context, userID pgtype.UUID) error
+}
+
 type AvatarRepository interface {
 	SetAvatarKey(ctx context.Context, userID pgtype.UUID, key string) (string, error)
 }
@@ -42,12 +49,15 @@ type Service struct {
 	avatars    AvatarRepository
 	households HouseholdRepository
 	settings   SettingsRepository
+	feeds      CalendarFeedRepository
 	blobs      blob.Store
+	// baseURL is the app's public URL, which calendar feed URLs are on.
+	baseURL string
 }
 
-// NewService creates a new Service from the provided logger, repositories
-// and the blob store avatar images are stored in.
-func NewService(log *slog.Logger, report *errreport.Reporter, tokens APITokenRepository, avatars AvatarRepository, households HouseholdRepository, settings SettingsRepository, blobs blob.Store) *Service {
+// NewService creates a new Service from the provided logger, repositories,
+// the blob store avatar images are stored in, and the app's public URL.
+func NewService(log *slog.Logger, report *errreport.Reporter, tokens APITokenRepository, avatars AvatarRepository, households HouseholdRepository, settings SettingsRepository, feeds CalendarFeedRepository, blobs blob.Store, baseURL string) *Service {
 	return &Service{
 		log:        log,
 		report:     report,
@@ -55,6 +65,8 @@ func NewService(log *slog.Logger, report *errreport.Reporter, tokens APITokenRep
 		avatars:    avatars,
 		households: households,
 		settings:   settings,
+		feeds:      feeds,
 		blobs:      blobs,
+		baseURL:    baseURL,
 	}
 }

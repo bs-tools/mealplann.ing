@@ -35,6 +35,30 @@ export const listAPITokens = UserService.method.listAPITokens;
 export const deleteAPIToken = UserService.method.deleteAPIToken;
 
 /**
+ * Get whether the user has a calendar feed: a secret URL a calendar app
+ * subscribes to, for the cooks, prep and meals of the person the user
+ * is. Its URL is only returned by CreateCalendarFeed.
+ *
+ * @generated from rpc users.v1.UserService.GetCalendarFeed
+ */
+export const getCalendarFeed = UserService.method.getCalendarFeed;
+
+/**
+ * Create the user's calendar feed, returning its URL. An old feed is
+ * replaced, and its URL stops working.
+ *
+ * @generated from rpc users.v1.UserService.CreateCalendarFeed
+ */
+export const createCalendarFeed = UserService.method.createCalendarFeed;
+
+/**
+ * Delete the user's calendar feed, so its URL stops working.
+ *
+ * @generated from rpc users.v1.UserService.DeleteCalendarFeed
+ */
+export const deleteCalendarFeed = UserService.method.deleteCalendarFeed;
+
+/**
  * Upload a picture to use as the user's avatar, replacing any previous
  * one. The middle square of the picture is used.
  *
