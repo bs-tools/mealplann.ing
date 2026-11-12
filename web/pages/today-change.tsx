@@ -1,5 +1,6 @@
 import Loading from "@components/loading";
 import DisplacedChoice from "@components/today/displaced-choice";
+import BackLink from "@components/ui/back-link";
 import { PageHeader } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import Segmented from "@components/ui/segmented";
@@ -11,10 +12,7 @@ import {
 import type { ConnectError } from "@connectrpc/connect";
 import { createClient } from "@connectrpc/connect";
 import { useQuery, useTransport } from "@connectrpc/connect-query";
-import {
-  ArrowLeftIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import { listPantry } from "gen/pantry/v1/pantry-PantryService_connectquery";
@@ -34,7 +32,7 @@ import { formatHoursMinutes, formatList } from "helpers/format";
 import { formatServings } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 // Choice is what was eaten instead, or on top: something from the pantry.
 type Choice =
@@ -472,15 +470,7 @@ const TodayChangePage: React.FC = () => {
       : `Instead of ${formatList(replaced.portions.map((portion) => portion.name)).toLowerCase()}`;
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-      <div>
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink-soft"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          Today
-        </Link>
-      </div>
+      <BackLink to="/">Today</BackLink>
       <PageHeader title={replacing ? "One more thing" : title} />
       {content}
     </div>

@@ -2,6 +2,7 @@ import type { Criteria } from "@components/autoplan/criteria-panel";
 import CriteriaPanel, { MEALS } from "@components/autoplan/criteria-panel";
 import PlanSlotCard from "@components/autoplan/plan-slot-card";
 import { useSuggestFeedback } from "@components/recipes/suggest-feedback";
+import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
@@ -13,7 +14,6 @@ import {
 import { skipToken, useMutation, useQuery } from "@connectrpc/connect-query";
 import {
   AdjustmentsHorizontalIcon,
-  ArrowLeftIcon,
   ArrowPathIcon,
   CheckIcon,
   ExclamationTriangleIcon,
@@ -596,15 +596,7 @@ const AutoPlanPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          to="/plan"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 print:hidden"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          Plan
-        </Link>
-      </div>
+      <BackLink to="/plan">Plan</BackLink>
       <PageHeader
         title="Plan for me"
         subtitle={`${formatShortDate(criteria.start)} to ${formatShortDate(end)}: a recipe for each meal, chosen together to share ingredients, use the pantry and fit everyone's rules.`}

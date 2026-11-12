@@ -1,5 +1,6 @@
 import BottomNav from "@components/header/bottom-nav";
 import Header from "@components/header/header";
+import SideRail from "@components/header/side-rail";
 import { Code } from "@connectrpc/connect";
 import { useQuery } from "@connectrpc/connect-query";
 import { getCurrentUser } from "gen/users/v1/users-UserService_connectquery";
@@ -35,19 +36,24 @@ import React from "react";
 import { Link, Outlet, Route, Routes } from "react-router";
 
 /**
- * Layout is the header above the page, and on phones the tab bar below it,
- * which the page leaves room for.
+ * Layout is the page with, once signed in, the main pages beside it on
+ * large screens and in a tab bar below it on phones, which the page leaves
+ * room for; there's no top bar, so the page has the whole screen. Signed
+ * out, the header has the brand above the page.
  */
 const Layout: React.FC<{ user: User | null }> = ({ user }) => (
-  <div className="flex min-h-full flex-col">
-    <Header user={user} />
-    <main
-      className={`flex grow justify-center bg-ground print:bg-white ${user === null ? "" : "pb-20 lg:pb-0 print:pb-0"}`}
-    >
-      <div className="flex w-full max-w-7xl min-w-0 grow flex-col px-4 py-5 sm:px-5 print:px-0 print:py-0">
-        <Outlet />
-      </div>
-    </main>
+  <div className="flex min-h-full bg-ground print:bg-white">
+    {user !== null && <SideRail user={user} />}
+    <div className="flex min-w-0 grow flex-col">
+      {user === null && <Header />}
+      <main
+        className={`flex grow justify-center ${user === null ? "" : "pb-20 lg:pb-0 print:pb-0"}`}
+      >
+        <div className="flex w-full max-w-5xl min-w-0 grow flex-col px-4 pt-6 pb-5 sm:px-6 lg:pt-8 print:px-0 print:py-0">
+          <Outlet />
+        </div>
+      </main>
+    </div>
     {user !== null && <BottomNav />}
   </div>
 );

@@ -1,5 +1,6 @@
 import { timestampMs } from "@bufbuild/protobuf/wkt";
 import Loading from "@components/loading";
+import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import ConfirmButton from "@components/ui/confirm-button";
 import {
@@ -15,7 +16,7 @@ import UnsavedChangesGuard, {
   leaveUnsaved,
 } from "@components/ui/unsaved-changes-guard";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
-import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   deleteFood,
@@ -40,7 +41,7 @@ import { NUTRIENT_GROUPS, NUTRIENTS } from "helpers/nutrients";
 import { optionalNumberInput, parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 /**
  * PriceHint says what a pack costs at a price per kilogram, and when the
@@ -328,15 +329,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
       }}
     >
       <UnsavedChangesGuard dirty={dirty && !remove.isSuccess} />
-      <div>
-        <Link
-          to="/foods"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 print:hidden"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          Foods
-        </Link>
-      </div>
+      <BackLink to="/foods">Foods</BackLink>
       <PageHeader
         title={food.name}
         subtitle={<FoodSourceNote food={food} />}

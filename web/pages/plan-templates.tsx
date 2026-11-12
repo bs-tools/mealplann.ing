@@ -1,6 +1,7 @@
 import Loading from "@components/loading";
 import ApplyTemplateDialog from "@components/templates/apply-template-dialog";
 import SaveTemplateDialog from "@components/templates/save-template-dialog";
+import BackLink from "@components/ui/back-link";
 import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
 import {
@@ -10,7 +11,6 @@ import {
 } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
 import {
-  ArrowLeftIcon,
   BookmarkSquareIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
@@ -119,15 +119,7 @@ const PlanTemplatesPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          to="/plan"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 print:hidden"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          Plan
-        </Link>
-      </div>
+      <BackLink to="/plan">Plan</BackLink>
       <PageHeader
         title="Templates"
         subtitle="Plans to use again: everyone's portions and the leftovers, from any date."

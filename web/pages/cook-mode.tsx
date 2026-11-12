@@ -1,10 +1,5 @@
 import Loading from "@components/loading";
 import QueryError from "@components/ui/query-error";
-import {
-  iconButton,
-  primaryButton,
-  secondaryButton,
-} from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
 import {
   ArrowLeftIcon,
@@ -126,7 +121,6 @@ interface StepPageProps {
   recipe: Recipe;
   step: Step;
   index: number;
-  count: number;
   scale: number;
   onTimer: (label: string, seconds: number) => void;
 }
@@ -136,7 +130,6 @@ const StepPage: React.FC<StepPageProps> = ({
   recipe,
   step,
   index,
-  count,
   scale,
   onTimer,
 }) => {
@@ -149,41 +142,45 @@ const StepPage: React.FC<StepPageProps> = ({
   const after = stepStart(step, index);
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm font-semibold tracking-wide text-gray-500 uppercase">
-        Step {index + 1} of {count}
-        {step.section !== "" && ` · ${step.section}`}
-      </p>
-      <p className="text-2xl leading-snug text-gray-900 sm:text-3xl">
+      {step.section !== "" && (
+        <p className="text-sm font-bold tracking-[0.08em] text-white/60 uppercase">
+          {step.section}
+        </p>
+      )}
+      <p className="text-[28px] leading-tight font-bold text-white sm:text-4xl">
         {step.text}
       </p>
       {ingredients.length > 0 && (
-        <ul className="flex flex-col gap-1.5 rounded-lg bg-brand-50 p-4 text-lg">
+        <ul className="flex flex-col gap-2 text-lg">
           {ingredients.map(({ ingredient, position }) => (
-            <li key={position} className="flex gap-2">
-              <span className="min-w-20 font-semibold text-gray-900 tabular-nums">
-                {stepIngredientAmount(recipe, step, position, scale, system)}
-              </span>
-              <span className="text-gray-800">
+            <li
+              key={position}
+              className="flex items-baseline justify-between gap-3 rounded-xl bg-white/[0.07] px-4 py-3.5"
+            >
+              <span className="text-white/90">
                 {ingredientName(ingredient)}
                 {ingredient.note !== "" && (
-                  <span className="text-gray-500">, {ingredient.note}</span>
+                  <span className="text-white/50">, {ingredient.note}</span>
                 )}
+              </span>
+              <span className="shrink-0 font-bold text-white tabular-nums">
+                {stepIngredientAmount(recipe, step, position, scale, system)}
               </span>
             </li>
           ))}
         </ul>
       )}
-      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+      <div className="flex flex-col gap-3 text-sm text-white/60">
         {duration !== "" && (
           <button
             type="button"
-            className={secondaryButton}
+            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-pine-200 px-4 py-3.5 text-lg font-bold text-pine-200 hover:bg-pine-200/10"
             onClick={() => {
               onTimer(`Step ${index + 1}`, step.durationSeconds);
             }}
           >
-            <ClockIcon className="size-4" aria-hidden="true" />
-            Start a {duration} timer
+            <ClockIcon className="size-5" aria-hidden="true" />
+            Timer {duration}
           </button>
         )}
         {step.waiting && (
@@ -287,7 +284,7 @@ const CookModePage: React.FC = () => {
   if (page === 0) {
     body = (
       <div className="flex flex-col gap-5">
-        <p className="text-sm font-semibold tracking-wide text-gray-500 uppercase">
+        <p className="text-[28px] leading-tight font-bold text-white">
           Get everything ready
         </p>
         <ul className="flex flex-col gap-2 text-lg">
@@ -295,21 +292,21 @@ const CookModePage: React.FC = () => {
             // Ingredients are only ever shown in order.
             // oxlint-disable-next-line react/no-array-index-key
             <li key={index}>
-              <label className="flex cursor-pointer items-start gap-3">
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-white/[0.07] px-4 py-3">
                 <input
                   type="checkbox"
-                  className="mt-1.5 size-5 accent-brand-700"
+                  className="mt-1.5 size-5 accent-pine-200"
                 />
-                <span>
-                  <span className="font-semibold text-gray-900 tabular-nums">
+                <span className="text-white/90">
+                  <span className="font-bold text-white tabular-nums">
                     {ingredientAmount(ingredient, scale, system)}
                   </span>{" "}
                   {ingredientName(ingredient)}
                   {ingredient.note !== "" && (
-                    <span className="text-gray-500">, {ingredient.note}</span>
+                    <span className="text-white/50">, {ingredient.note}</span>
                   )}
                   {ingredient.optional && (
-                    <span className="text-gray-500"> (optional)</span>
+                    <span className="text-white/50"> (optional)</span>
                   )}
                 </span>
               </label>
@@ -317,16 +314,21 @@ const CookModePage: React.FC = () => {
           ))}
         </ul>
         {steps.length === 0 && (
-          <p className="text-gray-600">This recipe has no steps yet.</p>
+          <p className="text-white/60">This recipe has no steps yet.</p>
         )}
       </div>
     );
   } else if (step === undefined) {
     body = (
       <div className="flex flex-col items-center gap-4 py-10 text-center">
-        <CheckIcon className="size-12 text-brand-600" aria-hidden="true" />
-        <p className="text-2xl text-gray-900">Done. Enjoy your {data.name}!</p>
-        <Link to={`/recipes/${data.id}`} className={primaryButton}>
+        <CheckIcon className="size-12 text-pine-200" aria-hidden="true" />
+        <p className="text-2xl font-bold text-white">
+          Done. Enjoy your {data.name}!
+        </p>
+        <Link
+          to={`/recipes/${data.id}`}
+          className="rounded-xl bg-white px-5 py-3 font-bold text-ink-soft"
+        >
           Back to the recipe
         </Link>
       </div>
@@ -337,7 +339,6 @@ const CookModePage: React.FC = () => {
         recipe={data}
         step={step}
         index={page - 1}
-        count={steps.length}
         scale={scale}
         onTimer={(label, seconds) => {
           nextTimerID += 1;
@@ -357,7 +358,7 @@ const CookModePage: React.FC = () => {
 
   return (
     <div
-      className="mx-auto flex min-h-[70vh] max-w-3xl flex-col gap-6"
+      className="fixed inset-0 z-[1200] flex flex-col overflow-y-auto bg-ink-soft font-ui text-white"
       onTouchStart={(event) => {
         touchStart.current = event.touches[0]?.clientX ?? null;
       }}
@@ -370,97 +371,103 @@ const CookModePage: React.FC = () => {
         }
       }}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col">
+      <div className="mx-auto flex w-full max-w-2xl grow flex-col gap-6 px-6 pt-8 pb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <p className="text-[13px] font-bold tracking-[0.08em] text-white/70 uppercase">
+              {page === 0 || step === undefined
+                ? data.name
+                : `Step ${page} of ${steps.length}`}
+            </p>
+            <div className="flex items-center gap-1 text-sm text-white/60">
+              <button
+                type="button"
+                className="rounded-full p-1 hover:bg-white/10 hover:text-white"
+                aria-label="Fewer servings"
+                onClick={() => {
+                  setServings(servings - 1);
+                }}
+              >
+                <MinusIcon className="size-4" />
+              </button>
+              <span className="tabular-nums">{formatServings(servings)}</span>
+              <button
+                type="button"
+                className="rounded-full p-1 hover:bg-white/10 hover:text-white"
+                aria-label="More servings"
+                onClick={() => {
+                  setServings(servings + 1);
+                }}
+              >
+                <PlusIcon className="size-4" />
+              </button>
+            </div>
+          </div>
           <Link
             to={`/recipes/${data.id}`}
-            className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+            aria-label="Leave cook mode"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/25 text-white hover:bg-white/10"
           >
-            <XMarkIcon className="size-4" aria-hidden="true" />
-            Leave cook mode
+            <XMarkIcon className="size-5" aria-hidden="true" />
           </Link>
-          <h1 className="truncate text-xl font-semibold text-gray-900">
-            {data.name}
-          </h1>
         </div>
-        <div className="flex items-center gap-1 text-sm text-gray-700">
-          <button
-            type="button"
-            className={iconButton}
-            aria-label="Fewer servings"
-            onClick={() => {
-              setServings(servings - 1);
-            }}
-          >
-            <MinusIcon className="size-4" />
-          </button>
-          <span className="tabular-nums">{formatServings(servings)}</span>
-          <button
-            type="button"
-            className={iconButton}
-            aria-label="More servings"
-            onClick={() => {
-              setServings(servings + 1);
-            }}
-          >
-            <PlusIcon className="size-4" />
-          </button>
-        </div>
-      </div>
-      {timers.length > 0 && (
-        <ul className="flex flex-wrap gap-2" aria-label="Timers">
-          {timers.map((timer) => {
-            const left = (timer.endsAt - now) / 1000;
-            const finished = left <= 0;
-            return (
-              <li
-                key={timer.id}
-                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium ring-1 ${
-                  finished
-                    ? "bg-amber-100 text-amber-900 ring-amber-300 motion-safe:animate-pulse"
-                    : "bg-white text-gray-800 ring-gray-200"
-                }`}
-              >
-                <ClockIcon className="size-4" aria-hidden="true" />
-                {timer.label}:{" "}
-                <span className="tabular-nums">
-                  {finished ? "done" : formatClock(left)}
-                </span>
-                <button
-                  type="button"
-                  className="text-gray-500 hover:text-gray-900"
-                  aria-label={`Stop the ${timer.label} timer`}
-                  onClick={() => {
-                    globalThis.clearTimeout(timer.timeout);
-                    setTimers(timers.filter((other) => other.id !== timer.id));
-                  }}
+        {timers.length > 0 && (
+          <ul className="flex flex-wrap gap-2" aria-label="Timers">
+            {timers.map((timer) => {
+              const left = (timer.endsAt - now) / 1000;
+              const finished = left <= 0;
+              return (
+                <li
+                  key={timer.id}
+                  className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium ring-1 ${
+                    finished
+                      ? "bg-amber-100 text-amber-900 ring-amber-300 motion-safe:animate-pulse"
+                      : "bg-white/10 text-white ring-white/20"
+                  }`}
                 >
-                  <XMarkIcon className="size-4" />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      <div
-        className="flex gap-1"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={lastPage}
-        aria-valuenow={page}
-      >
-        {Array.from({ length: lastPage + 1 }, (_unused, index) => (
-          <span
-            key={index}
-            className={`h-1.5 grow rounded-full ${index <= page ? "bg-brand-600" : "bg-gray-200"}`}
-          />
-        ))}
+                  <ClockIcon className="size-4" aria-hidden="true" />
+                  {timer.label}:{" "}
+                  <span className="tabular-nums">
+                    {finished ? "done" : formatClock(left)}
+                  </span>
+                  <button
+                    type="button"
+                    className="text-white/60 hover:text-white"
+                    aria-label={`Stop the ${timer.label} timer`}
+                    onClick={() => {
+                      globalThis.clearTimeout(timer.timeout);
+                      setTimers(
+                        timers.filter((other) => other.id !== timer.id)
+                      );
+                    }}
+                  >
+                    <XMarkIcon className="size-4" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <div
+          className="flex gap-1"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={lastPage}
+          aria-valuenow={page}
+        >
+          {Array.from({ length: lastPage + 1 }, (_unused, index) => (
+            <span
+              key={index}
+              className={`h-1 grow rounded-full ${index <= page ? "bg-pine-200" : "bg-white/15"}`}
+            />
+          ))}
+        </div>
+        <div className="grow">{body}</div>
       </div>
-      <div className="grow">{body}</div>
-      <div className="sticky bottom-0 flex gap-3 bg-gray-50/90 py-3 backdrop-blur">
+      <div className="sticky bottom-0 mx-auto flex w-full max-w-2xl gap-3 bg-ink-soft px-6 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <button
           type="button"
-          className={`${secondaryButton} grow justify-center py-3 text-base`}
+          className="flex basis-2/5 items-center justify-center gap-1.5 rounded-2xl border border-white/25 py-3.5 text-base font-medium text-white disabled:opacity-40"
           disabled={page === 0}
           onClick={() => {
             go(-1);
@@ -471,13 +478,13 @@ const CookModePage: React.FC = () => {
         </button>
         <button
           type="button"
-          className={`${primaryButton} grow justify-center py-3 text-base`}
+          className="flex grow items-center justify-center gap-1.5 rounded-2xl bg-white py-3.5 text-base font-bold text-ink-soft disabled:opacity-40"
           disabled={page === lastPage}
           onClick={() => {
             go(1);
           }}
         >
-          {page === 0 ? "Start cooking" : "Next"}
+          {page === 0 ? "Start cooking" : "Next step"}
           <ArrowRightIcon className="size-5" aria-hidden="true" />
         </button>
       </div>
