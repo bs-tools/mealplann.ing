@@ -70,7 +70,7 @@ var indexTemplate = template.Must(template.New(templateName).Parse(
     <link rel="stylesheet" href="{{ .CSS }}" />
     <link rel="icon" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="/img/icon-192.png" />
+    <link rel="apple-touch-icon" href="/img/icon-180.png" />
     <meta name="theme-color" content="#111111" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="mealplann.ing" />
@@ -81,13 +81,12 @@ var indexTemplate = template.Must(template.New(templateName).Parse(
     <div id="root" class="h-full"></div>
     <div id="splash" class="splash" role="status" aria-label="Loading mealplann.ing">
       <div class="splash-content">
-        <svg class="splash-mark" aria-hidden="true" viewBox="0 0 40 26" fill="none">
-          <path class="splash-bowl" pathLength="1" d="M3 13 L37 13 C 35 20, 28 23, 20 23 C 12 23, 5 20, 3 13" stroke="#4b9338" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+        <svg class="splash-mark" aria-hidden="true" viewBox="4 6 56 52" fill="none">
+          <path class="splash-m" pathLength="1" d="M8 54V33c0-6 3.5-10 8-10s8 4 8 10v21M24 33c0-6 3.5-10 8-10s8 4 8 10v21" stroke="#eef1ec" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" />
           <g class="splash-leaf">
-            <path d="M20 12 C 13.5 10.5, 13 4, 21.5 1.5 C 26.5 5.5, 25.5 10.5, 20 12 Z" fill="#ffffff" />
-            <path d="M20 11.5 Q 19.6 7, 21.4 2.6" stroke="#111111" stroke-width="0.9" stroke-linecap="round" />
+            <path d="M40 29C40 17 46.5 10.5 58 9.5c0 11.5-6.5 18.5-18 19.5z" fill="#7ed3a6" />
+            <path d="M42.5 25.5C46 20 50 15.5 55 12" stroke="#111111" stroke-width="1.6" stroke-linecap="round" />
           </g>
-          <path d="M15 25 L25 25" stroke="#404040" stroke-width="1.5" stroke-linecap="round" />
         </svg>
         <div class="splash-wordmark">mealplann<span>.ing</span></div>
         <p class="splash-status">Setting the table…</p>

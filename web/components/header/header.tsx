@@ -11,7 +11,7 @@ const Header: React.FC = () => (
   <nav className="relative bg-ink font-ui print:hidden">
     <div className="mx-auto flex h-16 max-w-5xl items-center px-4">
       <Link to="/" className="flex shrink-0 items-center gap-2.5">
-        <LogoMark />
+        <LogoMark className="size-7" />
         <Wordmark className="text-[15px] text-neutral-50 sm:text-lg" />
       </Link>
     </div>

@@ -118,7 +118,7 @@
 /*
   The splash screen in index.html (internal/html/html.go), shown until the
   app has loaded the signed in user: the mark on the sign in page's ink
-  ground, its bowl drawing itself and the leaf sprouting from it.
+  ground, its m drawing itself and the leaf growing from its shoulder.
   It's plain CSS rather than Tailwind classes, because Tailwind doesn't scan
   the Go template, and uses colors rather than theme variables, which
   Tailwind leaves out when no class uses them.
@@ -156,19 +156,19 @@
 }
 
 .splash-mark {
-  width: 120px;
-  height: 78px;
+  width: 104px;
+  height: 97px;
   overflow: visible;
 }
 
-.splash-bowl {
+.splash-m {
   stroke-dasharray: 1;
-  animation: splash-bowl 2.4s ease-in-out infinite;
+  animation: splash-m 2.4s ease-in-out infinite;
 }
 
 .splash-leaf {
   transform-box: fill-box;
-  transform-origin: 50% 100%;
+  transform-origin: 0% 100%;
   animation: splash-leaf 2.4s ease-in-out infinite;
 }
 
@@ -179,7 +179,7 @@
 }
 
 .splash-wordmark span {
-  color: #4b9338;
+  color: #7ed3a6;
 }
 
 .splash-status {
@@ -195,7 +195,7 @@
   }
 }
 
-@keyframes splash-bowl {
+@keyframes splash-m {
   0% {
     stroke-dashoffset: 1;
     opacity: 1;
@@ -211,7 +211,7 @@
   }
 }
 
-/* The leaf sprouts from the bowl once it's drawn, and sways once. */
+/* The leaf grows from the m once it's drawn, and sways once. */
 @keyframes splash-leaf {
   0%,
   40% {
@@ -248,7 +248,7 @@
 @media (prefers-reduced-motion: reduce) {
   .splash,
   .splash-content,
-  .splash-bowl,
+  .splash-m,
   .splash-leaf,
   .splash-status {
     animation: none;
