@@ -107,7 +107,7 @@ const MealSheet: React.FC<MealSheetProps> = ({
         <div className="flex flex-col">
           {portions.length > 0 && (
             <div className="flex flex-col gap-3 pb-3">
-              <Plate portions={portions} />
+              <Plate nutrients={planned.nutrients} />
               <MealWarnings warnings={planned.warnings} />
               {et !== undefined &&
                 portions.some((portion) => portion.cookId !== "") && (

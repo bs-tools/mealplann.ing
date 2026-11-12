@@ -258,7 +258,12 @@ const DayLine: React.FC<DayLineProps> = ({
                   {block.minutes > 0 && ` · ${block.minutes} min`}
                 </span>
                 <span className="font-medium text-ink-soft">
-                  {block.name}
+                  <Link
+                    to={`/recipes/${block.cook.cook?.recipeId ?? ""}`}
+                    className="underline decoration-cook/40 underline-offset-4 hover:decoration-cook"
+                  >
+                    {block.name}
+                  </Link>
                   {block.cook.cook !== undefined &&
                     `, ${formatServings(block.cook.cook.servings)}`}
                 </span>
@@ -467,8 +472,17 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
         <div className="-mt-1 flex flex-wrap gap-2">
           {cookingMinutes > 0 && (
             <span className="rounded-full bg-cook-tint px-3 py-1.5 text-sm font-medium text-cook-dark">
-              {cookingMinutes} min cooking
-              {firstBlock !== undefined && ` at ${firstBlock.start}`}
+              {/*
+               * The day's cooking in all: one cook at its time, or several
+               * in all from the first, so it adds up to the cooks below.
+               */}
+              {blocks.length === 1
+                ? `${cookingMinutes} min cooking`
+                : `${blocks.length} cooks, ${cookingMinutes} min in all`}
+              {firstBlock !== undefined &&
+                (blocks.length === 1
+                  ? ` at ${firstBlock.start}`
+                  : `, from ${firstBlock.start}`)}
             </span>
           )}
           {shopText !== "" && (

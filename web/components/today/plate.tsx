@@ -8,9 +8,10 @@ import {
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Nutrients } from "gen/foods/v1/foods_pb";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
-import type { PlannedPortion, Warning } from "gen/plans/v1/plans_pb";
+import type { Warning } from "gen/plans/v1/plans_pb";
 import { PlanService, Severity } from "gen/plans/v1/plans_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { suggestSides } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
@@ -21,68 +22,85 @@ import { invalidateServices } from "helpers/query";
 import React from "react";
 
 /*
- * PLATE_COLORS are the colors of the plate's parts, in order: the main
- * meal, then sides and the rest.
+ * MACROS are the parts of a meal's energy the plate shows, with their
+ * kilocalories per gram, to weigh each by the energy it brings.
  */
-const PLATE_COLORS = [
-  "var(--color-pine)",
-  "var(--color-cook)",
-  "var(--color-heat)",
-  "var(--color-leaf)",
+const MACROS: {
+  key: "proteinGrams" | "carbohydrateGrams" | "fatGrams";
+  label: string;
+  kcalPerGram: number;
+  color: string;
+}[] = [
+  { color: "#2f6b4f", kcalPerGram: 4, key: "proteinGrams", label: "Protein" },
+  {
+    color: "#b8895a",
+    kcalPerGram: 4,
+    key: "carbohydrateGrams",
+    label: "Carbohydrate",
+  },
+  { color: "#7c93b5", kcalPerGram: 9, key: "fatGrams", label: "Fat" },
 ];
 
-const plateColor = (index: number): string =>
-  PLATE_COLORS[index % PLATE_COLORS.length] ?? "var(--color-muted)";
-
 interface PlateProps {
-  portions: PlannedPortion[];
+  // What the meal has in all: its portions together, at their sizes.
+  nutrients: Nutrients | undefined;
 }
 
 /**
- * Plate shows a meal as a plate: each portion a slice by its weight, with
- * what it is and how much beside it.
+ * Plate shows a meal's macronutrients as a plate: protein, carbohydrate
+ * and fat each a slice by the energy it brings, with the meal's energy in
+ * the middle and each one's grams and share beside it.
  */
-export const Plate: React.FC<PlateProps> = ({ portions }) => {
-  const weighed = portions.filter((portion) => portion.grams > 0);
-  const total = weighed.reduce((sum, portion) => sum + portion.grams, 0);
-  if (total === 0) {
+export const Plate: React.FC<PlateProps> = ({ nutrients }) => {
+  const parts = MACROS.map((macro) => {
+    const grams = nutrients?.[macro.key] ?? 0;
+    return {
+      color: macro.color,
+      grams,
+      kcal: grams * macro.kcalPerGram,
+      key: macro.key,
+      label: macro.label,
+    };
+  });
+  const total = parts.reduce((sum, part) => sum + part.kcal, 0);
+  if (total <= 0) {
     return null;
   }
   const stops: string[] = [];
-  weighed.reduce((from, portion, index) => {
-    const to = from + (portion.grams / total) * 100;
-    stops.push(`${plateColor(index)} ${from}% ${to}%`);
+  parts.reduce((from, part) => {
+    const to = from + (part.kcal / total) * 100;
+    stops.push(`${part.color} ${from}% ${to}%`);
     return to;
   }, 0);
+  const energy = nutrients?.energyKcal;
   return (
     <div className="flex items-center gap-5">
       <div
-        className="relative size-28 shrink-0 rounded-full p-2 ring-1 ring-line ring-inset"
+        className="relative size-32 shrink-0 rounded-full p-2 ring-1 ring-line ring-inset"
         aria-hidden="true"
       >
         <div
           className="size-full rounded-full"
           style={{ background: `conic-gradient(${stops.join(", ")})` }}
         />
-        <div className="absolute inset-[38%] rounded-full bg-white" />
+        <div className="absolute inset-[30%] flex flex-col items-center justify-center rounded-full bg-white leading-tight">
+          <span className="text-base font-bold text-ink-soft tabular-nums">
+            {formatAmount(Math.round(energy ?? total))}
+          </span>
+          <span className="text-[11px] text-muted">kcal</span>
+        </div>
       </div>
-      <ul className="flex min-w-0 flex-col gap-1.5">
-        {weighed.map((portion, index) => (
-          <li
-            key={
-              portion.portionId === "" ? portion.stapleId : portion.portionId
-            }
-            className="flex items-center gap-2 text-sm"
-          >
+      <ul className="flex min-w-0 flex-col gap-2">
+        {parts.map((part) => (
+          <li key={part.key} className="flex items-center gap-2 text-sm">
             <span
               className="size-2.5 shrink-0 rounded-full"
-              style={{ background: plateColor(index) }}
+              style={{ background: part.color }}
             />
-            <span className="min-w-0 truncate font-medium text-ink-soft">
-              {portion.name}
-            </span>
-            <span className="shrink-0 text-muted">
-              {formatAmount(Math.round(portion.grams))} g
+            <span className="font-medium text-ink-soft">{part.label}</span>
+            <span className="text-muted tabular-nums">
+              {formatAmount(Math.round(part.grams))} g ·{" "}
+              {Math.round((part.kcal / total) * 100)}%
             </span>
           </li>
         ))}
