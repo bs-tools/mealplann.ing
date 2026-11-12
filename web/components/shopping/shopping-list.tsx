@@ -1,4 +1,4 @@
-import { iconButton } from "@components/ui/styles";
+import { iconButton, sectionLabelClass } from "@components/ui/styles";
 import {
   CheckIcon,
   ExclamationTriangleIcon,
@@ -88,42 +88,33 @@ const ItemRow: React.FC<ItemRowProps> = ({
   onToggle,
   onDelete,
 }) => (
-  <li className="flex items-stretch">
+  <li className="flex items-stretch border-b border-line last:border-b-0">
     <div className="flex min-w-0 grow flex-col">
       <button
         type="button"
         role="checkbox"
         aria-checked={checked}
         disabled={disabled}
-        className={`flex min-h-14 grow items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-50 active:bg-gray-100 disabled:cursor-not-allowed ${checked ? "text-gray-400" : "text-gray-900"}`}
+        className="flex min-h-14 grow items-center gap-4 py-2.5 text-left disabled:cursor-not-allowed"
         onClick={onToggle}
       >
         <span
-          className={`flex size-7 shrink-0 items-center justify-center rounded-full ring-2 ring-inset ${checked ? "bg-brand-600 text-white ring-brand-600" : "bg-white ring-gray-300"}`}
+          className={`flex size-7 shrink-0 items-center justify-center rounded-full ${checked ? "bg-pine text-white" : "bg-white ring-2 ring-muted/60 ring-inset"}`}
           aria-hidden="true"
         >
           {checked && <CheckIcon className="size-4 stroke-[3]" />}
         </span>
         <span className="flex min-w-0 grow flex-col">
-          <span className="flex flex-wrap items-baseline gap-x-2">
-            <span
-              className={`text-base font-medium ${checked ? "line-through decoration-gray-400" : ""}`}
-            >
-              {item.name}
-            </span>
-            {item.amountText !== "" && (
-              <span
-                className={`text-sm tabular-nums ${checked ? "" : "text-gray-600"}`}
-              >
-                {item.amountText}
-              </span>
-            )}
+          <span
+            className={`text-base ${checked ? "text-muted line-through decoration-muted/60" : "text-ink-soft"}`}
+          >
+            {item.name}
           </span>
           {item.note !== "" && (
-            <span className="text-sm text-gray-500 italic">{item.note}</span>
+            <span className="text-sm text-muted italic">{item.note}</span>
           )}
           {!checked && item.warning !== "" && (
-            <span className="mt-0.5 flex items-start gap-1 text-xs text-amber-800">
+            <span className="mt-0.5 flex items-start gap-1 text-xs text-warn-dark">
               <ExclamationTriangleIcon
                 className="mt-px size-3.5 shrink-0"
                 aria-hidden="true"
@@ -132,32 +123,34 @@ const ItemRow: React.FC<ItemRowProps> = ({
             </span>
           )}
         </span>
-        <span className="flex shrink-0 flex-col items-end gap-0.5 text-xs">
+        <span className="flex shrink-0 flex-col items-end gap-0.5">
+          {item.amountText !== "" && (
+            <span
+              className={`text-sm tabular-nums ${checked ? "text-muted" : "text-ink-soft"}`}
+            >
+              {item.amountText}
+            </span>
+          )}
           {item.topUp && !checked && (
-            <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-800 ring-1 ring-amber-200 ring-inset">
-              Top-up
+            <span className="rounded-full bg-warn-tint px-2 py-0.5 text-xs font-medium text-warn-dark">
+              Top-up {formatWeekday(item.neededByDate)}
             </span>
           )}
           {checked && item.checkedBy !== "" && (
-            <span className="text-gray-400">{item.checkedBy}</span>
-          )}
-          {!checked && item.neededByDate !== "" && (
-            <span className="text-gray-500">
-              {formatWeekday(item.neededByDate)}
-            </span>
+            <span className="text-xs text-muted">{item.checkedBy}</span>
           )}
         </span>
       </button>
       {/* The recipes are links, so they sit below the row's button, not in it. */}
       {!checked && item.recipes.length > 0 && (
-        <p className="-mt-1 pb-2 pl-12 text-xs text-gray-500">
-          For{" "}
+        <p className="-mt-2 pb-2.5 pl-11 text-xs text-muted">
+          for{" "}
           {item.recipes.map((recipe, index) => (
             <React.Fragment key={recipe.recipeId}>
               {index > 0 && ", "}
               <Link
                 to={`/recipes/${recipe.recipeId}`}
-                className="underline decoration-gray-300 underline-offset-2 hover:text-gray-900"
+                className="hover:text-ink-soft hover:underline"
               >
                 {recipe.recipeName}
               </Link>
@@ -169,7 +162,7 @@ const ItemRow: React.FC<ItemRowProps> = ({
     {!disabled && (
       <button
         type="button"
-        className={`${iconButton} shrink-0 self-center print:hidden`}
+        className={`${iconButton} shrink-0 self-center text-muted/60 print:hidden`}
         aria-label={`Remove ${item.name}`}
         title={`Remove ${item.name}`}
         onClick={onDelete}
@@ -190,8 +183,8 @@ interface ShoppingListViewProps {
 }
 
 /**
- * ShoppingListView shows a list's items by store and section, in the order
- * of the shop, to tick off.
+ * ShoppingListView shows a list's items to buy by store and section, in
+ * the order of the shop, to tick off, and those ticked in the cart below.
  */
 const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   list,
@@ -202,51 +195,53 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 }) => {
   const isChecked = (item: ShoppingItem): boolean =>
     pending[item.id] ?? item.checked;
-  const stores = groupItems(list.items, isChecked);
+  // What's left to buy is by store and section, and what's ticked in the cart.
+  const stores = groupItems(
+    list.items.filter((item) => !isChecked(item)),
+    isChecked
+  );
+  const cart = list.items.filter(isChecked);
+  const row = (item: ShoppingItem): React.ReactNode => (
+    <ItemRow
+      key={item.id}
+      item={item}
+      checked={isChecked(item)}
+      disabled={disabled}
+      onToggle={() => {
+        onToggle(item, !isChecked(item));
+      }}
+      onDelete={() => {
+        onDelete(item);
+      }}
+    />
+  );
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {stores.map((store) => (
-        <section
-          key={store.storeId}
-          className="rounded-lg border border-gray-200 bg-white shadow-sm print:shadow-none"
-        >
-          <div className="flex items-baseline justify-between gap-2 border-b border-gray-100 px-3 py-2.5">
-            <h2 className="text-base font-semibold text-gray-900">
-              {store.storeName === "" ? "Shopping" : store.storeName}
+        <section key={store.storeId} className="flex flex-col gap-4">
+          {stores.length > 1 && (
+            <h2 className="text-lg font-bold text-ink-soft">
+              {store.storeName === "" ? "Elsewhere" : store.storeName}
             </h2>
-            <span className="text-sm text-gray-500 tabular-nums">
-              {store.left === 0 ? "All done" : `${store.left} to buy`}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1 px-1 py-2">
-            {store.sections.map((section) => (
-              <div key={section.section}>
-                <h3 className="px-2 pt-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                  {section.section === StoreSection.UNSPECIFIED
-                    ? "Elsewhere"
-                    : storeSectionLabel(section.section)}
-                </h3>
-                <ul className="divide-y divide-gray-100">
-                  {section.items.map((item) => (
-                    <ItemRow
-                      key={item.id}
-                      item={item}
-                      checked={isChecked(item)}
-                      disabled={disabled}
-                      onToggle={() => {
-                        onToggle(item, !isChecked(item));
-                      }}
-                      onDelete={() => {
-                        onDelete(item);
-                      }}
-                    />
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          )}
+          {store.sections.map((section) => (
+            <div key={section.section} className="flex flex-col">
+              <h3 className={sectionLabelClass}>
+                {section.section === StoreSection.UNSPECIFIED
+                  ? "Other"
+                  : storeSectionLabel(section.section)}
+              </h3>
+              <ul>{section.items.map(row)}</ul>
+            </div>
+          ))}
         </section>
       ))}
+      {cart.length > 0 && (
+        <section className="flex flex-col">
+          <h3 className={sectionLabelClass}>In the cart</h3>
+          <ul>{cart.map(row)}</ul>
+        </section>
+      )}
     </div>
   );
 };

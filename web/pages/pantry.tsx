@@ -3,6 +3,7 @@ import FoodPicker from "@components/foods/food-picker";
 import Loading from "@components/loading";
 import FreezerCard from "@components/pantry/freezer-card";
 import PantryItemDialog from "@components/pantry/pantry-item-dialog";
+import { tintOf } from "@components/recipes/tint";
 import Card from "@components/ui/card";
 import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
@@ -93,12 +94,6 @@ interface LotRowProps {
 const LotRow: React.FC<LotRowProps> = ({ item, now, onOpen }) => {
   const days =
     item.useByDate === "" ? Infinity : daysBetween(now, item.useByDate);
-  let marker = "bg-gray-300";
-  if (days <= 0) {
-    marker = "bg-cook";
-  } else if (days <= SOON_DAYS) {
-    marker = "bg-amber-400";
-  }
   const when = useByText(item, now);
   return (
     <li>
@@ -108,7 +103,7 @@ const LotRow: React.FC<LotRowProps> = ({ item, now, onOpen }) => {
         onClick={onOpen}
       >
         <span
-          className={`h-10 w-1.5 shrink-0 rounded-full ${marker}`}
+          className={`size-11 shrink-0 rounded-xl ${tintOf(item.foodId)}`}
           aria-hidden="true"
         />
         <span className="flex min-w-0 grow flex-col">

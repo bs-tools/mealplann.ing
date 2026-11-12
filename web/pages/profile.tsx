@@ -1,18 +1,10 @@
 import Loading from "@components/loading";
-import { PageHeader } from "@components/ui/misc";
+import BackLink from "@components/ui/back-link";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import Segmented from "@components/ui/segmented";
-import {
-  cardClass,
-  choiceClass,
-  inputClass,
-  labelClass,
-  primaryButton,
-  secondaryButton,
-  sectionLabelClass,
-} from "@components/ui/styles";
+import { inputClass, secondaryButton } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
-import { ArrowLeftIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import { Nutrient } from "gen/foods/v1/foods_pb";
 import {
@@ -34,7 +26,7 @@ import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import type { User } from "gen/users/v1/users_pb";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
-import { Link, Navigate, useParams } from "react-router";
+import { Navigate, useParams } from "react-router";
 
 const SEXES = [
   { kind: Sex.FEMALE, label: "Female", value: String(Sex.FEMALE) },
@@ -129,84 +121,123 @@ const parseNumber = (text: string): number | undefined => {
 };
 
 interface TasteChipsProps {
-  label: string;
-  items: string[];
-  placeholder: string;
-  onChange: (items: string[]) => void;
+  likes: string[];
+  dislikes: string[];
+  onChange: (likes: string[], dislikes: string[]) => void;
 }
 
 /**
- * TasteChips edits a list of likes or dislikes as chips, adding one on
- * Enter or with the button.
+ * TasteChips shows what a person likes and doesn't as chips, "Loves
+ * noodles" and "Not mushrooms", tapping one to remove it, and adds one.
  */
 const TasteChips: React.FC<TasteChipsProps> = ({
-  label,
-  items,
-  placeholder,
+  likes,
+  dislikes,
   onChange,
 }) => {
+  const [adding, setAdding] = useState(false);
   const [text, setText] = useState("");
+  const [liked, setLiked] = useState("dislike");
   const add = (): void => {
     const item = text.trim();
+    const all = [...likes, ...dislikes];
     if (
       item !== "" &&
-      !items.some((other) => other.toLowerCase() === item.toLowerCase())
+      !all.some((other) => other.toLowerCase() === item.toLowerCase())
     ) {
-      onChange([...items, item]);
+      if (liked === "like") {
+        onChange([...likes, item], dislikes);
+      } else {
+        onChange(likes, [...dislikes, item]);
+      }
     }
     setText("");
+    setAdding(false);
   };
   return (
-    <div className="flex flex-col gap-2">
-      <span className={labelClass}>{label}</span>
-      {items.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {items.map((item) => (
-            <span
-              key={item}
-              className="inline-flex items-center gap-1 rounded-full bg-ground-dark py-1 pr-1.5 pl-3 text-sm text-ink-soft"
-            >
-              {item}
-              <button
-                type="button"
-                className="rounded-full p-0.5 text-muted hover:bg-white hover:text-ink-soft"
-                aria-label={`Remove ${item}`}
-                onClick={() => {
-                  onChange(items.filter((other) => other !== item));
-                }}
-              >
-                <XMarkIcon className="size-4" aria-hidden="true" />
-              </button>
-            </span>
-          ))}
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-2">
+        {dislikes.map((item) => (
+          <button
+            key={`not-${item}`}
+            type="button"
+            className="inline-flex items-center gap-1 rounded-full bg-[#fde3e0] px-3 py-1.5 text-sm text-[#9a2b1e]"
+            title={`Remove "not ${item}"`}
+            onClick={() => {
+              onChange(
+                likes,
+                dislikes.filter((other) => other !== item)
+              );
+            }}
+          >
+            Not {item}
+            <XMarkIcon className="size-3.5" aria-hidden="true" />
+          </button>
+        ))}
+        {likes.map((item) => (
+          <button
+            key={`loves-${item}`}
+            type="button"
+            className="inline-flex items-center gap-1 rounded-full bg-ready-tint px-3 py-1.5 text-sm text-pine-dark"
+            title={`Remove "loves ${item}"`}
+            onClick={() => {
+              onChange(
+                likes.filter((other) => other !== item),
+                dislikes
+              );
+            }}
+          >
+            Loves {item}
+            <XMarkIcon className="size-3.5" aria-hidden="true" />
+          </button>
+        ))}
+        {!adding && (
+          <button
+            type="button"
+            className="rounded-full border border-dashed border-muted/50 px-3 py-1.5 text-sm text-pine"
+            onClick={() => {
+              setAdding(true);
+            }}
+          >
+            + Add
+          </button>
+        )}
+      </div>
+      {adding && (
+        <div className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-3">
+          <Segmented
+            label="Likes or not"
+            value={liked}
+            options={[
+              { label: "Doesn't like", value: "dislike" },
+              { label: "Loves", value: "like" },
+            ]}
+            onChange={setLiked}
+          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={text}
+              placeholder={liked === "like" ? "e.g. noodles" : "e.g. mushrooms"}
+              maxLength={50}
+              autoFocus
+              className={inputClass}
+              onChange={(event) => {
+                setText(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  add();
+                }
+              }}
+            />
+            <button type="button" className={secondaryButton} onClick={add}>
+              Add
+            </button>
+          </div>
         </div>
       )}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={text}
-          placeholder={placeholder}
-          maxLength={50}
-          className={inputClass}
-          onChange={(event) => {
-            setText(event.target.value);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              add();
-            }
-          }}
-        />
-        <button
-          type="button"
-          className={secondaryButton}
-          disabled={text.trim() === ""}
-          onClick={add}
-        >
-          Add
-        </button>
-      </div>
     </div>
   );
 };
@@ -214,7 +245,6 @@ const TasteChips: React.FC<TasteChipsProps> = ({
 // TargetChange is a daily target the recommendation would set.
 interface TargetChange {
   nutrient: Nutrient;
-  label: string;
   min?: number;
   max?: number;
 }
@@ -247,38 +277,45 @@ const withTargets = (
   })),
 ];
 
+// FormState is the profile as edited.
+interface FormState {
+  height: string;
+  weight: string;
+  birthYear: string;
+  sex: string;
+  activity: string;
+  goal: string;
+  smallMeals: string;
+  spice: string;
+  likes: string[];
+  dislikes: string[];
+}
+
 interface ProfileFormProps {
   person: Person;
 }
 
 /**
- * ProfileForm edits a person's body, activity, goal and tastes, showing
- * what the profile recommends they eat a day, which they can use as their
- * daily targets.
+ * ProfileForm edits a person's body, activity, goal and tastes, saving
+ * each change as it's made, and shows what the profile recommends they
+ * eat a day, which they can use as their daily targets.
  */
 const ProfileForm: React.FC<ProfileFormProps> = ({ person }) => {
   const queryClient = useQueryClient();
   const { profile, tastes } = person;
-  const [height, setHeight] = useState(numberText(profile?.heightCm));
-  const [weight, setWeight] = useState(numberText(profile?.weightKg));
-  const [birthYear, setBirthYear] = useState(numberText(profile?.birthYear));
-  const [sex, setSex] = useState(String(profile?.sex ?? Sex.UNSPECIFIED));
-  const [activity, setActivity] = useState(
-    String(profile?.activity ?? Activity.UNSPECIFIED)
-  );
-  const [goal, setGoal] = useState(String(profile?.goal ?? Goal.UNSPECIFIED));
-  const [smallMeals, setSmallMeals] = useState(
-    String(tastes?.smallMeals ?? SmallMealTaste.UNSPECIFIED)
-  );
-  const [spice, setSpice] = useState(
-    String(tastes?.spice ?? SpiceLevel.UNSPECIFIED)
-  );
-  const [likes, setLikes] = useState(tastes?.likes ?? []);
-  const [dislikes, setDislikes] = useState(tastes?.dislikes ?? []);
-  const [saved, setSaved] = useState(false);
-
+  const [form, setForm] = useState<FormState>({
+    activity: String(profile?.activity ?? Activity.UNSPECIFIED),
+    birthYear: numberText(profile?.birthYear),
+    dislikes: tastes?.dislikes ?? [],
+    goal: String(profile?.goal ?? Goal.UNSPECIFIED),
+    height: numberText(profile?.heightCm),
+    likes: tastes?.likes ?? [],
+    sex: String(profile?.sex ?? Sex.UNSPECIFIED),
+    smallMeals: String(tastes?.smallMeals ?? SmallMealTaste.UNSPECIFIED),
+    spice: String(tastes?.spice ?? SpiceLevel.UNSPECIFIED),
+    weight: numberText(profile?.weightKg),
+  });
   const onSuccess = async (): Promise<void> => {
-    setSaved(true);
     await invalidateServices(queryClient, [
       PersonService,
       PlanService,
@@ -288,31 +325,45 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ person }) => {
   const save = useMutation(updatePerson, { onSuccess });
   const adopt = useMutation(updatePerson, { onSuccess });
 
+  // Commit saves the form with a change, as each change is made.
+  const commit = (change: Partial<FormState>): void => {
+    const next = { ...form, ...change };
+    setForm(next);
+    save.mutate({
+      person: {
+        id: person.id,
+        profile: {
+          activity: kindOf(ACTIVITIES, next.activity, Activity.UNSPECIFIED),
+          birthYear: Math.round(parseNumber(next.birthYear) ?? 0),
+          goal: kindOf(GOALS, next.goal, Goal.UNSPECIFIED),
+          heightCm: parseNumber(next.height),
+          sex: kindOf(SEXES, next.sex, Sex.UNSPECIFIED),
+          weightKg: parseNumber(next.weight),
+        },
+        tastes: {
+          dislikes: next.dislikes,
+          likes: next.likes,
+          smallMeals: kindOf(
+            SMALL_MEALS,
+            next.smallMeals,
+            SmallMealTaste.UNSPECIFIED
+          ),
+          spice: kindOf(SPICES, next.spice, SpiceLevel.UNSPECIFIED),
+        },
+      },
+      updateMask: { paths: ["profile", "tastes"] },
+    });
+  };
+
   const rec = person.recommended;
   const changes: TargetChange[] =
     rec === undefined
       ? []
       : [
-          {
-            label: "Energy, at most",
-            max: rec.energyKcal,
-            nutrient: Nutrient.ENERGY_KCAL,
-          },
-          {
-            label: "Protein, at least",
-            min: rec.proteinGrams,
-            nutrient: Nutrient.PROTEIN_GRAMS,
-          },
-          {
-            label: "Carbohydrate, at most",
-            max: rec.carbohydrateGrams,
-            nutrient: Nutrient.CARBOHYDRATE_GRAMS,
-          },
-          {
-            label: "Fat, at most",
-            max: rec.fatGrams,
-            nutrient: Nutrient.FAT_GRAMS,
-          },
+          { max: rec.energyKcal, nutrient: Nutrient.ENERGY_KCAL },
+          { min: rec.proteinGrams, nutrient: Nutrient.PROTEIN_GRAMS },
+          { max: rec.carbohydrateGrams, nutrient: Nutrient.CARBOHYDRATE_GRAMS },
+          { max: rec.fatGrams, nutrient: Nutrient.FAT_GRAMS },
         ];
   const adopted = changes.every((change) =>
     person.dailyTargets.some(
@@ -322,191 +373,98 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ person }) => {
         target.maxPerDay === change.max
     )
   );
-  const goalNumber = kindOf(GOALS, goal, Goal.UNSPECIFIED);
-  const activityNumber = kindOf(ACTIVITIES, activity, Activity.UNSPECIFIED);
-
-  return (
-    <form
-      className="flex flex-col gap-5"
-      onSubmit={(event) => {
-        event.preventDefault();
-        setSaved(false);
-        save.mutate({
-          person: {
-            id: person.id,
-            profile: {
-              activity: activityNumber,
-              birthYear: Math.round(parseNumber(birthYear) ?? 0),
-              goal: goalNumber,
-              heightCm: parseNumber(height),
-              sex: kindOf(SEXES, sex, Sex.UNSPECIFIED),
-              weightKg: parseNumber(weight),
-            },
-            tastes: {
-              dislikes,
-              likes,
-              smallMeals: kindOf(
-                SMALL_MEALS,
-                smallMeals,
-                SmallMealTaste.UNSPECIFIED
-              ),
-              spice: kindOf(SPICES, spice, SpiceLevel.UNSPECIFIED),
-            },
-          },
-          updateMask: { paths: ["profile", "tastes"] },
-        });
-      }}
-    >
-      <section className="flex flex-col gap-3">
-        <h2 className={sectionLabelClass}>Goal</h2>
-        <Segmented
-          label="Goal"
-          value={goal}
-          options={GOALS}
-          onChange={(value) => {
-            setGoal(value);
-            setSaved(false);
+  const goal = kindOf(GOALS, form.goal, Goal.UNSPECIFIED);
+  const activity = kindOf(ACTIVITIES, form.activity, Activity.UNSPECIFIED);
+  const field = (
+    label: string,
+    key: "height" | "weight" | "birthYear",
+    unit: string
+  ): React.ReactNode => (
+    <label className="flex flex-col gap-1">
+      <span className="text-sm text-muted">{label}</span>
+      <span className="relative">
+        <input
+          inputMode="decimal"
+          className={`${inputClass} py-3 text-base ${unit === "" ? "" : "pr-10"}`}
+          value={form[key]}
+          onChange={(event) => {
+            setForm({ ...form, [key]: event.target.value });
+          }}
+          onBlur={() => {
+            commit({});
           }}
         />
-        {goalNumber !== Goal.UNSPECIFIED && (
-          <p className="text-sm text-muted">{GOAL_HINTS[goalNumber]}</p>
+        {unit !== "" && (
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted">
+            {unit}
+          </span>
         )}
-      </section>
+      </span>
+    </label>
+  );
 
-      <section className="flex flex-col gap-3">
-        <h2 className={sectionLabelClass}>Body</h2>
-        <div className="grid grid-cols-3 gap-3">
-          <label className="flex flex-col gap-1">
-            <span className={labelClass}>Height, cm</span>
-            <input
-              inputMode="decimal"
-              className={inputClass}
-              value={height}
-              onChange={(event) => {
-                setHeight(event.target.value);
-              }}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className={labelClass}>Weight, kg</span>
-            <input
-              inputMode="decimal"
-              className={inputClass}
-              value={weight}
-              onChange={(event) => {
-                setWeight(event.target.value);
-              }}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className={labelClass}>Born in</span>
-            <input
-              inputMode="numeric"
-              className={inputClass}
-              value={birthYear}
-              placeholder="1990"
-              onChange={(event) => {
-                setBirthYear(event.target.value);
-              }}
-            />
-          </label>
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-2 gap-3">
+        {field("Height", "height", "cm")}
+        {field("Weight", "weight", "kg")}
+        {field("Born in", "birthYear", "")}
+        <div className="flex flex-col gap-1">
+          <span className="text-sm text-muted">Sex</span>
+          <Segmented
+            label="Sex"
+            value={form.sex}
+            options={SEXES}
+            className="py-[5px]"
+            onChange={(value) => {
+              commit({ sex: value });
+            }}
+          />
         </div>
-        <Segmented label="Sex" value={sex} options={SEXES} onChange={setSex} />
-        <span className={labelClass}>Activity</span>
+      </div>
+      <div className="flex flex-col gap-2">
+        <span className="text-sm text-muted">Activity</span>
         <Segmented
           label="Activity"
-          value={activity}
+          value={form.activity}
           options={ACTIVITIES}
-          onChange={setActivity}
+          onChange={(value) => {
+            commit({ activity: value });
+          }}
         />
-        {activityNumber !== Activity.UNSPECIFIED && (
-          <p className="-mt-1 text-sm text-muted">
-            {ACTIVITY_HINTS[activityNumber]}
-          </p>
-        )}
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className={sectionLabelClass}>Tastes</h2>
-        <span className={labelClass}>Small meals</span>
-        <Segmented
-          label="Small meals"
-          value={smallMeals}
-          options={SMALL_MEALS}
-          onChange={setSmallMeals}
-        />
-        <span className={labelClass}>Spice</span>
-        <Segmented
-          label="Spice"
-          value={spice}
-          options={SPICES}
-          onChange={setSpice}
-        />
-        <TasteChips
-          label="Likes"
-          items={likes}
-          placeholder="e.g. noodles"
-          onChange={setLikes}
-        />
-        <TasteChips
-          label="Doesn't like"
-          items={dislikes}
-          placeholder="e.g. mushrooms"
-          onChange={setDislikes}
-        />
-      </section>
-
-      <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          className={primaryButton}
-          disabled={save.isPending}
-        >
-          {save.isPending ? "Saving…" : "Save"}
-        </button>
-        {saved && !save.isPending && (
-          <span className="text-sm text-pine">Saved</span>
+        {activity !== Activity.UNSPECIFIED && (
+          <span className="text-xs text-muted">{ACTIVITY_HINTS[activity]}</span>
         )}
       </div>
-      <ErrorText error={save.error} />
-
+      <div className="flex flex-col gap-2">
+        <span className="text-sm text-muted">Goal</span>
+        <Segmented
+          label="Goal"
+          value={form.goal}
+          options={GOALS}
+          onChange={(value) => {
+            commit({ goal: value });
+          }}
+        />
+      </div>
       {rec === undefined ? (
-        <p className="text-sm text-muted">
-          With height, weight, birth year, sex, activity and goal saved,
-          you&apos;ll see how much to eat a day for the goal.
+        <p className="rounded-2xl bg-ground-dark/60 p-4 text-sm text-muted">
+          With height, weight, birth year, sex, activity and goal, you&apos;ll
+          see how much to eat a day for the goal.
         </p>
       ) : (
-        <section className={`${cardClass} flex flex-col gap-3 p-4`}>
-          <h2 className={sectionLabelClass}>A day for this goal</h2>
-          <div className="grid grid-cols-4 gap-2 text-center">
-            {[
-              { label: "kcal", value: rec.energyKcal },
-              { label: "protein", value: `${rec.proteinGrams} g` },
-              { label: "carbs", value: `${rec.carbohydrateGrams} g` },
-              { label: "fat", value: `${rec.fatGrams} g` },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="flex flex-col rounded-xl bg-ground-dark/60 py-2"
-              >
-                <span className="text-lg font-bold text-ink-soft">
-                  {item.value}
-                </span>
-                <span className="text-xs text-muted">{item.label}</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-sm text-muted">
-            A general estimate from the profile. Using it sets the daily targets
-            for energy, protein, carbohydrate and fat; the other targets and
-            rules stay.
+        <div className="flex flex-col gap-3 rounded-2xl bg-ready-tint p-4 text-base text-pine-dark">
+          <p>
+            About {rec.energyKcal.toLocaleString()} kcal a day, with{" "}
+            {rec.proteinGrams} g protein, {rec.carbohydrateGrams} g carbohydrate
+            and {rec.fatGrams} g fat.{" "}
+            {goal === Goal.UNSPECIFIED ? "" : GOAL_HINTS[goal]}
           </p>
           <button
             type="button"
-            className={`${adopted ? secondaryButton : primaryButton} self-start`}
+            className={`self-start rounded-xl px-4 py-2 text-sm font-bold ${adopted ? "bg-white/70 text-pine-dark" : "bg-pine text-white"}`}
             disabled={adopt.isPending || adopted}
             onClick={() => {
-              setSaved(false);
               adopt.mutate({
                 person: {
                   dailyTargets: withTargets(person.dailyTargets, changes),
@@ -516,12 +474,45 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ person }) => {
               });
             }}
           >
-            {adopted ? "These are the targets" : "Use as targets"}
+            {adopted ? "These are the daily targets" : "Use as daily targets"}
           </button>
           <ErrorText error={adopt.error} />
-        </section>
+        </div>
       )}
-    </form>
+      <h2 className="mt-1 text-lg font-bold text-ink-soft">Tastes</h2>
+      <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-3">
+        <span className="text-base text-ink-soft">Small meals</span>
+        <Segmented
+          label="Small meals"
+          value={form.smallMeals}
+          options={SMALL_MEALS}
+          onChange={(value) => {
+            commit({ smallMeals: value });
+          }}
+        />
+        <span className="text-base text-ink-soft">Spice</span>
+        <Segmented
+          label="Spice"
+          value={form.spice}
+          options={SPICES}
+          onChange={(value) => {
+            commit({ spice: value });
+          }}
+        />
+      </div>
+      <TasteChips
+        likes={form.likes}
+        dislikes={form.dislikes}
+        onChange={(likes, dislikes) => {
+          commit({ dislikes, likes });
+        }}
+      />
+      <p className="text-sm text-muted" role="status">
+        {save.isPending ? "Saving…" : ""}
+        {save.isSuccess && !save.isPending ? "Saved" : ""}
+      </p>
+      <ErrorText error={save.error} />
+    </div>
   );
 };
 
@@ -568,18 +559,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
   }
   const name = person.data?.person?.name ?? "";
   return (
-    <div className="mx-auto flex max-w-xl flex-col">
-      <Link
-        to="/people"
-        className={`${choiceClass(false)} mb-3 inline-flex items-center gap-1 self-start`}
-      >
-        <ArrowLeftIcon className="size-4" aria-hidden="true" />
-        People
-      </Link>
-      <PageHeader
-        title={name === "" ? "Profile" : name}
-        subtitle="What they're aiming for, and what they like to eat"
-      />
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
+      <div className="flex flex-col gap-1">
+        <BackLink to="/people">Household</BackLink>
+        <h1 className="mt-2 text-[28px] leading-tight font-bold tracking-tight text-ink-soft">
+          {name === "" ? "Profile" : name}
+        </h1>
+      </div>
       {content}
     </div>
   );
