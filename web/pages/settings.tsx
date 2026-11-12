@@ -248,7 +248,11 @@ interface SettingsPageProps {
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => (
   <div>
-    <PageHeader title="Settings" />
+    <PageHeader
+      kicker="Your account"
+      title="Settings"
+      subtitle="Your picture and units, the household, sign-in, and connecting AI agents."
+    />
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div className="flex flex-col gap-4">
         <AvatarCard user={user} />
