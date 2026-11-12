@@ -357,3 +357,44 @@ func TestPlanLeftoverMeals(t *testing.T) {
 		}
 	}
 }
+
+// TestPlanCooksOncePerDay checks that the planner cooks about once a day,
+// at most: after the first day, which has nothing to eat the rest of, a
+// day's lunch or dinner is the rest of an earlier day's meal.
+func TestPlanCooksOncePerDay(t *testing.T) {
+	t.Parallel()
+	b := ben()
+	var rs []*recipes.Recipe
+	for _, name := range []string{"Curry", "Hummus bowl", "Falafel", "Chili", "Dal", "Stew"} {
+		r := recipe(name, 2, ingredient(chickpeas, 400))
+		r.FridgeDays = new(int32(3))
+		rs = append(rs, r)
+	}
+	in := planInput(0, []*people.Person{b}, rs...)
+	for d := range 3 {
+		for _, meal := range []people.Meal{people.MealLunch, people.MealDinner} {
+			in.Slots = append(in.Slots, &PlanSlot{Date: monday.AddDate(0, 0, d), Meal: meal, People: []*people.Person{b}})
+		}
+	}
+	result := Plan(in)
+	cooks := map[time.Time]int{}
+	for _, s := range result.Slots {
+		if s.Suggestion == nil {
+			t.Fatalf("got an empty slot on %v, want every meal planned", s.Slot.Date)
+		}
+		if s.Suggestion.Leftover == nil {
+			cooks[s.Slot.Date]++
+		}
+	}
+	total := 0
+	for d := range 3 {
+		n := cooks[monday.AddDate(0, 0, d)]
+		total += n
+		if d > 0 && n > 1 {
+			t.Errorf("got %d cooks on day %d, want 1 at most, the other meal the rest of an earlier one", n, d+1)
+		}
+	}
+	if total > 4 {
+		t.Errorf("got %d cooks for 6 meals, want 4 at most", total)
+	}
+}

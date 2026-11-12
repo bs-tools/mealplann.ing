@@ -53,6 +53,7 @@ const CRITERIA_KEY = "mealplanning.autoPlanCriteria";
  * every criterion at normal.
  */
 const defaultCriteria = (): Criteria => ({
+  cooking: Emphasis.NORMAL,
   cookingWeekdays: [],
   days: 7,
   excludeTags: [],
@@ -290,6 +291,7 @@ const AutoPlanPage: React.FC = () => {
             : ownEatingTimes)
       ),
       criteria: {
+        cooking: criteria.cooking,
         cookingWeekdays: criteria.cookingWeekdays,
         excludeTags: criteria.excludeTags,
         favorites: criteria.favorites,

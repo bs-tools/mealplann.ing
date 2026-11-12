@@ -17,6 +17,8 @@ export interface Criteria {
   pantry: Emphasis;
   shopping: Emphasis;
   nutrition: Emphasis;
+  // How much to cook less, eating the rest of meals instead.
+  cooking: Emphasis;
   // The longest a recipe may take, in minutes, 0 for any time.
   maxMinutes: number;
   // The tags of recipes not to plan.
@@ -66,7 +68,8 @@ type EmphasisKey =
   | "favorites"
   | "pantry"
   | "shopping"
-  | "nutrition";
+  | "nutrition"
+  | "cooking";
 
 // EMPHASIS_ROWS describe the criteria that take an emphasis.
 const EMPHASIS_ROWS: { key: EmphasisKey; label: string; hint: string }[] = [
@@ -94,6 +97,11 @@ const EMPHASIS_ROWS: { key: EmphasisKey; label: string; hint: string }[] = [
     hint: "Meet everyone's daily targets.",
     key: "nutrition",
     label: "Nutrition",
+  },
+  {
+    hint: "Cook about once a day, and have the rest of a meal at the next day's other.",
+    key: "cooking",
+    label: "Cook less",
   },
 ];
 
