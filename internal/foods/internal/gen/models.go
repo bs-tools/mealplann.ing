@@ -549,6 +549,7 @@ type CalendarFeed struct {
 	SecretSHA256 []byte
 	CreateTime   pgtype.Timestamptz
 	LastUsedTime pgtype.Timestamptz
+	TimeZone     string
 }
 
 type Cook struct {

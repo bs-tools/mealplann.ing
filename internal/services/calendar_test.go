@@ -40,7 +40,13 @@ func TestCalendarFeed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateRecipe: %v", err)
 	}
-	today := time.Now().UTC().Format(time.DateOnly)
+	// The plan's dates and times are Berlin's, an hour ahead of UTC in
+	// November.
+	berlin, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		t.Fatal(err)
+	}
+	today := time.Now().In(berlin).Format(time.DateOnly)
 	if _, err := e.plans.CreatePortion(ctx, plansv1.CreatePortionRequest_builder{
 		Portion: plansv1.Portion_builder{
 			PersonId: me.GetId(), EatingTimeId: eatingTimeID(t, me, "Dinner"), Date: today,
@@ -54,7 +60,10 @@ func TestCalendarFeed(t *testing.T) {
 	if _, err := e.anonUsers.CreateCalendarFeed(ctx, usersv1.CreateCalendarFeedRequest_builder{}.Build()); connect.CodeOf(err) != connect.CodeUnauthenticated {
 		t.Errorf("got %v anonymously, want Unauthenticated", err)
 	}
-	created, err := e.users.CreateCalendarFeed(ctx, usersv1.CreateCalendarFeedRequest_builder{}.Build())
+	if _, err := e.users.CreateCalendarFeed(ctx, usersv1.CreateCalendarFeedRequest_builder{TimeZone: "Mars/Olympus"}.Build()); connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("got %v for an unknown time zone, want InvalidArgument", err)
+	}
+	created, err := e.users.CreateCalendarFeed(ctx, usersv1.CreateCalendarFeedRequest_builder{TimeZone: "Europe/Berlin"}.Build())
 	if err != nil {
 		t.Fatalf("CreateCalendarFeed: %v", err)
 	}
@@ -77,26 +86,43 @@ func TestCalendarFeed(t *testing.T) {
 	if code != http.StatusOK {
 		t.Fatalf("got %d: %s", code, body)
 	}
-	day := strings.ReplaceAll(today, "-", "")
+	// at writes a time of today in Berlin in UTC, as the feed does.
+	at := func(clock string) string {
+		t.Helper()
+		local, err := time.ParseInLocation("2006-01-02 15:04", today+" "+clock, berlin)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return local.UTC().Format("20060102T150405Z")
+	}
 	for _, want := range []string{
 		"BEGIN:VCALENDAR\r\n",
 		"X-WR-CALNAME:mealplann.ing · Erin\r\n",
-		// Dinner at 19:00, for half an hour, with its name escaped.
-		"DTSTART:" + day + "T190000\r\nDTEND:" + day + "T193000\r\nSUMMARY:Dinner: Tofu bowls\\; spicy\r\n",
+		"X-WR-TIMEZONE:Europe/Berlin\r\n",
+		// Dinner at 19:00 in Berlin, for half an hour, with its name escaped.
+		"DTSTART:" + at("19:00") + "\r\nDTEND:" + at("19:30") + "\r\nSUMMARY:Dinner: Tofu bowls\\; spicy\r\n",
 		// The cook starts its 30 minutes before dinner.
-		"DTSTART:" + day + "T183000\r\nDTEND:" + day + "T190000\r\nSUMMARY:Cook Tofu bowls\\; spicy (2 servings)\r\n",
+		"DTSTART:" + at("18:30") + "\r\nDTEND:" + at("19:00") + "\r\nSUMMARY:Cook Tofu bowls\\; spicy (2 servings)\r\n",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("calendar is missing %q:\n%s", want, body)
 		}
 	}
 	got, err := e.users.GetCalendarFeed(ctx, usersv1.GetCalendarFeedRequest_builder{}.Build())
-	if err != nil || !got.HasFeed() || got.GetFeed().GetUrl() != "" || !got.GetFeed().HasLastUsedTime() {
-		t.Errorf("got %v, %v, want a feed, read, without its URL", got, err)
+	if err != nil || !got.HasFeed() || got.GetFeed().GetUrl() != "" || !got.GetFeed().HasLastUsedTime() || got.GetFeed().GetTimeZone() != "Europe/Berlin" {
+		t.Errorf("got %v, %v, want a feed in Berlin, read, without its URL", got, err)
+	}
+	// Its time zone can change.
+	updated, err := e.users.UpdateCalendarFeed(ctx, usersv1.UpdateCalendarFeedRequest_builder{TimeZone: "America/Vancouver"}.Build())
+	if err != nil || updated.GetFeed().GetTimeZone() != "America/Vancouver" {
+		t.Errorf("got %v, %v, want the feed in Vancouver", updated, err)
+	}
+	if _, body := get(path); !strings.Contains(body, "X-WR-TIMEZONE:America/Vancouver\r\n") {
+		t.Errorf("calendar isn't in Vancouver's time zone:\n%s", body)
 	}
 
 	// A new feed replaces the old one.
-	renewed, err := e.users.CreateCalendarFeed(ctx, usersv1.CreateCalendarFeedRequest_builder{}.Build())
+	renewed, err := e.users.CreateCalendarFeed(ctx, usersv1.CreateCalendarFeedRequest_builder{TimeZone: "Europe/Berlin"}.Build())
 	if err != nil {
 		t.Fatalf("CreateCalendarFeed: %v", err)
 	}

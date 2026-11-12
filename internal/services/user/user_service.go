@@ -21,7 +21,8 @@ type APITokenRepository interface {
 
 // CalendarFeedRepository stores users' calendar feeds.
 type CalendarFeedRepository interface {
-	CreateCalendarFeed(ctx context.Context, userID pgtype.UUID) (*users.CalendarFeed, string, error)
+	CreateCalendarFeed(ctx context.Context, userID pgtype.UUID, timeZone string) (*users.CalendarFeed, string, error)
+	SetCalendarFeedTimeZone(ctx context.Context, userID pgtype.UUID, timeZone string) (*users.CalendarFeed, error)
 	GetCalendarFeed(ctx context.Context, userID pgtype.UUID) (*users.CalendarFeed, error)
 	DeleteCalendarFeed(ctx context.Context, userID pgtype.UUID) error
 }

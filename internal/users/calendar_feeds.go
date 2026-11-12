@@ -24,15 +24,16 @@ type CalendarFeed struct {
 	*gen.CalendarFeed
 }
 
-// CreateCalendarFeed creates the user's calendar feed, replacing any old
-// one, and returns it with its secret. Only a hash of the secret is
-// stored.
-func (r *Repository) CreateCalendarFeed(ctx context.Context, userID pgtype.UUID) (*CalendarFeed, string, error) {
+// CreateCalendarFeed creates the user's calendar feed, in a time zone,
+// an IANA name, replacing any old one, and returns it with its secret.
+// Only a hash of the secret is stored.
+func (r *Repository) CreateCalendarFeed(ctx context.Context, userID pgtype.UUID, timeZone string) (*CalendarFeed, string, error) {
 	secret := calendarFeedPrefix + rand.Text()
 	hash := sha256.Sum256([]byte(secret))
 	feed, err := r.querier.UpsertCalendarFeed(ctx, &gen.UpsertCalendarFeedParams{
 		UserID:       userID,
 		SecretSHA256: hash[:],
+		TimeZone:     timeZone,
 	})
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to create calendar feed: %w", err)
@@ -53,6 +54,22 @@ func (r *Repository) GetCalendarFeed(ctx context.Context, userID pgtype.UUID) (*
 	return &CalendarFeed{CalendarFeed: feed}, nil
 }
 
+// SetCalendarFeedTimeZone sets the time zone of the user's calendar feed,
+// returning store.ErrNotFound if they have none.
+func (r *Repository) SetCalendarFeedTimeZone(ctx context.Context, userID pgtype.UUID, timeZone string) (*CalendarFeed, error) {
+	feed, err := r.querier.SetCalendarFeedTimeZone(ctx, &gen.SetCalendarFeedTimeZoneParams{
+		UserID:   userID,
+		TimeZone: timeZone,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, store.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to set calendar feed time zone: %w", err)
+	}
+	return &CalendarFeed{CalendarFeed: feed}, nil
+}
+
 // DeleteCalendarFeed deletes the user's calendar feed, so its URL stops
 // working. Deleting none is no error.
 func (r *Repository) DeleteCalendarFeed(ctx context.Context, userID pgtype.UUID) error {
@@ -62,20 +79,21 @@ func (r *Repository) DeleteCalendarFeed(ctx context.Context, userID pgtype.UUID)
 	return nil
 }
 
-// GetCalendarFeedUser returns the user of the calendar feed with the
-// secret, recording that it was read. It returns store.ErrNotFound if the
-// secret matches no feed.
-func (r *Repository) GetCalendarFeedUser(ctx context.Context, secret string) (User, error) {
+// GetCalendarFeedUser returns the user and time zone of the calendar
+// feed with the secret, recording that it was read. It returns
+// store.ErrNotFound if the secret matches no feed.
+func (r *Repository) GetCalendarFeedUser(ctx context.Context, secret string) (User, string, error) {
 	if !strings.HasPrefix(secret, calendarFeedPrefix) {
-		return nil, store.ErrNotFound
+		return nil, "", store.ErrNotFound
 	}
 	hash := sha256.Sum256([]byte(secret))
-	userID, err := r.querier.UseCalendarFeed(ctx, hash[:])
+	row, err := r.querier.UseCalendarFeed(ctx, hash[:])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, store.ErrNotFound
+			return nil, "", store.ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to read calendar feed: %w", err)
+		return nil, "", fmt.Errorf("failed to read calendar feed: %w", err)
 	}
-	return r.loadUser(ctx, r.querier, userID)
+	user, err := r.loadUser(ctx, r.querier, row.UserID)
+	return user, row.TimeZone, err
 }

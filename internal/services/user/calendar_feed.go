@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"time"
 
 	"connectrpc.com/connect/v2"
 	"github.com/bs-tools/mealplann.ing/internal/authn"
@@ -42,13 +43,52 @@ func (s *Service) CreateCalendarFeed(ctx context.Context, req *usersv1.CreateCal
 	if err != nil {
 		return nil, err
 	}
-	feed, secret, err := s.feeds.CreateCalendarFeed(ctx, user.ID())
+	timeZone, err := timeZoneFromProto(req.GetTimeZone())
+	if err != nil {
+		return nil, err
+	}
+	feed, secret, err := s.feeds.CreateCalendarFeed(ctx, user.ID(), timeZone)
 	if err != nil {
 		s.report.Report(ctx, "failed to create calendar feed", err)
 		return nil, connect.NewError(connect.CodeInternal, "failed to create calendar feed").WithCause(err)
 	}
 	url := s.baseURL + CalendarPath + secret + ".ics"
 	return usersv1.CreateCalendarFeedResponse_builder{Feed: calendarFeedToProto(feed, url)}.Build(), nil
+}
+
+// UpdateCalendarFeed changes the time zone of the user's calendar feed.
+func (s *Service) UpdateCalendarFeed(ctx context.Context, req *usersv1.UpdateCalendarFeedRequest) (*usersv1.UpdateCalendarFeedResponse, error) {
+	user, err := authn.GetSessionUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	timeZone, err := timeZoneFromProto(req.GetTimeZone())
+	if err != nil {
+		return nil, err
+	}
+	feed, err := s.feeds.SetCalendarFeedTimeZone(ctx, user.ID(), timeZone)
+	if errors.Is(err, store.ErrNotFound) {
+		return nil, connect.NewError(connect.CodeNotFound, "you have no calendar feed: make one with CreateCalendarFeed")
+	}
+	if err != nil {
+		s.report.Report(ctx, "failed to update calendar feed", err)
+		return nil, connect.NewError(connect.CodeInternal, "failed to update calendar feed").WithCause(err)
+	}
+	return usersv1.UpdateCalendarFeedResponse_builder{Feed: calendarFeedToProto(feed, "")}.Build(), nil
+}
+
+// timeZoneFromProto checks a time zone is an IANA name, like
+// "America/Vancouver", the server knows.
+func timeZoneFromProto(name string) (string, error) {
+	if name == "" {
+		return "", connect.NewError(connect.CodeInvalidArgument,
+			`time_zone is required: the IANA name of the time zone the plan's times are in, like "America/Vancouver"`)
+	}
+	if _, err := time.LoadLocation(name); err != nil || name == "Local" {
+		return "", connect.Errorf(connect.CodeInvalidArgument,
+			`time_zone %q isn't a known time zone: give an IANA name, like "America/Vancouver" or "Europe/London"`, name)
+	}
+	return name, nil
 }
 
 // DeleteCalendarFeed deletes the user's calendar feed.
@@ -68,6 +108,7 @@ func calendarFeedToProto(feed *users.CalendarFeed, url string) *usersv1.Calendar
 	b := usersv1.CalendarFeed_builder{
 		CreateTime: timestamppb.New(feed.CreateTime.Time),
 		Url:        url,
+		TimeZone:   feed.TimeZone,
 	}
 	if feed.LastUsedTime.Valid {
 		b.LastUsedTime = timestamppb.New(feed.LastUsedTime.Time)

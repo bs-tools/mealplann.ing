@@ -38,6 +38,9 @@ const (
 	// UserServiceCreateCalendarFeedProcedure is the procedure name of the UserService's
 	// CreateCalendarFeed RPC.
 	UserServiceCreateCalendarFeedProcedure = "/users.v1.UserService/CreateCalendarFeed"
+	// UserServiceUpdateCalendarFeedProcedure is the procedure name of the UserService's
+	// UpdateCalendarFeed RPC.
+	UserServiceUpdateCalendarFeedProcedure = "/users.v1.UserService/UpdateCalendarFeed"
 	// UserServiceDeleteCalendarFeedProcedure is the procedure name of the UserService's
 	// DeleteCalendarFeed RPC.
 	UserServiceDeleteCalendarFeedProcedure = "/users.v1.UserService/DeleteCalendarFeed"
@@ -95,6 +98,13 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_users_v1_users_proto.Services().ByName("UserService").Methods().ByName("CreateCalendarFeed"),
 			Procedure:  UserServiceCreateCalendarFeedProcedure,
+		}
+	})
+	userServiceUpdateCalendarFeedSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_users_v1_users_proto.Services().ByName("UserService").Methods().ByName("UpdateCalendarFeed"),
+			Procedure:  UserServiceUpdateCalendarFeedProcedure,
 		}
 	})
 	userServiceDeleteCalendarFeedSpec = sync.OnceValue(func() connect.Spec {
@@ -160,6 +170,8 @@ type UserServiceClient interface {
 	// Create the user's calendar feed, returning its URL. An old feed is
 	// replaced, and its URL stops working.
 	CreateCalendarFeed(context.Context, *v1.CreateCalendarFeedRequest) (*v1.CreateCalendarFeedResponse, error)
+	// Change the time zone of the user's calendar feed.
+	UpdateCalendarFeed(context.Context, *v1.UpdateCalendarFeedRequest) (*v1.UpdateCalendarFeedResponse, error)
 	// Delete the user's calendar feed, so its URL stops working.
 	DeleteCalendarFeed(context.Context, *v1.DeleteCalendarFeedRequest) (*v1.DeleteCalendarFeedResponse, error)
 	// Upload a picture to use as the user's avatar, replacing any previous
@@ -202,6 +214,8 @@ type UserServiceHandler interface {
 	// Create the user's calendar feed, returning its URL. An old feed is
 	// replaced, and its URL stops working.
 	CreateCalendarFeed(context.Context, *v1.CreateCalendarFeedRequest) (*v1.CreateCalendarFeedResponse, error)
+	// Change the time zone of the user's calendar feed.
+	UpdateCalendarFeed(context.Context, *v1.UpdateCalendarFeedRequest) (*v1.UpdateCalendarFeedResponse, error)
 	// Delete the user's calendar feed, so its URL stops working.
 	DeleteCalendarFeed(context.Context, *v1.DeleteCalendarFeedRequest) (*v1.DeleteCalendarFeedResponse, error)
 	// Upload a picture to use as the user's avatar, replacing any previous
@@ -229,6 +243,7 @@ func RegisterUserServiceHandler(server *connect.Server, svc UserServiceHandler) 
 		connect.Method{Spec: userServiceDeleteAPITokenSpec(), Handler: adapter.deleteAPIToken},
 		connect.Method{Spec: userServiceGetCalendarFeedSpec(), Handler: adapter.getCalendarFeed},
 		connect.Method{Spec: userServiceCreateCalendarFeedSpec(), Handler: adapter.createCalendarFeed},
+		connect.Method{Spec: userServiceUpdateCalendarFeedSpec(), Handler: adapter.updateCalendarFeed},
 		connect.Method{Spec: userServiceDeleteCalendarFeedSpec(), Handler: adapter.deleteCalendarFeed},
 		connect.Method{Spec: userServiceUploadAvatarSpec(), Handler: adapter.uploadAvatar},
 		connect.Method{Spec: userServiceDeleteAvatarSpec(), Handler: adapter.deleteAvatar},
@@ -263,6 +278,10 @@ func (UnimplementedUserServiceHandler) GetCalendarFeed(context.Context, *v1.GetC
 
 func (UnimplementedUserServiceHandler) CreateCalendarFeed(context.Context, *v1.CreateCalendarFeedRequest) (*v1.CreateCalendarFeedResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "users.v1.UserService.CreateCalendarFeed is not implemented")
+}
+
+func (UnimplementedUserServiceHandler) UpdateCalendarFeed(context.Context, *v1.UpdateCalendarFeedRequest) (*v1.UpdateCalendarFeedResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "users.v1.UserService.UpdateCalendarFeed is not implemented")
 }
 
 func (UnimplementedUserServiceHandler) DeleteCalendarFeed(context.Context, *v1.DeleteCalendarFeedRequest) (*v1.DeleteCalendarFeedResponse, error) {
@@ -336,6 +355,14 @@ func (c *userServiceClient) GetCalendarFeed(ctx context.Context, req *v1.GetCale
 func (c *userServiceClient) CreateCalendarFeed(ctx context.Context, req *v1.CreateCalendarFeedRequest) (*v1.CreateCalendarFeedResponse, error) {
 	var res v1.CreateCalendarFeedResponse
 	if err := c.client.CallUnary(ctx, userServiceCreateCalendarFeedSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *userServiceClient) UpdateCalendarFeed(ctx context.Context, req *v1.UpdateCalendarFeedRequest) (*v1.UpdateCalendarFeedResponse, error) {
+	var res v1.UpdateCalendarFeedResponse
+	if err := c.client.CallUnary(ctx, userServiceUpdateCalendarFeedSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -457,6 +484,18 @@ func (h userServiceHandler) createCalendarFeed(ctx context.Context, _ connect.Sp
 		return err
 	}
 	res, err := h.svc.CreateCalendarFeed(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h userServiceHandler) updateCalendarFeed(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.UpdateCalendarFeedRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.UpdateCalendarFeed(ctx, &req)
 	if err != nil {
 		return err
 	}
