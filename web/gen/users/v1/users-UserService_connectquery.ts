@@ -5,7 +5,8 @@
 import { UserService } from "./users_pb";
 
 /**
- * Get the signed in user.
+ * Get the signed in user. The response has no user when no one is
+ * signed in.
  *
  * @generated from rpc users.v1.UserService.GetCurrentUser
  */

@@ -277,6 +277,8 @@ export const GetCurrentUserRequestSchema: GenMessage<GetCurrentUserRequest> = /*
  */
 export type GetCurrentUserResponse = Message<"users.v1.GetCurrentUserResponse"> & {
   /**
+   * The signed in user, unset when no one is signed in.
+   *
    * @generated from field: users.v1.User user = 1;
    */
   user?: User | undefined;
@@ -553,7 +555,8 @@ export const UnitSystemSchema: GenEnum<UnitSystem> = /*@__PURE__*/
  */
 export const UserService: GenService<{
   /**
-   * Get the signed in user.
+   * Get the signed in user. The response has no user when no one is
+   * signed in.
    *
    * @generated from rpc users.v1.UserService.GetCurrentUser
    */
