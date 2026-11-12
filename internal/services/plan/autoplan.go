@@ -614,7 +614,7 @@ func boolInt(b bool) int {
 }
 
 // planWeights returns the weights of the scores' components for plan
-// criteria. The rules, meal tags and leftovers always count fully.
+// criteria. The rules and meal tags always count fully.
 func planWeights(c *suggestionsv1.PlanCriteria) (map[suggest.Kind]float64, error) {
 	weights := map[suggest.Kind]float64{}
 	for _, e := range []struct {
@@ -627,6 +627,7 @@ func planWeights(c *suggestionsv1.PlanCriteria) (map[suggest.Kind]float64, error
 		{"pantry", c.GetPantry(), []suggest.Kind{suggest.Pantry, suggest.PackLeftovers}},
 		{"shopping", c.GetShopping(), []suggest.Kind{suggest.SharedIngredients, suggest.Keeping}},
 		{"nutrition", c.GetNutrition(), []suggest.Kind{suggest.Nutrition}},
+		{"cooking", c.GetCooking(), []suggest.Kind{suggest.Cooks, suggest.Leftover}},
 	} {
 		w, ok := emphasisWeights[e.emphasis]
 		if !ok {

@@ -65,6 +65,9 @@ const (
 	// Tastes is the eaters' tastes: their likes and dislikes, sweet or
 	// savory small meals, and spice.
 	Tastes
+	// Cooks is how many lunches and dinners the day cooks already, as the
+	// household cooks about once a day and eats the rest of meals.
+	Cooks
 )
 
 // The weights of the components, in points. A typical good suggestion
@@ -164,6 +167,12 @@ const (
 	// planner weighs it against cooking again. It repeats the recipe by
 	// nature, so the variety penalty doesn't apply.
 	MealLeftoverPoints = 8.0
+	// ExtraCookPenalty is for each lunch or dinner cooked on the slot's
+	// day already, as the household cooks about once a day: a second cook
+	// that day costs about what eating the rest of a meal earns
+	// (MealLeftoverPoints), so the planner cooks once and has the rest at
+	// the next day's other meal.
+	ExtraCookPenalty = 6.0
 	// DefaultLeftoverDays is how many days after its cook a meal of
 	// unknown fridge days is eaten as a leftover at a small meal.
 	DefaultLeftoverDays = 2
@@ -562,6 +571,7 @@ func (s *scorer) score(r *recipes.Recipe, leftover *plans.Cook) *Suggestion {
 	} else {
 		s.sharedIngredients(c)
 		s.variety(c)
+		s.cooks(c)
 		s.mealTag(c)
 		if r.Favorite {
 			c.add(Favorite, FavoritePoints, "a household favorite")
@@ -1247,6 +1257,25 @@ func (s *scorer) leftovers() []*plans.Cook {
 func mainMeal(r *recipes.Recipe) bool {
 	tags := recipeMealTags(r)
 	return len(tags) == 0 || slices.Contains(tags, "lunch") || slices.Contains(tags, "dinner")
+}
+
+// cooks scores a new cook at a shared lunch or dinner against the lunches
+// and dinners the day cooks already: the household cooks about once a day,
+// so another costs ExtraCookPenalty each.
+func (s *scorer) cooks(c *candidate) {
+	if s.in.Meal != people.MealLunch && s.in.Meal != people.MealDinner {
+		return
+	}
+	var names []string
+	for _, cook := range s.in.Cooks {
+		if cook.Date.Equal(s.in.Date) && (cook.Meal == people.MealLunch || cook.Meal == people.MealDinner) {
+			names = append(names, cook.RecipeName)
+		}
+	}
+	if len(names) == 0 {
+		return
+	}
+	c.add(Cooks, -ExtraCookPenalty*float64(len(names)), "another cook the day of %s: eating the rest of a meal is less work", list(names))
 }
 
 // eatenAsMeal reports whether the rest of a cook is eaten at a shared meal

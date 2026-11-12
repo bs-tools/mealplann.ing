@@ -48,13 +48,16 @@ const (
 	ScoreKind_SCORE_KIND_MEAL_TAG ScoreKind = 9
 	// The household's favorite recipes.
 	ScoreKind_SCORE_KIND_FAVORITE ScoreKind = 10
-	// The rest of an earlier shared meal, reheated at a small meal.
+	// The rest of an earlier shared meal, reheated, rather than cooking.
 	ScoreKind_SCORE_KIND_LEFTOVER ScoreKind = 11
 	// How often the household cooked it lately.
 	ScoreKind_SCORE_KIND_COOKED ScoreKind = 12
 	// The eaters' tastes (see people.v1.Tastes): what they like and dislike,
 	// sweet or savory small meals, and spice.
 	ScoreKind_SCORE_KIND_TASTES ScoreKind = 13
+	// The lunches and dinners the day cooks already, as a household cooks
+	// about once a day, eating the rest of meals at the others.
+	ScoreKind_SCORE_KIND_COOKS ScoreKind = 14
 )
 
 // Enum value maps for ScoreKind.
@@ -73,6 +76,7 @@ var (
 		11: "SCORE_KIND_LEFTOVER",
 		12: "SCORE_KIND_COOKED",
 		13: "SCORE_KIND_TASTES",
+		14: "SCORE_KIND_COOKS",
 	}
 	ScoreKind_value = map[string]int32{
 		"SCORE_KIND_UNSPECIFIED":        0,
@@ -88,6 +92,7 @@ var (
 		"SCORE_KIND_LEFTOVER":           11,
 		"SCORE_KIND_COOKED":             12,
 		"SCORE_KIND_TASTES":             13,
+		"SCORE_KIND_COOKS":              14,
 	}
 )
 
@@ -1292,6 +1297,7 @@ type PlanCriteria struct {
 	xxx_hidden_ExcludeTags      []string               `protobuf:"bytes,7,rep,name=exclude_tags,json=excludeTags,proto3"`
 	xxx_hidden_ExcludeRecipeIds []string               `protobuf:"bytes,8,rep,name=exclude_recipe_ids,json=excludeRecipeIds,proto3"`
 	xxx_hidden_CookingWeekdays  []int32                `protobuf:"varint,9,rep,packed,name=cooking_weekdays,json=cookingWeekdays,proto3"`
+	xxx_hidden_Cooking          Emphasis               `protobuf:"varint,10,opt,name=cooking,proto3,enum=suggestions.v1.Emphasis"`
 	unknownFields               protoimpl.UnknownFields
 	sizeCache                   protoimpl.SizeCache
 }
@@ -1384,6 +1390,13 @@ func (x *PlanCriteria) GetCookingWeekdays() []int32 {
 	return nil
 }
 
+func (x *PlanCriteria) GetCooking() Emphasis {
+	if x != nil {
+		return x.xxx_hidden_Cooking
+	}
+	return Emphasis_EMPHASIS_UNSPECIFIED
+}
+
 func (x *PlanCriteria) SetVariety(v Emphasis) {
 	x.xxx_hidden_Variety = v
 }
@@ -1420,6 +1433,10 @@ func (x *PlanCriteria) SetCookingWeekdays(v []int32) {
 	x.xxx_hidden_CookingWeekdays = v
 }
 
+func (x *PlanCriteria) SetCooking(v Emphasis) {
+	x.xxx_hidden_Cooking = v
+}
+
 type PlanCriteria_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -1451,6 +1468,9 @@ type PlanCriteria_builder struct {
 	// the fridge until then, by its fridge_days, 2 if unknown. A meal before
 	// the first cooking day planned is cooked on its day.
 	CookingWeekdays []int32
+	// How much to cook less: about once a day, eating the rest of earlier
+	// meals at the others (COOKS and LEFTOVER).
+	Cooking Emphasis
 }
 
 func (b0 PlanCriteria_builder) Build() *PlanCriteria {
@@ -1466,6 +1486,7 @@ func (b0 PlanCriteria_builder) Build() *PlanCriteria {
 	x.xxx_hidden_ExcludeTags = b.ExcludeTags
 	x.xxx_hidden_ExcludeRecipeIds = b.ExcludeRecipeIds
 	x.xxx_hidden_CookingWeekdays = b.CookingWeekdays
+	x.xxx_hidden_Cooking = b.Cooking
 	return m0
 }
 
@@ -3414,7 +3435,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"itemsToBuy\x125\n" +
 	"\vleftover_of\x18\v \x01(\v2\x14.plans.v1.LeftoverOfR\n" +
 	"leftoverOf\x12\x1b\n" +
-	"\tcook_date\x18\f \x01(\tR\bcookDate\"\xc2\x03\n" +
+	"\tcook_date\x18\f \x01(\tR\bcookDate\"\xf6\x03\n" +
 	"\fPlanCriteria\x122\n" +
 	"\avariety\x18\x01 \x01(\x0e2\x18.suggestions.v1.EmphasisR\avariety\x126\n" +
 	"\tfavorites\x18\x02 \x01(\x0e2\x18.suggestions.v1.EmphasisR\tfavorites\x120\n" +
@@ -3424,7 +3445,9 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x11max_total_seconds\x18\x06 \x01(\x05R\x0fmaxTotalSeconds\x12!\n" +
 	"\fexclude_tags\x18\a \x03(\tR\vexcludeTags\x12,\n" +
 	"\x12exclude_recipe_ids\x18\b \x03(\tR\x10excludeRecipeIds\x12)\n" +
-	"\x10cooking_weekdays\x18\t \x03(\x05R\x0fcookingWeekdays\"\xe5\x01\n" +
+	"\x10cooking_weekdays\x18\t \x03(\x05R\x0fcookingWeekdays\x122\n" +
+	"\acooking\x18\n" +
+	" \x01(\x0e2\x18.suggestions.v1.EmphasisR\acooking\"\xe5\x01\n" +
 	"\n" +
 	"PlanChoice\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +
@@ -3536,7 +3559,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"recipeName\x12\x1a\n" +
 	"\bservings\x18\x0e \x01(\x01R\bservings\x12\x17\n" +
 	"\acook_id\x18\x0f \x01(\tR\x06cookId\x120\n" +
-	"\x14cook_servings_needed\x18\x10 \x01(\x01R\x12cookServingsNeeded*\xf2\x02\n" +
+	"\x14cook_servings_needed\x18\x10 \x01(\x01R\x12cookServingsNeeded*\x88\x03\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
@@ -3551,7 +3574,8 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x12\x17\n" +
 	"\x13SCORE_KIND_LEFTOVER\x10\v\x12\x15\n" +
 	"\x11SCORE_KIND_COOKED\x10\f\x12\x15\n" +
-	"\x11SCORE_KIND_TASTES\x10\r\"\x04\b\a\x10\a*\x11SCORE_KIND_FLAVOR*p\n" +
+	"\x11SCORE_KIND_TASTES\x10\r\x12\x14\n" +
+	"\x10SCORE_KIND_COOKS\x10\x0e\"\x04\b\a\x10\a*\x11SCORE_KIND_FLAVOR*p\n" +
 	"\bEmphasis\x12\x18\n" +
 	"\x14EMPHASIS_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fEMPHASIS_OFF\x10\x01\x12\x10\n" +
@@ -3628,41 +3652,42 @@ var file_suggestions_v1_suggestions_proto_depIdxs = []int32{
 	1,  // 11: suggestions.v1.PlanCriteria.pantry:type_name -> suggestions.v1.Emphasis
 	1,  // 12: suggestions.v1.PlanCriteria.shopping:type_name -> suggestions.v1.Emphasis
 	1,  // 13: suggestions.v1.PlanCriteria.nutrition:type_name -> suggestions.v1.Emphasis
-	26, // 14: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
-	28, // 15: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
-	26, // 16: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
-	11, // 17: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
-	12, // 18: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
-	26, // 19: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
-	2,  // 20: suggestions.v1.PlanSlot.state:type_name -> suggestions.v1.PlanSlotState
-	10, // 21: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
-	10, // 22: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
-	14, // 23: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
-	19, // 24: suggestions.v1.SuggestFixesResponse.fixes:type_name -> suggestions.v1.PlanFix
-	27, // 25: suggestions.v1.SuggestFixesResponse.warnings:type_name -> plans.v1.Warning
-	29, // 26: suggestions.v1.PortionResize.unit:type_name -> foods.v1.AmountUnit
-	3,  // 27: suggestions.v1.PlanFix.kind:type_name -> suggestions.v1.PlanFixKind
-	18, // 28: suggestions.v1.PlanFix.resizes:type_name -> suggestions.v1.PortionResize
-	27, // 29: suggestions.v1.PlanFix.warnings:type_name -> plans.v1.Warning
-	26, // 30: suggestions.v1.SuggestFromPantryRequest.meals:type_name -> people.v1.HouseholdMeal
-	22, // 31: suggestions.v1.SuggestFromPantryResponse.recipes:type_name -> suggestions.v1.PantryRecipe
-	25, // 32: suggestions.v1.SuggestSidesResponse.sides:type_name -> suggestions.v1.SideSuggestion
-	27, // 33: suggestions.v1.SideSuggestion.warnings:type_name -> plans.v1.Warning
-	5,  // 34: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
-	13, // 35: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
-	16, // 36: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
-	20, // 37: suggestions.v1.SuggestionService.SuggestFromPantry:input_type -> suggestions.v1.SuggestFromPantryRequest
-	23, // 38: suggestions.v1.SuggestionService.SuggestSides:input_type -> suggestions.v1.SuggestSidesRequest
-	6,  // 39: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
-	15, // 40: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
-	17, // 41: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
-	21, // 42: suggestions.v1.SuggestionService.SuggestFromPantry:output_type -> suggestions.v1.SuggestFromPantryResponse
-	24, // 43: suggestions.v1.SuggestionService.SuggestSides:output_type -> suggestions.v1.SuggestSidesResponse
-	39, // [39:44] is the sub-list for method output_type
-	34, // [34:39] is the sub-list for method input_type
-	34, // [34:34] is the sub-list for extension type_name
-	34, // [34:34] is the sub-list for extension extendee
-	0,  // [0:34] is the sub-list for field type_name
+	1,  // 14: suggestions.v1.PlanCriteria.cooking:type_name -> suggestions.v1.Emphasis
+	26, // 15: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
+	28, // 16: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
+	26, // 17: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
+	11, // 18: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
+	12, // 19: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
+	26, // 20: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
+	2,  // 21: suggestions.v1.PlanSlot.state:type_name -> suggestions.v1.PlanSlotState
+	10, // 22: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
+	10, // 23: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
+	14, // 24: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
+	19, // 25: suggestions.v1.SuggestFixesResponse.fixes:type_name -> suggestions.v1.PlanFix
+	27, // 26: suggestions.v1.SuggestFixesResponse.warnings:type_name -> plans.v1.Warning
+	29, // 27: suggestions.v1.PortionResize.unit:type_name -> foods.v1.AmountUnit
+	3,  // 28: suggestions.v1.PlanFix.kind:type_name -> suggestions.v1.PlanFixKind
+	18, // 29: suggestions.v1.PlanFix.resizes:type_name -> suggestions.v1.PortionResize
+	27, // 30: suggestions.v1.PlanFix.warnings:type_name -> plans.v1.Warning
+	26, // 31: suggestions.v1.SuggestFromPantryRequest.meals:type_name -> people.v1.HouseholdMeal
+	22, // 32: suggestions.v1.SuggestFromPantryResponse.recipes:type_name -> suggestions.v1.PantryRecipe
+	25, // 33: suggestions.v1.SuggestSidesResponse.sides:type_name -> suggestions.v1.SideSuggestion
+	27, // 34: suggestions.v1.SideSuggestion.warnings:type_name -> plans.v1.Warning
+	5,  // 35: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
+	13, // 36: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
+	16, // 37: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
+	20, // 38: suggestions.v1.SuggestionService.SuggestFromPantry:input_type -> suggestions.v1.SuggestFromPantryRequest
+	23, // 39: suggestions.v1.SuggestionService.SuggestSides:input_type -> suggestions.v1.SuggestSidesRequest
+	6,  // 40: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
+	15, // 41: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
+	17, // 42: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
+	21, // 43: suggestions.v1.SuggestionService.SuggestFromPantry:output_type -> suggestions.v1.SuggestFromPantryResponse
+	24, // 44: suggestions.v1.SuggestionService.SuggestSides:output_type -> suggestions.v1.SuggestSidesResponse
+	40, // [40:45] is the sub-list for method output_type
+	35, // [35:40] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_suggestions_v1_suggestions_proto_init() }

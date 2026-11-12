@@ -224,13 +224,16 @@ enum ScoreKind {
   SCORE_KIND_MEAL_TAG = 9;
   // The household's favorite recipes.
   SCORE_KIND_FAVORITE = 10;
-  // The rest of an earlier shared meal, reheated at a small meal.
+  // The rest of an earlier shared meal, reheated, rather than cooking.
   SCORE_KIND_LEFTOVER = 11;
   // How often the household cooked it lately.
   SCORE_KIND_COOKED = 12;
   // The eaters' tastes (see people.v1.Tastes): what they like and dislike,
   // sweet or savory small meals, and spice.
   SCORE_KIND_TASTES = 13;
+  // The lunches and dinners the day cooks already, as a household cooks
+  // about once a day, eating the rest of meals at the others.
+  SCORE_KIND_COOKS = 14;
   reserved 7;
   reserved "SCORE_KIND_FLAVOR";
 }
@@ -366,6 +369,9 @@ message PlanCriteria {
   // the fridge until then, by its fridge_days, 2 if unknown. A meal before
   // the first cooking day planned is cooked on its day.
   repeated int32 cooking_weekdays = 9;
+  // How much to cook less: about once a day, eating the rest of earlier
+  // meals at the others (COOKS and LEFTOVER).
+  Emphasis cooking = 10;
 }
 
 // The user's choice for a slot of a suggested plan.
