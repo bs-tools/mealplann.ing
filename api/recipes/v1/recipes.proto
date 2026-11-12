@@ -435,6 +435,12 @@ message RecipeSummary {
   // (see Recipe.not_suggested and Recipe.snoozed_until).
   bool not_suggested = 18;
   string snoozed_until = 19;
+  // The fiber in a serving, in grams. Unset if unknown.
+  optional double fiber_grams_per_serving = 20;
+  // The sugars in a serving, in grams. Unset if unknown.
+  optional double sugars_grams_per_serving = 21;
+  // The sodium in a serving, in milligrams. Unset if unknown.
+  optional double sodium_milligrams_per_serving = 22;
 }
 
 message CreateRecipeRequest {

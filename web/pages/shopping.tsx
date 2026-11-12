@@ -5,12 +5,12 @@ import NewListForm from "@components/shopping/new-list-form";
 import ShoppingListView from "@components/shopping/shopping-list";
 import StoresDialog from "@components/shopping/stores-dialog";
 import Card from "@components/ui/card";
-import ConfirmButton from "@components/ui/confirm-button";
-import { EmptyState, PageHeader } from "@components/ui/misc";
+import { EmptyState } from "@components/ui/misc";
 import Modal from "@components/ui/modal";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
-  ghostDangerButton,
+  dangerButton,
+  iconButton,
   linkClass,
   primaryButton,
   secondaryButton,
@@ -21,13 +21,12 @@ import {
   useQuery,
   useTransport,
 } from "@connectrpc/connect-query";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import {
-  ArrowPathIcon,
-  BuildingStorefrontIcon,
+  EllipsisHorizontalIcon,
   CheckCircleIcon,
   ReceiptPercentIcon,
   ExclamationTriangleIcon,
-  PlusIcon,
 } from "@heroicons/react/24/outline";
 import { skipToken, useQueryClient } from "@tanstack/react-query";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
@@ -42,7 +41,7 @@ import {
   regenerateShoppingList,
   uncheckItem,
 } from "gen/shopping/v1/shopping-ShoppingService_connectquery";
-import type { ShoppingItem } from "gen/shopping/v1/shopping_pb";
+import type { ShoppingItem, ShoppingList } from "gen/shopping/v1/shopping_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { today } from "helpers/dates";
 import { formatDay, formatShortDate } from "helpers/format";
@@ -61,6 +60,9 @@ const POLL_MS = 4000;
  * ShoppingPage shows the household's shopping list, by store and aisle, to
  * tick off on a phone in the store, or makes a new one from the plan.
  */
+const menuItemClass =
+  "block w-full px-4 py-2.5 text-left text-sm text-ink-soft data-[focus]:bg-ground-dark/60 data-[focus]:outline-hidden";
+
 const ShoppingPage: React.FC = () => {
   const queryClient = useQueryClient();
   const transport = useTransport();
@@ -91,6 +93,7 @@ const ShoppingPage: React.FC = () => {
   const [adding, setAdding] = useState(false);
   const [managingStores, setManagingStores] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [deletingList, setDeletingList] = useState(false);
   const [done, setDone] = useState("");
   // Checks being saved, by item ID, shown before the server has them.
   const [pending, setPending] = useState<Record<string, boolean>>({});
@@ -185,22 +188,11 @@ const ShoppingPage: React.FC = () => {
     (other) => other.id !== currentId
   );
   const storeList = stores.data?.stores ?? [];
-  const storesButton = (
-    <button
-      type="button"
-      className={secondaryButton}
-      onClick={() => {
-        setManagingStores(true);
-      }}
-    >
-      <BuildingStorefrontIcon className="size-4" aria-hidden="true" />
-      Stores
-    </button>
-  );
-
   let content: React.ReactNode = null;
-  let subtitle: React.ReactNode = "One shop a week, by store and aisle.";
-  let actions: React.ReactNode = storesButton;
+  let kicker = "One shop a week, by store and aisle";
+  let progress: { checked: number; total: number } | undefined;
+  // The list shown, for the menu's actions on it.
+  let shown: ShoppingList | undefined;
   if (lists.isPending || (currentId !== "" && list.isPending)) {
     content = <Loading />;
   } else if (lists.isError) {
@@ -249,52 +241,9 @@ const ShoppingPage: React.FC = () => {
     const checkedCount = current.items.filter(
       (item) => pending[item.id] ?? item.checked
     ).length;
-    subtitle = (
-      <>
-        For the meals of {formatDay(current.startDate)} to{" "}
-        {formatDay(current.endDate)}
-        {current.items.length > 0 && (
-          <span className="tabular-nums">
-            {" "}
-            · {checkedCount} of {current.items.length} checked
-          </span>
-        )}
-      </>
-    );
-    actions = (
-      <>
-        {!current.complete && (
-          <>
-            <button
-              type="button"
-              className={secondaryButton}
-              disabled={regenerate.isPending}
-              title="Make the list again from the plan and the pantry, keeping what's checked"
-              onClick={() => {
-                regenerate.mutate({ id: current.id });
-              }}
-            >
-              <ArrowPathIcon
-                className={`size-4 ${regenerate.isPending ? "animate-spin" : ""}`}
-                aria-hidden="true"
-              />
-              Update from plan
-            </button>
-            <button
-              type="button"
-              className={secondaryButton}
-              onClick={() => {
-                setAdding(true);
-              }}
-            >
-              <PlusIcon className="size-4" aria-hidden="true" />
-              Add item
-            </button>
-          </>
-        )}
-        {storesButton}
-      </>
-    );
+    kicker = `${formatDay(current.startDate)} – ${formatDay(current.endDate)}`;
+    progress = { checked: checkedCount, total: current.items.length };
+    shown = current;
     content = (
       <div className="flex flex-col gap-4">
         {done !== "" && <DoneBanner message={done} />}
@@ -352,64 +301,18 @@ const ShoppingPage: React.FC = () => {
           />
         )}
         {!current.complete && current.items.length > 0 && (
-          <button
-            type="button"
-            className={`${primaryButton} w-full py-3 text-base sm:w-auto sm:self-end`}
-            onClick={() => {
-              setCompleting(true);
-            }}
-          >
-            <CheckCircleIcon className="size-5" aria-hidden="true" />
-            Done shopping
-          </button>
-        )}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 pt-3 text-sm print:hidden">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="sticky bottom-[4.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
             <button
               type="button"
-              className={secondaryButton}
+              className={`${primaryButton} w-full py-3.5 text-base`}
               onClick={() => {
-                setCreating(true);
+                setCompleting(true);
               }}
             >
-              New list
+              Done: put it in the pantry
             </button>
-            {otherLists.length > 0 && (
-              <label className="flex items-center gap-2 text-gray-600">
-                <span>Other lists</span>
-                <select
-                  className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm"
-                  value=""
-                  onChange={(event) => {
-                    showList(event.target.value);
-                  }}
-                >
-                  <option value="" disabled>
-                    Choose…
-                  </option>
-                  {otherLists.map((other) => (
-                    <option key={other.id} value={other.id}>
-                      {formatShortDate(other.startDate)} to{" "}
-                      {formatShortDate(other.endDate)}
-                      {other.complete ? " (done)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
           </div>
-          <ConfirmButton
-            className={ghostDangerButton}
-            title="Delete this list?"
-            message="The list and its ticks are deleted. The pantry doesn't change."
-            disabled={removeList.isPending}
-            onConfirm={() => {
-              removeList.mutate({ id: current.id });
-            }}
-          >
-            Delete list
-          </ConfirmButton>
-        </div>
+        )}
         {completing && (
           <CompleteDialog
             list={{
@@ -443,9 +346,166 @@ const ShoppingPage: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
-      <PageHeader title="Shopping" subtitle={subtitle} actions={actions} />
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-medium text-muted">{kicker}</p>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink-soft">
+            Shop
+          </h1>
+          <div className="flex items-center gap-2">
+            {progress !== undefined && progress.total > 0 && (
+              <span className="text-sm text-muted tabular-nums">
+                {progress.checked} of {progress.total}
+              </span>
+            )}
+            <Menu as="div" className="relative print:hidden">
+              <MenuButton className={iconButton} aria-label="More" title="More">
+                <EllipsisHorizontalIcon className="size-6" />
+              </MenuButton>
+              <MenuItems
+                transition
+                anchor="bottom end"
+                className="z-[1100] mt-1 w-64 rounded-2xl border border-line bg-white py-1 font-ui shadow-lg transition focus:outline-hidden data-[closed]:scale-95 data-[closed]:opacity-0"
+              >
+                {shown !== undefined && !shown.complete && (
+                  <>
+                    <MenuItem>
+                      <button
+                        type="button"
+                        className={menuItemClass}
+                        disabled={regenerate.isPending}
+                        onClick={() => {
+                          regenerate.mutate({ id: shown?.id ?? "" });
+                        }}
+                      >
+                        Update from the plan
+                      </button>
+                    </MenuItem>
+                    <MenuItem>
+                      <button
+                        type="button"
+                        className={menuItemClass}
+                        onClick={() => {
+                          setAdding(true);
+                        }}
+                      >
+                        Add an item
+                      </button>
+                    </MenuItem>
+                  </>
+                )}
+                <MenuItem>
+                  <button
+                    type="button"
+                    className={menuItemClass}
+                    onClick={() => {
+                      setManagingStores(true);
+                    }}
+                  >
+                    Stores
+                  </button>
+                </MenuItem>
+                {shown !== undefined && (
+                  <MenuItem>
+                    <button
+                      type="button"
+                      className={menuItemClass}
+                      onClick={() => {
+                        setCreating(true);
+                      }}
+                    >
+                      New list
+                    </button>
+                  </MenuItem>
+                )}
+                {otherLists.slice(0, 5).map((other) => (
+                  <MenuItem key={other.id}>
+                    <button
+                      type="button"
+                      className={menuItemClass}
+                      onClick={() => {
+                        showList(other.id);
+                      }}
+                    >
+                      {formatShortDate(other.startDate)} –{" "}
+                      {formatShortDate(other.endDate)}
+                      {other.complete ? " (done)" : ""}
+                    </button>
+                  </MenuItem>
+                ))}
+                {shown !== undefined && (
+                  <MenuItem>
+                    <button
+                      type="button"
+                      className={`${menuItemClass} border-t border-line text-red-700`}
+                      onClick={() => {
+                        setDeletingList(true);
+                      }}
+                    >
+                      Delete this list
+                    </button>
+                  </MenuItem>
+                )}
+              </MenuItems>
+            </Menu>
+          </div>
+        </div>
+        {progress !== undefined && progress.total > 0 && (
+          <div
+            className="mt-2 h-2 rounded-full bg-ground-dark"
+            role="progressbar"
+            aria-label="Ticked"
+            aria-valuemin={0}
+            aria-valuemax={progress.total}
+            aria-valuenow={progress.checked}
+          >
+            <div
+              className="h-2 rounded-full bg-pine transition-[width]"
+              style={{ width: `${(progress.checked / progress.total) * 100}%` }}
+            />
+          </div>
+        )}
+      </div>
       {content}
+      {deletingList && shown !== undefined && (
+        <Modal
+          open
+          title="Delete this list?"
+          onClose={() => {
+            setDeletingList(false);
+          }}
+        >
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-ink-soft">
+              The list and its ticks are deleted. The pantry doesn&apos;t
+              change.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className={dangerButton}
+                disabled={removeList.isPending}
+                onClick={() => {
+                  removeList.mutate({ id: shown?.id ?? "" });
+                  setDeletingList(false);
+                }}
+              >
+                Delete
+              </button>
+              <button
+                type="button"
+                className={secondaryButton}
+                onClick={() => {
+                  setDeletingList(false);
+                }}
+              >
+                Keep it
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
       {creating && (
         <Modal
           open

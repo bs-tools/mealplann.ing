@@ -56,6 +56,48 @@ const ratingOf = (nutrient: BalanceNutrient, share: number): Rating => {
   return { good: true, word: share <= LOW ? "Low" : "Some" };
 };
 
+// BalanceSummary is a serving's balance in a word, and whether it's good.
+export interface BalanceSummary {
+  word: string;
+  good: boolean;
+}
+
+/**
+ * BalanceOf sums up a serving's balance in a word, for a recipe's card:
+ * its worst nutrient, like "Salty", "Sugary" or "Low protein", else
+ * "High protein" or "Balanced". It's undefined without nutrition.
+ */
+export const balanceOf = (
+  perServing: Partial<Record<NutrientKey, number | undefined>>
+): BalanceSummary | undefined => {
+  const share = (key: NutrientKey): number | undefined => {
+    const value = perServing[key];
+    const nutrient = BALANCE.find((other) => other.key === key);
+    return value === undefined || nutrient === undefined
+      ? undefined
+      : value / nutrient.dailyValue;
+  };
+  const sodium = share("sodiumMilligrams");
+  const sugars = share("sugarsGrams");
+  const protein = share("proteinGrams");
+  if (sodium === undefined && sugars === undefined && protein === undefined) {
+    return undefined;
+  }
+  if (sodium !== undefined && sodium >= HIGH) {
+    return { good: false, word: "Salty" };
+  }
+  if (sugars !== undefined && sugars >= HIGH) {
+    return { good: false, word: "Sugary" };
+  }
+  if (protein !== undefined && protein <= LOW) {
+    return { good: false, word: "Low protein" };
+  }
+  if (protein !== undefined && protein >= HIGH) {
+    return { good: true, word: "High protein" };
+  }
+  return { good: true, word: "Balanced" };
+};
+
 interface RecipeBalanceProps {
   perServing: Nutrients | undefined;
 }

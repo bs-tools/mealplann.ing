@@ -1,16 +1,12 @@
 import Loading from "@components/loading";
+import { balanceOf } from "@components/recipes/balance";
 import ImportRecipeDialog from "@components/recipes/import-recipe-dialog";
-import { Badge, EmptyState, PageHeader } from "@components/ui/misc";
+import { tintOf } from "@components/recipes/tint";
+import { Badge, EmptyState } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
-import {
-  cardClass,
-  choiceClass,
-  primaryButton,
-  secondaryButton,
-} from "@components/ui/styles";
+import { choiceClass, secondaryButton } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
 import {
-  ArrowDownTrayIcon,
   InformationCircleIcon,
   MagnifyingGlassIcon,
   PlusIcon,
@@ -23,7 +19,6 @@ import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
 import { formatHoursMinutes } from "helpers/format";
 import { useDebouncedValue } from "helpers/hooks";
-import { formatAmount } from "helpers/nutrients";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
@@ -156,7 +151,7 @@ const RecipesPage: React.FC = () => {
     }
   } else {
     content = (
-      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-4">
         {data.recipes.map((recipe) => (
           <RecipeCard key={recipe.id} recipe={recipe} />
         ))}
@@ -166,28 +161,30 @@ const RecipesPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title="Recipes"
-        subtitle="Your household's recipes, with nutrition per serving."
-        actions={
-          <>
-            <button
-              type="button"
-              className={secondaryButton}
-              onClick={() => {
-                setImporting(true);
-              }}
-            >
-              <ArrowDownTrayIcon className="size-4" aria-hidden="true" />
-              Import
-            </button>
-            <Link to="/recipes/new" className={primaryButton}>
-              <PlusIcon className="size-4" aria-hidden="true" />
-              New recipe
-            </Link>
-          </>
-        }
-      />
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink-soft">
+          Recipes
+        </h1>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className={secondaryButton}
+            onClick={() => {
+              setImporting(true);
+            }}
+          >
+            Import
+          </button>
+          <Link
+            to="/recipes/new"
+            className={`${secondaryButton} px-2.5`}
+            aria-label="New recipe"
+            title="New recipe"
+          >
+            <PlusIcon className="size-5" aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
       <ImportRecipeDialog
         open={importing}
         onClose={() => {
@@ -289,48 +286,66 @@ interface RecipeCardProps {
   recipe: RecipeSummary;
 }
 
-// RecipeCard shows a recipe in the list: its time and main nutrients.
+/**
+ * RecipeCard shows a recipe in the grid: a tile in its color, its name,
+ * and its balance in a word with its time.
+ */
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
   const totalSeconds = recipe.prepSeconds + recipe.cookSeconds;
+  const balance = balanceOf({
+    fiberGrams: recipe.fiberGramsPerServing,
+    proteinGrams: recipe.proteinGramsPerServing,
+    sodiumMilligrams: recipe.sodiumMilligramsPerServing,
+    sugarsGrams: recipe.sugarsGramsPerServing,
+  });
   const facts: string[] = [];
+  if (balance !== undefined) {
+    facts.push(balance.word);
+  }
   if (totalSeconds > 0) {
     facts.push(formatHoursMinutes(totalSeconds));
-  }
-  if (recipe.energyKcalPerServing !== undefined) {
-    facts.push(`${formatAmount(recipe.energyKcalPerServing)} kcal`);
-  }
-  if (recipe.proteinGramsPerServing !== undefined) {
-    facts.push(`${formatAmount(recipe.proteinGramsPerServing)} g protein`);
   }
   return (
     <li>
       <Link
         to={`/recipes/${recipe.id}`}
-        className={`${cardClass} flex h-full flex-col gap-1.5 p-4 hover:border-gray-300`}
+        className="group flex h-full flex-col gap-2"
       >
-        <h2 className="flex items-start gap-1.5 text-base font-bold text-ink-soft">
-          <span className="grow">{recipe.name}</span>
+        <span
+          className={`relative block aspect-[4/3] rounded-2xl ${tintOf(recipe.id)} group-hover:opacity-90`}
+        >
           {recipe.favorite && (
             <FilledStarIcon
-              className="mt-0.5 size-4 shrink-0 text-amber-500"
+              className="absolute top-2.5 right-2.5 size-5 text-white drop-shadow"
               aria-label="Favorite"
             />
           )}
-        </h2>
-        {recipe.draft && (
-          <span className="self-start">
-            <Badge>Draft</Badge>
-          </span>
-        )}
-        <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted tabular-nums">
-          {facts.length > 0 ? facts.join(" · ") : "No nutrition yet"}
-          {recipe.hasIssues && (
-            <InformationCircleIcon
-              className="size-4 shrink-0"
-              aria-label="Some ingredients lack data"
-            />
+          {recipe.draft && (
+            <span className="absolute bottom-2.5 left-2.5">
+              <Badge>Draft</Badge>
+            </span>
           )}
-        </p>
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <h2 className="text-base leading-snug font-bold text-ink-soft">
+            {recipe.name}
+          </h2>
+          <span className="flex items-center gap-1.5 text-sm text-muted">
+            {balance !== undefined && (
+              <span
+                className={`size-2 shrink-0 rounded-full ${balance.good ? "bg-pine" : "bg-cook"}`}
+                aria-hidden="true"
+              />
+            )}
+            {facts.length > 0 ? facts.join(" · ") : "No nutrition yet"}
+            {recipe.hasIssues && (
+              <InformationCircleIcon
+                className="size-4 shrink-0"
+                aria-label="Some ingredients lack data"
+              />
+            )}
+          </span>
+        </span>
       </Link>
     </li>
   );

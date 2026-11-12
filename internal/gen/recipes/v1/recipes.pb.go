@@ -1624,6 +1624,9 @@ type RecipeSummary struct {
 	xxx_hidden_Draft                       bool                   `protobuf:"varint,17,opt,name=draft,proto3"`
 	xxx_hidden_NotSuggested                bool                   `protobuf:"varint,18,opt,name=not_suggested,json=notSuggested,proto3"`
 	xxx_hidden_SnoozedUntil                string                 `protobuf:"bytes,19,opt,name=snoozed_until,json=snoozedUntil,proto3"`
+	xxx_hidden_FiberGramsPerServing        float64                `protobuf:"fixed64,20,opt,name=fiber_grams_per_serving,json=fiberGramsPerServing,proto3,oneof"`
+	xxx_hidden_SugarsGramsPerServing       float64                `protobuf:"fixed64,21,opt,name=sugars_grams_per_serving,json=sugarsGramsPerServing,proto3,oneof"`
+	xxx_hidden_SodiumMilligramsPerServing  float64                `protobuf:"fixed64,22,opt,name=sodium_milligrams_per_serving,json=sodiumMilligramsPerServing,proto3,oneof"`
 	XXX_raceDetectHookData                 protoimpl.RaceDetectHookData
 	XXX_presence                           [1]uint32
 	unknownFields                          protoimpl.UnknownFields
@@ -1781,6 +1784,27 @@ func (x *RecipeSummary) GetSnoozedUntil() string {
 	return ""
 }
 
+func (x *RecipeSummary) GetFiberGramsPerServing() float64 {
+	if x != nil {
+		return x.xxx_hidden_FiberGramsPerServing
+	}
+	return 0
+}
+
+func (x *RecipeSummary) GetSugarsGramsPerServing() float64 {
+	if x != nil {
+		return x.xxx_hidden_SugarsGramsPerServing
+	}
+	return 0
+}
+
+func (x *RecipeSummary) GetSodiumMilligramsPerServing() float64 {
+	if x != nil {
+		return x.xxx_hidden_SodiumMilligramsPerServing
+	}
+	return 0
+}
+
 func (x *RecipeSummary) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -1811,17 +1835,17 @@ func (x *RecipeSummary) SetTags(v []string) {
 
 func (x *RecipeSummary) SetEnergyKcalPerServing(v float64) {
 	x.xxx_hidden_EnergyKcalPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 21)
 }
 
 func (x *RecipeSummary) SetProteinGramsPerServing(v float64) {
 	x.xxx_hidden_ProteinGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 21)
 }
 
 func (x *RecipeSummary) SetCarbohydrateGramsPerServing(v float64) {
 	x.xxx_hidden_CarbohydrateGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 21)
 }
 
 func (x *RecipeSummary) SetGramsPerServing(v float64) {
@@ -1842,7 +1866,7 @@ func (x *RecipeSummary) SetFavorite(v bool) {
 
 func (x *RecipeSummary) SetCostCentsPerServing(v int32) {
 	x.xxx_hidden_CostCentsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 21)
 }
 
 func (x *RecipeSummary) SetDraft(v bool) {
@@ -1855,6 +1879,21 @@ func (x *RecipeSummary) SetNotSuggested(v bool) {
 
 func (x *RecipeSummary) SetSnoozedUntil(v string) {
 	x.xxx_hidden_SnoozedUntil = v
+}
+
+func (x *RecipeSummary) SetFiberGramsPerServing(v float64) {
+	x.xxx_hidden_FiberGramsPerServing = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 21)
+}
+
+func (x *RecipeSummary) SetSugarsGramsPerServing(v float64) {
+	x.xxx_hidden_SugarsGramsPerServing = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 21)
+}
+
+func (x *RecipeSummary) SetSodiumMilligramsPerServing(v float64) {
+	x.xxx_hidden_SodiumMilligramsPerServing = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 21)
 }
 
 func (x *RecipeSummary) HasEnergyKcalPerServing() bool {
@@ -1892,6 +1931,27 @@ func (x *RecipeSummary) HasCostCentsPerServing() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 14)
 }
 
+func (x *RecipeSummary) HasFiberGramsPerServing() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 18)
+}
+
+func (x *RecipeSummary) HasSugarsGramsPerServing() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 19)
+}
+
+func (x *RecipeSummary) HasSodiumMilligramsPerServing() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 20)
+}
+
 func (x *RecipeSummary) ClearEnergyKcalPerServing() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
 	x.xxx_hidden_EnergyKcalPerServing = 0
@@ -1914,6 +1974,21 @@ func (x *RecipeSummary) ClearUpdateTime() {
 func (x *RecipeSummary) ClearCostCentsPerServing() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
 	x.xxx_hidden_CostCentsPerServing = 0
+}
+
+func (x *RecipeSummary) ClearFiberGramsPerServing() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 18)
+	x.xxx_hidden_FiberGramsPerServing = 0
+}
+
+func (x *RecipeSummary) ClearSugarsGramsPerServing() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 19)
+	x.xxx_hidden_SugarsGramsPerServing = 0
+}
+
+func (x *RecipeSummary) ClearSodiumMilligramsPerServing() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 20)
+	x.xxx_hidden_SodiumMilligramsPerServing = 0
 }
 
 type RecipeSummary_builder struct {
@@ -1959,6 +2034,12 @@ type RecipeSummary_builder struct {
 	// (see Recipe.not_suggested and Recipe.snoozed_until).
 	NotSuggested bool
 	SnoozedUntil string
+	// The fiber in a serving, in grams. Unset if unknown.
+	FiberGramsPerServing *float64
+	// The sugars in a serving, in grams. Unset if unknown.
+	SugarsGramsPerServing *float64
+	// The sodium in a serving, in milligrams. Unset if unknown.
+	SodiumMilligramsPerServing *float64
 }
 
 func (b0 RecipeSummary_builder) Build() *RecipeSummary {
@@ -1973,15 +2054,15 @@ func (b0 RecipeSummary_builder) Build() *RecipeSummary {
 	x.xxx_hidden_CookSeconds = b.CookSeconds
 	x.xxx_hidden_Tags = b.Tags
 	if b.EnergyKcalPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 21)
 		x.xxx_hidden_EnergyKcalPerServing = *b.EnergyKcalPerServing
 	}
 	if b.ProteinGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 21)
 		x.xxx_hidden_ProteinGramsPerServing = *b.ProteinGramsPerServing
 	}
 	if b.CarbohydrateGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 21)
 		x.xxx_hidden_CarbohydrateGramsPerServing = *b.CarbohydrateGramsPerServing
 	}
 	x.xxx_hidden_GramsPerServing = b.GramsPerServing
@@ -1989,12 +2070,24 @@ func (b0 RecipeSummary_builder) Build() *RecipeSummary {
 	x.xxx_hidden_UpdateTime = b.UpdateTime
 	x.xxx_hidden_Favorite = b.Favorite
 	if b.CostCentsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 21)
 		x.xxx_hidden_CostCentsPerServing = *b.CostCentsPerServing
 	}
 	x.xxx_hidden_Draft = b.Draft
 	x.xxx_hidden_NotSuggested = b.NotSuggested
 	x.xxx_hidden_SnoozedUntil = b.SnoozedUntil
+	if b.FiberGramsPerServing != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 21)
+		x.xxx_hidden_FiberGramsPerServing = *b.FiberGramsPerServing
+	}
+	if b.SugarsGramsPerServing != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 21)
+		x.xxx_hidden_SugarsGramsPerServing = *b.SugarsGramsPerServing
+	}
+	if b.SodiumMilligramsPerServing != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 21)
+		x.xxx_hidden_SodiumMilligramsPerServing = *b.SodiumMilligramsPerServing
+	}
 	return m0
 }
 
@@ -4024,7 +4117,7 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\tfood_name\x18\x03 \x01(\tR\bfoodName\x12%\n" +
 	"\x0eunknown_weight\x18\x04 \x01(\bR\runknownWeight\x12+\n" +
 	"\x11unknown_nutrients\x18\x05 \x03(\tR\x10unknownNutrients\x12\x1c\n" +
-	"\tunmatched\x18\x06 \x01(\bR\tunmatched\"\xdf\x06\n" +
+	"\tunmatched\x18\x06 \x01(\bR\tunmatched\"\xfc\b\n" +
 	"\rRecipeSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -4046,11 +4139,17 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x16cost_cents_per_serving\x18\x10 \x01(\x05H\x03R\x13costCentsPerServing\x88\x01\x01\x12\x14\n" +
 	"\x05draft\x18\x11 \x01(\bR\x05draft\x12#\n" +
 	"\rnot_suggested\x18\x12 \x01(\bR\fnotSuggested\x12#\n" +
-	"\rsnoozed_until\x18\x13 \x01(\tR\fsnoozedUntilB\x1a\n" +
+	"\rsnoozed_until\x18\x13 \x01(\tR\fsnoozedUntil\x12:\n" +
+	"\x17fiber_grams_per_serving\x18\x14 \x01(\x01H\x04R\x14fiberGramsPerServing\x88\x01\x01\x12<\n" +
+	"\x18sugars_grams_per_serving\x18\x15 \x01(\x01H\x05R\x15sugarsGramsPerServing\x88\x01\x01\x12F\n" +
+	"\x1dsodium_milligrams_per_serving\x18\x16 \x01(\x01H\x06R\x1asodiumMilligramsPerServing\x88\x01\x01B\x1a\n" +
 	"\x18_energy_kcal_per_servingB\x1c\n" +
 	"\x1a_protein_grams_per_servingB!\n" +
 	"\x1f_carbohydrate_grams_per_servingB\x19\n" +
-	"\x17_cost_cents_per_servingJ\x04\b\x0f\x10\x10R\x10has_instructions\"`\n" +
+	"\x17_cost_cents_per_servingB\x1a\n" +
+	"\x18_fiber_grams_per_servingB\x1b\n" +
+	"\x19_sugars_grams_per_servingB \n" +
+	"\x1e_sodium_milligrams_per_servingJ\x04\b\x0f\x10\x10R\x10has_instructions\"`\n" +
 	"\x13CreateRecipeRequest\x12*\n" +
 	"\x06recipe\x18\x01 \x01(\v2\x12.recipes.v1.RecipeR\x06recipe\x12\x1d\n" +
 	"\n" +

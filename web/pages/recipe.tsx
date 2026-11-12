@@ -3,27 +3,24 @@ import RecipeBalance from "@components/recipes/balance";
 import FavoriteButton from "@components/recipes/favorite-button";
 import NutritionPanel from "@components/recipes/nutrition-panel";
 import SuggestMenu from "@components/recipes/suggest-feedback";
+import { tintOf } from "@components/recipes/tint";
 import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
-import ConfirmButton from "@components/ui/confirm-button";
-import { Badge, PageHeader } from "@components/ui/misc";
+import { Badge } from "@components/ui/misc";
+import Modal from "@components/ui/modal";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
-  iconButton,
+  dangerButton,
   linkClass,
   primaryButton,
   secondaryButton,
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import {
   ArrowTopRightOnSquareIcon,
-  CalendarDaysIcon,
-  ChartBarIcon,
+  EllipsisHorizontalIcon,
   ExclamationTriangleIcon,
-  DocumentDuplicateIcon,
-  PencilIcon,
-  PlayIcon,
-  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
@@ -49,7 +46,7 @@ import {
   stepStart,
 } from "helpers/steps";
 import { useUnitSystem } from "helpers/user";
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
 // FridgeNote says how long a recipe's leftovers keep.
@@ -87,7 +84,11 @@ const fridgeNote = (recipe: Recipe): string => {
  * RecipePage shows a recipe: its ingredients, steps and nutrition per
  * serving, with the ingredients whose foods lack data flagged.
  */
+const menuItemClass =
+  "block w-full px-4 py-2.5 text-left text-sm text-ink-soft data-[focus]:bg-ground-dark/60 data-[focus]:outline-hidden";
+
 const RecipePage: React.FC = () => {
+  const [deleting, setDeleting] = useState(false);
   const system = useUnitSystem();
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -139,89 +140,121 @@ const RecipePage: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <BackLink to="/recipes">Recipes</BackLink>
-      <PageHeader
-        title={recipe.name}
-        subtitle={
-          <span className="flex flex-col gap-1">
-            <span className="tabular-nums">
-              {meta.join(" · ")}
-              {recipe.sourceUrl !== "" && (
-                <>
-                  {" · "}
-                  <a
-                    href={recipe.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`${linkClass} inline-flex items-center gap-1`}
-                  >
-                    {formatRedirectTarget(recipe.sourceUrl)}
-                    <ArrowTopRightOnSquareIcon
-                      className="size-3.5"
-                      aria-hidden="true"
-                    />
-                  </a>
-                </>
-              )}
-            </span>
-            {recipe.description !== "" && (
-              <span className="text-ink-soft">{recipe.description}</span>
-            )}
-          </span>
-        }
-        actions={
-          <div className="flex items-center gap-1 print:hidden">
-            <Link
-              to={`/recipes/${recipe.id}/edit`}
-              className={iconButton}
-              aria-label="Edit"
-              title="Edit"
-            >
-              <PencilIcon className="size-5" />
-            </Link>
-            <Link
-              to={`/recipes/new?from=${recipe.id}`}
-              className={iconButton}
-              aria-label="Duplicate"
-              title="Start a new recipe from this one, to make a variation of it"
-            >
-              <DocumentDuplicateIcon className="size-5" />
-            </Link>
-            <Link
-              to={`/recipes/${recipe.id}/timeline`}
-              className={iconButton}
-              aria-label="Timeline"
-              title="Timeline"
-            >
-              <ChartBarIcon className="size-5" />
-            </Link>
-            <ConfirmButton
-              className={iconButton}
-              title="Delete recipe?"
-              message={`"${recipe.name}" will be deleted. Its foods are kept.`}
-              disabled={remove.isPending}
-              onConfirm={() => {
-                remove.mutate({ id: recipe.id });
-              }}
-            >
-              <TrashIcon className="size-5" aria-label="Delete" />
-            </ConfirmButton>
-          </div>
-        }
-      />
-      <div className="-mt-2 flex flex-wrap items-center gap-2 print:hidden">
-        {!recipe.draft && (
-          <Link to={`/plan?plan=${recipe.id}`} className={primaryButton}>
-            <CalendarDaysIcon className="size-4" aria-hidden="true" />
-            Plan this
-          </Link>
-        )}
-        <Link to={`/recipes/${recipe.id}/cook`} className={secondaryButton}>
-          <PlayIcon className="size-4" aria-hidden="true" />
-          Cook now
-        </Link>
-        <FavoriteButton recipe={recipe} />
-        <SuggestMenu recipe={recipe} />
+      <div
+        className={`relative -mt-1 flex h-36 items-start justify-end rounded-3xl p-3 sm:h-44 print:hidden ${tintOf(recipe.id)}`}
+      >
+        <Menu as="div" className="relative">
+          <MenuButton
+            className="flex size-10 items-center justify-center rounded-full bg-white/80 text-ink-soft backdrop-blur hover:bg-white"
+            aria-label="More"
+            title="More"
+          >
+            <EllipsisHorizontalIcon className="size-6" />
+          </MenuButton>
+          <MenuItems
+            transition
+            anchor="bottom end"
+            className="z-[1100] mt-1 w-60 rounded-2xl border border-line bg-white py-1 font-ui shadow-lg transition focus:outline-hidden data-[closed]:scale-95 data-[closed]:opacity-0"
+          >
+            <MenuItem>
+              <Link to={`/recipes/${recipe.id}/edit`} className={menuItemClass}>
+                Edit
+              </Link>
+            </MenuItem>
+            <MenuItem>
+              <Link
+                to={`/recipes/new?from=${recipe.id}`}
+                className={menuItemClass}
+              >
+                Start a variation of it
+              </Link>
+            </MenuItem>
+            <MenuItem>
+              <Link
+                to={`/recipes/${recipe.id}/timeline`}
+                className={menuItemClass}
+              >
+                Timeline
+              </Link>
+            </MenuItem>
+            <MenuItem>
+              <button
+                type="button"
+                className={`${menuItemClass} text-red-700`}
+                onClick={() => {
+                  setDeleting(true);
+                }}
+              >
+                Delete
+              </button>
+            </MenuItem>
+          </MenuItems>
+        </Menu>
       </div>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink-soft">
+          {recipe.name}
+        </h1>
+        <p className="text-sm text-muted tabular-nums">
+          {meta.join(" · ")}
+          {recipe.sourceUrl !== "" && (
+            <>
+              {" · "}
+              <a
+                href={recipe.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={`${linkClass} inline-flex items-center gap-1`}
+              >
+                {formatRedirectTarget(recipe.sourceUrl)}
+                <ArrowTopRightOnSquareIcon
+                  className="size-3.5"
+                  aria-hidden="true"
+                />
+              </a>
+            </>
+          )}
+        </p>
+        {recipe.description !== "" && (
+          <p className="text-sm text-ink-soft">{recipe.description}</p>
+        )}
+      </div>
+      {deleting && (
+        <Modal
+          open
+          title="Delete recipe?"
+          onClose={() => {
+            setDeleting(false);
+          }}
+        >
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-ink-soft">
+              &ldquo;{recipe.name}&rdquo; will be deleted. Its foods are kept.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className={dangerButton}
+                disabled={remove.isPending}
+                onClick={() => {
+                  remove.mutate({ id: recipe.id });
+                }}
+              >
+                {remove.isPending ? "Deleting…" : "Delete"}
+              </button>
+              <button
+                type="button"
+                className={secondaryButton}
+                onClick={() => {
+                  setDeleting(false);
+                }}
+              >
+                Keep it
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
       <ErrorText error={remove.error} />
       {recipe.draft && (
         <p className="rounded-xl bg-warn-tint px-3 py-2 text-sm text-warn-dark">
@@ -376,21 +409,22 @@ const RecipePage: React.FC = () => {
         </div>
         <div className="order-first flex flex-col gap-4 lg:order-none lg:col-span-2">
           <RecipeBalance perServing={recipe.nutrition?.perServing} />
-          {recipe.servedWith.length > 0 && (
-            <p className="text-sm text-muted">
-              Served with{" "}
-              {recipe.servedWith
-                .map(
-                  (side) =>
-                    `${side.foodName.toLowerCase()} (${side.gramsPerServing} g)`
-                )
-                .join(", ")}
-              : each meal suggests the one that fits the day.
-            </p>
-          )}
           <NutritionPanel recipe={recipe} />
-          {(recipe.tags.length > 0 || keeps !== "") && (
+          {(recipe.tags.length > 0 ||
+            keeps !== "" ||
+            recipe.servedWith.length > 0) && (
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+              {recipe.servedWith.length > 0 && (
+                <span
+                  className="rounded-full bg-[#f0e1b4] px-3 py-1 text-sm text-ink-soft"
+                  title="Each meal of it suggests the side that fits the day"
+                >
+                  with{" "}
+                  {formatList(
+                    recipe.servedWith.map((side) => side.foodName.toLowerCase())
+                  )}
+                </span>
+              )}
               {recipe.tags.map((tag) => (
                 <Link
                   key={tag}
@@ -403,7 +437,27 @@ const RecipePage: React.FC = () => {
               {keeps !== "" && <span>{keeps}</span>}
             </div>
           )}
+          <div className="flex flex-wrap items-start gap-2 print:hidden">
+            <FavoriteButton recipe={recipe} />
+            <SuggestMenu recipe={recipe} />
+          </div>
         </div>
+      </div>
+      <div className="sticky bottom-[4.75rem] z-10 flex gap-2 rounded-2xl bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
+        {!recipe.draft && (
+          <Link
+            to={`/plan?plan=${recipe.id}`}
+            className={`${primaryButton} grow py-3.5 text-base`}
+          >
+            Plan this
+          </Link>
+        )}
+        <Link
+          to={`/recipes/${recipe.id}/cook`}
+          className={`${secondaryButton} py-3.5 text-base ${recipe.draft ? "grow" : ""}`}
+        >
+          Cook now
+        </Link>
       </div>
     </div>
   );
