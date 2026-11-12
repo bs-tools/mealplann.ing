@@ -47,7 +47,7 @@ const Layout: React.FC<{ user: User | null }> = ({ user }) => (
     <div className="flex min-w-0 grow flex-col">
       {user === null && <Header />}
       <main
-        className={`flex grow justify-center ${user === null ? "" : "pb-20 lg:pb-0 print:pb-0"}`}
+        className={`flex grow justify-center ${user === null ? "" : "pb-16 lg:pb-0 print:pb-0"}`}
       >
         <div className="flex w-full max-w-5xl min-w-0 grow flex-col px-4 pt-6 pb-5 sm:px-6 lg:pt-8 print:px-0 print:py-0">
           <Outlet />

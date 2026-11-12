@@ -26,34 +26,27 @@ export const TABS: Tab[] = [
 
 /**
  * BottomNav is the tab bar of the main pages on phones and tablets, at the
- * bottom of the screen; larger screens have them in the side rail.
+ * bottom of the screen, as words without icons, as in the design; larger
+ * screens have them in the side rail.
  */
 const BottomNav: React.FC = () => (
   <nav
     aria-label="Main"
-    className="fixed inset-x-0 bottom-0 z-[1000] border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden print:hidden"
+    className="fixed inset-x-0 bottom-0 z-[1000] border-t border-line bg-ground/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden print:hidden"
   >
-    <div className="mx-auto grid max-w-md grid-cols-5">
-      {TABS.map(({ icon: Icon, label, to, end }) => (
+    <div className="mx-auto grid max-w-md grid-cols-5 px-2 pt-1 pb-3">
+      {TABS.map(({ label, to, end }) => (
         <NavLink
           key={to}
           to={to}
           end={end ?? false}
           className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 pt-2 pb-2.5 text-[11px] ${
+            `py-3 text-center text-xs ${
               isActive ? "font-bold text-ink-soft" : "text-muted"
             }`
           }
         >
-          {({ isActive }) => (
-            <>
-              <Icon
-                className={`size-6 ${isActive ? "stroke-2 text-pine" : ""}`}
-                aria-hidden="true"
-              />
-              {label}
-            </>
-          )}
+          {label}
         </NavLink>
       ))}
     </div>
