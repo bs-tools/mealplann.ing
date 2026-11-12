@@ -268,7 +268,7 @@ const DayLine: React.FC<DayLineProps> = ({
                     `, ${formatServings(block.cook.cook.servings)}`}
                 </span>
                 <Link
-                  to={`/recipes/${block.cook.cook?.recipeId ?? ""}/cook`}
+                  to={`/recipes/${block.cook.cook?.recipeId ?? ""}/cook?cook=${block.cook.cook?.id ?? ""}&servings=${block.cook.cook?.servings ?? ""}`}
                   className={`${primaryButton} mt-1 self-start`}
                 >
                   Start cooking

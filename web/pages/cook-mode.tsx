@@ -1,6 +1,6 @@
 import Loading from "@components/loading";
 import QueryError from "@components/ui/query-error";
-import { useQuery } from "@connectrpc/connect-query";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -10,9 +10,20 @@ import {
   PlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { useQueryClient } from "@tanstack/react-query";
+import { PantryService } from "gen/pantry/v1/pantry_pb";
+import {
+  getWeek,
+  updateCook,
+} from "gen/plans/v1/plans-PlanService_connectquery";
+import { PlanService } from "gen/plans/v1/plans_pb";
 import { getRecipe } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import type { Recipe, Step } from "gen/recipes/v1/recipes_pb";
+import { ShoppingService } from "gen/shopping/v1/shopping_pb";
+import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
+import { startOfWeek, today } from "helpers/dates";
 import { formatServings } from "helpers/labels";
+import { invalidateServices } from "helpers/query";
 import {
   formatClock,
   formatStepDuration,
@@ -194,6 +205,102 @@ const StepPage: React.FC<StepPageProps> = ({
   );
 };
 
+interface MarkCookedProps {
+  recipeId: string;
+  // The cook being cooked, "" for today's cook of the recipe, if any.
+  cookId: string;
+}
+
+/**
+ * MarkCooked marks the cook cooked once cook mode reaches its end, which
+ * takes its ingredients out of the pantry, as finishing the steps is
+ * cooking it. Cook mode opened from Today names its cook; opened from the
+ * recipe, it's today's cook of the recipe that isn't cooked yet, if any.
+ * It can be undone, for a run through the steps that wasn't the cook.
+ */
+const MarkCooked: React.FC<MarkCookedProps> = ({ recipeId, cookId }) => {
+  const queryClient = useQueryClient();
+  const now = today();
+  const week = useQuery(getWeek, { monday: startOfWeek(now) });
+  const update = useMutation(updateCook, {
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [
+        PlanService,
+        PantryService,
+        ShoppingService,
+        SuggestionService,
+      ]);
+    },
+  });
+  // Whether it was marked here, to only mark it once.
+  const marked = useRef(false);
+  const [undone, setUndone] = useState(false);
+  const cooks = week.data?.cooks ?? [];
+  const planned =
+    cookId === ""
+      ? cooks.find(
+          (other) =>
+            other.cook?.recipeId === recipeId &&
+            other.cook.date === now &&
+            !other.cook.done
+        )
+      : cooks.find((other) => other.cook?.id === cookId);
+  const id = cookId === "" ? (planned?.cook?.id ?? "") : cookId;
+  const { mutate } = update;
+  useEffect(() => {
+    // A cook named by Today is marked even if it's of another week.
+    if (marked.current || id === "" || (cookId === "" && week.isPending)) {
+      return;
+    }
+    if (planned?.cook?.done === true) {
+      return;
+    }
+    marked.current = true;
+    mutate({ cook: { done: true, id }, updateMask: { paths: ["done"] } });
+  }, [id, cookId, week.isPending, planned, mutate]);
+
+  if (update.isIdle) {
+    return null;
+  }
+  if (undone && !update.isError) {
+    return (
+      <p className="text-sm text-white/70">
+        {update.isPending ? "Undoing…" : "Not marked cooked."}
+      </p>
+    );
+  }
+  if (update.isError) {
+    return (
+      <p className="text-sm text-white/70">
+        It couldn&apos;t be marked cooked: {update.error.rawMessage}. Tick it on
+        Today or the Cooks page.
+      </p>
+    );
+  }
+  return (
+    <p className="flex flex-wrap items-center justify-center gap-x-2 text-sm text-white/70">
+      {update.isPending
+        ? "Marking it cooked…"
+        : "Marked cooked: its ingredients are out of the pantry."}
+      {update.isSuccess && (
+        <button
+          type="button"
+          className="font-bold text-white underline"
+          onClick={() => {
+            mutate({
+              cook: { done: false, id },
+              updateMask: { paths: ["done"] },
+            });
+            setUndone(true);
+          }}
+        >
+          Undo
+        </button>
+      )}
+    </p>
+  );
+};
+
 /**
  * CookModePage walks through a recipe one step at a time, in large type,
  * with each step's ingredients scaled to the servings cooked, timers, and
@@ -276,7 +383,9 @@ const CookModePage: React.FC = () => {
   }
   const setServings = (next: number) => {
     if (next >= 1 && next <= 100) {
-      setParams({ servings: String(next) }, { replace: true });
+      const nextParams = new URLSearchParams(params);
+      nextParams.set("servings", String(next));
+      setParams(nextParams, { replace: true });
     }
   };
   const step = steps[page - 1];
@@ -325,11 +434,13 @@ const CookModePage: React.FC = () => {
         <p className="text-2xl font-bold text-white">
           Done. Enjoy your {data.name}!
         </p>
+        <MarkCooked recipeId={data.id} cookId={params.get("cook") ?? ""} />
+        {/* Cook mode opened from Today goes back there. */}
         <Link
-          to={`/recipes/${data.id}`}
+          to={params.has("cook") ? "/" : `/recipes/${data.id}`}
           className="rounded-xl bg-white px-5 py-3 font-bold text-ink-soft"
         >
-          Back to the recipe
+          {params.has("cook") ? "Back to today" : "Back to the recipe"}
         </Link>
       </div>
     );
