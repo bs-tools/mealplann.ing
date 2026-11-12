@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file users/v1/users.proto.
  */
 export const file_users_v1_users: GenFile = /*@__PURE__*/
-  fileDesc("ChR1c2Vycy92MS91c2Vycy5wcm90bxIIdXNlcnMudjEiYQoJSG91c2Vob2xkEhIKAmlkGAEgASgJQgaqnxkCCAESDAoEbmFtZRgCIAEoCRIyCgdtZW1iZXJzGAMgAygLMhkudXNlcnMudjEuSG91c2Vob2xkTWVtYmVyQgaqnxkCCAEiRAoPSG91c2Vob2xkTWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgphdmF0YXJfdXJsGAMgASgJIhUKE0dldEhvdXNlaG9sZFJlcXVlc3QiPgoUR2V0SG91c2Vob2xkUmVzcG9uc2USJgoJaG91c2Vob2xkGAEgASgLMhMudXNlcnMudjEuSG91c2Vob2xkIiYKFlVwZGF0ZUhvdXNlaG9sZFJlcXVlc3QSDAoEbmFtZRgBIAEoCSJBChdVcGRhdGVIb3VzZWhvbGRSZXNwb25zZRImCglob3VzZWhvbGQYASABKAsyEy51c2Vycy52MS5Ib3VzZWhvbGQivAEKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRISCgpnaXZlbl9uYW1lGAQgASgJEhMKC2ZhbWlseV9uYW1lGAUgASgJEhIKCmF2YXRhcl91cmwYBiABKAkSDQoFYWRtaW4YByABKAgSFAoMaG91c2Vob2xkX2lkGAggASgJEikKC3VuaXRfc3lzdGVtGAkgASgOMhQudXNlcnMudjEuVW5pdFN5c3RlbSJCChVVcGRhdGVTZXR0aW5nc1JlcXVlc3QSKQoLdW5pdF9zeXN0ZW0YASABKA4yFC51c2Vycy52MS5Vbml0U3lzdGVtIjYKFlVwZGF0ZVNldHRpbmdzUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiFwoVR2V0Q3VycmVudFVzZXJSZXF1ZXN0IjYKFkdldEN1cnJlbnRVc2VyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiiQEKCEFQSVRva2VuEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSLwoLY3JlYXRlX3RpbWUYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKDmxhc3RfdXNlZF90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIlChVDcmVhdGVBUElUb2tlblJlcXVlc3QSDAoEbmFtZRgBIAEoCSJLChZDcmVhdGVBUElUb2tlblJlc3BvbnNlEiEKBXRva2VuGAEgASgLMhIudXNlcnMudjEuQVBJVG9rZW4SDgoGc2VjcmV0GAIgASgJIhYKFExpc3RBUElUb2tlbnNSZXF1ZXN0IjsKFUxpc3RBUElUb2tlbnNSZXNwb25zZRIiCgZ0b2tlbnMYASADKAsyEi51c2Vycy52MS5BUElUb2tlbiIjChVEZWxldGVBUElUb2tlblJlcXVlc3QSCgoCaWQYASABKAkiGAoWRGVsZXRlQVBJVG9rZW5SZXNwb25zZSIjChNVcGxvYWRBdmF0YXJSZXF1ZXN0EgwKBGRhdGEYASABKAwiNAoUVXBsb2FkQXZhdGFyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiFQoTRGVsZXRlQXZhdGFyUmVxdWVzdCI0ChREZWxldGVBdmF0YXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4udXNlcnMudjEuVXNlcipbCgpVbml0U3lzdGVtEhsKF1VOSVRfU1lTVEVNX1VOU1BFQ0lGSUVEEAASFgoSVU5JVF9TWVNURU1fTUVUUklDEAESGAoUVU5JVF9TWVNURU1fSU1QRVJJQUwQAjKoBgoLVXNlclNlcnZpY2USUwoOR2V0Q3VycmVudFVzZXISHy51c2Vycy52MS5HZXRDdXJyZW50VXNlclJlcXVlc3QaIC51c2Vycy52MS5HZXRDdXJyZW50VXNlclJlc3BvbnNlElsKDkNyZWF0ZUFQSVRva2VuEh8udXNlcnMudjEuQ3JlYXRlQVBJVG9rZW5SZXF1ZXN0GiAudXNlcnMudjEuQ3JlYXRlQVBJVG9rZW5SZXNwb25zZSIGop8ZAggBElgKDUxpc3RBUElUb2tlbnMSHi51c2Vycy52MS5MaXN0QVBJVG9rZW5zUmVxdWVzdBofLnVzZXJzLnYxLkxpc3RBUElUb2tlbnNSZXNwb25zZSIGop8ZAggBElsKDkRlbGV0ZUFQSVRva2VuEh8udXNlcnMudjEuRGVsZXRlQVBJVG9rZW5SZXF1ZXN0GiAudXNlcnMudjEuRGVsZXRlQVBJVG9rZW5SZXNwb25zZSIGop8ZAggBElUKDFVwbG9hZEF2YXRhchIdLnVzZXJzLnYxLlVwbG9hZEF2YXRhclJlcXVlc3QaHi51c2Vycy52MS5VcGxvYWRBdmF0YXJSZXNwb25zZSIGop8ZAggBElUKDERlbGV0ZUF2YXRhchIdLnVzZXJzLnYxLkRlbGV0ZUF2YXRhclJlcXVlc3QaHi51c2Vycy52MS5EZWxldGVBdmF0YXJSZXNwb25zZSIGop8ZAggBElMKDlVwZGF0ZVNldHRpbmdzEh8udXNlcnMudjEuVXBkYXRlU2V0dGluZ3NSZXF1ZXN0GiAudXNlcnMudjEuVXBkYXRlU2V0dGluZ3NSZXNwb25zZRJNCgxHZXRIb3VzZWhvbGQSHS51c2Vycy52MS5HZXRIb3VzZWhvbGRSZXF1ZXN0Gh4udXNlcnMudjEuR2V0SG91c2Vob2xkUmVzcG9uc2USXgoPVXBkYXRlSG91c2Vob2xkEiAudXNlcnMudjEuVXBkYXRlSG91c2Vob2xkUmVxdWVzdBohLnVzZXJzLnYxLlVwZGF0ZUhvdXNlaG9sZFJlc3BvbnNlIgainxkCCAFCnAEKDGNvbS51c2Vycy52MUIKVXNlcnNQcm90b1ABWj9naXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3VzZXJzL3YxO3VzZXJzdjGiAgNVWFiqAghVc2Vycy5WMcoCCFVzZXJzXFYx4gIUVXNlcnNcVjFcR1BCTWV0YWRhdGHqAglVc2Vyczo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChR1c2Vycy92MS91c2Vycy5wcm90bxIIdXNlcnMudjEiYQoJSG91c2Vob2xkEhIKAmlkGAEgASgJQgaqnxkCCAESDAoEbmFtZRgCIAEoCRIyCgdtZW1iZXJzGAMgAygLMhkudXNlcnMudjEuSG91c2Vob2xkTWVtYmVyQgaqnxkCCAEiRAoPSG91c2Vob2xkTWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgphdmF0YXJfdXJsGAMgASgJIhUKE0dldEhvdXNlaG9sZFJlcXVlc3QiPgoUR2V0SG91c2Vob2xkUmVzcG9uc2USJgoJaG91c2Vob2xkGAEgASgLMhMudXNlcnMudjEuSG91c2Vob2xkIiYKFlVwZGF0ZUhvdXNlaG9sZFJlcXVlc3QSDAoEbmFtZRgBIAEoCSJBChdVcGRhdGVIb3VzZWhvbGRSZXNwb25zZRImCglob3VzZWhvbGQYASABKAsyEy51c2Vycy52MS5Ib3VzZWhvbGQivAEKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRISCgpnaXZlbl9uYW1lGAQgASgJEhMKC2ZhbWlseV9uYW1lGAUgASgJEhIKCmF2YXRhcl91cmwYBiABKAkSDQoFYWRtaW4YByABKAgSFAoMaG91c2Vob2xkX2lkGAggASgJEikKC3VuaXRfc3lzdGVtGAkgASgOMhQudXNlcnMudjEuVW5pdFN5c3RlbSJCChVVcGRhdGVTZXR0aW5nc1JlcXVlc3QSKQoLdW5pdF9zeXN0ZW0YASABKA4yFC51c2Vycy52MS5Vbml0U3lzdGVtIjYKFlVwZGF0ZVNldHRpbmdzUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiFwoVR2V0Q3VycmVudFVzZXJSZXF1ZXN0IjYKFkdldEN1cnJlbnRVc2VyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiiQEKCEFQSVRva2VuEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSLwoLY3JlYXRlX3RpbWUYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKDmxhc3RfdXNlZF90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIlChVDcmVhdGVBUElUb2tlblJlcXVlc3QSDAoEbmFtZRgBIAEoCSJLChZDcmVhdGVBUElUb2tlblJlc3BvbnNlEiEKBXRva2VuGAEgASgLMhIudXNlcnMudjEuQVBJVG9rZW4SDgoGc2VjcmV0GAIgASgJIhYKFExpc3RBUElUb2tlbnNSZXF1ZXN0IjsKFUxpc3RBUElUb2tlbnNSZXNwb25zZRIiCgZ0b2tlbnMYASADKAsyEi51c2Vycy52MS5BUElUb2tlbiIjChVEZWxldGVBUElUb2tlblJlcXVlc3QSCgoCaWQYASABKAkiGAoWRGVsZXRlQVBJVG9rZW5SZXNwb25zZSKAAQoMQ2FsZW5kYXJGZWVkEi8KC2NyZWF0ZV90aW1lGAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIyCg5sYXN0X3VzZWRfdGltZRgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASCwoDdXJsGAMgASgJIhgKFkdldENhbGVuZGFyRmVlZFJlcXVlc3QiPwoXR2V0Q2FsZW5kYXJGZWVkUmVzcG9uc2USJAoEZmVlZBgBIAEoCzIWLnVzZXJzLnYxLkNhbGVuZGFyRmVlZCIbChlDcmVhdGVDYWxlbmRhckZlZWRSZXF1ZXN0IkIKGkNyZWF0ZUNhbGVuZGFyRmVlZFJlc3BvbnNlEiQKBGZlZWQYASABKAsyFi51c2Vycy52MS5DYWxlbmRhckZlZWQiGwoZRGVsZXRlQ2FsZW5kYXJGZWVkUmVxdWVzdCIcChpEZWxldGVDYWxlbmRhckZlZWRSZXNwb25zZSIjChNVcGxvYWRBdmF0YXJSZXF1ZXN0EgwKBGRhdGEYASABKAwiNAoUVXBsb2FkQXZhdGFyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiFQoTRGVsZXRlQXZhdGFyUmVxdWVzdCI0ChREZWxldGVBdmF0YXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4udXNlcnMudjEuVXNlcipbCgpVbml0U3lzdGVtEhsKF1VOSVRfU1lTVEVNX1VOU1BFQ0lGSUVEEAASFgoSVU5JVF9TWVNURU1fTUVUUklDEAESGAoUVU5JVF9TWVNURU1fSU1QRVJJQUwQAjLaCAoLVXNlclNlcnZpY2USUwoOR2V0Q3VycmVudFVzZXISHy51c2Vycy52MS5HZXRDdXJyZW50VXNlclJlcXVlc3QaIC51c2Vycy52MS5HZXRDdXJyZW50VXNlclJlc3BvbnNlElsKDkNyZWF0ZUFQSVRva2VuEh8udXNlcnMudjEuQ3JlYXRlQVBJVG9rZW5SZXF1ZXN0GiAudXNlcnMudjEuQ3JlYXRlQVBJVG9rZW5SZXNwb25zZSIGop8ZAggBElgKDUxpc3RBUElUb2tlbnMSHi51c2Vycy52MS5MaXN0QVBJVG9rZW5zUmVxdWVzdBofLnVzZXJzLnYxLkxpc3RBUElUb2tlbnNSZXNwb25zZSIGop8ZAggBElsKDkRlbGV0ZUFQSVRva2VuEh8udXNlcnMudjEuRGVsZXRlQVBJVG9rZW5SZXF1ZXN0GiAudXNlcnMudjEuRGVsZXRlQVBJVG9rZW5SZXNwb25zZSIGop8ZAggBEl4KD0dldENhbGVuZGFyRmVlZBIgLnVzZXJzLnYxLkdldENhbGVuZGFyRmVlZFJlcXVlc3QaIS51c2Vycy52MS5HZXRDYWxlbmRhckZlZWRSZXNwb25zZSIGop8ZAggBEmcKEkNyZWF0ZUNhbGVuZGFyRmVlZBIjLnVzZXJzLnYxLkNyZWF0ZUNhbGVuZGFyRmVlZFJlcXVlc3QaJC51c2Vycy52MS5DcmVhdGVDYWxlbmRhckZlZWRSZXNwb25zZSIGop8ZAggBEmcKEkRlbGV0ZUNhbGVuZGFyRmVlZBIjLnVzZXJzLnYxLkRlbGV0ZUNhbGVuZGFyRmVlZFJlcXVlc3QaJC51c2Vycy52MS5EZWxldGVDYWxlbmRhckZlZWRSZXNwb25zZSIGop8ZAggBElUKDFVwbG9hZEF2YXRhchIdLnVzZXJzLnYxLlVwbG9hZEF2YXRhclJlcXVlc3QaHi51c2Vycy52MS5VcGxvYWRBdmF0YXJSZXNwb25zZSIGop8ZAggBElUKDERlbGV0ZUF2YXRhchIdLnVzZXJzLnYxLkRlbGV0ZUF2YXRhclJlcXVlc3QaHi51c2Vycy52MS5EZWxldGVBdmF0YXJSZXNwb25zZSIGop8ZAggBElMKDlVwZGF0ZVNldHRpbmdzEh8udXNlcnMudjEuVXBkYXRlU2V0dGluZ3NSZXF1ZXN0GiAudXNlcnMudjEuVXBkYXRlU2V0dGluZ3NSZXNwb25zZRJNCgxHZXRIb3VzZWhvbGQSHS51c2Vycy52MS5HZXRIb3VzZWhvbGRSZXF1ZXN0Gh4udXNlcnMudjEuR2V0SG91c2Vob2xkUmVzcG9uc2USXgoPVXBkYXRlSG91c2Vob2xkEiAudXNlcnMudjEuVXBkYXRlSG91c2Vob2xkUmVxdWVzdBohLnVzZXJzLnYxLlVwZGF0ZUhvdXNlaG9sZFJlc3BvbnNlIgainxkCCAFCnAEKDGNvbS51c2Vycy52MUIKVXNlcnNQcm90b1ABWj9naXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3VzZXJzL3YxO3VzZXJzdjGiAgNVWFiqAghVc2Vycy5WMcoCCFVzZXJzXFYx4gIUVXNlcnNcVjFcR1BCTWV0YWRhdGHqAglVc2Vyczo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A household: the users who share everything the app stores about food,
@@ -443,6 +443,132 @@ export const DeleteAPITokenResponseSchema: GenMessage<DeleteAPITokenResponse> = 
   messageDesc(file_users_v1_users, 17);
 
 /**
+ * A user's calendar feed.
+ *
+ * @generated from message users.v1.CalendarFeed
+ */
+export type CalendarFeed = Message<"users.v1.CalendarFeed"> & {
+  /**
+   * When it was created.
+   *
+   * @generated from field: google.protobuf.Timestamp create_time = 1;
+   */
+  createTime?: Timestamp | undefined;
+
+  /**
+   * When a calendar app last read it, unset if none has.
+   *
+   * @generated from field: google.protobuf.Timestamp last_used_time = 2;
+   */
+  lastUsedTime?: Timestamp | undefined;
+
+  /**
+   * The URL to subscribe to, only set when it's created: only a hash of
+   * its secret is kept.
+   *
+   * @generated from field: string url = 3;
+   */
+  url: string;
+};
+
+/**
+ * Describes the message users.v1.CalendarFeed.
+ * Use `create(CalendarFeedSchema)` to create a new message.
+ */
+export const CalendarFeedSchema: GenMessage<CalendarFeed> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 18);
+
+/**
+ * @generated from message users.v1.GetCalendarFeedRequest
+ */
+export type GetCalendarFeedRequest = Message<"users.v1.GetCalendarFeedRequest"> & {
+};
+
+/**
+ * Describes the message users.v1.GetCalendarFeedRequest.
+ * Use `create(GetCalendarFeedRequestSchema)` to create a new message.
+ */
+export const GetCalendarFeedRequestSchema: GenMessage<GetCalendarFeedRequest> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 19);
+
+/**
+ * @generated from message users.v1.GetCalendarFeedResponse
+ */
+export type GetCalendarFeedResponse = Message<"users.v1.GetCalendarFeedResponse"> & {
+  /**
+   * The feed, unset if the user has none.
+   *
+   * @generated from field: users.v1.CalendarFeed feed = 1;
+   */
+  feed?: CalendarFeed | undefined;
+};
+
+/**
+ * Describes the message users.v1.GetCalendarFeedResponse.
+ * Use `create(GetCalendarFeedResponseSchema)` to create a new message.
+ */
+export const GetCalendarFeedResponseSchema: GenMessage<GetCalendarFeedResponse> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 20);
+
+/**
+ * @generated from message users.v1.CreateCalendarFeedRequest
+ */
+export type CreateCalendarFeedRequest = Message<"users.v1.CreateCalendarFeedRequest"> & {
+};
+
+/**
+ * Describes the message users.v1.CreateCalendarFeedRequest.
+ * Use `create(CreateCalendarFeedRequestSchema)` to create a new message.
+ */
+export const CreateCalendarFeedRequestSchema: GenMessage<CreateCalendarFeedRequest> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 21);
+
+/**
+ * @generated from message users.v1.CreateCalendarFeedResponse
+ */
+export type CreateCalendarFeedResponse = Message<"users.v1.CreateCalendarFeedResponse"> & {
+  /**
+   * The feed, with its URL.
+   *
+   * @generated from field: users.v1.CalendarFeed feed = 1;
+   */
+  feed?: CalendarFeed | undefined;
+};
+
+/**
+ * Describes the message users.v1.CreateCalendarFeedResponse.
+ * Use `create(CreateCalendarFeedResponseSchema)` to create a new message.
+ */
+export const CreateCalendarFeedResponseSchema: GenMessage<CreateCalendarFeedResponse> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 22);
+
+/**
+ * @generated from message users.v1.DeleteCalendarFeedRequest
+ */
+export type DeleteCalendarFeedRequest = Message<"users.v1.DeleteCalendarFeedRequest"> & {
+};
+
+/**
+ * Describes the message users.v1.DeleteCalendarFeedRequest.
+ * Use `create(DeleteCalendarFeedRequestSchema)` to create a new message.
+ */
+export const DeleteCalendarFeedRequestSchema: GenMessage<DeleteCalendarFeedRequest> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 23);
+
+/**
+ * @generated from message users.v1.DeleteCalendarFeedResponse
+ */
+export type DeleteCalendarFeedResponse = Message<"users.v1.DeleteCalendarFeedResponse"> & {
+};
+
+/**
+ * Describes the message users.v1.DeleteCalendarFeedResponse.
+ * Use `create(DeleteCalendarFeedResponseSchema)` to create a new message.
+ */
+export const DeleteCalendarFeedResponseSchema: GenMessage<DeleteCalendarFeedResponse> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 24);
+
+/**
  * @generated from message users.v1.UploadAvatarRequest
  */
 export type UploadAvatarRequest = Message<"users.v1.UploadAvatarRequest"> & {
@@ -459,7 +585,7 @@ export type UploadAvatarRequest = Message<"users.v1.UploadAvatarRequest"> & {
  * Use `create(UploadAvatarRequestSchema)` to create a new message.
  */
 export const UploadAvatarRequestSchema: GenMessage<UploadAvatarRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 18);
+  messageDesc(file_users_v1_users, 25);
 
 /**
  * @generated from message users.v1.UploadAvatarResponse
@@ -478,7 +604,7 @@ export type UploadAvatarResponse = Message<"users.v1.UploadAvatarResponse"> & {
  * Use `create(UploadAvatarResponseSchema)` to create a new message.
  */
 export const UploadAvatarResponseSchema: GenMessage<UploadAvatarResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 19);
+  messageDesc(file_users_v1_users, 26);
 
 /**
  * @generated from message users.v1.DeleteAvatarRequest
@@ -491,7 +617,7 @@ export type DeleteAvatarRequest = Message<"users.v1.DeleteAvatarRequest"> & {
  * Use `create(DeleteAvatarRequestSchema)` to create a new message.
  */
 export const DeleteAvatarRequestSchema: GenMessage<DeleteAvatarRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 20);
+  messageDesc(file_users_v1_users, 27);
 
 /**
  * @generated from message users.v1.DeleteAvatarResponse
@@ -510,7 +636,7 @@ export type DeleteAvatarResponse = Message<"users.v1.DeleteAvatarResponse"> & {
  * Use `create(DeleteAvatarResponseSchema)` to create a new message.
  */
 export const DeleteAvatarResponseSchema: GenMessage<DeleteAvatarResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 21);
+  messageDesc(file_users_v1_users, 28);
 
 /**
  * UnitSystem is the units a user reads amounts in.
@@ -595,6 +721,39 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof DeleteAPITokenRequestSchema;
     output: typeof DeleteAPITokenResponseSchema;
+  },
+  /**
+   * Get whether the user has a calendar feed: a secret URL a calendar app
+   * subscribes to, for the cooks, prep and meals of the person the user
+   * is. Its URL is only returned by CreateCalendarFeed.
+   *
+   * @generated from rpc users.v1.UserService.GetCalendarFeed
+   */
+  getCalendarFeed: {
+    methodKind: "unary";
+    input: typeof GetCalendarFeedRequestSchema;
+    output: typeof GetCalendarFeedResponseSchema;
+  },
+  /**
+   * Create the user's calendar feed, returning its URL. An old feed is
+   * replaced, and its URL stops working.
+   *
+   * @generated from rpc users.v1.UserService.CreateCalendarFeed
+   */
+  createCalendarFeed: {
+    methodKind: "unary";
+    input: typeof CreateCalendarFeedRequestSchema;
+    output: typeof CreateCalendarFeedResponseSchema;
+  },
+  /**
+   * Delete the user's calendar feed, so its URL stops working.
+   *
+   * @generated from rpc users.v1.UserService.DeleteCalendarFeed
+   */
+  deleteCalendarFeed: {
+    methodKind: "unary";
+    input: typeof DeleteCalendarFeedRequestSchema;
+    output: typeof DeleteCalendarFeedResponseSchema;
   },
   /**
    * Upload a picture to use as the user's avatar, replacing any previous

@@ -161,7 +161,7 @@ func newEnv(t *testing.T) *env {
 	if err != nil {
 		t.Fatal(err)
 	}
-	userService := user.NewService(log, report, userRepo, userRepo, userRepo, userRepo, avatars)
+	userService := user.NewService(log, report, userRepo, userRepo, userRepo, userRepo, userRepo, avatars, "https://mealplann.ing.test")
 	e.foodRepo = foods.NewRepository(log, db)
 	requests := idempotency.NewStore(log, report, db)
 	foodService := food.NewService(log, report, e.foodRepo, requests)
@@ -207,6 +207,7 @@ func newEnv(t *testing.T) *env {
 	suggestionsv1connect.RegisterSuggestionServiceHandler(srv2, planService)
 	apilimit.Mount(mux, srv2)
 	mux.Handle(user.AvatarPath, userService.AvatarHandler())
+	mux.Handle(user.CalendarPath, planService.CalendarHandler(user.CalendarPath, userRepo))
 	// The same services as main.go serves over MCP.
 	mcpServer, err := mcp.NewServer(log, report,
 		mcp.Service{Name: usersv1connect.UserServiceName, Handler: userService},

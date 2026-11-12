@@ -544,6 +544,13 @@ type APIToken struct {
 	ExpireTime   pgtype.Timestamptz
 }
 
+type CalendarFeed struct {
+	UserID       pgtype.UUID
+	SecretSHA256 []byte
+	CreateTime   pgtype.Timestamptz
+	LastUsedTime pgtype.Timestamptz
+}
+
 type Cook struct {
 	ID              pgtype.UUID
 	HouseholdID     pgtype.UUID

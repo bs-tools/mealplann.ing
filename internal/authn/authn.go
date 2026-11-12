@@ -128,6 +128,14 @@ func getSessionCookie(r *http.Request) (*http.Cookie, bool, error) {
 	return c, err == nil, err
 }
 
+// WithUser returns a context authenticated as the user, for a request
+// authenticated some other way than a session or token, like a calendar
+// feed's secret URL, to call services as the user. It has no session, so
+// GetSessionUser refuses it.
+func WithUser(ctx context.Context, user users.User) context.Context {
+	return context.WithValue(ctx, authCtx{}, authInfo{user: user})
+}
+
 // GetUser gets the authenticated user, if there is one. It returns
 // (nil, false) if the current request is unauthenticated.
 func GetUser(ctx context.Context) (users.User, bool) {

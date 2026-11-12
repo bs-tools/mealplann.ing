@@ -377,7 +377,7 @@ func run(
 		return err
 	}
 
-	userService := user.NewService(log, report, users, users, users, users, avatars)
+	userService := user.NewService(log, report, users, users, users, users, users, avatars, baseURL)
 	authService, err := auth.NewService(log, report, users, baseURL, adminBootstrapToken)
 	if err != nil {
 		return fmt.Errorf("failed to create auth service: %w", err)
@@ -509,6 +509,8 @@ func run(
 	// authorization requests.
 	oauthServer.RegisterHandlers(mux, indexHandler)
 	mux.Handle(user.AvatarPath, userService.AvatarHandler())
+	// Calendar apps subscribe to a feed's secret URL, as they can't sign in.
+	mux.Handle(user.CalendarPath, planService.CalendarHandler(user.CalendarPath, users))
 
 	// Requests are traced, and named after the routes they match.
 	srvHandler := telemetry.Routes(mux)
