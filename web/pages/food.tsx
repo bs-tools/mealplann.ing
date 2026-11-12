@@ -2,7 +2,7 @@ import { timestampMs } from "@bufbuild/protobuf/wkt";
 import Loading from "@components/loading";
 import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
-import ConfirmButton from "@components/ui/confirm-button";
+import { ConfirmDialog } from "@components/ui/confirm-button";
 import {
   CheckboxField,
   SelectField,
@@ -10,13 +10,14 @@ import {
   TextField,
 } from "@components/ui/fields";
 import { Badge, PageHeader } from "@components/ui/misc";
+import MoreMenu from "@components/ui/more-menu";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import { inputClass, labelClass, primaryButton } from "@components/ui/styles";
 import UnsavedChangesGuard, {
   leaveUnsaved,
 } from "@components/ui/unsaved-changes-guard";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   deleteFood,
@@ -36,8 +37,8 @@ import {
   foodSourceInfo,
   optionValue,
 } from "helpers/labels";
-import type { NutrientKey } from "helpers/nutrients";
-import { NUTRIENT_GROUPS, NUTRIENTS } from "helpers/nutrients";
+import type { NutrientGroup, NutrientKey } from "helpers/nutrients";
+import { NUTRIENTS, formatAmount } from "helpers/nutrients";
 import { optionalNumberInput, parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
@@ -65,6 +66,14 @@ const priceHint = (
     ? parts.join(" · ")
     : "What it costs where you shop, to estimate meals' costs.";
 };
+
+// MACROS are the nutrients a food's summary shows, per 100 g.
+const MACROS: { key: NutrientKey; label: string; unit: string }[] = [
+  { key: "energyKcal", label: "Energy", unit: "kcal" },
+  { key: "proteinGrams", label: "Protein", unit: "g" },
+  { key: "carbohydrateGrams", label: "Carbs", unit: "g" },
+  { key: "fatGrams", label: "Fat", unit: "g" },
+];
 
 /**
  * FoodPage shows one of the household's foods, to edit all of its fields,
@@ -168,6 +177,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
   const [price, setPrice] = useState(initialPrice);
   const [notes, setNotes] = useState(food.notes);
   const [invalid, setInvalid] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const update = useMutation(updateFood, {
     onSuccess: async () => {
@@ -330,37 +340,111 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
     >
       <UnsavedChangesGuard dirty={dirty && !remove.isSuccess} />
       <BackLink to="/foods">Foods</BackLink>
-      <PageHeader
-        title={food.name}
-        subtitle={<FoodSourceNote food={food} />}
-        actions={
-          <>
-            <ConfirmButton
-              title="Delete food?"
-              message={`"${food.name}" will be removed from your foods. Foods used by recipes can't be deleted.`}
-              disabled={remove.isPending}
-              onConfirm={() => {
-                remove.mutate({ id: food.id });
-              }}
-            >
-              <TrashIcon className="size-4" aria-hidden="true" />
-              Delete
-            </ConfirmButton>
-            <button
-              type="submit"
-              className={primaryButton}
-              disabled={!dirty || update.isPending}
-            >
-              {update.isPending ? "Saving…" : "Save"}
-            </button>
-          </>
-        }
-      />
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 grow">
+          <PageHeader
+            title={food.name}
+            subtitle={<FoodSourceNote food={food} />}
+          />
+        </div>
+        <MoreMenu
+          label={`More for ${food.name}`}
+          items={[
+            {
+              danger: true,
+              disabled: remove.isPending,
+              label: "Delete",
+              onClick: () => {
+                setDeleting(true);
+              },
+            },
+          ]}
+        />
+        <ConfirmDialog
+          open={deleting}
+          title="Delete food?"
+          message={`"${food.name}" will be removed from your foods. Foods used by recipes can't be deleted.`}
+          onClose={() => {
+            setDeleting(false);
+          }}
+          onConfirm={() => {
+            remove.mutate({ id: food.id });
+          }}
+        />
+      </div>
+      <div className="-mt-4 grid grid-cols-4 gap-2">
+        {MACROS.map((macro) => (
+          <div
+            key={macro.key}
+            className="flex flex-col rounded-2xl border border-line bg-white px-2 py-2.5 text-center"
+          >
+            <span className="text-lg font-bold text-ink-soft tabular-nums">
+              {food.nutrients?.[macro.key] === undefined
+                ? "–"
+                : formatAmount(food.nutrients[macro.key] ?? 0)}
+              <span className="text-xs font-medium text-muted">
+                {" "}
+                {macro.unit}
+              </span>
+            </span>
+            <span className="text-xs text-muted">{macro.label}</span>
+          </div>
+        ))}
+      </div>
+      <p className="-mt-2 text-xs text-muted">Per 100 g, as saved.</p>
       <ErrorText error={remove.error ?? update.error} />
       {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="flex flex-col gap-4 lg:col-span-1">
-          <Card title="Food">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="flex flex-col gap-5">
+          <Card title="Nutrients per 100 g">
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted">
+                Leave a nutrient empty if it&apos;s unknown: 0 means
+                there&apos;s none. Enter labels&apos; &quot;per 100 g&quot;
+                values.
+              </p>
+              <NutrientFields
+                group="Energy and macronutrients"
+                nutrients={nutrients}
+                onChange={setNutrients}
+              />
+            </div>
+          </Card>
+          {(["Vitamins", "Minerals"] as const).map((group) => {
+            const keys = NUTRIENTS.filter(
+              (nutrient) => nutrient.group === group
+            );
+            const known = keys.filter(
+              (nutrient) => (nutrients[nutrient.key] ?? "") !== ""
+            ).length;
+            return (
+              <details
+                key={group}
+                className="group rounded-2xl border border-line bg-white"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden">
+                  <span className="font-bold text-ink-soft">{group}</span>
+                  <span className="flex items-center gap-1 text-sm text-muted">
+                    {known} of {keys.length} known
+                    <ChevronDownIcon
+                      className="size-4 transition-transform group-open:rotate-180"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </summary>
+                <div className="px-4 pb-4">
+                  <NutrientFields
+                    group={group}
+                    nutrients={nutrients}
+                    onChange={setNutrients}
+                  />
+                </div>
+              </details>
+            );
+          })}
+        </div>
+        <div className="flex flex-col gap-5">
+          <Card title="In the kitchen">
             <div className="flex flex-col gap-3">
               <TextField label="Name" value={name} onChange={setName} />
               <SelectField
@@ -488,52 +572,60 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
             </div>
           </Card>
         </div>
-        <Card title="Nutrients per 100 g" className="lg:col-span-2">
-          <div className="flex flex-col gap-4">
-            <p className="text-sm text-muted">
-              Leave a nutrient empty if it&apos;s unknown: 0 means there&apos;s
-              none. Enter labels&apos; &quot;per 100 g&quot; values.
-            </p>
-            {NUTRIENT_GROUPS.map((group) => (
-              <fieldset key={group}>
-                <legend className="mb-2 text-sm font-semibold text-ink-soft">
-                  {group}
-                </legend>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {NUTRIENTS.filter((nutrient) => nutrient.group === group).map(
-                    (nutrient) => (
-                      <label
-                        key={nutrient.key}
-                        className="flex flex-col gap-1"
-                        title={nutrient.hint}
-                      >
-                        <span className={labelClass}>
-                          {nutrient.label} ({nutrient.unit})
-                        </span>
-                        <input
-                          className={`${inputClass} tabular-nums`}
-                          inputMode="decimal"
-                          value={nutrients[nutrient.key] ?? ""}
-                          placeholder="Unknown"
-                          onChange={(event) => {
-                            setNutrients({
-                              ...nutrients,
-                              [nutrient.key]: event.target.value,
-                            });
-                          }}
-                        />
-                      </label>
-                    )
-                  )}
-                </div>
-              </fieldset>
-            ))}
-          </div>
-        </Card>
       </div>
+      {(dirty || update.isPending) && (
+        <div className="sticky bottom-[3.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4">
+          <button
+            type="submit"
+            className={`${primaryButton} w-full py-3.5 text-base`}
+            disabled={update.isPending}
+          >
+            {update.isPending ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      )}
     </form>
   );
 };
+
+interface NutrientFieldsProps {
+  group: NutrientGroup;
+  // The nutrients as typed, by key.
+  nutrients: Partial<Record<NutrientKey, string>>;
+  onChange: (nutrients: Partial<Record<NutrientKey, string>>) => void;
+}
+
+// NutrientFields are the inputs of a group of nutrients, per 100 g.
+const NutrientFields: React.FC<NutrientFieldsProps> = ({
+  group,
+  nutrients,
+  onChange,
+}) => (
+  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    {NUTRIENTS.filter((nutrient) => nutrient.group === group).map(
+      (nutrient) => (
+        <label
+          key={nutrient.key}
+          className="flex flex-col gap-1"
+          title={nutrient.hint}
+        >
+          <span className={labelClass}>
+            {nutrient.label} ({nutrient.unit})
+          </span>
+          <input
+            className={`${inputClass} tabular-nums`}
+            inputMode="decimal"
+            value={nutrients[nutrient.key] ?? ""}
+            placeholder="Unknown"
+            onChange={(event) => {
+              onChange({ ...nutrients, [nutrient.key]: event.target.value });
+            }}
+          />
+        </label>
+      )
+    )}
+  </div>
+);
 
 interface FoodSourceNoteProps {
   food: Food;

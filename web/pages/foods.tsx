@@ -1,24 +1,19 @@
 import AddFoodDialog from "@components/foods/add-food-dialog";
 import Loading from "@components/loading";
-import Card from "@components/ui/card";
-import { Badge, EmptyState, PageHeader } from "@components/ui/misc";
+import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
-import {
-  inputClass,
-  primaryButton,
-  secondaryButton,
-} from "@components/ui/styles";
+import { primaryButton, secondaryButton } from "@components/ui/styles";
 import { useInfiniteQuery } from "@connectrpc/connect-query";
 import {
-  BoltIcon,
   MagnifyingGlassIcon,
   PlusIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import { keepPreviousData } from "@tanstack/react-query";
 import { listFoods } from "gen/foods/v1/foods-FoodService_connectquery";
 import type { Food } from "gen/foods/v1/foods_pb";
 import { useDebouncedValue } from "helpers/hooks";
-import { foodSourceInfo, storeSectionLabel } from "helpers/labels";
+import { storeSectionLabel } from "helpers/labels";
 import { formatNutrient } from "helpers/nutrients";
 import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
@@ -75,14 +70,14 @@ const FoodsPage: React.FC = () => {
         );
     } else {
       content = (
-        <Card>
-          <ul className="-my-2 divide-y divide-line">
+        <div className="rounded-2xl border border-line bg-white px-4">
+          <ul className="divide-y divide-line">
             {list.map((food) => (
               <FoodRow key={food.id} food={food} />
             ))}
           </ul>
           {foods.hasNextPage && (
-            <div className="mt-3 flex justify-center">
+            <div className="flex justify-center border-t border-line py-3">
               <button
                 type="button"
                 className={secondaryButton}
@@ -95,7 +90,7 @@ const FoodsPage: React.FC = () => {
               </button>
             </div>
           )}
-        </Card>
+        </div>
       );
     }
   }
@@ -103,8 +98,9 @@ const FoodsPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
+        kicker="Your kitchen"
         title="Foods"
-        subtitle="The ingredients of your recipes, with their nutrients per 100 g."
+        subtitle="The ingredients of your recipes. Nutrients are per 100 g."
         actions={
           <button
             type="button"
@@ -118,12 +114,15 @@ const FoodsPage: React.FC = () => {
           </button>
         }
       />
-      <label className="relative block sm:max-w-sm">
+      <label className="flex items-center gap-2 rounded-xl border-2 border-pine bg-white px-3 py-2">
+        <MagnifyingGlassIcon
+          className="size-5 shrink-0 text-pine"
+          aria-hidden="true"
+        />
         <span className="sr-only">Search foods</span>
-        <MagnifyingGlassIcon className="pointer-events-none absolute top-2 left-2.5 size-4 text-muted/70" />
         <input
           type="search"
-          className={`${inputClass} pl-8`}
+          className="min-w-0 grow border-0 bg-transparent py-1 text-base text-ink-soft outline-none placeholder:text-muted"
           value={query}
           placeholder="Search foods"
           onChange={(event) => {
@@ -157,7 +156,7 @@ interface FoodRowProps {
   food: Food;
 }
 
-// FoodRow shows a food in the list, with its main nutrients.
+// FoodRow shows a food in the list, with its store section and main nutrients.
 const FoodRow: React.FC<FoodRowProps> = ({ food }) => {
   const { nutrients } = food;
   const facts: string[] = [];
@@ -171,40 +170,35 @@ const FoodRow: React.FC<FoodRowProps> = ({ food }) => {
     facts.push(`${formatNutrient(nutrients.carbohydrateGrams, "g")} carbs`);
   }
   const section = storeSectionLabel(food.storeSection);
-  const source = foodSourceInfo(food.source, food.sourceId);
   return (
     <li>
       <Link
         to={`/foods/${food.id}`}
-        className="-mx-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded px-2 py-2 hover:bg-ground"
+        className="flex items-center gap-3 py-3 hover:bg-ground/60"
       >
-        <div className="min-w-0">
-          <p className="font-medium text-ink-soft">{food.name}</p>
-          <p className="text-xs text-muted tabular-nums">
-            {facts.length > 0
-              ? `Per 100 g: ${facts.join(" · ")}`
-              : "No nutrients yet"}
+        <div className="flex min-w-0 grow flex-col gap-0.5">
+          <p className="truncate font-bold text-ink-soft">{food.name}</p>
+          <p className="truncate text-sm text-muted tabular-nums">
+            {[
+              section,
+              facts.length > 0 ? facts.join(" · ") : "No nutrients yet",
+            ]
+              .filter((part) => part !== "")
+              .join(" · ")}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {food.fastCarb && (
-            <Badge
-              className="bg-warn-tint text-warn-dark ring-warn-line"
-              title="Quickly absorbed carbohydrate"
-            >
-              <BoltIcon className="size-3" aria-hidden="true" />
-              Fast carb
-            </Badge>
-          )}
-          {section !== "" && <Badge>{section}</Badge>}
-          {source === undefined ? (
-            <Badge>Custom</Badge>
-          ) : (
-            <Badge className={source.badgeClass} title={source.name}>
-              {source.badge}
-            </Badge>
-          )}
-        </div>
+        {food.fastCarb && (
+          <span
+            className="shrink-0 rounded-full bg-warn-tint px-2.5 py-1 text-xs font-bold text-warn-dark"
+            title="Quickly absorbed carbohydrate"
+          >
+            Fast carb
+          </span>
+        )}
+        <ChevronRightIcon
+          className="size-5 shrink-0 text-muted/70"
+          aria-hidden="true"
+        />
       </Link>
     </li>
   );
