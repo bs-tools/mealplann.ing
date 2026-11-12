@@ -1,10 +1,10 @@
 import Loading from "@components/loading";
+import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import { PageHeader, Stat } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
-import { inputClass, labelClass, primaryButton } from "@components/ui/styles";
+import { inputClass } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
-import { ArrowLeftIcon, PlayIcon } from "@heroicons/react/24/outline";
 import {
   getRecipe,
   getRecipeTimeline,
@@ -114,54 +114,47 @@ const RecipeTimelinePage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          to={`/recipes/${id}`}
-          className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink-soft"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          {data.name}
-        </Link>
-      </div>
+      <BackLink to={`/recipes/${id}`}>{data.name}</BackLink>
       <PageHeader
-        title="Timeline"
+        kicker="Timeline"
+        title={data.name}
         subtitle="When each step happens, for one cook: hands-on work fits into the waiting, like chopping while rice simmers."
-        actions={
-          <Link to={`/recipes/${id}/cook`} className={primaryButton}>
-            <PlayIcon className="size-4" aria-hidden="true" />
-            Cook mode
-          </Link>
-        }
       />
-      <div className="flex flex-wrap items-end gap-6">
-        <Stat
-          label="From start to table"
-          value={formatHoursMinutes(totalSeconds)}
-        />
+      <div className="-mt-2 grid grid-cols-3 gap-2">
+        <Stat label="In all" value={formatHoursMinutes(totalSeconds)} />
         <Stat label="Hands-on" value={formatHoursMinutes(handsOnSeconds)} />
         <Stat
           label="Waiting"
           value={formatHoursMinutes(Math.max(totalSeconds - handsOnSeconds, 0))}
         />
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Serve at</span>
-          <input
-            type="time"
-            className={`${inputClass} w-32`}
-            value={serveAt}
-            onChange={(event) => {
-              setServeAt(event.target.value);
-            }}
-          />
-        </label>
-        {start !== "" && (
-          <p className="pb-2 text-sm text-ink-soft">
-            Start at <span className="font-semibold tabular-nums">{start}</span>
-          </p>
-        )}
       </div>
+      <label className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-white px-4 py-3">
+        <span className="flex flex-col">
+          <span className="font-bold text-ink-soft">Serve at</span>
+          <span className="text-sm text-muted">
+            {start === "" ? (
+              "To know when to start."
+            ) : (
+              <>
+                Start at{" "}
+                <span className="font-bold text-ink-soft tabular-nums">
+                  {start}
+                </span>
+              </>
+            )}
+          </span>
+        </span>
+        <input
+          type="time"
+          className={`${inputClass} w-32`}
+          value={serveAt}
+          onChange={(event) => {
+            setServeAt(event.target.value);
+          }}
+        />
+      </label>
       {data.instructions.length === 0 && steps.length > 0 && (
-        <p className="rounded-xl bg-warn-tint px-3 py-2 text-sm text-warn-dark ring-1 ring-warn-line">
+        <p className="rounded-2xl border border-warn-line bg-warn-tint p-4 text-sm text-ink-soft">
           This recipe&apos;s steps don&apos;t say how long they take or what can
           happen at the same time yet, so they&apos;re shown one after the
           other, 5 minutes each. Edit the recipe to add their durations.
@@ -244,6 +237,14 @@ const RecipeTimelinePage: React.FC = () => {
           </div>
         )}
       </Card>
+      <div className="sticky bottom-[3.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4">
+        <Link
+          to={`/recipes/${id}/cook`}
+          className="flex w-full items-center justify-center rounded-xl bg-cook py-3.5 text-base font-bold text-white hover:bg-cook-dark"
+        >
+          Cook it now
+        </Link>
+      </div>
     </div>
   );
 };

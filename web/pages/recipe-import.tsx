@@ -373,6 +373,7 @@ const RecipeImportPage: React.FC = () => {
     <div className="flex flex-col gap-4">
       <BackLink to="/recipes">Recipes</BackLink>
       <PageHeader
+        kicker="From the web"
         title="Import a recipe"
         subtitle="Read a recipe from a web page, like a food blog's, and choose the food of each ingredient."
       />

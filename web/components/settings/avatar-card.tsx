@@ -61,7 +61,7 @@ const AvatarCard: React.FC<{ user: User }> = ({ user }) => {
         />
         <div className="flex flex-col gap-2">
           <p className="text-sm text-muted">
-            Shown in the header. The middle square of the picture is used.
+            Shown in the menu. The middle square of the picture is used.
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <label

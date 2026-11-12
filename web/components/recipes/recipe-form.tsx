@@ -3,6 +3,7 @@ import FoodPicker from "@components/foods/food-picker";
 import RecipePicker from "@components/recipes/recipe-picker";
 import type { SideInput } from "@components/recipes/served-with";
 import ServedWith, { sidesKey } from "@components/recipes/served-with";
+import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import { CheckboxField, TextAreaField, TextField } from "@components/ui/fields";
 import { PageHeader } from "@components/ui/misc";
@@ -41,7 +42,7 @@ import {
 } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 // IngredientInput is an ingredient being edited.
 interface IngredientInput {
@@ -887,43 +888,17 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
     }
   };
 
-  /*
-   * Actions are the form's buttons, at its top and bottom, as a long
-   * recipe's bottom is far from its top.
-   */
-  let title = recipe === undefined ? "New recipe" : `Edit ${recipe.name}`;
+  let kicker = recipe === undefined ? "New recipe" : "Edit recipe";
+  let title = recipe === undefined ? "New recipe" : recipe.name;
   if (copyOf !== undefined) {
+    kicker = "Variation";
     title = `Copy of ${copyOf.name}`;
   }
+  if (recipe === undefined && copyOf === undefined) {
+    kicker = "Recipes";
+  }
+  const back = source === undefined ? "/recipes" : `/recipes/${source.id}`;
   const unchanged = recipe !== undefined && !dirty;
-  const actions = (
-    <>
-      <Link
-        to={source === undefined ? "/recipes" : `/recipes/${source.id}`}
-        className={secondaryButton}
-      >
-        Cancel
-      </Link>
-      <button
-        type="button"
-        className={secondaryButton}
-        disabled={saving || (unchanged && recipe.draft)}
-        title="Save it unfinished: ingredients can be left without a food, and it isn't planned until it's saved as a recipe."
-        onClick={() => {
-          save(true);
-        }}
-      >
-        {recipe?.draft === false ? "Save as draft" : "Save draft"}
-      </button>
-      <button
-        type="submit"
-        className={primaryButton}
-        disabled={saving || (unchanged && !recipe.draft)}
-      >
-        {saving ? "Saving…" : "Save"}
-      </button>
-    </>
-  );
 
   const setIngredient = (index: number, change: Partial<IngredientInput>) => {
     setIngredients(
@@ -946,9 +921,12 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
       <UnsavedChangesGuard
         dirty={dirty && !create.isSuccess && !update.isSuccess}
       />
-      <PageHeader title={title} actions={actions} />
+      <BackLink to={back}>
+        {source === undefined ? "Recipes" : source.name}
+      </BackLink>
+      <PageHeader kicker={kicker} title={title} />
       {recipe?.draft === true && (
-        <p className="rounded-xl border border-warn-line bg-warn-tint px-3 py-2 text-sm text-warn-dark">
+        <p className="rounded-2xl border border-warn-line bg-warn-tint p-4 text-sm text-ink-soft">
           This is a draft: it isn&apos;t planned or suggested. Choose a food for
           each ingredient and save it to finish it.
         </p>
@@ -1124,9 +1102,9 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                               ? "Another recipe, like cooked chickpeas, in servings or by weight: planning this recipe plans a cook of it too"
                               : "A food, like tomatoes"
                           }
-                          className={`-ml-px px-2 py-1.5 text-xs font-medium ring-1 ring-inset first:ml-0 first:rounded-l-md last:rounded-r-md ${
+                          className={`-ml-px px-2 py-1.5 text-xs font-medium ring-1 ring-inset first:ml-0 first:rounded-l-lg last:rounded-r-lg ${
                             ingredient.isRecipe === isRecipe
-                              ? "relative z-10 bg-ink text-white ring-ink"
+                              ? "relative z-10 bg-ink-soft text-white ring-ink-soft"
                               : "bg-white text-ink-soft ring-line hover:bg-ground"
                           }`}
                           onClick={() => {
@@ -1336,7 +1314,26 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
       </div>
       <ErrorText error={create.error ?? update.error} />
       {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
-      <div className="flex flex-wrap justify-end gap-2">{actions}</div>
+      <div className="sticky bottom-[3.75rem] z-10 flex gap-2 bg-ground/90 py-2 backdrop-blur lg:bottom-4">
+        <button
+          type="button"
+          className={`${secondaryButton} py-3.5 text-base`}
+          disabled={saving || (unchanged && recipe.draft)}
+          title="Save it unfinished: ingredients can be left without a food, and it isn't planned until it's saved as a recipe."
+          onClick={() => {
+            save(true);
+          }}
+        >
+          {recipe?.draft === false ? "Save as draft" : "Save draft"}
+        </button>
+        <button
+          type="submit"
+          className={`${primaryButton} grow py-3.5 text-base`}
+          disabled={saving || (unchanged && !recipe.draft)}
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+      </div>
     </form>
   );
 };
