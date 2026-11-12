@@ -1,4 +1,5 @@
 import { useApplyFix } from "@components/plan/apply-fix";
+import { splitFix } from "@components/today/plate";
 import { warningTitle } from "@components/today/today-bits";
 import { ErrorText } from "@components/ui/query-error";
 import { useQuery } from "@connectrpc/connect-query";
@@ -48,6 +49,11 @@ const WarningFix: React.FC<WarningFixProps> = ({
         {personName === "" ? "" : ` · ${personName}`}
       </p>
       <p className="col-start-2 text-sm text-ink-soft">{warning.message}</p>
+      {fix !== undefined && splitFix(fix.description).detail !== "" && (
+        <p className="col-start-2 text-sm text-ink-soft/80">
+          {splitFix(fix.description).detail}.
+        </p>
+      )}
       {fix !== undefined && (
         <button
           type="button"
@@ -57,7 +63,7 @@ const WarningFix: React.FC<WarningFixProps> = ({
             apply.mutate(fix);
           }}
         >
-          {apply.isPending ? "Doing it…" : fix.description}
+          {apply.isPending ? "Doing it…" : splitFix(fix.description).action}
         </button>
       )}
       {apply.error !== null && (
