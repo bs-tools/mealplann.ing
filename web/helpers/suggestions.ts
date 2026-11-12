@@ -1,4 +1,4 @@
-import type { HouseholdMeal } from "gen/people/v1/people_pb";
+import { HouseholdMeal } from "gen/people/v1/people_pb";
 import type { Suggestion } from "gen/suggestions/v1/suggestions_pb";
 
 import { formatWeekday } from "./format";
@@ -27,3 +27,10 @@ export const suggestionKey = (suggestion: Suggestion): string =>
 // Mon's dinner".
 export const leftoverLabel = (leftover: Leftover): string =>
   `Rest of ${formatWeekday(leftover.date)}'s ${householdMealLabel(leftover.meal).toLowerCase()}`;
+
+/*
+ * MAIN_MEALS are the meals the pantry suggests recipes for by default:
+ * lunches and dinners, rather than sides, snacks, drinks or basics like a
+ * pot of beans, which are always there to cook.
+ */
+export const MAIN_MEALS = [HouseholdMeal.LUNCH, HouseholdMeal.DINNER];

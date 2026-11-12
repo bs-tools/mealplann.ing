@@ -164,13 +164,16 @@ const warningsOf = (day: PersonDay): Map<string, Warning[]> => {
 
 /**
  * CookBlocksOf returns the day's cooks for a person's meals, with when to
- * start them: their total time before the eating time of their meal, or
- * unknown for cooks made ahead.
+ * start them: their total time before the eating time of their meal, or,
+ * for a cook of no shared meal, like a side cooked for one, of the first
+ * of the person's eating times that day that eats from it; unknown for
+ * cooks made ahead.
  */
 const cookBlocksOf = (
   cooks: PlannedCook[],
   date: string,
   eatingTimes: EatingTime[],
+  day: PersonDay | undefined,
   minutesOfRecipe: Map<string, { minutes: number; name: string }>
 ): CookBlock[] => {
   const blocks: CookBlock[] = [];
@@ -183,7 +186,9 @@ const cookBlocksOf = (
     const minutes = recipe?.minutes ?? 0;
     const eatingTime =
       cook.meal === HouseholdMeal.UNSPECIFIED
-        ? undefined
+        ? day?.eatingTimes.find((eating) =>
+            eating.portions.some((portion) => portion.cookId === cook.id)
+          )?.eatingTime
         : eatingTimes.find((et) => et.meal === cook.meal);
     const mealAt = minutesOf(eatingTime?.time ?? "");
     blocks.push({
@@ -433,6 +438,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
           week.data.cooks,
           now,
           person?.eatingTimes ?? [],
+          day,
           minutesOfRecipe
         ).filter((block) => {
           // A shared meal's cook is on the line of those who eat from it.

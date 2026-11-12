@@ -12,9 +12,11 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/foods"
 	suggestionsv1 "github.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1"
 	"github.com/bs-tools/mealplann.ing/internal/pantry"
+	"github.com/bs-tools/mealplann.ing/internal/people"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
 	"github.com/bs-tools/mealplann.ing/internal/shopping"
 	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/suggest"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -30,6 +32,15 @@ func (s *Service) SuggestFromPantry(ctx context.Context, req *suggestionsv1.Sugg
 	date, err := parseDate("date", req.GetDate())
 	if err != nil {
 		return nil, err
+	}
+	var meals []people.Meal
+	for i, m := range req.GetMeals() {
+		meal, err := mealFromProto(m)
+		if err != nil {
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"meals[%d] must be HOUSEHOLD_MEAL_BREAKFAST, HOUSEHOLD_MEAL_LUNCH or HOUSEHOLD_MEAL_DINNER", i)
+		}
+		meals = append(meals, meal)
 	}
 	householdID := user.HouseholdID()
 	var recipeList []*recipes.Recipe
@@ -64,7 +75,7 @@ func (s *Service) SuggestFromPantry(ctx context.Context, req *suggestionsv1.Sugg
 	var cookable []found
 	soon := date.AddDate(0, 0, useSoonDays)
 	for _, r := range recipeList {
-		if !r.Suggestable(date) {
+		if !r.Suggestable(date) || (len(meals) > 0 && !suggest.TaggedFor(r, meals)) {
 			continue
 		}
 		ingredients := r.IngredientsWithout(float64(r.Servings), nil)

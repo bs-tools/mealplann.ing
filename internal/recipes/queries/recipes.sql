@@ -191,17 +191,22 @@ select id, name from foods where household_id = @household_id order by lower(nam
 
 -- name: ListRecipeSides :many
 -- The sides of the given recipes, or of all the household's recipes, in
--- order, with their foods' names. Sides whose food was deleted are left
--- out.
+-- order, each a food or a recipe, with its name. Sides whose food or
+-- recipe was deleted are left out.
 select
   r.id as recipe_id,
   f.id as food_id,
-  (s.side->>'grams')::double precision as grams,
-  f.name as food_name,
+  coalesce((s.side->>'grams')::double precision, 0)::double precision as grams,
+  coalesce(f.name, '')::text as food_name,
+  sr.id as side_recipe_id,
+  coalesce((s.side->>'servings')::double precision, 0)::double precision as servings,
+  coalesce(sr.name, '')::text as side_recipe_name,
   s.position::bigint as position
 from recipes r
 cross join lateral jsonb_array_elements(r.served_with) with ordinality as s(side, position)
-join foods f on f.id = (s.side->>'food_id')::uuid and f.household_id = r.household_id
+left join foods f on f.id = (s.side->>'food_id')::uuid and f.household_id = r.household_id
+left join recipes sr on sr.id = (s.side->>'recipe_id')::uuid and sr.household_id = r.household_id
 where r.household_id = @household_id
   and (@all_recipes::boolean or r.id = any(@recipe_ids::uuid[]))
+  and (f.id is not null or sr.id is not null)
 order by r.id, s.position;

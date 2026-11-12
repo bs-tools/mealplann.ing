@@ -2,7 +2,11 @@ import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
 import RecipePicker from "@components/recipes/recipe-picker";
 import type { SideInput } from "@components/recipes/served-with";
-import ServedWith, { sidesKey } from "@components/recipes/served-with";
+import ServedWith, {
+  sidesFromRecipe,
+  sidesKey,
+  sidesToSave,
+} from "@components/recipes/served-with";
 import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import { CheckboxField, TextAreaField, TextField } from "@components/ui/fields";
@@ -642,11 +646,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
   );
   const [notes, setNotes] = useState(source?.notes ?? "");
   const [initialSides] = useState<SideInput[]>(() =>
-    (source?.servedWith ?? []).map((side) => ({
-      foodId: side.foodId,
-      foodName: side.foodName,
-      grams: String(side.gramsPerServing),
-    }))
+    sidesFromRecipe(source?.servedWith ?? [])
   );
   const [sides, setSides] = useState(initialSides);
   // What the source makes, for recipes using it by weight or volume.
@@ -861,10 +861,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
       prepAheadDays: aheadDays,
       prepAheadNote,
       prepSeconds,
-      servedWith: sides.map((side) => ({
-        foodId: side.foodId,
-        gramsPerServing: Number.parseFloat(side.grams.replace(",", ".")),
-      })),
+      servedWith: sidesToSave(sides),
       servings: servingCount,
       sourceUrl,
       tags: parseTags(tags),
@@ -1067,7 +1064,11 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                 onChange={setPrepAheadNote}
               />
             </div>
-            <ServedWith sides={sides} onChange={setSides} />
+            <ServedWith
+              sides={sides}
+              recipeId={recipe?.id}
+              onChange={setSides}
+            />
             <TextField
               label="Source"
               value={sourceUrl}

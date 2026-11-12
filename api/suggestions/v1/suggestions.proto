@@ -152,10 +152,12 @@ service SuggestionService {
   // in proportion to the servings planned, as much as the eating time's
   // maximum portion leaves room for. Each says what it adds and what that
   // does to the person's rules and targets, e.g. "adds 6 g protein:
-  // today is 12 g short", best first. Add the one the user picks as a
-  // portion of its food at the eating time with PlanService.CreatePortion,
-  // and remove another side planned there with DeletePortion. Nothing is
-  // changed. Returns no sides if the eating time has no recipe with sides.
+  // today is 12 g short", best first. Add the one the user picks at the
+  // eating time with PlanService.CreatePortion: a portion of its food, or,
+  // for a recipe side, a share of its cook_id if it has one, else with
+  // new_cook to cook it on the meal's date. Remove another side planned
+  // there with DeletePortion. Nothing is changed. Returns no sides if the
+  // eating time has no recipe with sides.
   rpc SuggestSides(SuggestSidesRequest) returns (SuggestSidesResponse);
 }
 
@@ -562,6 +564,10 @@ message PlanFix {
 message SuggestFromPantryRequest {
   // The date to cook on (YYYY-MM-DD), usually today. Required.
   string date = 1;
+  // Only list recipes for these meals: those tagged with one of them, like
+  // "lunch" or "dinner", leaving out sides, snacks and basics like a pot
+  // of beans. Empty to list all.
+  repeated people.v1.HouseholdMeal meals = 2;
 }
 
 message SuggestFromPantryResponse {
@@ -604,13 +610,14 @@ message SuggestSidesResponse {
 
 // A side to serve with a meal.
 message SideSuggestion {
-  // The ID of the side's food.
+  // The ID of the side's food, for a food side.
   string food_id = 1;
-  // The food's name.
+  // The food's name, for a food side.
   string food_name = 2;
-  // How much of it to add, in grams: the recipe's grams per serving
-  // times the servings planned, rounded to 5 g, less if the maximum
-  // portion leaves less room.
+  // How much of it to add, in grams: for a food side, the recipe's grams
+  // per serving times the servings planned, rounded to 5 g, less if the
+  // maximum portion leaves less room; for a recipe side, what its
+  // servings weigh.
   double grams = 3;
   // What it adds, in kcal and grams.
   double energy_kcal = 4;
@@ -629,4 +636,19 @@ message SideSuggestion {
   // The planned portion's ID, if planned, to remove it with
   // PlanService.DeletePortion.
   string portion_id = 11;
+  // The ID of the side's recipe, for a recipe side.
+  string recipe_id = 12;
+  // The side recipe's name, for a recipe side.
+  string recipe_name = 13;
+  // For a recipe side, how many of its servings to add: the recipe's
+  // servings per serving times the servings planned, less if the maximum
+  // portion leaves less room.
+  double servings = 14;
+  // For a recipe side, a cook of it on the meal's date to add a share of,
+  // like the pot of rice cooked for someone else's portion; empty to cook
+  // it with CreatePortion's new_cook.
+  string cook_id = 15;
+  // The servings cook_id must make for this side too, if it makes too few
+  // already: set them with PlanService.UpdateCook. 0 if it makes enough.
+  double cook_servings_needed = 16;
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	pantryv1 "github.com/bs-tools/mealplann.ing/internal/gen/pantry/v1"
+	peoplev1 "github.com/bs-tools/mealplann.ing/internal/gen/people/v1"
 	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
 	suggestionsv1 "github.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1"
 )
@@ -21,8 +22,13 @@ func TestSuggestFromPantry(t *testing.T) {
 	lentils := customFood(t, e, "Lentils", 120, 9, 20, 1, 0.5, nil)
 	recipe := func(name string, ings ...*recipesv1.Ingredient) {
 		t.Helper()
+		// The scramble is a dinner; the others aren't tagged for a meal.
+		var tags []string
+		if name == "Tofu scramble" {
+			tags = []string{"dinner"}
+		}
 		if _, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
-			Name: name, Servings: 2, Ingredients: ings,
+			Name: name, Servings: 2, Ingredients: ings, Tags: tags,
 		}.Build()}.Build()); err != nil {
 			t.Fatalf("CreateRecipe: %v", err)
 		}
@@ -57,5 +63,17 @@ func TestSuggestFromPantry(t *testing.T) {
 	}
 	if got := resp.GetRecipes()[0].GetUseSoonFoodNames(); len(got) != 1 || got[0] != "Spinach" {
 		t.Errorf("got %q to use soon, want the spinach", got)
+	}
+
+	// Only meals: the plain tofu isn't tagged lunch or dinner.
+	resp, err = e.suggestions.SuggestFromPantry(ctx, suggestionsv1.SuggestFromPantryRequest_builder{
+		Date:  date,
+		Meals: []peoplev1.HouseholdMeal{peoplev1.HouseholdMeal_HOUSEHOLD_MEAL_LUNCH, peoplev1.HouseholdMeal_HOUSEHOLD_MEAL_DINNER},
+	}.Build())
+	if err != nil {
+		t.Fatalf("SuggestFromPantry: %v", err)
+	}
+	if got := resp.GetRecipes(); len(got) != 1 || got[0].GetRecipeName() != "Tofu scramble" {
+		t.Errorf("got %v for lunch or dinner, want only the scramble", got)
 	}
 }

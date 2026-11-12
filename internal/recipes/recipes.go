@@ -103,13 +103,18 @@ type Recipe struct {
 	UpdateTime time.Time
 }
 
-// Side is a food a recipe can be served with, in grams per serving of the
-// recipe.
+// Side is what a recipe can be served with: a food, in grams per serving
+// of the recipe, or a recipe, in servings per serving, like a pot of rice
+// cooked for the meal. Exactly one of FoodID and RecipeID is valid.
 type Side struct {
 	FoodID pgtype.UUID
 	Grams  float64
 	// FoodName is read from the food, and ignored when writing.
 	FoodName string
+	RecipeID pgtype.UUID
+	Servings float64
+	// RecipeName is read from the recipe, and ignored when writing.
+	RecipeName string
 }
 
 // MaxComponentDepth is how deep components can nest: a recipe's component
@@ -734,7 +739,9 @@ func checkFoods(ctx context.Context, b *store.Batch, recipe *Recipe) {
 		}
 	}
 	for _, side := range recipe.ServedWith {
-		ids = append(ids, side.FoodID)
+		if side.FoodID.Valid {
+			ids = append(ids, side.FoodID)
+		}
 	}
 	b.Read(func(db store.Querier) error {
 		known, err := gen.New(db).ListHouseholdFoodIDs(ctx, &gen.ListHouseholdFoodIDsParams{
@@ -771,6 +778,12 @@ func checkComponents(ctx context.Context, b *store.Batch, recipe *Recipe) {
 	for _, in := range recipe.Ingredients {
 		if in.IsComponent() {
 			ids = append(ids, in.ComponentRecipeID)
+		}
+	}
+	// A recipe side must be the household's recipe too.
+	for _, side := range recipe.ServedWith {
+		if side.RecipeID.Valid {
+			ids = append(ids, side.RecipeID)
 		}
 	}
 	if len(ids) == 0 {
@@ -852,16 +865,23 @@ func readSides(ctx context.Context, b *store.Batch, householdID pgtype.UUID, rec
 	})
 }
 
-// sideJSON is a side as stored in recipes.served_with.
+// sideJSON is a side as stored in recipes.served_with: a food with its
+// grams, or a recipe with its servings.
 type sideJSON struct {
-	FoodID string  `json:"food_id"`
-	Grams  float64 `json:"grams"`
+	FoodID   string  `json:"food_id,omitempty"`
+	Grams    float64 `json:"grams,omitempty"`
+	RecipeID string  `json:"recipe_id,omitempty"`
+	Servings float64 `json:"servings,omitempty"`
 }
 
 // sidesToDB encodes a recipe's sides for recipes.served_with.
 func sidesToDB(sides []Side) []byte {
 	list := make([]sideJSON, 0, len(sides))
 	for _, side := range sides {
+		if side.RecipeID.Valid {
+			list = append(list, sideJSON{RecipeID: store.UUIDToString(side.RecipeID), Servings: side.Servings})
+			continue
+		}
 		list = append(list, sideJSON{FoodID: store.UUIDToString(side.FoodID), Grams: side.Grams})
 	}
 	// A slice of plain structs always encodes.
@@ -944,7 +964,10 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow, 
 	}
 	r.ServedWith = make([]Side, 0, len(sides))
 	for _, side := range sides {
-		r.ServedWith = append(r.ServedWith, Side{FoodID: side.FoodID, Grams: side.Grams, FoodName: side.FoodName})
+		r.ServedWith = append(r.ServedWith, Side{
+			FoodID: side.FoodID, Grams: side.Grams, FoodName: side.FoodName,
+			RecipeID: side.SideRecipeID, Servings: side.Servings, RecipeName: side.SideRecipeName,
+		})
 	}
 	// Instructions are only written encoded by instructionsToDB, so they
 	// decode; if they somehow don't, the recipe still reads, without

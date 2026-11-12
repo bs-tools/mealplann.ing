@@ -20,6 +20,7 @@ import { suggestSides } from "gen/suggestions/v1/suggestions-SuggestionService_c
 import type { SideSuggestion } from "gen/suggestions/v1/suggestions_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { formatGrams } from "helpers/format";
+import { formatServings } from "helpers/labels";
 import { formatAmount } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
 import React from "react";
@@ -230,6 +231,16 @@ export const MealWarnings: React.FC<MealWarningsProps> = ({ warnings }) => (
   </>
 );
 
+// SideName names a side, a food or a recipe.
+const sideName = (side: SideSuggestion): string =>
+  side.recipeId === "" ? side.foodName : side.recipeName;
+
+// SideAmount says how much of a side to add, e.g. "150 g" or "1½ servings".
+const sideAmount = (side: SideSuggestion): string =>
+  side.recipeId === ""
+    ? `${formatAmount(side.grams)} g`
+    : `${formatServings(side.servings)}${side.grams > 0 ? `, ${formatAmount(side.grams)} g` : ""}`;
+
 interface SidesCardProps {
   personId: string;
   eatingTimeId: string;
@@ -264,18 +275,57 @@ export const SidesCard: React.FC<SidesCardProps> = ({
       if (side.planned) {
         return;
       }
+      if (side.recipeId === "") {
+        await client.createPortion({
+          portion: {
+            date,
+            eatingTimeId,
+            personId,
+            what: {
+              case: "food",
+              value: {
+                amount: side.grams,
+                foodId: side.foodId,
+                unit: AmountUnit.GRAMS,
+              },
+            },
+          },
+        });
+        return;
+      }
+      /*
+       * A recipe side is cooked: a share of the pot already cooked that day
+       * for someone else, made bigger if it must be, or a new cook of it.
+       */
+      if (side.cookId !== "") {
+        if (side.cookServingsNeeded > 0) {
+          await client.updateCook({
+            cook: { id: side.cookId, servings: side.cookServingsNeeded },
+            updateMask: { paths: ["servings"] },
+          });
+        }
+        await client.createPortion({
+          portion: {
+            date,
+            eatingTimeId,
+            personId,
+            what: {
+              case: "cook",
+              value: { cookId: side.cookId, servings: side.servings },
+            },
+          },
+        });
+        return;
+      }
       await client.createPortion({
+        newCook: { recipeId: side.recipeId, servings: 0 },
         portion: {
           date,
           eatingTimeId,
           personId,
           what: {
-            case: "food",
-            value: {
-              amount: side.grams,
-              foodId: side.foodId,
-              unit: AmountUnit.GRAMS,
-            },
+            case: "cook",
+            value: { cookId: "", servings: side.servings },
           },
         },
       });
@@ -317,7 +367,7 @@ export const SidesCard: React.FC<SidesCardProps> = ({
           }
           return (
             <button
-              key={side.foodId}
+              key={side.recipeId === "" ? side.foodId : side.recipeId}
               type="button"
               className={`rounded-full px-4 py-2 text-sm ${chipClass} disabled:opacity-50`}
               disabled={choose.isPending || side.grams === 0}
@@ -327,7 +377,7 @@ export const SidesCard: React.FC<SidesCardProps> = ({
                 choose.mutate(side);
               }}
             >
-              {side.foodName}
+              {sideName(side)}
               {side === suggested && " · suggested"}
             </button>
           );
@@ -341,7 +391,7 @@ export const SidesCard: React.FC<SidesCardProps> = ({
           />
           <span>
             <span className="font-bold text-ready">
-              {suggested.foodName}, {formatAmount(suggested.grams)} g
+              {sideName(suggested)}, {sideAmount(suggested)}
             </span>
             <br />
             {suggested.reason.replace(/^./u, (first) => first.toUpperCase())}.

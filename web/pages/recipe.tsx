@@ -421,7 +421,12 @@ const RecipePage: React.FC = () => {
                 >
                   with{" "}
                   {formatList(
-                    recipe.servedWith.map((side) => side.foodName.toLowerCase())
+                    recipe.servedWith.map((side) =>
+                      (side.recipeId === ""
+                        ? side.foodName
+                        : side.recipeName
+                      ).toLowerCase()
+                    )
                   )}
                 </span>
               )}

@@ -37,6 +37,7 @@ import { suggestFromPantry } from "gen/suggestions/v1/suggestions-SuggestionServ
 import { daysBetween, parseDate, today } from "helpers/dates";
 import { formatGrams, formatNearDate, formatStock } from "helpers/format";
 import { invalidateServices } from "helpers/query";
+import { MAIN_MEALS } from "helpers/suggestions";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
@@ -170,7 +171,11 @@ const PantryPage: React.FC = () => {
     PLACES.find((option) => option.value === params.get("place"))?.value ??
     "fridge";
   const pantry = useQuery(listPantry, {});
-  const cookable = useQuery(suggestFromPantry, { date: now });
+  // Only lunches and dinners count, not toast or a pot of beans.
+  const cookable = useQuery(suggestFromPantry, {
+    date: now,
+    meals: MAIN_MEALS,
+  });
   // The lot being corrected, null to add one, undefined if none.
   const [editing, setEditing] = useState<PantryItem | null | undefined>(
     undefined
@@ -441,8 +446,8 @@ const PantryPage: React.FC = () => {
           <FireIcon className="size-5 shrink-0" aria-hidden="true" />
           <span className="grow">
             {cookableCount === 1
-              ? "1 recipe you can cook right now"
-              : `${cookableCount} recipes you can cook right now`}
+              ? "1 lunch or dinner you can cook right now"
+              : `${cookableCount} lunches and dinners you can cook right now`}
           </span>
           <ChevronRightIcon className="size-5 shrink-0" aria-hidden="true" />
         </Link>
