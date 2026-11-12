@@ -2,23 +2,20 @@ import Loading from "@components/loading";
 import ApplyTemplateDialog from "@components/templates/apply-template-dialog";
 import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
-import ConfirmButton from "@components/ui/confirm-button";
+import { ConfirmDialog } from "@components/ui/confirm-button";
 import { TextAreaField, TextField } from "@components/ui/fields";
 import { Badge, PageHeader } from "@components/ui/misc";
 import Modal from "@components/ui/modal";
+import MoreMenu from "@components/ui/more-menu";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
   iconButton,
   primaryButton,
   secondaryButton,
+  sectionLabelClass,
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
-import {
-  CalendarDaysIcon,
-  PencilIcon,
-  TrashIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import type { EatingTime, Person } from "gen/people/v1/people_pb";
@@ -172,6 +169,7 @@ const PlanTemplatePage: React.FC = () => {
   const people = useQuery(listPeople, {});
   const [applying, setApplying] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const onChanged = async (): Promise<void> => {
     await invalidateServices(queryClient, [PlanTemplateService]);
   };
@@ -221,46 +219,45 @@ const PlanTemplatePage: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <BackLink to="/plan/templates">Templates</BackLink>
-      <PageHeader
-        title={tmpl.name}
-        subtitle={tmpl.source === "" ? undefined : tmpl.source}
-        actions={
-          <div className="flex flex-wrap gap-2 print:hidden">
-            <ConfirmButton
-              title="Delete template?"
-              message={`"${tmpl.name}" will be deleted. What you planned from it stays.`}
-              disabled={remove.isPending}
-              onConfirm={() => {
-                remove.mutate({ id: tmpl.id });
-              }}
-            >
-              <TrashIcon className="size-4" aria-hidden="true" />
-              Delete
-            </ConfirmButton>
-            <button
-              type="button"
-              className={secondaryButton}
-              onClick={() => {
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 grow">
+          <PageHeader
+            kicker={`${tmpl.days} ${tmpl.days === 1 ? "day" : "days"} · ${tmpl.entries.length} ${tmpl.entries.length === 1 ? "meal" : "meals"}`}
+            title={tmpl.name}
+            subtitle={tmpl.source === "" ? undefined : tmpl.source}
+          />
+        </div>
+        <MoreMenu
+          label={`More for ${tmpl.name}`}
+          items={[
+            {
+              label: "Rename or change notes",
+              onClick: () => {
                 setEditing(true);
-              }}
-            >
-              <PencilIcon className="size-4" aria-hidden="true" />
-              Edit
-            </button>
-            <button
-              type="button"
-              className={primaryButton}
-              disabled={people.data === undefined}
-              onClick={() => {
-                setApplying(true);
-              }}
-            >
-              <CalendarDaysIcon className="size-4" aria-hidden="true" />
-              Plan it
-            </button>
-          </div>
-        }
-      />
+              },
+            },
+            {
+              danger: true,
+              disabled: remove.isPending,
+              label: "Delete",
+              onClick: () => {
+                setDeleting(true);
+              },
+            },
+          ]}
+        />
+        <ConfirmDialog
+          open={deleting}
+          title="Delete template?"
+          message={`"${tmpl.name}" will be deleted. What you planned from it stays.`}
+          onClose={() => {
+            setDeleting(false);
+          }}
+          onConfirm={() => {
+            remove.mutate({ id: tmpl.id });
+          }}
+        />
+      </div>
       <ErrorText error={update.error ?? remove.error} />
       {tmpl.notes !== "" && (
         <p className="text-sm whitespace-pre-line text-ink-soft">
@@ -282,9 +279,7 @@ const PlanTemplatePage: React.FC = () => {
                     )
                     .map((slot) => (
                       <li key={slot.key} className="flex flex-col gap-1">
-                        <span className="text-[11px] font-semibold tracking-wide text-muted uppercase">
-                          {slot.name}
-                        </span>
+                        <span className={sectionLabelClass}>{slot.name}</span>
                         <ul className="flex flex-col gap-1">
                           {entries
                             .filter((entry) => entry.slotKey === slot.key)
@@ -303,12 +298,12 @@ const PlanTemplatePage: React.FC = () => {
                                     ) : (
                                       <Link
                                         to={`/recipes/${entry.recipeId}`}
-                                        className="text-sm font-medium text-ink-soft hover:underline"
+                                        className="font-bold text-ink-soft"
                                       >
                                         {entry.recipeName}
                                       </Link>
                                     )}
-                                    <span className="text-xs text-muted">
+                                    <span className="text-sm text-muted">
                                       {entryEaters(tmpl, entry, everyone)}
                                     </span>
                                     {note !== undefined && (
@@ -340,6 +335,18 @@ const PlanTemplatePage: React.FC = () => {
             </Card>
           );
         })}
+      </div>
+      <div className="sticky bottom-[3.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
+        <button
+          type="button"
+          className={`${primaryButton} w-full py-3.5 text-base`}
+          disabled={people.data === undefined}
+          onClick={() => {
+            setApplying(true);
+          }}
+        >
+          Plan it from a date
+        </button>
       </div>
       {applying && (
         <ApplyTemplateDialog

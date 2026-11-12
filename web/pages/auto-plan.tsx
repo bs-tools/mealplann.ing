@@ -9,15 +9,14 @@ import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
   linkClass,
   primaryButton,
-  secondaryButton,
+  choiceClass,
+  ghostButton,
 } from "@components/ui/styles";
 import { skipToken, useMutation, useQuery } from "@connectrpc/connect-query";
 import {
   AdjustmentsHorizontalIcon,
   ArrowPathIcon,
-  CheckIcon,
   ExclamationTriangleIcon,
-  ScaleIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
@@ -413,10 +412,6 @@ const AutoPlanPage: React.FC = () => {
       (slot.state === PlanSlotState.SUGGESTED ||
         slot.state === PlanSlotState.KEPT)
   );
-  const maxScore = Math.max(
-    0,
-    ...toSave.map((slot) => slot.suggestion?.score ?? 0)
-  );
   const breaking = toSave.filter(
     (slot) => slot.suggestion?.fitsRules === false
   ).length;
@@ -465,8 +460,7 @@ const AutoPlanPage: React.FC = () => {
     content = (
       <div className="relative flex flex-col gap-3">
         {plan.isError && <ErrorText error={plan.error} />}
-        <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted">
-          <SparklesIcon className="size-4 text-pine" aria-hidden="true" />
+        <p className="text-sm text-muted">
           <span>
             Tried {plan.data.plansTried.toLocaleString()}{" "}
             {plan.data.plansTried === 1 ? "plan" : "plans"} with{" "}
@@ -476,6 +470,7 @@ const AutoPlanPage: React.FC = () => {
           </span>
           {toSave.length > 0 && (
             <span>
+              {" "}
               {breaking === 0
                 ? "Every meal fits everyone's rules."
                 : `${breaking} ${breaking === 1 ? "meal breaks" : "meals break"} someone's rules: swap ${breaking === 1 ? "it" : "them"} if you can.`}
@@ -483,9 +478,9 @@ const AutoPlanPage: React.FC = () => {
           )}
         </p>
         {repeats.length > 0 && (
-          <div className="flex items-start gap-2 rounded-xl border border-warn-line bg-warn-tint px-3 py-2 text-sm text-warn-dark">
+          <div className="flex items-start gap-3 rounded-2xl border border-warn-line bg-warn-tint p-4 text-sm text-ink-soft">
             <ExclamationTriangleIcon
-              className="mt-0.5 size-4 shrink-0 text-warn"
+              className="size-5 shrink-0 text-warn-dark"
               aria-hidden="true"
             />
             <p>
@@ -502,13 +497,13 @@ const AutoPlanPage: React.FC = () => {
           </div>
         )}
         <div
-          className={`grid grid-cols-1 gap-3 transition-opacity sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${plan.isFetching ? "opacity-50" : ""}`}
+          className={`grid grid-cols-1 gap-5 transition-opacity lg:grid-cols-2 ${plan.isFetching ? "opacity-50" : ""}`}
           aria-busy={plan.isFetching}
         >
           {[...byDate.entries()].map(([date, daySlots]) => (
             <section key={date} className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-ink-soft">
+                <h2 className="text-base font-bold text-ink-soft">
                   {formatWeekday(date)}{" "}
                   <span className="font-normal text-muted">
                     {formatShortDate(date)}
@@ -516,18 +511,17 @@ const AutoPlanPage: React.FC = () => {
                 </h2>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-0.5 rounded px-1 text-xs font-medium text-pine hover:bg-pine-50 disabled:opacity-50 print:hidden"
+                  className={`${ghostButton} -mr-2 print:hidden`}
                   disabled={busy}
                   title="Plan this day's meals again, putting everyone's targets first, and keeping the other days as they are, but for leftovers of this day's meals"
                   onClick={() => {
                     replanDay(date);
                   }}
                 >
-                  <ScaleIcon className="size-3.5" aria-hidden="true" />
                   Re-plan for nutrition
                 </button>
               </div>
-              <ul className="flex flex-col gap-2">
+              <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
                 {daySlots.map((slot) => {
                   const key = slotKey(slot);
                   const planned =
@@ -546,7 +540,6 @@ const AutoPlanPage: React.FC = () => {
                       key={`${key}|${planned}|${slot.state}`}
                       slot={slot}
                       mealName={slotName(slot)}
-                      maxScore={maxScore}
                       locked={locked}
                       index={index}
                       disabled={busy}
@@ -598,66 +591,41 @@ const AutoPlanPage: React.FC = () => {
     <div className="flex flex-col gap-4">
       <BackLink to="/plan">Plan</BackLink>
       <PageHeader
+        kicker={`${formatShortDate(criteria.start)} to ${formatShortDate(end)}`}
         title="Plan for me"
-        subtitle={`${formatShortDate(criteria.start)} to ${formatShortDate(end)}: a recipe for each meal, chosen together to share ingredients, use the pantry and fit everyone's rules.`}
-        actions={
-          <div className="flex flex-wrap items-center gap-2 print:hidden">
-            <button
-              type="button"
-              className={secondaryButton}
-              aria-expanded={showCriteria}
-              onClick={() => {
-                setShowCriteria(!showCriteria);
-              }}
-            >
-              <AdjustmentsHorizontalIcon
-                className="size-4"
-                aria-hidden="true"
-              />
-              Criteria
-            </button>
-            <button
-              type="button"
-              className={secondaryButton}
-              disabled={busy || plan.data === undefined}
-              title="Plan the meals you didn't keep again, differently"
-              onClick={() => {
-                setReplanned(new Map(choices));
-                setFocus(undefined);
-                setPins(new Map());
-                setSeed(randomSeed());
-              }}
-            >
-              <ArrowPathIcon
-                className={`size-4 ${plan.isFetching ? "motion-safe:animate-spin" : ""}`}
-                aria-hidden="true"
-              />
-              Shuffle
-            </button>
-            <button
-              type="button"
-              className={primaryButton}
-              disabled={busy || toSave.length === 0}
-              onClick={() => {
-                save.mutate({
-                  meals: toSave.map((slot) => ({
-                    cookDate: slot.suggestion?.cookDate ?? "",
-                    date: slot.date,
-                    eatingTimeId: slot.eatingTimeId,
-                    leftoverOf: slot.suggestion?.leftoverOf,
-                    meal: slot.meal,
-                    personId: slot.personId,
-                    recipeId: slot.suggestion?.recipeId ?? "",
-                  })),
-                });
-              }}
-            >
-              <CheckIcon className="size-4" aria-hidden="true" />
-              {saveLabel(save.isPending, toSave.length)}
-            </button>
-          </div>
-        }
+        subtitle="A recipe for each meal, chosen together to share ingredients, use the pantry and fit everyone's rules."
       />
+      <div className="-mt-3 flex flex-wrap gap-2 print:hidden">
+        <button
+          type="button"
+          className={`${choiceClass(showCriteria)} inline-flex items-center gap-1.5`}
+          aria-expanded={showCriteria}
+          onClick={() => {
+            setShowCriteria(!showCriteria);
+          }}
+        >
+          <AdjustmentsHorizontalIcon className="size-4" aria-hidden="true" />
+          What matters
+        </button>
+        <button
+          type="button"
+          className={`${choiceClass(false)} inline-flex items-center gap-1.5 disabled:opacity-50`}
+          disabled={busy || plan.data === undefined}
+          title="Plan the meals you didn't keep again, differently"
+          onClick={() => {
+            setReplanned(new Map(choices));
+            setFocus(undefined);
+            setPins(new Map());
+            setSeed(randomSeed());
+          }}
+        >
+          <ArrowPathIcon
+            className={`size-4 ${plan.isFetching ? "motion-safe:animate-spin" : ""}`}
+            aria-hidden="true"
+          />
+          Shuffle
+        </button>
+      </div>
       <ErrorText error={save.error ?? eatOut.error ?? feedback.error} />
       {showCriteria && (
         <Card title="What matters this time">
@@ -671,6 +639,30 @@ const AutoPlanPage: React.FC = () => {
         </Card>
       )}
       {content}
+      {toSave.length > 0 && (
+        <div className="sticky bottom-[3.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
+          <button
+            type="button"
+            className={`${primaryButton} w-full py-3.5 text-base`}
+            disabled={busy}
+            onClick={() => {
+              save.mutate({
+                meals: toSave.map((slot) => ({
+                  cookDate: slot.suggestion?.cookDate ?? "",
+                  date: slot.date,
+                  eatingTimeId: slot.eatingTimeId,
+                  leftoverOf: slot.suggestion?.leftoverOf,
+                  meal: slot.meal,
+                  personId: slot.personId,
+                  recipeId: slot.suggestion?.recipeId ?? "",
+                })),
+              });
+            }}
+          >
+            {saveLabel(save.isPending, toSave.length)}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

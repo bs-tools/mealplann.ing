@@ -4,16 +4,9 @@ import SaveTemplateDialog from "@components/templates/save-template-dialog";
 import BackLink from "@components/ui/back-link";
 import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
-import {
-  cardClass,
-  primaryButton,
-  secondaryButton,
-} from "@components/ui/styles";
+import { ghostButton } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
-import {
-  BookmarkSquareIcon,
-  CalendarDaysIcon,
-} from "@heroicons/react/24/outline";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import { listPlanTemplates } from "gen/plans/v1/templates-PlanTemplateService_connectquery";
 import type { PlanTemplateSummary } from "gen/plans/v1/templates_pb";
@@ -59,57 +52,44 @@ const PlanTemplatesPage: React.FC = () => {
     );
   } else {
     content = (
-      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
         {templates.data.templates.map((template) => {
           const recipes = template.recipeNames.slice(0, SHOWN_RECIPES);
           const more = template.recipeNames.length - recipes.length;
           return (
-            <li
-              key={template.id}
-              className={`${cardClass} flex flex-col gap-2 p-4`}
-            >
-              <div>
-                <Link
-                  to={`/plan/templates/${template.id}`}
-                  className="font-semibold text-ink-soft hover:underline"
-                >
-                  {template.name}
-                </Link>
-                {template.source !== "" && (
-                  <p className="text-sm text-muted">{template.source}</p>
+            <li key={template.id} className="flex items-center gap-3 py-3.5">
+              <Link
+                to={`/plan/templates/${template.id}`}
+                className="flex min-w-0 grow flex-col gap-0.5"
+              >
+                <span className="font-bold text-ink-soft">{template.name}</span>
+                <span className="text-sm text-muted">
+                  {[
+                    template.source,
+                    `${template.days} ${template.days === 1 ? "day" : "days"}`,
+                    `${template.entryCount} ${template.entryCount === 1 ? "meal" : "meals"}`,
+                  ]
+                    .filter((part) => part !== "")
+                    .join(" · ")}
+                </span>
+                {recipes.length > 0 && (
+                  <span className="line-clamp-2 text-sm text-ink-soft">
+                    {formatList(
+                      more > 0 ? [...recipes, `${more} more`] : recipes
+                    )}
+                  </span>
                 )}
-              </div>
-              <p className="text-xs text-muted">
-                {template.days} {template.days === 1 ? "day" : "days"} ·{" "}
-                {template.entryCount}{" "}
-                {template.entryCount === 1 ? "meal" : "meals"}
-              </p>
-              {recipes.length > 0 && (
-                <p className="text-sm text-ink-soft">
-                  {formatList(
-                    more > 0 ? [...recipes, `${more} more`] : recipes
-                  )}
-                </p>
-              )}
-              <div className="mt-auto flex gap-2 pt-1">
-                <button
-                  type="button"
-                  className={primaryButton}
-                  disabled={people.data === undefined}
-                  onClick={() => {
-                    setApplying(template);
-                  }}
-                >
-                  <CalendarDaysIcon className="size-4" aria-hidden="true" />
-                  Plan it
-                </button>
-                <Link
-                  to={`/plan/templates/${template.id}`}
-                  className={secondaryButton}
-                >
-                  View
-                </Link>
-              </div>
+              </Link>
+              <button
+                type="button"
+                className="shrink-0 rounded-full bg-pine-50 px-3.5 py-2 text-sm font-bold text-pine hover:bg-pine-100 disabled:opacity-50"
+                disabled={people.data === undefined}
+                onClick={() => {
+                  setApplying(template);
+                }}
+              >
+                Plan it
+              </button>
             </li>
           );
         })}
@@ -122,20 +102,18 @@ const PlanTemplatesPage: React.FC = () => {
       <BackLink to="/plan">Plan</BackLink>
       <PageHeader
         title="Templates"
-        subtitle="Plans to use again: everyone's portions and the leftovers, from any date."
-        actions={
-          <button
-            type="button"
-            className={secondaryButton}
-            onClick={() => {
-              setSaving(true);
-            }}
-          >
-            <BookmarkSquareIcon className="size-4" aria-hidden="true" />
-            Save days as a template
-          </button>
-        }
+        subtitle="Plans to use again, like a dietitian's sample week: everyone's portions and the leftovers, from any date."
       />
+      <button
+        type="button"
+        className={`${ghostButton} -mt-3 -ml-2 self-start text-pine`}
+        onClick={() => {
+          setSaving(true);
+        }}
+      >
+        <PlusIcon className="size-4" aria-hidden="true" />
+        Save days of the plan as a template
+      </button>
       {content}
       {saving && (
         <SaveTemplateDialog
