@@ -1,5 +1,6 @@
 import Loading from "@components/loading";
 import { useApplyFix } from "@components/plan/apply-fix";
+import { splitFix } from "@components/today/plate";
 import { warningTitle } from "@components/today/today-bits";
 import Modal from "@components/ui/modal";
 import QueryError, { ErrorText } from "@components/ui/query-error";
@@ -77,7 +78,14 @@ const WarningSheet: React.FC<WarningSheetProps> = ({
             aria-hidden="true"
           />
           <div className="flex flex-col gap-1">
-            <p className="font-bold text-ink-soft">{fix.description}</p>
+            <p className="font-bold text-ink-soft">
+              {splitFix(fix.description).action}
+            </p>
+            {splitFix(fix.description).detail !== "" && (
+              <p className="text-sm text-muted">
+                {splitFix(fix.description).detail}.
+              </p>
+            )}
             {fix.energyKcal !== fix.plannedEnergyKcal && (
               <p className="text-sm text-muted tabular-nums">
                 Brings the day to {formatAmount(fix.energyKcal)} kcal.

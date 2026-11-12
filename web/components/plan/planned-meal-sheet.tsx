@@ -1,8 +1,7 @@
 import CookActions from "@components/plan/cook-actions";
 import type { MealRow, RowSlot } from "@components/plan/plan-rows";
-import { rowNames } from "@components/plan/plan-rows";
 import type { Slot } from "@components/plan/portion-dialog";
-import { Plate, SidesCard } from "@components/today/plate";
+import { Plate, PortionList, SidesCard } from "@components/today/plate";
 import WarningFix from "@components/today/warning-fix";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
@@ -29,7 +28,6 @@ import { PlanService, Severity } from "gen/plans/v1/plans_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { parseDate } from "helpers/dates";
-import { formatList } from "helpers/format";
 import { formatAmount } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
@@ -205,7 +203,7 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
   const weekday = parseDate(day.date).toLocaleDateString(undefined, {
     weekday: "long",
   });
-  const kicker = `${weekday} ${row.label.toLowerCase()}${row.time === "" ? "" : ` · ${row.time}`}`;
+  const kicker = `${weekday}${row.time === "" ? "" : ` · ${row.time}`}`;
   let content: React.ReactNode = null;
   if (slot === undefined) {
     content = null;
@@ -256,6 +254,7 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
     ];
     content = (
       <div className="flex flex-col gap-5">
+        <PortionList portions={portions} />
         <Plate nutrients={slot.planned.nutrients} />
         {main !== undefined && (
           <SidesCard
@@ -332,7 +331,7 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
   }
 
   return (
-    <Modal open onClose={onClose} title={formatList(rowNames(row))}>
+    <Modal open onClose={onClose} title={row.label}>
       <div className="flex flex-col gap-4">
         <p className="-mt-2 text-sm text-muted">{kicker}</p>
         {eaters.length > 1 && (

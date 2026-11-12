@@ -1,6 +1,11 @@
 import { markEaten, scalePortions } from "@components/today/day-change";
 import DisplacedChoice from "@components/today/displaced-choice";
-import { MealWarnings, Plate, SidesCard } from "@components/today/plate";
+import {
+  MealWarnings,
+  PortionList,
+  Plate,
+  SidesCard,
+} from "@components/today/plate";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
 import { choiceClass } from "@components/ui/styles";
@@ -24,7 +29,6 @@ import type {
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
-import { formatList } from "helpers/format";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 import { Link } from "react-router";
@@ -67,7 +71,9 @@ const MealSheet: React.FC<MealSheetProps> = ({
   const [step, setStep] = useState<Step>("actions");
   const et = planned.eatingTime;
   const { portions } = planned;
-  const names = formatList(portions.map((portion) => portion.name));
+  // What to call the meal in a sentence, e.g. "breakfast" or "this meal".
+  const mealName =
+    et === undefined || et.name === "" ? "this meal" : et.name.toLowerCase();
   const eaten =
     portions.length > 0 && portions.every((portion) => portion.eaten);
 
@@ -107,6 +113,7 @@ const MealSheet: React.FC<MealSheetProps> = ({
         <div className="flex flex-col">
           {portions.length > 0 && (
             <div className="flex flex-col gap-3 pb-3">
+              <PortionList portions={portions} />
               <Plate nutrients={planned.nutrients} />
               <MealWarnings warnings={planned.warnings} />
               {et !== undefined &&
@@ -228,7 +235,7 @@ const MealSheet: React.FC<MealSheetProps> = ({
       content = (
         <div className="flex flex-col gap-3">
           <p className="text-lg font-bold text-ink-soft">
-            What about the {names.toLowerCase()}?
+            What about {mealName}?
           </p>
           <DisplacedChoice
             week={week}
@@ -237,7 +244,7 @@ const MealSheet: React.FC<MealSheetProps> = ({
             today={today}
             time={et?.time ?? ""}
             portions={portions}
-            name={`the ${names.toLowerCase()}`}
+            name={mealName}
             then={step === "out" ? eatingOut : undefined}
             onDone={onClose}
           />
@@ -247,15 +254,11 @@ const MealSheet: React.FC<MealSheetProps> = ({
   }
 
   return (
-    <Modal
-      open
-      onClose={onClose}
-      title={portions.length === 0 ? (et?.name ?? "") : names}
-    >
+    <Modal open onClose={onClose} title={et?.name ?? "This meal"}>
       <div className="flex flex-col gap-3">
-        <p className="-mt-2 text-sm text-muted">
-          {et?.time} · {et?.name}
-        </p>
+        {et !== undefined && et.time !== "" && (
+          <p className="-mt-2 text-sm text-muted">{et.time}</p>
+        )}
         {content}
         <ErrorText error={change.error} />
       </div>

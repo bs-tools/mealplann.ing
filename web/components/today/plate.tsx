@@ -11,12 +11,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Nutrients } from "gen/foods/v1/foods_pb";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
-import type { Warning } from "gen/plans/v1/plans_pb";
+import type { PlannedPortion, Warning } from "gen/plans/v1/plans_pb";
 import { PlanService, Severity } from "gen/plans/v1/plans_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { suggestSides } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
 import type { SideSuggestion } from "gen/suggestions/v1/suggestions_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
+import { formatGrams } from "helpers/format";
 import { formatAmount } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
 import React from "react";
@@ -107,6 +108,49 @@ export const Plate: React.FC<PlateProps> = ({ nutrients }) => {
       </ul>
     </div>
   );
+};
+
+interface PortionListProps {
+  portions: PlannedPortion[];
+}
+
+/**
+ * PortionList lists what a meal is: each recipe or food, with its weight,
+ * so the sheet's title can be just the meal, like "Breakfast".
+ */
+export const PortionList: React.FC<PortionListProps> = ({ portions }) => (
+  <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line bg-white">
+    {portions.map((portion) => (
+      <li
+        key={portion.portionId === "" ? portion.stapleId : portion.portionId}
+        className="flex items-baseline justify-between gap-3 px-4 py-2.5 text-sm"
+      >
+        <span className="min-w-0 text-ink-soft">{portion.name}</span>
+        {portion.grams > 0 && (
+          <span className="shrink-0 text-muted tabular-nums">
+            {formatGrams(portion.grams)}
+          </span>
+        )}
+      </li>
+    ))}
+  </ul>
+);
+
+/**
+ * SplitFix splits a fix's description into its action, short enough for a
+ * button, like "Have each portion smaller, at 55%", and the detail after
+ * its colon, of each portion's new size.
+ */
+export const splitFix = (
+  description: string
+): { action: string; detail: string } => {
+  const at = description.indexOf(": ");
+  return at < 0
+    ? { action: description, detail: "" }
+    : {
+        action: description.slice(0, at),
+        detail: description.slice(at + 2),
+      };
 };
 
 interface MealWarningsProps {
