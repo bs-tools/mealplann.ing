@@ -16,6 +16,7 @@ import {
   linkClass,
   primaryButton,
   secondaryButton,
+  sectionLabelClass,
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
@@ -39,6 +40,7 @@ import {
   formatRedirectTarget,
 } from "helpers/format";
 import { formatIngredientAmount, formatServings } from "helpers/labels";
+import { formatAmount } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
 import {
   formatStepDuration,
@@ -86,6 +88,59 @@ const fridgeNote = (recipe: Recipe): string => {
  * RecipePage shows a recipe: its ingredients, steps and nutrition per
  * serving, with the ingredients whose foods lack data flagged.
  */
+interface ServedWithChipsProps {
+  recipe: Recipe;
+}
+
+/**
+ * ServedWithChips shows the sides a recipe is served with as chips, a
+ * recipe side linking to its recipe, with how much goes with a serving:
+ * each meal of it suggests the one that fits the day.
+ */
+const ServedWithChips: React.FC<ServedWithChipsProps> = ({ recipe }) => {
+  if (recipe.servedWith.length === 0) {
+    return null;
+  }
+  const chipClass =
+    "inline-flex items-baseline gap-1.5 rounded-full bg-white px-4 py-2 text-sm text-ink-soft ring-1 ring-line ring-inset";
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className={sectionLabelClass}>Served with</h2>
+      <ul className="flex flex-wrap gap-2">
+        {recipe.servedWith.map((side) => {
+          const amount =
+            side.recipeId === ""
+              ? `${formatAmount(side.gramsPerServing)} g`
+              : formatServings(side.servingsPerServing);
+          return (
+            <li key={side.recipeId === "" ? side.foodId : side.recipeId}>
+              {side.recipeId === "" ? (
+                <span className={chipClass}>
+                  {side.foodName}
+                  <span className="text-xs text-muted">{amount}</span>
+                </span>
+              ) : (
+                <Link
+                  to={`/recipes/${side.recipeId}`}
+                  className={`${chipClass} font-bold hover:ring-muted`}
+                >
+                  {side.recipeName}
+                  <span className="text-xs font-normal text-muted">
+                    {amount}
+                  </span>
+                </Link>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <p className="text-xs text-muted">
+        A meal of it suggests the side that fits the day best, for each serving.
+      </p>
+    </section>
+  );
+};
+
 const RecipePage: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const system = useUnitSystem();
@@ -264,6 +319,7 @@ const RecipePage: React.FC = () => {
           to choose a food for each ingredient, and save it to finish it.
         </p>
       )}
+      <ServedWithChips recipe={recipe} />
       <RecipeLeftovers recipeId={recipe.id} />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="flex flex-col gap-4 lg:col-span-3">
@@ -410,26 +466,8 @@ const RecipePage: React.FC = () => {
         <div className="order-first flex flex-col gap-4 lg:order-none lg:col-span-2">
           <RecipeBalance perServing={recipe.nutrition?.perServing} />
           <NutritionPanel recipe={recipe} />
-          {(recipe.tags.length > 0 ||
-            keeps !== "" ||
-            recipe.servedWith.length > 0) && (
+          {(recipe.tags.length > 0 || keeps !== "") && (
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
-              {recipe.servedWith.length > 0 && (
-                <span
-                  className="rounded-full bg-[#f0e1b4] px-3 py-1 text-sm text-ink-soft"
-                  title="Each meal of it suggests the side that fits the day"
-                >
-                  with{" "}
-                  {formatList(
-                    recipe.servedWith.map((side) =>
-                      (side.recipeId === ""
-                        ? side.foodName
-                        : side.recipeName
-                      ).toLowerCase()
-                    )
-                  )}
-                </span>
-              )}
               {recipe.tags.map((tag) => (
                 <Link
                   key={tag}
