@@ -260,7 +260,7 @@ const DayLine: React.FC<DayLineProps> = ({
                 <span className="font-medium text-ink-soft">
                   <Link
                     to={`/recipes/${block.cook.cook?.recipeId ?? ""}`}
-                    className="underline decoration-cook/40 underline-offset-4 hover:decoration-cook"
+                    className="hover:text-cook-dark"
                   >
                     {block.name}
                   </Link>
