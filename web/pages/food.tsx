@@ -1,5 +1,6 @@
 import { timestampMs } from "@bufbuild/protobuf/wkt";
 import Loading from "@components/loading";
+import { FoodStock } from "@components/pantry/in-the-kitchen";
 import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import { ConfirmDialog } from "@components/ui/confirm-button";
@@ -392,6 +393,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
         ))}
       </div>
       <p className="-mt-2 text-xs text-muted">Per 100 g, as saved.</p>
+      <FoodStock foodId={food.id} foodName={food.name} />
       <ErrorText error={remove.error ?? update.error} />
       {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
