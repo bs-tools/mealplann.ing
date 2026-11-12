@@ -3,7 +3,10 @@ import { sectionLabelClass } from "@components/ui/styles";
 import type { ConnectError } from "@connectrpc/connect";
 import { createClient } from "@connectrpc/connect";
 import { useQuery, useTransport } from "@connectrpc/connect-query";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import {
+  ExclamationTriangleIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
@@ -119,9 +122,9 @@ interface SidesCardProps {
 }
 
 /**
- * SidesCard offers the sides the meal's recipe is served with, best for
- * the day first, each saying why, to add one, swap it for another, or
- * take it off.
+ * SidesCard offers the sides the meal's recipe is served with as chips,
+ * the planned one filled and the best for the day suggested with why, to
+ * add one, swap it for another, or take it off.
  */
 export const SidesCard: React.FC<SidesCardProps> = ({
   personId,
@@ -175,61 +178,61 @@ export const SidesCard: React.FC<SidesCardProps> = ({
   if (list.length === 0) {
     return null;
   }
+  // The best side, if it fits and isn't planned, is suggested with why.
+  const [best] = list;
+  const suggested =
+    best !== undefined &&
+    !best.planned &&
+    best.grams > 0 &&
+    best.warnings.length === 0
+      ? best
+      : undefined;
   return (
-    <section className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
-      <h3 className={sectionLabelClass}>
-        {sides.data?.recipeName} is served with
-      </h3>
-      <ul className="flex flex-col">
-        {list.map((side, index) => {
-          const fits = side.grams > 0 && side.warnings.length === 0;
-          let action = "Add";
+    <section className="flex flex-col gap-3">
+      <h3 className={sectionLabelClass}>Served with</h3>
+      <div className="flex flex-wrap gap-2">
+        {list.map((side) => {
+          let chipClass =
+            "bg-white text-ink-soft ring-1 ring-line ring-inset hover:ring-muted";
           if (side.planned) {
-            action = "Remove";
-          } else if (planned.length > 0) {
-            action = "Swap";
+            chipClass = "bg-ink-soft font-bold text-white";
+          } else if (side === suggested) {
+            chipClass =
+              "bg-white font-bold text-pine ring-2 ring-pine ring-inset";
           }
           return (
-            <li
+            <button
               key={side.foodId}
-              className="flex items-center gap-3 border-b border-line py-2.5 last:border-b-0"
+              type="button"
+              className={`rounded-full px-4 py-2 text-sm ${chipClass} disabled:opacity-50`}
+              disabled={choose.isPending || side.grams === 0}
+              title={side.reason}
+              aria-pressed={side.planned}
+              onClick={() => {
+                choose.mutate(side);
+              }}
             >
-              <div className="flex min-w-0 flex-1 flex-col">
-                <span className="flex items-center gap-2 font-medium text-ink-soft">
-                  {side.foodName}
-                  {side.grams > 0 && (
-                    <span className="text-sm font-normal text-muted">
-                      {formatAmount(side.grams)} g
-                    </span>
-                  )}
-                  {index === 0 && fits && !side.planned && (
-                    <span className="rounded-full bg-ready-tint px-2 py-0.5 text-xs font-bold text-ready">
-                      Best fit
-                    </span>
-                  )}
-                </span>
-                <span
-                  className={`text-sm ${fits ? "text-muted" : "text-warn-dark"}`}
-                >
-                  {side.reason}
-                </span>
-              </div>
-              {side.grams > 0 && (
-                <button
-                  type="button"
-                  className={`shrink-0 rounded-xl px-3 py-2 text-sm font-bold ${side.planned ? "bg-white text-ink-soft ring-1 ring-line ring-inset" : "bg-ink-soft text-white"}`}
-                  disabled={choose.isPending}
-                  onClick={() => {
-                    choose.mutate(side);
-                  }}
-                >
-                  {action}
-                </button>
-              )}
-            </li>
+              {side.foodName}
+              {side === suggested && " · suggested"}
+            </button>
           );
         })}
-      </ul>
+      </div>
+      {suggested !== undefined && (
+        <p className="grid grid-cols-[1.5rem_minmax(0,1fr)] items-center gap-2 rounded-2xl bg-ready-tint p-4 text-sm text-ink-soft">
+          <SparklesIcon
+            className="size-5 justify-self-center text-ready"
+            aria-hidden="true"
+          />
+          <span>
+            <span className="font-bold text-ready">
+              {suggested.foodName}, {formatAmount(suggested.grams)} g
+            </span>
+            <br />
+            {suggested.reason.replace(/^./u, (first) => first.toUpperCase())}.
+          </span>
+        </p>
+      )}
       <ErrorText error={choose.error} />
     </section>
   );
