@@ -16,6 +16,7 @@ import {
   ghostButton,
   iconButton,
   inputClass,
+  linkClass,
   primaryButton,
   secondaryButton,
 } from "@components/ui/styles";
@@ -46,7 +47,7 @@ import {
 } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 // IngredientInput is an ingredient being edited.
 interface IngredientInput {
@@ -904,6 +905,13 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
       )
     );
   };
+  /*
+   * A recipe whose steps say how long they take gets its times from them,
+   * on the server, so they aren't asked for.
+   */
+  const timed = steps.some(
+    (step) => Number.parseFloat(step.minutes.replace(",", ".")) > 0
+  );
   const currentTags = parseTags(tags);
   const suggestedTags = allTags.filter((tag) => !currentTags.includes(tag));
 
@@ -940,29 +948,60 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
               rows={2}
               onChange={setDescription}
             />
-            <div className="grid grid-cols-3 gap-3">
-              <TextField
-                label="Servings"
-                value={servings}
-                inputMode="numeric"
-                onChange={setServings}
-              />
-              <TextField
-                label="Prep"
-                value={prep}
-                placeholder="min"
-                onChange={setPrep}
-              />
-              <TextField
-                label="Cook"
-                value={cook}
-                placeholder="min"
-                onChange={setCook}
-              />
-            </div>
-            <p className="-mt-1 text-xs text-muted">
-              Times are minutes, like 45, or hours and minutes, like 1:30.
-            </p>
+            {timed ? (
+              <div className="flex flex-col gap-1">
+                <TextField
+                  label="Servings"
+                  value={servings}
+                  inputMode="numeric"
+                  onChange={setServings}
+                />
+                <p className="text-xs text-muted">
+                  How long it takes comes from the steps&apos; durations, so the
+                  two can&apos;t disagree.
+                  {recipe !== undefined && (
+                    <>
+                      {" "}
+                      <Link
+                        to={`/recipes/${recipe.id}/timeline`}
+                        className={linkClass}
+                      >
+                        See the timeline
+                      </Link>
+                      .
+                    </>
+                  )}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-3">
+                  <TextField
+                    label="Servings"
+                    value={servings}
+                    inputMode="numeric"
+                    onChange={setServings}
+                  />
+                  <TextField
+                    label="Prep"
+                    value={prep}
+                    placeholder="min"
+                    onChange={setPrep}
+                  />
+                  <TextField
+                    label="Cook"
+                    value={cook}
+                    placeholder="min"
+                    onChange={setCook}
+                  />
+                </div>
+                <p className="-mt-1 text-xs text-muted">
+                  Times are minutes, like 45, or hours and minutes, like 1:30.
+                  Give the steps durations instead, and they&apos;re worked out
+                  from them.
+                </p>
+              </>
+            )}
             <div className="flex flex-col gap-1">
               <div className="flex items-end gap-2">
                 <TextField
