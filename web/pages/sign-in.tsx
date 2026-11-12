@@ -11,7 +11,7 @@ const SignInPage: React.FC = () => (
   <div className="flex min-h-full flex-col bg-stone-50 md:flex-row font-ui text-ink">
     <section className="relative flex min-h-80 flex-col justify-between gap-8 overflow-hidden bg-ink px-6 py-8 text-neutral-50 sm:px-12 sm:py-10 md:flex-1">
       <div className="flex items-center gap-3">
-        <LogoMark className="h-[30px] w-[46px]" />
+        <LogoMark className="size-9" />
         <Wordmark className="text-[22px]" />
       </div>
       <div className="relative flex max-w-md flex-col gap-3 pb-20">

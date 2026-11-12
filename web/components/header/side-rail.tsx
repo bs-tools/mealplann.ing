@@ -20,7 +20,12 @@ const SideRail: React.FC<SideRailProps> = ({ user }) => (
     className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-line bg-white px-3 py-5 lg:flex print:hidden"
   >
     <Link to="/" className="mb-6 flex items-center gap-2 px-3">
-      <LogoMark leaf="#1b1f1d" ground="#ffffff" />
+      <LogoMark
+        letter="#2f6b4f"
+        leaf="#4b9338"
+        ground="#ffffff"
+        className="size-7"
+      />
       <Wordmark className="text-[15px] text-ink-soft" />
     </Link>
     <div className="flex flex-col gap-1">

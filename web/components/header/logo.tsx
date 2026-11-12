@@ -1,41 +1,48 @@
 import React from "react";
 
+/*
+ * The mark's shapes, in a 64 unit box: a lowercase m, and a leaf sprouting
+ * from its right shoulder, with a vein cut out of it in the ground's color.
+ */
+export const MARK_M =
+  "M8 54V33c0-6 3.5-10 8-10s8 4 8 10v21M24 33c0-6 3.5-10 8-10s8 4 8 10v21";
+export const MARK_LEAF =
+  "M40 29C40 17 46.5 10.5 58 9.5c0 11.5-6.5 18.5-18 19.5z";
+export const MARK_VEIN = "M42.5 25.5C46 20 50 15.5 55 12";
+
 interface LogoMarkProps {
-  // The color of the leaf: white on dark grounds, ink on light ones.
+  // The color of the m: light on dark grounds, pine on light ones.
+  letter?: string;
+  // The color of the leaf.
   leaf?: string;
-  // The color of the ground, which the leaf's midrib is cut out in.
+  // The color of the ground, which the leaf's vein is cut out in.
   ground?: string;
   className?: string;
 }
 
-// LogoMark is the mealplann.ing mark: a leaf sprouting from a bowl.
+/**
+ * LogoMark is the mealplann.ing mark: a lowercase m with a leaf sprouting
+ * from its shoulder. Its defaults suit a dark ground.
+ */
 export const LogoMark: React.FC<LogoMarkProps> = ({
-  leaf = "#ffffff",
+  letter = "#eef1ec",
+  leaf = "#7ed3a6",
   ground = "#111111",
-  className = "h-[25px] w-[38px]",
+  className = "size-8",
 }) => (
-  <svg aria-hidden="true" viewBox="0 0 40 26" fill="none" className={className}>
+  <svg aria-hidden="true" viewBox="4 6 56 52" fill="none" className={className}>
     <path
-      d="M3 13 L37 13 C 35 20, 28 23, 20 23 C 12 23, 5 20, 3 13"
-      className="stroke-leaf"
-      strokeWidth="2.6"
+      d={MARK_M}
+      stroke={letter}
+      strokeWidth="6.5"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
+    <path d={MARK_LEAF} fill={leaf} />
     <path
-      d="M20 12 C 13.5 10.5, 13 4, 21.5 1.5 C 26.5 5.5, 25.5 10.5, 20 12 Z"
-      fill={leaf}
-    />
-    <path
-      d="M20 11.5 Q 19.6 7, 21.4 2.6"
+      d={MARK_VEIN}
       stroke={ground}
-      strokeWidth="0.9"
-      strokeLinecap="round"
-    />
-    <path
-      d="M15 25 L25 25"
-      stroke="#404040"
-      strokeWidth="1.5"
+      strokeWidth="1.6"
       strokeLinecap="round"
     />
   </svg>
