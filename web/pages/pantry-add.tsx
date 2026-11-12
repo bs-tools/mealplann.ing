@@ -1,12 +1,12 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
 import Loading from "@components/loading";
+import BackLink from "@components/ui/back-link";
 import { PageHeader } from "@components/ui/misc";
 import { ErrorText } from "@components/ui/query-error";
 import Segmented from "@components/ui/segmented";
 import { inputClass, labelClass, primaryButton } from "@components/ui/styles";
 import { skipToken, useMutation, useQuery } from "@connectrpc/connect-query";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import { getFood } from "gen/foods/v1/foods-FoodService_connectquery";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
@@ -16,7 +16,7 @@ import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { addDays, today } from "helpers/dates";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 type Place = "fridge" | "freezer" | "cupboard";
 
@@ -103,15 +103,7 @@ const PantryAddPage: React.FC = () => {
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-      <div>
-        <Link
-          to="/pantry"
-          className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink-soft"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          Pantry
-        </Link>
-      </div>
+      <BackLink to="/pantry">Pantry</BackLink>
       <PageHeader title="Add" />
       <FoodPicker
         value={food}

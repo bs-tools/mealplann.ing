@@ -16,7 +16,7 @@ interface Tab {
 }
 
 // The app's main pages, a thumb away on a phone.
-const TABS: Tab[] = [
+export const TABS: Tab[] = [
   { end: true, icon: SunIcon, label: "Today", to: "/" },
   { icon: CalendarDaysIcon, label: "Plan", to: "/plan" },
   { icon: BookOpenIcon, label: "Recipes", to: "/recipes" },
@@ -26,7 +26,7 @@ const TABS: Tab[] = [
 
 /**
  * BottomNav is the tab bar of the main pages on phones and tablets, at the
- * bottom of the screen; larger screens have them in the header.
+ * bottom of the screen; larger screens have them in the side rail.
  */
 const BottomNav: React.FC = () => (
   <nav

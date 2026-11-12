@@ -3,6 +3,7 @@ import RecipeBalance from "@components/recipes/balance";
 import FavoriteButton from "@components/recipes/favorite-button";
 import NutritionPanel from "@components/recipes/nutrition-panel";
 import SuggestMenu from "@components/recipes/suggest-feedback";
+import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import ConfirmButton from "@components/ui/confirm-button";
 import { Badge, PageHeader } from "@components/ui/misc";
@@ -15,7 +16,6 @@ import {
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
-  ArrowLeftIcon,
   ArrowTopRightOnSquareIcon,
   CalendarDaysIcon,
   ChartBarIcon,
@@ -138,15 +138,7 @@ const RecipePage: React.FC = () => {
   ].filter((part) => part !== "");
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          to="/recipes"
-          className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink-soft print:hidden"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          Recipes
-        </Link>
-      </div>
+      <BackLink to="/recipes">Recipes</BackLink>
       <PageHeader
         title={recipe.name}
         subtitle={

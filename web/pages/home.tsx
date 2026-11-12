@@ -1,3 +1,4 @@
+import AccountMenu from "@components/header/account-menu";
 import Loading from "@components/loading";
 import MealSheet from "@components/today/meal-sheet";
 import {
@@ -363,17 +364,20 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
   const lists = useQuery(listShoppingLists, { pageSize: 10 });
 
   const title = (
-    <div className="flex flex-col gap-1">
-      <p className="text-sm font-medium text-muted">
-        {parseDate(now).toLocaleDateString(undefined, {
-          day: "numeric",
-          month: "long",
-          weekday: "long",
-        })}
-      </p>
-      <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink-soft">
-        Today
-      </h1>
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-medium text-muted">
+          {parseDate(now).toLocaleDateString(undefined, {
+            day: "numeric",
+            month: "long",
+            weekday: "long",
+          })}
+        </p>
+        <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink-soft">
+          Today
+        </h1>
+      </div>
+      <AccountMenu user={user} className="lg:hidden" />
     </div>
   );
 

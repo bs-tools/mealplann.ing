@@ -1,5 +1,6 @@
 import Loading from "@components/loading";
 import ApplyTemplateDialog from "@components/templates/apply-template-dialog";
+import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import ConfirmButton from "@components/ui/confirm-button";
 import { TextAreaField, TextField } from "@components/ui/fields";
@@ -13,7 +14,6 @@ import {
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
-  ArrowLeftIcon,
   CalendarDaysIcon,
   PencilIcon,
   TrashIcon,
@@ -220,15 +220,7 @@ const PlanTemplatePage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          to="/plan/templates"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 print:hidden"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          Templates
-        </Link>
-      </div>
+      <BackLink to="/plan/templates">Templates</BackLink>
       <PageHeader
         title={tmpl.name}
         subtitle={tmpl.source === "" ? undefined : tmpl.source}

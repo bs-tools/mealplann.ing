@@ -1,6 +1,7 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
 import Loading from "@components/loading";
+import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import { PageHeader } from "@components/ui/misc";
 import { ErrorText } from "@components/ui/query-error";
@@ -12,7 +13,6 @@ import {
 } from "@components/ui/styles";
 import { skipToken, useMutation, useQuery } from "@connectrpc/connect-query";
 import {
-  ArrowLeftIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
@@ -28,7 +28,7 @@ import { AMOUNT_UNITS, optionValue } from "helpers/labels";
 import { parseQuantity } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 // AUTO_PICK_SCORE is how alike a food must be to be picked for the user.
 const AUTO_PICK_SCORE = 0.75;
@@ -371,15 +371,7 @@ const RecipeImportPage: React.FC = () => {
   );
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          to="/recipes"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          Recipes
-        </Link>
-      </div>
+      <BackLink to="/recipes">Recipes</BackLink>
       <PageHeader
         title="Import a recipe"
         subtitle="Read a recipe from a web page, like a food blog's, and choose the food of each ingredient."

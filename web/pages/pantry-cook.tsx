@@ -1,9 +1,9 @@
 import Loading from "@components/loading";
+import BackLink from "@components/ui/back-link";
 import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
 import { linkClass, primaryButton } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { suggestFromPantry } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
 import { today } from "helpers/dates";
 import { formatHoursMinutes, formatList } from "helpers/format";
@@ -80,15 +80,7 @@ const PantryCookPage: React.FC = () => {
   }
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-      <div>
-        <Link
-          to="/pantry"
-          className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink-soft"
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden="true" />
-          Pantry
-        </Link>
-      </div>
+      <BackLink to="/pantry">Pantry</BackLink>
       <PageHeader title="You can cook these now" />
       {content}
     </div>
