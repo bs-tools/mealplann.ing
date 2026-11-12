@@ -1246,10 +1246,12 @@ type Suggestion_builder struct {
 	// What it needs bought beyond the pantry and the week's shopping,
 	// rounded to whole packs, by name.
 	ItemsToBuy []*ItemToBuy
-	// At one person's small meal, the earlier shared meal it's the rest of,
-	// eaten reheated: a serving more of that meal's cook of the recipe,
-	// rather than a new cook, with cook_servings the servings it adds. Unset
-	// for a new cook.
+	// The earlier shared meal it's the rest of, eaten reheated: more of
+	// that meal's cook of the recipe, rather than a new cook, with
+	// cook_servings the servings it adds. At one person's small meal, a
+	// serving more of a meal; at a shared lunch or dinner, from SuggestPlan,
+	// everyone's servings from an earlier day's lunch or dinner, cooking once
+	// for two meals. Unset for a new cook.
 	LeftoverOf *v11.LeftoverOf
 	// The date it's cooked (YYYY-MM-DD), for a meal of a suggested plan on a
 	// day the household doesn't cook (see PlanCriteria.cooking_weekdays):
@@ -1597,10 +1599,9 @@ type PlanChoice_builder struct {
 	PersonId string
 	// The person's eating time, with person_id.
 	EatingTimeId string
-	// For one person's eating time, to keep the rest of an earlier shared
-	// meal of recipe_id there rather than a new cook, as a suggestion's
-	// leftover_of says. It's kept if the plan has that meal's cook of the
-	// recipe.
+	// To keep the rest of an earlier shared meal of recipe_id at the slot
+	// rather than a new cook, as a suggestion's leftover_of says. It's kept
+	// if the plan has that meal's cook of the recipe.
 	LeftoverOf *v11.LeftoverOf
 }
 

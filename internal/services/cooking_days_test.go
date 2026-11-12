@@ -49,8 +49,15 @@ func TestCookingDays(t *testing.T) {
 	if len(slots) != 3 {
 		t.Fatalf("got %d slots, want 3", len(slots))
 	}
+	// Monday's and Tuesday's are cooked on Sunday: ahead, or as the rest
+	// of Sunday's dinner.
 	for i, want := range []string{"", sunday, sunday} {
-		if got := slots[i].GetSuggestion().GetCookDate(); got != want {
+		sg := slots[i].GetSuggestion()
+		got := sg.GetCookDate()
+		if sg.HasLeftoverOf() {
+			got = sg.GetLeftoverOf().GetDate()
+		}
+		if got != want {
 			t.Errorf("got %s's dinner cooked on %q, want %q", slots[i].GetDate(), got, want)
 		}
 	}

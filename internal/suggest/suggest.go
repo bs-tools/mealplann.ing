@@ -157,6 +157,13 @@ const (
 	// recipe.
 	UntaggedSnackPenalty = 4.0
 	LeftoverPoints       = 1.0
+	// MealLeftoverPoints is for the rest of an earlier meal eaten at a
+	// shared lunch or dinner, like Monday's chili for Tuesday's lunch:
+	// there's no cooking and nothing new to buy, about what a good new
+	// cook earns for its shared ingredients and short shop, so the
+	// planner weighs it against cooking again. It repeats the recipe by
+	// nature, so the variety penalty doesn't apply.
+	MealLeftoverPoints = 8.0
 	// DefaultLeftoverDays is how many days after its cook a meal of
 	// unknown fridge days is eaten as a leftover at a small meal.
 	DefaultLeftoverDays = 2
@@ -229,10 +236,12 @@ type Input struct {
 	Lots []*pantry.Item
 	// Max is the most suggestions to return.
 	Max int
-	// Leftovers is whether to also suggest, at a small meal, a serving
-	// more of a cook of an earlier shared meal among Cooks, eaten reheated
-	// rather than cooking: the rest of last night's dinner. They're scored
-	// after Candidates, whichever those are.
+	// Leftovers is whether to also suggest the rest of a cook of an earlier
+	// shared meal among Cooks, eaten reheated rather than cooking: at a
+	// small meal, a serving more of last night's dinner; at a shared lunch
+	// or dinner, the servings for everyone at it, from a meal of an earlier
+	// day not eaten as the rest of a meal yet. They're scored after
+	// Candidates, whichever those are.
 	Leftovers bool
 	// LeftoverOf, if not nil, is the only leftover to suggest: the cook of
 	// its recipe at its shared meal, if there's one.
@@ -543,8 +552,13 @@ func (s *scorer) score(r *recipes.Recipe, leftover *plans.Cook) *Suggestion {
 		// A leftover adds to a cook the week has already: it shares all of
 		// that cook's ingredients and repeats it by nature, and its meal
 		// tags don't matter, as it's the rest of a meal.
-		c.add(Leftover, LeftoverPoints, "the rest of %s's %s, reheated, with no cooking",
-			formatDate(leftover.Date), leftover.Meal)
+		if s.in.Meal != people.MealNone {
+			c.add(Leftover, MealLeftoverPoints, "the rest of %s's %s, reheated: no cooking, and nothing new to buy",
+				formatDate(leftover.Date), leftover.Meal)
+		} else {
+			c.add(Leftover, LeftoverPoints, "the rest of %s's %s, reheated, with no cooking",
+				formatDate(leftover.Date), leftover.Meal)
+		}
 	} else {
 		s.sharedIngredients(c)
 		s.variety(c)
@@ -610,6 +624,14 @@ func (s *scorer) portion(c *candidate) {
 			return
 		}
 		sg.CookServings = split.Servings
+		if c.leftover != nil {
+			// A leftover's cook grows by the servings eaten, not by a
+			// cook's whole servings.
+			sg.CookServings = 0
+			for _, share := range split.Shares {
+				sg.CookServings += share.Servings
+			}
+		}
 		for _, share := range split.Shares {
 			p := s.person(share.PersonID)
 			sg.Portions = append(sg.Portions, Portion{
@@ -1156,18 +1178,30 @@ func (s *scorer) slotTag() string {
 	return slotTag(s.in.Meal, et)
 }
 
-// leftovers returns the cooks of earlier shared meals the slot may eat a
-// serving more of, if Input.Leftovers: for a small meal of one person,
-// the latest cook of each recipe on an earlier day within its fridge
-// days, or earlier the same day, before the slot's eating time. Most
-// meals are as good reheated, and eating the rest of one is less work
-// than cooking a snack.
+// leftovers returns the cooks of earlier shared meals the slot may eat the
+// rest of, if Input.Leftovers: the latest cook of each recipe within its
+// fridge days. A small meal of one person may eat a serving more of one of
+// an earlier day, or earlier the same day, before the slot's eating time:
+// eating the rest of a meal is less work than cooking a snack. A shared
+// lunch or dinner may eat the rest of a lunch or dinner of an earlier
+// day, like Monday's chili for Tuesday's lunch, once per cook, so the
+// week isn't one pot; breakfast is its own kind of food, so it takes none,
+// and none is the rest of one.
 func (s *scorer) leftovers() []*plans.Cook {
-	if !s.in.Leftovers || s.in.Meal != people.MealNone || s.slotTag() != "snack" {
+	if !s.in.Leftovers {
 		return nil
 	}
-	p := s.in.People[0]
-	snack := p.EatingTime(s.in.EatingTimeID)
+	shared := s.in.Meal != people.MealNone
+	switch {
+	case shared && s.in.Meal == people.MealBreakfast:
+		return nil
+	case !shared && s.slotTag() != "snack":
+		return nil
+	}
+	var snack *people.EatingTime
+	if !shared {
+		snack = s.in.People[0].EatingTime(s.in.EatingTimeID)
+	}
 	latest := map[pgtype.UUID]*plans.Cook{}
 	var order []pgtype.UUID
 	for _, cook := range s.in.Cooks {
@@ -1185,7 +1219,11 @@ func (s *scorer) leftovers() []*plans.Cook {
 		if pantry.DaysTo(cook.Date, s.in.Date) > keeps {
 			continue
 		}
-		if cook.Date.Equal(s.in.Date) && !eatenBefore(p, cook.Meal, snack) {
+		if shared {
+			if !cook.Date.Before(s.in.Date) || cook.Meal == people.MealBreakfast || !mainMeal(r) || s.eatenAsMeal(cook) {
+				continue
+			}
+		} else if cook.Date.Equal(s.in.Date) && !eatenBefore(s.in.People[0], cook.Meal, snack) {
 			continue
 		}
 		prev, seen := latest[cook.RecipeID]
@@ -1201,6 +1239,30 @@ func (s *scorer) leftovers() []*plans.Cook {
 		cooks = append(cooks, latest[id])
 	}
 	return cooks
+}
+
+// mainMeal reports whether a recipe makes a lunch or dinner: it's tagged
+// for one, or for no meal at all, like most mains, rather than only for
+// breakfast or a snack, like porridge kept for one dinner.
+func mainMeal(r *recipes.Recipe) bool {
+	tags := recipeMealTags(r)
+	return len(tags) == 0 || slices.Contains(tags, "lunch") || slices.Contains(tags, "dinner")
+}
+
+// eatenAsMeal reports whether the rest of a cook is eaten at a shared meal
+// of a later day already, which a cook is once at most.
+func (s *scorer) eatenAsMeal(cook *plans.Cook) bool {
+	for _, portion := range s.in.Week.Portions {
+		if portion.CookID != cook.ID || !portion.Date.After(cook.Date) {
+			continue
+		}
+		if p := s.person(portion.PersonID); p != nil {
+			if et := p.EatingTime(portion.EatingTimeID); et != nil && et.Meal != people.MealNone {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // eatenBefore reports whether the person eats a shared meal before an

@@ -296,9 +296,9 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 		}
 		choices[key] = id
 		if c.HasLeftoverOf() {
-			if !key.personal() || !id.Valid {
+			if !id.Valid {
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
-					"%s.leftover_of is only for one person's eating time, with recipe_id: set them, or leave it out", field)
+					"%s.leftover_of is the rest of a meal of recipe_id: set recipe_id, or leave leftover_of out", field)
 			}
 			leftoverChoices[key], err = leftoverFromProto(field+".leftover_of", c.GetLeftoverOf(), id, date)
 			if err != nil {
@@ -769,13 +769,16 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 		seen[key] = true
 		var leftover *suggest.LeftoverRef
 		if m.HasLeftoverOf() {
-			if !key.personal() {
-				return nil, connect.Errorf(connect.CodeInvalidArgument,
-					"%s.leftover_of is only for one person's eating time: set person_id and eating_time_id, or leave it out", field)
-			}
 			leftover, err = leftoverFromProto(field+".leftover_of", m.GetLeftoverOf(), recipeID, date)
 			if err != nil {
 				return nil, err
+			}
+			// A shared meal eats the rest of one of an earlier day, as a
+			// meal isn't the rest of another the same day.
+			if !key.personal() && !leftover.Date.Before(date) {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.leftover_of.date must be before a shared meal's date, %s: a shared meal eats the rest of an earlier day's",
+					field, store.FormatDate(date))
 			}
 		}
 		cookDate := date
@@ -897,6 +900,22 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			})
 			planned[share.Slot] += share.Servings * gramsPerServing
 			d.addPlanned(amounts, share.Slot, m.recipeID, share.Servings)
+		}
+		if m.leftover != nil {
+			// The rest of an earlier meal: its cook makes the servings
+			// everyone eats here too.
+			cp, err := leftoverCook(toCreate, served, d.plan.Cooks, m.leftover, i)
+			if err != nil {
+				return nil, err
+			}
+			if cp.Existing {
+				toCreate = append(toCreate, cp)
+			}
+			for _, portion := range portions {
+				cp.Cook.Servings += portion.Servings
+			}
+			cp.Portions = append(cp.Portions, portions...)
+			continue
 		}
 		// A cook made ahead isn't its cooking day's shared meal.
 		cookMeal := m.meal

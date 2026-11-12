@@ -56,6 +56,9 @@ func TestSuggestPlan(t *testing.T) {
 			Servings:    2,
 			Tags:        tags,
 			CookSeconds: minutes * 60,
+			// They keep only the day they're cooked, so each dinner is a
+			// new cook: TestSuggestPlanLeftoverMeals plans leftovers.
+			FridgeDays:  new(int32(0)),
 			Ingredients: []*recipesv1.Ingredient{ingredient(f.GetId(), 400, grams)},
 		}.Build()}.Build())
 		if err != nil {

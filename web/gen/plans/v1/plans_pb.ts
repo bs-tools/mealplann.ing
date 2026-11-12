@@ -1392,11 +1392,13 @@ export type MealToPlan = Message<"plans.v1.MealToPlan"> & {
   eatingTimeId: string;
 
   /**
-   * For one person's eating time, instead of a new cook of recipe_id, the
-   * rest of an earlier shared meal, reheated: a serving more of that
-   * meal's cook of recipe_id, which grows by it. The cook is one planned
-   * by this request, or else already. SuggestRecipes and SuggestPlan
-   * suggest these as their suggestions' leftover_of.
+   * Instead of a new cook of recipe_id, the rest of an earlier shared
+   * meal, reheated: more of that meal's cook of recipe_id, which grows by
+   * the servings eaten here. For one person's eating time, a serving
+   * more; for a shared meal, everyone's servings, from a meal of an
+   * earlier day, like Monday's dinner for Tuesday's lunch. The cook is one
+   * planned by this request, or else already. SuggestPlan suggests these
+   * as its suggestions' leftover_of.
    *
    * @generated from field: plans.v1.LeftoverOf leftover_of = 6;
    */

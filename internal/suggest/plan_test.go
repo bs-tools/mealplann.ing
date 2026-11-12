@@ -34,6 +34,15 @@ func planInput(days int, ps []*people.Person, rs ...*recipes.Recipe) *PlanInput 
 	return in
 }
 
+// sameDay marks recipes as keeping only the day they're cooked, so a plan
+// of them has no leftovers to eat at a later meal: for tests of what new
+// cooks the planner picks.
+func sameDay(rs ...*recipes.Recipe) {
+	for _, r := range rs {
+		r.FridgeDays = new(int32(0))
+	}
+}
+
 // plannedNames returns the names of the recipes planned at each slot,
 // empty for none.
 func plannedNames(result *PlanResult) []string {
@@ -56,6 +65,7 @@ func TestPlan(t *testing.T) {
 	curry := recipe("Curry", 2, ingredient(chickpeas, 400))
 	hummus := recipe("Hummus", 2, ingredient(chickpeas, 400))
 	falafel := recipe("Falafel", 2, ingredient(chickpeas, 400))
+	sameDay(curry, hummus, falafel)
 	result := Plan(planInput(3, []*people.Person{b}, curry, hummus, falafel))
 
 	names := plannedNames(result)
@@ -92,6 +102,7 @@ func TestPlanSharesPacks(t *testing.T) {
 	thai := recipe("Thai curry", 2, ingredient(coconutMilk, 200), ingredient(tofu, 200))
 	soup := recipe("Coconut soup", 2, ingredient(coconutMilk, 200), ingredient(onions, 150))
 	plain := recipe("Plain rice", 2, ingredient(rice, 150))
+	sameDay(thai, soup, plain)
 	names := plannedNames(Plan(planInput(2, []*people.Person{b}, thai, soup, plain)))
 	if !slices.Contains(names, "Thai curry") || !slices.Contains(names, "Coconut soup") {
 		t.Errorf("got %v, want the curry and the soup sharing a can", names)
@@ -103,6 +114,7 @@ func TestPlanFixed(t *testing.T) {
 	b := ben()
 	curry := recipe("Curry", 2, ingredient(chickpeas, 400))
 	hummus := recipe("Hummus", 2, ingredient(chickpeas, 400))
+	sameDay(curry, hummus)
 	in := planInput(2, []*people.Person{b}, curry, hummus)
 	// The user keeps the hummus on Tuesday, though the curry scores as
 	// well and comes first by name, so Monday gets the curry.
@@ -289,5 +301,59 @@ func TestPlanSnacks(t *testing.T) {
 	result = Plan(in)
 	if sg := result.Slots[1].Suggestion; sg == nil || sg.Leftover == nil || sg.Recipe != stew {
 		t.Errorf("got %v at the snack, want the kept leftover of the stew", sg)
+	}
+}
+
+// TestPlanLeftoverMeals checks that a shared dinner can be the rest of an
+// earlier day's, cooking once for two meals: the first dinner's cook makes
+// the second's servings too. A cook is eaten as the rest of a meal once,
+// so three dinners aren't one pot, and breakfast takes no leftovers.
+func TestPlanLeftoverMeals(t *testing.T) {
+	t.Parallel()
+	b := ben()
+	curry := recipe("Curry", 2, ingredient(chickpeas, 400))
+	curry.FridgeDays = new(int32(3))
+	hummus := recipe("Hummus", 2, ingredient(chickpeas, 400))
+	hummus.FridgeDays = new(int32(3))
+	result := Plan(planInput(3, []*people.Person{b}, curry, hummus))
+	var leftovers int
+	var cooks []*Suggestion
+	for _, s := range result.Slots {
+		if s.Suggestion == nil {
+			t.Fatalf("got %v, want 3 dinners planned", plannedNames(result))
+		}
+		if s.Suggestion.Leftover != nil {
+			leftovers++
+			if !s.Suggestion.Leftover.Date.Before(s.Slot.Date) || s.Suggestion.Leftover.Meal != people.MealDinner {
+				t.Errorf("got the rest of %v, want an earlier day's dinner", s.Suggestion.Leftover)
+			}
+			// The cook grows by Ben's portion, sized toward his protein.
+			var eaten float64
+			for _, p := range s.Suggestion.Portions {
+				eaten += p.Servings
+			}
+			if s.Suggestion.CookServings != eaten || eaten <= 0 {
+				t.Errorf("got the cook growing by %v servings, want Ben's %v", s.Suggestion.CookServings, eaten)
+			}
+		} else {
+			cooks = append(cooks, s.Suggestion)
+		}
+	}
+	if leftovers != 1 || len(cooks) != 2 {
+		t.Errorf("got %v, with %d leftovers, want 2 cooks and the rest of one", plannedNames(result), leftovers)
+	}
+
+	// Breakfast takes none.
+	oats := recipe("Oats", 2, ingredient(rice, 100))
+	oats.Tags = []string{"breakfast"}
+	oats.FridgeDays = new(int32(3))
+	in := planInput(2, []*people.Person{b}, oats)
+	for _, slot := range in.Slots {
+		slot.Meal = people.MealBreakfast
+	}
+	for _, s := range Plan(in).Slots {
+		if s.Suggestion != nil && s.Suggestion.Leftover != nil {
+			t.Errorf("got the rest of %v at breakfast, want a new cook", s.Suggestion.Leftover)
+		}
 	}
 }

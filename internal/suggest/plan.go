@@ -45,7 +45,9 @@ import (
 // chili. A small meal draws from the recipes tagged "snack" that break no
 // rule, if there are any, and otherwise from the rest of the plan's
 // earlier meals, eaten reheated (see Input.Leftovers), so snacks come
-// first even when repeating one costs variety.
+// first even when repeating one costs variety. A shared lunch or dinner
+// may also eat the rest of an earlier day's, whose cook then makes more:
+// cooking once for two meals.
 //
 // The slots are shared meals, and the eating times of one person that eat
 // from no shared meal, like a snack mid-morning. A shared meal's portion
@@ -89,8 +91,8 @@ type PlanSlot struct {
 	EatingTimeID pgtype.UUID
 	// Fixed is the recipe the user chose for the slot, nil to pick one.
 	Fixed *recipes.Recipe
-	// FixedLeftover is the leftover the user chose for a small meal of
-	// one person, nil to pick one. It's planned if the plan has its cook.
+	// FixedLeftover is the leftover the user chose for the slot, nil to
+	// pick one. It's planned if the plan has its cook.
 	FixedLeftover *LeftoverRef
 	// CookDate is when its meal is cooked, at midnight UTC, if before
 	// Date, as the household doesn't cook on Date: only recipes that keep
@@ -538,7 +540,7 @@ func (st *state) input(slot *PlanSlot, candidates []*recipes.Recipe) *Input {
 		History:      st.p.in.History,
 		Weights:      st.p.in.Weights,
 		// A slot of a recipe the user chose takes no leftover.
-		Leftovers:  slot.personal() && slot.Fixed == nil,
+		Leftovers:  slot.Fixed == nil,
 		LeftoverOf: slot.FixedLeftover,
 	}
 }
