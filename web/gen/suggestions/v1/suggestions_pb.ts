@@ -369,10 +369,12 @@ export type Suggestion = Message<"suggestions.v1.Suggestion"> & {
   itemsToBuy: ItemToBuy[];
 
   /**
-   * At one person's small meal, the earlier shared meal it's the rest of,
-   * eaten reheated: a serving more of that meal's cook of the recipe,
-   * rather than a new cook, with cook_servings the servings it adds. Unset
-   * for a new cook.
+   * The earlier shared meal it's the rest of, eaten reheated: more of
+   * that meal's cook of the recipe, rather than a new cook, with
+   * cook_servings the servings it adds. At one person's small meal, a
+   * serving more of a meal; at a shared lunch or dinner, from SuggestPlan,
+   * everyone's servings from an earlier day's lunch or dinner, cooking once
+   * for two meals. Unset for a new cook.
    *
    * @generated from field: plans.v1.LeftoverOf leftover_of = 11;
    */
@@ -528,10 +530,9 @@ export type PlanChoice = Message<"suggestions.v1.PlanChoice"> & {
   eatingTimeId: string;
 
   /**
-   * For one person's eating time, to keep the rest of an earlier shared
-   * meal of recipe_id there rather than a new cook, as a suggestion's
-   * leftover_of says. It's kept if the plan has that meal's cook of the
-   * recipe.
+   * To keep the rest of an earlier shared meal of recipe_id at the slot
+   * rather than a new cook, as a suggestion's leftover_of says. It's kept
+   * if the plan has that meal's cook of the recipe.
    *
    * @generated from field: plans.v1.LeftoverOf leftover_of = 6;
    */

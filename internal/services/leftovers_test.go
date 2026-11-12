@@ -91,13 +91,14 @@ func TestLeftoverSnacks(t *testing.T) {
 			servings, curry.GetCook().GetServings())
 	}
 
-	// A leftover needs its meal's cook, and is only for an eating time.
+	// A leftover needs its meal's cook, and a shared meal eats the rest of
+	// an earlier day's.
 	_, err = e.plans.PlanMeals(ctx, plansv1.PlanMealsRequest_builder{Meals: []*plansv1.MealToPlan{
 		plansv1.MealToPlan_builder{RecipeId: recipeID["Stew"], Date: thursday, PersonId: cleo.GetId(), EatingTimeId: snack, LeftoverOf: leftoverOf(monday)}.Build(),
 	}}.Build())
 	wantCode(t, err, connect.CodeFailedPrecondition)
 	_, err = e.plans.PlanMeals(ctx, plansv1.PlanMealsRequest_builder{Meals: []*plansv1.MealToPlan{
-		plansv1.MealToPlan_builder{RecipeId: recipeID["Curry"], Date: thursday, Meal: dinner, LeftoverOf: leftoverOf(monday)}.Build(),
+		plansv1.MealToPlan_builder{RecipeId: recipeID["Curry"], Date: monday, Meal: lunch, LeftoverOf: leftoverOf(monday)}.Build(),
 	}}.Build())
 	wantCode(t, err, connect.CodeInvalidArgument)
 }

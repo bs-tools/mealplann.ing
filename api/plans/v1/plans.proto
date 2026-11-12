@@ -710,11 +710,13 @@ message MealToPlan {
   string person_id = 4;
   // The person's eating time, with person_id.
   string eating_time_id = 5;
-  // For one person's eating time, instead of a new cook of recipe_id, the
-  // rest of an earlier shared meal, reheated: a serving more of that
-  // meal's cook of recipe_id, which grows by it. The cook is one planned
-  // by this request, or else already. SuggestRecipes and SuggestPlan
-  // suggest these as their suggestions' leftover_of.
+  // Instead of a new cook of recipe_id, the rest of an earlier shared
+  // meal, reheated: more of that meal's cook of recipe_id, which grows by
+  // the servings eaten here. For one person's eating time, a serving
+  // more; for a shared meal, everyone's servings, from a meal of an
+  // earlier day, like Monday's dinner for Tuesday's lunch. The cook is one
+  // planned by this request, or else already. SuggestPlan suggests these
+  // as its suggestions' leftover_of.
   LeftoverOf leftover_of = 6;
   // The date to cook it (YYYY-MM-DD), up to 14 days before date, to batch
   // cook it ahead and eat it as leftovers, like on the household's cooking
