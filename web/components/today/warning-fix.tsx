@@ -38,7 +38,7 @@ const WarningFix: React.FC<WarningFixProps> = ({
   });
   const [fix] = fixes.data?.fixes ?? [];
   return (
-    <div className="grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-2xl border border-cook-tint bg-warn-tint/70 p-4">
+    <div className="grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-2xl border border-warn-line bg-warn-tint p-4">
       <ExclamationTriangleIcon
         className="size-6 self-center justify-self-center text-warn-dark"
         aria-hidden="true"

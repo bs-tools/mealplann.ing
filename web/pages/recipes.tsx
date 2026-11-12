@@ -333,7 +333,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
           <span className="flex items-center gap-1.5 text-sm text-muted">
             {balance !== undefined && (
               <span
-                className={`size-2 shrink-0 rounded-full ${balance.good ? "bg-pine" : "bg-cook"}`}
+                className={`size-2 shrink-0 rounded-full ${balance.good ? "bg-pine" : "bg-warn"}`}
                 aria-hidden="true"
               />
             )}

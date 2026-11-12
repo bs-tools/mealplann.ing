@@ -73,7 +73,7 @@ const WarningSheet: React.FC<WarningSheetProps> = ({
       <>
         <div className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-line bg-white p-4">
           <SparklesIcon
-            className="size-6 justify-self-center text-cook"
+            className="size-6 justify-self-center text-pine"
             aria-hidden="true"
           />
           <div className="flex flex-col gap-1">
