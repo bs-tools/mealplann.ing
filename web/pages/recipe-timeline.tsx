@@ -48,10 +48,10 @@ const Bar: React.FC<BarProps> = ({ step, total }) => {
     ((step.endSeconds - step.startSeconds) / total) * 100,
     0.8
   );
-  let style = "bg-brand-600 text-white";
+  let style = "bg-pine text-white";
   if (step.waiting) {
     style =
-      "bg-[repeating-linear-gradient(135deg,var(--color-amber-200)_0_6px,var(--color-amber-100)_6px_12px)] text-amber-950 ring-1 ring-amber-300";
+      "bg-[repeating-linear-gradient(135deg,var(--color-amber-200)_0_6px,var(--color-amber-100)_6px_12px)] text-warn-dark ring-1 ring-warn-line";
   }
   if (step.estimated) {
     style +=
@@ -117,7 +117,7 @@ const RecipeTimelinePage: React.FC = () => {
       <div>
         <Link
           to={`/recipes/${id}`}
-          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink-soft"
         >
           <ArrowLeftIcon className="size-4" aria-hidden="true" />
           {data.name}
@@ -155,20 +155,20 @@ const RecipeTimelinePage: React.FC = () => {
           />
         </label>
         {start !== "" && (
-          <p className="pb-2 text-sm text-gray-700">
+          <p className="pb-2 text-sm text-ink-soft">
             Start at <span className="font-semibold tabular-nums">{start}</span>
           </p>
         )}
       </div>
       {data.instructions.length === 0 && steps.length > 0 && (
-        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-950 ring-1 ring-amber-200">
+        <p className="rounded-xl bg-warn-tint px-3 py-2 text-sm text-warn-dark ring-1 ring-warn-line">
           This recipe&apos;s steps don&apos;t say how long they take or what can
           happen at the same time yet, so they&apos;re shown one after the
           other, 5 minutes each. Edit the recipe to add their durations.
         </p>
       )}
       {data.instructions.length > 0 && estimated > 0 && (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           {estimated} {estimated === 1 ? "step doesn't" : "steps don't"} say how
           long {estimated === 1 ? "it takes" : "they take"}, so{" "}
           {estimated === 1 ? "it's" : "they're"} counted as 5 minutes, marked ~.
@@ -176,12 +176,12 @@ const RecipeTimelinePage: React.FC = () => {
       )}
       <Card>
         {steps.length === 0 ? (
-          <p className="text-sm text-gray-500">This recipe has no steps yet.</p>
+          <p className="text-sm text-muted">This recipe has no steps yet.</p>
         ) : (
           <div className="flex flex-col gap-1">
             <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
               <span className="hidden sm:block" />
-              <div className="relative h-5 text-[11px] text-gray-500 tabular-nums">
+              <div className="relative h-5 text-[11px] text-muted tabular-nums">
                 {ticks.map((minute) => (
                   <span
                     key={minute}
@@ -202,17 +202,17 @@ const RecipeTimelinePage: React.FC = () => {
               return (
                 <React.Fragment key={step.stepIndex}>
                   {heading !== "" && (
-                    <p className="mt-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                    <p className="mt-2 text-xs font-semibold tracking-wide text-muted uppercase">
                       {heading}
                     </p>
                   )}
-                  <div className="grid grid-cols-1 items-center gap-x-4 gap-y-1 border-t border-gray-100 py-1.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-                    <p className="text-sm text-gray-800">
-                      <span className="mr-1.5 font-semibold text-gray-500 tabular-nums">
+                  <div className="grid grid-cols-1 items-center gap-x-4 gap-y-1 border-t border-line py-1.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+                    <p className="text-sm text-ink-soft">
+                      <span className="mr-1.5 font-semibold text-muted tabular-nums">
                         {step.stepIndex + 1}.
                       </span>
                       {start !== "" && (
-                        <span className="mr-1.5 text-xs font-medium text-brand-700 tabular-nums">
+                        <span className="mr-1.5 text-xs font-medium text-pine tabular-nums">
                           {clockAt(start, step.startSeconds)}
                         </span>
                       )}
@@ -222,7 +222,7 @@ const RecipeTimelinePage: React.FC = () => {
                       {ticks.map((minute) => (
                         <span
                           key={minute}
-                          className="absolute inset-y-0 border-l border-gray-100"
+                          className="absolute inset-y-0 border-l border-line"
                           style={{ left: `${((minute * 60) / total) * 100}%` }}
                         />
                       ))}
@@ -232,12 +232,12 @@ const RecipeTimelinePage: React.FC = () => {
                 </React.Fragment>
               );
             })}
-            <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted">
               <span className="flex items-center gap-1.5">
-                <span className="size-3 rounded-sm bg-brand-600" /> Hands-on
+                <span className="size-3 rounded-sm bg-pine" /> Hands-on
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="size-3 rounded-sm bg-amber-200 ring-1 ring-amber-300" />{" "}
+                <span className="size-3 rounded-sm bg-warn-line ring-1 ring-warn-line" />{" "}
                 Waiting: simmering, baking, resting
               </span>
             </div>

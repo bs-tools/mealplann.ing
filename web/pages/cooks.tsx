@@ -2,26 +2,21 @@ import Loading from "@components/loading";
 import { WarningList } from "@components/plan/plan-bits";
 import type { PickedRecipe } from "@components/recipes/recipe-picker";
 import RecipePicker from "@components/recipes/recipe-picker";
-import Card from "@components/ui/card";
-import ConfirmButton from "@components/ui/confirm-button";
+import { ConfirmDialog } from "@components/ui/confirm-button";
 import { EmptyState, PageHeader } from "@components/ui/misc";
 import Modal from "@components/ui/modal";
+import MoreMenu from "@components/ui/more-menu";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
-  iconButton,
   inputClass,
   labelClass,
   linkClass,
   primaryButton,
   secondaryButton,
+  sectionLabelClass,
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
-import {
-  ClockIcon,
-  PencilSquareIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
+import { CheckIcon, ClockIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
 import {
@@ -37,8 +32,8 @@ import type {
 } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
-import { addDays, startOfWeek, today } from "helpers/dates";
-import { formatDate, formatShortDate, formatWeekday } from "helpers/format";
+import { addDays, parseDate, startOfWeek, today } from "helpers/dates";
+import { formatWeekday } from "helpers/format";
 import { formatServings, householdMealLabel } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
@@ -46,6 +41,21 @@ import { Link } from "react-router";
 
 // DAYS is how many days of cooks the page shows, from today.
 const DAYS = 14;
+
+// DayLabel names a day of cooks, e.g. "Today", "Tomorrow" or "Sat 14 Nov".
+const dayLabel = (date: string, now: string): string => {
+  if (date === now) {
+    return "Today";
+  }
+  if (date === addDays(now, 1)) {
+    return "Tomorrow";
+  }
+  return parseDate(date).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    weekday: "long",
+  });
+};
 
 // Eater is a portion of a cook: who eats it, when.
 interface Eater {
@@ -119,150 +129,49 @@ const upcomingCooks = (
     }));
 };
 
-interface CookCardProps {
-  upcoming: Upcoming;
-  disabled: boolean;
-  onSave: (
-    id: string,
-    change: { date: string; servings: number; notes: string }
-  ) => void;
-  onDone: (id: string, done: boolean) => void;
-  onDelete: (id: string) => void;
+interface CookChange {
+  date: string;
+  servings: number;
+  notes: string;
 }
 
-// CookCard shows a cook to come, to mark done, change or delete.
-const CookCard: React.FC<CookCardProps> = ({
-  upcoming,
+interface ChangeCookDialogProps {
+  planned: PlannedCook;
+  disabled: boolean;
+  onSave: (change: CookChange) => void;
+  onClose: () => void;
+}
+
+// ChangeCookDialog changes a cook's date, servings or notes.
+const ChangeCookDialog: React.FC<ChangeCookDialogProps> = ({
+  planned,
   disabled,
   onSave,
-  onDone,
-  onDelete,
+  onClose,
 }) => {
-  const { planned, eaters, prepTasks } = upcoming;
   const { cook } = planned;
-  const [editing, setEditing] = useState(false);
   const [date, setDate] = useState(cook?.date ?? "");
   const [servings, setServings] = useState(String(cook?.servings ?? 1));
   const [notes, setNotes] = useState(cook?.notes ?? "");
   const [invalid, setInvalid] = useState("");
-  if (cook === undefined) {
-    return null;
-  }
-  const meal = householdMealLabel(cook.meal);
   return (
-    <li className="flex flex-col gap-2 py-3">
-      <div className="flex items-start gap-2">
-        <input
-          type="checkbox"
-          className="mt-1 size-4 shrink-0 rounded border-gray-300 accent-brand-700"
-          checked={cook.done}
-          disabled={disabled}
-          aria-label={`${cook.recipeName} is cooked`}
-          title={
-            cook.done
-              ? "Cooked: its ingredients were taken out of the pantry. Uncheck to put them back."
-              : "Mark as cooked, taking its ingredients out of the pantry"
+    <Modal open title={cook?.recipeName ?? "Cook"} onClose={onClose}>
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const count = Number(servings);
+          if (date === "" || !(count > 0)) {
+            setInvalid("Give a date and servings more than 0.");
+            return;
           }
-          onChange={(event) => {
-            onDone(cook.id, event.target.checked);
-          }}
-        />
-        <div className="flex min-w-0 grow flex-col gap-0.5">
-          <span className="text-sm">
-            <Link
-              to={`/recipes/${cook.recipeId}`}
-              className={`font-medium text-gray-900 hover:underline ${cook.done ? "line-through decoration-gray-400" : ""}`}
-            >
-              {cook.recipeName}
-            </Link>
-            <span className="text-gray-600 tabular-nums">
-              {" "}
-              · {formatServings(cook.servings)}
-              {meal === "" ? "" : ` · for ${meal.toLowerCase()}`}
-            </span>
-          </span>
-          {cook.notes !== "" && (
-            <span className="text-xs text-gray-500 italic">{cook.notes}</span>
-          )}
-          {eaters.length > 0 && (
-            <ul className="flex flex-col text-xs text-gray-600">
-              {eaters.map((eater) => (
-                <li
-                  key={`${eater.personName}|${eater.date}|${eater.eatingTimeName}`}
-                >
-                  {eater.personName} · {formatWeekday(eater.date)}{" "}
-                  {formatShortDate(eater.date)} {eater.eatingTimeName} ·{" "}
-                  {formatServings(eater.servings)}
-                  {eater.date > cook.date ? " (leftover)" : ""}
-                </li>
-              ))}
-            </ul>
-          )}
-          {planned.leftServings > 0 && (
-            <span className="text-xs text-gray-600">
-              {formatServings(planned.leftServings)} left over, not planned yet:{" "}
-              <Link
-                to={`/plan?week=${startOfWeek(cook.date)}&day=${cook.date}`}
-                className={linkClass}
-              >
-                plan them
-              </Link>
-            </span>
-          )}
-          {prepTasks.map((task) => (
-            <span
-              key={`${task.cookId}|${task.date}`}
-              className="flex items-center gap-1 text-xs text-sky-900"
-            >
-              <ClockIcon className="size-3.5" aria-hidden="true" />
-              {formatWeekday(task.date)}: {task.note}
-            </span>
-          ))}
-        </div>
-        <button
-          type="button"
-          className={iconButton}
-          aria-label={`Change ${cook.recipeName}`}
-          title="Change its date, servings or notes"
-          disabled={disabled}
-          onClick={() => {
-            setEditing(!editing);
-          }}
-        >
-          <PencilSquareIcon className="size-5" />
-        </button>
-        <ConfirmButton
-          className={iconButton}
-          title={`Delete ${cook.recipeName}?`}
-          message="The cook is deleted with its portions, from every day it's eaten."
-          confirmLabel="Delete"
-          disabled={disabled}
-          onConfirm={() => {
-            onDelete(cook.id);
-          }}
-        >
-          <TrashIcon
-            className="size-5"
-            aria-label={`Delete ${cook.recipeName}`}
-          />
-        </ConfirmButton>
-      </div>
-      {editing && (
-        <form
-          className="ml-6 flex flex-wrap items-end gap-2 rounded-md bg-gray-50 p-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const count = Number(servings);
-            if (date === "" || !(count > 0)) {
-              setInvalid("Give a date and servings more than 0.");
-              return;
-            }
-            setInvalid("");
-            onSave(cook.id, { date, notes, servings: count });
-            setEditing(false);
-          }}
-        >
-          <label className="flex flex-col gap-1">
+          setInvalid("");
+          onSave({ date, notes, servings: count });
+          onClose();
+        }}
+      >
+        <div className="flex gap-2">
+          <label className="flex grow flex-col gap-1">
             <span className={labelClass}>Cook on</span>
             <input
               type="date"
@@ -273,7 +182,7 @@ const CookCard: React.FC<CookCardProps> = ({
               }}
             />
           </label>
-          <label className="flex w-24 flex-col gap-1">
+          <label className="flex w-28 flex-col gap-1">
             <span className={labelClass}>Servings</span>
             <input
               className={inputClass}
@@ -284,29 +193,179 @@ const CookCard: React.FC<CookCardProps> = ({
               }}
             />
           </label>
-          <label className="flex min-w-48 grow flex-col gap-1">
-            <span className={labelClass}>Notes</span>
-            <input
-              className={inputClass}
-              value={notes}
-              onChange={(event) => {
-                setNotes(event.target.value);
-              }}
-            />
-          </label>
+        </div>
+        <label className="flex flex-col gap-1">
+          <span className={labelClass}>Notes</span>
+          <input
+            className={inputClass}
+            value={notes}
+            onChange={(event) => {
+              setNotes(event.target.value);
+            }}
+          />
+        </label>
+        {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
+        <div className="flex justify-end gap-2">
+          <button type="button" className={secondaryButton} onClick={onClose}>
+            Cancel
+          </button>
           <button type="submit" className={primaryButton} disabled={disabled}>
             Save
           </button>
-          {invalid !== "" && (
-            <p className="w-full text-sm text-red-700">{invalid}</p>
-          )}
-        </form>
-      )}
-      {planned.warnings.length > 0 && (
-        <div className="ml-6">
-          <WarningList warnings={planned.warnings} />
         </div>
+      </form>
+    </Modal>
+  );
+};
+
+/**
+ * EatersOf says who eats a cook's servings and when, in short, like
+ * "Anna Mon lunch", with the days after the cook as leftovers.
+ */
+const eatersOf = (cookDate: string, eaters: Eater[]): string[] =>
+  eaters.map(
+    (eater) =>
+      `${eater.personName} ${eater.date === cookDate ? "" : `${formatWeekday(eater.date)} `}${eater.eatingTimeName.toLowerCase()}`
+  );
+
+interface CookRowProps {
+  upcoming: Upcoming;
+  disabled: boolean;
+  onSave: (id: string, change: CookChange) => void;
+  onDone: (id: string, done: boolean) => void;
+  onDelete: (id: string) => void;
+}
+
+/**
+ * CookRow shows a cook to come: a tick to mark it cooked, which takes its
+ * ingredients out of the pantry, what it is and who eats it, with what to
+ * start ahead, and a ⋯ menu to change or delete it.
+ */
+const CookRow: React.FC<CookRowProps> = ({
+  upcoming,
+  disabled,
+  onSave,
+  onDone,
+  onDelete,
+}) => {
+  const { planned, eaters, prepTasks } = upcoming;
+  const { cook } = planned;
+  const [changing, setChanging] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  if (cook === undefined) {
+    return null;
+  }
+  const meal = householdMealLabel(cook.meal);
+  const who = eatersOf(cook.date, eaters);
+  return (
+    <li className="flex items-start gap-3 py-3.5">
+      <button
+        type="button"
+        className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border-2 transition-colors disabled:opacity-50 ${cook.done ? "border-cook bg-cook text-white" : "border-cook/50 text-transparent hover:border-cook"}`}
+        aria-pressed={cook.done}
+        aria-label={`${cook.recipeName} is cooked`}
+        title={
+          cook.done
+            ? "Cooked: its ingredients were taken out of the pantry. Tap to put them back."
+            : "Mark as cooked, taking its ingredients out of the pantry"
+        }
+        disabled={disabled}
+        onClick={() => {
+          onDone(cook.id, !cook.done);
+        }}
+      >
+        <CheckIcon className="size-4" strokeWidth={3} aria-hidden="true" />
+      </button>
+      <div className="flex min-w-0 grow flex-col gap-1">
+        <Link
+          to={`/recipes/${cook.recipeId}`}
+          className={`leading-snug font-bold ${cook.done ? "text-muted line-through decoration-line" : "text-ink-soft"}`}
+        >
+          {cook.recipeName}
+        </Link>
+        <p className="text-sm text-muted tabular-nums">
+          {[
+            formatServings(cook.servings),
+            meal === "" ? "" : `for ${meal.toLowerCase()}`,
+          ]
+            .filter((part) => part !== "")
+            .join(" · ")}
+          {who.length > 0 && ` · ${who.join(", ")}`}
+        </p>
+        {cook.notes !== "" && (
+          <p className="text-sm text-muted italic">{cook.notes}</p>
+        )}
+        {(prepTasks.length > 0 || planned.leftServings > 0) && (
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {prepTasks.map((task) => (
+              <span
+                key={`${task.cookId}|${task.date}`}
+                className="inline-flex items-center gap-1 rounded-full bg-cook-tint px-2.5 py-1 text-xs font-medium text-cook-dark"
+              >
+                <ClockIcon className="size-3.5" aria-hidden="true" />
+                {formatWeekday(task.date)}: {task.note}
+              </span>
+            ))}
+            {planned.leftServings > 0 && (
+              <Link
+                to={`/plan?week=${startOfWeek(cook.date)}&day=${cook.date}`}
+                className="inline-flex items-center rounded-full bg-ground-dark px-2.5 py-1 text-xs font-medium text-ink-soft"
+              >
+                {formatServings(planned.leftServings)} left over · Plan them ›
+              </Link>
+            )}
+          </div>
+        )}
+        {planned.warnings.length > 0 && (
+          <div className="mt-1">
+            <WarningList warnings={planned.warnings} />
+          </div>
+        )}
+      </div>
+      <MoreMenu
+        label={`More for ${cook.recipeName}`}
+        className="-mt-1.5 -mr-2 flex size-10 items-center justify-center rounded-full text-muted hover:bg-ground-dark/60"
+        items={[
+          {
+            disabled,
+            label: "Change date, servings or notes",
+            onClick: () => {
+              setChanging(true);
+            },
+          },
+          {
+            danger: true,
+            disabled,
+            label: "Delete",
+            onClick: () => {
+              setDeleting(true);
+            },
+          },
+        ]}
+      />
+      {changing && (
+        <ChangeCookDialog
+          planned={planned}
+          disabled={disabled}
+          onSave={(change) => {
+            onSave(cook.id, change);
+          }}
+          onClose={() => {
+            setChanging(false);
+          }}
+        />
       )}
+      <ConfirmDialog
+        open={deleting}
+        title={`Delete ${cook.recipeName}?`}
+        message="The cook is deleted with its portions, from every day it's eaten."
+        onClose={() => {
+          setDeleting(false);
+        }}
+        onConfirm={() => {
+          onDelete(cook.id);
+        }}
+      />
     </li>
   );
 };
@@ -387,11 +446,11 @@ const PlanCookDialog: React.FC<PlanCookDialogProps> = ({ onClose }) => {
             }}
           />
         </label>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Its servings are left over to plan: add them to meals from the plan,
           as leftovers of the cook.
         </p>
-        {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+        {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
         <ErrorText error={create.error} />
         <div className="flex justify-end gap-2">
           <button type="button" className={secondaryButton} onClick={onClose}>
@@ -473,12 +532,13 @@ const CooksPage: React.FC = () => {
           , or plan a cook here, like a batch to eat as leftovers.
         </EmptyState>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           {[...byDate.entries()].map(([date, dayCooks]) => (
-            <Card key={date} title={formatDate(date)}>
-              <ul className="-my-3 divide-y divide-gray-100">
+            <section key={date} className="flex flex-col gap-2">
+              <h2 className={sectionLabelClass}>{dayLabel(date, from)}</h2>
+              <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
                 {dayCooks.map((upcoming) => (
-                  <CookCard
+                  <CookRow
                     // A changed cook shows its new values.
                     key={`${upcoming.planned.cook?.id ?? ""}|${upcoming.planned.cook?.date ?? ""}|${upcoming.planned.cook?.servings ?? 0}|${upcoming.planned.cook?.notes ?? ""}`}
                     upcoming={upcoming}
@@ -501,7 +561,7 @@ const CooksPage: React.FC = () => {
                   />
                 ))}
               </ul>
-            </Card>
+            </section>
           ))}
         </div>
       );
@@ -510,8 +570,9 @@ const CooksPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
+        kicker="The next two weeks"
         title="Cooks"
-        subtitle="What to cook in the next two weeks, who eats it, and what to start ahead."
+        subtitle="Tick a cook when it's done, which takes its ingredients out of the pantry."
         actions={
           <button
             type="button"

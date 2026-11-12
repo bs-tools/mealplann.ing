@@ -14,19 +14,19 @@ const InvitationLink: React.FC<InvitationLinkProps> = ({
   description,
   onDone,
 }) => (
-  <div className="flex flex-col gap-3 rounded-md border border-emerald-300 bg-emerald-50 p-3">
-    <p className="text-sm text-emerald-900">{description}</p>
+  <div className="flex flex-col gap-3 rounded-xl border border-pine-200 bg-ready-tint p-3">
+    <p className="text-sm text-pine-dark">{description}</p>
     <CopyField value={url} />
     <div className="flex flex-wrap items-end gap-3">
       <QrCode value={url} />
-      <p className="max-w-60 text-xs text-gray-600">
+      <p className="max-w-60 text-xs text-muted">
         Scan the code with the other device&apos;s camera. The link can only be
         used once and is only shown now.
       </p>
     </div>
     <button
       type="button"
-      className="self-start text-sm font-medium text-emerald-800 hover:underline"
+      className="self-start text-sm font-medium text-ready hover:underline"
       onClick={onDone}
     >
       Done

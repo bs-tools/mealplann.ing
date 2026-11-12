@@ -380,7 +380,7 @@ const PantryItemDialog: React.FC<PantryItemDialogProps> = ({
           placeholder="Half used"
           onChange={setNotes}
         />
-        {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+        {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
         <ErrorText error={add.error ?? update.error ?? remove.error} />
         <div className="flex justify-end gap-2">
           {item !== undefined && (

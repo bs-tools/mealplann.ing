@@ -40,24 +40,24 @@ const Connections: React.FC = () => {
       />
     );
   } else if (data.connections.length === 0) {
-    list = <p className="text-sm text-gray-500">No connected apps yet.</p>;
+    list = <p className="text-sm text-muted">No connected apps yet.</p>;
   } else {
     list = (
-      <ul className="divide-y divide-gray-100">
+      <ul className="divide-y divide-line">
         {data.connections.map((connection) => (
           <li
             key={connection.id}
             className="flex items-center justify-between gap-2 py-2"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-gray-900">
+              <p className="truncate text-sm font-medium text-ink-soft">
                 {connection.clientName}
-                <span className="font-normal text-gray-500">
+                <span className="font-normal text-muted">
                   {" "}
                   · {formatRedirectTarget(connection.redirectUri)}
                 </span>
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 Connected {formatTimestamp(connection.createTime)} · last used{" "}
                 {formatTimestamp(connection.lastUsedTime)}
               </p>
@@ -83,7 +83,7 @@ const Connections: React.FC = () => {
   return (
     <Card title="Connected apps">
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Apps you connected with OAuth, like claude.ai custom connectors, use
           mealplann.ing on your behalf. Disconnecting an app revokes its access.
         </p>

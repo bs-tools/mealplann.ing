@@ -295,7 +295,7 @@ const DayLine: React.FC<DayLineProps> = ({
             <div className="flex min-w-0 grow flex-col gap-1">
               <button
                 type="button"
-                className="flex flex-col gap-1 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-pine"
+                className="flex flex-col gap-1 rounded-xl text-left outline-none focus-visible:ring-2 focus-visible:ring-pine"
                 onClick={() => {
                   onMeal(planned);
                 }}

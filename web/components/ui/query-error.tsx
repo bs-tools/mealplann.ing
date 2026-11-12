@@ -11,7 +11,7 @@ interface QueryErrorProps {
 
 // QueryError shows a failed request with an optional retry button.
 const QueryError: React.FC<QueryErrorProps> = ({ error, onRetry }) => (
-  <div className="flex items-start gap-3 rounded-md border border-error/20 bg-error-tint p-3 text-sm text-error">
+  <div className="flex items-start gap-3 rounded-xl border border-error/20 bg-error-tint p-3 text-sm text-error">
     <ExclamationTriangleIcon className="size-5 shrink-0" />
     <div className="flex grow flex-col gap-2">
       <p>{error.rawMessage === "" ? error.message : error.rawMessage}</p>

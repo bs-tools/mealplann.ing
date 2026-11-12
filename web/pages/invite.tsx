@@ -29,7 +29,7 @@ interface InviteFrameProps {
 const InviteFrame: React.FC<InviteFrameProps> = ({ title, children }) => (
   <div className="flex justify-center py-8">
     <div className={`${cardClass} flex w-full max-w-md flex-col gap-4 p-6`}>
-      <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+      <h1 className="text-xl font-bold text-ink-soft">{title}</h1>
       {children}
     </div>
   </div>
@@ -88,11 +88,11 @@ const InviteForm: React.FC<InviteFormProps> = ({ token, invitation }) => {
   return (
     <InviteFrame title={inviteTitle(invitation)}>
       {invitation.note !== "" && newUser && (
-        <p className="rounded-md bg-gray-50 p-3 text-sm whitespace-pre-line text-gray-700">
+        <p className="rounded-xl bg-ground p-3 text-sm whitespace-pre-line text-ink-soft">
           {invitation.note}
         </p>
       )}
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-muted">
         {newUser
           ? "mealplann.ing signs you in with a passkey instead of a password: your device's fingerprint, face or screen lock."
           : "Create a passkey on this device to sign in here with your fingerprint, face or screen lock."}
@@ -115,7 +115,7 @@ const InviteForm: React.FC<InviteFormProps> = ({ token, invitation }) => {
               required
             />
           )}
-          {error !== "" && <p className="text-sm text-red-700">{error}</p>}
+          {error !== "" && <p className="text-sm text-error">{error}</p>}
           <button
             type="submit"
             className={`${primaryButton} py-2.5 text-base`}
@@ -126,7 +126,7 @@ const InviteForm: React.FC<InviteFormProps> = ({ token, invitation }) => {
           </button>
         </form>
       ) : (
-        <p className="text-sm text-red-700">
+        <p className="text-sm text-error">
           This browser doesn&apos;t support passkeys. Open the link in an
           up-to-date browser.
         </p>
@@ -146,7 +146,7 @@ const InvitePage: React.FC = () => {
   if (token === "") {
     return (
       <InviteFrame title="Invitation not found">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           The link is incomplete. Open the whole link you were sent, or ask for
           a new one.
         </p>
@@ -161,12 +161,12 @@ const InvitePage: React.FC = () => {
       error.code === Code.FailedPrecondition || error.code === Code.NotFound;
     return (
       <InviteFrame title="This invitation can't be used">
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-ink-soft">
           {expected
             ? error.rawMessage
             : `Something went wrong: ${error.rawMessage}`}
         </p>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted">
           Ask the person who invited you for a new link.
         </p>
       </InviteFrame>
@@ -175,7 +175,7 @@ const InvitePage: React.FC = () => {
   if (data.invitation === undefined) {
     return (
       <InviteFrame title="Invitation not found">
-        <p className="text-sm text-gray-600">Ask for a new link.</p>
+        <p className="text-sm text-muted">Ask for a new link.</p>
       </InviteFrame>
     );
   }

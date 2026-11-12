@@ -147,11 +147,11 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   if (recipes.length === 0) {
     return (
       <Modal open onClose={onClose} title="Plan a meal">
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-ink-soft">
           There are no recipes yet.{" "}
           <Link
             to="/recipes/new"
-            className="font-medium text-brand-600 hover:underline"
+            className="font-medium text-pine hover:underline"
           >
             Add a recipe
           </Link>{" "}
@@ -164,7 +164,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   return (
     <Modal open onClose={onClose} title="Plan a meal" wide>
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           One cook for everyone who eats the shared meal. Portions over
           someone&apos;s maximum are split, with the rest at their next small
           meal.
@@ -196,7 +196,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
         <div className="flex flex-col gap-1">
           <span className={labelClass}>Who eats it</span>
           {eaters.length === 0 ? (
-            <p className="text-sm text-amber-800">
+            <p className="text-sm text-warn-dark">
               Nobody eats from this meal: give someone an eating time for it on
               the{" "}
               <Link to="/people" className="font-medium underline">
@@ -215,7 +215,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
                     ) : (
                       <>
                         {person.name}{" "}
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted">
                           has {formatList(stapled.get(person.id) ?? [])}
                         </span>
                       </>
@@ -235,7 +235,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
           )}
         </div>
         <div
-          className="flex gap-1 border-t border-gray-100 pt-3"
+          className="flex gap-1 border-t border-line pt-3"
           role="tablist"
           aria-label="How to choose the recipe"
         >
@@ -286,7 +286,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
               />
             )}
             {eaters.length > 0 && chosen.length === 0 && (
-              <p className="text-sm text-gray-700">Choose who eats it.</p>
+              <p className="text-sm text-ink-soft">Choose who eats it.</p>
             )}
             <ErrorText error={plan.error} />
           </>
@@ -317,9 +317,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
               />
               <TextField label="Notes" value={notes} onChange={setNotes} />
             </div>
-            {invalid !== "" && (
-              <p className="text-sm text-red-700">{invalid}</p>
-            )}
+            {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
             <ErrorText error={plan.error} />
             <div className="flex justify-end gap-2">
               <button
@@ -366,11 +364,11 @@ const PlanMealResult: React.FC<PlanMealResultProps> = ({
     0;
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-gray-700">
+      <p className="text-sm text-ink-soft">
         {cook?.recipeName} on {formatDay(cook?.date ?? "")}, cooking{" "}
         {formatServings(cook?.servings ?? 0)}:
       </p>
-      <ul className="divide-y divide-gray-100 rounded-md border border-gray-200 text-sm">
+      <ul className="divide-y divide-line rounded-xl border border-line text-sm">
         {result.portions.map((portion) => {
           const person = people.find((other) => other.id === portion.personId);
           const et = person?.eatingTimes.find(
@@ -387,7 +385,7 @@ const PlanMealResult: React.FC<PlanMealResultProps> = ({
                 <span className="font-medium">{person?.name}</span> · {et?.name}
                 {portion.date !== cook?.date && ` · ${formatDay(portion.date)}`}
               </span>
-              <span className="text-gray-600 tabular-nums">
+              <span className="text-muted tabular-nums">
                 {formatServings(servings)}
                 {gramsPerServing > 0 &&
                   ` · ${formatAmount(servings * gramsPerServing)} g`}
@@ -397,7 +395,7 @@ const PlanMealResult: React.FC<PlanMealResultProps> = ({
         })}
       </ul>
       {result.unassignedServings > 0 && (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           {formatServings(result.unassignedServings)} left over, to plan as
           leftovers.
         </p>

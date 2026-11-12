@@ -71,10 +71,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ recipe }) => {
         }}
       >
         {recipe.favorite ? (
-          <FilledStarIcon
-            className="size-4 text-amber-500"
-            aria-hidden="true"
-          />
+          <FilledStarIcon className="size-4 text-warn" aria-hidden="true" />
         ) : (
           <StarIcon className="size-4" aria-hidden="true" />
         )}

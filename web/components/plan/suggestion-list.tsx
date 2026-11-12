@@ -90,13 +90,13 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
       );
   const hidden = suggestion.components.length - shown.length;
   return (
-    <li className="flex flex-col gap-2 rounded-md border border-gray-200 bg-white p-3">
+    <li className="flex flex-col gap-2 rounded-xl border border-line bg-white p-3">
       <div className="flex items-start gap-3">
         <div className="flex min-w-0 grow flex-col gap-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Link
               to={`/recipes/${suggestion.recipeId}`}
-              className="font-medium text-gray-900 hover:underline"
+              className="font-medium text-ink-soft hover:underline"
             >
               {suggestion.recipeName}
             </Link>
@@ -104,7 +104,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
               <Badge>{leftoverLabel(suggestion.leftoverOf)}</Badge>
             )}
             {!suggestion.fitsRules && (
-              <Badge className="bg-amber-50 text-amber-900 ring-amber-300">
+              <Badge className="bg-warn-tint text-warn-dark ring-warn-line">
                 Breaks rules
               </Badge>
             )}
@@ -113,13 +113,13 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
             className="flex items-center gap-2"
             title="Score, relative to the best suggestion"
           >
-            <div className="h-1.5 w-full max-w-48 min-w-16 overflow-hidden rounded-full bg-gray-200">
+            <div className="h-1.5 w-full max-w-48 min-w-16 overflow-hidden rounded-full bg-ground-dark">
               <div
-                className={`h-full rounded-full ${suggestion.fitsRules ? "bg-brand-500" : "bg-amber-500"}`}
+                className={`h-full rounded-full ${suggestion.fitsRules ? "bg-pine" : "bg-warn"}`}
                 style={{ width: `${fraction * 100}%` }}
               />
             </div>
-            <span className="text-xs whitespace-nowrap text-gray-600 tabular-nums">
+            <span className="text-xs whitespace-nowrap text-muted tabular-nums">
               {formatAmount(suggestion.score)} points
             </span>
           </div>
@@ -143,7 +143,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
           ))}
         </ul>
       )}
-      <p className="text-xs text-gray-600">
+      <p className="text-xs text-muted">
         {portionsLine(suggestion)}
         {" · "}
         {toBuy.length === 0
@@ -154,7 +154,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({
       {(hidden > 0 || suggestion.warnings.length > 0) && (
         <button
           type="button"
-          className="self-start text-xs font-medium text-brand-700 hover:underline"
+          className="self-start text-xs font-medium text-pine hover:underline"
           aria-expanded={expanded}
           onClick={() => {
             setExpanded(!expanded);
@@ -206,11 +206,11 @@ const SuggestionList: React.FC<SuggestionListProps> = ({
   const list = suggestions.data.suggestions;
   if (list.length === 0) {
     return (
-      <p className="text-sm text-gray-700">
+      <p className="text-sm text-ink-soft">
         There are no recipes to suggest yet.{" "}
         <Link
           to="/recipes/new"
-          className="font-medium text-brand-600 hover:underline"
+          className="font-medium text-pine hover:underline"
         >
           Add a recipe
         </Link>{" "}
@@ -221,9 +221,9 @@ const SuggestionList: React.FC<SuggestionListProps> = ({
   const maxScore = Math.max(...list.map((suggestion) => suggestion.score));
   return (
     <div className="flex flex-col gap-2">
-      <p className="flex items-start gap-1.5 text-xs text-gray-600">
+      <p className="flex items-start gap-1.5 text-xs text-muted">
         <SparklesIcon
-          className="mt-px size-3.5 shrink-0 text-brand-600"
+          className="mt-px size-3.5 shrink-0 text-pine"
           aria-hidden="true"
         />
         <span>

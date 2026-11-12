@@ -23,11 +23,11 @@ export const WarningList: React.FC<WarningListProps> = ({ warnings }) => {
       {warnings.map((warning) => {
         const info = warning.severity === Severity.INFO;
         const Icon = info ? InformationCircleIcon : ExclamationTriangleIcon;
-        let color = "text-amber-900";
+        let color = "text-warn-dark";
         if (info) {
-          color = "text-sky-900";
+          color = "text-heat";
         } else if (warning.uncertain) {
-          color = "text-amber-800/80";
+          color = "text-warn-dark/80";
         }
         return (
           <li
@@ -35,7 +35,7 @@ export const WarningList: React.FC<WarningListProps> = ({ warnings }) => {
             className={`flex gap-1.5 text-xs leading-snug ${color}`}
           >
             <Icon
-              className={`mt-px size-3.5 shrink-0 ${info ? "text-sky-600" : "text-amber-600"}`}
+              className={`mt-px size-3.5 shrink-0 ${info ? "text-heat" : "text-warn"}`}
               aria-label={info ? "Note" : "Warning"}
             />
             <span>{warning.message}</span>
@@ -78,13 +78,13 @@ export const ComponentChip: React.FC<ComponentChipProps> = ({ component }) => {
     <li
       className={`inline-flex max-w-full items-start gap-1 rounded px-1.5 py-0.5 text-xs leading-snug ring-1 ring-inset ${
         positive
-          ? "bg-brand-50 text-gray-800 ring-brand-200"
-          : "bg-amber-50 text-amber-950 ring-amber-200"
+          ? "bg-pine-50 text-ink-soft ring-pine-200"
+          : "bg-warn-tint text-warn-dark ring-warn-line"
       }`}
       title={KIND_LABELS[component.kind]}
     >
       <span
-        className={`shrink-0 font-semibold tabular-nums ${positive ? "text-brand-700" : "text-amber-700"}`}
+        className={`shrink-0 font-semibold tabular-nums ${positive ? "text-pine" : "text-warn"}`}
       >
         {formatPoints(component.points)}
       </span>

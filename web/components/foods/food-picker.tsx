@@ -77,25 +77,25 @@ const FoodPicker: React.FC<FoodPickerProps> = ({ value, onChange, label }) => {
         />
         <ComboboxOptions
           anchor="bottom start"
-          className="z-[2100] max-h-72 w-[max(var(--input-width),16rem)] overflow-y-auto rounded-md bg-white p-1 text-sm shadow-lg ring-1 ring-black/5 [--anchor-gap:4px] empty:invisible"
+          className="z-[2100] max-h-72 w-[max(var(--input-width),16rem)] overflow-y-auto rounded-xl bg-white p-1 text-sm shadow-lg ring-1 ring-black/5 [--anchor-gap:4px] empty:invisible"
         >
           {foods.map((food) => (
             <ComboboxOption
               key={food.id}
               value={{ id: food.id, name: food.name }}
-              className="cursor-pointer rounded px-2 py-1.5 text-gray-900 data-[focus]:bg-brand-50"
+              className="cursor-pointer rounded px-2 py-1.5 text-ink-soft data-[focus]:bg-pine-50"
             >
               {food.name}
             </ComboboxOption>
           ))}
           {!isPending && foods.length === 0 && (
-            <p className="px-2 py-1.5 text-gray-500">
+            <p className="px-2 py-1.5 text-muted">
               No foods match &quot;{search}&quot;.
             </p>
           )}
           <ComboboxOption
             value={ADD_FOOD}
-            className="flex cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 font-medium text-brand-700 data-[focus]:bg-brand-50"
+            className="flex cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 font-medium text-pine data-[focus]:bg-pine-50"
           >
             <PlusIcon className="size-4" aria-hidden="true" />
             {query.trim() === "" ? "Add a new food" : `Add “${query.trim()}”`}

@@ -122,7 +122,7 @@ const PantryAddPage: React.FC = () => {
             <span className="flex items-center gap-2">
               <button
                 type="button"
-                className="size-10 rounded-full border border-gray-300 bg-white text-xl text-ink-soft disabled:opacity-40"
+                className="size-10 rounded-full border border-line bg-white text-xl text-ink-soft disabled:opacity-40"
                 aria-label="Fewer"
                 disabled={count <= step}
                 onClick={() => {
@@ -136,7 +136,7 @@ const PantryAddPage: React.FC = () => {
               </span>
               <button
                 type="button"
-                className="size-10 rounded-full border border-gray-300 bg-white text-xl text-ink-soft"
+                className="size-10 rounded-full border border-line bg-white text-xl text-ink-soft"
                 aria-label="More"
                 onClick={() => {
                   setCount(count + step);

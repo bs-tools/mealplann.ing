@@ -34,8 +34,8 @@ const foodDataKey = (data: FoodData): string =>
 
 // TabClass styles a tab of the dialog.
 const tabClass = (active: boolean): string =>
-  `rounded-md px-3 py-1.5 text-sm font-medium ${
-    active ? "bg-ink text-white" : "text-gray-600 hover:bg-gray-100"
+  `rounded-xl px-3 py-1.5 text-sm font-medium ${
+    active ? "bg-ink text-white" : "text-muted hover:bg-ground-dark"
   }`;
 
 interface AddFoodDialogProps {
@@ -82,7 +82,7 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
   let list: React.ReactNode = null;
   if (search === "") {
     list = (
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted">
         Search for an ingredient, e.g. &quot;chickpeas cooked&quot; or
         &quot;spinach raw&quot;.
       </p>
@@ -106,7 +106,7 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
     );
   } else {
     list = (
-      <ul className="flex max-h-96 flex-col divide-y divide-gray-100 overflow-y-auto">
+      <ul className="flex max-h-96 flex-col divide-y divide-line overflow-y-auto">
         {results.data.foods.map((data) => (
           <FoodDataRow
             key={foodDataKey(data)}
@@ -159,7 +159,7 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
               <span className="sr-only">
                 Search the Canadian Nutrient File and USDA FoodData Central
               </span>
-              <MagnifyingGlassIcon className="pointer-events-none absolute top-2 left-2.5 size-4 text-gray-400" />
+              <MagnifyingGlassIcon className="pointer-events-none absolute top-2 left-2.5 size-4 text-muted/70" />
               <input
                 className={`${inputClass} pl-8`}
                 value={query}
@@ -172,7 +172,7 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
             </label>
             {picked !== null && (
               <form
-                className="flex flex-col gap-2 rounded-md border border-brand-200 bg-brand-50 p-3"
+                className="flex flex-col gap-2 rounded-xl border border-pine-200 bg-pine-50 p-3"
                 onSubmit={(event) => {
                   event.preventDefault();
                   /*
@@ -227,7 +227,7 @@ const AddFoodDialog: React.FC<AddFoodDialogProps> = ({
               create.mutate({ food: { name: customName.trim() } });
             }}
           >
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted">
               For products the nutrient databases don&apos;t have, like a brand
               of tofu or plant milk. You&apos;ll enter its nutrients per 100 g
               from its label next.
@@ -290,11 +290,11 @@ const FoodDataRow: React.FC<FoodDataRowProps> = ({
   }
   return (
     <li
-      className={`flex items-start justify-between gap-3 py-2 ${picked ? "bg-brand-50" : ""}`}
+      className={`flex items-start justify-between gap-3 py-2 ${picked ? "bg-pine-50" : ""}`}
     >
       <div className="min-w-0">
-        <p className="text-sm font-medium text-gray-900">{data.description}</p>
-        <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-gray-500">
+        <p className="text-sm font-medium text-ink-soft">{data.description}</p>
+        <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted">
           {source !== undefined && (
             <Badge className={source.badgeClass} title={source.name}>
               {source.badge}
@@ -306,7 +306,7 @@ const FoodDataRow: React.FC<FoodDataRowProps> = ({
           </span>
         </p>
         {facts.length > 0 && (
-          <p className="text-xs text-gray-600 tabular-nums">
+          <p className="text-xs text-muted tabular-nums">
             Per 100 g: {facts.join(" · ")}
           </p>
         )}

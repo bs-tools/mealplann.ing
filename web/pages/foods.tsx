@@ -76,7 +76,7 @@ const FoodsPage: React.FC = () => {
     } else {
       content = (
         <Card>
-          <ul className="-my-2 divide-y divide-gray-100">
+          <ul className="-my-2 divide-y divide-line">
             {list.map((food) => (
               <FoodRow key={food.id} food={food} />
             ))}
@@ -120,7 +120,7 @@ const FoodsPage: React.FC = () => {
       />
       <label className="relative block sm:max-w-sm">
         <span className="sr-only">Search foods</span>
-        <MagnifyingGlassIcon className="pointer-events-none absolute top-2 left-2.5 size-4 text-gray-400" />
+        <MagnifyingGlassIcon className="pointer-events-none absolute top-2 left-2.5 size-4 text-muted/70" />
         <input
           type="search"
           className={`${inputClass} pl-8`}
@@ -176,11 +176,11 @@ const FoodRow: React.FC<FoodRowProps> = ({ food }) => {
     <li>
       <Link
         to={`/foods/${food.id}`}
-        className="-mx-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded px-2 py-2 hover:bg-gray-50"
+        className="-mx-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded px-2 py-2 hover:bg-ground"
       >
         <div className="min-w-0">
-          <p className="font-medium text-gray-900">{food.name}</p>
-          <p className="text-xs text-gray-500 tabular-nums">
+          <p className="font-medium text-ink-soft">{food.name}</p>
+          <p className="text-xs text-muted tabular-nums">
             {facts.length > 0
               ? `Per 100 g: ${facts.join(" · ")}`
               : "No nutrients yet"}
@@ -189,7 +189,7 @@ const FoodRow: React.FC<FoodRowProps> = ({ food }) => {
         <div className="flex flex-wrap items-center gap-1.5">
           {food.fastCarb && (
             <Badge
-              className="bg-amber-50 text-amber-800 ring-amber-200"
+              className="bg-warn-tint text-warn-dark ring-warn-line"
               title="Quickly absorbed carbohydrate"
             >
               <BoltIcon className="size-3" aria-hidden="true" />

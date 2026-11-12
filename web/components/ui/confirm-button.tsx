@@ -15,6 +15,49 @@ interface ConfirmButtonProps {
   onConfirm: () => void;
 }
 
+interface ConfirmDialogProps {
+  open: boolean;
+  title: string;
+  message: ReactNode;
+  confirmLabel?: string;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+/**
+ * ConfirmDialog asks for confirmation before a destructive action, for one
+ * started from somewhere other than a button of its own, like a ⋯ menu.
+ */
+export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+  open,
+  title,
+  message,
+  confirmLabel = "Delete",
+  onClose,
+  onConfirm,
+}) => (
+  <Modal open={open} onClose={onClose} title={title}>
+    <div className="flex flex-col gap-4">
+      <div className="text-sm text-ink-soft">{message}</div>
+      <div className="flex justify-end gap-2">
+        <button type="button" className={secondaryButton} onClick={onClose}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          className={dangerButton}
+          onClick={() => {
+            onClose();
+            onConfirm();
+          }}
+        >
+          {confirmLabel}
+        </button>
+      </div>
+    </div>
+  </Modal>
+);
+
 // ConfirmButton asks for confirmation before running a destructive action.
 const ConfirmButton: React.FC<ConfirmButtonProps> = ({
   children,
@@ -41,26 +84,14 @@ const ConfirmButton: React.FC<ConfirmButtonProps> = ({
       >
         {children}
       </button>
-      <Modal open={open} onClose={close} title={title}>
-        <div className="flex flex-col gap-4">
-          <div className="text-sm text-gray-700">{message}</div>
-          <div className="flex justify-end gap-2">
-            <button type="button" className={secondaryButton} onClick={close}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={dangerButton}
-              onClick={() => {
-                setOpen(false);
-                onConfirm();
-              }}
-            >
-              {confirmLabel}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      <ConfirmDialog
+        open={open}
+        title={title}
+        message={message}
+        confirmLabel={confirmLabel}
+        onClose={close}
+        onConfirm={onConfirm}
+      />
     </>
   );
 };

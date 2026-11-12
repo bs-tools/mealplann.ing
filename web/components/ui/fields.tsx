@@ -42,9 +42,7 @@ export const TextField: React.FC<TextFieldProps> = ({
         onChange(event.target.value);
       }}
     />
-    {hint !== undefined && (
-      <span className="text-xs text-gray-500">{hint}</span>
-    )}
+    {hint !== undefined && <span className="text-xs text-muted">{hint}</span>}
   </label>
 );
 
@@ -131,12 +129,12 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
   className = "",
 }) => (
   <label
-    className={`inline-flex cursor-pointer items-center gap-2 text-sm text-gray-800 ${className}`}
+    className={`inline-flex cursor-pointer items-center gap-2 text-sm text-ink-soft ${className}`}
   >
     <input
       type="checkbox"
       checked={checked}
-      className="size-4 rounded border-gray-300 accent-brand-700"
+      className="size-4 rounded border-line accent-pine"
       onChange={(event) => {
         onChange(event.target.checked);
       }}

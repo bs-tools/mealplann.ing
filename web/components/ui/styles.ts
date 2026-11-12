@@ -7,17 +7,17 @@ export const secondaryButton =
   "inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-ink-soft ring-1 ring-line ring-inset hover:bg-ground-dark/50 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const dangerButton =
-  "inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1.5 rounded-xl bg-error px-4 py-2.5 text-sm font-bold text-white hover:bg-error/90 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const ghostButton =
   "inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-muted hover:bg-ground-dark hover:text-ink-soft disabled:cursor-not-allowed disabled:opacity-50";
 
 // Destructive actions, such as deleting, in the secondary and ghost styles.
 export const secondaryDangerButton =
-  "inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-red-300 ring-inset hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-error ring-1 ring-error/40 ring-inset hover:bg-error-tint disabled:cursor-not-allowed disabled:opacity-50";
 
 export const ghostDangerButton =
-  "inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-red-700 hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-error hover:bg-error-tint hover:text-error disabled:cursor-not-allowed disabled:opacity-50";
 
 export const iconButton =
   "inline-flex items-center justify-center rounded-lg p-1.5 text-muted hover:bg-ground-dark hover:text-ink-soft disabled:cursor-not-allowed disabled:opacity-40";

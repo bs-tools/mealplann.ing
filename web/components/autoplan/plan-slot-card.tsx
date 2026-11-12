@@ -76,7 +76,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
 }) => {
   const delay = { animationDelay: `${Math.min(index * 40, 800)}ms` };
   const header = (
-    <span className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
+    <span className="text-[11px] font-semibold tracking-wide text-muted uppercase">
       {mealName}
     </span>
   );
@@ -86,9 +86,9 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
     switch (slot.state) {
       case PlanSlotState.PLANNED: {
         body = (
-          <p className="flex items-start gap-1.5 text-sm text-gray-600">
+          <p className="flex items-start gap-1.5 text-sm text-muted">
             <CheckCircleIcon
-              className="mt-0.5 size-4 shrink-0 text-brand-600"
+              className="mt-0.5 size-4 shrink-0 text-pine"
               aria-hidden="true"
             />
             <span>Planned: {formatList(slot.plannedRecipeNames)}</span>
@@ -99,10 +99,10 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
       case PlanSlotState.SKIPPED: {
         body = (
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-gray-500 italic">Left empty</span>
+            <span className="text-sm text-muted italic">Left empty</span>
             <button
               type="button"
-              className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+              className="inline-flex items-center gap-1 text-xs font-medium text-pine hover:underline disabled:opacity-50"
               disabled={disabled}
               onClick={onFill}
             >
@@ -116,16 +116,16 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
       case PlanSlotState.EATING_OUT: {
         body = (
           <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5 text-sm text-gray-600">
+            <span className="flex items-center gap-1.5 text-sm text-muted">
               <BuildingStorefrontIcon
-                className="size-4 shrink-0 text-gray-500"
+                className="size-4 shrink-0 text-muted"
                 aria-hidden="true"
               />
               Eating out
             </span>
             <button
               type="button"
-              className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+              className="inline-flex items-center gap-1 text-xs font-medium text-pine hover:underline disabled:opacity-50"
               disabled={disabled}
               onClick={() => {
                 onEatingOut(false);
@@ -140,7 +140,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
       }
       case PlanSlotState.FILLED_BY_MEAL: {
         body = (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             The rest of an earlier meal, which is more than the most they eat at
             once.
           </p>
@@ -152,7 +152,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
       case PlanSlotState.KEPT:
       case PlanSlotState.UNFILLED: {
         body = (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted">
             {slot.unfilledReason === ""
               ? "No recipe meets the criteria."
               : slot.unfilledReason}
@@ -163,7 +163,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
     }
     return (
       <li
-        className="flex flex-col gap-1 rounded-md border border-dashed border-gray-300 bg-gray-50/60 p-3 motion-safe:animate-rise"
+        className="flex flex-col gap-1 rounded-xl border border-dashed border-line bg-ground/60 p-3 motion-safe:animate-rise"
         style={delay}
       >
         {header}
@@ -181,8 +181,8 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
   );
   return (
     <li
-      className={`flex flex-col gap-2 rounded-md border bg-white p-3 shadow-sm motion-safe:animate-rise ${
-        locked ? "border-brand-400 ring-1 ring-brand-200" : "border-gray-200"
+      className={`flex flex-col gap-2 rounded-xl border bg-white p-3 shadow-sm motion-safe:animate-rise ${
+        locked ? "border-brand-400 ring-1 ring-pine-200" : "border-line"
       }`}
       style={delay}
     >
@@ -191,17 +191,17 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
           {header}
           <Link
             to={`/recipes/${suggestion.recipeId}`}
-            className="font-medium text-gray-900 hover:underline"
+            className="font-medium text-ink-soft hover:underline"
           >
             {suggestion.recipeName}
           </Link>
           {suggestion.leftoverOf !== undefined && (
-            <span className="text-xs text-gray-600">
+            <span className="text-xs text-muted">
               {leftoverLabel(suggestion.leftoverOf)}, reheated
             </span>
           )}
           {suggestion.cookDate !== "" && (
-            <span className="text-xs text-gray-600">
+            <span className="text-xs text-muted">
               Cooked {formatWeekday(suggestion.cookDate)}, from the fridge
             </span>
           )}
@@ -209,7 +209,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
         <div className="-mt-1 -mr-1 flex shrink-0 items-center print:hidden">
           <button
             type="button"
-            className={`${iconButton} ${locked ? "text-brand-700" : ""}`}
+            className={`${iconButton} ${locked ? "text-pine" : ""}`}
             aria-pressed={locked}
             aria-label={locked ? "Kept" : "Keep"}
             title={
@@ -238,36 +238,36 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
               </MenuButton>
               <MenuItems
                 transition
-                className="absolute right-0 z-[1100] mt-1 w-72 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-hidden data-[closed]:scale-95 data-[closed]:opacity-0"
+                className="absolute right-0 z-[1100] mt-1 w-72 origin-top-right rounded-xl bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-hidden data-[closed]:scale-95 data-[closed]:opacity-0"
               >
-                <p className="px-3 py-1 text-xs text-gray-500">
+                <p className="px-3 py-1 text-xs text-muted">
                   Next best, given the rest of the plan
                 </p>
                 {slot.alternatives.map((alternative) => (
                   <MenuItem key={suggestionKey(alternative)}>
                     <button
                       type="button"
-                      className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left data-[focus]:bg-gray-100"
+                      className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left data-[focus]:bg-ground-dark"
                       onClick={() => {
                         onSwap(alternative);
                       }}
                     >
                       <span className="flex w-full items-baseline justify-between gap-2">
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-medium text-ink-soft">
                           {alternative.recipeName}
                           {alternative.leftoverOf !== undefined && (
-                            <span className="font-normal text-gray-600">
+                            <span className="font-normal text-muted">
                               {" "}
                               · {leftoverLabel(alternative.leftoverOf)}
                             </span>
                           )}
                         </span>
-                        <span className="shrink-0 text-xs text-gray-500 tabular-nums">
+                        <span className="shrink-0 text-xs text-muted tabular-nums">
                           {formatAmount(alternative.score)} points
                         </span>
                       </span>
                       {firstReason(alternative) !== "" && (
-                        <span className="line-clamp-2 text-xs text-gray-600">
+                        <span className="line-clamp-2 text-xs text-muted">
                           {firstReason(alternative)}
                         </span>
                       )}
@@ -289,13 +289,13 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
               </MenuButton>
               <MenuItems
                 transition
-                className="absolute right-0 z-[1100] mt-1 w-52 origin-top-right rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 transition focus:outline-hidden data-[closed]:scale-95 data-[closed]:opacity-0"
+                className="absolute right-0 z-[1100] mt-1 w-52 origin-top-right rounded-xl bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 transition focus:outline-hidden data-[closed]:scale-95 data-[closed]:opacity-0"
               >
                 {SNOOZES.map((snooze) => (
                   <MenuItem key={snooze.days}>
                     <button
                       type="button"
-                      className="w-full px-3 py-2 text-left data-[focus]:bg-gray-100"
+                      className="w-full px-3 py-2 text-left data-[focus]:bg-ground-dark"
                       onClick={() => {
                         onFeedback(snoozeFor(snooze.days));
                       }}
@@ -307,7 +307,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
                 <MenuItem>
                   <button
                     type="button"
-                    className="w-full px-3 py-2 text-left data-[focus]:bg-gray-100"
+                    className="w-full px-3 py-2 text-left data-[focus]:bg-ground-dark"
                     onClick={() => {
                       onFeedback(NEVER);
                     }}
@@ -346,13 +346,13 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
         className="flex items-center gap-2"
         title="Score, relative to the plan's best meal"
       >
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-ground-dark">
           <div
-            className={`h-full rounded-full transition-[width] duration-700 ${suggestion.fitsRules ? "bg-brand-500" : "bg-amber-500"}`}
+            className={`h-full rounded-full transition-[width] duration-700 ${suggestion.fitsRules ? "bg-pine" : "bg-warn"}`}
             style={{ width: `${fraction * 100}%` }}
           />
         </div>
-        <span className="text-xs whitespace-nowrap text-gray-600 tabular-nums">
+        <span className="text-xs whitespace-nowrap text-muted tabular-nums">
           {formatAmount(suggestion.score)}
         </span>
       </div>
@@ -362,7 +362,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
         <ul className="flex flex-wrap gap-1">
           {!suggestion.fitsRules && (
             <li>
-              <Badge className="bg-amber-50 text-amber-900 ring-amber-300">
+              <Badge className="bg-warn-tint text-warn-dark ring-warn-line">
                 Breaks rules
               </Badge>
             </li>

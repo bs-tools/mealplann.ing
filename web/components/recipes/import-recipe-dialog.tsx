@@ -39,7 +39,7 @@ const ImportRecipeDialog: React.FC<ImportRecipeDialogProps> = ({
           autoFocus
           onChange={setUrl}
         />
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Most recipe sites, like food blogs, describe their recipes for search
           engines. You then choose the food of each ingredient, from those most
           like it, before saving it.

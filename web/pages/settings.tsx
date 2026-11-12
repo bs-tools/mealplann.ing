@@ -68,20 +68,20 @@ const ApiTokens: React.FC = () => {
       />
     );
   } else if (data.tokens.length === 0) {
-    list = <p className="text-sm text-gray-500">No API tokens yet.</p>;
+    list = <p className="text-sm text-muted">No API tokens yet.</p>;
   } else {
     list = (
-      <ul className="divide-y divide-gray-100">
+      <ul className="divide-y divide-line">
         {data.tokens.map((token) => (
           <li
             key={token.id}
             className="flex items-center justify-between gap-2 py-2"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-gray-900">
+              <p className="truncate text-sm font-medium text-ink-soft">
                 {token.name}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 Created {formatTimestamp(token.createTime)} · last used{" "}
                 {formatTimestamp(token.lastUsedTime)}
               </p>
@@ -106,17 +106,17 @@ const ApiTokens: React.FC = () => {
   return (
     <Card title="API tokens">
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           API tokens let AI agents and other clients use mealplann.ing on your
           behalf with an{" "}
-          <code className="rounded bg-gray-100 px-1">
+          <code className="rounded bg-ground-dark px-1">
             Authorization: Bearer &lt;token&gt;
           </code>{" "}
           header.
         </p>
         {created !== null && (
-          <div className="flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 p-3">
-            <p className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+          <div className="flex flex-col gap-2 rounded-xl border border-warn-line bg-warn-tint p-3">
+            <p className="flex items-center gap-2 text-sm font-semibold text-warn-dark">
               <ExclamationTriangleIcon className="size-5" />
               Copy the token &quot;{created.name}&quot; now. It is not stored
               and will not be shown again.
@@ -143,9 +143,7 @@ const ApiTokens: React.FC = () => {
           }}
         >
           <label className="flex min-w-48 grow flex-col gap-1">
-            <span className="text-xs font-medium text-gray-600">
-              Token name
-            </span>
+            <span className="text-xs font-medium text-muted">Token name</span>
             <input
               value={name}
               className={inputClass}
@@ -188,14 +186,14 @@ const McpInstructions: React.FC = () => {
   );
   return (
     <Card title="Connect your AI agent (MCP)">
-      <div className="flex flex-col gap-4 text-sm text-gray-700">
+      <div className="flex flex-col gap-4 text-sm text-ink-soft">
         <p>
           mealplann.ing is also an{" "}
           <a
             href="https://modelcontextprotocol.io"
             target="_blank"
             rel="noreferrer"
-            className="font-medium text-brand-600 hover:underline"
+            className="font-medium text-pine hover:underline"
           >
             MCP server
           </a>
@@ -203,13 +201,13 @@ const McpInstructions: React.FC = () => {
           and build your shopping list with you.
         </p>
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-gray-600 uppercase">
+          <span className="text-xs font-medium text-muted uppercase">
             Endpoint (streamable HTTP)
           </span>
           <CopyField value={endpoint} />
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-gray-600 uppercase">
+          <span className="text-xs font-medium text-muted uppercase">
             claude.ai, Claude Desktop and other OAuth clients
           </span>
           <p>
@@ -221,19 +219,19 @@ const McpInstructions: React.FC = () => {
         <p>
           Clients can also use an API token instead, which is the simplest
           option for Claude Code: create one above and use it in place of{" "}
-          <code className="rounded bg-gray-100 px-1">&lt;token&gt;</code>.
+          <code className="rounded bg-ground-dark px-1">&lt;token&gt;</code>.
         </p>
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-gray-600 uppercase">
+          <span className="text-xs font-medium text-muted uppercase">
             Claude Code
           </span>
           <CopyField value={command} multiline />
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-gray-600 uppercase">
+          <span className="text-xs font-medium text-muted uppercase">
             Other MCP clients
           </span>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted">
             Most clients accept a configuration like this for a remote server
             using the streamable HTTP transport.
           </p>

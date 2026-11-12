@@ -5,7 +5,7 @@ import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
 import { primaryButton } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
-import { InformationCircleIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import type { Person } from "gen/people/v1/people_pb";
 import { listStaples } from "gen/plans/v1/plans-PlanService_connectquery";
@@ -66,8 +66,9 @@ const PeoplePage: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
+        kicker="Your household"
         title="People"
-        subtitle="The people you plan meals for: when they eat, and the rules and targets their plan is checked against."
+        subtitle="Each person's rules and targets are their own: the plan is checked against them, with a warning when it's off."
         actions={
           <button
             type="button"
@@ -81,14 +82,6 @@ const PeoplePage: React.FC = () => {
           </button>
         }
       />
-      <p className="-mt-2 flex items-start gap-1.5 text-sm text-gray-600">
-        <InformationCircleIcon
-          className="mt-0.5 size-4 shrink-0 text-sky-700"
-          aria-hidden="true"
-        />
-        Each person&apos;s rules and targets are their own. mealplann.ing checks
-        the plan against them and warns.
-      </p>
       {content}
       {editing !== undefined && (
         <PersonDialog

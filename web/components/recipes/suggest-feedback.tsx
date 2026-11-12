@@ -115,13 +115,13 @@ const SuggestMenu: React.FC<SuggestMenuProps> = ({ recipe }) => {
         </MenuButton>
         <MenuItems
           transition
-          className="absolute right-0 z-[1100] mt-1 w-56 origin-top-right rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 transition focus:outline-hidden data-[closed]:scale-95 data-[closed]:opacity-0"
+          className="absolute right-0 z-[1100] mt-1 w-56 origin-top-right rounded-xl bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 transition focus:outline-hidden data-[closed]:scale-95 data-[closed]:opacity-0"
         >
           {status !== "" && (
             <MenuItem>
               <button
                 type="button"
-                className="w-full px-3 py-2 text-left data-[focus]:bg-gray-100"
+                className="w-full px-3 py-2 text-left data-[focus]:bg-ground-dark"
                 onClick={() => {
                   save(recipe.id, SUGGEST);
                 }}
@@ -134,7 +134,7 @@ const SuggestMenu: React.FC<SuggestMenuProps> = ({ recipe }) => {
             <MenuItem key={snooze.days}>
               <button
                 type="button"
-                className="w-full px-3 py-2 text-left data-[focus]:bg-gray-100"
+                className="w-full px-3 py-2 text-left data-[focus]:bg-ground-dark"
                 onClick={() => {
                   save(recipe.id, snoozeFor(snooze.days));
                 }}
@@ -146,7 +146,7 @@ const SuggestMenu: React.FC<SuggestMenuProps> = ({ recipe }) => {
           <MenuItem>
             <button
               type="button"
-              className="w-full px-3 py-2 text-left data-[focus]:bg-gray-100"
+              className="w-full px-3 py-2 text-left data-[focus]:bg-ground-dark"
               onClick={() => {
                 save(recipe.id, NEVER);
               }}

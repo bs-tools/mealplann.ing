@@ -88,26 +88,26 @@ const Passkeys: React.FC = () => {
       />
     );
   } else if (data.passkeys.length === 0) {
-    list = <p className="text-sm text-gray-500">No passkeys yet.</p>;
+    list = <p className="text-sm text-muted">No passkeys yet.</p>;
   } else {
     const onlyOne = data.passkeys.length === 1;
     list = (
-      <ul className="divide-y divide-gray-100">
+      <ul className="divide-y divide-line">
         {data.passkeys.map((passkey) => (
           <li
             key={passkey.id}
             className="flex items-center justify-between gap-2 py-2"
           >
             <div className="min-w-0">
-              <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-900">
+              <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-ink-soft">
                 {passkey.name === "" ? "Passkey" : passkey.name}
                 {passkey.backedUp && (
-                  <Badge className="bg-sky-50 text-sky-800 ring-sky-200">
+                  <Badge className="bg-heat-tint text-heat ring-heat-tint">
                     Synced
                   </Badge>
                 )}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 Added {formatTimestamp(passkey.createTime)} · last used{" "}
                 {formatTimestamp(passkey.lastUsedTime)}
               </p>
@@ -139,7 +139,7 @@ const Passkeys: React.FC = () => {
   return (
     <Card title="Passkeys">
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Passkeys sign you in with your device&apos;s fingerprint, face or
           screen lock. Add one on each device you use, or use a synced passkey.
         </p>
@@ -147,7 +147,7 @@ const Passkeys: React.FC = () => {
         <ErrorText
           error={remove.error ?? invite.error ?? signOutOthers.error}
         />
-        {addError !== "" && <p className="text-sm text-red-700">{addError}</p>}
+        {addError !== "" && <p className="text-sm text-error">{addError}</p>}
         {inviteUrl !== "" && (
           <InvitationLink
             url={inviteUrl}
@@ -193,7 +193,7 @@ const Passkeys: React.FC = () => {
           </ConfirmButton>
         </div>
         {signedOut !== undefined && (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             {signedOut === 0
               ? "No other devices were signed in."
               : `Signed out ${signedOut.toString()} other ${signedOut === 1 ? "session" : "sessions"}.`}

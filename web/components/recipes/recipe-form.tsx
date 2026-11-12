@@ -383,7 +383,7 @@ const StepEditor: React.FC<StepEditorProps> = ({
     earlier.findIndex((other) => other.key === key) + 1;
   return (
     <li className="flex items-start gap-2">
-      <span className="mt-1.5 w-5 shrink-0 text-right text-sm font-semibold text-gray-500 tabular-nums">
+      <span className="mt-1.5 w-5 shrink-0 text-right text-sm font-semibold text-muted tabular-nums">
         {index + 1}.
       </span>
       <div className="flex grow flex-col gap-2">
@@ -408,7 +408,7 @@ const StepEditor: React.FC<StepEditorProps> = ({
                 onChange({ minutes: event.target.value });
               }}
             />
-            <span className="text-gray-600">min</span>
+            <span className="text-muted">min</span>
           </label>
           <CheckboxField
             label="Waiting time"
@@ -473,7 +473,7 @@ const StepEditor: React.FC<StepEditorProps> = ({
                 onChange({ offsetMinutes: event.target.value });
               }}
             />
-            <span className="text-gray-600">
+            <span className="text-muted">
               {step.offsetEnd ? "min before it ends" : "min in"}
             </span>
           </label>
@@ -502,8 +502,8 @@ const StepEditor: React.FC<StepEditorProps> = ({
                   aria-pressed={used}
                   className={`rounded-full px-2 py-0.5 text-xs ring-1 ${
                     used
-                      ? "bg-brand-100 font-medium text-brand-900 ring-brand-300"
-                      : "bg-white text-gray-600 ring-gray-200 hover:ring-gray-300"
+                      ? "bg-pine-100 font-medium text-pine-dark ring-pine-200"
+                      : "bg-white text-muted ring-line hover:ring-line"
                   }`}
                   onClick={() => {
                     onChange({
@@ -948,13 +948,13 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
       />
       <PageHeader title={title} actions={actions} />
       {recipe?.draft === true && (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <p className="rounded-xl border border-warn-line bg-warn-tint px-3 py-2 text-sm text-warn-dark">
           This is a draft: it isn&apos;t planned or suggested. Choose a food for
           each ingredient and save it to finish it.
         </p>
       )}
       <ErrorText error={create.error ?? update.error} />
-      {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+      {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card title="Recipe" className="lg:col-span-1">
           <div className="flex flex-col gap-3">
@@ -985,7 +985,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                 onChange={setCook}
               />
             </div>
-            <p className="-mt-1 text-xs text-gray-500">
+            <p className="-mt-1 text-xs text-muted">
               Times are minutes, like 45, or hours and minutes, like 1:30.
             </p>
             <div className="flex flex-col gap-1">
@@ -1018,7 +1018,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                   ))}
                 </select>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 What the whole recipe makes, like 1200 g of cooked beans, so
                 other recipes can use it by weight.
               </p>
@@ -1037,7 +1037,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                     <button
                       key={tag}
                       type="button"
-                      className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700 hover:bg-gray-200"
+                      className="rounded-full bg-ground-dark px-2 py-0.5 text-xs text-ink-soft hover:bg-ground-dark"
                       onClick={() => {
                         setTags([...currentTags, tag].join(", "));
                       }}
@@ -1106,7 +1106,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
               {ingredients.map((ingredient, index) => (
                 <li
                   key={ingredient.key}
-                  className="flex flex-col gap-2 rounded-md border border-gray-200 p-2 sm:p-3"
+                  className="flex flex-col gap-2 rounded-xl border border-line p-2 sm:p-3"
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <div
@@ -1127,7 +1127,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                           className={`-ml-px px-2 py-1.5 text-xs font-medium ring-1 ring-inset first:ml-0 first:rounded-l-md last:rounded-r-md ${
                             ingredient.isRecipe === isRecipe
                               ? "relative z-10 bg-ink text-white ring-ink"
-                              : "bg-white text-gray-700 ring-gray-300 hover:bg-gray-50"
+                              : "bg-white text-ink-soft ring-line hover:bg-ground"
                           }`}
                           onClick={() => {
                             if (isRecipe !== ingredient.isRecipe) {
@@ -1289,7 +1289,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
             </button>
           </Card>
           <Card title="Steps">
-            <p className="mb-3 text-sm text-gray-600">
+            <p className="mb-3 text-sm text-muted">
               One action per step, without the amounts: cook mode shows each
               step&apos;s ingredients, scaled to the servings cooked. Give steps
               their minutes to get timers and a timeline.
@@ -1335,7 +1335,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
         </div>
       </div>
       <ErrorText error={create.error ?? update.error} />
-      {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+      {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
       <div className="flex flex-wrap justify-end gap-2">{actions}</div>
     </form>
   );

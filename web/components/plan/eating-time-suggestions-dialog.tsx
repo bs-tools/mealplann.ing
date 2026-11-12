@@ -105,7 +105,7 @@ const EatingTimeSuggestionsDialog: React.FC<
       wide
     >
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           {formatDay(slot.date)}. Planning one cooks the recipe that day for
           this portion, within {person?.name ?? "their"}&apos;s maximum portion;
           the rest is left over to plan later.

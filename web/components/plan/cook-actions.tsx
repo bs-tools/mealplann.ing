@@ -49,13 +49,13 @@ const SupplyPicker: React.FC<SupplyPickerProps> = ({
   );
   return (
     <div className="flex flex-col gap-0.5">
-      <label className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600">
+      <label className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
         <span>
           {supply.supplierRecipeName}{" "}
           {supply.fromFreezer ? "from the freezer, cooked" : "from"}
         </span>
         <select
-          className="rounded border border-gray-300 bg-white px-1 py-0.5 text-xs text-gray-800"
+          className="rounded border border-line bg-white px-1 py-0.5 text-xs text-ink-soft"
           value={supply.supplierCookId}
           disabled={disabled || set.isPending || options.length < 2}
           title="The cook that makes it: choose another to share one pot between meals"
