@@ -205,23 +205,35 @@ message Recipe {
   // had enough of for a while; empty for none. Set it with the
   // update_mask "snoozed_until".
   string snoozed_until = 27;
-  // The sides it's served with, like rice, quinoa or bread, in order, at
-  // most 6: not ingredients, but foods a meal of it adds one of, or none,
-  // as a portion of its own (see PlanService.CreatePortion), to fill what
-  // the day is short of. SuggestionService.SuggestSides says which side
-  // fits a planned meal best.
+  // The sides it's served with, like rice, quinoa, bread or a salad, in
+  // order, at most 6: not ingredients, but foods or recipes a meal of it
+  // adds one of, or none, as a portion of its own (see
+  // PlanService.CreatePortion), to fill what the day is short of. A
+  // recipe side, like a pot of rice and quinoa, is cooked for the meal, so
+  // its cook says when to start it. SuggestionService.SuggestSides says
+  // which side fits a planned meal best.
   repeated RecipeSide served_with = 28;
 }
 
-// A side a recipe is served with.
+// A side a recipe is served with: a food, like bread, or a recipe, like
+// a pot of rice or a salad (often tagged "side"). Set food_id or
+// recipe_id, not both.
 message RecipeSide {
-  // The ID of the side's food (see FoodService). Required.
+  // The ID of the side's food (see FoodService), for a food side.
   string food_id = 1;
-  // How much of it goes with a serving of the recipe, in grams, e.g. 75
-  // for cooked rice. From 1 to 1000.
+  // For a food side, how much of it goes with a serving of the recipe, in
+  // grams, e.g. 75 for cooked rice. From 1 to 1000.
   double grams_per_serving = 2;
   // The food's name.
   string food_name = 3 [(mcp.v1.field).output_only = true];
+  // The ID of the side's recipe (see RecipeService), for a recipe side.
+  // It can't be the recipe itself.
+  string recipe_id = 4;
+  // For a recipe side, how many of its servings go with a serving of the
+  // recipe, e.g. 1 for a serving of rice with each bowl. From 0.1 to 4.
+  double servings_per_serving = 5;
+  // The side recipe's name.
+  string recipe_name = 6 [(mcp.v1.field).output_only = true];
 }
 
 // What a recipe's ingredients cost, from their foods' prices

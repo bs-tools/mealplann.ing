@@ -561,11 +561,13 @@ type Recipe_builder struct {
 	// had enough of for a while; empty for none. Set it with the
 	// update_mask "snoozed_until".
 	SnoozedUntil string
-	// The sides it's served with, like rice, quinoa or bread, in order, at
-	// most 6: not ingredients, but foods a meal of it adds one of, or none,
-	// as a portion of its own (see PlanService.CreatePortion), to fill what
-	// the day is short of. SuggestionService.SuggestSides says which side
-	// fits a planned meal best.
+	// The sides it's served with, like rice, quinoa, bread or a salad, in
+	// order, at most 6: not ingredients, but foods or recipes a meal of it
+	// adds one of, or none, as a portion of its own (see
+	// PlanService.CreatePortion), to fill what the day is short of. A
+	// recipe side, like a pot of rice and quinoa, is cooked for the meal, so
+	// its cook says when to start it. SuggestionService.SuggestSides says
+	// which side fits a planned meal best.
 	ServedWith []*RecipeSide
 }
 
@@ -610,14 +612,19 @@ func (b0 Recipe_builder) Build() *Recipe {
 	return m0
 }
 
-// A side a recipe is served with.
+// A side a recipe is served with: a food, like bread, or a recipe, like
+// a pot of rice or a salad (often tagged "side"). Set food_id or
+// recipe_id, not both.
 type RecipeSide struct {
-	state                      protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_FoodId          string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
-	xxx_hidden_GramsPerServing float64                `protobuf:"fixed64,2,opt,name=grams_per_serving,json=gramsPerServing,proto3"`
-	xxx_hidden_FoodName        string                 `protobuf:"bytes,3,opt,name=food_name,json=foodName,proto3"`
-	unknownFields              protoimpl.UnknownFields
-	sizeCache                  protoimpl.SizeCache
+	state                         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FoodId             string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
+	xxx_hidden_GramsPerServing    float64                `protobuf:"fixed64,2,opt,name=grams_per_serving,json=gramsPerServing,proto3"`
+	xxx_hidden_FoodName           string                 `protobuf:"bytes,3,opt,name=food_name,json=foodName,proto3"`
+	xxx_hidden_RecipeId           string                 `protobuf:"bytes,4,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_ServingsPerServing float64                `protobuf:"fixed64,5,opt,name=servings_per_serving,json=servingsPerServing,proto3"`
+	xxx_hidden_RecipeName         string                 `protobuf:"bytes,6,opt,name=recipe_name,json=recipeName,proto3"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *RecipeSide) Reset() {
@@ -666,6 +673,27 @@ func (x *RecipeSide) GetFoodName() string {
 	return ""
 }
 
+func (x *RecipeSide) GetRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeId
+	}
+	return ""
+}
+
+func (x *RecipeSide) GetServingsPerServing() float64 {
+	if x != nil {
+		return x.xxx_hidden_ServingsPerServing
+	}
+	return 0
+}
+
+func (x *RecipeSide) GetRecipeName() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeName
+	}
+	return ""
+}
+
 func (x *RecipeSide) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -678,16 +706,36 @@ func (x *RecipeSide) SetFoodName(v string) {
 	x.xxx_hidden_FoodName = v
 }
 
+func (x *RecipeSide) SetRecipeId(v string) {
+	x.xxx_hidden_RecipeId = v
+}
+
+func (x *RecipeSide) SetServingsPerServing(v float64) {
+	x.xxx_hidden_ServingsPerServing = v
+}
+
+func (x *RecipeSide) SetRecipeName(v string) {
+	x.xxx_hidden_RecipeName = v
+}
+
 type RecipeSide_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The ID of the side's food (see FoodService). Required.
+	// The ID of the side's food (see FoodService), for a food side.
 	FoodId string
-	// How much of it goes with a serving of the recipe, in grams, e.g. 75
-	// for cooked rice. From 1 to 1000.
+	// For a food side, how much of it goes with a serving of the recipe, in
+	// grams, e.g. 75 for cooked rice. From 1 to 1000.
 	GramsPerServing float64
 	// The food's name.
 	FoodName string
+	// The ID of the side's recipe (see RecipeService), for a recipe side.
+	// It can't be the recipe itself.
+	RecipeId string
+	// For a recipe side, how many of its servings go with a serving of the
+	// recipe, e.g. 1 for a serving of rice with each bowl. From 0.1 to 4.
+	ServingsPerServing float64
+	// The side recipe's name.
+	RecipeName string
 }
 
 func (b0 RecipeSide_builder) Build() *RecipeSide {
@@ -697,6 +745,9 @@ func (b0 RecipeSide_builder) Build() *RecipeSide {
 	x.xxx_hidden_FoodId = b.FoodId
 	x.xxx_hidden_GramsPerServing = b.GramsPerServing
 	x.xxx_hidden_FoodName = b.FoodName
+	x.xxx_hidden_RecipeId = b.RecipeId
+	x.xxx_hidden_ServingsPerServing = b.ServingsPerServing
+	x.xxx_hidden_RecipeName = b.RecipeName
 	return m0
 }
 
@@ -4059,12 +4110,16 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\vserved_with\x18\x1c \x03(\v2\x16.recipes.v1.RecipeSideR\n" +
 	"servedWithB\x0e\n" +
 	"\f_fridge_daysB\x0f\n" +
-	"\r_freezer_days\"v\n" +
+	"\r_freezer_days\"\xee\x01\n" +
 	"\n" +
 	"RecipeSide\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12*\n" +
 	"\x11grams_per_serving\x18\x02 \x01(\x01R\x0fgramsPerServing\x12#\n" +
-	"\tfood_name\x18\x03 \x01(\tB\x06\xaa\x9f\x19\x02\b\x01R\bfoodName\"\x89\x01\n" +
+	"\tfood_name\x18\x03 \x01(\tB\x06\xaa\x9f\x19\x02\b\x01R\bfoodName\x12\x1b\n" +
+	"\trecipe_id\x18\x04 \x01(\tR\brecipeId\x120\n" +
+	"\x14servings_per_serving\x18\x05 \x01(\x01R\x12servingsPerServing\x12'\n" +
+	"\vrecipe_name\x18\x06 \x01(\tB\x06\xaa\x9f\x19\x02\b\x01R\n" +
+	"recipeName\"\x89\x01\n" +
 	"\n" +
 	"RecipeCost\x12\x1f\n" +
 	"\vtotal_cents\x18\x01 \x01(\x05R\n" +

@@ -270,7 +270,9 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 	if err != nil {
 		return nil, err
 	}
-	sides, err := sidesFromProto(p.GetServedWith())
+	// A new recipe has no ID yet, so can't be its own side.
+	self, _ := store.StringToUUID(p.GetId())
+	sides, err := sidesFromProto(self, p.GetServedWith())
 	if err != nil {
 		return nil, err
 	}
@@ -320,15 +322,25 @@ func recipeFromProto(p *recipesv1.Recipe) (*recipes.Recipe, error) {
 
 // The limits of a recipe's sides.
 const (
-	maxSides     = 6
-	minSideGrams = 1
-	maxSideGrams = 1000
+	maxSides        = 6
+	minSideGrams    = 1
+	maxSideGrams    = 1000
+	minSideServings = 0.1
+	maxSideServings = 4
 )
 
 // sidesToProto converts a recipe's sides.
 func sidesToProto(sides []recipes.Side) []*recipesv1.RecipeSide {
 	list := make([]*recipesv1.RecipeSide, 0, len(sides))
 	for _, side := range sides {
+		if side.RecipeID.Valid {
+			list = append(list, recipesv1.RecipeSide_builder{
+				RecipeId:           store.UUIDToString(side.RecipeID),
+				ServingsPerServing: side.Servings,
+				RecipeName:         side.RecipeName,
+			}.Build())
+			continue
+		}
 		list = append(list, recipesv1.RecipeSide_builder{
 			FoodId:          store.UUIDToString(side.FoodID),
 			GramsPerServing: side.Grams,
@@ -338,13 +350,39 @@ func sidesToProto(sides []recipes.Side) []*recipesv1.RecipeSide {
 	return list
 }
 
-// sidesFromProto converts and validates a recipe's sides.
-func sidesFromProto(list []*recipesv1.RecipeSide) ([]recipes.Side, error) {
+// sidesFromProto converts and validates a recipe's sides: each a food
+// with its grams per serving, or another recipe with its servings per
+// serving, and each once.
+func sidesFromProto(recipeID pgtype.UUID, list []*recipesv1.RecipeSide) ([]recipes.Side, error) {
 	if len(list) > maxSides {
 		return nil, connect.Errorf(connect.CodeInvalidArgument, "served_with can have at most %d sides", maxSides)
 	}
 	sides := make([]recipes.Side, 0, len(list))
 	for i, p := range list {
+		if (p.GetFoodId() == "") == (p.GetRecipeId() == "") {
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"served_with[%d] must set food_id or recipe_id, not both: a side is a food, like bread, or a recipe, like a pot of rice", i)
+		}
+		if p.GetRecipeId() != "" {
+			id, err := store.StringToUUID(p.GetRecipeId())
+			if err != nil {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"served_with[%d].recipe_id must be a recipe's ID; find recipes with ListRecipes, like those tagged \"side\"", i)
+			}
+			if id == recipeID {
+				return nil, connect.Errorf(connect.CodeInvalidArgument, "served_with[%d].recipe_id is the recipe itself: a recipe can't be its own side", i)
+			}
+			if slices.ContainsFunc(sides, func(side recipes.Side) bool { return side.RecipeID == id }) {
+				return nil, connect.Errorf(connect.CodeInvalidArgument, "served_with[%d] repeats a side: list each recipe once", i)
+			}
+			servings := p.GetServingsPerServing()
+			if servings < minSideServings || servings > maxSideServings {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"served_with[%d].servings_per_serving must be from %g to %g servings of the side for each serving of the recipe", i, minSideServings, float64(maxSideServings))
+			}
+			sides = append(sides, recipes.Side{RecipeID: id, Servings: servings})
+			continue
+		}
 		id, err := store.StringToUUID(p.GetFoodId())
 		if err != nil {
 			return nil, connect.Errorf(connect.CodeInvalidArgument,

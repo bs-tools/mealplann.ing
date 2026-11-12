@@ -2626,10 +2626,11 @@ func (b0 PlanFix_builder) Build() *PlanFix {
 }
 
 type SuggestFromPantryRequest struct {
-	state           protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Date string                 `protobuf:"bytes,1,opt,name=date,proto3"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Date  string                 `protobuf:"bytes,1,opt,name=date,proto3"`
+	xxx_hidden_Meals []v1.HouseholdMeal     `protobuf:"varint,2,rep,packed,name=meals,proto3,enum=people.v1.HouseholdMeal"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *SuggestFromPantryRequest) Reset() {
@@ -2664,8 +2665,19 @@ func (x *SuggestFromPantryRequest) GetDate() string {
 	return ""
 }
 
+func (x *SuggestFromPantryRequest) GetMeals() []v1.HouseholdMeal {
+	if x != nil {
+		return x.xxx_hidden_Meals
+	}
+	return nil
+}
+
 func (x *SuggestFromPantryRequest) SetDate(v string) {
 	x.xxx_hidden_Date = v
+}
+
+func (x *SuggestFromPantryRequest) SetMeals(v []v1.HouseholdMeal) {
+	x.xxx_hidden_Meals = v
 }
 
 type SuggestFromPantryRequest_builder struct {
@@ -2673,6 +2685,10 @@ type SuggestFromPantryRequest_builder struct {
 
 	// The date to cook on (YYYY-MM-DD), usually today. Required.
 	Date string
+	// Only list recipes for these meals: those tagged with one of them, like
+	// "lunch" or "dinner", leaving out sides, snacks and basics like a pot
+	// of beans. Empty to list all.
+	Meals []v1.HouseholdMeal
 }
 
 func (b0 SuggestFromPantryRequest_builder) Build() *SuggestFromPantryRequest {
@@ -2680,6 +2696,7 @@ func (b0 SuggestFromPantryRequest_builder) Build() *SuggestFromPantryRequest {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Date = b.Date
+	x.xxx_hidden_Meals = b.Meals
 	return m0
 }
 
@@ -3043,20 +3060,25 @@ func (b0 SuggestSidesResponse_builder) Build() *SuggestSidesResponse {
 
 // A side to serve with a meal.
 type SideSuggestion struct {
-	state                        protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_FoodId            string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
-	xxx_hidden_FoodName          string                 `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3"`
-	xxx_hidden_Grams             float64                `protobuf:"fixed64,3,opt,name=grams,proto3"`
-	xxx_hidden_EnergyKcal        float64                `protobuf:"fixed64,4,opt,name=energy_kcal,json=energyKcal,proto3"`
-	xxx_hidden_ProteinGrams      float64                `protobuf:"fixed64,5,opt,name=protein_grams,json=proteinGrams,proto3"`
-	xxx_hidden_CarbohydrateGrams float64                `protobuf:"fixed64,6,opt,name=carbohydrate_grams,json=carbohydrateGrams,proto3"`
-	xxx_hidden_FatGrams          float64                `protobuf:"fixed64,7,opt,name=fat_grams,json=fatGrams,proto3"`
-	xxx_hidden_Reason            string                 `protobuf:"bytes,8,opt,name=reason,proto3"`
-	xxx_hidden_Warnings          *[]*v11.Warning        `protobuf:"bytes,9,rep,name=warnings,proto3"`
-	xxx_hidden_Planned           bool                   `protobuf:"varint,10,opt,name=planned,proto3"`
-	xxx_hidden_PortionId         string                 `protobuf:"bytes,11,opt,name=portion_id,json=portionId,proto3"`
-	unknownFields                protoimpl.UnknownFields
-	sizeCache                    protoimpl.SizeCache
+	state                         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FoodId             string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
+	xxx_hidden_FoodName           string                 `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3"`
+	xxx_hidden_Grams              float64                `protobuf:"fixed64,3,opt,name=grams,proto3"`
+	xxx_hidden_EnergyKcal         float64                `protobuf:"fixed64,4,opt,name=energy_kcal,json=energyKcal,proto3"`
+	xxx_hidden_ProteinGrams       float64                `protobuf:"fixed64,5,opt,name=protein_grams,json=proteinGrams,proto3"`
+	xxx_hidden_CarbohydrateGrams  float64                `protobuf:"fixed64,6,opt,name=carbohydrate_grams,json=carbohydrateGrams,proto3"`
+	xxx_hidden_FatGrams           float64                `protobuf:"fixed64,7,opt,name=fat_grams,json=fatGrams,proto3"`
+	xxx_hidden_Reason             string                 `protobuf:"bytes,8,opt,name=reason,proto3"`
+	xxx_hidden_Warnings           *[]*v11.Warning        `protobuf:"bytes,9,rep,name=warnings,proto3"`
+	xxx_hidden_Planned            bool                   `protobuf:"varint,10,opt,name=planned,proto3"`
+	xxx_hidden_PortionId          string                 `protobuf:"bytes,11,opt,name=portion_id,json=portionId,proto3"`
+	xxx_hidden_RecipeId           string                 `protobuf:"bytes,12,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_RecipeName         string                 `protobuf:"bytes,13,opt,name=recipe_name,json=recipeName,proto3"`
+	xxx_hidden_Servings           float64                `protobuf:"fixed64,14,opt,name=servings,proto3"`
+	xxx_hidden_CookId             string                 `protobuf:"bytes,15,opt,name=cook_id,json=cookId,proto3"`
+	xxx_hidden_CookServingsNeeded float64                `protobuf:"fixed64,16,opt,name=cook_servings_needed,json=cookServingsNeeded,proto3"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *SideSuggestion) Reset() {
@@ -3163,6 +3185,41 @@ func (x *SideSuggestion) GetPortionId() string {
 	return ""
 }
 
+func (x *SideSuggestion) GetRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeId
+	}
+	return ""
+}
+
+func (x *SideSuggestion) GetRecipeName() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeName
+	}
+	return ""
+}
+
+func (x *SideSuggestion) GetServings() float64 {
+	if x != nil {
+		return x.xxx_hidden_Servings
+	}
+	return 0
+}
+
+func (x *SideSuggestion) GetCookId() string {
+	if x != nil {
+		return x.xxx_hidden_CookId
+	}
+	return ""
+}
+
+func (x *SideSuggestion) GetCookServingsNeeded() float64 {
+	if x != nil {
+		return x.xxx_hidden_CookServingsNeeded
+	}
+	return 0
+}
+
 func (x *SideSuggestion) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -3207,16 +3264,37 @@ func (x *SideSuggestion) SetPortionId(v string) {
 	x.xxx_hidden_PortionId = v
 }
 
+func (x *SideSuggestion) SetRecipeId(v string) {
+	x.xxx_hidden_RecipeId = v
+}
+
+func (x *SideSuggestion) SetRecipeName(v string) {
+	x.xxx_hidden_RecipeName = v
+}
+
+func (x *SideSuggestion) SetServings(v float64) {
+	x.xxx_hidden_Servings = v
+}
+
+func (x *SideSuggestion) SetCookId(v string) {
+	x.xxx_hidden_CookId = v
+}
+
+func (x *SideSuggestion) SetCookServingsNeeded(v float64) {
+	x.xxx_hidden_CookServingsNeeded = v
+}
+
 type SideSuggestion_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The ID of the side's food.
+	// The ID of the side's food, for a food side.
 	FoodId string
-	// The food's name.
+	// The food's name, for a food side.
 	FoodName string
-	// How much of it to add, in grams: the recipe's grams per serving
-	// times the servings planned, rounded to 5 g, less if the maximum
-	// portion leaves less room.
+	// How much of it to add, in grams: for a food side, the recipe's grams
+	// per serving times the servings planned, rounded to 5 g, less if the
+	// maximum portion leaves less room; for a recipe side, what its
+	// servings weigh.
 	Grams float64
 	// What it adds, in kcal and grams.
 	EnergyKcal        float64
@@ -3235,6 +3313,21 @@ type SideSuggestion_builder struct {
 	// The planned portion's ID, if planned, to remove it with
 	// PlanService.DeletePortion.
 	PortionId string
+	// The ID of the side's recipe, for a recipe side.
+	RecipeId string
+	// The side recipe's name, for a recipe side.
+	RecipeName string
+	// For a recipe side, how many of its servings to add: the recipe's
+	// servings per serving times the servings planned, less if the maximum
+	// portion leaves less room.
+	Servings float64
+	// For a recipe side, a cook of it on the meal's date to add a share of,
+	// like the pot of rice cooked for someone else's portion; empty to cook
+	// it with CreatePortion's new_cook.
+	CookId string
+	// The servings cook_id must make for this side too, if it makes too few
+	// already: set them with PlanService.UpdateCook. 0 if it makes enough.
+	CookServingsNeeded float64
 }
 
 func (b0 SideSuggestion_builder) Build() *SideSuggestion {
@@ -3252,6 +3345,11 @@ func (b0 SideSuggestion_builder) Build() *SideSuggestion {
 	x.xxx_hidden_Warnings = &b.Warnings
 	x.xxx_hidden_Planned = b.Planned
 	x.xxx_hidden_PortionId = b.PortionId
+	x.xxx_hidden_RecipeId = b.RecipeId
+	x.xxx_hidden_RecipeName = b.RecipeName
+	x.xxx_hidden_Servings = b.Servings
+	x.xxx_hidden_CookId = b.CookId
+	x.xxx_hidden_CookServingsNeeded = b.CookServingsNeeded
 	return m0
 }
 
@@ -3395,9 +3493,10 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"energyKcal\x12.\n" +
 	"\x13planned_energy_kcal\x18\r \x01(\x01R\x11plannedEnergyKcal\x12$\n" +
 	"\x0edelete_cook_id\x18\x0e \x01(\tR\fdeleteCookIdJ\x04\b\x05\x10\x06J\x04\b\x06\x10\aJ\x04\b\a\x10\bJ\x04\b\b\x10\tJ\x04\b\t\x10\n" +
-	"R\trecipe_idR\afood_idR\bservingsR\x06amountR\x04unit\".\n" +
+	"R\trecipe_idR\afood_idR\bservingsR\x06amountR\x04unit\"^\n" +
 	"\x18SuggestFromPantryRequest\x12\x12\n" +
-	"\x04date\x18\x01 \x01(\tR\x04date\"S\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\x12.\n" +
+	"\x05meals\x18\x02 \x03(\x0e2\x18.people.v1.HouseholdMealR\x05meals\"S\n" +
 	"\x19SuggestFromPantryResponse\x126\n" +
 	"\arecipes\x18\x01 \x03(\v2\x1c.suggestions.v1.PantryRecipeR\arecipes\"\xbc\x01\n" +
 	"\fPantryRecipe\x12\x1b\n" +
@@ -3415,7 +3514,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x05sides\x18\x01 \x03(\v2\x1e.suggestions.v1.SideSuggestionR\x05sides\x12\x1b\n" +
 	"\trecipe_id\x18\x02 \x01(\tR\brecipeId\x12\x1f\n" +
 	"\vrecipe_name\x18\x03 \x01(\tR\n" +
-	"recipeName\"\xee\x02\n" +
+	"recipeName\"\x93\x04\n" +
 	"\x0eSideSuggestion\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x1b\n" +
 	"\tfood_name\x18\x02 \x01(\tR\bfoodName\x12\x14\n" +
@@ -3430,7 +3529,13 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\aplanned\x18\n" +
 	" \x01(\bR\aplanned\x12\x1d\n" +
 	"\n" +
-	"portion_id\x18\v \x01(\tR\tportionId*\xf2\x02\n" +
+	"portion_id\x18\v \x01(\tR\tportionId\x12\x1b\n" +
+	"\trecipe_id\x18\f \x01(\tR\brecipeId\x12\x1f\n" +
+	"\vrecipe_name\x18\r \x01(\tR\n" +
+	"recipeName\x12\x1a\n" +
+	"\bservings\x18\x0e \x01(\x01R\bservings\x12\x17\n" +
+	"\acook_id\x18\x0f \x01(\tR\x06cookId\x120\n" +
+	"\x14cook_servings_needed\x18\x10 \x01(\x01R\x12cookServingsNeeded*\xf2\x02\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
@@ -3538,24 +3643,25 @@ var file_suggestions_v1_suggestions_proto_depIdxs = []int32{
 	3,  // 27: suggestions.v1.PlanFix.kind:type_name -> suggestions.v1.PlanFixKind
 	18, // 28: suggestions.v1.PlanFix.resizes:type_name -> suggestions.v1.PortionResize
 	27, // 29: suggestions.v1.PlanFix.warnings:type_name -> plans.v1.Warning
-	22, // 30: suggestions.v1.SuggestFromPantryResponse.recipes:type_name -> suggestions.v1.PantryRecipe
-	25, // 31: suggestions.v1.SuggestSidesResponse.sides:type_name -> suggestions.v1.SideSuggestion
-	27, // 32: suggestions.v1.SideSuggestion.warnings:type_name -> plans.v1.Warning
-	5,  // 33: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
-	13, // 34: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
-	16, // 35: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
-	20, // 36: suggestions.v1.SuggestionService.SuggestFromPantry:input_type -> suggestions.v1.SuggestFromPantryRequest
-	23, // 37: suggestions.v1.SuggestionService.SuggestSides:input_type -> suggestions.v1.SuggestSidesRequest
-	6,  // 38: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
-	15, // 39: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
-	17, // 40: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
-	21, // 41: suggestions.v1.SuggestionService.SuggestFromPantry:output_type -> suggestions.v1.SuggestFromPantryResponse
-	24, // 42: suggestions.v1.SuggestionService.SuggestSides:output_type -> suggestions.v1.SuggestSidesResponse
-	38, // [38:43] is the sub-list for method output_type
-	33, // [33:38] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	26, // 30: suggestions.v1.SuggestFromPantryRequest.meals:type_name -> people.v1.HouseholdMeal
+	22, // 31: suggestions.v1.SuggestFromPantryResponse.recipes:type_name -> suggestions.v1.PantryRecipe
+	25, // 32: suggestions.v1.SuggestSidesResponse.sides:type_name -> suggestions.v1.SideSuggestion
+	27, // 33: suggestions.v1.SideSuggestion.warnings:type_name -> plans.v1.Warning
+	5,  // 34: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
+	13, // 35: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
+	16, // 36: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
+	20, // 37: suggestions.v1.SuggestionService.SuggestFromPantry:input_type -> suggestions.v1.SuggestFromPantryRequest
+	23, // 38: suggestions.v1.SuggestionService.SuggestSides:input_type -> suggestions.v1.SuggestSidesRequest
+	6,  // 39: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
+	15, // 40: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
+	17, // 41: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
+	21, // 42: suggestions.v1.SuggestionService.SuggestFromPantry:output_type -> suggestions.v1.SuggestFromPantryResponse
+	24, // 43: suggestions.v1.SuggestionService.SuggestSides:output_type -> suggestions.v1.SuggestSidesResponse
+	39, // [39:44] is the sub-list for method output_type
+	34, // [34:39] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_suggestions_v1_suggestions_proto_init() }

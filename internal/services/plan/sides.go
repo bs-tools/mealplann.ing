@@ -16,6 +16,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/plans"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
 	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // minSideGrams is the least of a side worth adding: less doesn't make a
@@ -24,10 +25,17 @@ const minSideGrams = 20
 
 // sideCandidate is a side of a meal, with what adding it does.
 type sideCandidate struct {
-	side     recipes.Side
-	grams    float64
-	added    nutrition.Amount
-	warnings []fixWarning
+	side  recipes.Side
+	grams float64
+	// servings are the servings of a recipe side to add.
+	servings float64
+	// cook is a cook of a recipe side on the meal's date, to add a share
+	// of rather than cooking it again, with the servings it must make for
+	// it too, 0 if it makes enough.
+	cook      *plans.Cook
+	cookNeeds float64
+	added     nutrition.Amount
+	warnings  []fixWarning
 	// newWarnings are the warnings it adds, which the meal alone doesn't
 	// have.
 	newWarnings []fixWarning
@@ -80,8 +88,11 @@ func (s *Service) SuggestSides(ctx context.Context, req *suggestionsv1.SuggestSi
 	}
 	for _, c := range candidates {
 		b := suggestionsv1.SideSuggestion_builder{
-			FoodId:            store.UUIDToString(c.side.FoodID),
+			FoodId:            optionalString(c.side.FoodID),
 			FoodName:          c.side.FoodName,
+			RecipeId:          optionalString(c.side.RecipeID),
+			RecipeName:        c.side.RecipeName,
+			Servings:          c.servings,
 			Grams:             c.grams,
 			EnergyKcal:        roundTenth(c.added.Nutrients[nutrition.EnergyKcal]),
 			ProteinGrams:      roundTenth(c.added.Nutrients[nutrition.ProteinGrams]),
@@ -92,6 +103,10 @@ func (s *Service) SuggestSides(ctx context.Context, req *suggestionsv1.SuggestSi
 		}
 		if c.planned != nil {
 			b.PortionId = store.UUIDToString(c.planned.ID)
+		}
+		if c.cook != nil {
+			b.CookId = store.UUIDToString(c.cook.ID)
+			b.CookServingsNeeded = c.cookNeeds
 		}
 		for _, w := range c.newWarnings {
 			b.Warnings = append(b.Warnings, fixWarningToProto(&w, p.ID, date))
@@ -123,12 +138,18 @@ func (d *planData) sideCandidates(p *people.Person, et *people.EatingTime, slot 
 	original := d.items[slot]
 	defer func() { d.items[slot] = original }()
 	var base []*item
+	// The sides planned, by their food's or recipe's ID.
 	planned := map[[16]byte]*plans.Portion{}
 	for _, it := range original {
-		if it.portion != nil && it.portion.FoodID.Valid &&
-			slices.ContainsFunc(r.ServedWith, func(side recipes.Side) bool { return side.FoodID == it.portion.FoodID }) {
-			planned[it.portion.FoodID.Bytes] = it.portion
-			continue
+		if it.portion != nil && it.portion != main {
+			id := it.portion.FoodID
+			if it.portion.CookID.Valid {
+				id = it.portion.CookRecipeID
+			}
+			if slices.ContainsFunc(r.ServedWith, func(side recipes.Side) bool { return sideID(side) == id }) {
+				planned[id.Bytes] = it.portion
+				continue
+			}
 		}
 		base = append(base, it)
 	}
@@ -146,29 +167,28 @@ func (d *planData) sideCandidates(p *people.Person, et *people.EatingTime, slot 
 
 	var candidates []*sideCandidate
 	for _, side := range r.ServedWith {
-		f, ok := d.foods[side.FoodID]
-		if !ok {
-			continue
+		c := &sideCandidate{side: side, planned: planned[sideID(side).Bytes]}
+		var portion *plans.Portion
+		if side.RecipeID.Valid {
+			portion = d.recipeSidePortion(c, slot, main, room)
+		} else {
+			portion = d.foodSidePortion(c, slot, main, room)
 		}
-		c := &sideCandidate{side: side, planned: planned[side.FoodID.Bytes]}
-		c.side.FoodName = f.Name
-		c.grams = roundAmount(side.Grams*main.Servings, nutrition.Grams)
-		if c.grams > room {
-			c.grams = math.Floor(room/5) * 5
+		if portion == nil {
+			continue
 		}
 		if c.grams < minSideGrams {
 			c.grams = 0
+			c.servings = 0
 			c.badness = math.Inf(1)
 			c.reason = fmt.Sprintf("no room: %s is at its %s g maximum portion", lowerFirst(et.Name), formatNumber(*p.Rules.MaxPortionGrams))
 			candidates = append(candidates, c)
 			continue
 		}
-		c.added = f.Nutrition().AmountOf(c.grams, nutrition.Grams)
-		side := &item{portion: &plans.Portion{
-			PersonID: p.ID, EatingTimeID: et.ID, Date: slot.Date,
-			FoodID: f.ID, Amount: c.grams, Unit: nutrition.Grams, Name: f.Name,
-		}, date: slot.Date}
-		d.items[slot] = append(slices.Clone(base), side)
+		portion.PersonID, portion.EatingTimeID, portion.Date = p.ID, et.ID, slot.Date
+		sideItem := &item{portion: portion, date: slot.Date}
+		c.added = d.eaten(sideItem).amount
+		d.items[slot] = append(slices.Clone(base), sideItem)
 		c.warnings, _ = d.dayWarnings(p, slot.Date)
 		c.badness = badness(c.warnings)
 		for _, w := range c.warnings {
@@ -195,6 +215,82 @@ func (d *planData) sideCandidates(p *people.Person, et *people.EatingTime, slot 
 		return cmp.Compare(amountOf(&b.added, nutrition.ProteinGrams), amountOf(&a.added, nutrition.ProteinGrams))
 	})
 	return candidates
+}
+
+// sideID returns the ID of a side's food or recipe.
+func sideID(side recipes.Side) pgtype.UUID {
+	if side.RecipeID.Valid {
+		return side.RecipeID
+	}
+	return side.FoodID
+}
+
+// foodSidePortion sizes a food side for a meal: its grams per serving
+// times the servings planned, as much as the room left allows. It returns
+// the portion to check the day with, or nil if the food is missing.
+func (d *planData) foodSidePortion(c *sideCandidate, slot plans.Slot, main *plans.Portion, room float64) *plans.Portion {
+	f, ok := d.foods[c.side.FoodID]
+	if !ok {
+		return nil
+	}
+	c.side.FoodName = f.Name
+	c.grams = roundAmount(c.side.Grams*main.Servings, nutrition.Grams)
+	if c.grams > room {
+		c.grams = math.Floor(room/5) * 5
+	}
+	return &plans.Portion{FoodID: f.ID, Amount: c.grams, Unit: nutrition.Grams, Name: f.Name}
+}
+
+// recipeSidePortion sizes a recipe side for a meal: its servings per
+// serving times the servings planned, in quarters, fewer if the room left
+// allows less, with a cook of it that day to share, if there's one. It
+// returns the portion to check the day with, or nil if the recipe is
+// missing.
+func (d *planData) recipeSidePortion(c *sideCandidate, slot plans.Slot, main *plans.Portion, room float64) *plans.Portion {
+	r, ok := d.recipes[c.side.RecipeID]
+	n := d.recipeNutrition[c.side.RecipeID]
+	if !ok || n == nil {
+		return nil
+	}
+	c.side.RecipeName = r.Name
+	c.servings = math.Round(c.side.Servings*main.Servings*4) / 4
+	perServing := n.Servings(1).Grams
+	if perServing > 0 && c.servings*perServing > room {
+		c.servings = math.Floor(room/perServing*4) / 4
+	}
+	c.grams = math.Round(c.servings * perServing)
+	if perServing == 0 && c.servings > 0 {
+		// A recipe of unknown weight still makes a side.
+		c.grams = minSideGrams
+	}
+	for _, cook := range d.plan.Cooks {
+		if cook.RecipeID == r.ID && cook.Date.Equal(slot.Date) {
+			c.cook = cook
+			break
+		}
+	}
+	if c.cook != nil && c.planned == nil {
+		assigned := 0.0
+		for _, p := range d.plan.Portions {
+			if p.CookID == c.cook.ID {
+				assigned += p.Servings
+			}
+		}
+		if need := assigned + c.servings; need > c.cook.Servings+1e-9 {
+			c.cookNeeds = need
+		}
+	}
+	return &plans.Portion{
+		CookID: pgtype.UUID{Valid: true}, CookRecipeID: r.ID, Servings: c.servings, Name: r.Name,
+	}
+}
+
+// optionalString returns the string of an ID, empty if it's invalid.
+func optionalString(id pgtype.UUID) string {
+	if !id.Valid {
+		return ""
+	}
+	return store.UUIDToString(id)
 }
 
 // proteinShort returns how far a person's day, as planned, is under
