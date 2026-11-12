@@ -301,7 +301,7 @@ const ShoppingPage: React.FC = () => {
           />
         )}
         {!current.complete && current.items.length > 0 && (
-          <div className="sticky bottom-[4.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
+          <div className="sticky bottom-[3.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
             <button
               type="button"
               className={`${primaryButton} w-full py-3.5 text-base`}

@@ -443,7 +443,7 @@ const RecipePage: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="sticky bottom-[4.75rem] z-10 flex gap-2 rounded-2xl bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
+      <div className="sticky bottom-[3.75rem] z-10 flex gap-2 rounded-2xl bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
         {!recipe.draft && (
           <Link
             to={`/plan?plan=${recipe.id}`}
