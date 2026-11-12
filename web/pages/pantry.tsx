@@ -1,7 +1,13 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
 import Loading from "@components/loading";
-import FreezerCard from "@components/pantry/freezer-card";
+import type { Leftover } from "@components/pantry/leftovers";
+import {
+  LeftoverRow,
+  LeftoverSheet,
+  matchesLeftover,
+  useLeftovers,
+} from "@components/pantry/leftovers";
 import PantryItemDialog from "@components/pantry/pantry-item-dialog";
 import { tintOf } from "@components/recipes/tint";
 import Card from "@components/ui/card";
@@ -174,7 +180,9 @@ const PantryPage: React.FC = () => {
    * The search the lots are filtered by, "" for none. A search looks in
    * every place, so a food is found wherever it's kept.
    */
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(params.get("q") ?? "");
+  const leftovers = useLeftovers();
+  const [openLeftover, setOpenLeftover] = useState<Leftover | null>(null);
   const searching = search.trim() !== "";
   const setAlwaysInStock = useMutation(updateFood, {
     onSuccess: async () => {
@@ -214,6 +222,22 @@ const PantryPage: React.FC = () => {
       ordered.splice(at < 0 ? ordered.length : at, 0, item);
     }
     const rest = here.filter((item) => !isSoon(item));
+    const leftoversIn = (where: Place): Leftover[] => {
+      if (where === "fridge") {
+        return leftovers.fridge;
+      }
+      return where === "freezer" ? leftovers.frozen : [];
+    };
+    const leftoverRow = (leftover: Leftover): React.ReactNode => (
+      <LeftoverRow
+        key={leftover.key}
+        leftover={leftover}
+        onOpen={() => {
+          setOpenLeftover(leftover);
+        }}
+      />
+    );
+    const leftoversHere = leftoversIn(place);
     const lotRow = (item: PantryItem): React.ReactNode => (
       <LotRow
         key={item.id}
@@ -229,8 +253,11 @@ const PantryPage: React.FC = () => {
       const found = allItems.filter((item) =>
         matchesSearch(item, search.trim())
       );
+      const foundLeftovers = [...leftovers.fridge, ...leftovers.frozen].filter(
+        (leftover) => matchesLeftover(leftover, search.trim())
+      );
       lots =
-        found.length === 0 ? (
+        found.length === 0 && foundLeftovers.length === 0 ? (
           <p className="text-sm text-muted">
             Nothing in the pantry matches &ldquo;{search.trim()}&rdquo;.
           </p>
@@ -239,17 +266,23 @@ const PantryPage: React.FC = () => {
             const there = found.filter(
               (item) => placeOf(item) === option.value
             );
+            const leftThere = leftoversIn(option.value).filter((leftover) =>
+              foundLeftovers.includes(leftover)
+            );
             return (
-              there.length > 0 && (
+              there.length + leftThere.length > 0 && (
                 <section key={option.value} className="flex flex-col">
                   <h2 className={sectionLabelClass}>{option.label}</h2>
-                  <ul>{there.map(lotRow)}</ul>
+                  <ul>
+                    {leftThere.map(leftoverRow)}
+                    {there.map(lotRow)}
+                  </ul>
                 </section>
               )
             );
           })
         );
-    } else if (allItems.length === 0) {
+    } else if (allItems.length === 0 && leftoversHere.length === 0) {
       lots = (
         <EmptyState title="The pantry is empty">
           Check items off a{" "}
@@ -259,11 +292,17 @@ const PantryPage: React.FC = () => {
           and they come here when you&apos;re done.
         </EmptyState>
       );
-    } else if (here.length === 0) {
+    } else if (here.length === 0 && leftoversHere.length === 0) {
       lots = <p className="text-sm text-muted">Nothing here.</p>;
     } else {
       lots = (
         <>
+          {leftoversHere.length > 0 && (
+            <section className="flex flex-col">
+              <h2 className={sectionLabelClass}>Leftovers</h2>
+              <ul>{leftoversHere.map(leftoverRow)}</ul>
+            </section>
+          )}
           {ordered.length > 0 && (
             <section className="flex flex-col">
               <h2 className={sectionLabelClass}>Use soon</h2>
@@ -283,8 +322,10 @@ const PantryPage: React.FC = () => {
           )}
           {rest.length > 0 && (
             <section className="flex flex-col">
-              {ordered.length > 0 && (
-                <h2 className={sectionLabelClass}>Everything else</h2>
+              {(ordered.length > 0 || leftoversHere.length > 0) && (
+                <h2 className={sectionLabelClass}>
+                  {ordered.length > 0 ? "Everything else" : "Food"}
+                </h2>
               )}
               <ul>
                 {rest.map((item) => (
@@ -306,7 +347,6 @@ const PantryPage: React.FC = () => {
     content = (
       <div className="flex flex-col gap-4">
         {lots}
-        {!searching && place === "freezer" && <FreezerCard />}
         {!searching && place === "cupboard" && (
           <Card title="Always in stock">
             <div className="flex flex-col gap-3 text-sm">
@@ -409,6 +449,14 @@ const PantryPage: React.FC = () => {
       )}
       <ErrorText error={setAlwaysInStock.error} />
       {content}
+      {openLeftover !== null && (
+        <LeftoverSheet
+          leftover={openLeftover}
+          onClose={() => {
+            setOpenLeftover(null);
+          }}
+        />
+      )}
       {editing !== undefined && (
         <PantryItemDialog
           item={editing ?? undefined}

@@ -1,4 +1,5 @@
 import Loading from "@components/loading";
+import { RecipeLeftovers } from "@components/pantry/in-the-kitchen";
 import RecipeBalance from "@components/recipes/balance";
 import FavoriteButton from "@components/recipes/favorite-button";
 import NutritionPanel from "@components/recipes/nutrition-panel";
@@ -263,6 +264,7 @@ const RecipePage: React.FC = () => {
           to choose a food for each ingredient, and save it to finish it.
         </p>
       )}
+      <RecipeLeftovers recipeId={recipe.id} />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="flex flex-col gap-4 lg:col-span-3">
           <Card title="Ingredients">
