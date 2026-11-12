@@ -161,7 +161,7 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
           />
         )}
         <TextField label="Note" value={note} onChange={setNote} />
-        {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+        {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
         <ErrorText error={add.error} />
         <div className="flex justify-end gap-2">
           <button type="button" className={secondaryButton} onClick={onClose}>

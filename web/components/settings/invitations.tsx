@@ -43,16 +43,16 @@ const invitationStatus = (invitation: Invitation): InvitationStatus => {
 const statusBadge = (status: InvitationStatus): React.ReactNode => {
   if (status === "used") {
     return (
-      <Badge className="bg-emerald-50 text-emerald-800 ring-emerald-200">
-        Used
-      </Badge>
+      <Badge className="bg-ready-tint text-ready ring-pine-200">Used</Badge>
     );
   }
   if (status === "expired") {
     return <Badge>Expired</Badge>;
   }
   return (
-    <Badge className="bg-amber-50 text-amber-800 ring-amber-200">Pending</Badge>
+    <Badge className="bg-warn-tint text-warn-dark ring-warn-line">
+      Pending
+    </Badge>
   );
 };
 
@@ -105,21 +105,21 @@ const Invitations: React.FC<InvitationsProps> = ({ admin }) => {
       />
     );
   } else if (data.invitations.length === 0) {
-    list = <p className="text-sm text-gray-500">No invitations.</p>;
+    list = <p className="text-sm text-muted">No invitations.</p>;
   } else {
     list = (
-      <ul className="divide-y divide-gray-100">
+      <ul className="divide-y divide-line">
         {data.invitations.map((invitation) => (
           <li
             key={invitation.id}
             className="flex items-center justify-between gap-2 py-2"
           >
             <div className="min-w-0">
-              <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-900">
+              <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-ink-soft">
                 <span className="truncate">{invitationTitle(invitation)}</span>
                 {statusBadge(invitationStatus(invitation))}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 Created {formatTimestamp(invitation.createTime)}
                 {invitation.useTime === undefined
                   ? ` · expires ${formatTimestamp(invitation.expireTime)}`
@@ -157,13 +157,13 @@ const Invitations: React.FC<InvitationsProps> = ({ admin }) => {
               });
             }}
           >
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted">
               mealplann.ing is invite only. Invite someone by sending them a
               link; they create their account with a passkey.
             </p>
             <div className="flex flex-wrap items-end gap-2">
               <label className="flex min-w-48 grow flex-col gap-1">
-                <span className="text-xs font-medium text-gray-600">
+                <span className="text-xs font-medium text-muted">
                   Note (who is it for?)
                 </span>
                 <input
@@ -185,7 +185,7 @@ const Invitations: React.FC<InvitationsProps> = ({ admin }) => {
             </div>
           </form>
         ) : (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             Links you created to add passkeys on other devices.
           </p>
         )}

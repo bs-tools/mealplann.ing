@@ -28,7 +28,7 @@ const QrCode: React.FC<QrCodeProps> = ({ value, size = 192 }) => {
       shapeRendering="crispEdges"
       role="img"
       aria-label="QR code of the link"
-      className="rounded-md bg-white"
+      className="rounded-xl bg-white"
     >
       <rect width={modules} height={modules} fill="#ffffff" />
       <path d={path} fill="#111827" />

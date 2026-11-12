@@ -57,7 +57,7 @@ const Modal: React.FC<ModalProps> = ({
     <Dialog open={open} onClose={dismiss} className="relative z-[2000]">
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-gray-900/50 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150"
+        className="fixed inset-0 bg-ink-soft/50 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150"
       />
       <div className="fixed inset-0 w-screen overflow-y-auto">
         <div className="flex min-h-full items-end justify-center sm:items-center sm:p-4">
@@ -174,7 +174,7 @@ export const DiscardDialog: React.FC<DiscardDialogProps> = ({
 }) => (
   <Modal open={open} onClose={onKeepEditing} title={title}>
     <div className="flex flex-col gap-4">
-      <div className="text-sm text-gray-700">{message}</div>
+      <div className="text-sm text-ink-soft">{message}</div>
       <div className="flex justify-end gap-2">
         <button
           type="button"

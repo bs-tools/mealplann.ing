@@ -17,7 +17,7 @@ interface SectionProps {
 
 const Section: React.FC<SectionProps> = ({ title, children }) => (
   <section className="flex flex-col gap-2">
-    <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+    <h2 className="text-lg font-semibold text-ink-soft">{title}</h2>
     {children}
   </section>
 );
@@ -29,11 +29,11 @@ const Section: React.FC<SectionProps> = ({ title, children }) => (
 const PrivacyPage: React.FC = () => (
   <div className="flex justify-center py-4">
     <article
-      className={`${cardClass} flex w-full max-w-3xl flex-col gap-6 p-6 text-sm leading-relaxed text-gray-700 sm:p-8`}
+      className={`${cardClass} flex w-full max-w-3xl flex-col gap-6 p-6 text-sm leading-relaxed text-ink-soft sm:p-8`}
     >
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-gray-900">Privacy policy</h1>
-        <p className="text-gray-500">Effective {EFFECTIVE_DATE}</p>
+        <h1 className="text-2xl font-bold text-ink-soft">Privacy policy</h1>
+        <p className="text-muted">Effective {EFFECTIVE_DATE}</p>
       </header>
 
       <p>
@@ -185,7 +185,7 @@ const PrivacyPage: React.FC = () => (
           Write to{" "}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="font-medium text-brand-600 hover:underline"
+            className="font-medium text-pine hover:underline"
           >
             {CONTACT_EMAIL}
           </a>{" "}
@@ -193,8 +193,8 @@ const PrivacyPage: React.FC = () => (
         </p>
       </Section>
 
-      <footer className="border-t border-stone-200 pt-4 text-gray-500">
-        <Link to="/" className="font-medium text-brand-600 hover:underline">
+      <footer className="border-t border-stone-200 pt-4 text-muted">
+        <Link to="/" className="font-medium text-pine hover:underline">
           Back to mealplann.ing
         </Link>
       </footer>

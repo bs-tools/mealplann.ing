@@ -41,7 +41,7 @@ const NewListForm: React.FC<NewListFormProps> = ({ onCreated, onCancel }) => {
         create.mutate({ endDate: end, startDate: start });
       }}
     >
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-muted">
         The list has what the plan needs for the meals of these days, less
         what&apos;s in the pantry, by store and aisle. Shop on the first day.
       </p>

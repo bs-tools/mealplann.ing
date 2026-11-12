@@ -78,7 +78,7 @@ const StoresDialog: React.FC<StoresDialogProps> = ({ stores, onClose }) => {
   return (
     <Modal open onClose={onClose} title="Stores">
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           The first store is your main store, where everything is bought unless
           a food has its own store, set on the food&apos;s page.
         </p>
@@ -112,7 +112,7 @@ const StoresDialog: React.FC<StoresDialogProps> = ({ stores, onClose }) => {
                     </button>
                   )}
                   {index === 0 && (
-                    <span className="text-xs whitespace-nowrap text-gray-500">
+                    <span className="text-xs whitespace-nowrap text-muted">
                       Main
                     </span>
                   )}

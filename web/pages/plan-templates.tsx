@@ -71,21 +71,21 @@ const PlanTemplatesPage: React.FC = () => {
               <div>
                 <Link
                   to={`/plan/templates/${template.id}`}
-                  className="font-semibold text-gray-900 hover:underline"
+                  className="font-semibold text-ink-soft hover:underline"
                 >
                   {template.name}
                 </Link>
                 {template.source !== "" && (
-                  <p className="text-sm text-gray-600">{template.source}</p>
+                  <p className="text-sm text-muted">{template.source}</p>
                 )}
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 {template.days} {template.days === 1 ? "day" : "days"} ·{" "}
                 {template.entryCount}{" "}
                 {template.entryCount === 1 ? "meal" : "meals"}
               </p>
               {recipes.length > 0 && (
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-ink-soft">
                   {formatList(
                     more > 0 ? [...recipes, `${more} more`] : recipes
                   )}

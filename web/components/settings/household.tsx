@@ -68,9 +68,9 @@ const HouseholdCard: React.FC = () => {
         )
       }
     >
-      <div className="flex flex-col gap-4 text-sm text-gray-700">
+      <div className="flex flex-col gap-4 text-sm text-ink-soft">
         {name === null ? (
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-lg font-semibold text-ink-soft">
             {household?.name}
           </p>
         ) : (
@@ -123,7 +123,7 @@ const HouseholdCard: React.FC = () => {
                 name={member.name}
                 className="size-8 shrink-0 text-sm"
               />
-              <span className="font-medium text-gray-900">{member.name}</span>
+              <span className="font-medium text-ink-soft">{member.name}</span>
             </li>
           ))}
         </ul>

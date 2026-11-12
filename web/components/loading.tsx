@@ -3,7 +3,7 @@ import React from "react";
 const Loading: React.FC = () => (
   <div className="flex grow items-center justify-center">
     <svg
-      className="text-gray-300 animate-spin"
+      className="text-muted/50 animate-spin"
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -23,7 +23,7 @@ const Loading: React.FC = () => (
         strokeWidth="5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-gray-900"
+        className="text-ink-soft"
       />
     </svg>
   </div>

@@ -392,7 +392,7 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
                 onChange={setCookServings}
               />
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               In servings. Servings cooked beyond those eaten are left over, to
               plan later.
             </p>
@@ -440,7 +440,7 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
           </div>
         )}
         <TextField label="Notes" value={notes} onChange={setNotes} />
-        {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+        {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
         <ErrorText error={create.error ?? update.error ?? take.error} />
         <div className="flex justify-end gap-2">
           <button type="button" className={secondaryButton} onClick={onClose}>

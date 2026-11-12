@@ -37,7 +37,7 @@ const UnitsCard: React.FC = () => {
   return (
     <Card title="Units">
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-sm text-gray-600">
+        <legend className="mb-2 text-sm text-muted">
           How you read amounts in recipes. Each food shows by weight, by volume
           or in pieces, as set on its page.
         </legend>
@@ -49,7 +49,7 @@ const UnitsCard: React.FC = () => {
             <input
               type="radio"
               name="unit-system"
-              className="mt-0.5 size-4 accent-brand-700"
+              className="mt-0.5 size-4 accent-pine"
               checked={system === option.value}
               disabled={update.isPending}
               onChange={() => {
@@ -57,10 +57,8 @@ const UnitsCard: React.FC = () => {
               }}
             />
             <span>
-              <span className="font-medium text-gray-900">{option.label}</span>
-              <span className="block text-xs text-gray-500">
-                {option.example}
-              </span>
+              <span className="font-medium text-ink-soft">{option.label}</span>
+              <span className="block text-xs text-muted">{option.example}</span>
             </span>
           </label>
         ))}

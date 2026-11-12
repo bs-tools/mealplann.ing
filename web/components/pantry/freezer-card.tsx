@@ -109,7 +109,7 @@ const PlanFrozenDialog: React.FC<PlanFrozenDialogProps> = ({
             });
           }}
         >
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             {formatAmount(leftover.remainingServings)} of the servings cooked on{" "}
             {formatShortDate(cook.date)} are in the freezer
             {leftover.keepsUntil === ""
@@ -171,7 +171,7 @@ const PlanFrozenDialog: React.FC<PlanFrozenDialogProps> = ({
               </select>
             </label>
           </div>
-          {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+          {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
           <ErrorText error={create.error} />
           <div className="flex justify-end gap-2">
             <button type="button" className={secondaryButton} onClick={onClose}>
@@ -220,9 +220,9 @@ const FreezerCard: React.FC = () => {
     );
   } else if (leftovers.data.leftovers.length === 0) {
     body = (
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-muted">
         Nothing frozen. Freeze a cook&apos;s leftovers from the{" "}
-        <Link to="/plan" className="font-medium text-brand-700 hover:underline">
+        <Link to="/plan" className="font-medium text-pine hover:underline">
           plan
         </Link>
         , to keep them longer than in the fridge.
@@ -230,7 +230,7 @@ const FreezerCard: React.FC = () => {
     );
   } else {
     body = (
-      <ul className="flex flex-col divide-y divide-gray-100">
+      <ul className="flex flex-col divide-y divide-line">
         {leftovers.data.leftovers.map((leftover) => {
           const { cook } = leftover;
           if (cook === undefined) {
@@ -244,16 +244,16 @@ const FreezerCard: React.FC = () => {
               <div className="flex items-baseline justify-between gap-2">
                 <Link
                   to={`/recipes/${cook.recipeId}`}
-                  className="text-sm font-medium text-gray-900 hover:underline"
+                  className="text-sm font-medium text-ink-soft hover:underline"
                 >
                   {cook.recipeName}
                 </Link>
-                <span className="shrink-0 text-sm text-gray-700 tabular-nums">
+                <span className="shrink-0 text-sm text-ink-soft tabular-nums">
                   {formatAmount(leftover.remainingServings)}{" "}
                   {leftover.remainingServings === 1 ? "serving" : "servings"}
                 </span>
               </div>
-              <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-gray-600">
+              <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
                 <span>Cooked {formatShortDate(cook.date)}</span>
                 {leftover.keepsUntil !== "" && (
                   <span>
@@ -261,7 +261,7 @@ const FreezerCard: React.FC = () => {
                   </span>
                 )}
                 {leftover.expired && (
-                  <Badge className="bg-amber-50 text-amber-900 ring-amber-300">
+                  <Badge className="bg-warn-tint text-warn-dark ring-warn-line">
                     Past its freezer days
                   </Badge>
                 )}

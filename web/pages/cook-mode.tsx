@@ -421,7 +421,7 @@ const CookModePage: React.FC = () => {
                   key={timer.id}
                   className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium ring-1 ${
                     finished
-                      ? "bg-amber-100 text-amber-900 ring-amber-300 motion-safe:animate-pulse"
+                      ? "bg-warn-tint text-warn-dark ring-warn-line motion-safe:animate-pulse"
                       : "bg-white/10 text-white ring-white/20"
                   }`}
                 >

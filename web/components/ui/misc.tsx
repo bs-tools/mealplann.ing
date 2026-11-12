@@ -10,27 +10,33 @@ interface EmptyStateProps {
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ title, children }) => (
-  <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-white/60 px-4 py-8 text-center">
-    <p className="font-medium text-gray-700">{title}</p>
+  <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-line px-4 py-8 text-center">
+    <p className="font-bold text-ink-soft">{title}</p>
     {children !== undefined && (
-      <div className="text-sm text-gray-500">{children}</div>
+      <div className="text-sm text-muted">{children}</div>
     )}
   </div>
 );
 
 interface PageHeaderProps {
+  // A line above the title, saying where the page is or what it's for.
+  kicker?: ReactNode;
   title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
+  kicker,
   title,
   subtitle,
   actions,
 }) => (
   <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
     <div className="min-w-0">
+      {kicker !== undefined && (
+        <p className="text-sm font-medium text-muted">{kicker}</p>
+      )}
       <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink-soft">
         {title}
       </h1>
@@ -51,14 +57,14 @@ interface StatProps {
 }
 
 export const Stat: React.FC<StatProps> = ({ label, value, sub }) => (
-  <div className="flex flex-col">
-    <span className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+  <div className="flex flex-col rounded-2xl border border-line bg-white px-3.5 py-3">
+    <span className="text-xs font-bold tracking-[0.08em] text-muted uppercase">
       {label}
     </span>
-    <span className="text-lg font-semibold text-gray-900 tabular-nums">
+    <span className="text-lg font-bold text-ink-soft tabular-nums">
       {value}
     </span>
-    {sub !== undefined && <span className="text-xs text-gray-500">{sub}</span>}
+    {sub !== undefined && <span className="text-xs text-muted">{sub}</span>}
   </div>
 );
 
@@ -70,7 +76,7 @@ interface BadgeProps {
 
 export const Badge: React.FC<BadgeProps> = ({
   children,
-  className = "bg-gray-100 text-gray-700 ring-gray-300",
+  className = "bg-ground-dark text-ink-soft ring-transparent",
   title,
 }) => (
   <span
@@ -94,7 +100,7 @@ interface ProgressBarProps {
 export const ProgressBar: React.FC<ProgressBarProps> = ({
   value,
   target,
-  className = "bg-brand-500",
+  className = "bg-pine",
 }) => {
   if (target <= 0) {
     return null;
@@ -102,9 +108,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   const fraction = Math.min(value / target, 1);
   const over = value > target * 1.1;
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-ground-dark">
       <div
-        className={`h-full rounded-full ${over ? "bg-amber-500" : className}`}
+        className={`h-full rounded-full ${over ? "bg-warn" : className}`}
         style={{ width: `${fraction * 100}%` }}
       />
     </div>
@@ -137,11 +143,11 @@ export const CopyField: React.FC<CopyFieldProps> = ({
   return (
     <div className="flex w-full min-w-0 items-start gap-2">
       {multiline ? (
-        <pre className="min-w-0 grow overflow-x-auto rounded-md bg-gray-900 p-3 font-mono text-xs text-gray-100">
+        <pre className="min-w-0 grow overflow-x-auto rounded-xl bg-ink-soft p-3 font-mono text-xs text-gray-100">
           {value}
         </pre>
       ) : (
-        <code className="min-w-0 grow overflow-x-auto rounded-md bg-gray-100 px-2 py-1.5 font-mono text-xs whitespace-nowrap text-gray-900 ring-1 ring-gray-200">
+        <code className="min-w-0 grow overflow-x-auto rounded-xl bg-ground-dark px-2 py-1.5 font-mono text-xs whitespace-nowrap text-ink-soft ring-1 ring-line">
           {value}
         </code>
       )}
@@ -152,7 +158,7 @@ export const CopyField: React.FC<CopyFieldProps> = ({
         aria-label="Copy to clipboard"
       >
         {copied ? (
-          <CheckIcon className="size-4 text-emerald-700" />
+          <CheckIcon className="size-4 text-ready" />
         ) : (
           <ClipboardIcon className="size-4" />
         )}

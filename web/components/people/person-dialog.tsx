@@ -404,7 +404,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
 
         <section className="flex flex-col gap-2">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="text-sm font-semibold text-gray-900">
+            <h3 className="text-sm font-semibold text-ink-soft">
               Eating pattern
             </h3>
             {eatingTimes.length === 0 && (
@@ -424,7 +424,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
               </div>
             )}
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted">
             The times of day the person eats, in order. A shared meal gives them
             a portion of what the household cooks for it.
           </p>
@@ -432,7 +432,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
             {eatingTimes.map((et, index) => (
               <li
                 key={et.key}
-                className="grid grid-cols-[1fr_auto] items-end gap-2 rounded-md border border-gray-200 p-2 sm:grid-cols-[2fr_1.3fr_1fr_1.3fr_auto]"
+                className="grid grid-cols-[1fr_auto] items-end gap-2 rounded-xl border border-line p-2 sm:grid-cols-[2fr_1.3fr_1fr_1.3fr_auto]"
               >
                 <TextField
                   label="Name"
@@ -539,7 +539,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
             ))}
           </ol>
           {person !== undefined && eatingTimes.length < initialTimes.length && (
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-warn">
               Removing an eating time deletes what&apos;s planned at it.
             </p>
           )}
@@ -566,7 +566,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
           </div>
         </section>
 
-        <div className="flex gap-2 rounded-md bg-sky-50 p-3 text-sm text-sky-900">
+        <div className="flex gap-2 rounded-xl bg-heat-tint p-3 text-sm text-heat">
           <InformationCircleIcon
             className="size-5 shrink-0"
             aria-hidden="true"
@@ -579,7 +579,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
         </div>
 
         <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-gray-900">
+          <h3 className="text-sm font-semibold text-ink-soft">
             Rules for every eating time
           </h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -603,7 +603,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
                 checked={warnFastCarbs}
                 onChange={setWarnFastCarbs}
               />
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted">
                 Foods marked as fast carbs, like white bread or juice.
               </span>
             </div>
@@ -611,9 +611,9 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
         </section>
 
         <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-gray-900">Daily targets</h3>
+          <h3 className="text-sm font-semibold text-ink-soft">Daily targets</h3>
           {targets.length === 0 && (
-            <p className="text-xs text-gray-500">No daily targets.</p>
+            <p className="text-xs text-muted">No daily targets.</p>
           )}
           <ul className="flex flex-col gap-2">
             {targets.map((target, index) => (
@@ -707,7 +707,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
           rows={2}
         />
 
-        {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+        {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
         <ErrorText error={create.error ?? update.error} />
         <div className="flex justify-end gap-2">
           <button type="button" className={secondaryButton} onClick={onClose}>

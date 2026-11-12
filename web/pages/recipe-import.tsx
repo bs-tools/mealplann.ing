@@ -191,7 +191,7 @@ const Review: React.FC<ReviewProps> = ({ preview }) => {
           </label>
         </div>
         {recipe !== undefined && recipe.sourceUrl !== "" && (
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-muted">
             From{" "}
             <a
               href={recipe.sourceUrl}
@@ -237,7 +237,7 @@ const Review: React.FC<ReviewProps> = ({ preview }) => {
             Every ingredient has a food: save the recipe.
           </p>
         ) : null}
-        <ul className="-my-2 divide-y divide-gray-100">
+        <ul className="-my-2 divide-y divide-line">
           {rows.map((row, index) => {
             if (autoMatched.has(index) && !reviewing) {
               return null;
@@ -252,15 +252,15 @@ const Review: React.FC<ReviewProps> = ({ preview }) => {
                 className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start"
               >
                 <div className="flex min-w-0 grow flex-col gap-1">
-                  <span className="flex items-start gap-1.5 text-sm font-medium text-gray-900">
+                  <span className="flex items-start gap-1.5 text-sm font-medium text-ink-soft">
                     {foodId === "" ? (
                       <ExclamationTriangleIcon
-                        className="mt-0.5 size-4 shrink-0 text-amber-600"
+                        className="mt-0.5 size-4 shrink-0 text-warn"
                         aria-label="Unmatched"
                       />
                     ) : (
                       <CheckCircleIcon
-                        className="mt-0.5 size-4 shrink-0 text-brand-600"
+                        className="mt-0.5 size-4 shrink-0 text-pine"
                         aria-label="Matched"
                       />
                     )}
@@ -336,7 +336,7 @@ const Review: React.FC<ReviewProps> = ({ preview }) => {
         </ul>
       </Card>
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           {matched === rows.length
             ? "Every ingredient has a food: it's saved as a recipe."
             : "It's saved as a draft, to match the rest in the editor."}
@@ -350,7 +350,7 @@ const Review: React.FC<ReviewProps> = ({ preview }) => {
           {create.isPending ? "Saving…" : "Save recipe"}
         </button>
       </div>
-      {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+      {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
       <ErrorText error={create.error} />
     </div>
   );

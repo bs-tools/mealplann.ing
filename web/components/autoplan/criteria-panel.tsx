@@ -102,15 +102,15 @@ const segment = (active: boolean): string =>
   `px-2 py-1 text-xs font-medium first:rounded-l-md last:rounded-r-md ring-1 ring-inset -ml-px first:ml-0 ${
     active
       ? "relative z-10 bg-ink text-white ring-ink"
-      : "bg-white text-gray-700 ring-gray-300 hover:bg-gray-50"
+      : "bg-white text-ink-soft ring-line hover:bg-ground"
   }`;
 
 // Chip styles a toggle among several, filled when on.
 const chip = (active: boolean): string =>
   `rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
     active
-      ? "bg-brand-600 text-white ring-brand-600"
-      : "bg-white text-gray-700 ring-gray-300 hover:bg-gray-50"
+      ? "bg-pine text-white ring-pine"
+      : "bg-white text-ink-soft ring-line hover:bg-ground"
   }`;
 
 interface CriteriaPanelProps {
@@ -282,7 +282,7 @@ const CriteriaPanel: React.FC<CriteriaPanelProps> = ({
             className="flex items-center justify-between gap-3"
             title={row.hint}
           >
-            <span className="text-sm text-gray-800">{row.label}</span>
+            <span className="text-sm text-ink-soft">{row.label}</span>
             <div className="flex" role="group" aria-label={row.label}>
               {EMPHASES.map(([emphasis, name]) => {
                 const current =
@@ -320,7 +320,7 @@ const CriteriaPanel: React.FC<CriteriaPanelProps> = ({
                   aria-pressed={active}
                   className={
                     active
-                      ? "rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 line-through ring-1 ring-amber-300 ring-inset"
+                      ? "rounded-full bg-warn-tint px-2.5 py-0.5 text-xs font-medium text-warn-dark line-through ring-1 ring-warn-line ring-inset"
                       : chip(false)
                   }
                   onClick={() => {

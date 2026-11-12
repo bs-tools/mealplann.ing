@@ -49,9 +49,9 @@ const Preview: React.FC<PreviewProps> = ({ result, people }) => {
       <ol className="flex flex-col gap-3">
         {dates.map((date) => (
           <li key={date} className="flex flex-col gap-1">
-            <h4 className="text-sm font-semibold text-gray-900">
+            <h4 className="text-sm font-semibold text-ink-soft">
               {formatWeekday(date)}{" "}
-              <span className="font-normal text-gray-500">
+              <span className="font-normal text-muted">
                 {formatShortDate(date)}
               </span>
             </h4>
@@ -65,16 +65,16 @@ const Preview: React.FC<PreviewProps> = ({ result, people }) => {
                       portion.what.value.cookId === cook.id
                   );
                   return (
-                    <li key={cook.id} className="text-sm text-gray-800">
+                    <li key={cook.id} className="text-sm text-ink-soft">
                       <span className="font-medium">{cook.recipeName}</span>
-                      <span className="text-gray-500">
+                      <span className="text-muted">
                         {" "}
                         · cook{" "}
                         {cook.servings.toLocaleString(undefined, {
                           maximumFractionDigits: 2,
                         })}
                       </span>
-                      <span className="block text-xs text-gray-600">
+                      <span className="block text-xs text-muted">
                         {portions
                           .map((portion) => {
                             const later =
@@ -94,14 +94,14 @@ const Preview: React.FC<PreviewProps> = ({ result, people }) => {
       </ol>
       {result.warnings.length > 0 && (
         <div className="flex flex-col gap-1">
-          <h4 className="text-sm font-semibold text-gray-900">Warnings</h4>
+          <h4 className="text-sm font-semibold text-ink-soft">Warnings</h4>
           <WarningList warnings={result.warnings} />
         </div>
       )}
       {result.skipped.length > 0 && (
         <div className="flex flex-col gap-1">
-          <h4 className="text-sm font-semibold text-gray-900">Left out</h4>
-          <ul className="flex flex-col gap-0.5 text-xs text-gray-600">
+          <h4 className="text-sm font-semibold text-ink-soft">Left out</h4>
+          <ul className="flex flex-col gap-0.5 text-xs text-muted">
             {result.skipped.map((line) => (
               <li key={line}>{line}</li>
             ))}
@@ -109,22 +109,18 @@ const Preview: React.FC<PreviewProps> = ({ result, people }) => {
         </div>
       )}
       <div className="flex flex-col gap-1">
-        <h4 className="text-sm font-semibold text-gray-900">To buy</h4>
+        <h4 className="text-sm font-semibold text-ink-soft">To buy</h4>
         {result.shopping.length === 0 ? (
-          <p className="text-xs text-gray-600">
-            Nothing: the pantry has it all.
-          </p>
+          <p className="text-xs text-muted">Nothing: the pantry has it all.</p>
         ) : (
-          <ul className="grid grid-cols-1 gap-x-4 gap-y-0.5 text-xs text-gray-700 sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-x-4 gap-y-0.5 text-xs text-ink-soft sm:grid-cols-2">
             {result.shopping.map((item) => (
               <li key={`${item.foodId}-${item.topUp}`}>
                 {item.foodName}{" "}
-                <span className="text-gray-500 tabular-nums">
+                <span className="text-muted tabular-nums">
                   {item.amountText}
                 </span>
-                {item.topUp && (
-                  <span className="text-amber-700"> · later trip</span>
-                )}
+                {item.topUp && <span className="text-warn"> · later trip</span>}
               </li>
             ))}
           </ul>
@@ -225,7 +221,7 @@ const ApplyTemplateDialog: React.FC<ApplyTemplateDialogProps> = ({
               }}
             />
           </label>
-          <span className="pb-2 text-sm text-gray-600">
+          <span className="pb-2 text-sm text-muted">
             to {formatShortDate(addDays(start, template.days - 1))} ·{" "}
             {template.days} {template.days === 1 ? "day" : "days"}
           </span>
@@ -252,7 +248,7 @@ const ApplyTemplateDialog: React.FC<ApplyTemplateDialogProps> = ({
           </div>
         </fieldset>
         <div
-          className={`max-h-[50vh] overflow-y-auto rounded-md border border-gray-200 p-3 transition-opacity ${preview.isFetching ? "opacity-60" : ""}`}
+          className={`max-h-[50vh] overflow-y-auto rounded-xl border border-line p-3 transition-opacity ${preview.isFetching ? "opacity-60" : ""}`}
         >
           {body}
         </div>

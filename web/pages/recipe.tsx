@@ -8,6 +8,7 @@ import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import { Badge } from "@components/ui/misc";
 import Modal from "@components/ui/modal";
+import { menuItemClass } from "@components/ui/more-menu";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
   dangerButton,
@@ -84,9 +85,6 @@ const fridgeNote = (recipe: Recipe): string => {
  * RecipePage shows a recipe: its ingredients, steps and nutrition per
  * serving, with the ingredients whose foods lack data flagged.
  */
-const menuItemClass =
-  "block w-full px-4 py-2.5 text-left text-sm text-ink-soft data-[focus]:bg-ground-dark/60 data-[focus]:outline-hidden";
-
 const RecipePage: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const system = useUnitSystem();
@@ -180,7 +178,7 @@ const RecipePage: React.FC = () => {
             <MenuItem>
               <button
                 type="button"
-                className={`${menuItemClass} text-red-700`}
+                className={`${menuItemClass} text-error`}
                 onClick={() => {
                   setDeleting(true);
                 }}
@@ -269,7 +267,7 @@ const RecipePage: React.FC = () => {
         <div className="flex flex-col gap-4 lg:col-span-3">
           <Card title="Ingredients">
             {recipe.ingredients.length === 0 ? (
-              <p className="text-sm text-gray-500">No ingredients yet.</p>
+              <p className="text-sm text-muted">No ingredients yet.</p>
             ) : (
               <ul className="flex flex-col gap-2 text-sm">
                 {recipe.ingredients.map((ingredient, index) => (
@@ -281,13 +279,13 @@ const RecipePage: React.FC = () => {
                   >
                     {(ingredient.foodId !== "" ||
                       ingredient.recipeId !== "") && (
-                      <span className="font-medium text-gray-900 tabular-nums">
+                      <span className="font-medium text-ink-soft tabular-nums">
                         {ingredientAmount(ingredient, 1, system)}
                       </span>
                     )}
                     {ingredient.recipeId === "" && ingredient.foodId === "" && (
                       <>
-                        <span className="text-gray-900">
+                        <span className="text-ink-soft">
                           {ingredient.originalText}
                         </span>
                         <Badge>No food yet</Badge>
@@ -296,23 +294,23 @@ const RecipePage: React.FC = () => {
                     {ingredient.recipeId === "" && ingredient.foodId !== "" && (
                       <Link
                         to={`/foods/${ingredient.foodId}`}
-                        className="text-gray-900 hover:underline"
+                        className="text-ink-soft hover:underline"
                       >
                         {ingredient.foodName}
                       </Link>
                     )}
                     {ingredient.recipeId !== "" && (
                       <>
-                        <span className="text-gray-500">of</span>
+                        <span className="text-muted">of</span>
                         <Link
                           to={`/recipes/${ingredient.recipeId}`}
-                          className="font-medium text-brand-700 hover:underline"
+                          className="font-medium text-pine hover:underline"
                         >
                           {ingredient.recipeName}
                         </Link>
                         <Badge>Recipe</Badge>
                         {ingredient.unit !== AmountUnit.UNSPECIFIED && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted">
                             {ingredient.componentServings > 0
                               ? formatServings(ingredient.componentServings)
                               : "servings unknown: set what it makes"}
@@ -321,18 +319,18 @@ const RecipePage: React.FC = () => {
                       </>
                     )}
                     {ingredient.note !== "" && (
-                      <span className="text-gray-500">{ingredient.note}</span>
+                      <span className="text-muted">{ingredient.note}</span>
                     )}
                     {ingredient.optional && <Badge>Optional</Badge>}
                     {issueIndexes.has(index) && (
                       <ExclamationTriangleIcon
-                        className="size-4 self-center text-amber-600"
+                        className="size-4 self-center text-warn"
                         aria-label="Its food lacks data"
                       />
                     )}
                     {ingredient.originalText !== "" &&
                       ingredient.foodId !== "" && (
-                        <span className="w-full text-xs text-gray-400">
+                        <span className="w-full text-xs text-muted/70">
                           “{ingredient.originalText}”
                         </span>
                       )}
@@ -343,7 +341,7 @@ const RecipePage: React.FC = () => {
           </Card>
           <Card title="Steps">
             {recipe.instructions.length === 0 ? (
-              <p className="text-sm text-gray-500">No steps yet.</p>
+              <p className="text-sm text-muted">No steps yet.</p>
             ) : (
               <div className="flex flex-col gap-4">
                 {groupSteps(recipe.instructions).map((group) => (
@@ -352,11 +350,11 @@ const RecipePage: React.FC = () => {
                     className="flex flex-col gap-2"
                   >
                     {group.section !== "" && (
-                      <h3 className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                      <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">
                         {group.section}
                       </h3>
                     )}
-                    <ol className="flex flex-col gap-3 text-sm text-gray-800">
+                    <ol className="flex flex-col gap-3 text-sm text-ink-soft">
                       {group.steps.map(({ step, index }) => {
                         const used = step.ingredientIndexes
                           .map((position) => recipe.ingredients[position])
@@ -367,7 +365,7 @@ const RecipePage: React.FC = () => {
                         );
                         return (
                           <li key={index} className="flex gap-2">
-                            <span className="w-5 shrink-0 text-right font-semibold text-gray-500 tabular-nums">
+                            <span className="w-5 shrink-0 text-right font-semibold text-muted tabular-nums">
                               {index + 1}.
                             </span>
                             <div className="flex flex-col gap-0.5">
@@ -377,7 +375,7 @@ const RecipePage: React.FC = () => {
                               {(used.length > 0 ||
                                 duration !== "" ||
                                 stepStart(step, index) !== "") && (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-muted">
                                   {[
                                     stepStart(step, index),
                                     duration === ""
@@ -401,7 +399,7 @@ const RecipePage: React.FC = () => {
           </Card>
           {recipe.notes !== "" && (
             <Card title="Notes">
-              <p className="text-sm whitespace-pre-line text-gray-800">
+              <p className="text-sm whitespace-pre-line text-ink-soft">
                 {recipe.notes}
               </p>
             </Card>
@@ -429,7 +427,7 @@ const RecipePage: React.FC = () => {
                 <Link
                   key={tag}
                   to={`/recipes?tag=${encodeURIComponent(tag)}`}
-                  className="rounded-full bg-ground-dark px-3 py-1 text-sm text-ink-soft hover:bg-gray-200"
+                  className="rounded-full bg-ground-dark px-3 py-1 text-sm text-ink-soft hover:bg-ground-dark"
                 >
                   {tag}
                 </Link>

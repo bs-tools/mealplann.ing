@@ -1,20 +1,17 @@
 import StapleDialog from "@components/people/staple-dialog";
-import Card from "@components/ui/card";
-import ConfirmButton from "@components/ui/confirm-button";
-import { Badge } from "@components/ui/misc";
+import ConfirmButton, { ConfirmDialog } from "@components/ui/confirm-button";
+import MoreMenu from "@components/ui/more-menu";
 import { ErrorText } from "@components/ui/query-error";
 import {
   ghostButton,
-  ghostDangerButton,
   iconButton,
-  secondaryButton,
+  sectionLabelClass,
 } from "@components/ui/styles";
 import { useMutation } from "@connectrpc/connect-query";
 import {
   PencilIcon,
   PlusIcon,
   TrashIcon,
-  UserCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
@@ -112,8 +109,9 @@ interface PersonCardProps {
 }
 
 /**
- * PersonCard shows a person: their eating pattern, rules, targets and
- * staples, with the staples managed here.
+ * PersonCard shows a person: who they are, when they eat, their rules and
+ * targets as chips, and their staples, managed here, with their profile
+ * and their eating times and rules a tap away.
  */
 const PersonCard: React.FC<PersonCardProps> = ({
   person,
@@ -125,6 +123,7 @@ const PersonCard: React.FC<PersonCardProps> = ({
   const system = useUnitSystem();
   // The staple being edited, null for a new one, undefined if none.
   const [editing, setEditing] = useState<Staple | null | undefined>(undefined);
+  const [deleting, setDeleting] = useState(false);
   const invalidate = async (): Promise<void> => {
     await invalidateServices(queryClient, [PersonService, PlanService]);
   };
@@ -135,121 +134,129 @@ const PersonCard: React.FC<PersonCardProps> = ({
   const rules = ruleFacts(person);
   const targets = targetFacts(person);
   const now = today();
+  const initials = person.name
+    .split(/\s+/u)
+    .filter((part) => part !== "")
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+  const chip = "rounded-full px-3 py-1 text-sm";
   return (
-    <Card
-      title={
-        <span className="flex items-center gap-2">
-          {person.name}
-          {member !== undefined && <Badge>{member.name}</Badge>}
+    <section className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-4">
+      <div className="flex items-center gap-3">
+        <span
+          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-pine-50 text-sm font-bold text-pine"
+          aria-hidden="true"
+        >
+          {initials}
         </span>
-      }
-      actions={
-        <>
-          <ConfirmButton
-            className={ghostDangerButton}
-            title={`Delete ${person.name}?`}
-            message="Everything planned for them, their portions and staples, is deleted too. The cooks stay."
-            disabled={remove.isPending}
-            onConfirm={() => {
-              remove.mutate({ id: person.id });
-            }}
-          >
-            <TrashIcon className="size-4" aria-hidden="true" />
-            Delete
-          </ConfirmButton>
-          <Link to={`/people/${person.id}/profile`} className={secondaryButton}>
-            <UserCircleIcon className="size-4" aria-hidden="true" />
-            Profile
-          </Link>
-          <button type="button" className={secondaryButton} onClick={onEdit}>
-            <PencilIcon className="size-4" aria-hidden="true" />
-            Edit
-          </button>
-        </>
-      }
-    >
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <section>
-          <h3 className="mb-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-            Eating pattern
-          </h3>
-          {person.eatingTimes.length === 0 ? (
-            <p className="text-sm text-gray-500">
-              No eating times yet: add them to plan for {person.name}.
-            </p>
-          ) : (
-            <ol className="flex flex-col gap-1 text-sm">
-              {person.eatingTimes.map((et) => (
-                <li key={et.id} className="flex items-baseline gap-2">
-                  <span className="w-11 shrink-0 text-gray-500 tabular-nums">
-                    {et.time}
-                  </span>
-                  <span
-                    className={
-                      et.kind === EatingTimeKind.MAIN
-                        ? "font-medium text-gray-900"
-                        : "text-gray-800"
-                    }
-                  >
-                    {et.name}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {et.kind === EatingTimeKind.MAIN ? "main" : "small"}
-                    {householdMealLabel(et.meal) !== "" &&
-                      ` · shared ${householdMealLabel(et.meal).toLowerCase()}`}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-        <section className="flex flex-col gap-3">
-          <div>
-            <h3 className="mb-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-              Rules for every eating time
-            </h3>
-            {rules.length === 0 ? (
-              <p className="text-sm text-gray-500">None.</p>
-            ) : (
-              <ul className="flex flex-wrap gap-1.5">
-                {rules.map((rule) => (
-                  <li key={rule}>
-                    <Badge className="bg-sky-50 text-sky-800 ring-sky-200">
-                      {rule}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div>
-            <h3 className="mb-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-              Daily targets
-            </h3>
-            {targets.length === 0 ? (
-              <p className="text-sm text-gray-500">None.</p>
-            ) : (
-              <ul className="flex flex-wrap gap-1.5">
-                {targets.map((target) => (
-                  <li key={target}>
-                    <Badge>{target}</Badge>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          {person.notes !== "" && (
-            <p className="text-sm whitespace-pre-line text-gray-600">
-              {person.notes}
-            </p>
-          )}
-        </section>
+        <div className="flex min-w-0 grow flex-col">
+          <h2 className="truncate text-lg font-bold text-ink-soft">
+            {person.name}
+          </h2>
+          <p className="truncate text-sm text-muted">
+            {member === undefined
+              ? "Not signed in themselves"
+              : `Signs in as ${member.name}`}
+          </p>
+        </div>
+        <MoreMenu
+          label={`More for ${person.name}`}
+          className="-mr-2 flex size-10 items-center justify-center rounded-full text-muted hover:bg-ground-dark/60"
+          items={[
+            { label: "Profile and goals", to: `/people/${person.id}/profile` },
+            { label: "Eating times and rules", onClick: onEdit },
+            {
+              danger: true,
+              disabled: remove.isPending,
+              label: "Delete",
+              onClick: () => {
+                setDeleting(true);
+              },
+            },
+          ]}
+        />
+        <ConfirmDialog
+          open={deleting}
+          title={`Delete ${person.name}?`}
+          message="Everything planned for them, their portions and staples, is deleted too. The cooks stay."
+          onClose={() => {
+            setDeleting(false);
+          }}
+          onConfirm={() => {
+            remove.mutate({ id: person.id });
+          }}
+        />
       </div>
-      <section className="mt-5 border-t border-gray-100 pt-4">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-            Staples
-          </h3>
+      <div className="-mx-2 -my-1 flex flex-wrap">
+        <Link
+          to={`/people/${person.id}/profile`}
+          className="rounded-lg px-2 py-1 text-sm font-bold text-pine hover:bg-pine-50"
+        >
+          Profile and goals ›
+        </Link>
+        <button
+          type="button"
+          className="rounded-lg px-2 py-1 text-sm font-bold text-pine hover:bg-pine-50"
+          onClick={onEdit}
+        >
+          Eating times and rules ›
+        </button>
+      </div>
+      <div className="flex flex-col gap-2">
+        <h3 className={sectionLabelClass}>Eats</h3>
+        {person.eatingTimes.length === 0 ? (
+          <p className="text-sm text-muted">
+            No eating times yet: add them to plan for {person.name}.
+          </p>
+        ) : (
+          <ul className="flex flex-wrap gap-1.5">
+            {person.eatingTimes.map((et) => (
+              <li
+                key={et.id}
+                className={`${chip} ${et.kind === EatingTimeKind.MAIN ? "bg-ground-dark text-ink-soft" : "bg-ground-dark/50 text-muted"}`}
+                title={
+                  householdMealLabel(et.meal) === ""
+                    ? undefined
+                    : `Shared ${householdMealLabel(et.meal).toLowerCase()}`
+                }
+              >
+                {et.time !== "" && (
+                  <span className="text-muted tabular-nums">{et.time} </span>
+                )}
+                {et.name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="flex flex-col gap-2">
+        <h3 className={sectionLabelClass}>Rules and targets</h3>
+        {rules.length === 0 && targets.length === 0 ? (
+          <p className="text-sm text-muted">None yet.</p>
+        ) : (
+          <ul className="flex flex-wrap gap-1.5">
+            {targets.map((target) => (
+              <li key={target} className={`${chip} bg-pine-50 text-pine-dark`}>
+                {target}
+              </li>
+            ))}
+            {rules.map((rule) => (
+              <li key={rule} className={`${chip} bg-heat-tint text-heat`}>
+                {rule}
+              </li>
+            ))}
+          </ul>
+        )}
+        {person.notes !== "" && (
+          <p className="text-sm whitespace-pre-line text-muted">
+            {person.notes}
+          </p>
+        )}
+      </div>
+      <section className="flex flex-col">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className={sectionLabelClass}>Staples</h3>
           <button
             type="button"
             className={ghostButton}
@@ -263,12 +270,12 @@ const PersonCard: React.FC<PersonCardProps> = ({
           </button>
         </div>
         {staples.length === 0 ? (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted">
             Nothing eaten regularly yet, like a usual breakfast or a daily glass
             of soy milk.
           </p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-line">
             {staples.map((staple) => {
               const et = person.eatingTimes.find(
                 (other) => other.id === staple.eatingTimeId
@@ -287,13 +294,13 @@ const PersonCard: React.FC<PersonCardProps> = ({
                   className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm"
                 >
                   <div className="min-w-0 grow">
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-ink-soft">
                       {staple.name}{" "}
-                      <span className="font-normal text-gray-600 tabular-nums">
+                      <span className="font-normal text-muted tabular-nums">
                         {stapleAmount(staple, system)}
                       </span>
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted">
                       {[
                         et?.name ?? "",
                         staple.replacesMeal && et !== undefined
@@ -306,17 +313,17 @@ const PersonCard: React.FC<PersonCardProps> = ({
                         .join(" · ")}
                     </p>
                     {skipped.length > 0 && (
-                      <p className="mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-500">
+                      <p className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted">
                         Skipped on
                         {skipped.map((date) => (
                           <span
                             key={date}
-                            className="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1.5 py-0.5"
+                            className="inline-flex items-center gap-0.5 rounded bg-ground-dark px-1.5 py-0.5"
                           >
                             {formatShortDate(date)}
                             <button
                               type="button"
-                              className="text-gray-500 hover:text-gray-900"
+                              className="text-muted hover:text-ink-soft"
                               aria-label={`Don't skip on ${formatShortDate(date)}`}
                               title="Don't skip"
                               disabled={unskip.isPending}
@@ -374,7 +381,7 @@ const PersonCard: React.FC<PersonCardProps> = ({
           }}
         />
       )}
-    </Card>
+    </section>
   );
 };
 

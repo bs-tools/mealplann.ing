@@ -95,7 +95,7 @@ const ServedWith: React.FC<ServedWithProps> = ({ sides, onChange }) => (
         }}
       />
     )}
-    <span className="text-xs text-gray-500">
+    <span className="text-xs text-muted">
       Like rice or quinoa: a meal adds the one that fits the day best.
     </span>
   </div>

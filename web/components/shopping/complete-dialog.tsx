@@ -30,23 +30,23 @@ const CompleteDialog: React.FC<CompleteDialogProps> = ({
   const unchecked = list.items.filter((item) => !item.checked).length;
   return (
     <Modal open onClose={onClose} title="Done shopping?">
-      <div className="flex flex-col gap-4 text-sm text-gray-700">
+      <div className="flex flex-col gap-4 text-sm text-ink-soft">
         {stocked.length === 0 ? (
           <p>Nothing checked goes into the pantry.</p>
         ) : (
           <div className="flex flex-col gap-2">
             <p>These go into the pantry, expiring after their shelf life:</p>
-            <ul className="max-h-64 overflow-y-auto rounded-md bg-gray-50 px-3 py-2">
+            <ul className="max-h-64 overflow-y-auto rounded-xl bg-ground px-3 py-2">
               {stocked.map((item) => (
                 <li key={item.id} className="flex justify-between gap-3 py-0.5">
                   <span>{item.name}</span>
-                  <span className="text-gray-600 tabular-nums">
+                  <span className="text-muted tabular-nums">
                     {item.amountText}
                   </span>
                 </li>
               ))}
             </ul>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               Foods always in stock, like salt, aren&apos;t tracked.
             </p>
           </div>

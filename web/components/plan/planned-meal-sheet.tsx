@@ -129,7 +129,7 @@ const CookBar: React.FC<CookBarProps> = ({ week, cookId, portions }) => {
             style={{ flexBasis: 0, flexGrow: use.servings }}
           >
             <span
-              className={`h-6 rounded-lg ${use.own ? "bg-cook" : USE_CLASS[use.kind]}`}
+              className={`h-6 rounded-xl ${use.own ? "bg-cook" : USE_CLASS[use.kind]}`}
             />
             <span
               className={`truncate text-xs ${use.own ? "font-bold text-ink-soft" : "text-muted"}`}

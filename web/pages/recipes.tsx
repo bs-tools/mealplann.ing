@@ -217,7 +217,7 @@ const RecipesPage: React.FC = () => {
           <span className="sr-only">Search recipes and tags</span>
           <input
             type="search"
-            className="min-w-24 grow border-0 bg-transparent py-1 text-base text-ink-soft outline-none placeholder:text-gray-500"
+            className="min-w-24 grow border-0 bg-transparent py-1 text-base text-ink-soft outline-none placeholder:text-muted"
             value={query}
             placeholder={tags.length === 0 ? "Search recipes and tags" : ""}
             onChange={(event) => {

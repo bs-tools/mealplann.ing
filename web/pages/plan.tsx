@@ -11,6 +11,7 @@ import PortionDialog from "@components/plan/portion-dialog";
 import WeekStrip, { fillOf, openSlotsOf } from "@components/plan/week-strip";
 import WarningSheet from "@components/today/warning-sheet";
 import { EmptyState } from "@components/ui/misc";
+import { menuItemClass } from "@components/ui/more-menu";
 import QueryError from "@components/ui/query-error";
 import Segmented from "@components/ui/segmented";
 import { iconButton, linkClass } from "@components/ui/styles";
@@ -76,9 +77,6 @@ interface DayWarningOpen {
   date: string;
   dayWarning: DayWarning;
 }
-
-const menuItemClass =
-  "block w-full px-4 py-2.5 text-left text-sm text-ink-soft data-[focus]:bg-ground-dark/60 data-[focus]:outline-hidden";
 
 /**
  * PlanPage shows the plan by week or month. A week is its strip of days,
@@ -169,7 +167,7 @@ const PlanPage: React.FC = () => {
   const banner = firstOpen !== undefined && lastOpen !== undefined && (
     <div className="flex flex-col gap-2.5 rounded-2xl bg-ink-soft p-5 text-white print:hidden">
       <p className="text-lg font-bold">{openTitle}</p>
-      <p className="text-sm text-gray-300">
+      <p className="text-sm text-muted/50">
         {openSlots} {openSlots === 1 ? "meal" : "meals"}
         {shop !== undefined &&
         shop.startDate > firstOpen.date &&

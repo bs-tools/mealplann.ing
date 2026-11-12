@@ -397,7 +397,7 @@ const TodayChangePage: React.FC = () => {
               <span className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="size-10 rounded-full border border-gray-300 bg-white text-xl disabled:opacity-40"
+                  className="size-10 rounded-full border border-line bg-white text-xl disabled:opacity-40"
                   aria-label="Less"
                   disabled={count <= step}
                   onClick={() => {
@@ -411,7 +411,7 @@ const TodayChangePage: React.FC = () => {
                 </span>
                 <button
                   type="button"
-                  className="size-10 rounded-full border border-gray-300 bg-white text-xl"
+                  className="size-10 rounded-full border border-line bg-white text-xl"
                   aria-label="More"
                   onClick={() => {
                     setCount(count + step);

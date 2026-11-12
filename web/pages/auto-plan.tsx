@@ -199,9 +199,9 @@ const Thinking: React.FC<{ slots: number }> = ({ slots }) => {
   }, []);
   return (
     <div className="flex flex-col gap-4" role="status">
-      <p className="flex items-center gap-2 text-sm text-gray-700">
+      <p className="flex items-center gap-2 text-sm text-ink-soft">
         <SparklesIcon
-          className="size-5 text-brand-600 motion-safe:animate-pulse"
+          className="size-5 text-pine motion-safe:animate-pulse"
           aria-hidden="true"
         />
         {THINKING[step]}
@@ -210,7 +210,7 @@ const Thinking: React.FC<{ slots: number }> = ({ slots }) => {
         {Array.from({ length: Math.min(slots, 8) }, (_unused, index) => (
           <li
             key={index}
-            className="h-28 rounded-md bg-gray-100 motion-safe:animate-pulse"
+            className="h-28 rounded-xl bg-ground-dark motion-safe:animate-pulse"
             style={{ animationDelay: `${index * 120}ms` }}
           />
         ))}
@@ -465,8 +465,8 @@ const AutoPlanPage: React.FC = () => {
     content = (
       <div className="relative flex flex-col gap-3">
         {plan.isError && <ErrorText error={plan.error} />}
-        <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-gray-600">
-          <SparklesIcon className="size-4 text-brand-600" aria-hidden="true" />
+        <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted">
+          <SparklesIcon className="size-4 text-pine" aria-hidden="true" />
           <span>
             Tried {plan.data.plansTried.toLocaleString()}{" "}
             {plan.data.plansTried === 1 ? "plan" : "plans"} with{" "}
@@ -483,9 +483,9 @@ const AutoPlanPage: React.FC = () => {
           )}
         </p>
         {repeats.length > 0 && (
-          <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          <div className="flex items-start gap-2 rounded-xl border border-warn-line bg-warn-tint px-3 py-2 text-sm text-warn-dark">
             <ExclamationTriangleIcon
-              className="mt-0.5 size-4 shrink-0 text-amber-600"
+              className="mt-0.5 size-4 shrink-0 text-warn"
               aria-hidden="true"
             />
             <p>
@@ -508,15 +508,15 @@ const AutoPlanPage: React.FC = () => {
           {[...byDate.entries()].map(([date, daySlots]) => (
             <section key={date} className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-ink-soft">
                   {formatWeekday(date)}{" "}
-                  <span className="font-normal text-gray-500">
+                  <span className="font-normal text-muted">
                     {formatShortDate(date)}
                   </span>
                 </h2>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-0.5 rounded px-1 text-xs font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-50 print:hidden"
+                  className="inline-flex items-center gap-0.5 rounded px-1 text-xs font-medium text-pine hover:bg-pine-50 disabled:opacity-50 print:hidden"
                   disabled={busy}
                   title="Plan this day's meals again, putting everyone's targets first, and keeping the other days as they are, but for leftovers of this day's meals"
                   onClick={() => {
@@ -581,9 +581,9 @@ const AutoPlanPage: React.FC = () => {
         </div>
         {plan.isFetching && (
           <div className="pointer-events-none absolute inset-x-0 top-10 flex justify-center">
-            <span className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm text-gray-700 shadow-md ring-1 ring-gray-200">
+            <span className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm text-ink-soft shadow-md ring-1 ring-line">
               <SparklesIcon
-                className="size-4 text-brand-600 motion-safe:animate-spin"
+                className="size-4 text-pine motion-safe:animate-spin"
                 aria-hidden="true"
               />
               Rethinking the plan…

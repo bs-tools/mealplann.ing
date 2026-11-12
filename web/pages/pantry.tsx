@@ -324,7 +324,7 @@ const PantryPage: React.FC = () => {
                       {food.foodName}
                       <button
                         type="button"
-                        className="rounded-full p-0.5 text-muted hover:bg-gray-200 hover:text-ink-soft"
+                        className="rounded-full p-0.5 text-muted hover:bg-ground-dark hover:text-ink-soft"
                         aria-label={`Track ${food.foodName} again`}
                         title="Track it again"
                         disabled={setAlwaysInStock.isPending}
@@ -373,7 +373,7 @@ const PantryPage: React.FC = () => {
         <span className="sr-only">Search the pantry</span>
         <input
           type="search"
-          className="min-w-0 grow border-0 bg-transparent py-1 text-base text-ink-soft outline-none placeholder:text-gray-500"
+          className="min-w-0 grow border-0 bg-transparent py-1 text-base text-ink-soft outline-none placeholder:text-muted"
           value={search}
           placeholder="Search the pantry"
           onChange={(event) => {

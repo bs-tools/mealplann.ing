@@ -357,7 +357,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
         }
       />
       <ErrorText error={remove.error ?? update.error} />
-      {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+      {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="flex flex-col gap-4 lg:col-span-1">
           <Card title="Food">
@@ -405,7 +405,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
                   checked={alwaysInStock}
                   onChange={setAlwaysInStock}
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted">
                   For things you always have, like salt and spices: the pantry
                   doesn&apos;t weigh them, and the shopping list leaves them
                   out.
@@ -417,7 +417,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
                   checked={fastCarb}
                   onChange={setFastCarb}
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted">
                   Quickly absorbed carbohydrate, like white bread, juice, sugar
                   or dried fruit. It matters for reactive hypoglycemia.
                 </p>
@@ -490,13 +490,13 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
         </div>
         <Card title="Nutrients per 100 g" className="lg:col-span-2">
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted">
               Leave a nutrient empty if it&apos;s unknown: 0 means there&apos;s
               none. Enter labels&apos; &quot;per 100 g&quot; values.
             </p>
             {NUTRIENT_GROUPS.map((group) => (
               <fieldset key={group}>
-                <legend className="mb-2 text-sm font-semibold text-gray-800">
+                <legend className="mb-2 text-sm font-semibold text-ink-soft">
                   {group}
                 </legend>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -559,7 +559,7 @@ const FoodSourceNote: React.FC<FoodSourceNoteProps> = ({ food }) => {
           href={info.url}
           target="_blank"
           rel="noreferrer"
-          className="font-medium text-brand-600 hover:underline"
+          className="font-medium text-pine hover:underline"
         >
           food {food.sourceId}
         </a>

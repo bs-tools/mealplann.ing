@@ -35,7 +35,7 @@ const NutrientValue: React.FC<NutrientValueProps> = ({
 }) => {
   const value = nutrients?.[nutrient.key];
   if (value === undefined) {
-    return <span className="text-gray-400 italic">Unknown</span>;
+    return <span className="text-muted/70 italic">Unknown</span>;
   }
   if (!incomplete) {
     return <span>{formatNutrient(value, nutrient.unit)}</span>;
@@ -79,9 +79,9 @@ const NutritionPanel: React.FC<NutritionPanelProps> = ({ recipe }) => {
       </button>
       {open && (
         <div className="flex flex-col gap-4 p-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             A serving is one of {recipe.servings}, weighing about{" "}
-            <span className="font-medium text-gray-900 tabular-nums">
+            <span className="font-medium text-ink-soft tabular-nums">
               {formatAmount(nutrition?.gramsPerServing ?? 0)} g
             </span>{" "}
             raw.
@@ -96,11 +96,11 @@ const NutritionPanel: React.FC<NutritionPanelProps> = ({ recipe }) => {
                 </tr>
               </thead>
               {NUTRIENT_GROUPS.map((group) => (
-                <tbody key={group} className="divide-y divide-gray-100">
+                <tbody key={group} className="divide-y divide-line">
                   <tr>
                     <th
                       colSpan={3}
-                      className="bg-gray-50 px-2 py-1 text-left text-xs font-semibold text-gray-600"
+                      className="bg-ground px-2 py-1 text-left text-xs font-semibold text-muted"
                     >
                       {group}
                     </th>
@@ -108,7 +108,7 @@ const NutritionPanel: React.FC<NutritionPanelProps> = ({ recipe }) => {
                   {NUTRIENTS.filter((nutrient) => nutrient.group === group).map(
                     (nutrient) => (
                       <tr key={nutrient.key}>
-                        <td className="px-2 py-1.5 text-gray-800">
+                        <td className="px-2 py-1.5 text-ink-soft">
                           {nutrient.label}
                         </td>
                         <td className="px-2 py-1.5 text-right whitespace-nowrap">
@@ -118,7 +118,7 @@ const NutritionPanel: React.FC<NutritionPanelProps> = ({ recipe }) => {
                             incomplete={incomplete.has(nutrient.field)}
                           />
                         </td>
-                        <td className="px-2 py-1.5 text-right whitespace-nowrap text-gray-600">
+                        <td className="px-2 py-1.5 text-right whitespace-nowrap text-muted">
                           <NutrientValue
                             nutrients={nutrition?.perHundredGrams}
                             nutrient={nutrient}

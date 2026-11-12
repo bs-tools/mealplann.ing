@@ -69,7 +69,7 @@ const FreezeDialog: React.FC<FreezeDialogProps> = ({ planned, onClose }) => {
           });
         }}
       >
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Of the {formatServings(cook.servings)} cooked on{" "}
           {formatShortDate(cook.date)}, {formatAmount(planned.assignedServings)}{" "}
           are planned for people. Frozen servings keep for the recipe&apos;s
@@ -84,7 +84,7 @@ const FreezeDialog: React.FC<FreezeDialogProps> = ({ planned, onClose }) => {
           hint="0 to take them out of the freezer."
           onChange={setServings}
         />
-        {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+        {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
         <ErrorText error={update.error} />
         <div className="flex justify-end gap-2">
           <button type="button" className={secondaryButton} onClick={onClose}>

@@ -192,7 +192,7 @@ const StapleDialog: React.FC<StapleDialogProps> = ({
           save();
         }}
       >
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Something {person.name} eats regularly. It shows in every week&apos;s
           plan, and can be skipped on a day.
         </p>
@@ -319,7 +319,7 @@ const StapleDialog: React.FC<StapleDialogProps> = ({
           />
         )}
         <TextField label="Notes" value={notes} onChange={setNotes} />
-        {invalid !== "" && <p className="text-sm text-red-700">{invalid}</p>}
+        {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
         <ErrorText error={create.error ?? update.error} />
         <div className="flex justify-end gap-2">
           <button type="button" className={secondaryButton} onClick={onClose}>

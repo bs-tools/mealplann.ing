@@ -63,7 +63,7 @@ const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
           save.mutate({ days: dayCount, name, source, startDate: start });
         }}
       >
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           The meals planned with recipes, with everyone&apos;s portions and the
           leftovers, become a template to plan again from any date. Staples
           aren&apos;t copied, as they recur anyway.
@@ -105,7 +105,7 @@ const SaveTemplateDialog: React.FC<SaveTemplateDialogProps> = ({
             onChange={setDays}
           />
           {valid && (
-            <span className="pb-2 text-sm text-gray-600">
+            <span className="pb-2 text-sm text-muted">
               to {formatShortDate(addDays(start, dayCount - 1))}
             </span>
           )}

@@ -263,7 +263,7 @@ const PlanTemplatePage: React.FC = () => {
       />
       <ErrorText error={update.error ?? remove.error} />
       {tmpl.notes !== "" && (
-        <p className="text-sm whitespace-pre-line text-gray-700">
+        <p className="text-sm whitespace-pre-line text-ink-soft">
           {tmpl.notes}
         </p>
       )}
@@ -273,7 +273,7 @@ const PlanTemplatePage: React.FC = () => {
           return (
             <Card key={day} title={`Day ${day + 1}`}>
               {entries.length === 0 ? (
-                <p className="text-sm text-gray-500">Nothing planned.</p>
+                <p className="text-sm text-muted">Nothing planned.</p>
               ) : (
                 <ul className="flex flex-col gap-3">
                   {tmpl.slots
@@ -282,7 +282,7 @@ const PlanTemplatePage: React.FC = () => {
                     )
                     .map((slot) => (
                       <li key={slot.key} className="flex flex-col gap-1">
-                        <span className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
+                        <span className="text-[11px] font-semibold tracking-wide text-muted uppercase">
                           {slot.name}
                         </span>
                         <ul className="flex flex-col gap-1">
@@ -297,18 +297,18 @@ const PlanTemplatePage: React.FC = () => {
                                 >
                                   <div className="flex min-w-0 flex-col">
                                     {entry.recipeName === "" ? (
-                                      <span className="text-sm text-amber-800">
+                                      <span className="text-sm text-warn-dark">
                                         A deleted recipe
                                       </span>
                                     ) : (
                                       <Link
                                         to={`/recipes/${entry.recipeId}`}
-                                        className="text-sm font-medium text-gray-900 hover:underline"
+                                        className="text-sm font-medium text-ink-soft hover:underline"
                                       >
                                         {entry.recipeName}
                                       </Link>
                                     )}
-                                    <span className="text-xs text-gray-600">
+                                    <span className="text-xs text-muted">
                                       {entryEaters(tmpl, entry, everyone)}
                                     </span>
                                     {note !== undefined && (

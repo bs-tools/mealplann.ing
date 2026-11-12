@@ -57,10 +57,10 @@ const AvatarCard: React.FC<{ user: User }> = ({ user }) => {
         <Avatar
           avatarUrl={user.avatarUrl}
           name={user.name}
-          className="size-20 shrink-0 text-2xl ring-1 ring-gray-200"
+          className="size-20 shrink-0 text-2xl ring-1 ring-line"
         />
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             Shown in the header. The middle square of the picture is used.
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -97,13 +97,13 @@ const AvatarCard: React.FC<{ user: User }> = ({ user }) => {
               </button>
             )}
             {status !== "" && (
-              <span className="text-sm text-gray-500">{status}</span>
+              <span className="text-sm text-muted">{status}</span>
             )}
           </div>
         </div>
       </div>
       {prepareError !== "" && (
-        <p className="text-sm text-red-700">{prepareError}</p>
+        <p className="text-sm text-error">{prepareError}</p>
       )}
       <ErrorText error={upload.error ?? remove.error} />
     </Card>
