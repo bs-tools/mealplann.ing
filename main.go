@@ -1,6 +1,8 @@
 package main
 
 import (
+	// Calendar feeds place times in their users' time zones, which the
+	// server image may have no database of.
 	"cmp"
 	"context"
 	"crypto/tls"
@@ -17,6 +19,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	_ "time/tzdata"
 
 	"connectrpc.com/connect/v2"
 	"github.com/bs-tools/mealplann.ing/internal/apilimit"

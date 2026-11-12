@@ -35,6 +35,10 @@ service UserService {
   rpc CreateCalendarFeed(CreateCalendarFeedRequest) returns (CreateCalendarFeedResponse) {
     option (mcp.v1.method).exclude = true;
   }
+  // Change the time zone of the user's calendar feed.
+  rpc UpdateCalendarFeed(UpdateCalendarFeedRequest) returns (UpdateCalendarFeedResponse) {
+    option (mcp.v1.method).exclude = true;
+  }
   // Delete the user's calendar feed, so its URL stops working.
   rpc DeleteCalendarFeed(DeleteCalendarFeedRequest) returns (DeleteCalendarFeedResponse) {
     option (mcp.v1.method).exclude = true;
@@ -191,6 +195,9 @@ message CalendarFeed {
   // The URL to subscribe to, only set when it's created: only a hash of
   // its secret is kept.
   string url = 3;
+  // The time zone the plan's times are in, an IANA name like
+  // "America/Vancouver", which events are placed by.
+  string time_zone = 4;
 }
 
 message GetCalendarFeedRequest {}
@@ -200,7 +207,21 @@ message GetCalendarFeedResponse {
   CalendarFeed feed = 1;
 }
 
-message CreateCalendarFeedRequest {}
+message CreateCalendarFeedRequest {
+  // The time zone the plan's times are in, an IANA name like
+  // "America/Vancouver": usually the browser's. Required.
+  string time_zone = 1;
+}
+
+message UpdateCalendarFeedRequest {
+  // The time zone the plan's times are in, an IANA name. Required.
+  string time_zone = 1;
+}
+
+message UpdateCalendarFeedResponse {
+  // The feed, without its URL.
+  CalendarFeed feed = 1;
+}
 
 message CreateCalendarFeedResponse {
   // The feed, with its URL.

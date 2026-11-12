@@ -26,16 +26,17 @@ const calendarWeeks = 3
 // Today: a recipe of unknown time still takes a while.
 const minCookMinutes = 15
 
-// CalendarFeedUsers finds the user of a calendar feed by its secret.
+// CalendarFeedUsers finds the user and time zone of a calendar feed by
+// its secret.
 type CalendarFeedUsers interface {
-	GetCalendarFeedUser(ctx context.Context, secret string) (users.User, error)
+	GetCalendarFeedUser(ctx context.Context, secret string) (users.User, string, error)
 }
 
 // CalendarHandler serves calendar feeds at prefix followed by a feed's
 // secret and ".ics": an iCalendar of the cooks, the prep ahead and the
 // meals of the person the feed's user is, for a calendar app to subscribe
-// to. Times are floating, in the calendar's own time zone, as the plan's
-// are local times.
+// to. The plan's local times are in the feed's time zone, and written in
+// UTC, which every calendar app places right.
 func (s *Service) CalendarHandler(prefix string, feeds CalendarFeedUsers) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		secret, ok := strings.CutSuffix(strings.TrimPrefix(r.URL.Path, prefix), ".ics")
@@ -43,7 +44,7 @@ func (s *Service) CalendarHandler(prefix string, feeds CalendarFeedUsers) http.H
 			http.NotFound(w, r)
 			return
 		}
-		user, err := feeds.GetCalendarFeedUser(r.Context(), secret)
+		user, timeZone, err := feeds.GetCalendarFeedUser(r.Context(), secret)
 		if errors.Is(err, store.ErrNotFound) {
 			http.Error(w, "This calendar feed doesn't exist: make a new one in mealplann.ing's settings.", http.StatusNotFound)
 			return
@@ -53,7 +54,12 @@ func (s *Service) CalendarHandler(prefix string, feeds CalendarFeedUsers) http.H
 			http.Error(w, "failed to read calendar feed", http.StatusInternalServerError)
 			return
 		}
-		cal, err := s.calendar(authn.WithUser(r.Context(), user), user)
+		loc, err := time.LoadLocation(timeZone)
+		if err != nil {
+			// A zone the server no longer knows still makes a calendar.
+			loc = time.UTC
+		}
+		cal, err := s.calendar(authn.WithUser(r.Context(), user), user, loc)
 		if err != nil {
 			s.report.Report(r.Context(), "failed to make calendar", err)
 			http.Error(w, "failed to make calendar", http.StatusInternalServerError)
@@ -67,7 +73,7 @@ func (s *Service) CalendarHandler(prefix string, feeds CalendarFeedUsers) http.H
 }
 
 // calendar makes the iCalendar of a user's person's weeks.
-func (s *Service) calendar(ctx context.Context, user users.User) (string, error) {
+func (s *Service) calendar(ctx context.Context, user users.User, loc *time.Location) (string, error) {
 	everyone, err := s.people.ListPeople(ctx, user.HouseholdID())
 	if err != nil {
 		return "", err
@@ -78,8 +84,10 @@ func (s *Service) calendar(ctx context.Context, user users.User) (string, error)
 			person = p
 		}
 	}
-	now := s.nowFn().UTC()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	now := s.nowFn()
+	// Today is the time zone's, as the plan's dates are local.
+	local := now.In(loc)
+	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
 	monday := today.AddDate(0, 0, -int(today.Weekday()+6)%7)
 	weeks := make([]*plansv1.GetWeekResponse, 0, calendarWeeks)
 	for i := range calendarWeeks {
@@ -111,7 +119,7 @@ func (s *Service) calendar(ctx context.Context, user users.User) (string, error)
 	if person != nil {
 		name += " · " + person.Name
 	}
-	c := &icsCalendar{name: name, stamp: now}
+	c := &icsCalendar{name: name, stamp: now.UTC(), loc: loc}
 	for _, week := range weeks {
 		calendarWeek(c, week, person, minutes)
 	}
@@ -283,10 +291,12 @@ type icsEvent struct {
 	description string
 }
 
-// icsCalendar is an iCalendar being written.
+// icsCalendar is an iCalendar being written, of events at local times
+// in loc.
 type icsCalendar struct {
 	name   string
 	stamp  time.Time
+	loc    *time.Location
 	events []icsEvent
 }
 
@@ -320,6 +330,7 @@ func (c *icsCalendar) String() string {
 	line("CALSCALE:GREGORIAN")
 	line("METHOD:PUBLISH")
 	line("X-WR-CALNAME:" + icsText(c.name))
+	line("X-WR-TIMEZONE:" + c.loc.String())
 	line("REFRESH-INTERVAL;VALUE=DURATION:PT1H")
 	line("X-PUBLISHED-TTL:PT1H")
 	stamp := c.stamp.Format("20060102T150405Z")
@@ -332,9 +343,11 @@ func (c *icsCalendar) String() string {
 		line("UID:" + e.uid + "@mealplann.ing")
 		line("DTSTAMP:" + stamp)
 		if start, ok := clockMinutes(e.at); ok {
-			begin := day.Add(time.Duration(start) * time.Minute)
-			line("DTSTART:" + begin.Format("20060102T150405"))
-			line("DTEND:" + begin.Add(time.Duration(e.minutes)*time.Minute).Format("20060102T150405"))
+			// The local time is placed in the time zone, then written in
+			// UTC, so no calendar app has to know the zone.
+			begin := time.Date(day.Year(), day.Month(), day.Day(), start/60, start%60, 0, 0, c.loc)
+			line("DTSTART:" + begin.UTC().Format("20060102T150405Z"))
+			line("DTEND:" + begin.Add(time.Duration(e.minutes)*time.Minute).UTC().Format("20060102T150405Z"))
 		} else {
 			line("DTSTART;VALUE=DATE:" + day.Format("20060102"))
 			line("DTEND;VALUE=DATE:" + day.AddDate(0, 0, 1).Format("20060102"))

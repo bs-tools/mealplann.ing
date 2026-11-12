@@ -1,6 +1,7 @@
 import Loading from "@components/loading";
 import Card from "@components/ui/card";
 import ConfirmButton from "@components/ui/confirm-button";
+import { SelectField } from "@components/ui/fields";
 import { CopyField } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
@@ -15,11 +16,25 @@ import {
   createCalendarFeed,
   deleteCalendarFeed,
   getCalendarFeed,
+  updateCalendarFeed,
 } from "gen/users/v1/users-UserService_connectquery";
 import { UserService } from "gen/users/v1/users_pb";
 import { formatTimestamp } from "helpers/format";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
+
+// BrowserTimeZone returns the browser's time zone, like "Europe/Berlin".
+const browserTimeZone = (): string =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/**
+ * TimeZones returns the time zones to choose from: those the browser
+ * knows, with the current one, which older browsers may not list.
+ */
+const timeZones = (current: string): string[] => {
+  const known = Intl.supportedValuesOf("timeZone");
+  return known.includes(current) ? known : [current, ...known];
+};
 
 /**
  * CalendarFeed makes a calendar feed: a secret link a calendar app, like
@@ -41,6 +56,7 @@ const CalendarFeed: React.FC = () => {
       await onSuccess();
     },
   });
+  const update = useMutation(updateCalendarFeed, { onSuccess });
   const remove = useMutation(deleteCalendarFeed, {
     onSuccess: async () => {
       setUrl("");
@@ -67,7 +83,7 @@ const CalendarFeed: React.FC = () => {
         className={`${primaryButton} self-start`}
         disabled={create.isPending}
         onClick={() => {
-          create.mutate({});
+          create.mutate({ timeZone: browserTimeZone() });
         }}
       >
         Make a calendar link
@@ -102,6 +118,22 @@ const CalendarFeed: React.FC = () => {
             </a>
           </div>
         )}
+        <SelectField
+          label="Time zone of your meals"
+          value={current.timeZone}
+          options={timeZones(current.timeZone).map((zone) => ({
+            label: zone.replaceAll("_", " "),
+            value: zone,
+          }))}
+          onChange={(timeZone) => {
+            update.mutate({ timeZone });
+          }}
+        />
+        {current.timeZone !== browserTimeZone() && (
+          <p className="-mt-1 text-xs text-muted">
+            This browser is in {browserTimeZone().replaceAll("_", " ")}.
+          </p>
+        )}
         <div className="-ml-2 flex flex-wrap gap-1">
           <ConfirmButton
             className={ghostButton}
@@ -110,7 +142,7 @@ const CalendarFeed: React.FC = () => {
             confirmLabel="Make a new link"
             disabled={create.isPending}
             onConfirm={() => {
-              create.mutate({});
+              create.mutate({ timeZone: current.timeZone });
             }}
           >
             Make a new link
@@ -140,7 +172,7 @@ const CalendarFeed: React.FC = () => {
           own calendar, for this week and the next two, kept up to date.
         </p>
         {body}
-        <ErrorText error={create.error ?? remove.error} />
+        <ErrorText error={create.error ?? update.error ?? remove.error} />
       </div>
     </Card>
   );

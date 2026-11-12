@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file users/v1/users.proto.
  */
 export const file_users_v1_users: GenFile = /*@__PURE__*/
-  fileDesc("ChR1c2Vycy92MS91c2Vycy5wcm90bxIIdXNlcnMudjEiYQoJSG91c2Vob2xkEhIKAmlkGAEgASgJQgaqnxkCCAESDAoEbmFtZRgCIAEoCRIyCgdtZW1iZXJzGAMgAygLMhkudXNlcnMudjEuSG91c2Vob2xkTWVtYmVyQgaqnxkCCAEiRAoPSG91c2Vob2xkTWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgphdmF0YXJfdXJsGAMgASgJIhUKE0dldEhvdXNlaG9sZFJlcXVlc3QiPgoUR2V0SG91c2Vob2xkUmVzcG9uc2USJgoJaG91c2Vob2xkGAEgASgLMhMudXNlcnMudjEuSG91c2Vob2xkIiYKFlVwZGF0ZUhvdXNlaG9sZFJlcXVlc3QSDAoEbmFtZRgBIAEoCSJBChdVcGRhdGVIb3VzZWhvbGRSZXNwb25zZRImCglob3VzZWhvbGQYASABKAsyEy51c2Vycy52MS5Ib3VzZWhvbGQivAEKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRISCgpnaXZlbl9uYW1lGAQgASgJEhMKC2ZhbWlseV9uYW1lGAUgASgJEhIKCmF2YXRhcl91cmwYBiABKAkSDQoFYWRtaW4YByABKAgSFAoMaG91c2Vob2xkX2lkGAggASgJEikKC3VuaXRfc3lzdGVtGAkgASgOMhQudXNlcnMudjEuVW5pdFN5c3RlbSJCChVVcGRhdGVTZXR0aW5nc1JlcXVlc3QSKQoLdW5pdF9zeXN0ZW0YASABKA4yFC51c2Vycy52MS5Vbml0U3lzdGVtIjYKFlVwZGF0ZVNldHRpbmdzUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiFwoVR2V0Q3VycmVudFVzZXJSZXF1ZXN0IjYKFkdldEN1cnJlbnRVc2VyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiiQEKCEFQSVRva2VuEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSLwoLY3JlYXRlX3RpbWUYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKDmxhc3RfdXNlZF90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIlChVDcmVhdGVBUElUb2tlblJlcXVlc3QSDAoEbmFtZRgBIAEoCSJLChZDcmVhdGVBUElUb2tlblJlc3BvbnNlEiEKBXRva2VuGAEgASgLMhIudXNlcnMudjEuQVBJVG9rZW4SDgoGc2VjcmV0GAIgASgJIhYKFExpc3RBUElUb2tlbnNSZXF1ZXN0IjsKFUxpc3RBUElUb2tlbnNSZXNwb25zZRIiCgZ0b2tlbnMYASADKAsyEi51c2Vycy52MS5BUElUb2tlbiIjChVEZWxldGVBUElUb2tlblJlcXVlc3QSCgoCaWQYASABKAkiGAoWRGVsZXRlQVBJVG9rZW5SZXNwb25zZSKAAQoMQ2FsZW5kYXJGZWVkEi8KC2NyZWF0ZV90aW1lGAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIyCg5sYXN0X3VzZWRfdGltZRgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASCwoDdXJsGAMgASgJIhgKFkdldENhbGVuZGFyRmVlZFJlcXVlc3QiPwoXR2V0Q2FsZW5kYXJGZWVkUmVzcG9uc2USJAoEZmVlZBgBIAEoCzIWLnVzZXJzLnYxLkNhbGVuZGFyRmVlZCIbChlDcmVhdGVDYWxlbmRhckZlZWRSZXF1ZXN0IkIKGkNyZWF0ZUNhbGVuZGFyRmVlZFJlc3BvbnNlEiQKBGZlZWQYASABKAsyFi51c2Vycy52MS5DYWxlbmRhckZlZWQiGwoZRGVsZXRlQ2FsZW5kYXJGZWVkUmVxdWVzdCIcChpEZWxldGVDYWxlbmRhckZlZWRSZXNwb25zZSIjChNVcGxvYWRBdmF0YXJSZXF1ZXN0EgwKBGRhdGEYASABKAwiNAoUVXBsb2FkQXZhdGFyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiFQoTRGVsZXRlQXZhdGFyUmVxdWVzdCI0ChREZWxldGVBdmF0YXJSZXNwb25zZRIcCgR1c2VyGAEgASgLMg4udXNlcnMudjEuVXNlcipbCgpVbml0U3lzdGVtEhsKF1VOSVRfU1lTVEVNX1VOU1BFQ0lGSUVEEAASFgoSVU5JVF9TWVNURU1fTUVUUklDEAESGAoUVU5JVF9TWVNURU1fSU1QRVJJQUwQAjLaCAoLVXNlclNlcnZpY2USUwoOR2V0Q3VycmVudFVzZXISHy51c2Vycy52MS5HZXRDdXJyZW50VXNlclJlcXVlc3QaIC51c2Vycy52MS5HZXRDdXJyZW50VXNlclJlc3BvbnNlElsKDkNyZWF0ZUFQSVRva2VuEh8udXNlcnMudjEuQ3JlYXRlQVBJVG9rZW5SZXF1ZXN0GiAudXNlcnMudjEuQ3JlYXRlQVBJVG9rZW5SZXNwb25zZSIGop8ZAggBElgKDUxpc3RBUElUb2tlbnMSHi51c2Vycy52MS5MaXN0QVBJVG9rZW5zUmVxdWVzdBofLnVzZXJzLnYxLkxpc3RBUElUb2tlbnNSZXNwb25zZSIGop8ZAggBElsKDkRlbGV0ZUFQSVRva2VuEh8udXNlcnMudjEuRGVsZXRlQVBJVG9rZW5SZXF1ZXN0GiAudXNlcnMudjEuRGVsZXRlQVBJVG9rZW5SZXNwb25zZSIGop8ZAggBEl4KD0dldENhbGVuZGFyRmVlZBIgLnVzZXJzLnYxLkdldENhbGVuZGFyRmVlZFJlcXVlc3QaIS51c2Vycy52MS5HZXRDYWxlbmRhckZlZWRSZXNwb25zZSIGop8ZAggBEmcKEkNyZWF0ZUNhbGVuZGFyRmVlZBIjLnVzZXJzLnYxLkNyZWF0ZUNhbGVuZGFyRmVlZFJlcXVlc3QaJC51c2Vycy52MS5DcmVhdGVDYWxlbmRhckZlZWRSZXNwb25zZSIGop8ZAggBEmcKEkRlbGV0ZUNhbGVuZGFyRmVlZBIjLnVzZXJzLnYxLkRlbGV0ZUNhbGVuZGFyRmVlZFJlcXVlc3QaJC51c2Vycy52MS5EZWxldGVDYWxlbmRhckZlZWRSZXNwb25zZSIGop8ZAggBElUKDFVwbG9hZEF2YXRhchIdLnVzZXJzLnYxLlVwbG9hZEF2YXRhclJlcXVlc3QaHi51c2Vycy52MS5VcGxvYWRBdmF0YXJSZXNwb25zZSIGop8ZAggBElUKDERlbGV0ZUF2YXRhchIdLnVzZXJzLnYxLkRlbGV0ZUF2YXRhclJlcXVlc3QaHi51c2Vycy52MS5EZWxldGVBdmF0YXJSZXNwb25zZSIGop8ZAggBElMKDlVwZGF0ZVNldHRpbmdzEh8udXNlcnMudjEuVXBkYXRlU2V0dGluZ3NSZXF1ZXN0GiAudXNlcnMudjEuVXBkYXRlU2V0dGluZ3NSZXNwb25zZRJNCgxHZXRIb3VzZWhvbGQSHS51c2Vycy52MS5HZXRIb3VzZWhvbGRSZXF1ZXN0Gh4udXNlcnMudjEuR2V0SG91c2Vob2xkUmVzcG9uc2USXgoPVXBkYXRlSG91c2Vob2xkEiAudXNlcnMudjEuVXBkYXRlSG91c2Vob2xkUmVxdWVzdBohLnVzZXJzLnYxLlVwZGF0ZUhvdXNlaG9sZFJlc3BvbnNlIgainxkCCAFCnAEKDGNvbS51c2Vycy52MUIKVXNlcnNQcm90b1ABWj9naXRodWIuY29tL2JzLXRvb2xzL21lYWxwbGFubi5pbmcvaW50ZXJuYWwvZ2VuL3VzZXJzL3YxO3VzZXJzdjGiAgNVWFiqAghVc2Vycy5WMcoCCFVzZXJzXFYx4gIUVXNlcnNcVjFcR1BCTWV0YWRhdGHqAglVc2Vyczo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_mcp_v1_options]);
+  fileDesc("ChR1c2Vycy92MS91c2Vycy5wcm90bxIIdXNlcnMudjEiYQoJSG91c2Vob2xkEhIKAmlkGAEgASgJQgaqnxkCCAESDAoEbmFtZRgCIAEoCRIyCgdtZW1iZXJzGAMgAygLMhkudXNlcnMudjEuSG91c2Vob2xkTWVtYmVyQgaqnxkCCAEiRAoPSG91c2Vob2xkTWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgphdmF0YXJfdXJsGAMgASgJIhUKE0dldEhvdXNlaG9sZFJlcXVlc3QiPgoUR2V0SG91c2Vob2xkUmVzcG9uc2USJgoJaG91c2Vob2xkGAEgASgLMhMudXNlcnMudjEuSG91c2Vob2xkIiYKFlVwZGF0ZUhvdXNlaG9sZFJlcXVlc3QSDAoEbmFtZRgBIAEoCSJBChdVcGRhdGVIb3VzZWhvbGRSZXNwb25zZRImCglob3VzZWhvbGQYASABKAsyEy51c2Vycy52MS5Ib3VzZWhvbGQivAEKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRISCgpnaXZlbl9uYW1lGAQgASgJEhMKC2ZhbWlseV9uYW1lGAUgASgJEhIKCmF2YXRhcl91cmwYBiABKAkSDQoFYWRtaW4YByABKAgSFAoMaG91c2Vob2xkX2lkGAggASgJEikKC3VuaXRfc3lzdGVtGAkgASgOMhQudXNlcnMudjEuVW5pdFN5c3RlbSJCChVVcGRhdGVTZXR0aW5nc1JlcXVlc3QSKQoLdW5pdF9zeXN0ZW0YASABKA4yFC51c2Vycy52MS5Vbml0U3lzdGVtIjYKFlVwZGF0ZVNldHRpbmdzUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiFwoVR2V0Q3VycmVudFVzZXJSZXF1ZXN0IjYKFkdldEN1cnJlbnRVc2VyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIiiQEKCEFQSVRva2VuEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSLwoLY3JlYXRlX3RpbWUYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKDmxhc3RfdXNlZF90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIlChVDcmVhdGVBUElUb2tlblJlcXVlc3QSDAoEbmFtZRgBIAEoCSJLChZDcmVhdGVBUElUb2tlblJlc3BvbnNlEiEKBXRva2VuGAEgASgLMhIudXNlcnMudjEuQVBJVG9rZW4SDgoGc2VjcmV0GAIgASgJIhYKFExpc3RBUElUb2tlbnNSZXF1ZXN0IjsKFUxpc3RBUElUb2tlbnNSZXNwb25zZRIiCgZ0b2tlbnMYASADKAsyEi51c2Vycy52MS5BUElUb2tlbiIjChVEZWxldGVBUElUb2tlblJlcXVlc3QSCgoCaWQYASABKAkiGAoWRGVsZXRlQVBJVG9rZW5SZXNwb25zZSKTAQoMQ2FsZW5kYXJGZWVkEi8KC2NyZWF0ZV90aW1lGAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIyCg5sYXN0X3VzZWRfdGltZRgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASCwoDdXJsGAMgASgJEhEKCXRpbWVfem9uZRgEIAEoCSIYChZHZXRDYWxlbmRhckZlZWRSZXF1ZXN0Ij8KF0dldENhbGVuZGFyRmVlZFJlc3BvbnNlEiQKBGZlZWQYASABKAsyFi51c2Vycy52MS5DYWxlbmRhckZlZWQiLgoZQ3JlYXRlQ2FsZW5kYXJGZWVkUmVxdWVzdBIRCgl0aW1lX3pvbmUYASABKAkiLgoZVXBkYXRlQ2FsZW5kYXJGZWVkUmVxdWVzdBIRCgl0aW1lX3pvbmUYASABKAkiQgoaVXBkYXRlQ2FsZW5kYXJGZWVkUmVzcG9uc2USJAoEZmVlZBgBIAEoCzIWLnVzZXJzLnYxLkNhbGVuZGFyRmVlZCJCChpDcmVhdGVDYWxlbmRhckZlZWRSZXNwb25zZRIkCgRmZWVkGAEgASgLMhYudXNlcnMudjEuQ2FsZW5kYXJGZWVkIhsKGURlbGV0ZUNhbGVuZGFyRmVlZFJlcXVlc3QiHAoaRGVsZXRlQ2FsZW5kYXJGZWVkUmVzcG9uc2UiIwoTVXBsb2FkQXZhdGFyUmVxdWVzdBIMCgRkYXRhGAEgASgMIjQKFFVwbG9hZEF2YXRhclJlc3BvbnNlEhwKBHVzZXIYASABKAsyDi51c2Vycy52MS5Vc2VyIhUKE0RlbGV0ZUF2YXRhclJlcXVlc3QiNAoURGVsZXRlQXZhdGFyUmVzcG9uc2USHAoEdXNlchgBIAEoCzIOLnVzZXJzLnYxLlVzZXIqWwoKVW5pdFN5c3RlbRIbChdVTklUX1NZU1RFTV9VTlNQRUNJRklFRBAAEhYKElVOSVRfU1lTVEVNX01FVFJJQxABEhgKFFVOSVRfU1lTVEVNX0lNUEVSSUFMEAIywwkKC1VzZXJTZXJ2aWNlElMKDkdldEN1cnJlbnRVc2VyEh8udXNlcnMudjEuR2V0Q3VycmVudFVzZXJSZXF1ZXN0GiAudXNlcnMudjEuR2V0Q3VycmVudFVzZXJSZXNwb25zZRJbCg5DcmVhdGVBUElUb2tlbhIfLnVzZXJzLnYxLkNyZWF0ZUFQSVRva2VuUmVxdWVzdBogLnVzZXJzLnYxLkNyZWF0ZUFQSVRva2VuUmVzcG9uc2UiBqKfGQIIARJYCg1MaXN0QVBJVG9rZW5zEh4udXNlcnMudjEuTGlzdEFQSVRva2Vuc1JlcXVlc3QaHy51c2Vycy52MS5MaXN0QVBJVG9rZW5zUmVzcG9uc2UiBqKfGQIIARJbCg5EZWxldGVBUElUb2tlbhIfLnVzZXJzLnYxLkRlbGV0ZUFQSVRva2VuUmVxdWVzdBogLnVzZXJzLnYxLkRlbGV0ZUFQSVRva2VuUmVzcG9uc2UiBqKfGQIIARJeCg9HZXRDYWxlbmRhckZlZWQSIC51c2Vycy52MS5HZXRDYWxlbmRhckZlZWRSZXF1ZXN0GiEudXNlcnMudjEuR2V0Q2FsZW5kYXJGZWVkUmVzcG9uc2UiBqKfGQIIARJnChJDcmVhdGVDYWxlbmRhckZlZWQSIy51c2Vycy52MS5DcmVhdGVDYWxlbmRhckZlZWRSZXF1ZXN0GiQudXNlcnMudjEuQ3JlYXRlQ2FsZW5kYXJGZWVkUmVzcG9uc2UiBqKfGQIIARJnChJVcGRhdGVDYWxlbmRhckZlZWQSIy51c2Vycy52MS5VcGRhdGVDYWxlbmRhckZlZWRSZXF1ZXN0GiQudXNlcnMudjEuVXBkYXRlQ2FsZW5kYXJGZWVkUmVzcG9uc2UiBqKfGQIIARJnChJEZWxldGVDYWxlbmRhckZlZWQSIy51c2Vycy52MS5EZWxldGVDYWxlbmRhckZlZWRSZXF1ZXN0GiQudXNlcnMudjEuRGVsZXRlQ2FsZW5kYXJGZWVkUmVzcG9uc2UiBqKfGQIIARJVCgxVcGxvYWRBdmF0YXISHS51c2Vycy52MS5VcGxvYWRBdmF0YXJSZXF1ZXN0Gh4udXNlcnMudjEuVXBsb2FkQXZhdGFyUmVzcG9uc2UiBqKfGQIIARJVCgxEZWxldGVBdmF0YXISHS51c2Vycy52MS5EZWxldGVBdmF0YXJSZXF1ZXN0Gh4udXNlcnMudjEuRGVsZXRlQXZhdGFyUmVzcG9uc2UiBqKfGQIIARJTCg5VcGRhdGVTZXR0aW5ncxIfLnVzZXJzLnYxLlVwZGF0ZVNldHRpbmdzUmVxdWVzdBogLnVzZXJzLnYxLlVwZGF0ZVNldHRpbmdzUmVzcG9uc2USTQoMR2V0SG91c2Vob2xkEh0udXNlcnMudjEuR2V0SG91c2Vob2xkUmVxdWVzdBoeLnVzZXJzLnYxLkdldEhvdXNlaG9sZFJlc3BvbnNlEl4KD1VwZGF0ZUhvdXNlaG9sZBIgLnVzZXJzLnYxLlVwZGF0ZUhvdXNlaG9sZFJlcXVlc3QaIS51c2Vycy52MS5VcGRhdGVIb3VzZWhvbGRSZXNwb25zZSIGop8ZAggBQpwBCgxjb20udXNlcnMudjFCClVzZXJzUHJvdG9QAVo/Z2l0aHViLmNvbS9icy10b29scy9tZWFscGxhbm4uaW5nL2ludGVybmFsL2dlbi91c2Vycy92MTt1c2Vyc3YxogIDVVhYqgIIVXNlcnMuVjHKAghVc2Vyc1xWMeICFFVzZXJzXFYxXEdQQk1ldGFkYXRh6gIJVXNlcnM6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_mcp_v1_options]);
 
 /**
  * A household: the users who share everything the app stores about food,
@@ -469,6 +469,14 @@ export type CalendarFeed = Message<"users.v1.CalendarFeed"> & {
    * @generated from field: string url = 3;
    */
   url: string;
+
+  /**
+   * The time zone the plan's times are in, an IANA name like
+   * "America/Vancouver", which events are placed by.
+   *
+   * @generated from field: string time_zone = 4;
+   */
+  timeZone: string;
 };
 
 /**
@@ -514,6 +522,13 @@ export const GetCalendarFeedResponseSchema: GenMessage<GetCalendarFeedResponse> 
  * @generated from message users.v1.CreateCalendarFeedRequest
  */
 export type CreateCalendarFeedRequest = Message<"users.v1.CreateCalendarFeedRequest"> & {
+  /**
+   * The time zone the plan's times are in, an IANA name like
+   * "America/Vancouver": usually the browser's. Required.
+   *
+   * @generated from field: string time_zone = 1;
+   */
+  timeZone: string;
 };
 
 /**
@@ -522,6 +537,44 @@ export type CreateCalendarFeedRequest = Message<"users.v1.CreateCalendarFeedRequ
  */
 export const CreateCalendarFeedRequestSchema: GenMessage<CreateCalendarFeedRequest> = /*@__PURE__*/
   messageDesc(file_users_v1_users, 21);
+
+/**
+ * @generated from message users.v1.UpdateCalendarFeedRequest
+ */
+export type UpdateCalendarFeedRequest = Message<"users.v1.UpdateCalendarFeedRequest"> & {
+  /**
+   * The time zone the plan's times are in, an IANA name. Required.
+   *
+   * @generated from field: string time_zone = 1;
+   */
+  timeZone: string;
+};
+
+/**
+ * Describes the message users.v1.UpdateCalendarFeedRequest.
+ * Use `create(UpdateCalendarFeedRequestSchema)` to create a new message.
+ */
+export const UpdateCalendarFeedRequestSchema: GenMessage<UpdateCalendarFeedRequest> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 22);
+
+/**
+ * @generated from message users.v1.UpdateCalendarFeedResponse
+ */
+export type UpdateCalendarFeedResponse = Message<"users.v1.UpdateCalendarFeedResponse"> & {
+  /**
+   * The feed, without its URL.
+   *
+   * @generated from field: users.v1.CalendarFeed feed = 1;
+   */
+  feed?: CalendarFeed | undefined;
+};
+
+/**
+ * Describes the message users.v1.UpdateCalendarFeedResponse.
+ * Use `create(UpdateCalendarFeedResponseSchema)` to create a new message.
+ */
+export const UpdateCalendarFeedResponseSchema: GenMessage<UpdateCalendarFeedResponse> = /*@__PURE__*/
+  messageDesc(file_users_v1_users, 23);
 
 /**
  * @generated from message users.v1.CreateCalendarFeedResponse
@@ -540,7 +593,7 @@ export type CreateCalendarFeedResponse = Message<"users.v1.CreateCalendarFeedRes
  * Use `create(CreateCalendarFeedResponseSchema)` to create a new message.
  */
 export const CreateCalendarFeedResponseSchema: GenMessage<CreateCalendarFeedResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 22);
+  messageDesc(file_users_v1_users, 24);
 
 /**
  * @generated from message users.v1.DeleteCalendarFeedRequest
@@ -553,7 +606,7 @@ export type DeleteCalendarFeedRequest = Message<"users.v1.DeleteCalendarFeedRequ
  * Use `create(DeleteCalendarFeedRequestSchema)` to create a new message.
  */
 export const DeleteCalendarFeedRequestSchema: GenMessage<DeleteCalendarFeedRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 23);
+  messageDesc(file_users_v1_users, 25);
 
 /**
  * @generated from message users.v1.DeleteCalendarFeedResponse
@@ -566,7 +619,7 @@ export type DeleteCalendarFeedResponse = Message<"users.v1.DeleteCalendarFeedRes
  * Use `create(DeleteCalendarFeedResponseSchema)` to create a new message.
  */
 export const DeleteCalendarFeedResponseSchema: GenMessage<DeleteCalendarFeedResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 24);
+  messageDesc(file_users_v1_users, 26);
 
 /**
  * @generated from message users.v1.UploadAvatarRequest
@@ -585,7 +638,7 @@ export type UploadAvatarRequest = Message<"users.v1.UploadAvatarRequest"> & {
  * Use `create(UploadAvatarRequestSchema)` to create a new message.
  */
 export const UploadAvatarRequestSchema: GenMessage<UploadAvatarRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 25);
+  messageDesc(file_users_v1_users, 27);
 
 /**
  * @generated from message users.v1.UploadAvatarResponse
@@ -604,7 +657,7 @@ export type UploadAvatarResponse = Message<"users.v1.UploadAvatarResponse"> & {
  * Use `create(UploadAvatarResponseSchema)` to create a new message.
  */
 export const UploadAvatarResponseSchema: GenMessage<UploadAvatarResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 26);
+  messageDesc(file_users_v1_users, 28);
 
 /**
  * @generated from message users.v1.DeleteAvatarRequest
@@ -617,7 +670,7 @@ export type DeleteAvatarRequest = Message<"users.v1.DeleteAvatarRequest"> & {
  * Use `create(DeleteAvatarRequestSchema)` to create a new message.
  */
 export const DeleteAvatarRequestSchema: GenMessage<DeleteAvatarRequest> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 27);
+  messageDesc(file_users_v1_users, 29);
 
 /**
  * @generated from message users.v1.DeleteAvatarResponse
@@ -636,7 +689,7 @@ export type DeleteAvatarResponse = Message<"users.v1.DeleteAvatarResponse"> & {
  * Use `create(DeleteAvatarResponseSchema)` to create a new message.
  */
 export const DeleteAvatarResponseSchema: GenMessage<DeleteAvatarResponse> = /*@__PURE__*/
-  messageDesc(file_users_v1_users, 28);
+  messageDesc(file_users_v1_users, 30);
 
 /**
  * UnitSystem is the units a user reads amounts in.
@@ -744,6 +797,16 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof CreateCalendarFeedRequestSchema;
     output: typeof CreateCalendarFeedResponseSchema;
+  },
+  /**
+   * Change the time zone of the user's calendar feed.
+   *
+   * @generated from rpc users.v1.UserService.UpdateCalendarFeed
+   */
+  updateCalendarFeed: {
+    methodKind: "unary";
+    input: typeof UpdateCalendarFeedRequestSchema;
+    output: typeof UpdateCalendarFeedResponseSchema;
   },
   /**
    * Delete the user's calendar feed, so its URL stops working.

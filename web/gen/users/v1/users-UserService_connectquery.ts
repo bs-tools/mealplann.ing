@@ -52,6 +52,13 @@ export const getCalendarFeed = UserService.method.getCalendarFeed;
 export const createCalendarFeed = UserService.method.createCalendarFeed;
 
 /**
+ * Change the time zone of the user's calendar feed.
+ *
+ * @generated from rpc users.v1.UserService.UpdateCalendarFeed
+ */
+export const updateCalendarFeed = UserService.method.updateCalendarFeed;
+
+/**
  * Delete the user's calendar feed, so its URL stops working.
  *
  * @generated from rpc users.v1.UserService.DeleteCalendarFeed

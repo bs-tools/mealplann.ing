@@ -24,7 +24,7 @@ func (q *Queries) DeleteCalendarFeed(ctx context.Context, userID pgtype.UUID) (i
 }
 
 const getCalendarFeed = `-- name: GetCalendarFeed :one
-select user_id, secret_sha256, create_time, last_used_time from calendar_feeds where user_id = $1
+select user_id, secret_sha256, create_time, last_used_time, time_zone from calendar_feeds where user_id = $1
 `
 
 func (q *Queries) GetCalendarFeed(ctx context.Context, userID pgtype.UUID) (*CalendarFeed, error) {
@@ -35,33 +35,61 @@ func (q *Queries) GetCalendarFeed(ctx context.Context, userID pgtype.UUID) (*Cal
 		&i.SecretSHA256,
 		&i.CreateTime,
 		&i.LastUsedTime,
+		&i.TimeZone,
 	)
 	return &i, err
 }
 
-const upsertCalendarFeed = `-- name: UpsertCalendarFeed :one
-insert into calendar_feeds (user_id, secret_sha256)
-values ($1, $2)
-on conflict (user_id) do update
-set secret_sha256 = excluded.secret_sha256, create_time = now(), last_used_time = null
-returning user_id, secret_sha256, create_time, last_used_time
+const setCalendarFeedTimeZone = `-- name: SetCalendarFeedTimeZone :one
+update calendar_feeds set time_zone = $1
+where user_id = $2
+returning user_id, secret_sha256, create_time, last_used_time, time_zone
 `
 
-type UpsertCalendarFeedParams struct {
-	UserID       pgtype.UUID
-	SecretSHA256 []byte
+type SetCalendarFeedTimeZoneParams struct {
+	TimeZone string
+	UserID   pgtype.UUID
 }
 
-// Creates the user's calendar feed, replacing any old one, whose URL then
-// stops working.
-func (q *Queries) UpsertCalendarFeed(ctx context.Context, arg *UpsertCalendarFeedParams) (*CalendarFeed, error) {
-	row := q.db.QueryRow(ctx, upsertCalendarFeed, arg.UserID, arg.SecretSHA256)
+func (q *Queries) SetCalendarFeedTimeZone(ctx context.Context, arg *SetCalendarFeedTimeZoneParams) (*CalendarFeed, error) {
+	row := q.db.QueryRow(ctx, setCalendarFeedTimeZone, arg.TimeZone, arg.UserID)
 	var i CalendarFeed
 	err := row.Scan(
 		&i.UserID,
 		&i.SecretSHA256,
 		&i.CreateTime,
 		&i.LastUsedTime,
+		&i.TimeZone,
+	)
+	return &i, err
+}
+
+const upsertCalendarFeed = `-- name: UpsertCalendarFeed :one
+insert into calendar_feeds (user_id, secret_sha256, time_zone)
+values ($1, $2, $3)
+on conflict (user_id) do update
+set secret_sha256 = excluded.secret_sha256, time_zone = excluded.time_zone,
+  create_time = now(), last_used_time = null
+returning user_id, secret_sha256, create_time, last_used_time, time_zone
+`
+
+type UpsertCalendarFeedParams struct {
+	UserID       pgtype.UUID
+	SecretSHA256 []byte
+	TimeZone     string
+}
+
+// Creates the user's calendar feed, replacing any old one, whose URL then
+// stops working.
+func (q *Queries) UpsertCalendarFeed(ctx context.Context, arg *UpsertCalendarFeedParams) (*CalendarFeed, error) {
+	row := q.db.QueryRow(ctx, upsertCalendarFeed, arg.UserID, arg.SecretSHA256, arg.TimeZone)
+	var i CalendarFeed
+	err := row.Scan(
+		&i.UserID,
+		&i.SecretSHA256,
+		&i.CreateTime,
+		&i.LastUsedTime,
+		&i.TimeZone,
 	)
 	return &i, err
 }
@@ -70,14 +98,19 @@ const useCalendarFeed = `-- name: UseCalendarFeed :one
 update calendar_feeds
 set last_used_time = now()
 where secret_sha256 = $1
-returning user_id
+returning user_id, time_zone
 `
 
-// Returns the user of the calendar feed with the secret, recording that
-// it was read.
-func (q *Queries) UseCalendarFeed(ctx context.Context, secretSha256 []byte) (pgtype.UUID, error) {
+type UseCalendarFeedRow struct {
+	UserID   pgtype.UUID
+	TimeZone string
+}
+
+// Returns the user and time zone of the calendar feed with the secret,
+// recording that it was read.
+func (q *Queries) UseCalendarFeed(ctx context.Context, secretSha256 []byte) (*UseCalendarFeedRow, error) {
 	row := q.db.QueryRow(ctx, useCalendarFeed, secretSha256)
-	var user_id pgtype.UUID
-	err := row.Scan(&user_id)
-	return user_id, err
+	var i UseCalendarFeedRow
+	err := row.Scan(&i.UserID, &i.TimeZone)
+	return &i, err
 }
