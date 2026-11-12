@@ -140,3 +140,23 @@ func TestInstructionsJSON(t *testing.T) {
 		t.Error("got nil for empty instructions, want empty")
 	}
 }
+
+// TestDeriveTimes checks that a recipe whose steps say how long they take
+// gets its prep and cook times from its timeline, whatever it was given,
+// and that one whose steps don't keeps its own.
+func TestDeriveTimes(t *testing.T) {
+	t.Parallel()
+	r := &Recipe{PrepSeconds: 60, CookSeconds: 60, Instructions: []*Step{
+		{Text: "Rinse the rice", DurationSeconds: 120},
+		{Text: "Simmer the rice", DurationSeconds: 1500, Waiting: true},
+	}}
+	r.DeriveTimes()
+	if r.PrepSeconds != 120 || r.CookSeconds != 1500 {
+		t.Errorf("got %d s prep and %d s cook, want 120 and 1500, the timeline's", r.PrepSeconds, r.CookSeconds)
+	}
+	plain := &Recipe{PrepSeconds: 600, CookSeconds: 900, Instructions: []*Step{{Text: "Mix"}}}
+	plain.DeriveTimes()
+	if plain.PrepSeconds != 600 || plain.CookSeconds != 900 {
+		t.Errorf("got %d s prep and %d s cook, want the 600 and 900 given", plain.PrepSeconds, plain.CookSeconds)
+	}
+}

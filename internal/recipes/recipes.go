@@ -401,6 +401,8 @@ func NewRepository(log *slog.Logger, db *store.DB) *Repository {
 // ingredients' foods. It returns an *UnknownFoodsError if ingredients use
 // foods that aren't the household's.
 func (r *Repository) CreateRecipe(ctx context.Context, recipe *Recipe) (*Recipe, error) {
+	// A timed recipe's times are its steps', whatever it was given.
+	recipe.DeriveTimes()
 	instructions, err := instructionsToDB(recipe.Instructions)
 	if err != nil {
 		return nil, err
@@ -646,6 +648,8 @@ func (r *Repository) listRecipesByID(ctx context.Context, householdID pgtype.UUI
 // such recipe, and an *UnknownFoodsError if ingredients use foods that
 // aren't the household's.
 func (r *Repository) UpdateRecipe(ctx context.Context, recipe *Recipe) (*Recipe, error) {
+	// A timed recipe's times are its steps', whatever it was given.
+	recipe.DeriveTimes()
 	instructions, err := instructionsToDB(recipe.Instructions)
 	if err != nil {
 		return nil, err
@@ -976,6 +980,8 @@ func recipeFromDB(row *gen.Recipe, ingredients []*gen.ListRecipeIngredientsRow, 
 	if r.Instructions, err = instructionsFromDB(row.Instructions); err != nil {
 		r.Instructions = []*Step{}
 	}
+	// Recipes saved before their times were derived read as if they were.
+	r.DeriveTimes()
 	return r
 }
 

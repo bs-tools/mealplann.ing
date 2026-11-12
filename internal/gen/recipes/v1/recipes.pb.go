@@ -483,10 +483,15 @@ type Recipe_builder struct {
 	// How many servings the recipe makes, from 1 to 100. Required. Nutrition
 	// per serving divides the whole recipe by it.
 	Servings int32
-	// The hands-on preparation time, in seconds. 0 if unknown.
+	// The hands-on preparation time, in seconds. 0 if unknown. If any of
+	// the instructions has a duration_seconds, it's derived from them, as
+	// the hands-on time of the recipe's timeline (see GetRecipeTimeline),
+	// and what's set is ignored, so the two can't disagree.
 	PrepSeconds int32
 	// The cooking time, in seconds, e.g. in the oven or simmering. 0 if
-	// unknown.
+	// unknown. If any of the instructions has a duration_seconds, it's
+	// derived from them, as the timeline's waiting time, so prep_seconds and
+	// cook_seconds add up to its total, and what's set is ignored.
 	CookSeconds int32
 	// The ingredients, in the recipe's order. At most 100.
 	Ingredients []*Ingredient

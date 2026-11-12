@@ -102,6 +102,31 @@ func instructionsFromDB(data json.RawMessage) ([]*Step, error) {
 // duration takes: about what reading it and doing a simple task does.
 const DefaultStepSeconds = 5 * 60
 
+// Timed reports whether any of the recipe's steps says how long it takes,
+// so its timeline, not its own prep and cook times, says how long it
+// takes.
+func (r *Recipe) Timed() bool {
+	for _, s := range r.Instructions {
+		if s.DurationSeconds > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// DeriveTimes sets a timed recipe's prep and cook times from its
+// timeline: the hands-on time, and the waiting time, so they add up to its
+// total and can't disagree with its steps. A recipe whose steps don't say
+// how long they take keeps the times it was given.
+func (r *Recipe) DeriveTimes() {
+	if !r.Timed() {
+		return
+	}
+	t := r.Timeline()
+	r.PrepSeconds = t.HandsOnSeconds
+	r.CookSeconds = t.TotalSeconds - t.HandsOnSeconds
+}
+
 // TimedStep is a step on a recipe's timeline.
 type TimedStep struct {
 	Index int

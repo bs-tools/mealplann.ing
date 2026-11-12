@@ -54,7 +54,10 @@ export type Recipe = Message<"recipes.v1.Recipe"> & {
   servings: number;
 
   /**
-   * The hands-on preparation time, in seconds. 0 if unknown.
+   * The hands-on preparation time, in seconds. 0 if unknown. If any of
+   * the instructions has a duration_seconds, it's derived from them, as
+   * the hands-on time of the recipe's timeline (see GetRecipeTimeline),
+   * and what's set is ignored, so the two can't disagree.
    *
    * @generated from field: int32 prep_seconds = 5;
    */
@@ -62,7 +65,9 @@ export type Recipe = Message<"recipes.v1.Recipe"> & {
 
   /**
    * The cooking time, in seconds, e.g. in the oven or simmering. 0 if
-   * unknown.
+   * unknown. If any of the instructions has a duration_seconds, it's
+   * derived from them, as the timeline's waiting time, so prep_seconds and
+   * cook_seconds add up to its total, and what's set is ignored.
    *
    * @generated from field: int32 cook_seconds = 6;
    */
