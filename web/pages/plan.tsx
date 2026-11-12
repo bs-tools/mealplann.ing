@@ -155,20 +155,37 @@ const PlanPage: React.FC = () => {
   const shop = lists.data?.lists.find(
     (list) => !list.complete && list.startDate >= now
   );
+  /*
+   * The banner's line says which days are open, when the title doesn't,
+   * and before which shop, if one's coming within the week.
+   */
+  let openLine = "";
+  if (firstOpen !== undefined && lastOpen !== undefined) {
+    const days =
+      firstOpen === lastOpen
+        ? weekdayOf(firstOpen.date)
+        : `${weekdayOf(firstOpen.date)} to ${weekdayOf(lastOpen.date)}`;
+    const beforeShop =
+      shop !== undefined &&
+      shop.startDate > firstOpen.date &&
+      daysBetween(now, shop.startDate) <= 7;
+    if (openTitle.endsWith("to plan")) {
+      openLine = beforeShop
+        ? `${days}, before ${weekdayOf(shop.startDate)}'s shop.`
+        : `${days}.`;
+    } else if (beforeShop) {
+      openLine = `Plan before ${weekdayOf(shop.startDate)}'s shop.`;
+    }
+  }
   const banner = firstOpen !== undefined && lastOpen !== undefined && (
-    <div className="flex flex-col gap-2.5 rounded-2xl bg-ink-soft p-5 text-white print:hidden">
-      <p className="text-lg font-bold">{openTitle}</p>
-      <p className="text-sm text-muted/50">
-        {openSlots} {openSlots === 1 ? "meal" : "meals"}
-        {shop !== undefined &&
-        shop.startDate > firstOpen.date &&
-        daysBetween(now, shop.startDate) <= 7
-          ? `, before ${weekdayOf(shop.startDate)}'s shop.`
-          : " left to plan."}
-      </p>
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-2xl border border-pine-200 bg-pine-50 p-4 print:hidden">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p className="text-base font-bold text-pine-dark">{openTitle}</p>
+        {openLine !== "" && <p className="text-sm text-muted">{openLine}</p>}
+      </div>
       <Link
         to={`/plan/auto?start=${firstOpen.date}&days=${daysBetween(firstOpen.date, lastOpen.date) + 1}`}
-        className="self-start rounded-xl bg-pine-200 px-4 py-2.5 text-sm font-bold text-pine-dark"
+        className="shrink-0 rounded-xl bg-pine px-4 py-2.5 text-sm font-bold text-white hover:bg-pine-dark"
       >
         Plan them for me
       </Link>
