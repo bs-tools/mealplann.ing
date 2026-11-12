@@ -17,6 +17,7 @@ import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
   ChevronRightIcon,
   FireIcon,
+  MagnifyingGlassIcon,
   PlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -44,6 +45,18 @@ const PLACES: { value: Place; label: string }[] = [
   { label: "Freezer", value: "freezer" },
   { label: "Cupboard", value: "cupboard" },
 ];
+
+/**
+ * MatchesSearch reports whether a lot matches a search: whether each of
+ * its words is in its food's name, label or notes, ignoring case.
+ */
+const matchesSearch = (item: PantryItem, search: string): boolean => {
+  const text = [item.foodName, item.label, item.notes].join(" ").toLowerCase();
+  return search
+    .toLowerCase()
+    .split(/\s+/u)
+    .every((word) => text.includes(word));
+};
 
 // PlaceOf returns the tab of a lot: the cupboard if it isn't said.
 const placeOf = (item: PantryItem): Place => {
@@ -157,6 +170,12 @@ const PantryPage: React.FC = () => {
     undefined
   );
   const [stockedFood, setStockedFood] = useState<PickedFood | null>(null);
+  /*
+   * The search the lots are filtered by, "" for none. A search looks in
+   * every place, so a food is found wherever it's kept.
+   */
+  const [search, setSearch] = useState("");
+  const searching = search.trim() !== "";
   const setAlwaysInStock = useMutation(updateFood, {
     onSuccess: async () => {
       setStockedFood(null);
@@ -195,8 +214,42 @@ const PantryPage: React.FC = () => {
       ordered.splice(at < 0 ? ordered.length : at, 0, item);
     }
     const rest = here.filter((item) => !isSoon(item));
+    const lotRow = (item: PantryItem): React.ReactNode => (
+      <LotRow
+        key={item.id}
+        item={item}
+        now={now}
+        onOpen={() => {
+          setEditing(item);
+        }}
+      />
+    );
     let lots: React.ReactNode = null;
-    if (allItems.length === 0) {
+    if (searching) {
+      const found = allItems.filter((item) =>
+        matchesSearch(item, search.trim())
+      );
+      lots =
+        found.length === 0 ? (
+          <p className="text-sm text-muted">
+            Nothing in the pantry matches &ldquo;{search.trim()}&rdquo;.
+          </p>
+        ) : (
+          PLACES.map((option) => {
+            const there = found.filter(
+              (item) => placeOf(item) === option.value
+            );
+            return (
+              there.length > 0 && (
+                <section key={option.value} className="flex flex-col">
+                  <h2 className={sectionLabelClass}>{option.label}</h2>
+                  <ul>{there.map(lotRow)}</ul>
+                </section>
+              )
+            );
+          })
+        );
+    } else if (allItems.length === 0) {
       lots = (
         <EmptyState title="The pantry is empty">
           Check items off a{" "}
@@ -253,8 +306,8 @@ const PantryPage: React.FC = () => {
     content = (
       <div className="flex flex-col gap-4">
         {lots}
-        {place === "freezer" && <FreezerCard />}
-        {place === "cupboard" && (
+        {!searching && place === "freezer" && <FreezerCard />}
+        {!searching && place === "cupboard" && (
           <Card title="Always in stock">
             <div className="flex flex-col gap-3 text-sm">
               <p className="text-muted">
@@ -312,17 +365,35 @@ const PantryPage: React.FC = () => {
           </Link>
         }
       />
-      <Segmented
-        label="Where it's kept"
-        value={place}
-        options={PLACES}
-        onChange={(next) => {
-          setParams(next === "fridge" ? {} : { place: next }, {
-            replace: true,
-          });
-        }}
-      />
-      {cookableCount > 0 && (
+      <label className="flex items-center gap-2 rounded-xl border-2 border-pine bg-white px-3 py-2">
+        <MagnifyingGlassIcon
+          className="size-5 shrink-0 text-pine"
+          aria-hidden="true"
+        />
+        <span className="sr-only">Search the pantry</span>
+        <input
+          type="search"
+          className="min-w-0 grow border-0 bg-transparent py-1 text-base text-ink-soft outline-none placeholder:text-gray-500"
+          value={search}
+          placeholder="Search the pantry"
+          onChange={(event) => {
+            setSearch(event.target.value);
+          }}
+        />
+      </label>
+      {!searching && (
+        <Segmented
+          label="Where it's kept"
+          value={place}
+          options={PLACES}
+          onChange={(next) => {
+            setParams(next === "fridge" ? {} : { place: next }, {
+              replace: true,
+            });
+          }}
+        />
+      )}
+      {!searching && cookableCount > 0 && (
         <Link
           to="/pantry/cook"
           className="flex items-center gap-3 rounded-2xl bg-pine-50 px-4 py-3.5 text-base font-bold text-pine-dark"
