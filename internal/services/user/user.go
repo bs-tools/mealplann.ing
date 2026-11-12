@@ -10,10 +10,14 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/users"
 )
 
+// GetCurrentUser returns the signed in user, or no user when no one is
+// signed in. Signed out isn't an error, as every visit to the sign in
+// page asks: an Unauthenticated error is a 401, which Cloud Run logs as
+// an error for every signed out visitor.
 func (s *Service) GetCurrentUser(ctx context.Context, req *usersv1.GetCurrentUserRequest) (*usersv1.GetCurrentUserResponse, error) {
 	user, ok := authn.GetUser(ctx)
 	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, "")
+		return usersv1.GetCurrentUserResponse_builder{}.Build(), nil
 	}
 	u, err := userToProto(user)
 	if err != nil {

@@ -1,3 +1,4 @@
+import PortionDialog from "@components/plan/portion-dialog";
 import { markEaten, scalePortions } from "@components/today/day-change";
 import DisplacedChoice from "@components/today/displaced-choice";
 import {
@@ -11,7 +12,7 @@ import { ErrorText } from "@components/ui/query-error";
 import { choiceClass } from "@components/ui/styles";
 import type { ConnectError } from "@connectrpc/connect";
 import { createClient } from "@connectrpc/connect";
-import { useTransport } from "@connectrpc/connect-query";
+import { useQuery, useTransport } from "@connectrpc/connect-query";
 import {
   ArrowsRightLeftIcon,
   BuildingStorefrontIcon,
@@ -21,10 +22,12 @@ import {
 } from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
+import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import type {
   GetWeekResponse,
   PersonDay,
   PlannedEatingTime,
+  PlannedPortion,
 } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
@@ -56,7 +59,8 @@ interface MealSheetProps {
 /**
  * MealSheet changes a meal of the day as it happens: it was eaten, or
  * something else was, more or less of it, eaten out, or skipped. A meal
- * not eaten then asks what happens to it.
+ * not eaten then asks what happens to it. What it is can be changed too,
+ * each recipe, food or leftovers, or added to, like a light lunch.
  */
 const MealSheet: React.FC<MealSheetProps> = ({
   week,
@@ -69,6 +73,15 @@ const MealSheet: React.FC<MealSheetProps> = ({
   const queryClient = useQueryClient();
   const transport = useTransport();
   const [step, setStep] = useState<Step>("actions");
+  /*
+   * The portion being changed, null to add one, or undefined while
+   * neither: the portion's dialog takes the sheet's place, and closing it
+   * comes back to the sheet.
+   */
+  const [editing, setEditing] = useState<PlannedPortion | null | undefined>(
+    undefined
+  );
+  const people = useQuery(listPeople, {});
   const et = planned.eatingTime;
   const { portions } = planned;
   // What to call the meal in a sentence, e.g. "breakfast" or "this meal".
@@ -111,9 +124,21 @@ const MealSheet: React.FC<MealSheetProps> = ({
     case "actions": {
       content = (
         <div className="flex flex-col">
+          <div className="flex flex-col gap-3 pb-3">
+            <PortionList
+              portions={portions}
+              onSelect={setEditing}
+              onAdd={
+                et === undefined
+                  ? undefined
+                  : () => {
+                      setEditing(null);
+                    }
+              }
+            />
+          </div>
           {portions.length > 0 && (
             <div className="flex flex-col gap-3 pb-3">
-              <PortionList portions={portions} />
               <Plate nutrients={planned.nutrients} />
               <MealWarnings warnings={planned.warnings} />
               {et !== undefined &&
@@ -251,6 +276,22 @@ const MealSheet: React.FC<MealSheetProps> = ({
         </div>
       );
     }
+  }
+
+  if (editing !== undefined && et !== undefined) {
+    return (
+      <PortionDialog
+        slot={{ date, eatingTimeId: et.id, personId: day.personId }}
+        portion={editing ?? undefined}
+        people={people.data?.people ?? []}
+        dates={week.days.map((other) => other.date)}
+        cooks={[...week.earlierLeftovers, ...week.cooks]}
+        mealName={et.name === "" ? "this meal" : et.name}
+        onClose={() => {
+          setEditing(undefined);
+        }}
+      />
+    );
   }
 
   return (

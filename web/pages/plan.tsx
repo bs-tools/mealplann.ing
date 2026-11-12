@@ -7,7 +7,6 @@ import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import type { MealRow } from "@components/plan/plan-rows";
 import PlannedMealSheet from "@components/plan/planned-meal-sheet";
 import type { Slot } from "@components/plan/portion-dialog";
-import PortionDialog from "@components/plan/portion-dialog";
 import WeekStrip, { fillOf, openSlotsOf } from "@components/plan/week-strip";
 import WarningSheet from "@components/today/warning-sheet";
 import { EmptyState } from "@components/ui/misc";
@@ -30,7 +29,6 @@ import {
   getWeek,
   listStaples,
 } from "gen/plans/v1/plans-PlanService_connectquery";
-import type { PlannedPortion } from "gen/plans/v1/plans_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import { listShoppingLists } from "gen/shopping/v1/shopping-ShoppingService_connectquery";
 import {
@@ -58,12 +56,6 @@ interface MealPlanning {
   meal?: HouseholdMeal | undefined;
   // The recipe, undefined to choose one.
   recipeId?: string | undefined;
-}
-
-// PortionEdit is the portion being added or changed, and where.
-interface PortionEdit {
-  slot: Slot;
-  portion?: PlannedPortion | undefined;
 }
 
 // MealOpen is the planned meal shown in its sheet.
@@ -116,7 +108,6 @@ const PlanPage: React.FC = () => {
     const recipeId = params.get("plan") ?? "";
     return recipeId === "" ? null : { date: day, recipeId };
   });
-  const [editing, setEditing] = useState<PortionEdit | null>(null);
   // The empty eating time recipes are suggested for, or null.
   const [suggesting, setSuggesting] = useState<Slot | null>(null);
   const [opened, setOpened] = useState<MealOpen | null>(null);
@@ -406,10 +397,6 @@ const PlanPage: React.FC = () => {
             week={week.data}
             day={openedDay}
             row={opened.row}
-            onEdit={(slot, portion) => {
-              setOpened(null);
-              setEditing({ portion, slot });
-            }}
             onClose={() => {
               setOpened(null);
             }}
@@ -465,21 +452,6 @@ const PlanPage: React.FC = () => {
           people={people.data?.people ?? []}
           onClose={() => {
             setSuggesting(null);
-          }}
-        />
-      )}
-      {editing !== null && (
-        <PortionDialog
-          slot={editing.slot}
-          portion={editing.portion}
-          people={people.data?.people ?? []}
-          dates={dates}
-          cooks={[
-            ...(week.data?.earlierLeftovers ?? []),
-            ...(week.data?.cooks ?? []),
-          ]}
-          onClose={() => {
-            setEditing(null);
           }}
         />
       )}

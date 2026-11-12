@@ -113,7 +113,8 @@ var (
 
 // UserServiceClient is a client for the users.v1.UserService service.
 type UserServiceClient interface {
-	// Get the signed in user.
+	// Get the signed in user. The response has no user when no one is
+	// signed in.
 	GetCurrentUser(context.Context, *v1.GetCurrentUserRequest) (*v1.GetCurrentUserResponse, error)
 	// Create an API token. API tokens authenticate MCP clients and other API
 	// clients with an "Authorization: Bearer <token>" header.
@@ -145,7 +146,8 @@ func NewUserServiceClient(client *connect.Client) UserServiceClient {
 
 // UserServiceHandler is an implementation of the users.v1.UserService service.
 type UserServiceHandler interface {
-	// Get the signed in user.
+	// Get the signed in user. The response has no user when no one is
+	// signed in.
 	GetCurrentUser(context.Context, *v1.GetCurrentUserRequest) (*v1.GetCurrentUserResponse, error)
 	// Create an API token. API tokens authenticate MCP clients and other API
 	// clients with an "Authorization: Bearer <token>" header.

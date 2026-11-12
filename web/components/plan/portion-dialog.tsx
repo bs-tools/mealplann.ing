@@ -7,6 +7,7 @@ import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
 import {
   choiceClass,
+  ghostDangerButton,
   labelClass,
   primaryButton,
   secondaryButton,
@@ -14,15 +15,19 @@ import {
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
+import { PantryService } from "gen/pantry/v1/pantry_pb";
 import type { Person } from "gen/people/v1/people_pb";
 import {
   createPortion,
+  deletePortion,
   listFrozenLeftovers,
   takeFromFreezer,
   updatePortion,
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type { PlannedCook, PlannedPortion } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
+import { ShoppingService } from "gen/shopping/v1/shopping_pb";
+import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { formatDay, formatShortDate } from "helpers/format";
 import { AMOUNT_UNITS, formatServings, optionValue } from "helpers/labels";
 import { parseOptionalNumber } from "helpers/parse";
@@ -58,8 +63,26 @@ interface PortionDialogProps {
    * leftovers still keep. Those with no servings left aren't offered.
    */
   cooks: PlannedCook[];
+  /*
+   * The meal it's opened from, like "Lunch", which fixes the person, the
+   * eating time and the day, so they aren't asked.
+   */
+  mealName?: string;
   onClose: () => void;
 }
+
+// DialogTitle says what the dialog does, like "Add to lunch".
+const dialogTitle = (
+  portion: PlannedPortion | undefined,
+  mealName: string | undefined
+): string => {
+  if (portion !== undefined) {
+    return `Change ${portion.name}`;
+  }
+  return mealName === undefined
+    ? "Add to the plan"
+    : `Add to ${mealName.toLowerCase()}`;
+};
 
 /**
  * PortionDialog adds something a person eats at an eating time, leftovers
@@ -72,6 +95,7 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
   people,
   dates,
   cooks,
+  mealName,
   onClose,
 }) => {
   const queryClient = useQueryClient();
@@ -116,13 +140,20 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
   const [invalid, setInvalid] = useState("");
 
   const onSuccess = async (): Promise<void> => {
-    await invalidateServices(queryClient, [PlanService]);
+    await invalidateServices(queryClient, [
+      PlanService,
+      PantryService,
+      ShoppingService,
+      SuggestionService,
+    ]);
     onClose();
   };
   const create = useMutation(createPortion, { onSuccess });
   const update = useMutation(updatePortion, { onSuccess });
   const take = useMutation(takeFromFreezer, { onSuccess });
-  const pending = create.isPending || update.isPending || take.isPending;
+  const remove = useMutation(deletePortion, { onSuccess });
+  const pending =
+    create.isPending || update.isPending || take.isPending || remove.isPending;
   // What's in the freezer, to thaw for it, when adding.
   const freezer = useQuery(
     listFrozenLeftovers,
@@ -275,13 +306,7 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
   };
 
   return (
-    <Modal
-      open
-      onClose={onClose}
-      title={
-        portion === undefined ? "Add to the plan" : `Change ${portion.name}`
-      }
-    >
+    <Modal open onClose={onClose} title={dialogTitle(portion, mealName)}>
       <form
         className="flex flex-col gap-3"
         onSubmit={(event) => {
@@ -289,46 +314,53 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
           save();
         }}
       >
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <SelectField
-            label="Person"
-            value={personId}
-            options={people.map((other) => ({
-              label: other.name,
-              value: other.id,
-            }))}
-            onChange={(value) => {
-              setPersonId(value);
-              const next = people.find((other) => other.id === value);
-              const sameName = next?.eatingTimes.find(
-                (et) =>
-                  et.name ===
-                  person?.eatingTimes.find((other) => other.id === eatingTimeId)
-                    ?.name
-              );
-              setEatingTimeId(sameName?.id ?? next?.eatingTimes[0]?.id ?? "");
-            }}
-          />
-          <SelectField
-            label="Eating time"
-            value={eatingTimeId}
-            options={(person?.eatingTimes ?? []).map((et) => ({
-              label: et.name,
-              value: et.id,
-            }))}
-            onChange={setEatingTimeId}
-          />
-          <SelectField
-            label="Day"
-            value={date}
-            options={dateOptions.map((value) => ({
-              label: formatDay(value),
-              value,
-            }))}
-            onChange={setDate}
-          />
-        </div>
-        <div className="flex gap-2" role="group" aria-label="What's eaten">
+        {mealName === undefined && (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <SelectField
+              label="Person"
+              value={personId}
+              options={people.map((other) => ({
+                label: other.name,
+                value: other.id,
+              }))}
+              onChange={(value) => {
+                setPersonId(value);
+                const next = people.find((other) => other.id === value);
+                const sameName = next?.eatingTimes.find(
+                  (et) =>
+                    et.name ===
+                    person?.eatingTimes.find(
+                      (other) => other.id === eatingTimeId
+                    )?.name
+                );
+                setEatingTimeId(sameName?.id ?? next?.eatingTimes[0]?.id ?? "");
+              }}
+            />
+            <SelectField
+              label="Eating time"
+              value={eatingTimeId}
+              options={(person?.eatingTimes ?? []).map((et) => ({
+                label: et.name,
+                value: et.id,
+              }))}
+              onChange={setEatingTimeId}
+            />
+            <SelectField
+              label="Day"
+              value={date}
+              options={dateOptions.map((value) => ({
+                label: formatDay(value),
+                value,
+              }))}
+              onChange={setDate}
+            />
+          </div>
+        )}
+        <div
+          className="flex flex-wrap gap-2"
+          role="group"
+          aria-label="What's eaten"
+        >
           <button
             type="button"
             className={choiceClass(what === "food")}
@@ -441,8 +473,22 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
         )}
         <TextField label="Notes" value={notes} onChange={setNotes} />
         {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
-        <ErrorText error={create.error ?? update.error ?? take.error} />
-        <div className="flex justify-end gap-2">
+        <ErrorText
+          error={create.error ?? update.error ?? take.error ?? remove.error}
+        />
+        <div className="flex flex-wrap justify-end gap-2">
+          {portion !== undefined && portion.portionId !== "" && (
+            <button
+              type="button"
+              className={`${ghostDangerButton} mr-auto`}
+              disabled={pending}
+              onClick={() => {
+                remove.mutate({ id: portion.portionId });
+              }}
+            >
+              Remove it
+            </button>
+          )}
           <button type="button" className={secondaryButton} onClick={onClose}>
             Cancel
           </button>

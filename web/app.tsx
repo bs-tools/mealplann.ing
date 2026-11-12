@@ -108,15 +108,9 @@ const App: React.FC = () => {
       console.error("Failed to get current user:", error);
     }
     user = null;
-  } else if (data.user === undefined) {
-    // This is a programmer error, the user should always be set in the response.
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <h1>Error: No user data, please report this bug!</h1>
-      </div>
-    );
   } else {
-    ({ user } = data);
+    // The user is unset when no one is signed in.
+    user = data.user ?? null;
   }
 
   /**
