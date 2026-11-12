@@ -36,7 +36,7 @@ const LOW = 0.05;
 
 interface Rating {
   word: string;
-  // Whether it's good news, which shows in pine, else in orange.
+  // Whether it's good news, which shows in pine, else as a warning, in amber.
   good: boolean;
 }
 
@@ -134,12 +134,12 @@ const RecipeBalance: React.FC<RecipeBalanceProps> = ({ perServing }) => {
                 title={`${Math.round(share * 100)}% of a daily value`}
               >
                 <span
-                  className={`block h-2.5 rounded-full ${rating.good ? "bg-pine" : "bg-cook"}`}
+                  className={`block h-2.5 rounded-full ${rating.good ? "bg-pine" : "bg-warn"}`}
                   style={{ width: `${Math.min(share / 0.4, 1) * 100}%` }}
                 />
               </span>
               <span
-                className={`font-bold ${rating.good ? "text-pine" : "text-cook-dark"}`}
+                className={`font-bold ${rating.good ? "text-pine" : "text-warn-dark"}`}
               >
                 {rating.word}
               </span>

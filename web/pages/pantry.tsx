@@ -115,7 +115,7 @@ const LotRow: React.FC<LotRowProps> = ({ item, now, onOpen }) => {
           </span>
           {when !== "" && (
             <span
-              className={`text-sm ${days <= SOON_DAYS ? "font-bold text-cook-dark" : "text-muted"}`}
+              className={`text-sm ${days <= SOON_DAYS ? "font-bold text-warn-dark" : "text-muted"}`}
             >
               {when}
               {item.notes !== "" && ` · ${item.notes}`}

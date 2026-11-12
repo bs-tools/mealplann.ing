@@ -43,15 +43,21 @@
   --color-ready: #2f6b4f;
   --color-ready-tint: #e3f1ea;
   --color-heat: #1f4e80;
-  --color-heat-tint: #e6eef7;
-  --color-cook: #c2410c;
-  --color-cook-dark: #7a300a;
-  --color-cook-tint: #fdebd8;
-  /* Warnings: a warm tint with a dark rust for text. */
-  --color-warn: #9a2b0e;
-  --color-warn-dark: #7a2e0e;
-  --color-warn-tint: #fff5ec;
-  --color-warn-line: #f4d9c3;
+  --color-heat-tint: #e3ecf6;
+  --color-cook: #6a4bb0;
+  --color-cook-dark: #4b3285;
+  --color-cook-tint: #ece7f8;
+  /*
+   * Warnings are yellow, a pale tint with dark amber for text and icons,
+   * apart from every effort's color, so a warning never reads as cooking.
+   * Red is kept for errors.
+   */
+  --color-warn: #8a6500;
+  --color-warn-dark: #6b4e00;
+  --color-warn-tint: #fff1bf;
+  --color-warn-line: #f2dc8a;
+  --color-error: #b42318;
+  --color-error-tint: #fef0ee;
   --color-google-text-gray: #3c4043;
   --color-google-logo-blue: #4285f4;
   --color-google-logo-green: #34a853;
