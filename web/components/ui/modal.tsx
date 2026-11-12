@@ -26,6 +26,13 @@ interface ModalProps {
   dirty?: boolean | undefined;
 }
 
+/*
+ * A drag of the grip shorter than TAP_PIXELS is a tap, and one longer than
+ * CLOSE_PIXELS closes the sheet; in between, it springs back.
+ */
+const TAP_PIXELS = 6;
+const CLOSE_PIXELS = 100;
+
 const Modal: React.FC<ModalProps> = ({
   open,
   onClose,
@@ -35,6 +42,10 @@ const Modal: React.FC<ModalProps> = ({
   dirty = false,
 }) => {
   const [confirming, setConfirming] = useState(false);
+  // The grip being dragged: where it started, and how far down it moved.
+  const [drag, setDrag] = useState<{ startY: number; moved: number } | null>(
+    null
+  );
   const dismiss = () => {
     if (dirty) {
       setConfirming(true);
@@ -52,13 +63,56 @@ const Modal: React.FC<ModalProps> = ({
         <div className="flex min-h-full items-end justify-center sm:items-center sm:p-4">
           <DialogPanel
             transition
+            style={
+              drag === null || drag.moved === 0
+                ? undefined
+                : {
+                    transform: `translateY(${drag.moved}px)`,
+                    transition: "none",
+                  }
+            }
             className={`relative w-full ${wide ? "max-w-3xl" : "max-w-lg"} rounded-t-3xl bg-ground pb-[env(safe-area-inset-bottom)] shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150 sm:rounded-2xl sm:pb-0`}
           >
-            {/* On phones, the modal is a sheet from the bottom, with a grip. */}
-            <div
-              className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-gray-300 sm:hidden"
-              aria-hidden="true"
-            />
+            {/*
+             * On phones, the modal is a sheet from the bottom, with a grip:
+             * dragging it down far enough, or tapping it, closes the sheet.
+             */}
+            <button
+              type="button"
+              aria-label="Close"
+              className="flex w-full cursor-grab touch-none justify-center pt-3 pb-1 sm:hidden"
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                setDrag({ moved: 0, startY: event.clientY });
+              }}
+              onPointerMove={(event) => {
+                if (drag !== null) {
+                  setDrag({
+                    ...drag,
+                    moved: Math.max(event.clientY - drag.startY, 0),
+                  });
+                }
+              }}
+              onPointerUp={() => {
+                const moved = drag?.moved ?? 0;
+                setDrag(null);
+                // A tap, or a drag past the threshold, closes it.
+                if (moved < TAP_PIXELS || moved > CLOSE_PIXELS) {
+                  dismiss();
+                }
+              }}
+              onPointerCancel={() => {
+                setDrag(null);
+              }}
+              onClick={(event) => {
+                // A key press clicks with no pointer, and closes it too.
+                if (event.detail === 0) {
+                  dismiss();
+                }
+              }}
+            >
+              <span className="h-1.5 w-10 rounded-full bg-gray-300" />
+            </button>
             <div className="flex items-center justify-between px-5 pt-3 pb-1 sm:pt-4">
               <DialogTitle as="h3" className="text-lg font-bold text-ink-soft">
                 {title}

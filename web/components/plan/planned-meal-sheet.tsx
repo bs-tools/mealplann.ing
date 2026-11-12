@@ -256,7 +256,7 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
     ];
     content = (
       <div className="flex flex-col gap-5">
-        <Plate portions={portions} />
+        <Plate nutrients={slot.planned.nutrients} />
         {main !== undefined && (
           <SidesCard
             personId={slot.person.personId}
