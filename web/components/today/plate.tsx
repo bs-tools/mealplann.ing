@@ -12,7 +12,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Nutrients } from "gen/foods/v1/foods_pb";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
-import type { PlannedPortion } from "gen/plans/v1/plans_pb";
+import { listStaples } from "gen/plans/v1/plans-PlanService_connectquery";
+import type { PlannedPortion, Staple } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { suggestSides } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
@@ -112,25 +113,92 @@ export const Plate: React.FC<PlateProps> = ({ nutrients }) => {
   );
 };
 
+/**
+ * StapleSkips are a person's staples at an eating time skipped on a date,
+ * and the mutations to skip and bring one back.
+ */
+export interface StapleSkips {
+  skipped: Staple[];
+  skip: (stapleId: string) => void;
+  unskip: (stapleId: string) => void;
+  pending: boolean;
+  error: ConnectError | null;
+}
+
+/**
+ * UseStapleSkips returns a person's staples at an eating time skipped on a
+ * date, and skips and brings them back, so a staple like a breakfast tea
+ * is skipped, or brought back, on the meal it's part of.
+ */
+export const useStapleSkips = (
+  personId: string,
+  eatingTimeId: string,
+  date: string
+): StapleSkips => {
+  const queryClient = useQueryClient();
+  const transport = useTransport();
+  const staples = useQuery(listStaples, {});
+  const change = useMutation<
+    void,
+    ConnectError,
+    { stapleId: string; skip: boolean }
+  >({
+    mutationFn: async ({ stapleId, skip }) => {
+      const client = createClient(PlanService, transport);
+      await (skip
+        ? client.skipStaple({ date, id: stapleId })
+        : client.unskipStaple({ date, id: stapleId }));
+    },
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [
+        PlanService,
+        ShoppingService,
+        SuggestionService,
+      ]);
+    },
+  });
+  return {
+    error: change.error,
+    pending: change.isPending,
+    skip: (stapleId) => {
+      change.mutate({ skip: true, stapleId });
+    },
+    skipped: (staples.data?.staples ?? []).filter(
+      (staple) =>
+        staple.personId === personId &&
+        staple.eatingTimeId === eatingTimeId &&
+        staple.skippedDates.includes(date)
+    ),
+    unskip: (stapleId) => {
+      change.mutate({ skip: false, stapleId });
+    },
+  };
+};
+
 interface PortionListProps {
   portions: PlannedPortion[];
   // Opens a portion to change or remove it, if the list allows it.
   onSelect?: (portion: PlannedPortion) => void;
   // Adds something to the meal, if the list allows it.
   onAdd?: (() => void) | undefined;
+  // Skips the meal's staples on its date, and brings them back, if allowed.
+  staples?: StapleSkips | undefined;
 }
 
 /**
  * PortionList lists what a meal is: each recipe or food, with its weight,
  * so the sheet's title can be just the meal, like "Breakfast". Given
  * onSelect and onAdd, each portion opens to change it, and a last row adds
- * more, like a piece of fruit to a light lunch. Staples are changed on the
- * People page, so they don't open.
+ * more, like a piece of fruit to a light lunch. Given staples, a staple,
+ * like a morning tea, is skipped that day from its row, and a skipped one
+ * shows, struck through, to bring back; staples are otherwise changed on
+ * the person's page.
  */
 export const PortionList: React.FC<PortionListProps> = ({
   portions,
   onSelect,
   onAdd,
+  staples,
 }) => (
   <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line bg-white">
     {portions.map((portion) => {
@@ -151,8 +219,22 @@ export const PortionList: React.FC<PortionListProps> = ({
           {onSelect === undefined || portion.portionId === "" ? (
             <div className="flex items-baseline gap-3 px-4 py-2.5 text-sm">
               {row}
-              {onSelect !== undefined && (
-                <span className="shrink-0 text-xs text-muted">Staple</span>
+              {staples !== undefined && portion.stapleId !== "" ? (
+                <button
+                  type="button"
+                  className="shrink-0 text-xs font-bold text-pine hover:underline disabled:opacity-50"
+                  disabled={staples.pending}
+                  title={`Skip ${portion.name} this day only; it's back the next`}
+                  onClick={() => {
+                    staples.skip(portion.stapleId);
+                  }}
+                >
+                  Skip
+                </button>
+              ) : (
+                onSelect !== undefined && (
+                  <span className="shrink-0 text-xs text-muted">Staple</span>
+                )
               )}
             </div>
           ) : (
@@ -174,6 +256,27 @@ export const PortionList: React.FC<PortionListProps> = ({
         </li>
       );
     })}
+    {staples?.skipped.map((staple) => (
+      <li
+        key={staple.id}
+        className="flex items-baseline gap-3 px-4 py-2.5 text-sm"
+      >
+        <span className="min-w-0 grow text-muted line-through">
+          {staple.name}
+        </span>
+        <span className="shrink-0 text-xs text-muted">Skipped</span>
+        <button
+          type="button"
+          className="shrink-0 text-xs font-bold text-pine hover:underline disabled:opacity-50"
+          disabled={staples.pending}
+          onClick={() => {
+            staples.unskip(staple.id);
+          }}
+        >
+          Bring back
+        </button>
+      </li>
+    ))}
     {onAdd !== undefined && (
       <li>
         <button

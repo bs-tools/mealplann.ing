@@ -3,7 +3,12 @@ import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import type { MealRow, RowSlot } from "@components/plan/plan-rows";
 import PortionDialog from "@components/plan/portion-dialog";
 import WarningsLink from "@components/plan/warnings-link";
-import { Plate, PortionList, SidesCard } from "@components/today/plate";
+import {
+  Plate,
+  PortionList,
+  SidesCard,
+  useStapleSkips,
+} from "@components/today/plate";
 import { ConfirmDialog } from "@components/ui/confirm-button";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
@@ -266,6 +271,11 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
     ]);
   };
   const remove = useMutation(deletePortion, { onSuccess });
+  const stapleSkips = useStapleSkips(
+    slot?.person.personId ?? "",
+    slot?.planned.eatingTime?.id ?? "",
+    day.date
+  );
   const eatIn = useMutation(setEatingOut, { onSuccess });
   const transport = useTransport();
   const staples = useQuery(listStaples, {});
@@ -397,6 +407,7 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
         <PortionList
           portions={portions}
           onSelect={setEditing}
+          staples={stapleSkips}
           onAdd={() => {
             setEditing(null);
           }}
