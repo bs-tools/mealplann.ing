@@ -28,6 +28,7 @@ import {
   deletePortion,
   listStaples,
   setEatingOut,
+  updateCook,
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type {
   GetWeekResponse,
@@ -75,7 +76,7 @@ const cookUsesOf = (
           .map((portion): CookUse => ({
             key: portion.portionId,
             kind: "eaten",
-            label: `${parseDate(day.date).toLocaleDateString(undefined, { weekday: "short" })} · ${person.personName}`,
+            label: `${parseDate(day.date).toLocaleDateString(undefined, { weekday: "short" })} · ${person.personName} ${formatAmount(portion.servings)}`,
             own: shown.some((other) => other.portionId === portion.portionId),
             servings: portion.servings,
           }))
@@ -88,7 +89,7 @@ const cookUsesOf = (
     uses.push({
       key: "frozen",
       kind: "frozen",
-      label: "Freezer",
+      label: `Freezer ${formatAmount(frozen)}`,
       own: false,
       servings: frozen,
     });
@@ -98,7 +99,7 @@ const cookUsesOf = (
     uses.push({
       key: "left",
       kind: "left",
-      label: "Left over",
+      label: `Not planned ${formatAmount(left)}`,
       own: false,
       servings: left,
     });
@@ -109,7 +110,7 @@ const cookUsesOf = (
 const USE_CLASS: Record<CookUse["kind"], string> = {
   eaten: "bg-cook/35",
   frozen: "bg-heat-tint",
-  left: "border-2 border-dashed border-line",
+  left: "border-2 border-dashed border-muted/40",
 };
 
 interface CookBarProps {
@@ -121,37 +122,84 @@ interface CookBarProps {
 /**
  * CookBar shows what a cook's servings go to: the meal shown, the other
  * meals that eat from it, the freezer and what's left, so it's clear what
- * changing one does to the rest.
+ * changing one does to the rest. Each part is as wide as its servings, so
+ * a cook making more than is planned shows mostly as unplanned: the bar
+ * offers to cook only what's planned, as nobody eats the rest.
  */
 const CookBar: React.FC<CookBarProps> = ({ week, cookId, portions }) => {
-  const cook = week.cooks.find((other) => other.cook?.id === cookId)?.cook;
+  const queryClient = useQueryClient();
+  const planned = week.cooks.find((other) => other.cook?.id === cookId);
+  const cook = planned?.cook;
   const uses = cookUsesOf(week, cookId, portions);
-  if (cook === undefined || uses.length < 2) {
+  const shrink = useMutation(updateCook, {
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [
+        PlanService,
+        PantryService,
+        ShoppingService,
+        SuggestionService,
+      ]);
+    },
+  });
+  if (planned === undefined || cook === undefined || uses.length < 2) {
     return null;
   }
+  const left = planned.leftServings;
+  /*
+   * What's planned of it, rounded up to a quarter serving, as recipes
+   * scale by quarters; a cook already made can't be made smaller.
+   */
+  const needed = Math.ceil((cook.servings - left) * 4 - 0.001) / 4;
+  const canShrink = !cook.done && left > 0.01 && needed > 0;
   return (
     <section className="flex flex-col gap-2">
       <h3 className={sectionLabelClass}>
         This cook makes {formatAmount(cook.servings)}
+        {left > 0.01 && ` · ${formatAmount(cook.servings - left)} planned`}
       </h3>
-      <div className="flex gap-1.5">
+      <div className="flex gap-1">
         {uses.map((use) => (
-          <div
+          <span
             key={use.key}
-            className="flex min-w-0 flex-col gap-1.5"
+            className={`h-6 min-w-2 rounded-xl ${use.own ? "bg-cook" : USE_CLASS[use.kind]}`}
             style={{ flexBasis: 0, flexGrow: use.servings }}
-          >
-            <span
-              className={`h-6 rounded-xl ${use.own ? "bg-cook" : USE_CLASS[use.kind]}`}
-            />
-            <span
-              className={`truncate text-xs ${use.own ? "font-bold text-ink-soft" : "text-muted"}`}
-            >
-              {use.label}
-            </span>
-          </div>
+          />
         ))}
       </div>
+      <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+        {uses.map((use) => (
+          <li
+            key={use.key}
+            className={`flex items-center gap-1.5 ${use.own ? "font-bold text-ink-soft" : "text-muted"}`}
+          >
+            <span
+              className={`size-2.5 shrink-0 rounded-full ${use.own ? "bg-cook" : USE_CLASS[use.kind]}`}
+              aria-hidden="true"
+            />
+            {use.label}
+          </li>
+        ))}
+      </ul>
+      {canShrink && (
+        <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            className="self-start rounded-full bg-pine-50 px-3.5 py-2 text-sm font-bold text-pine hover:bg-pine-100 disabled:opacity-50"
+            disabled={shrink.isPending}
+            onClick={() => {
+              shrink.mutate({
+                cook: { id: cook.id, servings: needed },
+                updateMask: { paths: ["servings"] },
+              });
+            }}
+          >
+            {shrink.isPending
+              ? "Changing it…"
+              : `Cook only ${formatServings(needed)}`}
+          </button>
+          <ErrorText error={shrink.error} />
+        </div>
+      )}
     </section>
   );
 };
@@ -474,9 +522,9 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
                 className="font-bold"
               >
                 {shared.cook.recipeName}
-              </Link>
-              , {formatServings(shared.cook.servings)} for{" "}
-              {formatList(sharedNames)}
+              </Link>{" "}
+              for {formatList(sharedNames)}, cooked as{" "}
+              {formatServings(shared.cook.servings)}
             </p>
             <div className="-mx-2 flex flex-wrap gap-1">
               <button

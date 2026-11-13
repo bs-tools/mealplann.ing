@@ -14,8 +14,12 @@ import {
   secondaryButton,
 } from "@components/ui/styles";
 import { createClient } from "@connectrpc/connect";
+import type { ConnectError } from "@connectrpc/connect";
 import { useMutation, useTransport } from "@connectrpc/connect-query";
-import { useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation as useTanstackMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
 import type { Person } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
@@ -107,6 +111,39 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   const [invalid, setInvalid] = useState("");
   const [result, setResult] = useState<PlanMealResponse | null>(null);
   const transport = useTransport();
+  /*
+   * EatOut marks the meal eaten out for whoever's chosen, instead of
+   * planning it: each person's eating time at it, which planning then
+   * leaves alone.
+   */
+  const eatOut = useTanstackMutation<void, ConnectError, Person[]>({
+    mutationFn: async (who) => {
+      const client = createClient(PlanService, transport);
+      await Promise.all(
+        who.flatMap((person) =>
+          person.eatingTimes
+            .filter((et) => et.meal === meal)
+            .slice(0, 1)
+            .map((et) =>
+              client.setEatingOut({
+                date,
+                eatingOut: true,
+                eatingTimeId: et.id,
+                personId: person.id,
+              })
+            )
+        )
+      );
+    },
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [
+        PlanService,
+        ShoppingService,
+        SuggestionService,
+      ]);
+      onClose();
+    },
+  });
   const plan = useMutation(planMeal, {
     onSuccess: async (response) => {
       // A swap deletes the meal's old cook, with its portions.
@@ -265,6 +302,23 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
                   </button>
                 );
               })}
+            </div>
+          )}
+          {replacing === undefined && chosen.length > 0 && (
+            <div className="mt-1 flex flex-col gap-1">
+              <button
+                type="button"
+                className="self-start text-sm font-bold text-pine hover:underline disabled:opacity-50"
+                disabled={eatOut.isPending}
+                onClick={() => {
+                  eatOut.mutate(chosen);
+                }}
+              >
+                {eatOut.isPending
+                  ? "Marking it…"
+                  : `Mark ${chosen.length === 1 ? (chosen[0]?.name ?? "them") : "them"} as eating out`}
+              </button>
+              <ErrorText error={eatOut.error} />
             </div>
           )}
         </div>

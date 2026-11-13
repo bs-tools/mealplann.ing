@@ -2,6 +2,7 @@ import Loading from "@components/loading";
 import { useApplyFix } from "@components/plan/apply-fix";
 import { splitFix } from "@components/today/plate";
 import { warningTitle } from "@components/today/today-bits";
+import { fixFor, fixLeaves } from "@components/today/warning-fix";
 import Modal from "@components/ui/modal";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
@@ -45,7 +46,7 @@ const WarningSheet: React.FC<WarningSheetProps> = ({
 }) => {
   const fixes = useQuery(suggestFixes, { date, eatingTimeId, personId });
   const apply = useApplyFix(portions, onClose);
-  const [fix] = fixes.data?.fixes ?? [];
+  const fix = fixFor(fixes.data?.fixes ?? [], warning);
 
   let content: React.ReactNode = null;
   if (fixes.isPending) {
@@ -85,6 +86,9 @@ const WarningSheet: React.FC<WarningSheetProps> = ({
               <p className="text-sm text-muted">
                 {splitFix(fix.description).detail}.
               </p>
+            )}
+            {fixLeaves(fix) !== "" && (
+              <p className="text-sm text-muted">{fixLeaves(fix)}</p>
             )}
             {fix.energyKcal !== fix.plannedEnergyKcal && (
               <p className="text-sm text-muted tabular-nums">
