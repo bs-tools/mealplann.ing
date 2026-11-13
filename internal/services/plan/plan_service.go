@@ -60,6 +60,8 @@ type PlanRepository interface {
 	CreatePortion(ctx context.Context, p *plans.Portion) (*plans.Portion, error)
 	UpdatePortion(ctx context.Context, p *plans.Portion) (*plans.Portion, error)
 	DeletePortion(ctx context.Context, householdID, id pgtype.UUID) error
+	DeletePortionAndUnusedCook(ctx context.Context, householdID, id pgtype.UUID) (string, error)
+	DeleteUnusedCook(ctx context.Context, householdID, id pgtype.UUID) (string, error)
 	SetPortionEaten(ctx context.Context, householdID, id pgtype.UUID, eaten bool) error
 	ListCookPortions(ctx context.Context, householdID, cookID pgtype.UUID) ([]*plans.Portion, error)
 	MoveCook(ctx context.Context, c *plans.Cook, moves []plans.PortionMove, deletes []pgtype.UUID) (*plans.Cook, error)
@@ -976,7 +978,16 @@ func (s *Service) UpdatePortion(ctx context.Context, req *plansv1.UpdatePortionR
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to update portion", portionNotFound)
 	}
-	return plansv1.UpdatePortionResponse_builder{Portion: portionToProto(updated)}.Build(), nil
+	resp := plansv1.UpdatePortionResponse_builder{Portion: portionToProto(updated)}.Build()
+	// A portion moved off a cook can leave it to nobody.
+	if req.GetDeleteUnusedCook() && existing.CookID.Valid && updated.CookID != existing.CookID {
+		name, err := s.plans.DeleteUnusedCook(ctx, user.HouseholdID(), existing.CookID)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to delete the unused cook", "")
+		}
+		resp.SetDeletedCookRecipeName(name)
+	}
+	return resp, nil
 }
 
 func (s *Service) DeletePortion(ctx context.Context, req *plansv1.DeletePortionRequest) (*plansv1.DeletePortionResponse, error) {
@@ -987,6 +998,13 @@ func (s *Service) DeletePortion(ctx context.Context, req *plansv1.DeletePortionR
 	id, err := parseID("id", req.GetId(), "find portions with GetWeek")
 	if err != nil {
 		return nil, err
+	}
+	if req.GetDeleteUnusedCook() {
+		name, err := s.plans.DeletePortionAndUnusedCook(ctx, user.HouseholdID(), id)
+		if err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to delete portion", portionNotFound)
+		}
+		return plansv1.DeletePortionResponse_builder{DeletedCookRecipeName: name}.Build(), nil
 	}
 	if err := s.plans.DeletePortion(ctx, user.HouseholdID(), id); err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to delete portion", portionNotFound)

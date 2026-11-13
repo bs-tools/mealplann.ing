@@ -292,6 +292,8 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
       return;
     }
     update.mutate({
+      // A cook it no longer has a share of goes, if nobody eats it then.
+      deleteUnusedCook: true,
       portion: message,
       updateMask: {
         paths: [
@@ -483,7 +485,11 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
               className={`${ghostDangerButton} mr-auto`}
               disabled={pending}
               onClick={() => {
-                remove.mutate({ id: portion.portionId });
+                // A cook planned only for it goes with it.
+                remove.mutate({
+                  deleteUnusedCook: true,
+                  id: portion.portionId,
+                });
               }}
             >
               Remove it

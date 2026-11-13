@@ -80,7 +80,14 @@ const SharedSides: React.FC<SharedSidesProps> = ({
           [...sides.values()]
             .filter((side) => side.planned)
             .map(async (side) => {
-              await client.deletePortion({ id: side.portionId });
+              /*
+               * A side's pot nobody eats from then isn't cooked, but for
+               * the side chosen again for everyone, whose pot they share.
+               */
+              await client.deletePortion({
+                deleteUnusedCook: everyone || sideKey(side) !== key,
+                id: side.portionId,
+              });
             })
         )
       );

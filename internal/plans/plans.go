@@ -18,6 +18,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/plans/internal/gen"
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -894,6 +895,39 @@ func (r *Repository) DeletePortion(ctx context.Context, householdID, id pgtype.U
 		return store.ErrNotFound
 	}
 	return nil
+}
+
+// DeletePortionAndUnusedCook deletes a household's portion, and then its
+// cook, if nobody eats any of it then (see DeleteUnusedCook). It returns
+// the deleted cook's recipe name, "" if it isn't deleted, and
+// store.ErrNotFound if the household has no such portion.
+func (r *Repository) DeletePortionAndUnusedCook(ctx context.Context, householdID, id pgtype.UUID) (string, error) {
+	cookID, err := gen.New(r.db).DeletePortionReturningCook(ctx, &gen.DeletePortionReturningCookParams{ID: id, HouseholdID: householdID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", store.ErrNotFound
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to delete portion: %w", err)
+	}
+	return r.DeleteUnusedCook(ctx, householdID, cookID)
+}
+
+// DeleteUnusedCook deletes a household's cook if nobody eats any of it: it
+// has no portions, isn't cooked, frozen or taken from, and makes no
+// component of another cook. It returns its recipe's name, or "" if it
+// isn't deleted, like an invalid ID's.
+func (r *Repository) DeleteUnusedCook(ctx context.Context, householdID, id pgtype.UUID) (string, error) {
+	if !id.Valid {
+		return "", nil
+	}
+	name, err := gen.New(r.db).DeleteCookIfUnused(ctx, &gen.DeleteCookIfUnusedParams{ID: id, HouseholdID: householdID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to delete the unused cook: %w", err)
+	}
+	return name, nil
 }
 
 // GetStaple gets a household's staple, with all the dates it's skipped on.

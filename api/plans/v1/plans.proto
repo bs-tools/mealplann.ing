@@ -888,19 +888,33 @@ message UpdatePortionRequest {
   // empty, all fields are replaced. Switch between a cook and a food by
   // updating "cook" or "food" as a whole.
   google.protobuf.FieldMask update_mask = 2;
+  // Whether to delete the cook the portion had a share of, if it no longer
+  // does and nobody eats any of the cook then, like a breakfast's cook when
+  // the breakfast is changed to something else: it would be cooked and
+  // bought for nobody. A cook that's cooked, frozen or taken from, or
+  // makes a component of another cook, is kept.
+  bool delete_unused_cook = 3;
 }
 
 message UpdatePortionResponse {
   // The updated portion.
   Portion portion = 1;
+  // The recipe of the cook deleted with delete_unused_cook, empty if none.
+  string deleted_cook_recipe_name = 2;
 }
 
 message DeletePortionRequest {
   // The ID of the portion.
   string id = 1;
+  // Whether to delete the portion's cook if nobody eats any of it then, as
+  // in UpdatePortionRequest.delete_unused_cook.
+  bool delete_unused_cook = 2;
 }
 
-message DeletePortionResponse {}
+message DeletePortionResponse {
+  // The recipe of the cook deleted with delete_unused_cook, empty if none.
+  string deleted_cook_recipe_name = 1;
+}
 
 message SetPortionEatenRequest {
   // The ID of the portion. Required.
