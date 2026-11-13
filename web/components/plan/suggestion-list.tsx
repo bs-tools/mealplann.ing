@@ -1,36 +1,21 @@
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import Loading from "@components/loading";
-import { ComponentChip, WarningList } from "@components/plan/plan-bits";
-import { Badge } from "@components/ui/misc";
+import {
+  KIND_LABELS,
+  WarningList,
+  formatPoints,
+} from "@components/plan/plan-bits";
 import QueryError from "@components/ui/query-error";
-import { primaryButton } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
-import { SparklesIcon } from "@heroicons/react/24/outline";
 import { suggestRecipes } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
 import type {
   SuggestRecipesRequestSchema,
   Suggestion,
 } from "gen/suggestions/v1/suggestions_pb";
 import { formatShortDate, formatList } from "helpers/format";
-import { formatAmount } from "helpers/nutrients";
 import { leftoverLabel, suggestionKey } from "helpers/suggestions";
 import React, { useState } from "react";
 import { Link } from "react-router";
-
-// SHOWN_REASONS is how many of the best reasons show before expanding.
-const SHOWN_REASONS = 4;
-
-// MoreLabel says what expanding a suggestion shows.
-const moreLabel = (reasons: number, warnings: number): string => {
-  const parts: string[] = [];
-  if (reasons > 0) {
-    parts.push(reasons === 1 ? "1 more reason" : `${reasons} more reasons`);
-  }
-  if (warnings > 0) {
-    parts.push("what to change");
-  }
-  return `Show ${formatList(parts)}`;
-};
 
 /**
  * PortionsLine describes who a suggestion feeds, e.g. "Anna 196 g at
@@ -53,10 +38,12 @@ const portionsLine = (suggestion: Suggestion): string => {
     .join(" · ");
 };
 
-interface SuggestionCardProps {
+// FirstReason returns a suggestion's best reason, or "" if none.
+const firstReason = (suggestion: Suggestion): string =>
+  suggestion.components.find((component) => component.points > 0)?.reason ?? "";
+
+interface SuggestionRowProps {
   suggestion: Suggestion;
-  // The highest score of the list, which the score bars are relative to.
-  maxScore: number;
   // Whether it's being planned, and whether planning is disabled.
   planning: boolean;
   disabled: boolean;
@@ -64,106 +51,95 @@ interface SuggestionCardProps {
 }
 
 /**
- * SuggestionCard shows a suggested recipe: its score as a bar, the reasons
- * as chips, who it feeds, what it needs bought, and the rules it breaks.
+ * SuggestionRow shows a suggested recipe as a row: its name and best
+ * reason, and whether it breaks a rule, with every reason, who it feeds
+ * and what it needs bought a tap away.
  */
-const SuggestionCard: React.FC<SuggestionCardProps> = ({
+const SuggestionRow: React.FC<SuggestionRowProps> = ({
   suggestion,
-  maxScore,
   planning,
   disabled,
   onPlan,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const fraction = maxScore > 0 ? Math.max(suggestion.score, 0) / maxScore : 0;
   const toBuy = suggestion.itemsToBuy.map(
     (item) => `${item.foodName} (${item.amountText})`
   );
-  /*
-   * The best reasons and every penalty show at first, the rest and the
-   * rules' advice when expanded, so a list of suggestions stays scannable.
-   */
-  const shown = expanded
-    ? suggestion.components
-    : suggestion.components.filter(
-        (component, index) => index < SHOWN_REASONS || component.points < 0
-      );
-  const hidden = suggestion.components.length - shown.length;
+  const reason = firstReason(suggestion);
   return (
-    <li className="flex flex-col gap-2 rounded-xl border border-line bg-white p-3">
+    <li className="flex flex-col gap-2 py-3">
       <div className="flex items-start gap-3">
-        <div className="flex min-w-0 grow flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <Link
-              to={`/recipes/${suggestion.recipeId}`}
-              className="font-medium text-ink-soft hover:underline"
-            >
-              {suggestion.recipeName}
-            </Link>
-            {suggestion.leftoverOf !== undefined && (
-              <Badge>{leftoverLabel(suggestion.leftoverOf)}</Badge>
-            )}
-            {!suggestion.fitsRules && (
-              <Badge className="bg-warn-tint text-warn-dark ring-warn-line">
-                Breaks rules
-              </Badge>
-            )}
-          </div>
-          <div
-            className="flex items-center gap-2"
-            title="Score, relative to the best suggestion"
+        <div className="flex min-w-0 grow flex-col gap-0.5">
+          <Link
+            to={`/recipes/${suggestion.recipeId}`}
+            className="leading-snug font-bold text-ink-soft"
           >
-            <div className="h-1.5 w-full max-w-48 min-w-16 overflow-hidden rounded-full bg-ground-dark">
-              <div
-                className={`h-full rounded-full ${suggestion.fitsRules ? "bg-pine" : "bg-warn"}`}
-                style={{ width: `${fraction * 100}%` }}
-              />
-            </div>
-            <span className="text-xs whitespace-nowrap text-muted tabular-nums">
-              {formatAmount(suggestion.score)} points
-            </span>
+            {suggestion.recipeName}
+          </Link>
+          <p className="text-sm text-muted">
+            {[
+              suggestion.leftoverOf === undefined
+                ? ""
+                : leftoverLabel(suggestion.leftoverOf),
+              reason,
+            ]
+              .filter((part) => part !== "")
+              .join(" · ")}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            {!suggestion.fitsRules && (
+              <span className="rounded-full bg-warn-tint px-2.5 py-0.5 text-xs font-bold text-warn-dark">
+                Breaks someone&apos;s rules
+              </span>
+            )}
+            <button
+              type="button"
+              className="text-xs font-bold text-pine"
+              aria-expanded={expanded}
+              onClick={() => {
+                setExpanded(!expanded);
+              }}
+            >
+              {expanded ? "Less" : "Why"}
+            </button>
           </div>
         </div>
         <button
           type="button"
-          className={`${primaryButton} shrink-0`}
+          className="shrink-0 rounded-full bg-pine-50 px-3.5 py-2 text-sm font-bold text-pine hover:bg-pine-100 disabled:opacity-50"
           disabled={disabled}
           onClick={onPlan}
         >
           {planning ? "Planning…" : "Plan this"}
         </button>
       </div>
-      {shown.length > 0 && (
-        <ul className="flex flex-wrap gap-1">
-          {shown.map((component) => (
-            <ComponentChip
-              key={`${component.kind}-${component.reason}`}
-              component={component}
-            />
-          ))}
-        </ul>
-      )}
-      <p className="text-xs text-muted">
-        {portionsLine(suggestion)}
-        {" · "}
-        {toBuy.length === 0
-          ? "Nothing more to buy"
-          : `To buy: ${formatList(toBuy)}`}
-      </p>
-      {expanded && <WarningList warnings={suggestion.warnings} />}
-      {(hidden > 0 || suggestion.warnings.length > 0) && (
-        <button
-          type="button"
-          className="self-start text-xs font-medium text-pine hover:underline"
-          aria-expanded={expanded}
-          onClick={() => {
-            setExpanded(!expanded);
-          }}
-        >
-          {expanded
-            ? "Show less"
-            : moreLabel(hidden, suggestion.warnings.length)}
-        </button>
+      {expanded && (
+        <div className="flex flex-col gap-2 rounded-xl bg-ground p-3 text-sm">
+          <ul className="flex flex-col gap-1">
+            {suggestion.components.map((component) => (
+              <li
+                key={`${component.kind}-${component.reason}`}
+                className="flex gap-2"
+                title={KIND_LABELS[component.kind]}
+              >
+                <span
+                  className={`w-10 shrink-0 text-right font-bold tabular-nums ${component.points < 0 ? "text-warn-dark" : "text-pine"}`}
+                >
+                  {formatPoints(component.points)}
+                </span>
+                <span className="text-ink-soft">{component.reason}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-muted">
+            {portionsLine(suggestion)}
+            {" · "}
+            {toBuy.length === 0
+              ? "Nothing more to buy"
+              : `To buy: ${formatList(toBuy)}`}
+          </p>
+          <WarningList warnings={suggestion.warnings} />
+        </div>
       )}
     </li>
   );
@@ -218,26 +194,17 @@ const SuggestionList: React.FC<SuggestionListProps> = ({
       </p>
     );
   }
-  const maxScore = Math.max(...list.map((suggestion) => suggestion.score));
   return (
     <div className="flex flex-col gap-2">
-      <p className="flex items-start gap-1.5 text-xs text-muted">
-        <SparklesIcon
-          className="mt-px size-3.5 shrink-0 text-pine"
-          aria-hidden="true"
-        />
-        <span>
-          Ranked by what the rest of the week buys, the pantry, everyone&apos;s
-          targets and rules, and a single shop on{" "}
-          {formatShortDate(suggestions.data.shopDate)}.
-        </span>
+      <p className="text-sm text-muted">
+        Best first, for what the week buys, the pantry, everyone&apos;s targets
+        and rules, and the shop on {formatShortDate(suggestions.data.shopDate)}.
       </p>
-      <ul className="flex flex-col gap-2">
+      <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
         {list.map((suggestion) => (
-          <SuggestionCard
+          <SuggestionRow
             key={suggestionKey(suggestion)}
             suggestion={suggestion}
-            maxScore={maxScore}
             planning={planningId === suggestionKey(suggestion)}
             disabled={disabled}
             onPlan={() => {

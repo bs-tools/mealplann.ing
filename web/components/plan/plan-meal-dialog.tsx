@@ -2,23 +2,29 @@ import { WarningList } from "@components/plan/plan-bits";
 import SuggestionList from "@components/plan/suggestion-list";
 import type { PickedRecipe } from "@components/recipes/recipe-picker";
 import RecipePicker from "@components/recipes/recipe-picker";
-import { CheckboxField, SelectField, TextField } from "@components/ui/fields";
+import { SelectField, TextField } from "@components/ui/fields";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
+import Segmented from "@components/ui/segmented";
 import {
   choiceClass,
   labelClass,
+  sectionLabelClass,
   primaryButton,
   secondaryButton,
 } from "@components/ui/styles";
-import { useMutation } from "@connectrpc/connect-query";
+import { createClient } from "@connectrpc/connect";
+import { useMutation, useTransport } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
+import { PantryService } from "gen/pantry/v1/pantry_pb";
 import type { Person } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
 import { planMeal } from "gen/plans/v1/plans-PlanService_connectquery";
 import type { PlanMealResponse, Staple } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
+import { ShoppingService } from "gen/shopping/v1/shopping_pb";
+import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { formatDay, formatList } from "helpers/format";
 import { HOUSEHOLD_MEALS, formatServings, optionValue } from "helpers/labels";
 import { formatAmount } from "helpers/nutrients";
@@ -44,6 +50,11 @@ interface PlanMealDialogProps {
   recipes: RecipeSummary[];
   // The recipe chosen first, like the one whose page "Plan this" was on.
   recipe?: PickedRecipe | undefined;
+  /*
+   * The cook of the meal the recipe replaces, which is deleted with its
+   * portions once the new one is planned: swapping a meal's recipe.
+   */
+  replacing?: { cookId: string; recipeName: string } | undefined;
   onClose: () => void;
 }
 
@@ -62,6 +73,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   staples,
   recipes,
   recipe: initialRecipe,
+  replacing,
   onClose,
 }) => {
   const queryClient = useQueryClient();
@@ -94,16 +106,32 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   const [notes, setNotes] = useState("");
   const [invalid, setInvalid] = useState("");
   const [result, setResult] = useState<PlanMealResponse | null>(null);
+  const transport = useTransport();
   const plan = useMutation(planMeal, {
     onSuccess: async (response) => {
+      // A swap deletes the meal's old cook, with its portions.
+      if (replacing !== undefined) {
+        await createClient(PlanService, transport).deleteCook({
+          id: replacing.cookId,
+        });
+      }
       setResult(response);
-      await invalidateServices(queryClient, [PlanService]);
+      await invalidateServices(queryClient, [
+        PlanService,
+        PantryService,
+        ShoppingService,
+        SuggestionService,
+      ]);
     },
   });
 
   if (result !== null) {
     return (
-      <Modal open onClose={onClose} title="Meal planned">
+      <Modal
+        open
+        onClose={onClose}
+        title={replacing === undefined ? "Meal planned" : "Meal swapped"}
+      >
         <PlanMealResult
           result={result}
           people={people}
@@ -162,12 +190,17 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   }
 
   return (
-    <Modal open onClose={onClose} title="Plan a meal" wide>
-      <div className="flex flex-col gap-3">
-        <p className="text-sm text-muted">
-          One cook for everyone who eats the shared meal. Portions over
-          someone&apos;s maximum are split, with the rest at their next small
-          meal.
+    <Modal
+      open
+      onClose={onClose}
+      title={replacing === undefined ? "Plan a meal" : "Swap the meal"}
+      wide
+    >
+      <div className="flex flex-col gap-4">
+        <p className="-mt-2 text-sm text-muted">
+          {replacing === undefined
+            ? "One cook for everyone at the meal."
+            : `Instead of ${replacing.recipeName}, whose cook and portions are removed.`}
         </p>
         <div className="grid grid-cols-2 gap-2">
           <SelectField
@@ -194,7 +227,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <span className={labelClass}>Who eats it</span>
+          <span className={sectionLabelClass}>Who eats it</span>
           {eaters.length === 0 ? (
             <p className="text-sm text-warn-dark">
               Nobody eats from this meal: give someone an eating time for it on
@@ -205,63 +238,45 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
               page.
             </p>
           ) : (
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {eaters.map((person) => (
-                <CheckboxField
-                  key={person.id}
-                  label={
-                    eatsByDefault(person.id) ? (
-                      person.name
-                    ) : (
-                      <>
-                        {person.name}{" "}
-                        <span className="text-xs text-muted">
-                          has {formatList(stapled.get(person.id) ?? [])}
-                        </span>
-                      </>
-                    )
-                  }
-                  checked={chosen.includes(person)}
-                  onChange={() => {
-                    setFlipped(
-                      flipped.includes(person.id)
-                        ? flipped.filter((id) => id !== person.id)
-                        : [...flipped, person.id]
-                    );
-                  }}
-                />
-              ))}
+            <div className="flex flex-wrap gap-2">
+              {eaters.map((person) => {
+                const eats = chosen.includes(person);
+                return (
+                  <button
+                    key={person.id}
+                    type="button"
+                    className={choiceClass(eats)}
+                    aria-pressed={eats}
+                    title={
+                      eatsByDefault(person.id)
+                        ? undefined
+                        : `Has ${formatList(stapled.get(person.id) ?? [])}`
+                    }
+                    onClick={() => {
+                      setFlipped(
+                        flipped.includes(person.id)
+                          ? flipped.filter((id) => id !== person.id)
+                          : [...flipped, person.id]
+                      );
+                    }}
+                  >
+                    {person.name}
+                    {!eatsByDefault(person.id) && " · has a staple"}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
-        <div
-          className="flex gap-1 border-t border-line pt-3"
-          role="tablist"
-          aria-label="How to choose the recipe"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "suggestions"}
-            className={choiceClass(tab === "suggestions")}
-            onClick={() => {
-              setTab("suggestions");
-            }}
-          >
-            Suggestions
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "recipe"}
-            className={choiceClass(tab === "recipe")}
-            onClick={() => {
-              setTab("recipe");
-            }}
-          >
-            Choose a recipe
-          </button>
-        </div>
+        <Segmented
+          label="How to choose the recipe"
+          value={tab}
+          options={[
+            { label: "Suggestions", value: "suggestions" },
+            { label: "Choose a recipe", value: "recipe" },
+          ]}
+          onChange={setTab}
+        />
         {tab === "suggestions" ? (
           <>
             {eaters.length > 0 && chosen.length > 0 && (
