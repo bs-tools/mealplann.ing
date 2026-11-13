@@ -76,3 +76,17 @@ export const sectionLabelClass =
  */
 export const stickyBarClass =
   "sticky bottom-[3.75rem] z-10 -mx-4 border-t border-line bg-ground px-4 py-3 sm:-mx-6 sm:px-6 lg:bottom-0 print:hidden";
+
+/*
+ * PillButton, pillPrimaryButton and pillDangerButton style a sheet's
+ * actions as one family of pills: the main one tinted, others outlined,
+ * and a destructive one in red.
+ */
+export const pillButton =
+  "inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-sm font-bold text-ink-soft ring-1 ring-line ring-inset hover:ring-muted disabled:cursor-not-allowed disabled:opacity-50";
+
+export const pillPrimaryButton =
+  "inline-flex items-center justify-center gap-1.5 rounded-full bg-pine-50 px-3.5 py-2 text-sm font-bold text-pine hover:bg-pine-100 disabled:cursor-not-allowed disabled:opacity-50";
+
+export const pillDangerButton =
+  "inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-sm font-bold text-error ring-1 ring-error/30 ring-inset hover:bg-error-tint disabled:cursor-not-allowed disabled:opacity-50";
