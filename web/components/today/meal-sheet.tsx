@@ -1,7 +1,12 @@
 import PortionDialog from "@components/plan/portion-dialog";
 import { markEaten, scalePortions } from "@components/today/day-change";
 import DisplacedChoice from "@components/today/displaced-choice";
-import { PortionList, Plate, SidesCard } from "@components/today/plate";
+import {
+  PortionList,
+  Plate,
+  SidesCard,
+  useStapleSkips,
+} from "@components/today/plate";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
 import { choiceClass } from "@components/ui/styles";
@@ -77,6 +82,7 @@ const MealSheet: React.FC<MealSheetProps> = ({
   const people = useQuery(listPeople, {});
   const et = planned.eatingTime;
   const { portions } = planned;
+  const stapleSkips = useStapleSkips(day.personId, et?.id ?? "", date);
   // What to call the meal in a sentence, e.g. "breakfast" or "this meal".
   const mealName =
     et === undefined || et.name === "" ? "this meal" : et.name.toLowerCase();
@@ -121,6 +127,7 @@ const MealSheet: React.FC<MealSheetProps> = ({
             <PortionList
               portions={portions}
               onSelect={setEditing}
+              staples={stapleSkips}
               onAdd={
                 et === undefined
                   ? undefined

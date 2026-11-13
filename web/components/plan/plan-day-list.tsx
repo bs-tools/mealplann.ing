@@ -1,7 +1,7 @@
 import type { MealRow } from "@components/plan/plan-rows";
 import {
   rowEffort,
-  rowNames,
+  rowItems,
   rowPlanned,
   rowsOf,
 } from "@components/plan/plan-rows";
@@ -102,20 +102,56 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
                 <button
                   key={row.key}
                   type="button"
-                  className="flex w-full items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3.5 text-left hover:border-muted"
+                  className="flex w-full items-start gap-3 rounded-2xl border border-line bg-white px-4 py-3.5 text-left hover:border-muted"
                   onClick={() => {
                     onOpen(day, row);
                   }}
                 >
                   <span
-                    className={`size-2.5 shrink-0 rounded-full ${style.dot}`}
+                    className={`mt-2 size-2.5 shrink-0 rounded-full ${style.dot}`}
                     aria-hidden="true"
                   />
-                  <span className="min-w-0 grow truncate text-base text-ink-soft">
-                    {row.label} · {formatList(rowNames(row))}
-                  </span>
-                  <span className={`shrink-0 text-sm ${style.word}`}>
-                    {EFFORT_WORD[effort]}
+                  <span className="flex min-w-0 grow flex-col gap-1">
+                    <span className="flex items-baseline gap-3">
+                      <span className="grow text-base font-bold text-ink-soft">
+                        {row.label}
+                      </span>
+                      <span className={`shrink-0 text-sm ${style.word}`}>
+                        {EFFORT_WORD[effort]}
+                      </span>
+                    </span>
+                    {rowItems(row).map((item) => (
+                      <span key={item.name} className="text-sm leading-snug">
+                        <span className="text-ink-soft">{item.name}</span>
+                        {item.leftover && (
+                          <span className="text-muted"> (leftovers)</span>
+                        )}
+                        <span className="text-muted">
+                          {item.shares.every((share) => share.amount === "")
+                            ? ""
+                            : " · "}
+                          {row.slots.length === 1
+                            ? item.shares
+                                .map((share) => share.amount)
+                                .join(" + ")
+                            : item.shares
+                                .map((share) =>
+                                  `${share.personName} ${share.amount}`.trim()
+                                )
+                                .join(" · ")}
+                        </span>
+                      </span>
+                    ))}
+                    {row.slots
+                      .filter((slot) => slot.planned.eatingOut)
+                      .map((slot) => (
+                        <span
+                          key={slot.person.personId}
+                          className="text-sm text-muted"
+                        >
+                          {slot.person.personName} is eating out
+                        </span>
+                      ))}
                   </span>
                 </button>
               );

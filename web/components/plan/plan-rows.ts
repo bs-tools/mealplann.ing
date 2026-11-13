@@ -5,8 +5,15 @@ import type {
   PersonDay,
   PlanDay,
   PlannedEatingTime,
+  PlannedPortion,
 } from "gen/plans/v1/plans_pb";
-import { householdMealLabel } from "helpers/labels";
+import { UnitSystem } from "gen/users/v1/users_pb";
+import { formatGrams } from "helpers/format";
+import {
+  formatIngredientAmount,
+  formatServings,
+  householdMealLabel,
+} from "helpers/labels";
 
 // RowSlot is one person's eating time in a row of the plan.
 export interface RowSlot {
@@ -46,17 +53,62 @@ export const rowPlanned = (row: MealRow): boolean =>
     (slot) => slot.planned.eatingOut || slot.planned.portions.length > 0
   );
 
-// RowNames lists what's planned at a row, each name once.
-export const rowNames = (row: MealRow): string[] => {
-  const names: string[] = [];
+// RowShare is one person's share of an item of a row, e.g. "Ben 1 serving".
+export interface RowShare {
+  personName: string;
+  amount: string;
+}
+
+/**
+ * RowItem is something planned at a row, like a recipe everyone eats from,
+ * with each person's share of it, and whether it's the rest of an earlier
+ * meal.
+ */
+export interface RowItem {
+  name: string;
+  leftover: boolean;
+  shares: RowShare[];
+}
+
+/**
+ * PortionAmount says how much a portion is: servings of a recipe, or the
+ * weight of a food, e.g. "1.5 servings" or "120 g".
+ */
+export const portionAmount = (portion: PlannedPortion): string => {
+  if (portion.cookId !== "" || portion.recipeId !== "") {
+    return formatServings(portion.servings);
+  }
+  if (portion.grams > 0) {
+    return formatGrams(portion.grams);
+  }
+  // A food without a weight, like soy milk lacking a density, says its amount.
+  return portion.amount > 0
+    ? formatIngredientAmount(portion.amount, portion.unit, UnitSystem.METRIC)
+    : "";
+};
+
+/**
+ * RowItems lists what's planned at a row, each item once, in the order
+ * first planned, with everyone's share of it, so a shared dinner reads
+ * "Curry: Ben 1 serving · Anna 0.5 servings" rather than just its names.
+ */
+export const rowItems = (row: MealRow): RowItem[] => {
+  const items: RowItem[] = [];
   for (const slot of row.slots) {
     for (const portion of slot.planned.portions) {
-      if (!names.includes(portion.name)) {
-        names.push(portion.name);
+      const key = portion.name;
+      let item = items.find((other) => other.name === key);
+      if (item === undefined) {
+        item = { leftover: portion.leftover, name: key, shares: [] };
+        items.push(item);
       }
+      item.shares.push({
+        amount: portionAmount(portion),
+        personName: slot.person.personName,
+      });
     }
   }
-  return names;
+  return items;
 };
 
 /**
