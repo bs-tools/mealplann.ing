@@ -4,25 +4,32 @@ import { weekWarnings } from "@components/plan/week-warnings";
 import { warningTitle } from "@components/today/today-bits";
 import WarningSheet from "@components/today/warning-sheet";
 import BackLink from "@components/ui/back-link";
+import ConfirmButton from "@components/ui/confirm-button";
 import { EmptyState, PageHeader } from "@components/ui/misc";
-import QueryError from "@components/ui/query-error";
-import { iconButton, sectionLabelClass } from "@components/ui/styles";
-import { useQuery } from "@connectrpc/connect-query";
+import QueryError, { ErrorText } from "@components/ui/query-error";
+import {
+  iconButton,
+  pillDangerButton,
+  sectionLabelClass,
+} from "@components/ui/styles";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { keepPreviousData } from "@tanstack/react-query";
-import { getWeek } from "gen/plans/v1/plans-PlanService_connectquery";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
+import { PantryService } from "gen/pantry/v1/pantry_pb";
 import {
-  addDays,
-  isDateString,
-  parseDate,
-  startOfWeek,
-  today,
-} from "helpers/dates";
+  deleteCook,
+  getWeek,
+} from "gen/plans/v1/plans-PlanService_connectquery";
+import { PlanService, WarningKind } from "gen/plans/v1/plans_pb";
+import { ShoppingService } from "gen/shopping/v1/shopping_pb";
+import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
+import { addDays, isDateString, startOfWeek, today } from "helpers/dates";
 import { formatDay } from "helpers/format";
+import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
@@ -37,6 +44,56 @@ const warningRowTitle = (item: WeekWarning): string => {
       : (item.cook.cook?.recipeName ?? "");
   const at = item.eatingTimeName === "" ? "" : ` at ${item.eatingTimeName}`;
   return `${who} · ${warningTitle(item.warning)}${at}`;
+};
+
+interface OrphanedCookProps {
+  cookId: string;
+  recipeName: string;
+  // The warning's icon and text.
+  children: React.ReactNode;
+}
+
+/**
+ * OrphanedCook is the warning of a cook nobody's planned to eat any of,
+ * with a button to delete it: it's usually left behind by accident, and
+ * not on the plan to open, as only meals are.
+ */
+const OrphanedCook: React.FC<OrphanedCookProps> = ({
+  cookId,
+  recipeName,
+  children,
+}) => {
+  const queryClient = useQueryClient();
+  const remove = useMutation(deleteCook, {
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [
+        PlanService,
+        PantryService,
+        ShoppingService,
+        SuggestionService,
+      ]);
+    },
+  });
+  return (
+    <div className="flex flex-col gap-2 py-3.5">
+      <div className="flex items-start gap-3">{children}</div>
+      <div className="flex flex-wrap gap-2 pl-8">
+        <ConfirmButton
+          className={pillDangerButton}
+          title={`Delete the cook of ${recipeName}?`}
+          message="It isn't cooked, bought for or planned anymore. Plan a meal of it instead if it's still wanted."
+          confirmLabel="Delete"
+          disabled={remove.isPending}
+          onConfirm={() => {
+            remove.mutate({ id: cookId });
+          }}
+        >
+          {remove.isPending ? "Deleting…" : "Delete the cook"}
+        </ConfirmButton>
+      </div>
+      <ErrorText error={remove.error} />
+    </div>
+  );
 };
 
 /**
@@ -91,9 +148,7 @@ const PlanWarningsPage: React.FC = () => {
           {dates.map((date) => (
             <section key={date} className="flex flex-col gap-2">
               <h2 className={sectionLabelClass}>
-                {date === now
-                  ? "Today"
-                  : `${parseDate(date).toLocaleDateString(undefined, { weekday: "long" })}, ${formatDay(date)}`}
+                {date === now ? "Today" : formatDay(date)}
               </h2>
               <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
                 {warnings
@@ -115,28 +170,47 @@ const PlanWarningsPage: React.FC = () => {
                         </span>
                       </>
                     );
-                    return (
-                      <li key={item.key}>
-                        {item.person === undefined ? (
-                          <Link
-                            to={`/plan?${new URLSearchParams(current ? { day: date } : { day: date, week: monday }).toString()}`}
-                            className="flex items-start gap-3 py-3.5 text-left"
-                          >
-                            {body}
-                          </Link>
-                        ) : (
-                          <button
-                            type="button"
-                            className="flex w-full items-start gap-3 py-3.5 text-left"
-                            onClick={() => {
-                              setOpen(item);
-                            }}
-                          >
-                            {body}
-                          </button>
-                        )}
-                      </li>
-                    );
+                    /*
+                     * A cook nobody eats offers to delete it; another
+                     * cook's warning opens its day, and a person's, the
+                     * fix for it.
+                     */
+                    let row: React.ReactNode = null;
+                    if (
+                      item.cook !== undefined &&
+                      item.warning.kind === WarningKind.SERVINGS_UNASSIGNED
+                    ) {
+                      row = (
+                        <OrphanedCook
+                          cookId={item.cook.cook?.id ?? ""}
+                          recipeName={item.cook.cook?.recipeName ?? ""}
+                        >
+                          {body}
+                        </OrphanedCook>
+                      );
+                    } else if (item.person === undefined) {
+                      row = (
+                        <Link
+                          to={`/plan?${new URLSearchParams(current ? { day: date } : { day: date, week: monday }).toString()}`}
+                          className="flex items-start gap-3 py-3.5 text-left"
+                        >
+                          {body}
+                        </Link>
+                      );
+                    } else {
+                      row = (
+                        <button
+                          type="button"
+                          className="flex w-full items-start gap-3 py-3.5 text-left"
+                          onClick={() => {
+                            setOpen(item);
+                          }}
+                        >
+                          {body}
+                        </button>
+                      );
+                    }
+                    return <li key={item.key}>{row}</li>;
                   })}
               </ul>
             </section>

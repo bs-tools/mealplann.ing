@@ -2849,7 +2849,11 @@ export enum WarningKind {
   PORTION_BEFORE_COOK = 12,
 
   /**
-   * Some of a cook's servings aren't planned for anyone.
+   * Some of a cook's servings aren't planned for anyone, a note. If none
+   * of a cook still to make are planned, frozen or made for another cook,
+   * it's a warning instead: the cook was likely left behind, like when
+   * its meal's portions were removed, and would be bought for and cooked
+   * for nobody. Plan a meal of it, or delete it with DeleteCook.
    *
    * @generated from enum value: WARNING_KIND_SERVINGS_UNASSIGNED = 13;
    */

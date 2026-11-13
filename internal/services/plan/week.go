@@ -489,6 +489,7 @@ func (d *planData) plannedCook(c *plans.Cook) *plansv1.PlannedCook {
 		FrozenServings:  c.FrozenServings,
 		LateServings:    c.LateServings,
 		OffPlanServings: c.OffPlanServings,
+		Done:            c.Done,
 	}
 	// What it makes for other cooks counts as planned, like portions.
 	assigned := c.AssignedServings + c.SuppliedServings
