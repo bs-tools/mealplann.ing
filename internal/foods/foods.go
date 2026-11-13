@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bs-tools/mealplann.ing/internal/foods/internal/gen"
@@ -161,11 +162,16 @@ type Repository struct {
 	log     *slog.Logger
 	db      *store.DB
 	querier *gen.Queries
+
+	// The households' foods held in memory, by household ID: see
+	// ListFoodsByID.
+	mu        sync.Mutex
+	snapshots map[pgtype.UUID]*foodSnapshot
 }
 
 // NewRepository returns a repository of the foods in the database.
 func NewRepository(log *slog.Logger, db *store.DB) *Repository {
-	return &Repository{log: log, db: db, querier: gen.New(db)}
+	return &Repository{log: log, db: db, querier: gen.New(db), snapshots: map[pgtype.UUID]*foodSnapshot{}}
 }
 
 // CreateFood creates a food in its household. It returns ErrNameTaken if
@@ -427,19 +433,63 @@ func (r *Repository) DeleteFood(ctx context.Context, householdID, id pgtype.UUID
 	return nil
 }
 
-// ListFoodsByID lists the household's foods with the given IDs, ordered by
-// name. IDs of foods the household doesn't have are left out.
+// foodsVersion is what changes whenever a household's foods do: see
+// GetFoodsVersion.
+type foodsVersion struct {
+	count      int64
+	updateTime time.Time
+}
+
+// foodSnapshot is all of a household's foods as read from the database, at
+// a version, in order of name. Its rows are never changed, as requests
+// share them.
+type foodSnapshot struct {
+	version foodsVersion
+	rows    []*gen.Food
+}
+
+// ListFoodsByID returns the household's foods with the IDs, in order of
+// name, leaving out those it doesn't have.
+//
+// The plan, its suggestions and its cost read the foods of everything
+// planned or suggested, hundreds of kilobytes each time, which is a cost of
+// the database's network transfer on the free tier. So the household's
+// foods are kept in memory, there being one server, and read again only
+// when their version, a few bytes, shows they changed.
 func (r *Repository) ListFoodsByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*Food, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
-	rows, err := r.querier.ListFoodsByID(ctx, &gen.ListFoodsByIDParams{HouseholdID: householdID, Ids: ids})
+	v, err := r.querier.GetFoodsVersion(ctx, householdID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list foods: %w", err)
 	}
-	list := make([]*Food, 0, len(rows))
-	for _, row := range rows {
-		list = append(list, foodFromDB(row))
+	version := foodsVersion{count: v.FoodCount, updateTime: v.UpdateTime.Time}
+	r.mu.Lock()
+	snap := r.snapshots[householdID]
+	r.mu.Unlock()
+	if snap == nil || snap.version != version {
+		rows, err := r.querier.ListHouseholdFoods(ctx, householdID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list foods: %w", err)
+		}
+		// A write between reading the version and the foods makes them
+		// newer than it says, which only means reading them again next
+		// time.
+		snap = &foodSnapshot{version: version, rows: rows}
+		r.mu.Lock()
+		r.snapshots[householdID] = snap
+		r.mu.Unlock()
+	}
+	wanted := make(map[pgtype.UUID]bool, len(ids))
+	for _, id := range ids {
+		wanted[id] = true
+	}
+	list := make([]*Food, 0, len(ids))
+	for _, row := range snap.rows {
+		if wanted[row.ID] {
+			list = append(list, foodFromDB(row))
+		}
 	}
 	return list, nil
 }

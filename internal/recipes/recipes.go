@@ -678,12 +678,24 @@ func (r *Repository) snapshot(ctx context.Context, householdID pgtype.UUID, vers
 // their ingredients' foods, ordered by name. IDs of recipes the household
 // doesn't have are left out.
 func (r *Repository) ListRecipesByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*Recipe, error) {
-	list, err := r.listRecipesByID(ctx, householdID, ids)
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	// They're taken from the recipes kept in memory, as the plan reads
+	// them on every view: see ListRecipes.
+	all, _, err := r.ListRecipes(ctx, householdID, ListFilter{})
 	if err != nil {
 		return nil, err
 	}
-	if err := r.resolve(ctx, householdID, list); err != nil {
-		return nil, fmt.Errorf("failed to read components: %w", err)
+	wanted := make(map[pgtype.UUID]bool, len(ids))
+	for _, id := range ids {
+		wanted[id] = true
+	}
+	list := make([]*Recipe, 0, len(ids))
+	for _, rc := range all {
+		if wanted[rc.ID] {
+			list = append(list, rc)
+		}
 	}
 	return list, nil
 }
