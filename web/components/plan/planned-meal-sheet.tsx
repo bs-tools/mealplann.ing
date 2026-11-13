@@ -549,7 +549,8 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
                   },
                   {
                     label: "Cook it now",
-                    to: `/recipes/${shared.cook.recipeId}/cook`,
+                    // Cook mode cooks this cook's servings, and marks it cooked.
+                    to: `/recipes/${shared.cook.recipeId}/cook?cook=${shared.cook.id}&servings=${shared.cook.servings}`,
                   },
                   {
                     danger: true,

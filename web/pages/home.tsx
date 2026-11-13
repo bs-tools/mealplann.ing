@@ -1,5 +1,7 @@
 import AccountMenu from "@components/header/account-menu";
 import Loading from "@components/loading";
+import EatingTimeSuggestionsDialog from "@components/plan/eating-time-suggestions-dialog";
+import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import WarningsLink from "@components/plan/warnings-link";
 import { weekWarnings } from "@components/plan/week-warnings";
 import MealSheet from "@components/today/meal-sheet";
@@ -13,7 +15,10 @@ import { useQuery } from "@connectrpc/connect-query";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import type { EatingTime } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
-import { getWeek } from "gen/plans/v1/plans-PlanService_connectquery";
+import {
+  getWeek,
+  listStaples,
+} from "gen/plans/v1/plans-PlanService_connectquery";
 import type {
   PersonDay,
   PlannedCook,
@@ -25,6 +30,7 @@ import type { User } from "gen/users/v1/users_pb";
 import {
   addDays,
   daysBetween,
+  daysOfWeek,
   parseDate,
   startOfWeek,
   today,
@@ -298,6 +304,10 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
   const people = useQuery(listPeople, {});
   const recipes = useQuery(listRecipes, {});
   const lists = useQuery(listShoppingLists, { pageSize: 10 });
+  const staples = useQuery(listStaples, {});
+  const close = () => {
+    setOpenMeal("");
+  };
 
   const title = (
     <div className="flex items-start justify-between gap-3">
@@ -488,16 +498,46 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
           const planned = day.eatingTimes.find(
             (other) => other.eatingTime?.id === openMeal
           );
-          return planned === undefined ? null : (
+          if (planned === undefined) {
+            return null;
+          }
+          // A meal with nothing planned is planned as on the Plan page.
+          if (planned.portions.length === 0 && !planned.eatingOut) {
+            const meal = planned.eatingTime?.meal ?? HouseholdMeal.UNSPECIFIED;
+            return meal === HouseholdMeal.UNSPECIFIED ? (
+              <EatingTimeSuggestionsDialog
+                slot={{
+                  date: now,
+                  eatingTimeId: openMeal,
+                  personId: day.personId,
+                }}
+                people={people.data?.people ?? []}
+                onClose={close}
+              />
+            ) : (
+              <PlanMealDialog
+                cooks={[
+                  ...(week.data?.earlierLeftovers ?? []),
+                  ...(week.data?.cooks ?? []),
+                ]}
+                dates={daysOfWeek(startOfWeek(now))}
+                date={now}
+                meal={meal}
+                people={people.data?.people ?? []}
+                staples={staples.data?.staples ?? []}
+                recipes={recipes.data?.recipes ?? []}
+                onClose={close}
+              />
+            );
+          }
+          return (
             <MealSheet
               week={week.data}
               day={day}
               planned={planned}
               date={now}
               today={now}
-              onClose={() => {
-                setOpenMeal("");
-              }}
+              onClose={close}
             />
           );
         })()}
