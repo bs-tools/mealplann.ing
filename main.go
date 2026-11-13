@@ -391,6 +391,13 @@ func run(
 	oauthService := oauthsvc.NewService(log, report, oauthServer, users)
 	foodRepo := foods.NewRepository(log, db)
 	recipeRepo := recipes.NewRepository(log, db)
+	// The household's foods and recipes are kept in the avatars' store, under
+	// cache/, between the server's starts: reading them from the database
+	// after every start of a server that scales to zero cost most of the
+	// database's network transfer, a limit of its free tier, where reading
+	// them from Cloud Storage in the same region costs nothing.
+	foodRepo.SetCache(avatars)
+	recipeRepo.SetCache(avatars)
 	peopleRepo := people.NewRepository(log, db)
 	// Create requests with a request ID record their responses, so agents
 	// can retry them without creating twice.

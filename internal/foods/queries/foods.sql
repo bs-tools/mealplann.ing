@@ -178,6 +178,17 @@ select * from foods
 where household_id = @household_id
 order by lower(name), id;
 
+-- name: ListFoodsChangedSince :many
+-- The household's foods changed after a time, to update those kept in
+-- memory.
+select * from foods
+where household_id = @household_id and update_time > @since;
+
+-- name: ListFoodIDs :many
+-- The household's foods' IDs, to drop deleted ones from those kept in
+-- memory.
+select id from foods where household_id = @household_id;
+
 -- name: GetFoodsVersion :one
 -- What changes whenever the household's foods do: every write of a food
 -- sets its update_time, and the count changes when one is deleted. It's a

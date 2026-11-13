@@ -60,9 +60,11 @@ import (
 // env is a running server for a test, with clients authenticated as a user.
 type env struct {
 	// pages are the web pages recipes are imported from, by URL.
-	pages    fakePages
-	t        *testing.T
-	db       *store.DB
+	pages fakePages
+	t     *testing.T
+	db    *store.DB
+	// cache keeps the foods and recipes between the server's starts.
+	cache    blob.Store
 	userRepo *users.Repository
 	userID   pgtype.UUID
 	// The user's API token, and session ID.
@@ -162,10 +164,15 @@ func newEnv(t *testing.T) *env {
 		t.Fatal(err)
 	}
 	userService := user.NewService(log, report, userRepo, userRepo, userRepo, userRepo, userRepo, avatars, "https://mealplann.ing.test")
+	// The foods and recipes are kept in the avatars' store, as on Cloud
+	// Run.
+	e.cache = avatars
 	e.foodRepo = foods.NewRepository(log, db)
+	e.foodRepo.SetCache(avatars)
 	requests := idempotency.NewStore(log, report, db)
 	foodService := food.NewService(log, report, e.foodRepo, requests)
 	recipeRepo := recipes.NewRepository(log, db)
+	recipeRepo.SetCache(avatars)
 	recipeService := recipe.NewService(log, report, recipeRepo, requests)
 	// Recipe pages are served from e.pages, as tests don't reach the
 	// internet.

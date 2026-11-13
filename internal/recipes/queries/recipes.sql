@@ -105,6 +105,16 @@ select
   (select count(*) from foods f where f.household_id = @household_id::uuid)::bigint as food_count,
   (select coalesce(max(f.update_time), 'epoch') from foods f where f.household_id = @household_id::uuid)::timestamptz as foods_update_time;
 
+-- name: ListRecipeStamps :many
+-- Each of the household's recipes' ID and when it last changed, to find
+-- the recipes kept in memory that changed or were deleted.
+select id, update_time from recipes where household_id = @household_id;
+
+-- name: ListFoodIDsChangedSince :many
+-- The household's foods changed after a time, whose recipes' ingredients
+-- and sides kept in memory are read again.
+select id from foods where household_id = @household_id and update_time > @since;
+
 -- name: FindRecipesByName :many
 -- The recipe with the name, ignoring case, first, then up to the limit of
 -- the recipes with similar names, most similar first.
