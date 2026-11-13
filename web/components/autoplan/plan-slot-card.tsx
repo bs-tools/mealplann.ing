@@ -44,6 +44,8 @@ interface PlanSlotCardProps {
   onEatingOut: (eatingOut: boolean) => void;
   // Leaves the suggested recipe out of suggestions, for a while or for good.
   onFeedback: (feedback: Feedback) => void;
+  // Whether it's in a narrow column, with its buttons beside the meal's name.
+  compact?: boolean | undefined;
 }
 
 /**
@@ -64,6 +66,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
   onFill,
   onEatingOut,
   onFeedback,
+  compact = false,
 }) => {
   const [swapping, setSwapping] = useState(false);
   const delay = { animationDelay: `${Math.min(index * 40, 800)}ms` };
@@ -150,13 +153,13 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
       }
     }
     return (
-      <li
+      <div
         className="flex flex-col gap-1 py-3 motion-safe:animate-rise"
         style={delay}
       >
         {header}
         {body}
-      </li>
+      </div>
     );
   }
 
@@ -209,54 +212,74 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
     },
     { disabled, label: "Leave empty", onClick: onSkip }
   );
+  const buttons = (
+    <div className="-mr-2 flex shrink-0 items-center print:hidden">
+      <button
+        type="button"
+        className={`flex size-10 items-center justify-center rounded-full disabled:opacity-50 ${locked ? "text-pine" : "text-muted/70 hover:text-ink-soft"}`}
+        aria-pressed={locked}
+        aria-label={locked ? "Kept" : "Keep"}
+        title={
+          locked
+            ? "Kept when you shuffle or change the criteria. Tap to let it change."
+            : "Keep this recipe when you shuffle or change the criteria"
+        }
+        disabled={disabled}
+        onClick={onToggleLock}
+      >
+        {locked ? (
+          <LockClosedIcon className="size-5" />
+        ) : (
+          <LockOpenIcon className="size-5" />
+        )}
+      </button>
+      <MoreMenu
+        label={`More for ${suggestion.recipeName}`}
+        className="flex size-10 items-center justify-center rounded-full text-muted hover:bg-ground-dark/60"
+        items={items}
+      />
+    </div>
+  );
+  const recipe = (
+    <>
+      <Link
+        to={`/recipes/${suggestion.recipeId}`}
+        className="leading-snug font-bold text-ink-soft"
+      >
+        {suggestion.recipeName}
+      </Link>
+      {notes.length > 0 && (
+        <p className="line-clamp-2 text-sm text-muted">{notes.join(" · ")}</p>
+      )}
+      {!suggestion.fitsRules && (
+        <span className="mt-1 self-start rounded-full bg-warn-tint px-2.5 py-0.5 text-xs font-bold text-warn-dark">
+          Breaks someone&apos;s rules
+        </span>
+      )}
+    </>
+  );
   return (
-    <li
-      className="flex items-start gap-3 py-3 motion-safe:animate-rise"
+    <div
+      className={`flex motion-safe:animate-rise ${compact ? "flex-col gap-0.5 py-2" : "items-start gap-3 py-3"}`}
       style={delay}
     >
-      <div className="flex min-w-0 grow flex-col gap-0.5">
-        {header}
-        <Link
-          to={`/recipes/${suggestion.recipeId}`}
-          className="leading-snug font-bold text-ink-soft"
-        >
-          {suggestion.recipeName}
-        </Link>
-        {notes.length > 0 && (
-          <p className="line-clamp-2 text-sm text-muted">{notes.join(" · ")}</p>
-        )}
-        {!suggestion.fitsRules && (
-          <span className="mt-1 self-start rounded-full bg-warn-tint px-2.5 py-0.5 text-xs font-bold text-warn-dark">
-            Breaks someone&apos;s rules
-          </span>
-        )}
-      </div>
-      <div className="-mr-2 flex shrink-0 items-center print:hidden">
-        <button
-          type="button"
-          className={`flex size-10 items-center justify-center rounded-full disabled:opacity-50 ${locked ? "text-pine" : "text-muted/70 hover:text-ink-soft"}`}
-          aria-pressed={locked}
-          aria-label={locked ? "Kept" : "Keep"}
-          title={
-            locked
-              ? "Kept when you shuffle or change the criteria. Tap to let it change."
-              : "Keep this recipe when you shuffle or change the criteria"
-          }
-          disabled={disabled}
-          onClick={onToggleLock}
-        >
-          {locked ? (
-            <LockClosedIcon className="size-5" />
-          ) : (
-            <LockOpenIcon className="size-5" />
-          )}
-        </button>
-        <MoreMenu
-          label={`More for ${suggestion.recipeName}`}
-          className="flex size-10 items-center justify-center rounded-full text-muted hover:bg-ground-dark/60"
-          items={items}
-        />
-      </div>
+      {compact ? (
+        <>
+          <div className="flex items-center justify-between gap-1">
+            {header}
+            {buttons}
+          </div>
+          {recipe}
+        </>
+      ) : (
+        <>
+          <div className="flex min-w-0 grow flex-col gap-0.5">
+            {header}
+            {recipe}
+          </div>
+          {buttons}
+        </>
+      )}
       <Modal
         open={swapping}
         title={`Instead of ${suggestion.recipeName}`}
@@ -300,7 +323,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
           </ul>
         </div>
       </Modal>
-    </li>
+    </div>
   );
 };
 
