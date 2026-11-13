@@ -690,3 +690,63 @@ func TestTastes(t *testing.T) {
 	wantComponents(t, suggestionOf(t, list, sweet), Tastes, "-3 Anna likes small meals savory")
 	wantComponents(t, suggestionOf(t, list, savory), Tastes, "2 Anna likes small meals savory")
 }
+
+// TestServedWith checks that a recipe is scored as it's served: with the
+// best of its sides, whose weight counts in its portions and whose food
+// is bought with it, or with the side the input keeps, or none.
+func TestServedWith(t *testing.T) {
+	t.Parallel()
+	b := ben()
+	flatbread := recipe("Flatbread", 4, ingredient(chickpeas, 400))
+	curry := recipe("Curry", 2, ingredient(tofu, 400), ingredient(coconutMilk, 200))
+	curry.ServedWith = []recipes.Side{
+		{FoodID: rice.ID, Grams: 75, FoodName: rice.Name},
+		{RecipeID: flatbread.ID, Servings: 1, RecipeName: flatbread.Name},
+	}
+
+	sg := suggestionOf(t, Suggest(input(monday, []*people.Person{b}, curry, flatbread)), curry)
+	if sg.Side == nil {
+		t.Fatalf("got no side, want one of the curry's")
+	}
+	none := input(monday, []*people.Person{b}, curry, flatbread)
+	none.NoSide = true
+	plain := suggestionOf(t, Suggest(none), curry)
+	if plain.Side != nil {
+		t.Errorf("got side %+v with NoSide, want none", plain.Side)
+	}
+	// A serving with its side weighs more than without.
+	if len(sg.Portions) != 1 || len(plain.Portions) != 1 ||
+		sg.Portions[0].Grams/sg.Portions[0].Servings <= plain.Portions[0].Grams/plain.Portions[0].Servings {
+		t.Errorf("got %+v with the side and %+v without, want a serving heavier with it", sg.Portions, plain.Portions)
+	}
+
+	// The side kept is the one scored, and its food bought.
+	kept := input(monday, []*people.Person{b}, curry, flatbread)
+	kept.Side = &curry.ServedWith[0]
+	withRice := suggestionOf(t, Suggest(kept), curry)
+	if withRice.Side == nil || withRice.Side.FoodID != rice.ID {
+		t.Fatalf("got side %+v, want the rice kept", withRice.Side)
+	}
+	if !slices.ContainsFunc(withRice.ItemsToBuy, func(it ItemToBuy) bool { return it.Food.ID == rice.ID }) {
+		t.Errorf("got items to buy %+v, want the rice", withRice.ItemsToBuy)
+	}
+}
+
+// TestSideNotLeftover checks that the rest of a side's cook, like a pot of
+// rice, isn't suggested as a meal of its own.
+func TestSideNotLeftover(t *testing.T) {
+	t.Parallel()
+	b := ben()
+	pot := recipe("Rice pot", 4, ingredient(rice, 300))
+	curry := recipe("Curry", 2, ingredient(tofu, 400))
+	curry.ServedWith = []recipes.Side{{RecipeID: pot.ID, Servings: 1}}
+	in := input(tuesday, []*people.Person{b}, curry, pot)
+	in.Candidates = []*recipes.Recipe{}
+	in.Leftovers = true
+	in.cook(pot, monday, 4)
+	for _, sg := range Suggest(in) {
+		if sg.Recipe == pot {
+			t.Errorf("got %+v, want no leftover of the side", sg)
+		}
+	}
+}

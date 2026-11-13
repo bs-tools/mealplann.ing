@@ -284,6 +284,41 @@ func (r *Recipe) nutrition(depth int) *nutrition.Recipe {
 	return n
 }
 
+// WithSide returns a copy of the recipe with a side it's served with as
+// one of its ingredients, in proportion to its servings, so its nutrition,
+// weight and ingredients are the meal's, like a curry's with its rice:
+// sideRecipe for a recipe side, a component in servings, or food for a
+// food side. It returns the recipe itself if the side's recipe or food is
+// nil, or the side is the recipe.
+func (r *Recipe) WithSide(side *Side, sideRecipe *Recipe, food *foods.Food) *Recipe {
+	meal := *r
+	meal.Ingredients = slices.Clone(r.Ingredients)
+	servings := float64(max(r.Servings, 1))
+	switch {
+	case side.RecipeID.Valid && sideRecipe != nil && sideRecipe.ID != r.ID:
+		// A component without a unit is in servings of its recipe.
+		meal.Ingredients = append(meal.Ingredients, &Ingredient{
+			ComponentRecipeID: sideRecipe.ID,
+			Amount:            side.Servings * servings,
+			Component:         sideRecipe,
+		})
+	case side.FoodID.Valid && food != nil:
+		meal.Ingredients = append(meal.Ingredients, &Ingredient{
+			FoodID:                food.ID,
+			Amount:                side.Grams * servings,
+			Unit:                  nutrition.Grams,
+			FoodName:              food.Name,
+			Food:                  *food.Nutrition(),
+			FoodMeasure:           food.Measure,
+			FastCarb:              food.FastCarb,
+			PriceCentsPerKilogram: food.PriceCentsPerKilogram,
+		})
+	default:
+		return r
+	}
+	return &meal
+}
+
 // IngredientsFor returns the foods used to make a number of servings of
 // the recipe, with its components made of their own ingredients: copies of
 // the ingredients scaled by servings divided by the recipe's servings,

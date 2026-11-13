@@ -81,6 +81,9 @@ const SuggestionRow: React.FC<SuggestionRowProps> = ({
               suggestion.leftoverOf === undefined
                 ? ""
                 : leftoverLabel(suggestion.leftoverOf),
+              suggestion.side === undefined
+                ? ""
+                : `with ${suggestion.side.recipeId === "" ? suggestion.side.foodName : suggestion.side.recipeName}`,
               reason,
             ]
               .filter((part) => part !== "")

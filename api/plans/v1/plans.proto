@@ -7,6 +7,7 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "mcp/v1/options.proto";
 import "people/v1/people.proto";
+import "recipes/v1/recipes.proto";
 
 // PlanService plans the household's meals, by week. Weeks start on Monday,
 // and dates are local dates, "YYYY-MM-DD". A plan is made of:
@@ -688,6 +689,11 @@ message PlanMealRequest {
   double servings = 5;
   // Notes for the cook. At most 2000 characters.
   string notes = 6;
+  // A side to serve with it, one of the recipe's served_with (see
+  // RecipeService), like a suggestion's side: everyone gets a portion of
+  // it for their servings, the food's grams per serving, or a share of a
+  // new cook of the side's recipe, cooked with the meal. Unset for none.
+  recipes.v1.RecipeSide side = 7;
 }
 
 message PlanMealResponse {
@@ -727,6 +733,9 @@ message MealToPlan {
   // day; empty to cook it on date. A cook made ahead isn't one of its
   // date's shared meals. SuggestPlan suggests these as cook_date.
   string cook_date = 7;
+  // A side to serve with it, as in PlanMealRequest.side, like the
+  // suggestion's side. Not for a leftover.
+  recipes.v1.RecipeSide side = 8;
 }
 
 // LeftoverOf is an earlier shared meal whose cook a portion is the rest

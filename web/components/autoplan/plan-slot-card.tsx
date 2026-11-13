@@ -6,22 +6,28 @@ import {
 } from "@components/recipes/suggest-feedback";
 import Modal from "@components/ui/modal";
 import type { MoreItem } from "@components/ui/more-menu";
-import MoreMenu from "@components/ui/more-menu";
+import MoreMenu, { menuItemClass } from "@components/ui/more-menu";
 import { sectionLabelClass } from "@components/ui/styles";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import {
   ArrowUturnLeftIcon,
   BuildingStorefrontIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
   LockClosedIcon,
   LockOpenIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
+import type { RecipeSide } from "gen/recipes/v1/recipes_pb";
 import type { PlanSlot, Suggestion } from "gen/suggestions/v1/suggestions_pb";
 import { PlanSlotState } from "gen/suggestions/v1/suggestions_pb";
 import { formatList, formatWeekday } from "helpers/format";
 import { leftoverLabel, suggestionKey } from "helpers/suggestions";
 import React, { useState } from "react";
 import { Link } from "react-router";
+
+// NO_SIDES is no sides to choose from, when none are given.
+const NO_SIDES: RecipeSide[] = [];
 
 // FirstReason returns a suggestion's best reason, or "" if none.
 const firstReason = (suggestion: Suggestion): string =>
@@ -46,7 +52,83 @@ interface PlanSlotCardProps {
   onFeedback: (feedback: Feedback) => void;
   // Whether it's in a narrow column, with its buttons beside the meal's name.
   compact?: boolean | undefined;
+  // The sides its recipe is served with, to choose from.
+  sides?: RecipeSide[] | undefined;
+  // Keeps the recipe with another side, or none with null.
+  onSide?: ((side: RecipeSide | null) => void) | undefined;
 }
+
+// SideName names a side, by its recipe or food.
+const sideName = (side: RecipeSide): string =>
+  side.recipeId === "" ? side.foodName : side.recipeName;
+
+// SameSide reports whether two sides are the same food or recipe.
+const sameSide = (side: RecipeSide | undefined, other: RecipeSide): boolean =>
+  side !== undefined &&
+  (side.recipeId === ""
+    ? side.foodId === other.foodId
+    : side.recipeId === other.recipeId);
+
+interface SidePickerProps {
+  side: RecipeSide | undefined;
+  sides: RecipeSide[];
+  disabled: boolean;
+  onSide: (side: RecipeSide | null) => void;
+}
+
+/**
+ * SidePicker shows the side a meal is served with, like "with rice", and
+ * changes it to another of its recipe's sides, or none, which plans the
+ * rest again around it.
+ */
+const SidePicker: React.FC<SidePickerProps> = ({
+  side,
+  sides,
+  disabled,
+  onSide,
+}) => (
+  <Menu as="div" className="relative mt-1 self-start print:hidden">
+    <MenuButton
+      className="inline-flex items-center gap-1 rounded-full bg-ground-dark/60 px-2.5 py-1 text-xs font-bold text-ink-soft hover:bg-ground-dark disabled:opacity-50"
+      disabled={disabled}
+    >
+      {side === undefined ? "No side" : `with ${sideName(side)}`}
+      <ChevronDownIcon className="size-3.5" aria-hidden="true" />
+    </MenuButton>
+    <MenuItems
+      transition
+      anchor="bottom start"
+      className="z-[1100] mt-1 w-56 rounded-2xl border border-line bg-white py-1 font-ui shadow-lg transition focus:outline-hidden data-[closed]:scale-95 data-[closed]:opacity-0"
+    >
+      {sides.map((option) => (
+        <MenuItem
+          key={option.recipeId === "" ? option.foodId : option.recipeId}
+        >
+          <button
+            type="button"
+            className={`${menuItemClass} ${sameSide(side, option) ? "font-bold" : ""}`}
+            onClick={() => {
+              onSide(option);
+            }}
+          >
+            With {sideName(option)}
+          </button>
+        </MenuItem>
+      ))}
+      <MenuItem>
+        <button
+          type="button"
+          className={`${menuItemClass} ${side === undefined ? "font-bold" : ""}`}
+          onClick={() => {
+            onSide(null);
+          }}
+        >
+          Nothing on the side
+        </button>
+      </MenuItem>
+    </MenuItems>
+  </Menu>
+);
 
 /**
  * PlanSlotCard shows a meal of a suggested plan as a row: the recipe and
@@ -67,6 +149,8 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
   onEatingOut,
   onFeedback,
   compact = false,
+  sides = NO_SIDES,
+  onSide,
 }) => {
   const [swapping, setSwapping] = useState(false);
   const delay = { animationDelay: `${Math.min(index * 40, 800)}ms` };
@@ -256,6 +340,16 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
           Breaks someone&apos;s rules
         </span>
       )}
+      {suggestion.leftoverOf === undefined &&
+        sides.length > 0 &&
+        onSide !== undefined && (
+          <SidePicker
+            side={suggestion.side}
+            sides={sides}
+            disabled={disabled}
+            onSide={onSide}
+          />
+        )}
     </>
   );
   return (

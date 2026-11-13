@@ -94,6 +94,10 @@ type PlanSlot struct {
 	// FixedLeftover is the leftover the user chose for the slot, nil to
 	// pick one. It's planned if the plan has its cook.
 	FixedLeftover *LeftoverRef
+	// FixedSide is the side the user chose for Fixed, nil to pick the best
+	// of its served_with; NoSide serves it with none.
+	FixedSide *recipes.Side
+	NoSide    bool
 	// CookDate is when its meal is cooked, at midnight UTC, if before
 	// Date, as the household doesn't cook on Date: only recipes that keep
 	// in the fridge until Date are picked. Zero to cook on Date.
@@ -212,14 +216,31 @@ func Plan(in *PlanInput) *PlanResult {
 	}
 	budget := cmp.Or(in.Budget, DefaultPlanBudget)
 	maxRollouts := cmp.Or(in.Rollouts, DefaultPlanRollouts)
-	p := &planner{in: in, nutrition: map[pgtype.UUID]*nutrition.Recipe{}, eligible: map[string][]*recipes.Recipe{}}
+	p := &planner{
+		in:        in,
+		nutrition: map[pgtype.UUID]*nutrition.Recipe{},
+		recipes:   map[pgtype.UUID]*recipes.Recipe{},
+		eligible:  map[string][]*recipes.Recipe{},
+	}
 	for _, r := range in.Recipes {
 		p.nutrition[r.ID] = r.Nutrition()
+		p.recipes[r.ID] = r
 	}
 	all := in.Candidates
 	if all == nil {
 		all = in.Recipes
 	}
+	// Sides are served with the meals planned, rather than planned as one,
+	// unless the user keeps one at a slot.
+	sides := map[pgtype.UUID]bool{}
+	for _, r := range in.Recipes {
+		for _, side := range r.ServedWith {
+			if side.RecipeID.Valid {
+				sides[side.RecipeID] = true
+			}
+		}
+	}
+	all = slices.DeleteFunc(slices.Clone(all), func(r *recipes.Recipe) bool { return isSide(r, sides) })
 	for _, slot := range in.Slots {
 		tag := slot.Tag()
 		if _, ok := p.eligible[tag]; ok {
@@ -284,8 +305,9 @@ func (p *planner) stopped() bool {
 // planner plans the slots, with what's computed once for all rollouts.
 type planner struct {
 	in *PlanInput
-	// nutrition is each recipe's nutrition, by ID.
+	// nutrition is each recipe's nutrition, and recipes each recipe, by ID.
 	nutrition map[pgtype.UUID]*nutrition.Recipe
+	recipes   map[pgtype.UUID]*recipes.Recipe
 	// eligible are the candidates each meal tag allows, and keeping those
 	// that keep a number of days, by tag and days, filled as needed.
 	eligible map[string][]*recipes.Recipe
@@ -542,6 +564,8 @@ func (st *state) input(slot *PlanSlot, candidates []*recipes.Recipe) *Input {
 		// A slot of a recipe the user chose takes no leftover.
 		Leftovers:  slot.Fixed == nil,
 		LeftoverOf: slot.FixedLeftover,
+		Side:       slot.FixedSide,
+		NoSide:     slot.NoSide,
 	}
 }
 
@@ -601,6 +625,9 @@ func (st *state) add(slot *PlanSlot, sg *Suggestion) {
 	}
 	planned := st.planned
 	n := st.p.nutrition[r.ID]
+	if sg.Side != nil && sg.Leftover == nil {
+		st.addSide(sg, cook)
+	}
 	for _, portion := range sg.Portions {
 		st.portions = append(st.portions, &plans.Portion{
 			ID:           store.NewUUID(),
@@ -636,4 +663,86 @@ func (st *state) add(slot *PlanSlot, sg *Suggestion) {
 		}
 		planned[portion.Slot] = et
 	}
+}
+
+// addSide plans a suggestion's side, as planning it does: a cook of the
+// side's recipe for everyone's shares with the meal's cook, or a portion
+// of its food for each, so later slots shop for, share and count it.
+func (st *state) addSide(sg *Suggestion, cook *plans.Cook) {
+	side := sg.Side
+	if side.RecipeID.Valid {
+		sr, ok := st.p.recipes[side.RecipeID]
+		if !ok {
+			return
+		}
+		var total float64
+		for _, portion := range sg.Portions {
+			total += portion.Servings * side.Servings
+		}
+		sideCook := &plans.Cook{
+			ID:         store.NewUUID(),
+			RecipeID:   sr.ID,
+			RecipeName: sr.Name,
+			Date:       cook.Date,
+			Servings:   total,
+			Meal:       cook.Meal,
+		}
+		st.cooks = append(st.cooks, sideCook)
+		n := st.p.nutrition[sr.ID]
+		for _, portion := range sg.Portions {
+			servings := portion.Servings * side.Servings
+			st.portions = append(st.portions, &plans.Portion{
+				ID:           store.NewUUID(),
+				PersonID:     portion.PersonID,
+				EatingTimeID: portion.EatingTimeID,
+				Date:         portion.Date,
+				CookID:       sideCook.ID,
+				Servings:     servings,
+				Name:         sr.Name,
+				CookDate:     sideCook.Date,
+				CookRecipeID: sr.ID,
+			})
+			if n != nil {
+				st.eat(portion, sr.Name, n.Servings(servings))
+			}
+		}
+		return
+	}
+	f, ok := st.p.in.Foods[side.FoodID]
+	if !ok {
+		return
+	}
+	for _, portion := range sg.Portions {
+		grams := portion.Servings * side.Grams
+		st.portions = append(st.portions, &plans.Portion{
+			ID:           store.NewUUID(),
+			PersonID:     portion.PersonID,
+			EatingTimeID: portion.EatingTimeID,
+			Date:         portion.Date,
+			FoodID:       f.ID,
+			Amount:       grams,
+			Unit:         nutrition.Grams,
+			Name:         f.Name,
+		})
+		st.eat(portion, f.Name, f.Nutrition().AmountOf(grams, nutrition.Grams))
+	}
+}
+
+// eat adds an amount eaten at a portion's eating time to what the state
+// plans there. The state's planned eating times are its own by then.
+func (st *state) eat(portion Portion, name string, amount nutrition.Amount) {
+	et := &rules.EatingTime{}
+	if portion.EatingTime != nil {
+		et.Name = portion.EatingTime.Name
+	}
+	if old, ok := st.planned[portion.Slot]; ok {
+		*et = *old
+		et.FastCarbFoods = slices.Clone(old.FastCarbFoods)
+		et.UnweighedNames = slices.Clone(old.UnweighedNames)
+	}
+	et.Amount.Add(&amount)
+	if amount.UnknownWeight && !slices.Contains(et.UnweighedNames, name) {
+		et.UnweighedNames = append(et.UnweighedNames, name)
+	}
+	st.planned[portion.Slot] = et
 }

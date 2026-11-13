@@ -1683,6 +1683,7 @@ type RecipeSummary struct {
 	xxx_hidden_FiberGramsPerServing        float64                `protobuf:"fixed64,20,opt,name=fiber_grams_per_serving,json=fiberGramsPerServing,proto3,oneof"`
 	xxx_hidden_SugarsGramsPerServing       float64                `protobuf:"fixed64,21,opt,name=sugars_grams_per_serving,json=sugarsGramsPerServing,proto3,oneof"`
 	xxx_hidden_SodiumMilligramsPerServing  float64                `protobuf:"fixed64,22,opt,name=sodium_milligrams_per_serving,json=sodiumMilligramsPerServing,proto3,oneof"`
+	xxx_hidden_ServedWith                  *[]*RecipeSide         `protobuf:"bytes,23,rep,name=served_with,json=servedWith,proto3"`
 	XXX_raceDetectHookData                 protoimpl.RaceDetectHookData
 	XXX_presence                           [1]uint32
 	unknownFields                          protoimpl.UnknownFields
@@ -1861,6 +1862,15 @@ func (x *RecipeSummary) GetSodiumMilligramsPerServing() float64 {
 	return 0
 }
 
+func (x *RecipeSummary) GetServedWith() []*RecipeSide {
+	if x != nil {
+		if x.xxx_hidden_ServedWith != nil {
+			return *x.xxx_hidden_ServedWith
+		}
+	}
+	return nil
+}
+
 func (x *RecipeSummary) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -1891,17 +1901,17 @@ func (x *RecipeSummary) SetTags(v []string) {
 
 func (x *RecipeSummary) SetEnergyKcalPerServing(v float64) {
 	x.xxx_hidden_EnergyKcalPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 21)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 22)
 }
 
 func (x *RecipeSummary) SetProteinGramsPerServing(v float64) {
 	x.xxx_hidden_ProteinGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 21)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 22)
 }
 
 func (x *RecipeSummary) SetCarbohydrateGramsPerServing(v float64) {
 	x.xxx_hidden_CarbohydrateGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 21)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 22)
 }
 
 func (x *RecipeSummary) SetGramsPerServing(v float64) {
@@ -1922,7 +1932,7 @@ func (x *RecipeSummary) SetFavorite(v bool) {
 
 func (x *RecipeSummary) SetCostCentsPerServing(v int32) {
 	x.xxx_hidden_CostCentsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 21)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 22)
 }
 
 func (x *RecipeSummary) SetDraft(v bool) {
@@ -1939,17 +1949,21 @@ func (x *RecipeSummary) SetSnoozedUntil(v string) {
 
 func (x *RecipeSummary) SetFiberGramsPerServing(v float64) {
 	x.xxx_hidden_FiberGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 21)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 22)
 }
 
 func (x *RecipeSummary) SetSugarsGramsPerServing(v float64) {
 	x.xxx_hidden_SugarsGramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 21)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 22)
 }
 
 func (x *RecipeSummary) SetSodiumMilligramsPerServing(v float64) {
 	x.xxx_hidden_SodiumMilligramsPerServing = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 21)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 22)
+}
+
+func (x *RecipeSummary) SetServedWith(v []*RecipeSide) {
+	x.xxx_hidden_ServedWith = &v
 }
 
 func (x *RecipeSummary) HasEnergyKcalPerServing() bool {
@@ -2096,6 +2110,9 @@ type RecipeSummary_builder struct {
 	SugarsGramsPerServing *float64
 	// The sodium in a serving, in milligrams. Unset if unknown.
 	SodiumMilligramsPerServing *float64
+	// The sides it's served with, as in Recipe.served_with, to choose one
+	// when planning it.
+	ServedWith []*RecipeSide
 }
 
 func (b0 RecipeSummary_builder) Build() *RecipeSummary {
@@ -2110,15 +2127,15 @@ func (b0 RecipeSummary_builder) Build() *RecipeSummary {
 	x.xxx_hidden_CookSeconds = b.CookSeconds
 	x.xxx_hidden_Tags = b.Tags
 	if b.EnergyKcalPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 21)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 22)
 		x.xxx_hidden_EnergyKcalPerServing = *b.EnergyKcalPerServing
 	}
 	if b.ProteinGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 21)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 22)
 		x.xxx_hidden_ProteinGramsPerServing = *b.ProteinGramsPerServing
 	}
 	if b.CarbohydrateGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 21)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 22)
 		x.xxx_hidden_CarbohydrateGramsPerServing = *b.CarbohydrateGramsPerServing
 	}
 	x.xxx_hidden_GramsPerServing = b.GramsPerServing
@@ -2126,24 +2143,25 @@ func (b0 RecipeSummary_builder) Build() *RecipeSummary {
 	x.xxx_hidden_UpdateTime = b.UpdateTime
 	x.xxx_hidden_Favorite = b.Favorite
 	if b.CostCentsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 21)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 22)
 		x.xxx_hidden_CostCentsPerServing = *b.CostCentsPerServing
 	}
 	x.xxx_hidden_Draft = b.Draft
 	x.xxx_hidden_NotSuggested = b.NotSuggested
 	x.xxx_hidden_SnoozedUntil = b.SnoozedUntil
 	if b.FiberGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 21)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 22)
 		x.xxx_hidden_FiberGramsPerServing = *b.FiberGramsPerServing
 	}
 	if b.SugarsGramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 21)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 22)
 		x.xxx_hidden_SugarsGramsPerServing = *b.SugarsGramsPerServing
 	}
 	if b.SodiumMilligramsPerServing != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 21)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 22)
 		x.xxx_hidden_SodiumMilligramsPerServing = *b.SodiumMilligramsPerServing
 	}
+	x.xxx_hidden_ServedWith = &b.ServedWith
 	return m0
 }
 
@@ -4177,7 +4195,7 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\tfood_name\x18\x03 \x01(\tR\bfoodName\x12%\n" +
 	"\x0eunknown_weight\x18\x04 \x01(\bR\runknownWeight\x12+\n" +
 	"\x11unknown_nutrients\x18\x05 \x03(\tR\x10unknownNutrients\x12\x1c\n" +
-	"\tunmatched\x18\x06 \x01(\bR\tunmatched\"\xfc\b\n" +
+	"\tunmatched\x18\x06 \x01(\bR\tunmatched\"\xb5\t\n" +
 	"\rRecipeSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -4202,7 +4220,9 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\rsnoozed_until\x18\x13 \x01(\tR\fsnoozedUntil\x12:\n" +
 	"\x17fiber_grams_per_serving\x18\x14 \x01(\x01H\x04R\x14fiberGramsPerServing\x88\x01\x01\x12<\n" +
 	"\x18sugars_grams_per_serving\x18\x15 \x01(\x01H\x05R\x15sugarsGramsPerServing\x88\x01\x01\x12F\n" +
-	"\x1dsodium_milligrams_per_serving\x18\x16 \x01(\x01H\x06R\x1asodiumMilligramsPerServing\x88\x01\x01B\x1a\n" +
+	"\x1dsodium_milligrams_per_serving\x18\x16 \x01(\x01H\x06R\x1asodiumMilligramsPerServing\x88\x01\x01\x127\n" +
+	"\vserved_with\x18\x17 \x03(\v2\x16.recipes.v1.RecipeSideR\n" +
+	"servedWithB\x1a\n" +
 	"\x18_energy_kcal_per_servingB\x1c\n" +
 	"\x1a_protein_grams_per_servingB!\n" +
 	"\x1f_carbohydrate_grams_per_servingB\x19\n" +
@@ -4360,47 +4380,48 @@ var file_recipes_v1_recipes_proto_depIdxs = []int32{
 	35, // 11: recipes.v1.RecipeNutrition.per_hundred_grams:type_name -> foods.v1.Nutrients
 	6,  // 12: recipes.v1.RecipeNutrition.issues:type_name -> recipes.v1.IngredientIssue
 	32, // 13: recipes.v1.RecipeSummary.update_time:type_name -> google.protobuf.Timestamp
-	0,  // 14: recipes.v1.CreateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
-	0,  // 15: recipes.v1.CreateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	0,  // 16: recipes.v1.GetRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	7,  // 17: recipes.v1.ListRecipesResponse.recipes:type_name -> recipes.v1.RecipeSummary
-	0,  // 18: recipes.v1.UpdateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
-	36, // 19: recipes.v1.UpdateRecipeRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 20: recipes.v1.UpdateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	18, // 21: recipes.v1.GetRecipeTimelineResponse.steps:type_name -> recipes.v1.TimedStep
-	14, // 22: recipes.v1.UpdateRecipesRequest.requests:type_name -> recipes.v1.UpdateRecipeRequest
-	21, // 23: recipes.v1.UpdateRecipesResponse.results:type_name -> recipes.v1.UpdateRecipeResult
-	0,  // 24: recipes.v1.UpdateRecipeResult.recipe:type_name -> recipes.v1.Recipe
-	7,  // 25: recipes.v1.ReplaceFoodResponse.recipes:type_name -> recipes.v1.RecipeSummary
-	0,  // 26: recipes.v1.PreviewImportResponse.recipe:type_name -> recipes.v1.Recipe
-	29, // 27: recipes.v1.PreviewImportResponse.ingredients:type_name -> recipes.v1.ImportedIngredient
-	30, // 28: recipes.v1.ImportedIngredient.matches:type_name -> recipes.v1.FoodMatch
-	0,  // 29: recipes.v1.ImportRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	16, // 30: recipes.v1.RecipeService.GetRecipeTimeline:input_type -> recipes.v1.GetRecipeTimelineRequest
-	8,  // 31: recipes.v1.RecipeService.CreateRecipe:input_type -> recipes.v1.CreateRecipeRequest
-	10, // 32: recipes.v1.RecipeService.GetRecipe:input_type -> recipes.v1.GetRecipeRequest
-	12, // 33: recipes.v1.RecipeService.ListRecipes:input_type -> recipes.v1.ListRecipesRequest
-	14, // 34: recipes.v1.RecipeService.UpdateRecipe:input_type -> recipes.v1.UpdateRecipeRequest
-	19, // 35: recipes.v1.RecipeService.UpdateRecipes:input_type -> recipes.v1.UpdateRecipesRequest
-	22, // 36: recipes.v1.RecipeService.ReplaceFood:input_type -> recipes.v1.ReplaceFoodRequest
-	26, // 37: recipes.v1.RecipeService.ImportRecipe:input_type -> recipes.v1.ImportRecipeRequest
-	27, // 38: recipes.v1.RecipeService.PreviewImport:input_type -> recipes.v1.PreviewImportRequest
-	24, // 39: recipes.v1.RecipeService.DeleteRecipe:input_type -> recipes.v1.DeleteRecipeRequest
-	17, // 40: recipes.v1.RecipeService.GetRecipeTimeline:output_type -> recipes.v1.GetRecipeTimelineResponse
-	9,  // 41: recipes.v1.RecipeService.CreateRecipe:output_type -> recipes.v1.CreateRecipeResponse
-	11, // 42: recipes.v1.RecipeService.GetRecipe:output_type -> recipes.v1.GetRecipeResponse
-	13, // 43: recipes.v1.RecipeService.ListRecipes:output_type -> recipes.v1.ListRecipesResponse
-	15, // 44: recipes.v1.RecipeService.UpdateRecipe:output_type -> recipes.v1.UpdateRecipeResponse
-	20, // 45: recipes.v1.RecipeService.UpdateRecipes:output_type -> recipes.v1.UpdateRecipesResponse
-	23, // 46: recipes.v1.RecipeService.ReplaceFood:output_type -> recipes.v1.ReplaceFoodResponse
-	31, // 47: recipes.v1.RecipeService.ImportRecipe:output_type -> recipes.v1.ImportRecipeResponse
-	28, // 48: recipes.v1.RecipeService.PreviewImport:output_type -> recipes.v1.PreviewImportResponse
-	25, // 49: recipes.v1.RecipeService.DeleteRecipe:output_type -> recipes.v1.DeleteRecipeResponse
-	40, // [40:50] is the sub-list for method output_type
-	30, // [30:40] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	1,  // 14: recipes.v1.RecipeSummary.served_with:type_name -> recipes.v1.RecipeSide
+	0,  // 15: recipes.v1.CreateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
+	0,  // 16: recipes.v1.CreateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	0,  // 17: recipes.v1.GetRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	7,  // 18: recipes.v1.ListRecipesResponse.recipes:type_name -> recipes.v1.RecipeSummary
+	0,  // 19: recipes.v1.UpdateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
+	36, // 20: recipes.v1.UpdateRecipeRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 21: recipes.v1.UpdateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	18, // 22: recipes.v1.GetRecipeTimelineResponse.steps:type_name -> recipes.v1.TimedStep
+	14, // 23: recipes.v1.UpdateRecipesRequest.requests:type_name -> recipes.v1.UpdateRecipeRequest
+	21, // 24: recipes.v1.UpdateRecipesResponse.results:type_name -> recipes.v1.UpdateRecipeResult
+	0,  // 25: recipes.v1.UpdateRecipeResult.recipe:type_name -> recipes.v1.Recipe
+	7,  // 26: recipes.v1.ReplaceFoodResponse.recipes:type_name -> recipes.v1.RecipeSummary
+	0,  // 27: recipes.v1.PreviewImportResponse.recipe:type_name -> recipes.v1.Recipe
+	29, // 28: recipes.v1.PreviewImportResponse.ingredients:type_name -> recipes.v1.ImportedIngredient
+	30, // 29: recipes.v1.ImportedIngredient.matches:type_name -> recipes.v1.FoodMatch
+	0,  // 30: recipes.v1.ImportRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	16, // 31: recipes.v1.RecipeService.GetRecipeTimeline:input_type -> recipes.v1.GetRecipeTimelineRequest
+	8,  // 32: recipes.v1.RecipeService.CreateRecipe:input_type -> recipes.v1.CreateRecipeRequest
+	10, // 33: recipes.v1.RecipeService.GetRecipe:input_type -> recipes.v1.GetRecipeRequest
+	12, // 34: recipes.v1.RecipeService.ListRecipes:input_type -> recipes.v1.ListRecipesRequest
+	14, // 35: recipes.v1.RecipeService.UpdateRecipe:input_type -> recipes.v1.UpdateRecipeRequest
+	19, // 36: recipes.v1.RecipeService.UpdateRecipes:input_type -> recipes.v1.UpdateRecipesRequest
+	22, // 37: recipes.v1.RecipeService.ReplaceFood:input_type -> recipes.v1.ReplaceFoodRequest
+	26, // 38: recipes.v1.RecipeService.ImportRecipe:input_type -> recipes.v1.ImportRecipeRequest
+	27, // 39: recipes.v1.RecipeService.PreviewImport:input_type -> recipes.v1.PreviewImportRequest
+	24, // 40: recipes.v1.RecipeService.DeleteRecipe:input_type -> recipes.v1.DeleteRecipeRequest
+	17, // 41: recipes.v1.RecipeService.GetRecipeTimeline:output_type -> recipes.v1.GetRecipeTimelineResponse
+	9,  // 42: recipes.v1.RecipeService.CreateRecipe:output_type -> recipes.v1.CreateRecipeResponse
+	11, // 43: recipes.v1.RecipeService.GetRecipe:output_type -> recipes.v1.GetRecipeResponse
+	13, // 44: recipes.v1.RecipeService.ListRecipes:output_type -> recipes.v1.ListRecipesResponse
+	15, // 45: recipes.v1.RecipeService.UpdateRecipe:output_type -> recipes.v1.UpdateRecipeResponse
+	20, // 46: recipes.v1.RecipeService.UpdateRecipes:output_type -> recipes.v1.UpdateRecipesResponse
+	23, // 47: recipes.v1.RecipeService.ReplaceFood:output_type -> recipes.v1.ReplaceFoodResponse
+	31, // 48: recipes.v1.RecipeService.ImportRecipe:output_type -> recipes.v1.ImportRecipeResponse
+	28, // 49: recipes.v1.RecipeService.PreviewImport:output_type -> recipes.v1.PreviewImportResponse
+	25, // 50: recipes.v1.RecipeService.DeleteRecipe:output_type -> recipes.v1.DeleteRecipeResponse
+	41, // [41:51] is the sub-list for method output_type
+	31, // [31:41] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_recipes_v1_recipes_proto_init() }

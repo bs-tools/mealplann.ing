@@ -12,7 +12,9 @@ import (
 	"connectrpc.com/connect/v2"
 	"github.com/bs-tools/mealplann.ing/internal/authn"
 	plansv1 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
+	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
 	suggestionsv1 "github.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 	"github.com/bs-tools/mealplann.ing/internal/people"
 	"github.com/bs-tools/mealplann.ing/internal/plans"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
@@ -251,6 +253,15 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 	}
 	choices := map[slotKey]pgtype.UUID{}
 	leftoverChoices := map[slotKey]*suggest.LeftoverRef{}
+	// The sides kept with the recipes chosen, read once the recipes are,
+	// by slot, with the choice's field for errors, and the slots kept with
+	// no side.
+	type sideChoice struct {
+		field string
+		side  *recipesv1.RecipeSide
+	}
+	sideChoices := map[slotKey]sideChoice{}
+	noSide := map[slotKey]bool{}
 	var personalChoices []*suggestionsv1.PlanChoice
 	for i, c := range req.GetChoices() {
 		field := fmt.Sprintf("choices[%d]", i)
@@ -295,6 +306,14 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 			}
 		}
 		choices[key] = id
+		if (c.HasSide() || c.GetNoSide()) && (!id.Valid || c.HasLeftoverOf()) {
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s.side and no_side are for a recipe kept as a new cook: set recipe_id without leftover_of, or leave them out", field)
+		}
+		if c.HasSide() {
+			sideChoices[key] = sideChoice{field: field + ".side", side: c.GetSide()}
+		}
+		noSide[key] = c.GetNoSide()
 		if c.HasLeftoverOf() {
 			if !id.Valid {
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
@@ -319,6 +338,12 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 	}
 	for _, c := range personalChoices {
 		if _, _, err := personalEatingTime(d.people, "choices", c.GetPersonId(), c.GetEatingTimeId()); err != nil {
+			return nil, err
+		}
+	}
+	fixedSides := map[slotKey]*recipes.Side{}
+	for key, c := range sideChoices {
+		if fixedSides[key], err = sideFromProto(c.field, c.side, d.recipes[choices[key]]); err != nil {
 			return nil, err
 		}
 	}
@@ -410,6 +435,8 @@ func (s *Service) SuggestPlan(ctx context.Context, req *suggestionsv1.SuggestPla
 				slot.FixedLeftover = ref
 			} else {
 				slot.Fixed = d.recipes[id]
+				slot.FixedSide = fixedSides[key]
+				slot.NoSide = noSide[key]
 			}
 			in.Slots = append(in.Slots, slot)
 		default:
@@ -690,12 +717,26 @@ func (d *planData) allPlanned() map[plans.Slot]*rules.EatingTime {
 	return planned
 }
 
-// servingsFor returns how many servings of a shared meal of a recipe each
-// person eats, toward their targets (see plans.ServingsToward), given the
-// nutrition planned at each slot.
-func (d *planData) servingsFor(recipeID pgtype.UUID, date time.Time, meal people.Meal, planned map[plans.Slot]*rules.EatingTime) func(*people.Person) float64 {
+// withSide plans a side with a cook to create, if there's one: its food's
+// portions with the cook, or a cook of its recipe after it.
+func withSide(toCreate []*plans.CookWithPortions, householdID pgtype.UUID, side *recipes.Side, cp *plans.CookWithPortions) []*plans.CookWithPortions {
+	if side == nil {
+		return toCreate
+	}
+	sideCook, foodPortions := planSide(householdID, side, cp.Cook, cp.Portions)
+	cp.FoodPortions = append(cp.FoodPortions, foodPortions...)
+	if sideCook != nil {
+		toCreate = append(toCreate, sideCook)
+	}
+	return toCreate
+}
+
+// servingsFor returns how many servings of a shared meal of nutrition n,
+// like a recipe's with its side, each person eats, toward their targets
+// (see plans.ServingsToward), given the nutrition planned at each slot.
+func servingsFor(n *nutrition.Recipe, date time.Time, meal people.Meal, planned map[plans.Slot]*rules.EatingTime) func(*people.Person) float64 {
 	return func(p *people.Person) float64 {
-		return plans.ServingsToward(p, d.recipeNutrition[recipeID], date, meal, planned)
+		return plans.ServingsToward(p, n, date, meal, planned)
 	}
 }
 
@@ -729,6 +770,11 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 		leftover *suggest.LeftoverRef
 		// cookDate is the date to cook it, its date unless made ahead.
 		cookDate time.Time
+		// field is the meal's in the request, for errors, and sideProto and
+		// side the side to serve with it, nil for none.
+		field     string
+		sideProto *recipesv1.RecipeSide
+		side      *recipes.Side
 	}
 	var list []mealToPlan
 	seen := map[slotKey]bool{}
@@ -796,7 +842,15 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 					"%s.cook_date must be from %d days before its date to its date", field, maxCookAheadDays)
 			}
 		}
-		list = append(list, mealToPlan{recipeID, key, leftover, cookDate})
+		var side *recipesv1.RecipeSide
+		if m.HasSide() {
+			if leftover != nil {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.side is for a new cook, and leftover_of eats an earlier one, with what it was served with: leave side out", field)
+			}
+			side = m.GetSide()
+		}
+		list = append(list, mealToPlan{recipeID: recipeID, slotKey: key, leftover: leftover, cookDate: cookDate, field: field, sideProto: side})
 		recipeIDs = append(recipeIDs, recipeID)
 	}
 	// The meals are split in order, each given the portions of those
@@ -820,6 +874,23 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to read plan", "")
 	}
+	// The sides are the recipes' served_with, read with their recipes and
+	// foods.
+	var sides []*recipes.Side
+	for i := range list {
+		m := &list[i]
+		r, ok := d.recipes[m.recipeID]
+		if !ok || m.sideProto == nil {
+			continue
+		}
+		if m.side, err = sideFromProto(m.field+".side", m.sideProto, r); err != nil {
+			return nil, err
+		}
+		sides = append(sides, m.side)
+	}
+	if err := s.loadSides(ctx, user.HouseholdID(), d, sides); err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to read the sides", "")
+	}
 	planned := d.plannedGrams()
 	// The nutrition planned at each slot, as the meals are, to size the
 	// later meals' servings given the earlier ones.
@@ -834,7 +905,9 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			return nil, connect.Errorf(connect.CodeNotFound, "the recipe for a meal on %s doesn't exist in your household; find recipes with ListRecipes",
 				store.FormatDate(m.date))
 		}
-		gramsPerServing := d.recipeNutrition[m.recipeID].GramsPerServing
+		// The portions are sized for the meal with its side, as it's eaten.
+		mealNutrition := d.mealNutrition(d.recipes[m.recipeID], m.side)
+		gramsPerServing := mealNutrition.GramsPerServing
 		if m.personal() {
 			p, _, err := personalEatingTime(d.people, fmt.Sprintf("meals[%d]", i), store.UUIDToString(m.personID), store.UUIDToString(m.eatingTimeID))
 			if err != nil {
@@ -844,6 +917,9 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			servings, cookServings := plans.EatingTimeServings(p, gramsPerServing, planned[slot])
 			planned[slot] += servings * gramsPerServing
 			d.addPlanned(amounts, slot, m.recipeID, servings)
+			if m.side != nil {
+				d.addPlannedSide(amounts, slot, m.side, servings)
+			}
 			portion := &plans.Portion{PersonID: p.ID, EatingTimeID: m.eatingTimeID, Date: m.date, Servings: servings}
 			if m.leftover != nil {
 				cp, err := leftoverCook(toCreate, served, d.plan.Cooks, m.leftover, i)
@@ -858,7 +934,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 				cp.Portions = append(cp.Portions, portion)
 				continue
 			}
-			toCreate = append(toCreate, &plans.CookWithPortions{
+			cp := &plans.CookWithPortions{
 				Cook: &plans.Cook{
 					HouseholdID: user.HouseholdID(),
 					RecipeID:    m.recipeID,
@@ -866,7 +942,9 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 					Servings:    cookServings,
 				},
 				Portions: []*plans.Portion{portion},
-			})
+			}
+			toCreate = append(toCreate, cp)
+			toCreate = withSide(toCreate, user.HouseholdID(), m.side, cp)
 			continue
 		}
 		if _, ok := eaters[m.meal]; !ok {
@@ -886,7 +964,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			GramsPerServing: gramsPerServing,
 			PlannedGrams:    planned,
 			EatingOut:       d.plan.EatingOutSlots(),
-			ServingsFor:     d.servingsFor(m.recipeID, m.date, m.meal, amounts),
+			ServingsFor:     servingsFor(mealNutrition, m.date, m.meal, amounts),
 		})
 		if err != nil {
 			return nil, s.toConnectError(ctx, err, "failed to split meal", "")
@@ -901,6 +979,9 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 			})
 			planned[share.Slot] += share.Servings * gramsPerServing
 			d.addPlanned(amounts, share.Slot, m.recipeID, share.Servings)
+			if m.side != nil {
+				d.addPlannedSide(amounts, share.Slot, m.side, share.Servings)
+			}
 		}
 		if m.leftover != nil {
 			// The rest of an earlier meal: its cook makes the servings
@@ -935,6 +1016,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 		}
 		served[cp] = &plans.Cook{RecipeID: m.recipeID, Date: m.date, Meal: m.meal}
 		toCreate = append(toCreate, cp)
+		toCreate = withSide(toCreate, user.HouseholdID(), m.side, cp)
 	}
 	// The cooks of the recipes' components are planned with them.
 	toCreate, err = s.planSuppliers(ctx, user.HouseholdID(), toCreate, d.recipes)

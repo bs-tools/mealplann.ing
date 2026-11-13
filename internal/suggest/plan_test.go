@@ -7,11 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 	"github.com/bs-tools/mealplann.ing/internal/people"
 	"github.com/bs-tools/mealplann.ing/internal/plans"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
 	"github.com/bs-tools/mealplann.ing/internal/rules"
 	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // planInput returns the input of planning dinners from Monday for days,
@@ -396,5 +398,60 @@ func TestPlanCooksOncePerDay(t *testing.T) {
 	}
 	if total > 4 {
 		t.Errorf("got %d cooks for 6 meals, want 4 at most", total)
+	}
+}
+
+// TestPlanSides checks that a plan serves its recipes with their sides,
+// keeps the side the user chose, or none, and plans each side for the
+// slots after it, which then share its pot.
+func TestPlanSides(t *testing.T) {
+	t.Parallel()
+	b := ben()
+	pot := recipe("Rice pot", 4, ingredient(rice, 300))
+	pot.Tags = []string{"side"}
+	curry := recipe("Curry", 2, ingredient(tofu, 400))
+	curry.ServedWith = []recipes.Side{{RecipeID: pot.ID, Servings: 1, RecipeName: pot.Name}}
+	sameDay(curry)
+	in := planInput(1, []*people.Person{b}, curry, pot)
+	in.Candidates = []*recipes.Recipe{curry}
+	result := Plan(in)
+	if sg := result.Slots[0].Suggestion; sg == nil || sg.Recipe != curry || sg.Side == nil || sg.Side.RecipeID != pot.ID {
+		t.Fatalf("got %+v, want the curry served with the rice pot", result.Slots[0].Suggestion)
+	}
+
+	none := planInput(1, []*people.Person{b}, curry, pot)
+	none.Candidates = []*recipes.Recipe{curry}
+	none.Slots[0].Fixed = curry
+	none.Slots[0].NoSide = true
+	if sg := Plan(none).Slots[0].Suggestion; sg == nil || sg.Side != nil {
+		t.Errorf("got %+v, want the curry kept without its side", sg)
+	}
+
+	// The side planned with the first dinner is a cook the second's
+	// state has, with a share for each portion.
+	p := &planner{in: in, nutrition: map[pgtype.UUID]*nutrition.Recipe{}, recipes: map[pgtype.UUID]*recipes.Recipe{}}
+	for _, r := range in.Recipes {
+		p.nutrition[r.ID] = r.Nutrition()
+		p.recipes[r.ID] = r
+	}
+	st := p.newState()
+	st.add(in.Slots[0], result.Slots[0].Suggestion)
+	var sideCook *plans.Cook
+	for _, c := range st.cooks {
+		if c.RecipeID == pot.ID {
+			sideCook = c
+		}
+	}
+	if sideCook == nil {
+		t.Fatalf("got cooks %+v, want one of the rice pot", st.cooks)
+	}
+	var shares float64
+	for _, portion := range st.portions {
+		if portion.CookID == sideCook.ID {
+			shares += portion.Servings
+		}
+	}
+	if shares <= 0 || shares > sideCook.Servings+0.01 {
+		t.Errorf("got %v servings of the pot's %v planned, want a share for the dinner", shares, sideCook.Servings)
 	}
 }

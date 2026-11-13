@@ -503,3 +503,109 @@ func TestSuggestPlanSnackFilledByMeal(t *testing.T) {
 		t.Errorf("got %v, want the porridge, filling the mid-morning snack too", got)
 	}
 }
+
+// TestPlanWithSides checks that a recipe served with sides is suggested
+// with the best of them, or the one kept, or none; that a side it isn't
+// served with is refused; and that planning it plans the side: a cook of
+// the side's recipe with a share for each portion, or a portion of the
+// side's food for each.
+func TestPlanWithSides(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	b := ben()
+	b.SetUserId(store.UUIDToString(e.userID))
+	createPerson(t, e, b)
+	tofu := customFood(t, e, "Tofu", 144, 15, 3, 0.6, 9, nil)
+	basmati := customFood(t, e, "Basmati", 360, 7, 78, 0, 1, nil)
+	naan := customFood(t, e, "Naan", 290, 9, 50, 3, 6, nil)
+	create := func(r *recipesv1.Recipe) *recipesv1.Recipe {
+		t.Helper()
+		resp, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: r}.Build())
+		if err != nil {
+			t.Fatalf("CreateRecipe: %v", err)
+		}
+		return resp.GetRecipe()
+	}
+	rice := create(recipesv1.Recipe_builder{
+		Name: "Rice", Servings: 4, Tags: []string{"side"},
+		Ingredients: []*recipesv1.Ingredient{ingredient(basmati.GetId(), 300, grams)},
+	}.Build())
+	curry := create(recipesv1.Recipe_builder{
+		Name: "Tofu curry", Servings: 2, Tags: []string{"dinner"}, FridgeDays: new(int32(0)),
+		Ingredients: []*recipesv1.Ingredient{ingredient(tofu.GetId(), 400, grams)},
+		ServedWith: []*recipesv1.RecipeSide{
+			recipesv1.RecipeSide_builder{RecipeId: rice.GetId(), ServingsPerServing: 1}.Build(),
+			recipesv1.RecipeSide_builder{FoodId: naan.GetId(), GramsPerServing: 80}.Build(),
+		},
+	}.Build())
+
+	plan := func(choice *suggestionsv1.PlanChoice) *suggestionsv1.Suggestion {
+		t.Helper()
+		req := suggestionsv1.SuggestPlanRequest_builder{StartDate: monday, Days: 1, Meals: []peoplev1.HouseholdMeal{dinner}, Seed: 1}.Build()
+		if choice != nil {
+			req.SetChoices([]*suggestionsv1.PlanChoice{choice})
+		}
+		resp, err := e.suggestions.SuggestPlan(ctx, req)
+		if err != nil {
+			t.Fatalf("SuggestPlan: %v", err)
+		}
+		return resp.GetSlots()[0].GetSuggestion()
+	}
+	if got := plan(nil); got.GetRecipeId() != curry.GetId() || !got.HasSide() {
+		t.Fatalf("got %v, want the curry with a side", got)
+	}
+	keep := func(edit func(*suggestionsv1.PlanChoice)) *suggestionsv1.PlanChoice {
+		c := suggestionsv1.PlanChoice_builder{Date: monday, Meal: dinner, RecipeId: curry.GetId()}.Build()
+		edit(c)
+		return c
+	}
+	if got := plan(keep(func(c *suggestionsv1.PlanChoice) {
+		c.SetSide(recipesv1.RecipeSide_builder{FoodId: naan.GetId()}.Build())
+	})); got.GetSide().GetFoodId() != naan.GetId() || got.GetSide().GetGramsPerServing() != 80 {
+		t.Errorf("got side %v, want the naan kept", got.GetSide())
+	}
+	if got := plan(keep(func(c *suggestionsv1.PlanChoice) { c.SetNoSide(true) })); got.HasSide() {
+		t.Errorf("got side %v, want none kept", got.GetSide())
+	}
+	_, err := e.suggestions.SuggestPlan(ctx, suggestionsv1.SuggestPlanRequest_builder{
+		StartDate: monday, Days: 1, Meals: []peoplev1.HouseholdMeal{dinner},
+		Choices: []*suggestionsv1.PlanChoice{keep(func(c *suggestionsv1.PlanChoice) {
+			c.SetSide(recipesv1.RecipeSide_builder{FoodId: tofu.GetId()}.Build())
+		})},
+	}.Build())
+	wantCode(t, err, connect.CodeInvalidArgument)
+
+	// Planned with the rice, it's a cook of the rice too, with Ben's
+	// share; planned with naan, a portion of it.
+	saved, err := e.plans.PlanMeals(ctx, plansv1.PlanMealsRequest_builder{Meals: []*plansv1.MealToPlan{
+		plansv1.MealToPlan_builder{
+			RecipeId: curry.GetId(), Date: monday, Meal: dinner,
+			Side: recipesv1.RecipeSide_builder{RecipeId: rice.GetId()}.Build(),
+		}.Build(),
+	}}.Build())
+	if err != nil {
+		t.Fatalf("PlanMeals: %v", err)
+	}
+	if len(saved.GetCooks()) != 2 || saved.GetCooks()[1].GetRecipeId() != rice.GetId() || saved.GetPortionCount() != 2 {
+		t.Errorf("got %v and %d portions, want the curry and the rice, each with Ben's portion", saved.GetCooks(), saved.GetPortionCount())
+	}
+	withNaan, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{
+		RecipeId: curry.GetId(), Date: tuesday, Meal: dinner,
+		Side: recipesv1.RecipeSide_builder{FoodId: naan.GetId()}.Build(),
+	}.Build())
+	if err != nil {
+		t.Fatalf("PlanMeal: %v", err)
+	}
+	var naanGrams, curryServings float64
+	for _, p := range withNaan.GetPortions() {
+		if p.GetFood().GetFoodId() == naan.GetId() {
+			naanGrams = p.GetFood().GetAmount()
+		} else {
+			curryServings = p.GetCook().GetServings()
+		}
+	}
+	if curryServings <= 0 || naanGrams < curryServings*80-0.5 || naanGrams > curryServings*80+0.5 {
+		t.Errorf("got %v g of naan with %v servings of curry, want 80 g for each serving", naanGrams, curryServings)
+	}
+}
