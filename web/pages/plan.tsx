@@ -424,6 +424,11 @@ const PlanPage: React.FC = () => {
       {planning !== null &&
         (planning.recipeId === undefined || recipes.data !== undefined) && (
           <PlanMealDialog
+            cooks={
+              week.data === undefined
+                ? []
+                : [...week.data.earlierLeftovers, ...week.data.cooks]
+            }
             dates={dates}
             date={planning.date}
             meal={planning.meal}

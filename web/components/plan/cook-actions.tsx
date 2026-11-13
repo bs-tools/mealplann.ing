@@ -1,7 +1,11 @@
 import FreezeDialog from "@components/plan/freeze-dialog";
 import ConfirmButton from "@components/ui/confirm-button";
 import { ErrorText } from "@components/ui/query-error";
-import { ghostButton, ghostDangerButton } from "@components/ui/styles";
+import {
+  pillButton,
+  pillDangerButton,
+  pillPrimaryButton,
+} from "@components/ui/styles";
 import { useMutation } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
@@ -92,6 +96,8 @@ interface CookActionsProps {
   weekCooks: PlannedCook[];
   // Called once the cook is deleted, as the meal is gone with it.
   onDeleted: () => void;
+  // Whether to leave out not cooking it, as a meal offers removing itself.
+  hideDelete?: boolean | undefined;
 }
 
 /**
@@ -103,6 +109,7 @@ const CookActions: React.FC<CookActionsProps> = ({
   planned,
   weekCooks,
   onDeleted,
+  hideDelete = false,
 }) => {
   const queryClient = useQueryClient();
   const [freezing, setFreezing] = useState(false);
@@ -151,10 +158,10 @@ const CookActions: React.FC<CookActionsProps> = ({
           disabled={false}
         />
       ))}
-      <div className="-mx-2 flex flex-wrap gap-x-1 gap-y-1">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          className={ghostButton}
+          className={pillPrimaryButton}
           disabled={done.isPending}
           aria-pressed={cook.done}
           onClick={() => {
@@ -169,7 +176,7 @@ const CookActions: React.FC<CookActionsProps> = ({
         {(planned.leftServings > 0 || cook.frozenServings > 0) && (
           <button
             type="button"
-            className={ghostButton}
+            className={pillButton}
             onClick={() => {
               setFreezing(true);
             }}
@@ -177,17 +184,19 @@ const CookActions: React.FC<CookActionsProps> = ({
             {cook.frozenServings > 0 ? "Frozen servings" : "Freeze leftovers"}
           </button>
         )}
-        <ConfirmButton
-          className={ghostDangerButton}
-          title={`Don't cook ${cook.recipeName}?`}
-          message="The cook is deleted with all its portions, leftovers on other days too."
-          disabled={remove.isPending}
-          onConfirm={() => {
-            remove.mutate({ id: cook.id });
-          }}
-        >
-          Don&apos;t cook it
-        </ConfirmButton>
+        {!hideDelete && (
+          <ConfirmButton
+            className={pillDangerButton}
+            title={`Don't cook ${cook.recipeName}?`}
+            message="The cook is deleted with all its portions, leftovers on other days too."
+            disabled={remove.isPending}
+            onConfirm={() => {
+              remove.mutate({ id: cook.id });
+            }}
+          >
+            Don&apos;t cook it
+          </ConfirmButton>
+        )}
       </div>
       {note !== "" && <p className="text-sm text-muted">{note}</p>}
       <ErrorText error={done.error ?? remove.error} />

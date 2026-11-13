@@ -1,7 +1,9 @@
 import CookActions from "@components/plan/cook-actions";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import type { MealRow, RowSlot } from "@components/plan/plan-rows";
+import { portionAmount } from "@components/plan/plan-rows";
 import PortionDialog from "@components/plan/portion-dialog";
+import SharedSides from "@components/plan/shared-sides";
 import WarningsLink from "@components/plan/warnings-link";
 import {
   Plate,
@@ -11,17 +13,19 @@ import {
 } from "@components/today/plate";
 import { ConfirmDialog } from "@components/ui/confirm-button";
 import Modal from "@components/ui/modal";
+import MoreMenu from "@components/ui/more-menu";
 import { ErrorText } from "@components/ui/query-error";
 import Segmented from "@components/ui/segmented";
 import {
+  pillButton,
+  pillDangerButton,
   secondaryButton,
-  ghostButton,
-  ghostDangerButton,
   sectionLabelClass,
 } from "@components/ui/styles";
 import type { ConnectError } from "@connectrpc/connect";
 import { createClient } from "@connectrpc/connect";
 import { useMutation, useQuery, useTransport } from "@connectrpc/connect-query";
+import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import {
   useMutation as useTanstackMutation,
   useQueryClient,
@@ -45,7 +49,6 @@ import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { parseDate } from "helpers/dates";
-import { formatList } from "helpers/format";
 import { formatServings } from "helpers/labels";
 import { formatAmount } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
@@ -189,7 +192,7 @@ const CookBar: React.FC<CookBarProps> = ({ week, cookId, portions }) => {
         <div className="flex flex-col gap-1">
           <button
             type="button"
-            className="self-start rounded-full bg-pine-50 px-3.5 py-2 text-sm font-bold text-pine hover:bg-pine-100 disabled:opacity-50"
+            className={`${pillButton} self-start`}
             disabled={shrink.isPending}
             onClick={() => {
               shrink.mutate({
@@ -413,7 +416,7 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
           }}
         />
         <Plate nutrients={slot.planned.nutrients} />
-        {main !== undefined && (
+        {shared === undefined && main !== undefined && (
           <SidesCard
             personId={slot.person.personId}
             eatingTimeId={eatingTimeId}
@@ -425,25 +428,29 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
           date={day.date}
           about={`for ${slot.person.personName}'s day`}
         />
-        {main !== undefined && (
+        {shared === undefined && main !== undefined && (
           <CookBar week={week} cookId={main.cookId} portions={portions} />
         )}
-        {cook !== undefined && main?.leftover === false && (
-          <CookActions
-            planned={cook}
-            weekCooks={week.cooks}
-            onDeleted={onClose}
-          />
-        )}
-        <div className="-mx-2 -mb-2 flex flex-wrap gap-x-1 gap-y-1">
-          {main !== undefined && main.recipeId !== "" && (
-            <Link to={`/recipes/${main.recipeId}`} className={ghostButton}>
-              The recipe
-            </Link>
+        {shared === undefined &&
+          cook !== undefined &&
+          main?.leftover === false && (
+            <CookActions
+              planned={cook}
+              weekCooks={week.cooks}
+              onDeleted={onClose}
+            />
           )}
+        <div className="flex flex-wrap gap-2">
+          {shared === undefined &&
+            main !== undefined &&
+            main.recipeId !== "" && (
+              <Link to={`/recipes/${main.recipeId}`} className={pillButton}>
+                The recipe
+              </Link>
+            )}
           <button
             type="button"
-            className={ghostDangerButton}
+            className={pillDangerButton}
             disabled={remove.isPending}
             onClick={() => {
               void Promise.all(
@@ -455,9 +462,9 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
               ).then(onClose);
             }}
           >
-            {shared === undefined
-              ? "Remove"
-              : `Remove ${slot.person.personName}'s portion`}
+            {eaters.length > 1
+              ? `Remove ${slot.person.personName}'s portion`
+              : "Remove"}
           </button>
         </div>
         <ErrorText error={remove.error} />
@@ -492,6 +499,7 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
   if (swapping && shared?.cook !== undefined) {
     return (
       <PlanMealDialog
+        cooks={[...week.earlierLeftovers, ...week.cooks]}
         dates={week.days.map((other) => other.date)}
         date={day.date}
         meal={row.meal}
@@ -507,48 +515,108 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
     );
   }
 
-  const sharedNames = eaters.map((other) => other.person.personName);
+  // Everyone's portions at the meal, to show their shares of its cook.
+  const mealPortions = eaters.flatMap((other) => other.planned.portions);
   return (
     <Modal open onClose={onClose} title={row.label}>
-      <div className="flex flex-col gap-4">
-        <p className="-mt-2 text-sm text-muted">{kicker}</p>
+      <div className="flex flex-col gap-5">
+        <p className="-mt-3 text-sm text-muted">{kicker}</p>
         {shared?.cook !== undefined && (
-          <section className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
-            <h3 className={sectionLabelClass}>For everyone</h3>
-            <p className="text-sm text-ink-soft">
-              <Link
-                to={`/recipes/${shared.cook.recipeId}`}
-                className="font-bold"
-              >
-                {shared.cook.recipeName}
-              </Link>{" "}
-              for {formatList(sharedNames)}, cooked as{" "}
-              {formatServings(shared.cook.servings)}
-            </p>
-            <div className="-mx-2 flex flex-wrap gap-1">
-              <button
-                type="button"
-                className={ghostButton}
-                disabled={
-                  recipes.data === undefined || people.data === undefined
-                }
-                onClick={() => {
-                  setSwapping(true);
-                }}
-              >
-                Swap the recipe
-              </button>
-              <button
-                type="button"
-                className={ghostDangerButton}
-                disabled={removeMeal.isPending}
-                onClick={() => {
-                  setRemovingMeal(true);
-                }}
-              >
-                Remove the meal
-              </button>
+          <section className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex min-w-0 grow flex-col gap-0.5">
+                <h3 className={sectionLabelClass}>For everyone</h3>
+                <Link
+                  to={`/recipes/${shared.cook.recipeId}`}
+                  className="text-lg leading-snug font-bold text-ink-soft hover:underline"
+                >
+                  {shared.cook.recipeName}
+                </Link>
+              </div>
+              <MoreMenu
+                label="More for the meal"
+                items={[
+                  {
+                    disabled:
+                      recipes.data === undefined || people.data === undefined,
+                    label: "Swap the recipe",
+                    onClick: () => {
+                      setSwapping(true);
+                    },
+                  },
+                  {
+                    label: "Cook it now",
+                    to: `/recipes/${shared.cook.recipeId}/cook`,
+                  },
+                  {
+                    danger: true,
+                    disabled: removeMeal.isPending,
+                    label: "Remove the meal",
+                    onClick: () => {
+                      setRemovingMeal(true);
+                    },
+                  },
+                ]}
+              />
             </div>
+            <ul className="-my-1 flex flex-col divide-y divide-line">
+              {eaters.map((other) => {
+                const share = other.planned.portions.find(
+                  (portion) => portion.cookId === shared.cook?.id
+                );
+                return (
+                  <li key={other.person.personId}>
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-3 py-2.5 text-left text-sm disabled:cursor-default"
+                      disabled={share === undefined}
+                      aria-label={`Change ${other.person.personName}'s portion`}
+                      onClick={() => {
+                        setPersonId(other.person.personId);
+                        setEditing(share);
+                      }}
+                    >
+                      <span className="grow font-medium text-ink-soft">
+                        {other.person.personName}
+                      </span>
+                      <span className="text-muted tabular-nums">
+                        {share === undefined
+                          ? "something else"
+                          : portionAmount(share)}
+                      </span>
+                      {share !== undefined && (
+                        <ChevronRightIcon
+                          className="size-4 shrink-0 text-muted/70"
+                          aria-hidden="true"
+                        />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <SharedSides
+              eaters={eaters
+                .filter((other) => !other.planned.eatingOut)
+                .map((other) => ({
+                  eatingTimeId: other.planned.eatingTime?.id ?? "",
+                  personId: other.person.personId,
+                }))}
+              date={day.date}
+              meal={row.meal}
+              cooks={week.cooks}
+            />
+            <CookBar
+              week={week}
+              cookId={shared.cook.id}
+              portions={mealPortions}
+            />
+            <CookActions
+              planned={shared}
+              weekCooks={week.cooks}
+              onDeleted={onClose}
+              hideDelete
+            />
             <ErrorText error={removeMeal.error} />
             <ConfirmDialog
               open={removingMeal}
@@ -564,18 +632,23 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
             />
           </section>
         )}
-        {eaters.length > 1 && (
-          <Segmented
-            label="Whose"
-            value={slot?.person.personId ?? ""}
-            options={eaters.map((other) => ({
-              label: other.person.personName,
-              value: other.person.personId,
-            }))}
-            onChange={setPersonId}
-          />
+        {eaters.length > 1 ? (
+          <section className="flex flex-col gap-3">
+            <h3 className={sectionLabelClass}>Each plate</h3>
+            <Segmented
+              label="Whose"
+              value={slot?.person.personId ?? ""}
+              options={eaters.map((other) => ({
+                label: other.person.personName,
+                value: other.person.personId,
+              }))}
+              onChange={setPersonId}
+            />
+            {content}
+          </section>
+        ) : (
+          content
         )}
-        {content}
       </div>
     </Modal>
   );

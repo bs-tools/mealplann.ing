@@ -1,4 +1,5 @@
 import { WarningList } from "@components/plan/plan-bits";
+import { FoodChoice, LeftoversChoice } from "@components/plan/plan-meal-other";
 import SuggestionList from "@components/plan/suggestion-list";
 import type { PickedRecipe } from "@components/recipes/recipe-picker";
 import RecipePicker from "@components/recipes/recipe-picker";
@@ -24,7 +25,11 @@ import { PantryService } from "gen/pantry/v1/pantry_pb";
 import type { Person } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
 import { planMeal } from "gen/plans/v1/plans-PlanService_connectquery";
-import type { PlanMealResponse, Staple } from "gen/plans/v1/plans_pb";
+import type {
+  PlanMealResponse,
+  PlannedCook,
+  Staple,
+} from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
@@ -38,8 +43,11 @@ import { staplesAt } from "helpers/staples";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
-// Tab is how the recipe is chosen: from the suggestions, or from all.
-type Tab = "suggestions" | "recipe";
+/*
+ * Tab is what the meal is: a recipe from the suggestions or from all of
+ * them, the rest of an earlier cook, or a food.
+ */
+type Tab = "suggestions" | "recipe" | "leftovers" | "food";
 
 interface PlanMealDialogProps {
   // The dates to choose from, those of the week shown.
@@ -59,15 +67,20 @@ interface PlanMealDialogProps {
    * portions once the new one is planned: swapping a meal's recipe.
    */
   replacing?: { cookId: string; recipeName: string } | undefined;
+  // The cooks whose leftovers can be the meal: the week's, and earlier ones.
+  cooks?: PlannedCook[] | undefined;
   onClose: () => void;
 }
+
+// NO_COOKS is no cooks to eat the rest of, when none are given.
+const NO_COOKS: PlannedCook[] = [];
 
 /**
  * PlanMealDialog plans a shared meal: a recipe cooked on a day for
  * breakfast, lunch or dinner, split into a portion for everyone who eats
- * it, within their maximum portions. The recipe is chosen from the
- * suggestions for the meal, or from all of them. It then shows the split
- * and its warnings.
+ * it, within their maximum portions, then showing the split and its
+ * warnings; or the rest of an earlier cook, or a food, for everyone. The
+ * recipe is chosen from the suggestions for the meal, or from all of them.
  */
 const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   dates,
@@ -78,6 +91,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   recipes,
   recipe: initialRecipe,
   replacing,
+  cooks = NO_COOKS,
   onClose,
 }) => {
   const queryClient = useQueryClient();
@@ -188,6 +202,23 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
    */
   const personIds =
     flipped.length === 0 ? [] : chosen.map((person) => person.id);
+  // Each person chosen, at their eating time of the meal.
+  const mealEaters = chosen.flatMap((person) =>
+    person.eatingTimes
+      .filter((et) => et.meal === meal)
+      .slice(0, 1)
+      .map((et) => ({ eatingTimeId: et.id, personId: person.id }))
+  );
+  // Planned leftovers or a food replace the meal swapped, then close.
+  const planned = async (): Promise<void> => {
+    if (replacing !== undefined) {
+      await createClient(PlanService, transport).deleteCook({
+        id: replacing.cookId,
+      });
+      await invalidateServices(queryClient, [PlanService, ShoppingService]);
+    }
+    onClose();
+  };
   const save = () => {
     setInvalid("");
     const value = parseOptionalNumber(servings);
@@ -236,7 +267,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
       <div className="flex flex-col gap-4">
         <p className="-mt-2 text-sm text-muted">
           {replacing === undefined
-            ? "One cook for everyone at the meal."
+            ? "One meal for everyone at it: a recipe, leftovers or a food."
             : `Instead of ${replacing.recipeName}, whose cook and portions are removed.`}
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -323,15 +354,28 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
           )}
         </div>
         <Segmented
-          label="How to choose the recipe"
+          label="What the meal is"
           value={tab}
           options={[
-            { label: "Suggestions", value: "suggestions" },
-            { label: "Choose a recipe", value: "recipe" },
+            { label: "Suggested", value: "suggestions" },
+            { label: "Recipe", value: "recipe" },
+            { label: "Leftovers", value: "leftovers" },
+            { label: "Food", value: "food" },
           ]}
           onChange={setTab}
         />
-        {tab === "suggestions" ? (
+        {tab === "leftovers" && (
+          <LeftoversChoice
+            eaters={mealEaters}
+            date={date}
+            cooks={cooks}
+            onPlanned={planned}
+          />
+        )}
+        {tab === "food" && (
+          <FoodChoice eaters={mealEaters} date={date} onPlanned={planned} />
+        )}
+        {tab === "suggestions" && (
           <>
             {eaters.length > 0 && chosen.length > 0 && (
               <SuggestionList
@@ -359,7 +403,8 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
             )}
             <ErrorText error={plan.error} />
           </>
-        ) : (
+        )}
+        {tab === "recipe" && (
           <form
             className="flex flex-col gap-3"
             onSubmit={(event) => {

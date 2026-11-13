@@ -310,7 +310,7 @@ export const splitFix = (
 };
 
 // SideName names a side, a food or a recipe.
-const sideName = (side: SideSuggestion): string =>
+export const sideName = (side: SideSuggestion): string =>
   side.recipeId === "" ? side.foodName : side.recipeName;
 
 // SideAmount says how much of a side to add, e.g. "150 g" or "1½ servings".
