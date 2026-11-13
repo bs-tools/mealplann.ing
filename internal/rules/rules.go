@@ -297,6 +297,9 @@ type Cook struct {
 	// OffPlanServings is how many servings were taken without a portion,
 	// which count as used, from the freezer first.
 	OffPlanServings float64
+	// Done is whether it's been cooked: what's left of it is leftovers in
+	// the kitchen, rather than a cook still to make.
+	Done bool
 }
 
 // CheckPortion checks when a portion of the cook is eaten: not before it's
@@ -375,8 +378,11 @@ func CheckSupply(recipeName string, date time.Time, componentName string, suppli
 // CheckServings checks that a cook's servings match the servings of its
 // portions, assigned, and those taken off plan, and that it has frozen
 // enough servings for those eaten after its fridge days. Frozen servings
-// not planned or taken yet are in the freezer, rather than unassigned. It
-// returns nil if all's well.
+// not planned or taken yet are in the freezer, rather than unassigned. A
+// cook still to make with none of its servings planned, frozen or made for
+// another cook is a warning, rather than a note: it's usually left behind
+// by accident, like the cook of a meal whose portions were all removed,
+// and would be cooked and bought for nobody. It returns nil if all's well.
 func CheckServings(c *Cook, assigned float64) *Warning {
 	inFreezer := max(c.FrozenServings-c.LateServings-c.OffPlanServings, 0)
 	assigned += c.OffPlanServings
@@ -396,6 +402,14 @@ func CheckServings(c *Cook, assigned float64) *Warning {
 			Limit: c.Servings,
 			Message: fmt.Sprintf("%s servings of %s are planned, in portions or for other cooks, more than the %s cooked: cook more servings, or plan less of it.",
 				format(assigned), c.RecipeName, format(c.Servings)),
+		}
+	case !c.Done && assigned+inFreezer < servingsSlack && c.Servings > servingsSlack:
+		return &Warning{
+			Kind:  ServingsUnassigned,
+			Value: c.Servings,
+			Limit: c.Servings,
+			Message: fmt.Sprintf("Nobody is planned to eat any of the %s %s of %s: plan it for a meal, or delete the cook if it was left behind.",
+				format(c.Servings), plural(int(math.Ceil(c.Servings)), "serving", "servings"), c.RecipeName),
 		}
 	case assigned+inFreezer < c.Servings-servingsSlack:
 		left := c.Servings - assigned - inFreezer

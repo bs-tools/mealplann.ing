@@ -282,6 +282,20 @@ func TestCheckServings(t *testing.T) {
 	if got := CheckServings(c, 5); got == nil || got.Kind != ServingsOverassigned || got.Info {
 		t.Errorf("got %+v, want servings overassigned", got)
 	}
+	// A cook nobody eats any of is likely left behind, so it warns.
+	got = CheckServings(c, 0)
+	if got == nil || got.Kind != ServingsUnassigned || got.Info || got.Value != 4 ||
+		got.Message != "Nobody is planned to eat any of the 4 servings of Dal: plan it for a meal, or delete the cook if it was left behind." {
+		t.Errorf("got %+v, want a warning for a cook nobody eats", got)
+	}
+	// Once cooked, it's leftovers in the kitchen, only noted.
+	if got := CheckServings(&Cook{RecipeName: "Dal", Servings: 4, Done: true}, 0); got == nil || !got.Info {
+		t.Errorf("got %+v for a cooked one nobody eats yet, want a note", got)
+	}
+	// Frozen servings are kept, not left behind.
+	if got := CheckServings(&Cook{RecipeName: "Dal", Servings: 4, FrozenServings: 4}, 0); got != nil {
+		t.Errorf("got %+v for a cook frozen whole, want none", got)
+	}
 
 	// With 2 servings frozen and 1 of them planned, the other is in the
 	// freezer, not unassigned.

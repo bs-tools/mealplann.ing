@@ -139,6 +139,9 @@ export const warningTitle = (warning: Warning): string => {
     case WarningKind.LEFTOVER_THAW: {
       return "Thaw it first";
     }
+    case WarningKind.SERVINGS_UNASSIGNED: {
+      return "Nobody eats it";
+    }
     default: {
       return "Check the plan";
     }

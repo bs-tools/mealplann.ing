@@ -121,7 +121,11 @@ const (
 	WarningKind_WARNING_KIND_LEFTOVER_FREEZE WarningKind = 11
 	// A portion is eaten before its cook is cooked.
 	WarningKind_WARNING_KIND_PORTION_BEFORE_COOK WarningKind = 12
-	// Some of a cook's servings aren't planned for anyone.
+	// Some of a cook's servings aren't planned for anyone, a note. If none
+	// of a cook still to make are planned, frozen or made for another cook,
+	// it's a warning instead: the cook was likely left behind, like when
+	// its meal's portions were removed, and would be bought for and cooked
+	// for nobody. Plan a meal of it, or delete it with DeleteCook.
 	WarningKind_WARNING_KIND_SERVINGS_UNASSIGNED WarningKind = 13
 	// A cook's portions add up to more servings than it makes.
 	WarningKind_WARNING_KIND_SERVINGS_OVERASSIGNED WarningKind = 14
