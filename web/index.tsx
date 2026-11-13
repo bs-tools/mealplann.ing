@@ -22,7 +22,16 @@ const transport = createConnectTransport({
   baseUrl: globalThis.location.origin,
 });
 
-const queryClient = new QueryClient();
+/*
+ * Data read in the last 30 seconds is used again rather than read again
+ * each time a page mounts or the app regains focus: every change the app
+ * makes invalidates what it changes, and reads like the recipes and the
+ * plan's cost cost the database's network transfer, a limit of its free
+ * tier. Changes from the other phone show within 30 seconds.
+ */
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 30_000 } },
+});
 
 /*
  * The service worker makes the app installable on a phone's home screen,
