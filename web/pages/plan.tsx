@@ -304,7 +304,7 @@ const PlanPage: React.FC = () => {
     : monday === startOfWeek(now);
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-5 lg:max-w-none">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-muted">

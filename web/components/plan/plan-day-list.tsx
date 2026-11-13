@@ -61,7 +61,8 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
   onOpen,
   onPlan,
 }) => (
-  <div className="flex flex-col gap-5">
+  // A wide screen shows the days side by side, as a week reads.
+  <div className="flex flex-col gap-5 lg:grid lg:grid-cols-3 lg:items-start">
     {days.map((day) => {
       const rows = rowsOf(day);
       const empty = rows.every((row) => !rowPlanned(row));
@@ -142,6 +143,8 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
                   </button>
                 );
               }
+              const items = rowItems(row);
+              const stapleOnly = items.every((item) => item.staple);
               const effort = rowEffort(row, day.date);
               const style = EFFORT_STYLE[effort];
               return (
@@ -163,31 +166,48 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
                         {row.label}
                       </span>
                       <span className={`shrink-0 text-sm ${style.word}`}>
-                        {EFFORT_WORD[effort]}
+                        {stapleOnly && items.length > 0
+                          ? "staples"
+                          : EFFORT_WORD[effort]}
                       </span>
                     </span>
-                    {rowItems(row).map((item) => (
-                      <span key={item.name} className="text-sm leading-snug">
-                        <span className="text-ink-soft">{item.name}</span>
-                        {item.leftover && (
-                          <span className="text-muted"> (leftovers)</span>
-                        )}
-                        <span className="text-muted">
-                          {item.shares.every((share) => share.amount === "")
-                            ? ""
-                            : " · "}
-                          {row.slots.length === 1
-                            ? item.shares
-                                .map((share) => share.amount)
-                                .join(" + ")
-                            : item.shares
-                                .map((share) =>
-                                  `${share.personName} ${share.amount}`.trim()
-                                )
-                                .join(" · ")}
+                    {items
+                      .filter((item) => !item.staple)
+                      .map((item) => (
+                        <span key={item.name} className="text-sm leading-snug">
+                          <span className="text-ink-soft">{item.name}</span>
+                          {item.leftover && (
+                            <span className="text-muted"> (leftovers)</span>
+                          )}
+                          <span className="text-muted">
+                            {item.shares.every((share) => share.amount === "")
+                              ? ""
+                              : " · "}
+                            {day.people.length === 1
+                              ? item.shares
+                                  .map((share) => share.amount)
+                                  .join(" + ")
+                              : item.shares
+                                  .map((share) =>
+                                    `${share.personName} ${share.amount}`.trim()
+                                  )
+                                  .join(" · ")}
+                          </span>
                         </span>
+                      ))}
+                    {/*
+                     * Staples are the same every day, so they take one
+                     * line; the meal opens them, to skip one for the day.
+                     */}
+                    {items.some((item) => item.staple) && (
+                      <span className="truncate text-sm text-muted">
+                        {items.every((item) => item.staple) ? "" : "+ "}
+                        {items
+                          .filter((item) => item.staple)
+                          .map((item) => item.name)
+                          .join(", ")}
                       </span>
-                    ))}
+                    )}
                     {row.slots
                       .filter((slot) => slot.planned.eatingOut)
                       .map((slot) => (

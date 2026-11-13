@@ -61,12 +61,13 @@ export interface RowShare {
 
 /**
  * RowItem is something planned at a row, like a recipe everyone eats from,
- * with each person's share of it, and whether it's the rest of an earlier
- * meal.
+ * with each person's share of it, whether it's the rest of an earlier
+ * meal, and whether it's a staple: what someone has there every day.
  */
 export interface RowItem {
   name: string;
   leftover: boolean;
+  staple: boolean;
   shares: RowShare[];
 }
 
@@ -99,7 +100,12 @@ export const rowItems = (row: MealRow): RowItem[] => {
       const key = portion.name;
       let item = items.find((other) => other.name === key);
       if (item === undefined) {
-        item = { leftover: portion.leftover, name: key, shares: [] };
+        item = {
+          leftover: portion.leftover,
+          name: key,
+          shares: [],
+          staple: portion.stapleId !== "",
+        };
         items.push(item);
       }
       item.shares.push({

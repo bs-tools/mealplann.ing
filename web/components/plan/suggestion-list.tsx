@@ -6,7 +6,10 @@ import {
   formatPoints,
 } from "@components/plan/plan-bits";
 import QueryError from "@components/ui/query-error";
+import { sectionLabelClass } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
+import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
+import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
 import { suggestRecipes } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
 import type {
   SuggestRecipesRequestSchema,
@@ -42,8 +45,33 @@ const portionsLine = (suggestion: Suggestion): string => {
 const firstReason = (suggestion: Suggestion): string =>
   suggestion.components.find((component) => component.points > 0)?.reason ?? "";
 
+/**
+ * FactsLine says what a serving of a recipe is, to compare suggestions by:
+ * its energy and protein, and how long the recipe takes, as far as they're
+ * known.
+ */
+const factsLine = (recipe: RecipeSummary | undefined): string => {
+  if (recipe === undefined) {
+    return "";
+  }
+  const minutes = Math.round((recipe.prepSeconds + recipe.cookSeconds) / 60);
+  return [
+    recipe.energyKcalPerServing === undefined
+      ? ""
+      : `${Math.round(recipe.energyKcalPerServing)} kcal`,
+    recipe.proteinGramsPerServing === undefined
+      ? ""
+      : `${Math.round(recipe.proteinGramsPerServing)} g protein`,
+    minutes > 0 ? `${minutes} min` : "",
+  ]
+    .filter((part) => part !== "")
+    .join(" · ");
+};
+
 interface SuggestionRowProps {
   suggestion: Suggestion;
+  // The suggested recipe, for what a serving of it is, once it's loaded.
+  recipe: RecipeSummary | undefined;
   // Whether it's being planned, and whether planning is disabled.
   planning: boolean;
   disabled: boolean;
@@ -57,11 +85,13 @@ interface SuggestionRowProps {
  */
 const SuggestionRow: React.FC<SuggestionRowProps> = ({
   suggestion,
+  recipe,
   planning,
   disabled,
   onPlan,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const facts = factsLine(recipe);
   const toBuy = suggestion.itemsToBuy.map(
     (item) => `${item.foodName} (${item.amountText})`
   );
@@ -76,6 +106,9 @@ const SuggestionRow: React.FC<SuggestionRowProps> = ({
           >
             {suggestion.recipeName}
           </Link>
+          {facts !== "" && (
+            <p className="text-sm font-medium text-ink-soft">{facts}</p>
+          )}
           <p className="text-sm text-muted">
             {[
               suggestion.leftoverOf === undefined
@@ -125,10 +158,12 @@ const SuggestionRow: React.FC<SuggestionRowProps> = ({
                 className="flex gap-2"
                 title={KIND_LABELS[component.kind]}
               >
+                {/* Whether it counts for or against, not by how much. */}
                 <span
-                  className={`w-10 shrink-0 text-right font-bold tabular-nums ${component.points < 0 ? "text-warn-dark" : "text-pine"}`}
+                  className={`w-4 shrink-0 text-center font-bold ${component.points < 0 ? "text-warn-dark" : "text-pine"}`}
+                  title={formatPoints(component.points)}
                 >
-                  {formatPoints(component.points)}
+                  {component.points < 0 ? "−" : "+"}
                 </span>
                 <span className="text-ink-soft">{component.reason}</span>
               </li>
@@ -169,6 +204,8 @@ const SuggestionList: React.FC<SuggestionListProps> = ({
   onPlan,
 }) => {
   const suggestions = useQuery(suggestRecipes, request);
+  // The recipes, which the plan has loaded already, for each one's facts.
+  const recipes = useQuery(listRecipes, {});
   if (suggestions.isPending) {
     return <Loading />;
   }
@@ -199,6 +236,7 @@ const SuggestionList: React.FC<SuggestionListProps> = ({
   }
   return (
     <div className="flex flex-col gap-2">
+      <h3 className={sectionLabelClass}>Suggested to cook</h3>
       <p className="text-sm text-muted">
         Best first, for what the week buys, the pantry, everyone&apos;s targets
         and rules, and the shop on {formatShortDate(suggestions.data.shopDate)}.
@@ -208,6 +246,9 @@ const SuggestionList: React.FC<SuggestionListProps> = ({
           <SuggestionRow
             key={suggestionKey(suggestion)}
             suggestion={suggestion}
+            recipe={recipes.data?.recipes.find(
+              (other) => other.id === suggestion.recipeId
+            )}
             planning={planningId === suggestionKey(suggestion)}
             disabled={disabled}
             onPlan={() => {

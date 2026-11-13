@@ -2,7 +2,11 @@ import FoodPicker from "@components/foods/food-picker";
 import type { PickedFood } from "@components/foods/food-picker";
 import { SelectField, TextField } from "@components/ui/fields";
 import { ErrorText } from "@components/ui/query-error";
-import { pillPrimaryButton, primaryButton } from "@components/ui/styles";
+import {
+  pillPrimaryButton,
+  primaryButton,
+  sectionLabelClass,
+} from "@components/ui/styles";
 import type { ConnectError } from "@connectrpc/connect";
 import { createClient } from "@connectrpc/connect";
 import { useQuery, useTransport } from "@connectrpc/connect-query";
@@ -14,6 +18,7 @@ import type { PlannedCook } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
+import { addDays, today } from "helpers/dates";
 import { formatShortDate } from "helpers/format";
 import { AMOUNT_UNITS, formatServings, optionValue } from "helpers/labels";
 import { parseOptionalNumber } from "helpers/parse";
@@ -25,6 +30,15 @@ export interface MealEater {
   personId: string;
   eatingTimeId: string;
 }
+
+// CookedOn says when a cook was, relative to today for the last two days.
+const cookedOn = (date: string): string => {
+  const now = today();
+  if (date === now) {
+    return "today";
+  }
+  return date === addDays(now, -1) ? "yesterday" : formatShortDate(date);
+};
 
 /**
  * ShareOf is each eater's share of what's left of a cook: a serving each,
@@ -44,7 +58,8 @@ interface LeftoversChoiceProps {
 
 /**
  * LeftoversChoice plans the meal as the rest of an earlier cook, from the
- * fridge or the freezer, a share of it for each person at the meal.
+ * fridge or the freezer, a share of it for each person at the meal: a
+ * serving each, or a fair share of what's left.
  */
 export const LeftoversChoice: React.FC<LeftoversChoiceProps> = ({
   eaters,
@@ -59,7 +74,9 @@ export const LeftoversChoice: React.FC<LeftoversChoiceProps> = ({
     (planned) =>
       planned.leftServings > 0 &&
       planned.cook !== undefined &&
-      planned.cook.date <= date
+      // A cook of the same day only has leftovers once it's cooked.
+      (planned.cook.date < date ||
+        (planned.cook.date === date && planned.cook.done))
   );
   const frozen = (freezer.data?.leftovers ?? []).filter(
     (leftover) => leftover.remainingServings > 0 && !leftover.expired
@@ -104,18 +121,14 @@ export const LeftoversChoice: React.FC<LeftoversChoiceProps> = ({
     },
   });
 
+  // Nothing shows without leftovers: the suggestions follow.
   if (fridge.length === 0 && frozen.length === 0) {
-    return (
-      <p className="text-sm text-muted">
-        There are no leftovers to eat yet: cooks with servings nobody eats, or
-        frozen ones, show here.
-      </p>
-    );
+    return null;
   }
   const rows = [
     ...fridge.map((planned) => ({
       cookId: planned.cook?.id ?? "",
-      detail: `${formatShortDate(planned.cook?.date ?? "")} · ${formatServings(planned.leftServings)} left`,
+      detail: `Cooked ${cookedOn(planned.cook?.date ?? "")} · ${formatServings(planned.leftServings)} left`,
       fromFreezer: false,
       left: planned.leftServings,
       name: planned.cook?.recipeName ?? "",
@@ -130,9 +143,7 @@ export const LeftoversChoice: React.FC<LeftoversChoiceProps> = ({
   ];
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm text-muted">
-        A serving each, or a fair share of what&apos;s left.
-      </p>
+      <h3 className={sectionLabelClass}>Leftovers to finish</h3>
       <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
         {rows.map((row) => (
           <li

@@ -20,6 +20,7 @@ import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { formatGrams, formatList, formatShortDate } from "helpers/format";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
+import { Link } from "react-router";
 
 interface SupplyPickerProps {
   cookId: string;
@@ -159,9 +160,18 @@ const CookActions: React.FC<CookActionsProps> = ({
         />
       ))}
       <div className="flex flex-wrap gap-2">
+        {/* Cook mode cooks this cook's servings, and marks it cooked. */}
+        {!cook.done && (
+          <Link
+            to={`/recipes/${cook.recipeId}/cook?cook=${cook.id}&servings=${cook.servings}`}
+            className={pillPrimaryButton}
+          >
+            Start cooking
+          </Link>
+        )}
         <button
           type="button"
-          className={pillPrimaryButton}
+          className={cook.done ? pillPrimaryButton : pillButton}
           disabled={done.isPending}
           aria-pressed={cook.done}
           onClick={() => {

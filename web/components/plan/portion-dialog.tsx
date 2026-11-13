@@ -43,6 +43,19 @@ type What = "cook" | "food" | "recipe";
 // FROZEN prefixes the option of a cook's frozen leftovers.
 const FROZEN = "freezer:";
 
+const stepButtonClass =
+  "flex size-11 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-xl font-medium text-ink-soft hover:border-muted disabled:opacity-40";
+
+/**
+ * StepServings moves the servings typed by a step, to the nearest quarter,
+ * and no lower than a quarter of a serving.
+ */
+const stepServings = (servings: string, step: number): number =>
+  Math.max(
+    0.25,
+    Math.round(((parseOptionalNumber(servings) ?? 0) + step) * 4) / 4
+  );
+
 // Slot is a person's eating time on a date.
 export interface Slot {
   personId: string;
@@ -120,6 +133,11 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
       ? String(portion.servings)
       : "1"
   );
+  // What a serving of the portion's cook weighs, to say what a change is.
+  const gramsPerServing =
+    portion !== undefined && portion.cookId === cookId && portion.servings > 0
+      ? portion.grams / portion.servings
+      : 0;
   // The recipe to cook for it, and how many servings to cook.
   const [recipe, setRecipe] = useState<PickedRecipe | null>(null);
   const [cookServings, setCookServings] = useState("");
@@ -458,19 +476,55 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
           </div>
         )}
         {what === "cook" && (
-          <div className="grid grid-cols-[1fr_6rem] items-end gap-2">
+          <div className="flex flex-col gap-3">
             <SelectField
               label="Cook"
               value={cookId}
               options={cookOptions}
               onChange={setCookId}
             />
-            <TextField
-              label="Servings"
-              value={servings}
-              inputMode="decimal"
-              onChange={setServings}
-            />
+            {/* Servings step by quarters, as recipes scale by them. */}
+            <div className="flex items-end gap-2">
+              <button
+                type="button"
+                className={stepButtonClass}
+                aria-label="A quarter serving less"
+                disabled={(parseOptionalNumber(servings) ?? 0) <= 0.25}
+                onClick={() => {
+                  setServings(String(stepServings(servings, -0.25)));
+                }}
+              >
+                −
+              </button>
+              <div className="w-24">
+                <TextField
+                  label="Servings"
+                  value={servings}
+                  inputMode="decimal"
+                  onChange={setServings}
+                />
+              </div>
+              <button
+                type="button"
+                className={stepButtonClass}
+                aria-label="A quarter serving more"
+                onClick={() => {
+                  setServings(String(stepServings(servings, 0.25)));
+                }}
+              >
+                +
+              </button>
+              {gramsPerServing > 0 &&
+                (parseOptionalNumber(servings) ?? 0) > 0 && (
+                  <span className="pb-2.5 text-sm text-muted">
+                    about{" "}
+                    {Math.round(
+                      (parseOptionalNumber(servings) ?? 0) * gramsPerServing
+                    )}{" "}
+                    g
+                  </span>
+                )}
+            </div>
           </div>
         )}
         <TextField label="Notes" value={notes} onChange={setNotes} />
