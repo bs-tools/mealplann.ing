@@ -9,6 +9,7 @@ import {
   createCook,
   createPortion,
   planMeals,
+  setEatingOut,
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import type { Suggestion } from "gen/suggestions/v1/suggestions_pb";
@@ -44,6 +45,12 @@ const EatingTimeSuggestionsDialog: React.FC<
   const cook = useMutation(createCook);
   const portion = useMutation(createPortion);
   const leftover = useMutation(planMeals);
+  const eatOut = useMutation(setEatingOut, {
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [PlanService]);
+      onClose();
+    },
+  });
 
   const plan = async (suggestion: Suggestion): Promise<void> => {
     setPlanningId(suggestionKey(suggestion));
@@ -108,6 +115,23 @@ const EatingTimeSuggestionsDialog: React.FC<
           {formatDay(slot.date)} · Planning one cooks it for this portion, or
           eats the rest of an earlier meal.
         </p>
+        <button
+          type="button"
+          className="-mt-2 self-start text-sm font-bold text-pine hover:underline disabled:opacity-50"
+          disabled={eatOut.isPending}
+          onClick={() => {
+            eatOut.mutate({
+              date: slot.date,
+              eatingOut: true,
+              eatingTimeId: slot.eatingTimeId,
+              personId: slot.personId,
+            });
+          }}
+        >
+          {eatOut.isPending
+            ? "Marking it…"
+            : `Mark ${person?.name ?? "them"} as eating out`}
+        </button>
         <SuggestionList
           request={{
             date: slot.date,
@@ -125,7 +149,9 @@ const EatingTimeSuggestionsDialog: React.FC<
             void plan(suggestion);
           }}
         />
-        <ErrorText error={cook.error ?? portion.error ?? leftover.error} />
+        <ErrorText
+          error={cook.error ?? portion.error ?? leftover.error ?? eatOut.error}
+        />
       </div>
     </Modal>
   );
