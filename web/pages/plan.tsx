@@ -1,14 +1,14 @@
 import Loading from "@components/loading";
 import EatingTimeSuggestionsDialog from "@components/plan/eating-time-suggestions-dialog";
 import MonthView from "@components/plan/month-view";
-import type { DayWarning } from "@components/plan/plan-day-list";
 import PlanDayList from "@components/plan/plan-day-list";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import type { MealRow } from "@components/plan/plan-rows";
 import PlannedMealSheet from "@components/plan/planned-meal-sheet";
 import type { Slot } from "@components/plan/portion-dialog";
+import WarningsLink from "@components/plan/warnings-link";
 import WeekStrip, { fillOf, openSlotsOf } from "@components/plan/week-strip";
-import WarningSheet from "@components/today/warning-sheet";
+import { weekWarnings } from "@components/plan/week-warnings";
 import { EmptyState } from "@components/ui/misc";
 import { menuItemClass } from "@components/ui/more-menu";
 import QueryError from "@components/ui/query-error";
@@ -64,12 +64,6 @@ interface MealOpen {
   row: MealRow;
 }
 
-// DayWarningOpen is a warning about a person's day, opened to fix it.
-interface DayWarningOpen {
-  date: string;
-  dayWarning: DayWarning;
-}
-
 /**
  * PlanPage shows the plan by week or month. A week is its strip of days,
  * an offer to plan the open ones, and from the day chosen on, a row for
@@ -111,7 +105,6 @@ const PlanPage: React.FC = () => {
   // The empty eating time recipes are suggested for, or null.
   const [suggesting, setSuggesting] = useState<Slot | null>(null);
   const [opened, setOpened] = useState<MealOpen | null>(null);
-  const [dayWarning, setDayWarning] = useState<DayWarningOpen | null>(null);
   const staples = useQuery(listStaples, {});
 
   const goTo = (nextWeek: string, nextDay?: string, nextMonth = false) => {
@@ -250,6 +243,14 @@ const PlanPage: React.FC = () => {
           }}
         />
         {banner}
+        <WarningsLink
+          count={
+            weekWarnings(week.data, monday === startOfWeek(now) ? now : "")
+              .length
+          }
+          date={monday}
+          about={monday === startOfWeek(now) ? "from today on" : "this week"}
+        />
         <PlanDayList
           days={week.data.days.filter((planDay) => planDay.date >= day)}
           today={now}
@@ -272,9 +273,6 @@ const PlanPage: React.FC = () => {
               setPlanning({ date: planDay.date, meal: row.meal });
             }
           }}
-          onDayWarning={(planDay, warning) => {
-            setDayWarning({ date: planDay.date, dayWarning: warning });
-          }}
         />
         {cost.data !== undefined && cost.data.totalCents > 0 && (
           <p className="text-sm text-muted">
@@ -288,12 +286,6 @@ const PlanPage: React.FC = () => {
 
   const openedDay = week.data?.days.find(
     (planDay) => planDay.date === opened?.date
-  );
-  const warnedDay = week.data?.days.find(
-    (planDay) => planDay.date === dayWarning?.date
-  );
-  const warnedPerson = warnedDay?.people.find(
-    (person) => person.personId === dayWarning?.dayWarning.person.personId
   );
   const shift = (step: number) => {
     if (month) {
@@ -371,6 +363,16 @@ const PlanPage: React.FC = () => {
               </MenuItem>
               <MenuItem>
                 <Link
+                  to={
+                    current ? "/plan/warnings" : `/plan/warnings?week=${monday}`
+                  }
+                  className={menuItemClass}
+                >
+                  Warnings
+                </Link>
+              </MenuItem>
+              <MenuItem>
+                <Link
                   to={`/plan/templates?week=${monday}`}
                   className={menuItemClass}
                 >
@@ -419,20 +421,6 @@ const PlanPage: React.FC = () => {
             }}
           />
         )}
-      {dayWarning !== null && warnedPerson !== undefined && (
-        <WarningSheet
-          warning={dayWarning.dayWarning.warning}
-          personId={warnedPerson.personId}
-          date={dayWarning.date}
-          eatingTimeId=""
-          portions={warnedPerson.eatingTimes.flatMap(
-            (planned) => planned.portions
-          )}
-          onClose={() => {
-            setDayWarning(null);
-          }}
-        />
-      )}
       {planning !== null &&
         (planning.recipeId === undefined || recipes.data !== undefined) && (
           <PlanMealDialog

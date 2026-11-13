@@ -1,20 +1,15 @@
 import AccountMenu from "@components/header/account-menu";
 import Loading from "@components/loading";
+import WarningsLink from "@components/plan/warnings-link";
+import { weekWarnings } from "@components/plan/week-warnings";
 import MealSheet from "@components/today/meal-sheet";
-import {
-  CookDot,
-  EffortDot,
-  effortOf,
-  warningTitle,
-} from "@components/today/today-bits";
+import { CookDot, EffortDot, effortOf } from "@components/today/today-bits";
 import type { Effort } from "@components/today/today-bits";
-import WarningSheet from "@components/today/warning-sheet";
 import { EmptyState } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
 import Segmented from "@components/ui/segmented";
 import { linkClass, primaryButton } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import type { EatingTime } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
@@ -23,9 +18,7 @@ import type {
   PersonDay,
   PlannedCook,
   PlannedEatingTime,
-  Warning,
 } from "gen/plans/v1/plans_pb";
-import { Severity } from "gen/plans/v1/plans_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import { listShoppingLists } from "gen/shopping/v1/shopping-ShoppingService_connectquery";
 import type { User } from "gen/users/v1/users_pb";
@@ -40,12 +33,6 @@ import { formatWeekday } from "helpers/format";
 import { formatServings } from "helpers/labels";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
-
-// A warning opened in the sheet, with the eating time it's about.
-interface OpenWarning {
-  warning: Warning;
-  eatingTimeId: string;
-}
 
 // A cook of the day, with when to start it and how long it takes.
 interface CookBlock {
@@ -128,41 +115,6 @@ const EFFORT_TEXT_CLASS: Record<Effort, string> = {
 };
 
 /**
- * WarningsOf returns the warnings of each eating time of a day, by eating
- * time ID, with the day's own warnings on the eating time with the most
- * energy, as it's the one to change.
- */
-const warningsOf = (day: PersonDay): Map<string, Warning[]> => {
-  const byEatingTime = new Map<string, Warning[]>();
-  let biggest = "";
-  let biggestEnergy = -1;
-  for (const planned of day.eatingTimes) {
-    const id = planned.eatingTime?.id ?? "";
-    byEatingTime.set(
-      id,
-      planned.warnings.filter(
-        (warning) => warning.severity === Severity.WARNING
-      )
-    );
-    const energy = planned.nutrients?.energyKcal ?? 0;
-    if (planned.portions.length > 0 && energy > biggestEnergy) {
-      biggest = id;
-      biggestEnergy = energy;
-    }
-  }
-  const dayWarnings = day.warnings.filter(
-    (warning) => warning.severity === Severity.WARNING
-  );
-  if (dayWarnings.length > 0) {
-    byEatingTime.set(biggest, [
-      ...(byEatingTime.get(biggest) ?? []),
-      ...dayWarnings,
-    ]);
-  }
-  return byEatingTime;
-};
-
-/**
  * CookBlocksOf returns the day's cooks for a person's meals, with when to
  * start them: their total time before the eating time of their meal, or,
  * for a cook of no shared meal, like a side cooked for one, of the first
@@ -205,7 +157,6 @@ interface DayLineProps {
   day: PersonDay;
   blocks: CookBlock[];
   date: string;
-  onWarning: (open: OpenWarning) => void;
   // Opens a meal, to change it.
   onMeal: (planned: PlannedEatingTime) => void;
 }
@@ -214,14 +165,7 @@ interface DayLineProps {
  * DayLine is a person's day as a vertical line of their meals and the
  * cooking before them, in time order, each marked with how much work it is.
  */
-const DayLine: React.FC<DayLineProps> = ({
-  day,
-  blocks,
-  date,
-  onWarning,
-  onMeal,
-}) => {
-  const warnings = warningsOf(day);
+const DayLine: React.FC<DayLineProps> = ({ day, blocks, date, onMeal }) => {
   let entries: Entry[] = [
     ...day.eatingTimes.map((planned): Entry => ({
       kind: "meal",
@@ -288,7 +232,6 @@ const DayLine: React.FC<DayLineProps> = ({
         const eaten =
           planned.portions.length > 0 &&
           planned.portions.every((portion) => portion.eaten);
-        const own = warnings.get(et?.id ?? "") ?? [];
         return (
           <li key={et?.id} className="flex items-start gap-3 py-2.5">
             <span className="w-12 shrink-0 pt-0.5 text-sm text-muted tabular-nums">
@@ -329,22 +272,6 @@ const DayLine: React.FC<DayLineProps> = ({
                   </>
                 )}
               </button>
-              {own.map((warning) => (
-                <button
-                  key={`${warning.kind}-${warning.nutrient}-${warning.message}`}
-                  type="button"
-                  className="mt-1 inline-flex items-center gap-1.5 self-start rounded-xl bg-warn-tint px-2.5 py-1.5 text-left text-sm font-bold text-warn-dark"
-                  onClick={() => {
-                    onWarning({ eatingTimeId: et?.id ?? "", warning });
-                  }}
-                >
-                  <ExclamationTriangleIcon
-                    className="size-4 shrink-0"
-                    aria-hidden="true"
-                  />
-                  {warningTitle(warning)}: see the fix
-                </button>
-              ))}
             </div>
           </li>
         );
@@ -359,13 +286,12 @@ interface HomePageProps {
 
 /**
  * HomePage is today: one person's day as a line of meals and the cooking
- * before them, with when the household shops next. Warnings open a sheet
- * that explains them and offers a fix.
+ * before them, with when the household shops next, and how many warnings
+ * the day has, linking to the page that lists them.
  */
 const HomePage: React.FC<HomePageProps> = ({ user }) => {
   const now = today();
   const [params, setParams] = useSearchParams();
-  const [openWarning, setOpenWarning] = useState<OpenWarning | null>(null);
   // The meal opened, to change it, by its eating time's ID.
   const [openMeal, setOpenMeal] = useState("");
   const week = useQuery(getWeek, { monday: startOfWeek(now) });
@@ -524,11 +450,22 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
         </EmptyState>
       ) : (
         <>
+          <WarningsLink
+            count={
+              weekWarnings(week.data, now).filter(
+                (item) =>
+                  item.date === now &&
+                  (item.person === undefined ||
+                    item.person.personId === day.personId)
+              ).length
+            }
+            date={now}
+            about="today"
+          />
           <DayLine
             day={day}
             blocks={blocks}
             date={now}
-            onWarning={setOpenWarning}
             onMeal={(planned) => {
               setOpenMeal(planned.eatingTime?.id ?? "");
             }}
@@ -570,22 +507,6 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
             />
           );
         })()}
-      {openWarning !== null && day !== undefined && (
-        <WarningSheet
-          warning={openWarning.warning}
-          personId={day.personId}
-          date={now}
-          eatingTimeId={
-            openWarning.warning.eatingTimeId === ""
-              ? ""
-              : openWarning.eatingTimeId
-          }
-          portions={day.eatingTimes.flatMap((planned) => planned.portions)}
-          onClose={() => {
-            setOpenWarning(null);
-          }}
-        />
-      )}
     </div>
   );
 };

@@ -6,7 +6,6 @@ import type {
   PlanDay,
   PlannedEatingTime,
 } from "gen/plans/v1/plans_pb";
-import { Severity } from "gen/plans/v1/plans_pb";
 import { householdMealLabel } from "helpers/labels";
 
 // RowSlot is one person's eating time in a row of the plan.
@@ -59,14 +58,6 @@ export const rowNames = (row: MealRow): string[] => {
   }
   return names;
 };
-
-// RowWarned reports whether any of a row's eating times has a warning.
-export const rowWarned = (row: MealRow): boolean =>
-  row.slots.some((slot) =>
-    slot.planned.warnings.some(
-      (warning) => warning.severity === Severity.WARNING
-    )
-  );
 
 /**
  * RowsOf groups a day's eating times into rows: those of a shared meal

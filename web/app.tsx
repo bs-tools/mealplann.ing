@@ -21,6 +21,7 @@ import PeoplePage from "pages/people";
 import PlanPage from "pages/plan";
 import PlanTemplatePage from "pages/plan-template";
 import PlanTemplatesPage from "pages/plan-templates";
+import PlanWarningsPage from "pages/plan-warnings";
 import PrivacyPage from "pages/privacy";
 import ProfilePage from "pages/profile";
 import RecipePage from "pages/recipe";
@@ -129,6 +130,7 @@ const App: React.FC = () => {
             <Route path="/plan" element={<PlanPage />} />
             <Route path="/plan/auto" element={<AutoPlanPage />} />
             <Route path="/plan/templates" element={<PlanTemplatesPage />} />
+            <Route path="/plan/warnings" element={<PlanWarningsPage />} />
             <Route path="/plan/templates/:id" element={<PlanTemplatePage />} />
             <Route path="/people" element={<PeoplePage />} />
             <Route path="/profile" element={<ProfilePage user={user} />} />

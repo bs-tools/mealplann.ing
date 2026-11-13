@@ -1,5 +1,4 @@
 import FreezeDialog from "@components/plan/freeze-dialog";
-import { MealWarnings } from "@components/today/plate";
 import ConfirmButton from "@components/ui/confirm-button";
 import { ErrorText } from "@components/ui/query-error";
 import { ghostButton, ghostDangerButton } from "@components/ui/styles";
@@ -143,7 +142,6 @@ const CookActions: React.FC<CookActionsProps> = ({
   }
   return (
     <section className="flex flex-col gap-2">
-      <MealWarnings warnings={planned.warnings} />
       {cook.supplies.map((supply) => (
         <SupplyPicker
           key={supply.componentRecipeId}

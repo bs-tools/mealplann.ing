@@ -3,15 +3,11 @@ import {
   rowEffort,
   rowNames,
   rowPlanned,
-  rowWarned,
   rowsOf,
 } from "@components/plan/plan-rows";
 import type { Effort } from "@components/today/today-bits";
-import { warningTitle } from "@components/today/today-bits";
 import { sectionLabelClass } from "@components/ui/styles";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import type { PersonDay, PlanDay, Warning } from "gen/plans/v1/plans_pb";
-import { Severity } from "gen/plans/v1/plans_pb";
+import type { PlanDay } from "gen/plans/v1/plans_pb";
 import { parseDate } from "helpers/dates";
 import { formatList } from "helpers/format";
 import React from "react";
@@ -35,12 +31,6 @@ const EFFORT_STYLE: Record<Effort, { dot: string; word: string }> = {
   ready: { dot: "bg-ready", word: "text-ready" },
 };
 
-// DayWarning is a warning about a person's whole day, like their energy.
-export interface DayWarning {
-  person: PersonDay;
-  warning: Warning;
-}
-
 const emptyRowClass =
   "flex w-full items-center rounded-2xl border-2 border-dashed border-line px-4 py-3.5 text-left text-base text-ink-soft hover:border-muted";
 
@@ -49,7 +39,6 @@ interface PlanDayListProps {
   today: string;
   onOpen: (day: PlanDay, row: MealRow) => void;
   onPlan: (day: PlanDay, row: MealRow) => void;
-  onDayWarning: (day: PlanDay, warning: DayWarning) => void;
 }
 
 /**
@@ -62,17 +51,11 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
   today,
   onOpen,
   onPlan,
-  onDayWarning,
 }) => (
   <div className="flex flex-col gap-5">
     {days.map((day) => {
       const rows = rowsOf(day);
       const empty = rows.every((row) => !rowPlanned(row));
-      const warnings: DayWarning[] = day.people.flatMap((person) =>
-        person.warnings
-          .filter((warning) => warning.severity === Severity.WARNING)
-          .map((warning) => ({ person, warning }))
-      );
       const label =
         day.date === today
           ? "Today"
@@ -86,23 +69,6 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
           className="flex scroll-mt-4 flex-col gap-2"
         >
           <h2 className={sectionLabelClass}>{label}</h2>
-          {warnings.map((dayWarning) => (
-            <button
-              key={`${dayWarning.person.personId}-${dayWarning.warning.kind}-${dayWarning.warning.nutrient}`}
-              type="button"
-              className="inline-flex items-center gap-1.5 self-start rounded-xl bg-warn-tint px-2.5 py-1.5 text-left text-sm font-bold text-warn-dark"
-              onClick={() => {
-                onDayWarning(day, dayWarning);
-              }}
-            >
-              <ExclamationTriangleIcon
-                className="size-4 shrink-0"
-                aria-hidden="true"
-              />
-              {dayWarning.person.personName}:{" "}
-              {warningTitle(dayWarning.warning).toLowerCase()}
-            </button>
-          ))}
           {empty ? (
             <Link
               to={`/plan/auto?start=${day.date}&days=1`}
@@ -148,12 +114,6 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
                   <span className="min-w-0 grow truncate text-base text-ink-soft">
                     {row.label} · {formatList(rowNames(row))}
                   </span>
-                  {rowWarned(row) && (
-                    <ExclamationTriangleIcon
-                      className="size-4 shrink-0 text-warn"
-                      aria-label="Has a warning"
-                    />
-                  )}
                   <span className={`shrink-0 text-sm ${style.word}`}>
                     {EFFORT_WORD[effort]}
                   </span>
