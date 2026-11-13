@@ -11,6 +11,7 @@ import {
   primaryButton,
   choiceClass,
   ghostButton,
+  sectionLabelClass,
   stickyBarClass,
 } from "@components/ui/styles";
 import { skipToken, useMutation, useQuery } from "@connectrpc/connect-query";
@@ -22,6 +23,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
+import type { Person } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
 import {
   planMeals,
@@ -39,6 +41,7 @@ import {
 import { addDays, isDateString, startOfWeek, today } from "helpers/dates";
 import { formatShortDate, formatWeekday } from "helpers/format";
 import { useDebouncedValue } from "helpers/hooks";
+import { formatServings } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
 import { readStorage, writeStorage } from "helpers/storage";
 import type { Leftover } from "helpers/suggestions";
@@ -216,6 +219,66 @@ const Thinking: React.FC<{ slots: number }> = ({ slots }) => {
           />
         ))}
       </ul>
+    </div>
+  );
+};
+
+interface SharedShareProps {
+  person: Person;
+  slot: PlanSlot;
+  disabled: boolean;
+  // Marks the person eating out at their eating time of the meal.
+  onEatingOut: (eatingTimeId: string) => void;
+}
+
+/**
+ * SharedShare is one person's share of a shared meal of the plan, under
+ * their name: how much they have, and at which eating time if not the
+ * meal's, or that they're not at it, like for their own breakfast; and
+ * to mark them eating out, which plans the meal for the others.
+ */
+const SharedShare: React.FC<SharedShareProps> = ({
+  person,
+  slot,
+  disabled,
+  onEatingOut,
+}) => {
+  const portions = (slot.suggestion?.portions ?? []).filter(
+    (portion) => portion.personId === person.id
+  );
+  const eatingTime = person.eatingTimes.find((et) => et.meal === slot.meal);
+  if (portions.length === 0) {
+    return (
+      <span className="px-3 text-sm text-muted">
+        {eatingTime === undefined ? "Doesn't eat it" : "Not at it"}
+      </span>
+    );
+  }
+  return (
+    <div className="flex flex-col items-start gap-0.5 px-3 text-sm">
+      {portions.map((portion) => (
+        <span
+          key={`${portion.date}-${portion.eatingTimeId}`}
+          className="text-ink-soft"
+        >
+          {formatServings(portion.servings)}
+          {portion.eatingTimeId === eatingTime?.id
+            ? ""
+            : ` at ${portion.eatingTimeName}`}
+        </span>
+      ))}
+      {eatingTime !== undefined && (
+        <button
+          type="button"
+          className="text-xs font-bold text-pine hover:underline disabled:opacity-50 print:hidden"
+          disabled={disabled}
+          onClick={() => {
+            onEatingOut(eatingTime.id);
+          }}
+        >
+          Eating out
+        </button>
+      )}
     </div>
   );
 };
@@ -455,6 +518,11 @@ const AutoPlanPage: React.FC = () => {
   } else if (plan.data === undefined) {
     content = <Thinking slots={criteria.days * plannedMeals.length} />;
   } else {
+    // Everyone in the household, a column each.
+    const household = people.data?.people ?? [];
+    const columnsStyle = {
+      gridTemplateColumns: `repeat(${Math.max(household.length, 1)}, minmax(9rem, 1fr))`,
+    };
     const byDate = new Map<string, PlanSlot[]>();
     for (const slot of slots) {
       byDate.set(slot.date, [...(byDate.get(slot.date) ?? []), slot]);
@@ -500,7 +568,7 @@ const AutoPlanPage: React.FC = () => {
           </div>
         )}
         <div
-          className={`grid grid-cols-1 gap-5 transition-opacity lg:grid-cols-2 ${plan.isFetching ? "opacity-50" : ""}`}
+          className={`grid grid-cols-1 gap-5 transition-opacity ${household.length > 1 ? "" : "lg:grid-cols-2"} ${plan.isFetching ? "opacity-50" : ""}`}
           aria-busy={plan.isFetching}
         >
           {[...byDate.entries()].map(([date, daySlots]) => (
@@ -524,54 +592,120 @@ const AutoPlanPage: React.FC = () => {
                   Re-plan for nutrition
                 </button>
               </div>
-              <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
-                {daySlots.map((slot) => {
-                  const key = slotKey(slot);
-                  const planned =
-                    slot.suggestion === undefined
-                      ? ""
-                      : suggestionKey(slot.suggestion);
-                  const choice = choices.get(key);
-                  const locked =
-                    choice !== undefined &&
-                    choice.recipeId !== "" &&
-                    planKey(choice.recipeId, choice.leftoverOf) === planned;
-                  index++;
-                  return (
-                    <PlanSlotCard
-                      // A new recipe at the slot rises in again.
-                      key={`${key}|${planned}|${slot.state}`}
-                      slot={slot}
-                      mealName={slotName(slot)}
-                      locked={locked}
-                      index={index}
-                      disabled={busy}
-                      onToggleLock={() => {
-                        choose(slot, locked ? undefined : slot.suggestion);
-                      }}
-                      onSwap={(swapped) => {
-                        setReplanned(choose(slot, swapped));
-                      }}
-                      onSkip={() => {
-                        setReplanned(choose(slot, ""));
-                      }}
-                      onFill={() => {
-                        setReplanned(choose(slot, undefined));
-                      }}
-                      onEatingOut={(eatingOut) => {
-                        markEatingOut(slot, eatingOut);
-                      }}
-                      onFeedback={(value) => {
-                        if (slot.suggestion !== undefined) {
-                          // A kept recipe is let go, to plan another.
-                          choose(slot, undefined);
-                          feedback.save(slot.suggestion.recipeId, value);
+              <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+                <div className="grid gap-2" style={columnsStyle}>
+                  {household.map((person) => (
+                    <span
+                      key={person.id}
+                      className={`${sectionLabelClass} truncate px-3`}
+                    >
+                      {person.name}
+                    </span>
+                  ))}
+                  {daySlots.map((slot) => {
+                    const key = slotKey(slot);
+                    const planned =
+                      slot.suggestion === undefined
+                        ? ""
+                        : suggestionKey(slot.suggestion);
+                    const choice = choices.get(key);
+                    const locked =
+                      choice !== undefined &&
+                      choice.recipeId !== "" &&
+                      planKey(choice.recipeId, choice.leftoverOf) === planned;
+                    index++;
+                    const card = (
+                      <PlanSlotCard
+                        compact={slot.eatingTimeId !== ""}
+                        // A new recipe at the slot rises in again.
+                        key={`${key}|${planned}|${slot.state}`}
+                        slot={slot}
+                        mealName={
+                          slot.eatingTimeId === ""
+                            ? slotName(slot)
+                            : slot.eatingTimeName
                         }
-                      }}
-                    />
-                  );
-                })}
-              </ul>
+                        locked={locked}
+                        index={index}
+                        disabled={busy}
+                        onToggleLock={() => {
+                          choose(slot, locked ? undefined : slot.suggestion);
+                        }}
+                        onSwap={(swapped) => {
+                          setReplanned(choose(slot, swapped));
+                        }}
+                        onSkip={() => {
+                          setReplanned(choose(slot, ""));
+                        }}
+                        onFill={() => {
+                          setReplanned(choose(slot, undefined));
+                        }}
+                        onEatingOut={(eatingOut) => {
+                          markEatingOut(slot, eatingOut);
+                        }}
+                        onFeedback={(value) => {
+                          if (slot.suggestion !== undefined) {
+                            // A kept recipe is let go, to plan another.
+                            choose(slot, undefined);
+                            feedback.save(slot.suggestion.recipeId, value);
+                          }
+                        }}
+                      />
+                    );
+                    // One person's eating time is in their column alone.
+                    if (slot.eatingTimeId !== "") {
+                      const column =
+                        household.findIndex(
+                          (person) => person.id === slot.personId
+                        ) + 1;
+                      return (
+                        <div
+                          key={key}
+                          className="rounded-2xl border border-line bg-white px-3"
+                          style={{ gridColumn: String(Math.max(column, 1)) }}
+                        >
+                          {card}
+                        </div>
+                      );
+                    }
+                    /*
+                     * A shared meal spans everyone, with each person's
+                     * share under their name, or that they're not at it.
+                     */
+                    return (
+                      <div
+                        key={key}
+                        className="col-span-full rounded-2xl border border-line bg-white"
+                      >
+                        <div className="px-3">{card}</div>
+                        {slot.suggestion !== undefined && (
+                          <div
+                            className="grid gap-2 border-t border-line py-2"
+                            style={columnsStyle}
+                          >
+                            {household.map((person) => (
+                              <SharedShare
+                                key={person.id}
+                                person={person}
+                                slot={slot}
+                                disabled={busy}
+                                onEatingOut={(eatingTimeId) => {
+                                  eatOut.mutate({
+                                    date: slot.date,
+                                    eatingOut: true,
+                                    eatingTimeId,
+                                    personId: person.id,
+                                  });
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </section>
           ))}
         </div>
