@@ -4,7 +4,7 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import type { Nutrients } from "gen/foods/v1/foods_pb";
-import type { Recipe } from "gen/recipes/v1/recipes_pb";
+import type { IngredientIssue, Recipe } from "gen/recipes/v1/recipes_pb";
 import { isVolumeUnit } from "helpers/measures";
 import type { NutrientInfo } from "helpers/nutrients";
 import {
@@ -50,6 +50,32 @@ const NutrientValue: React.FC<NutrientValueProps> = ({
 interface NutritionPanelProps {
   recipe: Recipe;
 }
+
+/**
+ * IssueProblem says what an ingredient lacks for the recipe's nutrition,
+ * and what to do, after its food's name, e.g. "has no density, so it's
+ * left out. Set its density."
+ */
+export const issueProblem = (
+  recipe: Recipe,
+  issue: IngredientIssue | undefined
+): string => {
+  if (issue === undefined) {
+    return "";
+  }
+  const unit = recipe.ingredients[issue.ingredientIndex]?.unit;
+  if (issue.unmatched) {
+    return "has no food yet, so it's left out. Choose its food.";
+  }
+  if (issue.unknownWeight) {
+    return unit !== undefined && isVolumeUnit(unit)
+      ? "has no density, so it's left out. Set its density."
+      : "has no weight per piece, so it's left out. Set its weight per piece.";
+  }
+  return `has no data for ${issue.unknownNutrients
+    .map((field) => nutrientLabel(field))
+    .join(", ")}.`;
+};
 
 /**
  * NutritionPanel shows a recipe's nutrition per serving and per 100 g,
@@ -140,21 +166,7 @@ const NutritionPanel: React.FC<NutritionPanelProps> = ({ recipe }) => {
               </p>
               <ul className="flex flex-col gap-1">
                 {issues.map((issue) => {
-                  const unit = recipe.ingredients[issue.ingredientIndex]?.unit;
-                  let problem = "";
-                  if (issue.unmatched) {
-                    problem =
-                      "has no food yet, so it's left out. Choose its food.";
-                  } else if (issue.unknownWeight) {
-                    problem =
-                      unit !== undefined && isVolumeUnit(unit)
-                        ? "has no density, so it's left out. Set its density."
-                        : "has no weight per piece, so it's left out. Set its weight per piece.";
-                  } else {
-                    problem = `has no data for ${issue.unknownNutrients
-                      .map((field) => nutrientLabel(field))
-                      .join(", ")}.`;
-                  }
+                  const problem = issueProblem(recipe, issue);
                   return (
                     <li key={issue.ingredientIndex}>
                       {issue.foodId === "" ? (

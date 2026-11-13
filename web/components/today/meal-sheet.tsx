@@ -9,7 +9,6 @@ import type { ConnectError } from "@connectrpc/connect";
 import { createClient } from "@connectrpc/connect";
 import { useQuery, useTransport } from "@connectrpc/connect-query";
 import {
-  ArrowsRightLeftIcon,
   BuildingStorefrontIcon,
   CheckIcon,
   ScaleIcon,
@@ -29,7 +28,6 @@ import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
-import { Link } from "react-router";
 
 // AMOUNTS are how much more or less of a meal can be said to be eaten.
 const AMOUNTS: { factor: number; label: string }[] = [
@@ -52,8 +50,8 @@ interface MealSheetProps {
 }
 
 /**
- * MealSheet changes a meal of the day as it happens: it was eaten, or
- * something else was, more or less of it, eaten out, or skipped. A meal
+ * MealSheet changes a meal of the day as it happens: it was eaten, more
+ * or less of it, eaten out, or skipped. A meal
  * not eaten then asks what happens to it. What it is can be changed too,
  * each recipe, food or leftovers, or added to, like a light lunch.
  */
@@ -160,20 +158,6 @@ const MealSheet: React.FC<MealSheetProps> = ({
             </span>
             {eaten ? "Not eaten yet" : "Ate it"}
           </button>
-          <Link
-            to={`/today/change?person=${day.personId}&et=${et?.id ?? ""}&date=${date}`}
-            className={actionClass}
-          >
-            <span className={`${iconClass} bg-heat-tint text-heat`}>
-              <ArrowsRightLeftIcon className="size-5" aria-hidden="true" />
-            </span>
-            <span className="flex flex-col">
-              Had something else
-              <span className="text-sm text-muted">
-                And choose what happens to this meal
-              </span>
-            </span>
-          </Link>
           <button
             type="button"
             className={actionClass}

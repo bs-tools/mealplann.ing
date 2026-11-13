@@ -19,6 +19,7 @@ import {
   linkClass,
   primaryButton,
   secondaryButton,
+  stickyBarClass,
 } from "@components/ui/styles";
 import UnsavedChangesGuard, {
   leaveUnsaved,
@@ -1354,7 +1355,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
       </div>
       <ErrorText error={create.error ?? update.error} />
       {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
-      <div className="sticky bottom-[3.75rem] z-10 flex gap-2 bg-ground/90 py-2 backdrop-blur lg:bottom-4">
+      <div className={`${stickyBarClass} flex gap-2`}>
         <button
           type="button"
           className={`${secondaryButton} py-3.5 text-base`}

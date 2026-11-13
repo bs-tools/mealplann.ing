@@ -480,12 +480,6 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
               Plan the rest of today
             </Link>
           )}
-          <Link
-            to={`/today/change?person=${day.personId}&date=${now}`}
-            className="rounded-2xl border-2 border-dashed border-gray-400 px-4 py-3.5 text-center text-base text-ink-soft"
-          >
-            + I ate something else
-          </Link>
         </>
       )}
       {openMeal !== "" &&

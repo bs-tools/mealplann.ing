@@ -2,11 +2,14 @@ import Loading from "@components/loading";
 import { RecipeLeftovers } from "@components/pantry/in-the-kitchen";
 import RecipeBalance from "@components/recipes/balance";
 import FavoriteButton from "@components/recipes/favorite-button";
-import NutritionPanel from "@components/recipes/nutrition-panel";
+import NutritionPanel, {
+  issueProblem,
+} from "@components/recipes/nutrition-panel";
 import SuggestMenu from "@components/recipes/suggest-feedback";
 import { tintOf } from "@components/recipes/tint";
 import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
+import HintIcon from "@components/ui/hint-icon";
 import { Badge } from "@components/ui/misc";
 import Modal from "@components/ui/modal";
 import { menuItemClass } from "@components/ui/more-menu";
@@ -17,6 +20,7 @@ import {
   primaryButton,
   secondaryButton,
   sectionLabelClass,
+  stickyBarClass,
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
@@ -173,8 +177,10 @@ const RecipePage: React.FC = () => {
   if (recipe === undefined) {
     return null;
   }
-  const issueIndexes = new Set(
-    recipe.nutrition?.issues.map((issue) => issue.ingredientIndex) ?? []
+  // The ingredients lacking data, by index, to say what each lacks.
+  const issues = new Map(
+    recipe.nutrition?.issues.map((issue) => [issue.ingredientIndex, issue]) ??
+      []
   );
   const keeps = fridgeNote(recipe);
   const totalSeconds = recipe.prepSeconds + recipe.cookSeconds;
@@ -380,10 +386,11 @@ const RecipePage: React.FC = () => {
                       <span className="text-muted">{ingredient.note}</span>
                     )}
                     {ingredient.optional && <Badge>Optional</Badge>}
-                    {issueIndexes.has(index) && (
-                      <ExclamationTriangleIcon
-                        className="size-4 self-center text-warn"
-                        aria-label="Its food lacks data"
+                    {issues.has(index) && (
+                      <HintIcon
+                        icon={ExclamationTriangleIcon}
+                        className="text-warn"
+                        hint={`${ingredient.foodName === "" ? ingredient.originalText : ingredient.foodName} ${issueProblem(recipe, issues.get(index))}`}
                       />
                     )}
                     {ingredient.originalText !== "" &&
@@ -486,7 +493,7 @@ const RecipePage: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="sticky bottom-[3.75rem] z-10 flex gap-2 rounded-2xl bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
+      <div className={`${stickyBarClass} flex gap-2`}>
         {!recipe.draft && (
           <Link
             to={`/plan?plan=${recipe.id}`}

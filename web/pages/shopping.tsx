@@ -15,6 +15,7 @@ import {
   linkClass,
   primaryButton,
   secondaryButton,
+  stickyBarClass,
 } from "@components/ui/styles";
 import {
   createConnectQueryKey,
@@ -301,7 +302,7 @@ const ShoppingPage: React.FC = () => {
           />
         )}
         {!current.complete && current.items.length > 0 && (
-          <div className="sticky bottom-[3.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
+          <div className={stickyBarClass}>
             <button
               type="button"
               className={`${primaryButton} w-full py-3.5 text-base`}

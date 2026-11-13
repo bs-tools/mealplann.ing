@@ -68,3 +68,11 @@ export const segmentClass = (active: boolean): string =>
 // SectionLabelClass styles the small uppercase label above a section.
 export const sectionLabelClass =
   "text-xs font-bold tracking-[0.08em] text-muted uppercase";
+
+/*
+ * StickyBarClass is a page's bar of primary actions kept above the tab
+ * bar: solid and edge to edge, with a hairline above it, as a translucent
+ * rounded one showed a pale outline around its buttons over white cards.
+ */
+export const stickyBarClass =
+  "sticky bottom-[3.75rem] z-10 -mx-4 border-t border-line bg-ground px-4 py-3 sm:-mx-6 sm:px-6 lg:bottom-0 print:hidden";

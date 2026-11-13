@@ -13,7 +13,12 @@ import {
 import { Badge, PageHeader } from "@components/ui/misc";
 import MoreMenu from "@components/ui/more-menu";
 import QueryError, { ErrorText } from "@components/ui/query-error";
-import { inputClass, labelClass, primaryButton } from "@components/ui/styles";
+import {
+  inputClass,
+  labelClass,
+  primaryButton,
+  stickyBarClass,
+} from "@components/ui/styles";
 import UnsavedChangesGuard, {
   leaveUnsaved,
 } from "@components/ui/unsaved-changes-guard";
@@ -576,7 +581,7 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
         </div>
       </div>
       {(dirty || update.isPending) && (
-        <div className="sticky bottom-[3.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4">
+        <div className={stickyBarClass}>
           <button
             type="submit"
             className={`${primaryButton} w-full py-3.5 text-base`}
