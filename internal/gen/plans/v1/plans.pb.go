@@ -5133,11 +5133,12 @@ func (b0 CreatePortionResponse_builder) Build() *CreatePortionResponse {
 }
 
 type UpdatePortionRequest struct {
-	state                 protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Portion    *Portion               `protobuf:"bytes,1,opt,name=portion,proto3"`
-	xxx_hidden_UpdateMask *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	state                       protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Portion          *Portion               `protobuf:"bytes,1,opt,name=portion,proto3"`
+	xxx_hidden_UpdateMask       *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3"`
+	xxx_hidden_DeleteUnusedCook bool                   `protobuf:"varint,3,opt,name=delete_unused_cook,json=deleteUnusedCook,proto3"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
 }
 
 func (x *UpdatePortionRequest) Reset() {
@@ -5179,12 +5180,23 @@ func (x *UpdatePortionRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
 	return nil
 }
 
+func (x *UpdatePortionRequest) GetDeleteUnusedCook() bool {
+	if x != nil {
+		return x.xxx_hidden_DeleteUnusedCook
+	}
+	return false
+}
+
 func (x *UpdatePortionRequest) SetPortion(v *Portion) {
 	x.xxx_hidden_Portion = v
 }
 
 func (x *UpdatePortionRequest) SetUpdateMask(v *fieldmaskpb.FieldMask) {
 	x.xxx_hidden_UpdateMask = v
+}
+
+func (x *UpdatePortionRequest) SetDeleteUnusedCook(v bool) {
+	x.xxx_hidden_DeleteUnusedCook = v
 }
 
 func (x *UpdatePortionRequest) HasPortion() bool {
@@ -5219,6 +5231,12 @@ type UpdatePortionRequest_builder struct {
 	// empty, all fields are replaced. Switch between a cook and a food by
 	// updating "cook" or "food" as a whole.
 	UpdateMask *fieldmaskpb.FieldMask
+	// Whether to delete the cook the portion had a share of, if it no longer
+	// does and nobody eats any of the cook then, like a breakfast's cook when
+	// the breakfast is changed to something else: it would be cooked and
+	// bought for nobody. A cook that's cooked, frozen or taken from, or
+	// makes a component of another cook, is kept.
+	DeleteUnusedCook bool
 }
 
 func (b0 UpdatePortionRequest_builder) Build() *UpdatePortionRequest {
@@ -5227,14 +5245,16 @@ func (b0 UpdatePortionRequest_builder) Build() *UpdatePortionRequest {
 	_, _ = b, x
 	x.xxx_hidden_Portion = b.Portion
 	x.xxx_hidden_UpdateMask = b.UpdateMask
+	x.xxx_hidden_DeleteUnusedCook = b.DeleteUnusedCook
 	return m0
 }
 
 type UpdatePortionResponse struct {
-	state              protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Portion *Portion               `protobuf:"bytes,1,opt,name=portion,proto3"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state                            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Portion               *Portion               `protobuf:"bytes,1,opt,name=portion,proto3"`
+	xxx_hidden_DeletedCookRecipeName string                 `protobuf:"bytes,2,opt,name=deleted_cook_recipe_name,json=deletedCookRecipeName,proto3"`
+	unknownFields                    protoimpl.UnknownFields
+	sizeCache                        protoimpl.SizeCache
 }
 
 func (x *UpdatePortionResponse) Reset() {
@@ -5269,8 +5289,19 @@ func (x *UpdatePortionResponse) GetPortion() *Portion {
 	return nil
 }
 
+func (x *UpdatePortionResponse) GetDeletedCookRecipeName() string {
+	if x != nil {
+		return x.xxx_hidden_DeletedCookRecipeName
+	}
+	return ""
+}
+
 func (x *UpdatePortionResponse) SetPortion(v *Portion) {
 	x.xxx_hidden_Portion = v
+}
+
+func (x *UpdatePortionResponse) SetDeletedCookRecipeName(v string) {
+	x.xxx_hidden_DeletedCookRecipeName = v
 }
 
 func (x *UpdatePortionResponse) HasPortion() bool {
@@ -5289,6 +5320,8 @@ type UpdatePortionResponse_builder struct {
 
 	// The updated portion.
 	Portion *Portion
+	// The recipe of the cook deleted with delete_unused_cook, empty if none.
+	DeletedCookRecipeName string
 }
 
 func (b0 UpdatePortionResponse_builder) Build() *UpdatePortionResponse {
@@ -5296,14 +5329,16 @@ func (b0 UpdatePortionResponse_builder) Build() *UpdatePortionResponse {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Portion = b.Portion
+	x.xxx_hidden_DeletedCookRecipeName = b.DeletedCookRecipeName
 	return m0
 }
 
 type DeletePortionRequest struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id,proto3"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                       protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id               string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_DeleteUnusedCook bool                   `protobuf:"varint,2,opt,name=delete_unused_cook,json=deleteUnusedCook,proto3"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
 }
 
 func (x *DeletePortionRequest) Reset() {
@@ -5338,8 +5373,19 @@ func (x *DeletePortionRequest) GetId() string {
 	return ""
 }
 
+func (x *DeletePortionRequest) GetDeleteUnusedCook() bool {
+	if x != nil {
+		return x.xxx_hidden_DeleteUnusedCook
+	}
+	return false
+}
+
 func (x *DeletePortionRequest) SetId(v string) {
 	x.xxx_hidden_Id = v
+}
+
+func (x *DeletePortionRequest) SetDeleteUnusedCook(v bool) {
+	x.xxx_hidden_DeleteUnusedCook = v
 }
 
 type DeletePortionRequest_builder struct {
@@ -5347,6 +5393,9 @@ type DeletePortionRequest_builder struct {
 
 	// The ID of the portion.
 	Id string
+	// Whether to delete the portion's cook if nobody eats any of it then, as
+	// in UpdatePortionRequest.delete_unused_cook.
+	DeleteUnusedCook bool
 }
 
 func (b0 DeletePortionRequest_builder) Build() *DeletePortionRequest {
@@ -5354,13 +5403,15 @@ func (b0 DeletePortionRequest_builder) Build() *DeletePortionRequest {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_DeleteUnusedCook = b.DeleteUnusedCook
 	return m0
 }
 
 type DeletePortionResponse struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_DeletedCookRecipeName string                 `protobuf:"bytes,1,opt,name=deleted_cook_recipe_name,json=deletedCookRecipeName,proto3"`
+	unknownFields                    protoimpl.UnknownFields
+	sizeCache                        protoimpl.SizeCache
 }
 
 func (x *DeletePortionResponse) Reset() {
@@ -5388,15 +5439,29 @@ func (x *DeletePortionResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
+func (x *DeletePortionResponse) GetDeletedCookRecipeName() string {
+	if x != nil {
+		return x.xxx_hidden_DeletedCookRecipeName
+	}
+	return ""
+}
+
+func (x *DeletePortionResponse) SetDeletedCookRecipeName(v string) {
+	x.xxx_hidden_DeletedCookRecipeName = v
+}
+
 type DeletePortionResponse_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
+	// The recipe of the cook deleted with delete_unused_cook, empty if none.
+	DeletedCookRecipeName string
 }
 
 func (b0 DeletePortionResponse_builder) Build() *DeletePortionResponse {
 	m0 := &DeletePortionResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
+	x.xxx_hidden_DeletedCookRecipeName = b.DeletedCookRecipeName
 	return m0
 }
 
@@ -7874,16 +7939,20 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\bservings\x18\x02 \x01(\x01R\bservings\"h\n" +
 	"\x15CreatePortionResponse\x12+\n" +
 	"\aportion\x18\x01 \x01(\v2\x11.plans.v1.PortionR\aportion\x12\"\n" +
-	"\x04cook\x18\x02 \x01(\v2\x0e.plans.v1.CookR\x04cook\"\x80\x01\n" +
+	"\x04cook\x18\x02 \x01(\v2\x0e.plans.v1.CookR\x04cook\"\xae\x01\n" +
 	"\x14UpdatePortionRequest\x12+\n" +
 	"\aportion\x18\x01 \x01(\v2\x11.plans.v1.PortionR\aportion\x12;\n" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
-	"updateMask\"D\n" +
+	"updateMask\x12,\n" +
+	"\x12delete_unused_cook\x18\x03 \x01(\bR\x10deleteUnusedCook\"}\n" +
 	"\x15UpdatePortionResponse\x12+\n" +
-	"\aportion\x18\x01 \x01(\v2\x11.plans.v1.PortionR\aportion\"&\n" +
+	"\aportion\x18\x01 \x01(\v2\x11.plans.v1.PortionR\aportion\x127\n" +
+	"\x18deleted_cook_recipe_name\x18\x02 \x01(\tR\x15deletedCookRecipeName\"T\n" +
 	"\x14DeletePortionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x17\n" +
-	"\x15DeletePortionResponse\">\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12,\n" +
+	"\x12delete_unused_cook\x18\x02 \x01(\bR\x10deleteUnusedCook\"P\n" +
+	"\x15DeletePortionResponse\x127\n" +
+	"\x18deleted_cook_recipe_name\x18\x01 \x01(\tR\x15deletedCookRecipeName\">\n" +
 	"\x16SetPortionEatenRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05eaten\x18\x02 \x01(\bR\x05eaten\"\xae\x01\n" +

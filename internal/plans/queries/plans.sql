@@ -199,6 +199,22 @@ where id = @id and household_id = @household_id;
 -- name: DeletePortion :execrows
 delete from portions where id = @id and household_id = @household_id;
 
+-- name: DeletePortionReturningCook :one
+-- Deletes a household's portion, returning its cook, null for a food.
+delete from portions where id = @id and household_id = @household_id
+returning cook_id;
+
+-- name: DeleteCookIfUnused :one
+-- Deletes a household's cook nobody eats any of: with no portions, not
+-- cooked, frozen or taken from, and not making a component of another
+-- cook. It returns its recipe's name, and no row if it isn't deleted.
+delete from cooks c
+where c.id = @id and c.household_id = @household_id
+  and not c.done and c.frozen_servings = 0 and c.off_plan_servings = 0
+  and not exists (select 1 from portions p where p.household_id = c.household_id and p.cook_id = c.id)
+  and not exists (select 1 from cook_supplies s where s.household_id = c.household_id and s.supplier_cook_id = c.id)
+returning coalesce((select r.name from recipes r where r.id = c.recipe_id), '')::text as recipe_name;
+
 -- name: ListCookPortionIDs :many
 -- The IDs of a cook's portions.
 select id from portions

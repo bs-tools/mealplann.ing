@@ -269,6 +269,30 @@ func (q *Queries) DeleteCook(ctx context.Context, arg *DeleteCookParams) (int64,
 	return result.RowsAffected(), nil
 }
 
+const deleteCookIfUnused = `-- name: DeleteCookIfUnused :one
+delete from cooks c
+where c.id = $1 and c.household_id = $2
+  and not c.done and c.frozen_servings = 0 and c.off_plan_servings = 0
+  and not exists (select 1 from portions p where p.household_id = c.household_id and p.cook_id = c.id)
+  and not exists (select 1 from cook_supplies s where s.household_id = c.household_id and s.supplier_cook_id = c.id)
+returning coalesce((select r.name from recipes r where r.id = c.recipe_id), '')::text as recipe_name
+`
+
+type DeleteCookIfUnusedParams struct {
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+}
+
+// Deletes a household's cook nobody eats any of: with no portions, not
+// cooked, frozen or taken from, and not making a component of another
+// cook. It returns its recipe's name, and no row if it isn't deleted.
+func (q *Queries) DeleteCookIfUnused(ctx context.Context, arg *DeleteCookIfUnusedParams) (string, error) {
+	row := q.db.QueryRow(ctx, deleteCookIfUnused, arg.ID, arg.HouseholdID)
+	var recipe_name string
+	err := row.Scan(&recipe_name)
+	return recipe_name, err
+}
+
 const deleteEatingOut = `-- name: DeleteEatingOut :exec
 delete from eating_out
 where household_id = $1 and person_id = $2
@@ -332,6 +356,24 @@ func (q *Queries) DeletePortion(ctx context.Context, arg *DeletePortionParams) (
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const deletePortionReturningCook = `-- name: DeletePortionReturningCook :one
+delete from portions where id = $1 and household_id = $2
+returning cook_id
+`
+
+type DeletePortionReturningCookParams struct {
+	ID          pgtype.UUID
+	HouseholdID pgtype.UUID
+}
+
+// Deletes a household's portion, returning its cook, null for a food.
+func (q *Queries) DeletePortionReturningCook(ctx context.Context, arg *DeletePortionReturningCookParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, deletePortionReturningCook, arg.ID, arg.HouseholdID)
+	var cook_id pgtype.UUID
+	err := row.Scan(&cook_id)
+	return cook_id, err
 }
 
 const deleteStaple = `-- name: DeleteStaple :execrows

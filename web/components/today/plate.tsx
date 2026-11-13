@@ -347,7 +347,11 @@ export const SidesCard: React.FC<SidesCardProps> = ({
       const client = createClient(PlanService, transport);
       await Promise.all(
         planned.map(async (other) => {
-          await client.deletePortion({ id: other.portionId });
+          // A side's pot nobody eats from then isn't cooked.
+          await client.deletePortion({
+            deleteUnusedCook: true,
+            id: other.portionId,
+          });
         })
       );
       if (side.planned) {

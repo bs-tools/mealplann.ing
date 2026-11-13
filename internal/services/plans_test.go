@@ -612,3 +612,106 @@ func TestPlanMealCapsAtWhatsPlanned(t *testing.T) {
 	_, err = e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: created.GetRecipe().GetId(), Date: monday, Meal: lunch}.Build())
 	wantCode(t, err, connect.CodeFailedPrecondition)
 }
+
+// TestDeleteUnusedCook checks that changing or removing a portion, asked
+// to, deletes its cook if nobody eats any of it then, like a breakfast's
+// cook when the breakfast is changed to a drink, and keeps it while
+// someone else does, or once it's cooked.
+func TestDeleteUnusedCook(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	b := createPerson(t, e, ben())
+	a := createPerson(t, e, anna())
+	tofu := customFood(t, e, "Tofu", 144, 15, 3, 0.6, 9, nil)
+	shake := customFood(t, e, "Shake", 60, 5, 6, 3, 2, nil)
+	scramble, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
+		Name: "Tofu scramble", Servings: 2,
+		Ingredients: []*recipesv1.Ingredient{ingredient(tofu.GetId(), 300, grams)},
+	}.Build()}.Build())
+	if err != nil {
+		t.Fatalf("CreateRecipe: %v", err)
+	}
+	cooks := func() []string {
+		t.Helper()
+		week, err := e.plans.GetWeek(ctx, plansv1.GetWeekRequest_builder{Monday: monday}.Build())
+		if err != nil {
+			t.Fatalf("GetWeek: %v", err)
+		}
+		var ids []string
+		for _, c := range week.GetCooks() {
+			ids = append(ids, c.GetCook().GetId())
+		}
+		return ids
+	}
+	planned, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{
+		RecipeId: scramble.GetRecipe().GetId(), Date: monday, Meal: breakfast,
+	}.Build())
+	if err != nil {
+		t.Fatalf("PlanMeal: %v", err)
+	}
+	cookID := planned.GetCook().GetId()
+	var bens, annas *plansv1.Portion
+	for _, p := range planned.GetPortions() {
+		if p.GetPersonId() == b.GetId() {
+			bens = p
+		}
+		if p.GetPersonId() == a.GetId() {
+			annas = p
+		}
+	}
+
+	// Ben's breakfast is changed to a shake: Anna still eats the scramble,
+	// so it's kept.
+	changed, err := e.plans.UpdatePortion(ctx, plansv1.UpdatePortionRequest_builder{
+		Portion: plansv1.Portion_builder{
+			Id:   bens.GetId(),
+			Food: plansv1.FoodAmount_builder{FoodId: shake.GetId(), Amount: 300, Unit: grams}.Build(),
+		}.Build(),
+		UpdateMask:       &fieldmaskpb.FieldMask{Paths: []string{"food"}},
+		DeleteUnusedCook: true,
+	}.Build())
+	if err != nil {
+		t.Fatalf("UpdatePortion: %v", err)
+	}
+	if changed.GetDeletedCookRecipeName() != "" || !slices.Contains(cooks(), cookID) {
+		t.Errorf("got %q deleted and cooks %v, want the scramble kept for Anna", changed.GetDeletedCookRecipeName(), cooks())
+	}
+	// Anna's too: nobody eats the scramble, so it goes.
+	removed, err := e.plans.DeletePortion(ctx, plansv1.DeletePortionRequest_builder{Id: annas.GetId(), DeleteUnusedCook: true}.Build())
+	if err != nil {
+		t.Fatalf("DeletePortion: %v", err)
+	}
+	if removed.GetDeletedCookRecipeName() != "Tofu scramble" || slices.Contains(cooks(), cookID) {
+		t.Errorf("got %q deleted and cooks %v, want the scramble deleted", removed.GetDeletedCookRecipeName(), cooks())
+	}
+
+	// A cook already cooked is kept, as what's left of it is leftovers.
+	done, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{
+		RecipeId: scramble.GetRecipe().GetId(), Date: tuesday, Meal: breakfast, PersonIds: []string{b.GetId()},
+	}.Build())
+	if err != nil {
+		t.Fatalf("PlanMeal: %v", err)
+	}
+	if _, err := e.plans.UpdateCook(ctx, plansv1.UpdateCookRequest_builder{
+		Cook:       plansv1.Cook_builder{Id: done.GetCook().GetId(), Done: true}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"done"}},
+	}.Build()); err != nil {
+		t.Fatalf("UpdateCook: %v", err)
+	}
+	if removed, err := e.plans.DeletePortion(ctx, plansv1.DeletePortionRequest_builder{
+		Id: done.GetPortions()[0].GetId(), DeleteUnusedCook: true,
+	}.Build()); err != nil || removed.GetDeletedCookRecipeName() != "" || !slices.Contains(cooks(), done.GetCook().GetId()) {
+		t.Errorf("got %v, %v and cooks %v, want the cooked scramble kept", removed, err, cooks())
+	}
+	// Without asking, a cook nobody eats is kept, as before.
+	kept, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{
+		RecipeId: scramble.GetRecipe().GetId(), Date: wednesday, Meal: breakfast, PersonIds: []string{b.GetId()},
+	}.Build())
+	if err != nil {
+		t.Fatalf("PlanMeal: %v", err)
+	}
+	if _, err := e.plans.DeletePortion(ctx, plansv1.DeletePortionRequest_builder{Id: kept.GetPortions()[0].GetId()}.Build()); err != nil || !slices.Contains(cooks(), kept.GetCook().GetId()) {
+		t.Errorf("got %v and cooks %v, want the cook kept when not asked to delete it", err, cooks())
+	}
+}

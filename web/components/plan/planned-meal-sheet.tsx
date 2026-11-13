@@ -457,7 +457,10 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
                 portions
                   .filter((portion) => portion.portionId !== "")
                   .map(async (portion) =>
-                    remove.mutateAsync({ id: portion.portionId })
+                    remove.mutateAsync({
+                      deleteUnusedCook: true,
+                      id: portion.portionId,
+                    })
                   )
               ).then(onClose);
             }}
