@@ -2,8 +2,8 @@ import CookActions from "@components/plan/cook-actions";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import type { MealRow, RowSlot } from "@components/plan/plan-rows";
 import PortionDialog from "@components/plan/portion-dialog";
+import WarningsLink from "@components/plan/warnings-link";
 import { Plate, PortionList, SidesCard } from "@components/today/plate";
-import WarningFix from "@components/today/warning-fix";
 import { ConfirmDialog } from "@components/ui/confirm-button";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
@@ -386,18 +386,12 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
     const cook = week.cooks.find(
       (other) => main !== undefined && other.cook?.id === main.cookId
     );
-    const dayPortions = slot.person.eatingTimes.flatMap(
-      (planned) => planned.portions
-    );
     const eatingTimeId = slot.planned.eatingTime?.id ?? "";
+    // The person's day's warnings, listed on the warnings page.
     const warnings = [
-      ...slot.planned.warnings
-        .filter((warning) => warning.severity === Severity.WARNING)
-        .map((warning) => ({ eatingTimeId, warning })),
-      ...slot.person.warnings
-        .filter((warning) => warning.severity === Severity.WARNING)
-        .map((warning) => ({ eatingTimeId: "", warning })),
-    ];
+      ...slot.person.warnings,
+      ...slot.person.eatingTimes.flatMap((planned) => planned.warnings),
+    ].filter((warning) => warning.severity === Severity.WARNING);
     content = (
       <div className="flex flex-col gap-5">
         <PortionList
@@ -415,17 +409,11 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
             date={day.date}
           />
         )}
-        {warnings.map(({ eatingTimeId: about, warning }) => (
-          <WarningFix
-            key={`${about}-${warning.kind}-${warning.nutrient}`}
-            warning={warning}
-            personName={eaters.length > 1 ? "" : slot.person.personName}
-            personId={slot.person.personId}
-            date={day.date}
-            eatingTimeId={about}
-            portions={dayPortions}
-          />
-        ))}
+        <WarningsLink
+          count={warnings.length}
+          date={day.date}
+          about={`for ${slot.person.personName}'s day`}
+        />
         {main !== undefined && (
           <CookBar week={week} cookId={main.cookId} portions={portions} />
         )}

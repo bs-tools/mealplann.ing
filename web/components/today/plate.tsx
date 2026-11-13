@@ -5,7 +5,6 @@ import { createClient } from "@connectrpc/connect";
 import { useQuery, useTransport } from "@connectrpc/connect-query";
 import {
   ChevronRightIcon,
-  ExclamationTriangleIcon,
   PlusIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
@@ -13,8 +12,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Nutrients } from "gen/foods/v1/foods_pb";
 import { AmountUnit } from "gen/foods/v1/foods_pb";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
-import type { PlannedPortion, Warning } from "gen/plans/v1/plans_pb";
-import { PlanService, Severity } from "gen/plans/v1/plans_pb";
+import type { PlannedPortion } from "gen/plans/v1/plans_pb";
+import { PlanService } from "gen/plans/v1/plans_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { suggestSides } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
 import type { SideSuggestion } from "gen/suggestions/v1/suggestions_pb";
@@ -206,30 +205,6 @@ export const splitFix = (
         detail: description.slice(at + 2),
       };
 };
-
-interface MealWarningsProps {
-  warnings: Warning[];
-}
-
-// MealWarnings shows an eating time's warnings, each a note to act on.
-export const MealWarnings: React.FC<MealWarningsProps> = ({ warnings }) => (
-  <>
-    {warnings
-      .filter((warning) => warning.severity === Severity.WARNING)
-      .map((warning) => (
-        <p
-          key={`${warning.kind}-${warning.nutrient}-${warning.message}`}
-          className="grid grid-cols-[1.5rem_minmax(0,1fr)] items-center gap-2 rounded-xl bg-warn-tint p-3 text-sm text-warn-dark"
-        >
-          <ExclamationTriangleIcon
-            className="size-5 justify-self-center"
-            aria-hidden="true"
-          />
-          <span>{warning.message}</span>
-        </p>
-      ))}
-  </>
-);
 
 // SideName names a side, a food or a recipe.
 const sideName = (side: SideSuggestion): string =>

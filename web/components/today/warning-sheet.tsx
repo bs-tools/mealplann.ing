@@ -2,7 +2,6 @@ import Loading from "@components/loading";
 import { useApplyFix } from "@components/plan/apply-fix";
 import { splitFix } from "@components/today/plate";
 import { warningTitle } from "@components/today/today-bits";
-import { fixFor, fixLeaves } from "@components/today/warning-fix";
 import Modal from "@components/ui/modal";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
@@ -17,9 +16,42 @@ import {
 } from "@heroicons/react/24/outline";
 import type { PlannedPortion, Warning } from "gen/plans/v1/plans_pb";
 import { suggestFixes } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
+import type { PlanFix } from "gen/suggestions/v1/suggestions_pb";
+import { formatList } from "helpers/format";
 import { formatAmount } from "helpers/nutrients";
 import React from "react";
 import { Link } from "react-router";
+
+/**
+ * FixFor returns the best of a day's fixes that fixes a warning: one that
+ * leaves no warning of its kind and nutrient. The best fix overall can
+ * fix another warning and leave this one, or make it worse, like a
+ * smaller portion for a day over its fat that's also under its protein,
+ * so it would contradict the warning it's shown with. Returns undefined
+ * if none fixes it.
+ */
+export const fixFor = (
+  fixes: PlanFix[],
+  warning: Warning
+): PlanFix | undefined =>
+  fixes.find(
+    (fix) =>
+      !fix.warnings.some(
+        (left) =>
+          left.kind === warning.kind && left.nutrient === warning.nutrient
+      )
+  );
+
+/**
+ * FixLeaves says which warnings a fix leaves, e.g. "Still under daily
+ * protein", or "" if none, so it's clear a fix for one isn't for all.
+ */
+export const fixLeaves = (fix: PlanFix): string => {
+  const titles = [
+    ...new Set(fix.warnings.map((left) => warningTitle(left).toLowerCase())),
+  ];
+  return titles.length === 0 ? "" : `Still ${formatList(titles)}.`;
+};
 
 interface WarningSheetProps {
   warning: Warning;
