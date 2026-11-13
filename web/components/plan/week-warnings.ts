@@ -4,7 +4,7 @@ import type {
   PlannedCook,
   Warning,
 } from "gen/plans/v1/plans_pb";
-import { Severity } from "gen/plans/v1/plans_pb";
+import { Severity, WarningKind } from "gen/plans/v1/plans_pb";
 
 // WeekWarning is a warning of the plan, with what it's about.
 export interface WeekWarning {
@@ -19,6 +19,14 @@ export interface WeekWarning {
   // The cook it's about, if any, like leftovers kept too long.
   cook?: PlannedCook | undefined;
 }
+
+/**
+ * IsTargetWarning reports whether a warning is of a day missing a daily
+ * target, which the bars of the day's targets show already.
+ */
+export const isTargetWarning = (warning: Warning): boolean =>
+  warning.kind === WarningKind.TARGET_LOW ||
+  warning.kind === WarningKind.TARGET_HIGH;
 
 // Acting reports whether a warning is one to act on, rather than a note.
 const acting = (warning: Warning): boolean =>

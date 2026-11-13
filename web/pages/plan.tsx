@@ -8,7 +8,7 @@ import PlannedMealSheet from "@components/plan/planned-meal-sheet";
 import type { Slot } from "@components/plan/portion-dialog";
 import WarningsLink from "@components/plan/warnings-link";
 import WeekStrip, { fillOf, openSlotsOf } from "@components/plan/week-strip";
-import { weekWarnings } from "@components/plan/week-warnings";
+import { isTargetWarning, weekWarnings } from "@components/plan/week-warnings";
 import { EmptyState } from "@components/ui/misc";
 import { menuItemClass } from "@components/ui/more-menu";
 import QueryError from "@components/ui/query-error";
@@ -245,14 +245,18 @@ const PlanPage: React.FC = () => {
         {banner}
         <WarningsLink
           count={
-            weekWarnings(week.data, monday === startOfWeek(now) ? now : "")
-              .length
+            // Missed targets show in each day's bars instead.
+            weekWarnings(
+              week.data,
+              monday === startOfWeek(now) ? now : ""
+            ).filter((item) => !isTargetWarning(item.warning)).length
           }
           date={monday}
           about={monday === startOfWeek(now) ? "from today on" : "this week"}
         />
         <PlanDayList
           days={week.data.days.filter((planDay) => planDay.date >= day)}
+          people={people.data?.people ?? []}
           today={now}
           onOpen={(planDay, row) => {
             setOpened({ date: planDay.date, row });

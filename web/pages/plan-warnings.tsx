@@ -1,6 +1,7 @@
 import Loading from "@components/loading";
+import TargetBars from "@components/plan/target-bars";
 import type { WeekWarning } from "@components/plan/week-warnings";
-import { weekWarnings } from "@components/plan/week-warnings";
+import { isTargetWarning, weekWarnings } from "@components/plan/week-warnings";
 import { warningTitle } from "@components/today/today-bits";
 import WarningSheet from "@components/today/warning-sheet";
 import BackLink from "@components/ui/back-link";
@@ -9,6 +10,7 @@ import { EmptyState, PageHeader } from "@components/ui/misc";
 import QueryError, { ErrorText } from "@components/ui/query-error";
 import {
   iconButton,
+  linkClass,
   pillDangerButton,
   sectionLabelClass,
 } from "@components/ui/styles";
@@ -20,6 +22,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
+import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import {
   deleteCook,
   getWeek,
@@ -96,6 +99,20 @@ const OrphanedCook: React.FC<OrphanedCookProps> = ({
   );
 };
 
+// WarningBody is a warning's icon, title and message, in a row.
+const WarningBody: React.FC<{ item: WeekWarning }> = ({ item }) => (
+  <>
+    <ExclamationTriangleIcon
+      className="mt-0.5 size-5 shrink-0 text-warn"
+      aria-hidden="true"
+    />
+    <span className="flex min-w-0 grow flex-col gap-0.5">
+      <span className="font-bold text-ink-soft">{warningRowTitle(item)}</span>
+      <span className="text-sm text-muted">{item.warning.message}</span>
+    </span>
+  </>
+);
+
 /**
  * PlanWarningsPage lists the week's warnings in one place, from today on
  * for this week: where the plan misses someone's targets or rules, and
@@ -114,6 +131,7 @@ const PlanWarningsPage: React.FC = () => {
     { monday },
     { placeholderData: keepPreviousData }
   );
+  const people = useQuery(listPeople, {});
   const [open, setOpen] = useState<WeekWarning | null>(null);
   const goTo = (next: string) => {
     setParams(next === startOfWeek(now) ? {} : { week: next }, {
@@ -150,69 +168,118 @@ const PlanWarningsPage: React.FC = () => {
               <h2 className={sectionLabelClass}>
                 {date === now ? "Today" : formatDay(date)}
               </h2>
-              <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
-                {warnings
-                  .filter((item) => item.date === date)
-                  .map((item) => {
-                    const body = (
-                      <>
-                        <ExclamationTriangleIcon
-                          className="mt-0.5 size-5 shrink-0 text-warn"
-                          aria-hidden="true"
-                        />
-                        <span className="flex min-w-0 grow flex-col gap-0.5">
-                          <span className="font-bold text-ink-soft">
-                            {warningRowTitle(item)}
-                          </span>
-                          <span className="text-sm text-muted">
-                            {item.warning.message}
-                          </span>
-                        </span>
-                      </>
-                    );
-                    /*
-                     * A cook nobody eats offers to delete it; another
-                     * cook's warning opens its day, and a person's, the
-                     * fix for it.
-                     */
-                    let row: React.ReactNode = null;
-                    if (
-                      item.cook !== undefined &&
-                      item.warning.kind === WarningKind.SERVINGS_UNASSIGNED
-                    ) {
-                      row = (
-                        <OrphanedCook
-                          cookId={item.cook.cook?.id ?? ""}
-                          recipeName={item.cook.cook?.recipeName ?? ""}
-                        >
-                          {body}
-                        </OrphanedCook>
-                      );
-                    } else if (item.person === undefined) {
-                      row = (
-                        <Link
-                          to={`/plan?${new URLSearchParams(current ? { day: date } : { day: date, week: monday }).toString()}`}
-                          className="flex items-start gap-3 py-3.5 text-left"
-                        >
-                          {body}
-                        </Link>
-                      );
-                    } else {
-                      row = (
-                        <button
-                          type="button"
-                          className="flex w-full items-start gap-3 py-3.5 text-left"
-                          onClick={() => {
-                            setOpen(item);
-                          }}
-                        >
-                          {body}
-                        </button>
-                      );
-                    }
-                    return <li key={item.key}>{row}</li>;
-                  })}
-              </ul>
+              {(
+                week.data.days.find((other) => other.date === date)?.people ??
+                []
+              )
+                .filter((person) =>
+                  warnings.some(
+                    (item) =>
+                      item.date === date &&
+                      item.person?.personId === person.personId
+                  )
+                )
+                .map((person) => {
+                  const mine = warnings.filter(
+                    (item) =>
+                      item.date === date &&
+                      item.person?.personId === person.personId
+                  );
+                  return (
+                    <div
+                      key={person.personId}
+                      className="flex flex-col gap-3 rounded-2xl border border-line bg-white px-4 py-3.5"
+                    >
+                      <div className="flex items-baseline justify-between gap-3">
+                        <h3 className="font-bold text-ink-soft">
+                          {person.personName}
+                        </h3>
+                        {date >= now && (
+                          <Link
+                            to={`/plan/auto?start=${date}&days=1`}
+                            className={`text-sm font-medium ${linkClass}`}
+                          >
+                            Re-plan this day
+                          </Link>
+                        )}
+                      </div>
+                      {/* A missed target opens the portions that fix it. */}
+                      <TargetBars
+                        targets={
+                          people.data?.people.find(
+                            (other) => other.id === person.personId
+                          )?.dailyTargets ?? []
+                        }
+                        nutrients={person.nutrients}
+                        onMissed={(nutrient) => {
+                          setOpen(
+                            mine.find(
+                              (item) =>
+                                isTargetWarning(item.warning) &&
+                                item.warning.nutrient === nutrient
+                            ) ?? null
+                          );
+                        }}
+                      />
+                      {mine.some((item) => isTargetWarning(item.warning)) && (
+                        <p className="text-sm text-muted">
+                          Tap a target in amber for a change to the portions
+                          that fixes it.
+                        </p>
+                      )}
+                      {mine.some((item) => !isTargetWarning(item.warning)) && (
+                        <ul className="divide-y divide-line border-t border-line">
+                          {mine
+                            .filter((item) => !isTargetWarning(item.warning))
+                            .map((item) => (
+                              <li key={item.key}>
+                                <button
+                                  type="button"
+                                  className="flex w-full items-start gap-3 py-3 text-left"
+                                  onClick={() => {
+                                    setOpen(item);
+                                  }}
+                                >
+                                  <WarningBody item={item} />
+                                </button>
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              {warnings.some(
+                (item) => item.date === date && item.person === undefined
+              ) && (
+                <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
+                  {warnings
+                    .filter(
+                      (item) => item.date === date && item.person === undefined
+                    )
+                    .map((item) => (
+                      <li key={item.key}>
+                        {item.cook !== undefined &&
+                        item.warning.kind ===
+                          WarningKind.SERVINGS_UNASSIGNED ? (
+                          <OrphanedCook
+                            cookId={item.cook.cook?.id ?? ""}
+                            recipeName={item.cook.cook?.recipeName ?? ""}
+                          >
+                            <WarningBody item={item} />
+                          </OrphanedCook>
+                        ) : (
+                          <Link
+                            to={`/plan?${new URLSearchParams(current ? { day: date } : { day: date, week: monday }).toString()}`}
+                            className="flex items-start gap-3 py-3.5 text-left"
+                          >
+                            <WarningBody item={item} />
+                          </Link>
+                        )}
+                      </li>
+                    ))}
+                </ul>
+              )}
             </section>
           ))}
         </div>
@@ -225,7 +292,7 @@ const PlanWarningsPage: React.FC = () => {
       <PageHeader
         kicker={`Week of ${formatDay(monday)}`}
         title="Warnings"
-        subtitle="Where the plan misses someone's targets or rules. Open one for a change to the portions that fixes it."
+        subtitle="Each person's days against their targets, and where the plan breaks a rule."
         actions={
           <div className="flex">
             <button
