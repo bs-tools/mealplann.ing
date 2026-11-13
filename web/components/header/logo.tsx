@@ -47,12 +47,3 @@ export const LogoMark: React.FC<LogoMarkProps> = ({
     />
   </svg>
 );
-
-// Wordmark is the mealplann.ing name, with .ing in the accent color.
-export const Wordmark: React.FC<{ className?: string }> = ({
-  className = "",
-}) => (
-  <span className={`font-brand font-bold ${className}`}>
-    mealplann<span className="text-leaf">.ing</span>
-  </span>
-);

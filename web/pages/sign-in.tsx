@@ -1,4 +1,4 @@
-import { LogoMark, Wordmark } from "@components/header/logo";
+import { LogoMark } from "@components/header/logo";
 import SignInForm from "@components/header/sign-in-form";
 import React from "react";
 import { Link } from "react-router";
@@ -12,7 +12,6 @@ const SignInPage: React.FC = () => (
     <section className="relative flex min-h-80 flex-col justify-between gap-8 overflow-hidden bg-ink px-6 py-8 text-neutral-50 sm:px-12 sm:py-10 md:flex-1">
       <div className="flex items-center gap-3">
         <LogoMark className="size-9" />
-        <Wordmark className="text-[22px]" />
       </div>
       <div className="relative flex max-w-md flex-col gap-3 pb-20">
         <h1 className="text-3xl leading-tight font-bold sm:text-4xl">

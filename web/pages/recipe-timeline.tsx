@@ -3,7 +3,7 @@ import BackLink from "@components/ui/back-link";
 import Card from "@components/ui/card";
 import { PageHeader, Stat } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
-import { inputClass } from "@components/ui/styles";
+import { inputClass, stickyBarClass } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
 import {
   getRecipe,
@@ -237,7 +237,7 @@ const RecipeTimelinePage: React.FC = () => {
           </div>
         )}
       </Card>
-      <div className="sticky bottom-[3.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4">
+      <div className={stickyBarClass}>
         <Link
           to={`/recipes/${id}/cook`}
           className="flex w-full items-center justify-center rounded-xl bg-cook py-3.5 text-base font-bold text-white hover:bg-cook-dark"

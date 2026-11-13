@@ -13,6 +13,7 @@ import {
   primaryButton,
   secondaryButton,
   sectionLabelClass,
+  stickyBarClass,
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { XMarkIcon } from "@heroicons/react/24/outline";
@@ -336,7 +337,7 @@ const PlanTemplatePage: React.FC = () => {
           );
         })}
       </div>
-      <div className="sticky bottom-[3.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
+      <div className={stickyBarClass}>
         <button
           type="button"
           className={`${primaryButton} w-full py-3.5 text-base`}

@@ -2,6 +2,7 @@ import Loading from "@components/loading";
 import { balanceOf } from "@components/recipes/balance";
 import ImportRecipeDialog from "@components/recipes/import-recipe-dialog";
 import { tintOf } from "@components/recipes/tint";
+import HintIcon from "@components/ui/hint-icon";
 import { Badge, EmptyState } from "@components/ui/misc";
 import QueryError from "@components/ui/query-error";
 import { choiceClass, secondaryButton } from "@components/ui/styles";
@@ -334,14 +335,15 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
             {balance !== undefined && (
               <span
                 className={`size-2 shrink-0 rounded-full ${balance.good ? "bg-pine" : "bg-warn"}`}
+                title={balance.good ? "Balanced" : "Not balanced"}
                 aria-hidden="true"
               />
             )}
             {facts.length > 0 ? facts.join(" · ") : "No nutrition yet"}
             {recipe.hasIssues && (
-              <InformationCircleIcon
-                className="size-4 shrink-0"
-                aria-label="Some ingredients lack data"
+              <HintIcon
+                icon={InformationCircleIcon}
+                hint="Some ingredients lack data, so its nutrition may be a little low. Open it to see which."
               />
             )}
           </span>

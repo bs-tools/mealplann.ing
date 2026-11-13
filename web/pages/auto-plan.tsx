@@ -11,6 +11,7 @@ import {
   primaryButton,
   choiceClass,
   ghostButton,
+  stickyBarClass,
 } from "@components/ui/styles";
 import { skipToken, useMutation, useQuery } from "@connectrpc/connect-query";
 import {
@@ -642,7 +643,7 @@ const AutoPlanPage: React.FC = () => {
       )}
       {content}
       {toSave.length > 0 && (
-        <div className="sticky bottom-[3.75rem] z-10 bg-ground/90 py-2 backdrop-blur lg:bottom-4 print:hidden">
+        <div className={stickyBarClass}>
           <button
             type="button"
             className={`${primaryButton} w-full py-3.5 text-base`}
