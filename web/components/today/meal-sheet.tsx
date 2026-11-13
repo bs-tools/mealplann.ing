@@ -22,6 +22,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
+import { HouseholdMeal } from "gen/people/v1/people_pb";
 import type {
   GetWeekResponse,
   PersonDay,
@@ -31,6 +32,7 @@ import type {
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
+import { formatList } from "helpers/format";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
 
@@ -86,8 +88,45 @@ const MealSheet: React.FC<MealSheetProps> = ({
   // What to call the meal in a sentence, e.g. "breakfast" or "this meal".
   const mealName =
     et === undefined || et.name === "" ? "this meal" : et.name.toLowerCase();
+  /*
+   * The others at the same shared meal, whose portions are marked eaten
+   * with this person's, so one tap covers the household's dinner.
+   */
+  const others =
+    et === undefined || et.meal === HouseholdMeal.UNSPECIFIED
+      ? []
+      : (week.days.find((other) => other.date === date)?.people ?? [])
+          .filter((person) => person.personId !== day.personId)
+          .flatMap((person) => {
+            const theirs = person.eatingTimes
+              .filter((other) => other.eatingTime?.meal === et.meal)
+              .flatMap((other) => other.portions);
+            return theirs.length === 0
+              ? []
+              : [{ name: person.personName, portions: theirs }];
+          });
+  const mealPortions = [
+    ...portions,
+    ...others.flatMap((other) => other.portions),
+  ];
   const eaten =
-    portions.length > 0 && portions.every((portion) => portion.eaten);
+    mealPortions.length > 0 && mealPortions.every((portion) => portion.eaten);
+  // The meal's cooks of the day that aren't marked cooked yet.
+  const toCook = [...week.earlierLeftovers, ...week.cooks].filter(
+    (other) =>
+      other.cook !== undefined &&
+      !other.cook.done &&
+      other.cook.date === date &&
+      mealPortions.some((portion) => portion.cookId === other.cook?.id)
+  );
+  let eatLabel = "Ate it";
+  if (eaten) {
+    eatLabel = "Not eaten yet";
+  } else if (toCook.length > 0) {
+    eatLabel = "Cooked and eaten";
+  } else if (others.length > 0) {
+    eatLabel = "Everyone ate it";
+  }
 
   const change = useMutation<void, ConnectError, () => Promise<void>>({
     mutationFn: async (run) => {
@@ -156,15 +195,57 @@ const MealSheet: React.FC<MealSheetProps> = ({
             disabled={change.isPending || portions.length === 0}
             onClick={() => {
               change.mutate(async () => {
-                await markEaten(client, portions, date, !eaten);
+                // Eating a meal means it was cooked, which takes its food.
+                if (!eaten) {
+                  await Promise.all(
+                    toCook.map(async (other) => {
+                      await client.updateCook({
+                        cook: { done: true, id: other.cook?.id ?? "" },
+                        updateMask: { paths: ["done"] },
+                      });
+                    })
+                  );
+                }
+                await markEaten(client, mealPortions, date, !eaten);
               });
             }}
           >
             <span className={`${iconClass} bg-ready-tint text-ready`}>
               <CheckIcon className="size-5 stroke-2" aria-hidden="true" />
             </span>
-            {eaten ? "Not eaten yet" : "Ate it"}
+            <span className="flex flex-col">
+              {eatLabel}
+              {others.length > 0 && (
+                <span className="text-sm text-muted">
+                  For{" "}
+                  {formatList([
+                    day.personName,
+                    ...others.map((other) => other.name),
+                  ])}
+                </span>
+              )}
+            </span>
           </button>
+          {/* One person eating it leaves the others' as they are. */}
+          {others.length > 0 &&
+            !eaten &&
+            !portions.every((portion) => portion.eaten) && (
+              <button
+                type="button"
+                className={actionClass}
+                disabled={change.isPending || portions.length === 0}
+                onClick={() => {
+                  change.mutate(async () => {
+                    await markEaten(client, portions, date, true);
+                  });
+                }}
+              >
+                <span className={`${iconClass} bg-ground-dark text-ink-soft`}>
+                  <CheckIcon className="size-5" aria-hidden="true" />
+                </span>
+                Only {day.personName} ate it
+              </button>
+            )}
           <button
             type="button"
             className={actionClass}
