@@ -72,6 +72,39 @@ where r.household_id = @household_id
   )
 order by lower(r.name), r.id;
 
+-- name: ListRecipeIDs :many
+-- The IDs of the recipes ListRecipes lists, in its order, to take from the
+-- recipes held in memory rather than read them all again.
+select r.id from recipes r
+where r.household_id = @household_id
+  and (
+    @query::text = ''
+    or strpos(lower(r.name), lower(@query)) > 0
+    or strpos(lower(r.description), lower(@query)) > 0
+  )
+  and r.tags @> @tags::text[]
+  and (not @favorites_only::boolean or r.favorite)
+  and (
+    cardinality(@food_ids::uuid[]) = 0
+    or r.id in (
+      select ri.recipe_id from recipe_ingredients ri
+      where ri.household_id = @household_id and ri.food_id = any(@food_ids::uuid[])
+    )
+  )
+order by lower(r.name), r.id;
+
+-- name: GetRecipesVersion :one
+-- What changes whenever the household's recipes, their ingredients and
+-- sides, or the foods they're made of do: every write of a recipe or food
+-- sets its update_time, ingredients and sides are only written with their
+-- recipe, and the counts change when one is deleted. It's a few bytes,
+-- where reading the recipes is megabytes.
+select
+  (select count(*) from recipes r where r.household_id = @household_id::uuid)::bigint as recipe_count,
+  (select coalesce(max(r.update_time), 'epoch') from recipes r where r.household_id = @household_id::uuid)::timestamptz as recipes_update_time,
+  (select count(*) from foods f where f.household_id = @household_id::uuid)::bigint as food_count,
+  (select coalesce(max(f.update_time), 'epoch') from foods f where f.household_id = @household_id::uuid)::timestamptz as foods_update_time;
+
 -- name: FindRecipesByName :many
 -- The recipe with the name, ignoring case, first, then up to the limit of
 -- the recipes with similar names, most similar first.

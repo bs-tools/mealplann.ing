@@ -52,10 +52,12 @@ import { Link, useSearchParams } from "react-router";
 
 /**
  * POLL_MS is how often an open list is read again, so that ticks on the
- * other phone in the store show within a few seconds. Lists are small, and
- * only polled while the page is visible and the shopping isn't complete.
+ * other phone in the store show within seconds. It's only polled while the
+ * page is visible and the shopping isn't complete, but each read is tens
+ * of kilobytes of the database's network transfer, a limit of its free
+ * tier, so not more often.
  */
-const POLL_MS = 4000;
+const POLL_MS = 10_000;
 
 /**
  * ShoppingPage shows the household's shopping list, by store and aisle, to

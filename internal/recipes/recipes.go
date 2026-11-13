@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/bs-tools/mealplann.ing/internal/foods"
@@ -390,11 +391,16 @@ type Repository struct {
 	log     *slog.Logger
 	db      *store.DB
 	querier *gen.Queries
+
+	// The households' recipes held in memory, by household ID: see
+	// ListRecipes.
+	mu        sync.Mutex
+	snapshots map[pgtype.UUID]*snapshot
 }
 
 // NewRepository returns a repository of the recipes in the database.
 func NewRepository(log *slog.Logger, db *store.DB) *Repository {
-	return &Repository{log: log, db: db, querier: gen.New(db)}
+	return &Repository{log: log, db: db, querier: gen.New(db), snapshots: map[pgtype.UUID]*snapshot{}}
 }
 
 // CreateRecipe creates a recipe in its household, and returns it with its
@@ -521,33 +527,127 @@ func (r *Repository) FindRecipesByName(ctx context.Context, householdID pgtype.U
 	return matches, nil
 }
 
+// recipesVersion is what changes whenever a household's recipes, or the
+// foods they're made of, do: see GetRecipesVersion.
+type recipesVersion struct {
+	recipes, foods                     int64
+	recipesUpdateTime, foodsUpdateTime time.Time
+}
+
+// snapshot is all of a household's recipes as read from the database, at
+// a version: what ListRecipes lists from. Its rows are never changed, as
+// requests share them; each makes its own Recipes from them.
+type snapshot struct {
+	version     recipesVersion
+	rows        []*gen.Recipe
+	tags        []string
+	ingredients map[pgtype.UUID][]*gen.ListRecipeIngredientsRow
+	sides       map[pgtype.UUID][]*gen.ListRecipeSidesRow
+}
+
 // ListRecipes lists a household's recipes that match the filter, with
 // their ingredients' foods, ordered by name. It also returns all the tags
 // of the household's recipes, in order.
+//
+// All the household's recipes, with every ingredient and its food's
+// nutrients, are megabytes, and suggestions, the plan's cost and the
+// recipe pickers list them often, which made most of the database's
+// network transfer, a cost of the free tier. So they're kept in memory,
+// there being one server, and read again only when their version, a few
+// bytes read in the same round trip as the matching recipes' IDs, shows
+// they changed.
 func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, filter ListFilter) ([]*Recipe, []string, error) {
-	var rows []*gen.Recipe
-	var allTags []string
+	var version *gen.GetRecipesVersionRow
+	var ids []pgtype.UUID
+	filtered := filter.Query != "" || len(filter.Tags) > 0 || filter.FavoritesOnly || len(filter.FoodIDs) > 0
+	var b store.Batch
+	b.Read(func(db store.Querier) error {
+		var err error
+		version, err = gen.New(db).GetRecipesVersion(ctx, householdID)
+		return err
+	})
+	if filtered {
+		b.Read(func(db store.Querier) error {
+			var err error
+			ids, err = gen.New(db).ListRecipeIDs(ctx, &gen.ListRecipeIDsParams{
+				HouseholdID:   householdID,
+				Query:         filter.Query,
+				Tags:          nonNil(filter.Tags),
+				FavoritesOnly: filter.FavoritesOnly,
+				FoodIds:       nonNil(filter.FoodIDs),
+			})
+			return err
+		})
+	}
+	if err := b.Send(ctx, r.db); err != nil {
+		return nil, nil, fmt.Errorf("failed to list recipes: %w", err)
+	}
+	snap, err := r.snapshot(ctx, householdID, recipesVersion{
+		recipes:           version.RecipeCount,
+		foods:             version.FoodCount,
+		recipesUpdateTime: version.RecipesUpdateTime.Time,
+		foodsUpdateTime:   version.FoodsUpdateTime.Time,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	// Every recipe is made, so components resolve without reading them.
+	all := make([]*Recipe, 0, len(snap.rows))
+	byID := make(map[pgtype.UUID]*Recipe, len(snap.rows))
+	for _, row := range snap.rows {
+		rc := recipeFromDB(row, snap.ingredients[row.ID], snap.sides[row.ID])
+		rc.Tags = slices.Clone(rc.Tags)
+		all = append(all, rc)
+		byID[rc.ID] = rc
+	}
+	if err := r.resolve(ctx, householdID, all); err != nil {
+		return nil, nil, fmt.Errorf("failed to read components: %w", err)
+	}
+	if !filtered {
+		return all, slices.Clone(snap.tags), nil
+	}
+	list := make([]*Recipe, 0, len(ids))
+	for _, id := range ids {
+		// A recipe created since the version was read isn't in it; it
+		// shows the next time.
+		if rc, ok := byID[id]; ok {
+			list = append(list, rc)
+		}
+	}
+	return list, slices.Clone(snap.tags), nil
+}
+
+// snapshot returns the household's recipes at the version: those in
+// memory if they're of it, or else read from the database.
+func (r *Repository) snapshot(ctx context.Context, householdID pgtype.UUID, version recipesVersion) (*snapshot, error) {
+	r.mu.Lock()
+	cached := r.snapshots[householdID]
+	r.mu.Unlock()
+	if cached != nil && cached.version == version {
+		return cached, nil
+	}
+	snap := &snapshot{
+		version:     version,
+		ingredients: map[pgtype.UUID][]*gen.ListRecipeIngredientsRow{},
+		sides:       map[pgtype.UUID][]*gen.ListRecipeSidesRow{},
+	}
 	var ingredients []*gen.ListRecipeIngredientsRow
 	var sides []*gen.ListRecipeSidesRow
 	var b store.Batch
 	b.Read(func(db store.Querier) error {
 		var err error
-		rows, err = gen.New(db).ListRecipes(ctx, &gen.ListRecipesParams{
-			HouseholdID:   householdID,
-			Query:         filter.Query,
-			Tags:          nonNil(filter.Tags),
-			FavoritesOnly: filter.FavoritesOnly,
-			FoodIds:       nonNil(filter.FoodIDs),
+		snap.rows, err = gen.New(db).ListRecipes(ctx, &gen.ListRecipesParams{
+			HouseholdID: householdID,
+			Tags:        []string{},
+			FoodIds:     []pgtype.UUID{},
 		})
 		return err
 	})
 	b.Read(func(db store.Querier) error {
 		var err error
-		allTags, err = gen.New(db).ListRecipeTags(ctx, householdID)
+		snap.tags, err = gen.New(db).ListRecipeTags(ctx, householdID)
 		return err
 	})
-	// The ingredients of all the household's recipes are read in the same
-	// round trip, rather than waiting for the matching recipes' IDs.
 	b.Read(func(db store.Querier) error {
 		var err error
 		ingredients, err = gen.New(db).ListRecipeIngredients(ctx, &gen.ListRecipeIngredientsParams{
@@ -558,26 +658,20 @@ func (r *Repository) ListRecipes(ctx context.Context, householdID pgtype.UUID, f
 	})
 	readSides(ctx, &b, householdID, nil, true, &sides)
 	if err := b.Send(ctx, r.db); err != nil {
-		return nil, nil, fmt.Errorf("failed to list recipes: %w", err)
+		return nil, fmt.Errorf("failed to list recipes: %w", err)
 	}
-	byRecipe := map[pgtype.UUID][]*gen.ListRecipeIngredientsRow{}
 	for _, in := range ingredients {
-		byRecipe[in.RecipeIngredient.RecipeID] = append(byRecipe[in.RecipeIngredient.RecipeID], in)
+		snap.ingredients[in.RecipeIngredient.RecipeID] = append(snap.ingredients[in.RecipeIngredient.RecipeID], in)
 	}
-	sidesByRecipe := map[pgtype.UUID][]*gen.ListRecipeSidesRow{}
 	for _, side := range sides {
-		sidesByRecipe[side.RecipeID] = append(sidesByRecipe[side.RecipeID], side)
+		snap.sides[side.RecipeID] = append(snap.sides[side.RecipeID], side)
 	}
-	recipes := make([]*Recipe, 0, len(rows))
-	for _, row := range rows {
-		recipes = append(recipes, recipeFromDB(row, byRecipe[row.ID], sidesByRecipe[row.ID]))
-	}
-	// The ingredients of all recipes are read, so components among the
-	// recipes listed resolve without reading them again.
-	if err := r.resolve(ctx, householdID, recipes); err != nil {
-		return nil, nil, fmt.Errorf("failed to read components: %w", err)
-	}
-	return recipes, allTags, nil
+	// A write between reading the version and the recipes makes them
+	// newer than it says, which only means reading them again next time.
+	r.mu.Lock()
+	r.snapshots[householdID] = snap
+	r.mu.Unlock()
+	return snap, nil
 }
 
 // ListRecipesByID lists the household's recipes with the given IDs, with

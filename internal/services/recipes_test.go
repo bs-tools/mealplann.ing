@@ -428,3 +428,76 @@ func TestRecipes(t *testing.T) {
 	_, err = e.anonRecipes.GetRecipe(ctx, recipesv1.GetRecipeRequest_builder{Id: soup.GetId()}.Build())
 	wantCode(t, err, connect.CodeUnauthenticated)
 }
+
+// TestListRecipesKeptInMemory checks that recipes listed from memory, as
+// ListRecipes keeps them, follow every change: a new recipe, a changed
+// one, a food's nutrients changing, and a deleted recipe, whether listed
+// all or by a search.
+func TestListRecipesKeptInMemory(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	oats := customFood(t, e, "Oats", 380, 13, 60, 1, 7, nil)
+	create := func(name string) *recipesv1.Recipe {
+		t.Helper()
+		created, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
+			Name: name, Servings: 1,
+			Ingredients: []*recipesv1.Ingredient{ingredient(oats.GetId(), 100, grams)},
+		}.Build()}.Build())
+		if err != nil {
+			t.Fatalf("CreateRecipe: %v", err)
+		}
+		return created.GetRecipe()
+	}
+	list := func(query string) map[string]*recipesv1.RecipeSummary {
+		t.Helper()
+		listed, err := e.recipes.ListRecipes(ctx, recipesv1.ListRecipesRequest_builder{Query: query}.Build())
+		if err != nil {
+			t.Fatalf("ListRecipes: %v", err)
+		}
+		byName := map[string]*recipesv1.RecipeSummary{}
+		for _, r := range listed.GetRecipes() {
+			byName[r.GetName()] = r
+		}
+		return byName
+	}
+	porridge := create("Porridge")
+	if got := list(""); len(got) != 1 || got["Porridge"].GetEnergyKcalPerServing() != 380 {
+		t.Fatalf("got %v, want porridge of 380 kcal", got)
+	}
+	// A new recipe shows, all or searched.
+	create("Overnight oats")
+	if got := list(""); len(got) != 2 {
+		t.Errorf("got %v, want both recipes", got)
+	}
+	if got := list("overnight"); len(got) != 1 || got["Overnight oats"] == nil {
+		t.Errorf("got %v searching, want the overnight oats", got)
+	}
+	// A food's nutrients change the recipes made of it.
+	if _, err := e.foods.UpdateFood(ctx, foodsv1.UpdateFoodRequest_builder{
+		Food:       foodsv1.Food_builder{Id: oats.GetId(), Nutrients: foodsv1.Nutrients_builder{EnergyKcal: new(400.0)}.Build()}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"nutrients.energy_kcal"}},
+	}.Build()); err != nil {
+		t.Fatalf("UpdateFood: %v", err)
+	}
+	if got := list("porridge"); got["Porridge"].GetEnergyKcalPerServing() != 400 {
+		t.Errorf("got %v, want porridge of 400 kcal", got)
+	}
+	// A changed recipe shows changed.
+	if _, err := e.recipes.UpdateRecipe(ctx, recipesv1.UpdateRecipeRequest_builder{
+		Recipe:     recipesv1.Recipe_builder{Id: porridge.GetId(), Name: "Hot porridge"}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"name"}},
+	}.Build()); err != nil {
+		t.Fatalf("UpdateRecipe: %v", err)
+	}
+	if got := list(""); got["Hot porridge"] == nil || got["Porridge"] != nil {
+		t.Errorf("got %v, want the porridge renamed", got)
+	}
+	// A deleted recipe goes.
+	if _, err := e.recipes.DeleteRecipe(ctx, recipesv1.DeleteRecipeRequest_builder{Id: porridge.GetId()}.Build()); err != nil {
+		t.Fatalf("DeleteRecipe: %v", err)
+	}
+	if got := list(""); len(got) != 1 || got["Overnight oats"] == nil {
+		t.Errorf("got %v, want only the overnight oats", got)
+	}
+}

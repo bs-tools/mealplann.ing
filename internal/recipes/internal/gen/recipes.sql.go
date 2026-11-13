@@ -324,6 +324,38 @@ func (q *Queries) GetRecipe(ctx context.Context, arg *GetRecipeParams) (*Recipe,
 	return &i, err
 }
 
+const getRecipesVersion = `-- name: GetRecipesVersion :one
+select
+  (select count(*) from recipes r where r.household_id = $1::uuid)::bigint as recipe_count,
+  (select coalesce(max(r.update_time), 'epoch') from recipes r where r.household_id = $1::uuid)::timestamptz as recipes_update_time,
+  (select count(*) from foods f where f.household_id = $1::uuid)::bigint as food_count,
+  (select coalesce(max(f.update_time), 'epoch') from foods f where f.household_id = $1::uuid)::timestamptz as foods_update_time
+`
+
+type GetRecipesVersionRow struct {
+	RecipeCount       int64
+	RecipesUpdateTime pgtype.Timestamptz
+	FoodCount         int64
+	FoodsUpdateTime   pgtype.Timestamptz
+}
+
+// What changes whenever the household's recipes, their ingredients and
+// sides, or the foods they're made of do: every write of a recipe or food
+// sets its update_time, ingredients and sides are only written with their
+// recipe, and the counts change when one is deleted. It's a few bytes,
+// where reading the recipes is megabytes.
+func (q *Queries) GetRecipesVersion(ctx context.Context, householdID pgtype.UUID) (*GetRecipesVersionRow, error) {
+	row := q.db.QueryRow(ctx, getRecipesVersion, householdID)
+	var i GetRecipesVersionRow
+	err := row.Scan(
+		&i.RecipeCount,
+		&i.RecipesUpdateTime,
+		&i.FoodCount,
+		&i.FoodsUpdateTime,
+	)
+	return &i, err
+}
+
 const listFoodNames = `-- name: ListFoodNames :many
 select id, name from foods where household_id = $1 order by lower(name)
 `
@@ -398,6 +430,62 @@ type ListHouseholdRecipeIDsParams struct {
 // Of the given recipe IDs, those of the household's recipes.
 func (q *Queries) ListHouseholdRecipeIDs(ctx context.Context, arg *ListHouseholdRecipeIDsParams) ([]pgtype.UUID, error) {
 	rows, err := q.db.Query(ctx, listHouseholdRecipeIDs, arg.HouseholdID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var id pgtype.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRecipeIDs = `-- name: ListRecipeIDs :many
+select r.id from recipes r
+where r.household_id = $1
+  and (
+    $2::text = ''
+    or strpos(lower(r.name), lower($2)) > 0
+    or strpos(lower(r.description), lower($2)) > 0
+  )
+  and r.tags @> $3::text[]
+  and (not $4::boolean or r.favorite)
+  and (
+    cardinality($5::uuid[]) = 0
+    or r.id in (
+      select ri.recipe_id from recipe_ingredients ri
+      where ri.household_id = $1 and ri.food_id = any($5::uuid[])
+    )
+  )
+order by lower(r.name), r.id
+`
+
+type ListRecipeIDsParams struct {
+	HouseholdID   pgtype.UUID
+	Query         string
+	Tags          []string
+	FavoritesOnly bool
+	FoodIds       []pgtype.UUID
+}
+
+// The IDs of the recipes ListRecipes lists, in its order, to take from the
+// recipes held in memory rather than read them all again.
+func (q *Queries) ListRecipeIDs(ctx context.Context, arg *ListRecipeIDsParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listRecipeIDs,
+		arg.HouseholdID,
+		arg.Query,
+		arg.Tags,
+		arg.FavoritesOnly,
+		arg.FoodIds,
+	)
 	if err != nil {
 		return nil, err
 	}
