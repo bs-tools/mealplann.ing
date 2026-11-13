@@ -587,17 +587,19 @@ const CookModePage: React.FC = () => {
           <ArrowLeftIcon className="size-5" aria-hidden="true" />
           Back
         </button>
-        <button
-          type="button"
-          className="flex grow items-center justify-center gap-1.5 rounded-2xl bg-white py-3.5 text-base font-bold text-ink-soft disabled:opacity-40"
-          disabled={page === lastPage}
-          onClick={() => {
-            go(1);
-          }}
-        >
-          {page === 0 ? "Start cooking" : "Next step"}
-          <ArrowRightIcon className="size-5" aria-hidden="true" />
-        </button>
+        {/* The last page has nowhere further to go. */}
+        {page < lastPage && (
+          <button
+            type="button"
+            className="flex grow items-center justify-center gap-1.5 rounded-2xl bg-white py-3.5 text-base font-bold text-ink-soft disabled:opacity-40"
+            onClick={() => {
+              go(1);
+            }}
+          >
+            {page === 0 ? "Start cooking" : "Next step"}
+            <ArrowRightIcon className="size-5" aria-hidden="true" />
+          </button>
+        )}
       </div>
     </div>
   );

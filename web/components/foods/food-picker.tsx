@@ -75,7 +75,9 @@ const FoodPicker: React.FC<FoodPickerProps> = ({ value, onChange, label }) => {
             setQuery(event.target.value);
           }}
         />
+        {/* The list stays shut under the dialog that adds a food. */}
         <ComboboxOptions
+          hidden={adding !== null}
           anchor="bottom start"
           className="z-[2100] max-h-72 w-[max(var(--input-width),16rem)] overflow-y-auto rounded-xl bg-white p-1 text-sm shadow-lg ring-1 ring-black/5 [--anchor-gap:4px] empty:invisible"
         >
