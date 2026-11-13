@@ -356,6 +356,37 @@ func (q *Queries) GetRecipesVersion(ctx context.Context, householdID pgtype.UUID
 	return &i, err
 }
 
+const listFoodIDsChangedSince = `-- name: ListFoodIDsChangedSince :many
+select id from foods where household_id = $1 and update_time > $2
+`
+
+type ListFoodIDsChangedSinceParams struct {
+	HouseholdID pgtype.UUID
+	Since       pgtype.Timestamptz
+}
+
+// The household's foods changed after a time, whose recipes' ingredients
+// and sides kept in memory are read again.
+func (q *Queries) ListFoodIDsChangedSince(ctx context.Context, arg *ListFoodIDsChangedSinceParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listFoodIDsChangedSince, arg.HouseholdID, arg.Since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var id pgtype.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listFoodNames = `-- name: ListFoodNames :many
 select id, name from foods where household_id = $1 order by lower(name)
 `
@@ -681,6 +712,37 @@ func (q *Queries) ListRecipeSides(ctx context.Context, arg *ListRecipeSidesParam
 			&i.SideRecipeName,
 			&i.Position,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRecipeStamps = `-- name: ListRecipeStamps :many
+select id, update_time from recipes where household_id = $1
+`
+
+type ListRecipeStampsRow struct {
+	ID         pgtype.UUID
+	UpdateTime pgtype.Timestamptz
+}
+
+// Each of the household's recipes' ID and when it last changed, to find
+// the recipes kept in memory that changed or were deleted.
+func (q *Queries) ListRecipeStamps(ctx context.Context, householdID pgtype.UUID) ([]*ListRecipeStampsRow, error) {
+	rows, err := q.db.Query(ctx, listRecipeStamps, householdID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListRecipeStampsRow
+	for rows.Next() {
+		var i ListRecipeStampsRow
+		if err := rows.Scan(&i.ID, &i.UpdateTime); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

@@ -2,14 +2,21 @@ package services_test
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"math"
 	"slices"
 	"strings"
 	"testing"
 
 	"connectrpc.com/connect/v2"
+	"github.com/bs-tools/mealplann.ing/internal/blob"
+	"github.com/bs-tools/mealplann.ing/internal/foods"
 	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
 	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
+	"github.com/bs-tools/mealplann.ing/internal/nutrition"
+	"github.com/bs-tools/mealplann.ing/internal/recipes"
+	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -432,7 +439,9 @@ func TestRecipes(t *testing.T) {
 // TestListRecipesKeptInMemory checks that recipes listed from memory, as
 // ListRecipes keeps them, follow every change: a new recipe, a changed
 // one, a food's nutrients changing, and a deleted recipe, whether listed
-// all or by a search.
+// all or by a search; and that a server started again reads them, and
+// their foods, from the cache as from the database, with only what
+// changed read again.
 func TestListRecipesKeptInMemory(t *testing.T) {
 	t.Parallel()
 	e := newEnv(t)
@@ -461,7 +470,52 @@ func TestListRecipesKeptInMemory(t *testing.T) {
 		}
 		return byName
 	}
+	var householdID pgtype.UUID
+	if err := e.db.QueryRow(ctx, "select household_id from users where id = $1", e.userID).Scan(&householdID); err != nil {
+		t.Fatal(err)
+	}
+	// restarted checks that a server started again, with the recipes and
+	// foods kept in the cache, reads them as one reading them all from
+	// the database does.
+	restarted := func(when string) {
+		t.Helper()
+		summary := func(cache blob.Store) string {
+			t.Helper()
+			recipeRepo := recipes.NewRepository(slog.New(slog.DiscardHandler), e.db)
+			foodRepo := foods.NewRepository(slog.New(slog.DiscardHandler), e.db)
+			if cache != nil {
+				recipeRepo.SetCache(cache)
+				foodRepo.SetCache(cache)
+			}
+			list, tags, err := recipeRepo.ListRecipes(ctx, householdID, recipes.ListFilter{})
+			if err != nil {
+				t.Fatalf("ListRecipes: %v", err)
+			}
+			var b strings.Builder
+			var foodIDs []pgtype.UUID
+			fmt.Fprintln(&b, tags)
+			for _, r := range list {
+				fmt.Fprintln(&b, r.Name, r.UpdateTime.UnixMicro())
+				for _, in := range r.Ingredients {
+					fmt.Fprintf(&b, "  %s %v %s\n", in.FoodName, in.Amount, nutrientsText(in.Food.Per100Grams))
+					foodIDs = append(foodIDs, in.FoodID)
+				}
+			}
+			foodList, err := foodRepo.ListFoodsByID(ctx, householdID, foodIDs)
+			if err != nil {
+				t.Fatalf("ListFoodsByID: %v", err)
+			}
+			for _, f := range foodList {
+				fmt.Fprintf(&b, "%s %s\n", f.Name, nutrientsText(f.Nutrition().Per100Grams))
+			}
+			return b.String()
+		}
+		if got, want := summary(e.cache), summary(nil); got != want {
+			t.Errorf("%s, restarted with the cache got:\n%s\nwant:\n%s", when, got, want)
+		}
+	}
 	porridge := create("Porridge")
+	restarted("with a recipe")
 	if got := list(""); len(got) != 1 || got["Porridge"].GetEnergyKcalPerServing() != 380 {
 		t.Fatalf("got %v, want porridge of 380 kcal", got)
 	}
@@ -470,6 +524,7 @@ func TestListRecipesKeptInMemory(t *testing.T) {
 	if got := list(""); len(got) != 2 {
 		t.Errorf("got %v, want both recipes", got)
 	}
+	restarted("with a new recipe")
 	if got := list("overnight"); len(got) != 1 || got["Overnight oats"] == nil {
 		t.Errorf("got %v searching, want the overnight oats", got)
 	}
@@ -480,6 +535,8 @@ func TestListRecipesKeptInMemory(t *testing.T) {
 	}.Build()); err != nil {
 		t.Fatalf("UpdateFood: %v", err)
 	}
+	// The cache is behind, so the server started again reads what changed.
+	restarted("with a food changed")
 	if got := list("porridge"); got["Porridge"].GetEnergyKcalPerServing() != 400 {
 		t.Errorf("got %v, want porridge of 400 kcal", got)
 	}
@@ -493,11 +550,26 @@ func TestListRecipesKeptInMemory(t *testing.T) {
 	if got := list(""); got["Hot porridge"] == nil || got["Porridge"] != nil {
 		t.Errorf("got %v, want the porridge renamed", got)
 	}
+	restarted("with a recipe changed")
 	// A deleted recipe goes.
 	if _, err := e.recipes.DeleteRecipe(ctx, recipesv1.DeleteRecipeRequest_builder{Id: porridge.GetId()}.Build()); err != nil {
 		t.Fatalf("DeleteRecipe: %v", err)
 	}
+	restarted("with a recipe deleted")
 	if got := list(""); len(got) != 1 || got["Overnight oats"] == nil {
 		t.Errorf("got %v, want only the overnight oats", got)
 	}
+}
+
+// nutrientsText writes nutrients' values, rather than their pointers.
+func nutrientsText(n nutrition.Nutrients) string {
+	var b strings.Builder
+	for _, v := range n {
+		if v == nil {
+			b.WriteString("- ")
+		} else {
+			fmt.Fprintf(&b, "%g ", *v)
+		}
+	}
+	return b.String()
 }

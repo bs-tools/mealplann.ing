@@ -421,6 +421,29 @@ func (q *Queries) GetFoodUsages(ctx context.Context, arg *GetFoodUsagesParams) (
 	return &i, err
 }
 
+const getFoodsVersion = `-- name: GetFoodsVersion :one
+select
+  count(*)::bigint as food_count,
+  coalesce(max(update_time), 'epoch')::timestamptz as update_time
+from foods
+where household_id = $1
+`
+
+type GetFoodsVersionRow struct {
+	FoodCount  int64
+	UpdateTime pgtype.Timestamptz
+}
+
+// What changes whenever the household's foods do: every write of a food
+// sets its update_time, and the count changes when one is deleted. It's a
+// few bytes, where reading the foods is hundreds of kilobytes.
+func (q *Queries) GetFoodsVersion(ctx context.Context, householdID pgtype.UUID) (*GetFoodsVersionRow, error) {
+	row := q.db.QueryRow(ctx, getFoodsVersion, householdID)
+	var i GetFoodsVersionRow
+	err := row.Scan(&i.FoodCount, &i.UpdateTime)
+	return &i, err
+}
+
 const listAlwaysInStockFoods = `-- name: ListAlwaysInStockFoods :many
 select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date, measure from foods
 where household_id = $1 and always_in_stock
@@ -484,6 +507,32 @@ func (q *Queries) ListAlwaysInStockFoods(ctx context.Context, householdID pgtype
 			return nil, err
 		}
 		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFoodIDs = `-- name: ListFoodIDs :many
+select id from foods where household_id = $1
+`
+
+// The household's foods' IDs, to drop deleted ones from those kept in
+// memory.
+func (q *Queries) ListFoodIDs(ctx context.Context, householdID pgtype.UUID) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listFoodIDs, householdID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var id pgtype.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -621,19 +670,91 @@ func (q *Queries) ListFoods(ctx context.Context, arg *ListFoodsParams) ([]*Food,
 	return items, nil
 }
 
-const listFoodsByID = `-- name: ListFoodsByID :many
+const listFoodsChangedSince = `-- name: ListFoodsChangedSince :many
 select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date, measure from foods
-where household_id = $1 and id = any($2::uuid[])
-order by lower(name)
+where household_id = $1 and update_time > $2
 `
 
-type ListFoodsByIDParams struct {
+type ListFoodsChangedSinceParams struct {
 	HouseholdID pgtype.UUID
-	Ids         []pgtype.UUID
+	Since       pgtype.Timestamptz
 }
 
-func (q *Queries) ListFoodsByID(ctx context.Context, arg *ListFoodsByIDParams) ([]*Food, error) {
-	rows, err := q.db.Query(ctx, listFoodsByID, arg.HouseholdID, arg.Ids)
+// The household's foods changed after a time, to update those kept in
+// memory.
+func (q *Queries) ListFoodsChangedSince(ctx context.Context, arg *ListFoodsChangedSinceParams) ([]*Food, error) {
+	rows, err := q.db.Query(ctx, listFoodsChangedSince, arg.HouseholdID, arg.Since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Food
+	for rows.Next() {
+		var i Food
+		if err := rows.Scan(
+			&i.ID,
+			&i.HouseholdID,
+			&i.Name,
+			&i.FDCID,
+			&i.EnergyKcalPer100Grams,
+			&i.ProteinGramsPer100Grams,
+			&i.CarbohydrateGramsPer100Grams,
+			&i.SugarsGramsPer100Grams,
+			&i.FatGramsPer100Grams,
+			&i.FiberGramsPer100Grams,
+			&i.VitaminB12MicrogramsPer100Grams,
+			&i.IronMilligramsPer100Grams,
+			&i.CalciumMilligramsPer100Grams,
+			&i.VitaminDMicrogramsPer100Grams,
+			&i.IodineMicrogramsPer100Grams,
+			&i.ZincMilligramsPer100Grams,
+			&i.Omega3ALAGramsPer100Grams,
+			&i.FolateMicrogramsPer100Grams,
+			&i.VitaminAMicrogramsPer100Grams,
+			&i.VitaminEMilligramsPer100Grams,
+			&i.VitaminKMicrogramsPer100Grams,
+			&i.CopperMilligramsPer100Grams,
+			&i.MagnesiumMilligramsPer100Grams,
+			&i.SodiumMilligramsPer100Grams,
+			&i.PotassiumMilligramsPer100Grams,
+			&i.GramsPerPiece,
+			&i.GramsPerMilliliter,
+			&i.FastCarb,
+			&i.StoreSection,
+			&i.PackageGrams,
+			&i.ShelfLifeDays,
+			&i.OpenedShelfLifeDays,
+			&i.Notes,
+			&i.CreateTime,
+			&i.UpdateTime,
+			&i.PreferredStoreID,
+			&i.AlwaysInStock,
+			&i.ReferenceSource,
+			&i.ReferenceID,
+			&i.FreezerShelfLifeDays,
+			&i.PriceCentsPerKilogram,
+			&i.PriceDate,
+			&i.Measure,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listHouseholdFoods = `-- name: ListHouseholdFoods :many
+select id, household_id, name, fdc_id, energy_kcal_per_100_grams, protein_grams_per_100_grams, carbohydrate_grams_per_100_grams, sugars_grams_per_100_grams, fat_grams_per_100_grams, fiber_grams_per_100_grams, vitamin_b12_micrograms_per_100_grams, iron_milligrams_per_100_grams, calcium_milligrams_per_100_grams, vitamin_d_micrograms_per_100_grams, iodine_micrograms_per_100_grams, zinc_milligrams_per_100_grams, omega3_ala_grams_per_100_grams, folate_micrograms_per_100_grams, vitamin_a_micrograms_per_100_grams, vitamin_e_milligrams_per_100_grams, vitamin_k_micrograms_per_100_grams, copper_milligrams_per_100_grams, magnesium_milligrams_per_100_grams, sodium_milligrams_per_100_grams, potassium_milligrams_per_100_grams, grams_per_piece, grams_per_milliliter, fast_carb, store_section, package_grams, shelf_life_days, opened_shelf_life_days, notes, create_time, update_time, preferred_store_id, always_in_stock, reference_source, reference_id, freezer_shelf_life_days, price_cents_per_kilogram, price_date, measure from foods
+where household_id = $1
+order by lower(name), id
+`
+
+// All the household's foods, to keep in memory: see GetFoodsVersion.
+func (q *Queries) ListHouseholdFoods(ctx context.Context, householdID pgtype.UUID) ([]*Food, error) {
+	rows, err := q.db.Query(ctx, listHouseholdFoods, householdID)
 	if err != nil {
 		return nil, err
 	}

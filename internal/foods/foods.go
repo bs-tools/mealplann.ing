@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/bs-tools/mealplann.ing/internal/blob"
 	"github.com/bs-tools/mealplann.ing/internal/foods/internal/gen"
 	"github.com/bs-tools/mealplann.ing/internal/nutrition"
 	"github.com/bs-tools/mealplann.ing/internal/store"
@@ -161,11 +163,18 @@ type Repository struct {
 	log     *slog.Logger
 	db      *store.DB
 	querier *gen.Queries
+
+	// The households' foods held in memory, by household ID, and the
+	// store keeping them between the server's starts, if any: see
+	// ListFoodsByID and SetCache.
+	mu        sync.Mutex
+	snapshots map[pgtype.UUID]*foodSnapshot
+	cache     blob.Store
 }
 
 // NewRepository returns a repository of the foods in the database.
 func NewRepository(log *slog.Logger, db *store.DB) *Repository {
-	return &Repository{log: log, db: db, querier: gen.New(db)}
+	return &Repository{log: log, db: db, querier: gen.New(db), snapshots: map[pgtype.UUID]*foodSnapshot{}}
 }
 
 // CreateFood creates a food in its household. It returns ErrNameTaken if
@@ -427,19 +436,36 @@ func (r *Repository) DeleteFood(ctx context.Context, householdID, id pgtype.UUID
 	return nil
 }
 
-// ListFoodsByID lists the household's foods with the given IDs, ordered by
-// name. IDs of foods the household doesn't have are left out.
+// ListFoodsByID returns the household's foods with the IDs, in order of
+// name, leaving out those it doesn't have.
+//
+// The plan, its suggestions and its cost read the foods of everything
+// planned or suggested, hundreds of kilobytes each time, which is a cost of
+// the database's network transfer on the free tier. So the household's
+// foods are kept in memory, there being one server, and in the cache
+// between its starts, and only those changed are read again when their
+// version, a few bytes, shows a change: see snapshot.
 func (r *Repository) ListFoodsByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*Food, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
-	rows, err := r.querier.ListFoodsByID(ctx, &gen.ListFoodsByIDParams{HouseholdID: householdID, Ids: ids})
+	v, err := r.querier.GetFoodsVersion(ctx, householdID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list foods: %w", err)
 	}
-	list := make([]*Food, 0, len(rows))
-	for _, row := range rows {
-		list = append(list, foodFromDB(row))
+	snap, err := r.snapshot(ctx, householdID, foodsVersion{Count: v.FoodCount, UpdateMicros: v.UpdateTime.Time.UnixMicro()})
+	if err != nil {
+		return nil, err
+	}
+	wanted := make(map[pgtype.UUID]bool, len(ids))
+	for _, id := range ids {
+		wanted[id] = true
+	}
+	list := make([]*Food, 0, len(ids))
+	for _, row := range snap.Rows {
+		if wanted[row.ID] {
+			list = append(list, foodFromDB(row))
+		}
 	}
 	return list, nil
 }

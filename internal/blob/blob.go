@@ -3,9 +3,16 @@
 package blob
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"reflect"
 	"regexp"
 )
 
@@ -34,4 +41,76 @@ func ValidateKey(key string) error {
 		return fmt.Errorf("invalid object key %q", key)
 	}
 	return nil
+}
+
+// PutJSON stores a value as gzipped JSON, as kept caches are: JSON
+// compresses to a fraction of its size, and Cloud Storage bills by the
+// byte stored.
+func PutJSON(ctx context.Context, s Store, key string, v any) error {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	if err := json.NewEncoder(zw).Encode(v); err != nil {
+		return fmt.Errorf("failed to encode %s: %w", key, err)
+	}
+	if err := zw.Close(); err != nil {
+		return fmt.Errorf("failed to compress %s: %w", key, err)
+	}
+	return s.Put(ctx, key, buf.Bytes(), "application/gzip")
+}
+
+// GetJSON reads a value stored by PutJSON into v. It returns false if
+// there's none.
+func GetJSON(ctx context.Context, s Store, key string, v any) (bool, error) {
+	data, err := s.Get(ctx, key)
+	if errors.Is(err, ErrNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	zr, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return false, fmt.Errorf("failed to decompress %s: %w", key, err)
+	}
+	if err := json.NewDecoder(zr).Decode(v); err != nil {
+		return false, fmt.Errorf("failed to decode %s: %w", key, err)
+	}
+	return true, nil
+}
+
+// Fingerprint returns a short hash of the fields of the types of the
+// values, to name what's stored of them: a migration adding a column
+// changes the rows' types, and so the name, so rows stored before it,
+// without the column, aren't read as if they had it empty.
+func Fingerprint(values ...any) string {
+	h := sha256.New()
+	for _, v := range values {
+		t := reflect.TypeOf(v)
+		for t.Kind() == reflect.Pointer {
+			t = t.Elem()
+		}
+		writeType(h, t)
+	}
+	return hex.EncodeToString(h.Sum(nil))[:12]
+}
+
+// writeType writes a type's name, and its fields' names and types, to w.
+func writeType(w io.Writer, t reflect.Type) {
+	fmt.Fprintf(w, "%s{", t.String())
+	if t.Kind() == reflect.Struct {
+		for i := range t.NumField() {
+			f := t.Field(i)
+			fmt.Fprintf(w, "%s:", f.Name)
+			ft := f.Type
+			for ft.Kind() == reflect.Pointer || ft.Kind() == reflect.Slice {
+				ft = ft.Elem()
+			}
+			if ft.Kind() == reflect.Struct && ft.PkgPath() == t.PkgPath() {
+				writeType(w, ft)
+			} else {
+				fmt.Fprintf(w, "%s;", f.Type.String())
+			}
+		}
+	}
+	fmt.Fprint(w, "}")
 }
