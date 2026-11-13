@@ -12,6 +12,9 @@ import React from "react";
 import { Link } from "react-router";
 
 // SectionGroup is the items of a store section.
+// MAX_RECIPES is how many of the recipes an item is for are named.
+const MAX_RECIPES = 2;
+
 interface SectionGroup {
   section: StoreSection;
   items: ShoppingItem[];
@@ -141,11 +144,14 @@ const ItemRow: React.FC<ItemRowProps> = ({
           )}
         </span>
       </button>
-      {/* The recipes are links, so they sit below the row's button, not in it. */}
+      {/*
+       * The recipes are links, so they sit below the row's button, not in
+       * it. A food most meals use, like garlic, names two of them.
+       */}
       {!checked && item.recipes.length > 0 && (
         <p className="-mt-2 pb-2.5 pl-11 text-xs text-muted">
           for{" "}
-          {item.recipes.map((recipe, index) => (
+          {item.recipes.slice(0, MAX_RECIPES).map((recipe, index) => (
             <React.Fragment key={recipe.recipeId}>
               {index > 0 && ", "}
               <Link
@@ -156,6 +162,17 @@ const ItemRow: React.FC<ItemRowProps> = ({
               </Link>
             </React.Fragment>
           ))}
+          {item.recipes.length > MAX_RECIPES && (
+            <span
+              title={item.recipes
+                .slice(MAX_RECIPES)
+                .map((recipe) => recipe.recipeName)
+                .join(", ")}
+            >
+              {" "}
+              and {item.recipes.length - MAX_RECIPES} more
+            </span>
+          )}
         </p>
       )}
     </div>

@@ -151,12 +151,26 @@ const RecipesPage: React.FC = () => {
       );
     }
   } else {
+    /*
+     * Sides are browsed on their own: without a search or a tag they'd
+     * crowd the meals out of the list.
+     */
+    const shown =
+      search === "" && tags.length === 0
+        ? data.recipes.filter((recipe) => !recipe.tags.includes(SIDE_TAG))
+        : data.recipes;
     content = (
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-4">
-        {data.recipes.map((recipe) => (
-          <RecipeCard key={recipe.id} recipe={recipe} />
-        ))}
-      </ul>
+      <div className="flex flex-col gap-2">
+        <p className="text-sm text-muted">
+          {shown.length} {shown.length === 1 ? "recipe" : "recipes"}
+          {shown.length < data.recipes.length && ", without the sides"}
+        </p>
+        <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-3 sm:grid sm:grid-cols-2 sm:gap-x-6 sm:divide-y-0 sm:px-4 lg:grid-cols-3">
+          {shown.map((recipe) => (
+            <RecipeCard key={recipe.id} recipe={recipe} />
+          ))}
+        </ul>
+      </div>
     );
   }
 
@@ -193,7 +207,7 @@ const RecipesPage: React.FC = () => {
         }}
       />
       <div className="flex flex-col gap-2 sm:max-w-xl">
-        <label className="flex flex-wrap items-center gap-1.5 rounded-xl border-2 border-pine bg-white px-3 py-2">
+        <label className="flex flex-wrap items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 focus-within:border-pine focus-within:ring-1 focus-within:ring-pine">
           <MagnifyingGlassIcon
             className="size-5 shrink-0 text-pine"
             aria-hidden="true"
@@ -264,6 +278,28 @@ const RecipesPage: React.FC = () => {
             )}
             Favorites
           </button>
+          {/* The meals recipes are tagged for, one at a time. */}
+          {MEAL_TAGS.filter((tag) => allTags.includes(tag)).map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              aria-pressed={tags.includes(tag)}
+              className={`${choiceClass(tags.includes(tag))} capitalize`}
+              onClick={() => {
+                setFilters(
+                  query.trim(),
+                  tags.includes(tag)
+                    ? tags.filter((other) => other !== tag)
+                    : [
+                        ...tags.filter((other) => !MEAL_TAGS.includes(other)),
+                        tag,
+                      ]
+                );
+              }}
+            >
+              {tag}
+            </button>
+          ))}
           {categories.map((category) => (
             <button
               key={category}
@@ -283,13 +319,20 @@ const RecipesPage: React.FC = () => {
   );
 };
 
+// SIDE_TAG marks the recipes served with a meal, like rice or a salad.
+const SIDE_TAG = "side";
+
+// MEAL_TAGS are the tags that say what meal a recipe is, to browse by.
+const MEAL_TAGS = ["breakfast", "lunch", "dinner", "snack", SIDE_TAG, "drink"];
+
 interface RecipeCardProps {
   recipe: RecipeSummary;
 }
 
 /**
- * RecipeCard shows a recipe in the grid: a tile in its color, its name,
- * and its balance in a word with its time.
+ * RecipeCard shows a recipe as a row of the list: a small tile in its
+ * color, its name, and what a serving is with how long it takes, so
+ * hundreds of recipes can be scanned and compared.
  */
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
   const totalSeconds = recipe.prepSeconds + recipe.cookSeconds;
@@ -300,46 +343,46 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
     sugarsGrams: recipe.sugarsGramsPerServing,
   });
   const facts: string[] = [];
-  if (balance !== undefined) {
-    facts.push(balance.word);
+  if (recipe.energyKcalPerServing !== undefined) {
+    facts.push(`${Math.round(recipe.energyKcalPerServing)} kcal`);
+  }
+  if (recipe.proteinGramsPerServing !== undefined) {
+    facts.push(`${Math.round(recipe.proteinGramsPerServing)} g protein`);
   }
   if (totalSeconds > 0) {
     facts.push(formatHoursMinutes(totalSeconds));
   }
   return (
-    <li>
+    <li className="sm:border-b sm:border-line">
       <Link
         to={`/recipes/${recipe.id}`}
-        className="group flex h-full flex-col gap-2"
+        className="group flex items-center gap-3 py-2.5"
       >
         <span
-          className={`relative block aspect-[4/3] rounded-2xl ${tintOf(recipe.id)} group-hover:opacity-90`}
+          className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${tintOf(recipe.id)} group-hover:opacity-90`}
+          aria-hidden="true"
         >
           {recipe.favorite && (
-            <FilledStarIcon
-              className="absolute top-2.5 right-2.5 size-5 text-white drop-shadow"
-              aria-label="Favorite"
-            />
-          )}
-          {recipe.draft && (
-            <span className="absolute bottom-2.5 left-2.5">
-              <Badge>Draft</Badge>
-            </span>
+            <FilledStarIcon className="size-5 text-white drop-shadow" />
           )}
         </span>
-        <span className="flex flex-col gap-0.5">
-          <h2 className="text-base leading-snug font-bold text-ink-soft">
-            {recipe.name}
+        <span className="flex min-w-0 grow flex-col gap-0.5">
+          <h2 className="flex items-center gap-2 text-base leading-snug font-bold text-ink-soft">
+            <span className="truncate">{recipe.name}</span>
+            {recipe.favorite && <span className="sr-only">Favorite</span>}
+            {recipe.draft && <Badge>Draft</Badge>}
           </h2>
           <span className="flex items-center gap-1.5 text-sm text-muted">
             {balance !== undefined && (
               <span
                 className={`size-2 shrink-0 rounded-full ${balance.good ? "bg-pine" : "bg-warn"}`}
-                title={balance.good ? "Balanced" : "Not balanced"}
+                title={balance.word}
                 aria-hidden="true"
               />
             )}
-            {facts.length > 0 ? facts.join(" · ") : "No nutrition yet"}
+            <span className="truncate">
+              {facts.length > 0 ? facts.join(" · ") : "No nutrition yet"}
+            </span>
             {recipe.hasIssues && (
               <HintIcon
                 icon={InformationCircleIcon}

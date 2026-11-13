@@ -1,4 +1,3 @@
-import { WarningList } from "@components/plan/plan-bits";
 import { FoodChoice, LeftoversChoice } from "@components/plan/plan-meal-other";
 import SuggestionList from "@components/plan/suggestion-list";
 import type { PickedRecipe } from "@components/recipes/recipe-picker";
@@ -25,18 +24,13 @@ import { PantryService } from "gen/pantry/v1/pantry_pb";
 import type { Person } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
 import { planMeal } from "gen/plans/v1/plans-PlanService_connectquery";
-import type {
-  PlanMealResponse,
-  PlannedCook,
-  Staple,
-} from "gen/plans/v1/plans_pb";
+import type { PlannedCook, Staple } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { formatDay, formatList } from "helpers/format";
-import { HOUSEHOLD_MEALS, formatServings, optionValue } from "helpers/labels";
-import { formatAmount } from "helpers/nutrients";
+import { HOUSEHOLD_MEALS, optionValue } from "helpers/labels";
 import { parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import { staplesAt } from "helpers/staples";
@@ -47,7 +41,7 @@ import { Link } from "react-router";
  * Tab is what the meal is: a recipe from the suggestions or from all of
  * them, the rest of an earlier cook, or a food.
  */
-type Tab = "suggestions" | "recipe" | "leftovers" | "food";
+type Tab = "suggestions" | "recipe" | "food";
 
 interface PlanMealDialogProps {
   // The dates to choose from, those of the week shown.
@@ -123,7 +117,6 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   const [servings, setServings] = useState("");
   const [notes, setNotes] = useState("");
   const [invalid, setInvalid] = useState("");
-  const [result, setResult] = useState<PlanMealResponse | null>(null);
   const transport = useTransport();
   /*
    * EatOut marks the meal eaten out for whoever's chosen, instead of
@@ -159,39 +152,23 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
     },
   });
   const plan = useMutation(planMeal, {
-    onSuccess: async (response) => {
+    onSuccess: async () => {
       // A swap deletes the meal's old cook, with its portions.
       if (replacing !== undefined) {
         await createClient(PlanService, transport).deleteCook({
           id: replacing.cookId,
         });
       }
-      setResult(response);
       await invalidateServices(queryClient, [
         PlanService,
         PantryService,
         ShoppingService,
         SuggestionService,
       ]);
+      // The plan shows how it's shared, so there's nothing to confirm.
+      onClose();
     },
   });
-
-  if (result !== null) {
-    return (
-      <Modal
-        open
-        onClose={onClose}
-        title={replacing === undefined ? "Meal planned" : "Meal swapped"}
-      >
-        <PlanMealResult
-          result={result}
-          people={people}
-          recipes={recipes}
-          onClose={onClose}
-        />
-      </Modal>
-    );
-  }
 
   const chosen = eaters.filter(
     (person) => eatsByDefault(person.id) !== flipped.includes(person.id)
@@ -359,24 +336,22 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
           options={[
             { label: "Suggested", value: "suggestions" },
             { label: "Recipe", value: "recipe" },
-            { label: "Leftovers", value: "leftovers" },
             { label: "Food", value: "food" },
           ]}
           onChange={setTab}
         />
-        {tab === "leftovers" && (
-          <LeftoversChoice
-            eaters={mealEaters}
-            date={date}
-            cooks={cooks}
-            onPlanned={planned}
-          />
-        )}
         {tab === "food" && (
           <FoodChoice eaters={mealEaters} date={date} onPlanned={planned} />
         )}
         {tab === "suggestions" && (
           <>
+            {/* What's cooked already comes before cooking anew. */}
+            <LeftoversChoice
+              eaters={mealEaters}
+              date={date}
+              cooks={cooks}
+              onPlanned={planned}
+            />
             {eaters.length > 0 && chosen.length > 0 && (
               <SuggestionList
                 request={{
@@ -456,72 +431,6 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
         )}
       </div>
     </Modal>
-  );
-};
-
-interface PlanMealResultProps {
-  result: PlanMealResponse;
-  people: Person[];
-  recipes: RecipeSummary[];
-  onClose: () => void;
-}
-
-// PlanMealResult shows how a planned meal was split, and its warnings.
-const PlanMealResult: React.FC<PlanMealResultProps> = ({
-  result,
-  people,
-  recipes,
-  onClose,
-}) => {
-  const { cook } = result;
-  const gramsPerServing =
-    recipes.find((recipe) => recipe.id === cook?.recipeId)?.gramsPerServing ??
-    0;
-  return (
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-ink-soft">
-        {cook?.recipeName} on {formatDay(cook?.date ?? "")}, cooking{" "}
-        {formatServings(cook?.servings ?? 0)}:
-      </p>
-      <ul className="divide-y divide-line rounded-xl border border-line text-sm">
-        {result.portions.map((portion) => {
-          const person = people.find((other) => other.id === portion.personId);
-          const et = person?.eatingTimes.find(
-            (other) => other.id === portion.eatingTimeId
-          );
-          const servings =
-            portion.what.case === "cook" ? portion.what.value.servings : 0;
-          return (
-            <li
-              key={portion.id}
-              className="flex flex-wrap justify-between gap-2 px-3 py-2"
-            >
-              <span>
-                <span className="font-medium">{person?.name}</span> · {et?.name}
-                {portion.date !== cook?.date && ` · ${formatDay(portion.date)}`}
-              </span>
-              <span className="text-muted tabular-nums">
-                {formatServings(servings)}
-                {gramsPerServing > 0 &&
-                  ` · ${formatAmount(servings * gramsPerServing)} g`}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-      {result.unassignedServings > 0 && (
-        <p className="text-sm text-muted">
-          {formatServings(result.unassignedServings)} left over, to plan as
-          leftovers.
-        </p>
-      )}
-      <WarningList warnings={result.warnings} />
-      <div className="flex justify-end">
-        <button type="button" className={primaryButton} onClick={onClose}>
-          Done
-        </button>
-      </div>
-    </div>
   );
 };
 

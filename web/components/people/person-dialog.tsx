@@ -235,6 +235,12 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
   const [warnFastCarbs, setWarnFastCarbs] = useState(
     person?.rules?.warnFastCarbs ?? false
   );
+  // The rules start open only for someone who has some.
+  const [rulesOpen] = useState(
+    () =>
+      Object.values(rules).some((value) => value !== "") ||
+      (person?.rules?.warnFastCarbs ?? false)
+  );
   const initialTargets = (person?.dailyTargets ?? []).map((target) => ({
     key: newKey(),
     max: optionalNumberInput(target.maxPerDay),
@@ -578,10 +584,15 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
           </p>
         </div>
 
-        <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-ink-soft">
+        {/* Few people have rules, so they're folded away until set. */}
+        <details className="group [&>summary]:mb-2" open={rulesOpen}>
+          <summary className="cursor-pointer text-sm font-semibold text-ink-soft">
             Rules for every eating time
-          </h3>
+            <span className="font-normal text-muted group-open:hidden">
+              {" "}
+              · none, tap to add
+            </span>
+          </summary>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {RULES.map((rule) => (
               <TextField
@@ -608,7 +619,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
               </span>
             </div>
           </div>
-        </section>
+        </details>
 
         <section className="flex flex-col gap-2">
           <h3 className="text-sm font-semibold text-ink-soft">Daily targets</h3>
