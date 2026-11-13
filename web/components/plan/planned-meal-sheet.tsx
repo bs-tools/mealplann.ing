@@ -1,8 +1,10 @@
 import CookActions from "@components/plan/cook-actions";
+import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import type { MealRow, RowSlot } from "@components/plan/plan-rows";
 import PortionDialog from "@components/plan/portion-dialog";
 import { Plate, PortionList, SidesCard } from "@components/today/plate";
 import WarningFix from "@components/today/warning-fix";
+import { ConfirmDialog } from "@components/ui/confirm-button";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
 import Segmented from "@components/ui/segmented";
@@ -12,12 +14,19 @@ import {
   ghostDangerButton,
   sectionLabelClass,
 } from "@components/ui/styles";
-import { useMutation, useQuery } from "@connectrpc/connect-query";
-import { useQueryClient } from "@tanstack/react-query";
+import type { ConnectError } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
+import { useMutation, useQuery, useTransport } from "@connectrpc/connect-query";
+import {
+  useMutation as useTanstackMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { PantryService } from "gen/pantry/v1/pantry_pb";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
+import { HouseholdMeal } from "gen/people/v1/people_pb";
 import {
   deletePortion,
+  listStaples,
   setEatingOut,
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type {
@@ -26,9 +35,12 @@ import type {
   PlannedPortion,
 } from "gen/plans/v1/plans_pb";
 import { PlanService, Severity } from "gen/plans/v1/plans_pb";
+import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { parseDate } from "helpers/dates";
+import { formatList } from "helpers/format";
+import { formatServings } from "helpers/labels";
 import { formatAmount } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
 import React, { useState } from "react";
@@ -207,6 +219,84 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
   };
   const remove = useMutation(deletePortion, { onSuccess });
   const eatIn = useMutation(setEatingOut, { onSuccess });
+  const transport = useTransport();
+  const staples = useQuery(listStaples, {});
+  const recipes = useQuery(listRecipes, {});
+  const [swapping, setSwapping] = useState(false);
+  const [removingMeal, setRemovingMeal] = useState(false);
+
+  /*
+   * The shared meal's cook: the one everyone at a shared meal eats from,
+   * cooked for it.
+   */
+  const shared =
+    row.meal === HouseholdMeal.UNSPECIFIED
+      ? undefined
+      : week.cooks.find(
+          (planned) =>
+            planned.cook !== undefined &&
+            planned.cook.date === day.date &&
+            planned.cook.meal === row.meal &&
+            eaters.some((other) =>
+              other.planned.portions.some(
+                (portion) => portion.cookId === planned.cook?.id
+              )
+            )
+        );
+  /*
+   * RemoveMeal takes the meal off for everyone: their portions at it, and
+   * its cook, unless another meal eats the rest of it, which it then only
+   * makes enough for.
+   */
+  const removeMeal = useTanstackMutation<void, ConnectError>({
+    mutationFn: async () => {
+      const client = createClient(PlanService, transport);
+      const here = eaters.flatMap((other) =>
+        other.planned.portions.filter((portion) => portion.portionId !== "")
+      );
+      const cookId = shared?.cook?.id ?? "";
+      const elsewhere = week.days.flatMap((planDay) =>
+        planDay.people.flatMap((person) =>
+          person.eatingTimes.flatMap((planned) =>
+            planned.portions.filter(
+              (portion) =>
+                portion.cookId === cookId &&
+                cookId !== "" &&
+                !here.some((other) => other.portionId === portion.portionId)
+            )
+          )
+        )
+      );
+      await Promise.all(
+        here
+          .filter(
+            (portion) => elsewhere.length > 0 || portion.cookId !== cookId
+          )
+          .map(async (portion) =>
+            client.deletePortion({ id: portion.portionId })
+          )
+      );
+      if (cookId === "") {
+        return;
+      }
+      if (elsewhere.length === 0) {
+        await client.deleteCook({ id: cookId });
+        return;
+      }
+      const left = elsewhere.reduce(
+        (sum, portion) => sum + portion.servings,
+        0
+      );
+      await client.updateCook({
+        cook: { id: cookId, servings: Math.ceil(left * 4) / 4 },
+        updateMask: { paths: ["servings"] },
+      });
+    },
+    onSuccess: async () => {
+      await onSuccess();
+      onClose();
+    },
+  });
 
   const weekday = parseDate(day.date).toLocaleDateString(undefined, {
     weekday: "long",
@@ -318,7 +408,9 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
               ).then(onClose);
             }}
           >
-            Remove
+            {shared === undefined
+              ? "Remove"
+              : `Remove ${slot.person.personName}'s portion`}
           </button>
         </div>
         <ErrorText error={remove.error} />
@@ -350,10 +442,81 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
     );
   }
 
+  if (swapping && shared?.cook !== undefined) {
+    return (
+      <PlanMealDialog
+        dates={week.days.map((other) => other.date)}
+        date={day.date}
+        meal={row.meal}
+        people={people.data?.people ?? []}
+        staples={staples.data?.staples ?? []}
+        recipes={recipes.data?.recipes ?? []}
+        replacing={{
+          cookId: shared.cook.id,
+          recipeName: shared.cook.recipeName,
+        }}
+        onClose={onClose}
+      />
+    );
+  }
+
+  const sharedNames = eaters.map((other) => other.person.personName);
   return (
     <Modal open onClose={onClose} title={row.label}>
       <div className="flex flex-col gap-4">
         <p className="-mt-2 text-sm text-muted">{kicker}</p>
+        {shared?.cook !== undefined && (
+          <section className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
+            <h3 className={sectionLabelClass}>For everyone</h3>
+            <p className="text-sm text-ink-soft">
+              <Link
+                to={`/recipes/${shared.cook.recipeId}`}
+                className="font-bold"
+              >
+                {shared.cook.recipeName}
+              </Link>
+              , {formatServings(shared.cook.servings)} for{" "}
+              {formatList(sharedNames)}
+            </p>
+            <div className="-mx-2 flex flex-wrap gap-1">
+              <button
+                type="button"
+                className={ghostButton}
+                disabled={
+                  recipes.data === undefined || people.data === undefined
+                }
+                onClick={() => {
+                  setSwapping(true);
+                }}
+              >
+                Swap the recipe
+              </button>
+              <button
+                type="button"
+                className={ghostDangerButton}
+                disabled={removeMeal.isPending}
+                onClick={() => {
+                  setRemovingMeal(true);
+                }}
+              >
+                Remove the meal
+              </button>
+            </div>
+            <ErrorText error={removeMeal.error} />
+            <ConfirmDialog
+              open={removingMeal}
+              title={`Remove ${row.label.toLowerCase()}?`}
+              message={`Everyone's portions at it are removed, and ${shared.cook.recipeName} isn't cooked, unless another meal eats the rest of it.`}
+              confirmLabel="Remove"
+              onClose={() => {
+                setRemovingMeal(false);
+              }}
+              onConfirm={() => {
+                removeMeal.mutate();
+              }}
+            />
+          </section>
+        )}
         {eaters.length > 1 && (
           <Segmented
             label="Whose"

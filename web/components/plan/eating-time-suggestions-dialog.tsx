@@ -2,7 +2,6 @@ import type { Slot } from "@components/plan/portion-dialog";
 import SuggestionList from "@components/plan/suggestion-list";
 import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
-import { secondaryButton } from "@components/ui/styles";
 import { useMutation } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Person } from "gen/people/v1/people_pb";
@@ -101,14 +100,13 @@ const EatingTimeSuggestionsDialog: React.FC<
     <Modal
       open
       onClose={onClose}
-      title={`Suggestions for ${person?.name ?? "someone"}'s ${eatingTime?.name ?? "eating time"}`}
+      title={`${person?.name ?? "Someone"}'s ${(eatingTime?.name ?? "meal").toLowerCase()}`}
       wide
     >
-      <div className="flex flex-col gap-3">
-        <p className="text-sm text-muted">
-          {formatDay(slot.date)}. Planning one cooks the recipe that day for
-          this portion, within {person?.name ?? "their"}&apos;s maximum portion;
-          the rest is left over to plan later.
+      <div className="flex flex-col gap-4">
+        <p className="-mt-2 text-sm text-muted">
+          {formatDay(slot.date)} · Planning one cooks it for this portion, or
+          eats the rest of an earlier meal.
         </p>
         <SuggestionList
           request={{
@@ -128,11 +126,6 @@ const EatingTimeSuggestionsDialog: React.FC<
           }}
         />
         <ErrorText error={cook.error ?? portion.error ?? leftover.error} />
-        <div className="flex justify-end">
-          <button type="button" className={secondaryButton} onClick={onClose}>
-            Close
-          </button>
-        </div>
       </div>
     </Modal>
   );
