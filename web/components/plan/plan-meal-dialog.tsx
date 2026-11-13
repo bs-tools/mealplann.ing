@@ -394,6 +394,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
                     meal,
                     personIds,
                     recipeId: suggestion.recipeId,
+                    side: suggestion.side,
                   });
                 }}
               />

@@ -277,6 +277,17 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 	if err := checkNotDraft(recipe); err != nil {
 		return nil, err
 	}
+	var side *recipes.Side
+	if req.HasSide() {
+		if side, err = sideFromProto("side", req.GetSide(), recipe); err != nil {
+			return nil, err
+		}
+		if err := s.loadSides(ctx, user.HouseholdID(), d, []*recipes.Side{side}); err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to read the side", "")
+		}
+	}
+	// The portions are sized for the meal with its side, as it's eaten.
+	mealNutrition := d.mealNutrition(recipe, side)
 	eaters, err := mealEaters(d.people, meal, personIDs)
 	if err != nil {
 		return nil, err
@@ -292,11 +303,11 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 		Date:            date,
 		Meal:            meal,
 		People:          eaters,
-		GramsPerServing: d.recipeNutrition[recipeID].GramsPerServing,
+		GramsPerServing: mealNutrition.GramsPerServing,
 		PlannedGrams:    d.plannedGrams(),
 		Servings:        req.GetServings(),
 		EatingOut:       d.plan.EatingOutSlots(),
-		ServingsFor:     d.servingsFor(recipeID, date, meal, d.allPlanned()),
+		ServingsFor:     servingsFor(mealNutrition, date, meal, d.allPlanned()),
 	})
 	if tooFew, ok := errors.AsType[*plans.TooFewServingsError](err); ok {
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
@@ -314,8 +325,7 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 			Servings:     share.Servings,
 		})
 	}
-	// The cooks of the recipe's components are planned with it.
-	toCreate, err := s.planSuppliers(ctx, user.HouseholdID(), []*plans.CookWithPortions{{
+	main := &plans.CookWithPortions{
 		Cook: &plans.Cook{
 			HouseholdID: user.HouseholdID(),
 			RecipeID:    recipe.ID,
@@ -325,7 +335,17 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 			Notes:       notes,
 		},
 		Portions: portions,
-	}}, d.recipes)
+	}
+	list := []*plans.CookWithPortions{main}
+	if side != nil {
+		sideCook, foodPortions := planSide(user.HouseholdID(), side, main.Cook, portions)
+		main.FoodPortions = foodPortions
+		if sideCook != nil {
+			list = append(list, sideCook)
+		}
+	}
+	// The cooks of the recipes' components are planned with them.
+	toCreate, err := s.planSuppliers(ctx, user.HouseholdID(), list, d.recipes)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to read the freezer", "")
 	}
@@ -333,11 +353,16 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to plan meal", recipeNotFound)
 	}
-	cook, created := cooks[0], createdPortions[0]
+	// The side's portions are the meal's too.
+	cook := cooks[0]
+	var created []*plans.Portion
+	for _, list := range createdPortions {
+		created = append(created, list...)
+	}
 
 	// The warnings are those of the eating times the portions are at, with
 	// what was planned there already, and of the cook.
-	d.plan.Cooks = append(d.plan.Cooks, cook)
+	d.plan.Cooks = append(d.plan.Cooks, cooks...)
 	for _, p := range created {
 		d.addItem(&item{portion: p, date: p.Date})
 	}

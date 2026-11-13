@@ -183,6 +183,7 @@ func summaryToProto(r *recipes.Recipe) *recipesv1.RecipeSummary {
 		Draft:                       r.Draft,
 		NotSuggested:                r.NotSuggested,
 		SnoozedUntil:                formatOptionalDate(r.SnoozedUntil),
+		ServedWith:                  sidesToProto(r.ServedWith),
 	}.Build()
 }
 

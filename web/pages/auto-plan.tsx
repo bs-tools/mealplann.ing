@@ -31,6 +31,7 @@ import {
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
+import type { RecipeSide } from "gen/recipes/v1/recipes_pb";
 import { suggestPlan } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
 import type { PlanSlot, Suggestion } from "gen/suggestions/v1/suggestions_pb";
 import {
@@ -126,7 +127,26 @@ interface Choice {
    * eating time.
    */
   leftoverOf?: Leftover | undefined;
+  // The side kept with a new cook, or noSide to keep it with none.
+  side?: RecipeSide | undefined;
+  noSide?: boolean;
 }
+
+/**
+ * SideChoice keeps a suggestion's side with its recipe, or no side if it
+ * has none, so planning again doesn't change it. A leftover keeps what it
+ * was served with.
+ */
+const sideChoice = (
+  suggestion: Suggestion
+): { side?: RecipeSide; noSide?: boolean } => {
+  if (suggestion.leftoverOf !== undefined) {
+    return {};
+  }
+  return suggestion.side === undefined
+    ? { noSide: true }
+    : { side: suggestion.side };
+};
 
 // SaveLabel labels the button adding a plan's meals to the plan.
 const saveLabel = (saving: boolean, meals: number): string => {
@@ -442,10 +462,32 @@ const AutoPlanPage: React.FC = () => {
         meal: slot.meal,
         personId: slot.personId,
         recipeId: pick === "" ? "" : pick.recipeId,
+        ...(pick === "" ? {} : sideChoice(pick)),
       });
     }
     setChoices(next);
     return next;
+  };
+  /*
+   * ChooseSide keeps a slot's recipe with another side, or none with null,
+   * and plans the rest again around it.
+   */
+  const chooseSide = (slot: PlanSlot, side: RecipeSide | null) => {
+    if (slot.suggestion === undefined) {
+      return;
+    }
+    const next = new Map(choices);
+    next.set(slotKey(slot), {
+      date: slot.date,
+      eatingTimeId: slot.eatingTimeId,
+      meal: slot.meal,
+      noSide: side === null,
+      personId: slot.personId,
+      recipeId: slot.suggestion.recipeId,
+      side: side ?? undefined,
+    });
+    setChoices(next);
+    setReplanned(next);
   };
 
   const slots = plan.data?.slots ?? [];
@@ -464,6 +506,7 @@ const AutoPlanPage: React.FC = () => {
           meal: slot.meal,
           personId: slot.personId,
           recipeId: slot.suggestion.recipeId,
+          ...sideChoice(slot.suggestion),
         });
       }
     }
@@ -643,6 +686,14 @@ const AutoPlanPage: React.FC = () => {
                         onEatingOut={(eatingOut) => {
                           markEatingOut(slot, eatingOut);
                         }}
+                        sides={
+                          recipes.data?.recipes.find(
+                            (other) => other.id === slot.suggestion?.recipeId
+                          )?.servedWith ?? []
+                        }
+                        onSide={(side) => {
+                          chooseSide(slot, side);
+                        }}
                         onFeedback={(value) => {
                           if (slot.suggestion !== undefined) {
                             // A kept recipe is let go, to plan another.
@@ -792,6 +843,7 @@ const AutoPlanPage: React.FC = () => {
                   meal: slot.meal,
                   personId: slot.personId,
                   recipeId: slot.suggestion?.recipeId ?? "",
+                  side: slot.suggestion?.side,
                 })),
               });
             }}

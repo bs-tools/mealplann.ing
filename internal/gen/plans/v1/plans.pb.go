@@ -10,6 +10,7 @@ import (
 	v11 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
 	_ "github.com/bs-tools/mealplann.ing/internal/gen/mcp/v1"
 	v1 "github.com/bs-tools/mealplann.ing/internal/gen/people/v1"
+	v12 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -3412,6 +3413,7 @@ type PlanMealRequest struct {
 	xxx_hidden_PersonIds []string               `protobuf:"bytes,4,rep,name=person_ids,json=personIds,proto3"`
 	xxx_hidden_Servings  float64                `protobuf:"fixed64,5,opt,name=servings,proto3"`
 	xxx_hidden_Notes     string                 `protobuf:"bytes,6,opt,name=notes,proto3"`
+	xxx_hidden_Side      *v12.RecipeSide        `protobuf:"bytes,7,opt,name=side,proto3"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -3483,6 +3485,13 @@ func (x *PlanMealRequest) GetNotes() string {
 	return ""
 }
 
+func (x *PlanMealRequest) GetSide() *v12.RecipeSide {
+	if x != nil {
+		return x.xxx_hidden_Side
+	}
+	return nil
+}
+
 func (x *PlanMealRequest) SetRecipeId(v string) {
 	x.xxx_hidden_RecipeId = v
 }
@@ -3507,6 +3516,21 @@ func (x *PlanMealRequest) SetNotes(v string) {
 	x.xxx_hidden_Notes = v
 }
 
+func (x *PlanMealRequest) SetSide(v *v12.RecipeSide) {
+	x.xxx_hidden_Side = v
+}
+
+func (x *PlanMealRequest) HasSide() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Side != nil
+}
+
+func (x *PlanMealRequest) ClearSide() {
+	x.xxx_hidden_Side = nil
+}
+
 type PlanMealRequest_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -3526,6 +3550,11 @@ type PlanMealRequest_builder struct {
 	Servings float64
 	// Notes for the cook. At most 2000 characters.
 	Notes string
+	// A side to serve with it, one of the recipe's served_with (see
+	// RecipeService), like a suggestion's side: everyone gets a portion of
+	// it for their servings, the food's grams per serving, or a share of a
+	// new cook of the side's recipe, cooked with the meal. Unset for none.
+	Side *v12.RecipeSide
 }
 
 func (b0 PlanMealRequest_builder) Build() *PlanMealRequest {
@@ -3538,6 +3567,7 @@ func (b0 PlanMealRequest_builder) Build() *PlanMealRequest {
 	x.xxx_hidden_PersonIds = b.PersonIds
 	x.xxx_hidden_Servings = b.Servings
 	x.xxx_hidden_Notes = b.Notes
+	x.xxx_hidden_Side = b.Side
 	return m0
 }
 
@@ -3669,6 +3699,7 @@ type MealToPlan struct {
 	xxx_hidden_EatingTimeId string                 `protobuf:"bytes,5,opt,name=eating_time_id,json=eatingTimeId,proto3"`
 	xxx_hidden_LeftoverOf   *LeftoverOf            `protobuf:"bytes,6,opt,name=leftover_of,json=leftoverOf,proto3"`
 	xxx_hidden_CookDate     string                 `protobuf:"bytes,7,opt,name=cook_date,json=cookDate,proto3"`
+	xxx_hidden_Side         *v12.RecipeSide        `protobuf:"bytes,8,opt,name=side,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -3747,6 +3778,13 @@ func (x *MealToPlan) GetCookDate() string {
 	return ""
 }
 
+func (x *MealToPlan) GetSide() *v12.RecipeSide {
+	if x != nil {
+		return x.xxx_hidden_Side
+	}
+	return nil
+}
+
 func (x *MealToPlan) SetRecipeId(v string) {
 	x.xxx_hidden_RecipeId = v
 }
@@ -3775,6 +3813,10 @@ func (x *MealToPlan) SetCookDate(v string) {
 	x.xxx_hidden_CookDate = v
 }
 
+func (x *MealToPlan) SetSide(v *v12.RecipeSide) {
+	x.xxx_hidden_Side = v
+}
+
 func (x *MealToPlan) HasLeftoverOf() bool {
 	if x == nil {
 		return false
@@ -3782,8 +3824,19 @@ func (x *MealToPlan) HasLeftoverOf() bool {
 	return x.xxx_hidden_LeftoverOf != nil
 }
 
+func (x *MealToPlan) HasSide() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Side != nil
+}
+
 func (x *MealToPlan) ClearLeftoverOf() {
 	x.xxx_hidden_LeftoverOf = nil
+}
+
+func (x *MealToPlan) ClearSide() {
+	x.xxx_hidden_Side = nil
 }
 
 type MealToPlan_builder struct {
@@ -3813,6 +3866,9 @@ type MealToPlan_builder struct {
 	// day; empty to cook it on date. A cook made ahead isn't one of its
 	// date's shared meals. SuggestPlan suggests these as cook_date.
 	CookDate string
+	// A side to serve with it, as in PlanMealRequest.side, like the
+	// suggestion's side. Not for a leftover.
+	Side *v12.RecipeSide
 }
 
 func (b0 MealToPlan_builder) Build() *MealToPlan {
@@ -3826,6 +3882,7 @@ func (b0 MealToPlan_builder) Build() *MealToPlan {
 	x.xxx_hidden_EatingTimeId = b.EatingTimeId
 	x.xxx_hidden_LeftoverOf = b.LeftoverOf
 	x.xxx_hidden_CookDate = b.CookDate
+	x.xxx_hidden_Side = b.Side
 	return m0
 }
 
@@ -7567,7 +7624,7 @@ var File_plans_v1_plans_proto protoreflect.FileDescriptor
 
 const file_plans_v1_plans_proto_rawDesc = "" +
 	"\n" +
-	"\x14plans/v1/plans.proto\x12\bplans.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\x1a\x16people/v1/people.proto\"\xb9\x04\n" +
+	"\x14plans/v1/plans.proto\x12\bplans.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\x1a\x16people/v1/people.proto\x1a\x18recipes/v1/recipes.proto\"\xb9\x04\n" +
 	"\x04Cook\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\trecipe_id\x18\x02 \x01(\tR\brecipeId\x12'\n" +
@@ -7742,7 +7799,7 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\bservings\x18\x04 \x01(\x01R\bservings\x12\x1f\n" +
 	"\vtotal_cents\x18\x05 \x01(\x05R\n" +
 	"totalCents\x12*\n" +
-	"\x11cents_per_serving\x18\x06 \x01(\x05R\x0fcentsPerServing\"\xc1\x01\n" +
+	"\x11cents_per_serving\x18\x06 \x01(\x05R\x0fcentsPerServing\"\xed\x01\n" +
 	"\x0fPlanMealRequest\x12\x1b\n" +
 	"\trecipe_id\x18\x01 \x01(\tR\brecipeId\x12\x12\n" +
 	"\x04date\x18\x02 \x01(\tR\x04date\x12,\n" +
@@ -7750,12 +7807,13 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\n" +
 	"person_ids\x18\x04 \x03(\tR\tpersonIds\x12\x1a\n" +
 	"\bservings\x18\x05 \x01(\x01R\bservings\x12\x14\n" +
-	"\x05notes\x18\x06 \x01(\tR\x05notes\"\xc5\x01\n" +
+	"\x05notes\x18\x06 \x01(\tR\x05notes\x12*\n" +
+	"\x04side\x18\a \x01(\v2\x16.recipes.v1.RecipeSideR\x04side\"\xc5\x01\n" +
 	"\x10PlanMealResponse\x12\"\n" +
 	"\x04cook\x18\x01 \x01(\v2\x0e.plans.v1.CookR\x04cook\x12-\n" +
 	"\bportions\x18\x02 \x03(\v2\x11.plans.v1.PortionR\bportions\x12/\n" +
 	"\x13unassigned_servings\x18\x03 \x01(\x01R\x12unassignedServings\x12-\n" +
-	"\bwarnings\x18\x04 \x03(\v2\x11.plans.v1.WarningR\bwarnings\"\x82\x02\n" +
+	"\bwarnings\x18\x04 \x03(\v2\x11.plans.v1.WarningR\bwarnings\"\xae\x02\n" +
 	"\n" +
 	"MealToPlan\x12\x1b\n" +
 	"\trecipe_id\x18\x01 \x01(\tR\brecipeId\x12\x12\n" +
@@ -7765,7 +7823,8 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x0eeating_time_id\x18\x05 \x01(\tR\featingTimeId\x125\n" +
 	"\vleftover_of\x18\x06 \x01(\v2\x14.plans.v1.LeftoverOfR\n" +
 	"leftoverOf\x12\x1b\n" +
-	"\tcook_date\x18\a \x01(\tR\bcookDate\"N\n" +
+	"\tcook_date\x18\a \x01(\tR\bcookDate\x12*\n" +
+	"\x04side\x18\b \x01(\v2\x16.recipes.v1.RecipeSideR\x04side\"N\n" +
 	"\n" +
 	"LeftoverOf\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +
@@ -8059,7 +8118,8 @@ var file_plans_v1_plans_proto_goTypes = []any{
 	(v11.Nutrient)(0),                   // 73: foods.v1.Nutrient
 	(*v11.Nutrients)(nil),               // 74: foods.v1.Nutrients
 	(*v1.EatingTime)(nil),               // 75: people.v1.EatingTime
-	(*fieldmaskpb.FieldMask)(nil),       // 76: google.protobuf.FieldMask
+	(*v12.RecipeSide)(nil),              // 76: recipes.v1.RecipeSide
+	(*fieldmaskpb.FieldMask)(nil),       // 77: google.protobuf.FieldMask
 }
 var file_plans_v1_plans_proto_depIdxs = []int32{
 	70,  // 0: plans.v1.Cook.meal:type_name -> people.v1.HouseholdMeal
@@ -8097,103 +8157,105 @@ var file_plans_v1_plans_proto_depIdxs = []int32{
 	10,  // 32: plans.v1.PlannedCook.warnings:type_name -> plans.v1.Warning
 	21,  // 33: plans.v1.GetPlanCostResponse.cooks:type_name -> plans.v1.CookCost
 	70,  // 34: plans.v1.PlanMealRequest.meal:type_name -> people.v1.HouseholdMeal
-	3,   // 35: plans.v1.PlanMealResponse.cook:type_name -> plans.v1.Cook
-	8,   // 36: plans.v1.PlanMealResponse.portions:type_name -> plans.v1.Portion
-	10,  // 37: plans.v1.PlanMealResponse.warnings:type_name -> plans.v1.Warning
-	70,  // 38: plans.v1.MealToPlan.meal:type_name -> people.v1.HouseholdMeal
-	25,  // 39: plans.v1.MealToPlan.leftover_of:type_name -> plans.v1.LeftoverOf
-	70,  // 40: plans.v1.LeftoverOf.meal:type_name -> people.v1.HouseholdMeal
-	24,  // 41: plans.v1.PlanMealsRequest.meals:type_name -> plans.v1.MealToPlan
-	3,   // 42: plans.v1.PlanMealsResponse.cooks:type_name -> plans.v1.Cook
-	3,   // 43: plans.v1.CreateCookRequest.cook:type_name -> plans.v1.Cook
-	3,   // 44: plans.v1.CreateCookResponse.cook:type_name -> plans.v1.Cook
-	30,  // 45: plans.v1.CreateCookResponse.pantry_changes:type_name -> plans.v1.PantryChange
-	3,   // 46: plans.v1.UpdateCookRequest.cook:type_name -> plans.v1.Cook
-	76,  // 47: plans.v1.UpdateCookRequest.update_mask:type_name -> google.protobuf.FieldMask
-	32,  // 48: plans.v1.UpdateCookRequest.food_uses:type_name -> plans.v1.FoodUse
-	72,  // 49: plans.v1.FoodUse.unit:type_name -> foods.v1.AmountUnit
-	3,   // 50: plans.v1.UpdateCookResponse.cook:type_name -> plans.v1.Cook
-	30,  // 51: plans.v1.UpdateCookResponse.pantry_changes:type_name -> plans.v1.PantryChange
-	8,   // 52: plans.v1.CreatePortionRequest.portion:type_name -> plans.v1.Portion
-	37,  // 53: plans.v1.CreatePortionRequest.new_cook:type_name -> plans.v1.NewCook
-	8,   // 54: plans.v1.CreatePortionResponse.portion:type_name -> plans.v1.Portion
-	3,   // 55: plans.v1.CreatePortionResponse.cook:type_name -> plans.v1.Cook
-	8,   // 56: plans.v1.UpdatePortionRequest.portion:type_name -> plans.v1.Portion
-	76,  // 57: plans.v1.UpdatePortionRequest.update_mask:type_name -> google.protobuf.FieldMask
-	8,   // 58: plans.v1.UpdatePortionResponse.portion:type_name -> plans.v1.Portion
-	8,   // 59: plans.v1.SetPortionEatenResponse.portion:type_name -> plans.v1.Portion
-	30,  // 60: plans.v1.SetPortionEatenResponse.pantry_changes:type_name -> plans.v1.PantryChange
-	70,  // 61: plans.v1.MoveCookRequest.meal:type_name -> people.v1.HouseholdMeal
-	3,   // 62: plans.v1.MoveCookResponse.cook:type_name -> plans.v1.Cook
-	8,   // 63: plans.v1.MoveCookResponse.moved_portions:type_name -> plans.v1.Portion
-	8,   // 64: plans.v1.MoveCookResponse.removed_portions:type_name -> plans.v1.Portion
-	9,   // 65: plans.v1.CreateStapleRequest.staple:type_name -> plans.v1.Staple
-	9,   // 66: plans.v1.CreateStapleResponse.staple:type_name -> plans.v1.Staple
-	9,   // 67: plans.v1.ListStaplesResponse.staples:type_name -> plans.v1.Staple
-	9,   // 68: plans.v1.UpdateStapleRequest.staple:type_name -> plans.v1.Staple
-	76,  // 69: plans.v1.UpdateStapleRequest.update_mask:type_name -> google.protobuf.FieldMask
-	9,   // 70: plans.v1.UpdateStapleResponse.staple:type_name -> plans.v1.Staple
-	9,   // 71: plans.v1.SkipStapleResponse.staple:type_name -> plans.v1.Staple
-	9,   // 72: plans.v1.UnskipStapleResponse.staple:type_name -> plans.v1.Staple
-	9,   // 73: plans.v1.SetStapleEatenResponse.staple:type_name -> plans.v1.Staple
-	30,  // 74: plans.v1.SetStapleEatenResponse.pantry_changes:type_name -> plans.v1.PantryChange
-	63,  // 75: plans.v1.ListFrozenLeftoversResponse.leftovers:type_name -> plans.v1.FrozenLeftover
-	3,   // 76: plans.v1.FrozenLeftover.cook:type_name -> plans.v1.Cook
-	63,  // 77: plans.v1.TakeFromFreezerResponse.leftover:type_name -> plans.v1.FrozenLeftover
-	8,   // 78: plans.v1.TakeFromFreezerResponse.portion:type_name -> plans.v1.Portion
-	3,   // 79: plans.v1.SetCookSupplierResponse.cook:type_name -> plans.v1.Cook
-	70,  // 80: plans.v1.SetEatingOutRequest.meal:type_name -> people.v1.HouseholdMeal
-	19,  // 81: plans.v1.PlanService.GetPlanCost:input_type -> plans.v1.GetPlanCostRequest
-	11,  // 82: plans.v1.PlanService.GetWeek:input_type -> plans.v1.GetWeekRequest
-	22,  // 83: plans.v1.PlanService.PlanMeal:input_type -> plans.v1.PlanMealRequest
-	26,  // 84: plans.v1.PlanService.PlanMeals:input_type -> plans.v1.PlanMealsRequest
-	28,  // 85: plans.v1.PlanService.CreateCook:input_type -> plans.v1.CreateCookRequest
-	31,  // 86: plans.v1.PlanService.UpdateCook:input_type -> plans.v1.UpdateCookRequest
-	34,  // 87: plans.v1.PlanService.DeleteCook:input_type -> plans.v1.DeleteCookRequest
-	66,  // 88: plans.v1.PlanService.SetCookSupplier:input_type -> plans.v1.SetCookSupplierRequest
-	36,  // 89: plans.v1.PlanService.CreatePortion:input_type -> plans.v1.CreatePortionRequest
-	39,  // 90: plans.v1.PlanService.UpdatePortion:input_type -> plans.v1.UpdatePortionRequest
-	41,  // 91: plans.v1.PlanService.DeletePortion:input_type -> plans.v1.DeletePortionRequest
-	43,  // 92: plans.v1.PlanService.SetPortionEaten:input_type -> plans.v1.SetPortionEatenRequest
-	45,  // 93: plans.v1.PlanService.MoveCook:input_type -> plans.v1.MoveCookRequest
-	47,  // 94: plans.v1.PlanService.CreateStaple:input_type -> plans.v1.CreateStapleRequest
-	49,  // 95: plans.v1.PlanService.ListStaples:input_type -> plans.v1.ListStaplesRequest
-	51,  // 96: plans.v1.PlanService.UpdateStaple:input_type -> plans.v1.UpdateStapleRequest
-	53,  // 97: plans.v1.PlanService.DeleteStaple:input_type -> plans.v1.DeleteStapleRequest
-	55,  // 98: plans.v1.PlanService.SkipStaple:input_type -> plans.v1.SkipStapleRequest
-	57,  // 99: plans.v1.PlanService.UnskipStaple:input_type -> plans.v1.UnskipStapleRequest
-	59,  // 100: plans.v1.PlanService.SetStapleEaten:input_type -> plans.v1.SetStapleEatenRequest
-	61,  // 101: plans.v1.PlanService.ListFrozenLeftovers:input_type -> plans.v1.ListFrozenLeftoversRequest
-	64,  // 102: plans.v1.PlanService.TakeFromFreezer:input_type -> plans.v1.TakeFromFreezerRequest
-	68,  // 103: plans.v1.PlanService.SetEatingOut:input_type -> plans.v1.SetEatingOutRequest
-	20,  // 104: plans.v1.PlanService.GetPlanCost:output_type -> plans.v1.GetPlanCostResponse
-	12,  // 105: plans.v1.PlanService.GetWeek:output_type -> plans.v1.GetWeekResponse
-	23,  // 106: plans.v1.PlanService.PlanMeal:output_type -> plans.v1.PlanMealResponse
-	27,  // 107: plans.v1.PlanService.PlanMeals:output_type -> plans.v1.PlanMealsResponse
-	29,  // 108: plans.v1.PlanService.CreateCook:output_type -> plans.v1.CreateCookResponse
-	33,  // 109: plans.v1.PlanService.UpdateCook:output_type -> plans.v1.UpdateCookResponse
-	35,  // 110: plans.v1.PlanService.DeleteCook:output_type -> plans.v1.DeleteCookResponse
-	67,  // 111: plans.v1.PlanService.SetCookSupplier:output_type -> plans.v1.SetCookSupplierResponse
-	38,  // 112: plans.v1.PlanService.CreatePortion:output_type -> plans.v1.CreatePortionResponse
-	40,  // 113: plans.v1.PlanService.UpdatePortion:output_type -> plans.v1.UpdatePortionResponse
-	42,  // 114: plans.v1.PlanService.DeletePortion:output_type -> plans.v1.DeletePortionResponse
-	44,  // 115: plans.v1.PlanService.SetPortionEaten:output_type -> plans.v1.SetPortionEatenResponse
-	46,  // 116: plans.v1.PlanService.MoveCook:output_type -> plans.v1.MoveCookResponse
-	48,  // 117: plans.v1.PlanService.CreateStaple:output_type -> plans.v1.CreateStapleResponse
-	50,  // 118: plans.v1.PlanService.ListStaples:output_type -> plans.v1.ListStaplesResponse
-	52,  // 119: plans.v1.PlanService.UpdateStaple:output_type -> plans.v1.UpdateStapleResponse
-	54,  // 120: plans.v1.PlanService.DeleteStaple:output_type -> plans.v1.DeleteStapleResponse
-	56,  // 121: plans.v1.PlanService.SkipStaple:output_type -> plans.v1.SkipStapleResponse
-	58,  // 122: plans.v1.PlanService.UnskipStaple:output_type -> plans.v1.UnskipStapleResponse
-	60,  // 123: plans.v1.PlanService.SetStapleEaten:output_type -> plans.v1.SetStapleEatenResponse
-	62,  // 124: plans.v1.PlanService.ListFrozenLeftovers:output_type -> plans.v1.ListFrozenLeftoversResponse
-	65,  // 125: plans.v1.PlanService.TakeFromFreezer:output_type -> plans.v1.TakeFromFreezerResponse
-	69,  // 126: plans.v1.PlanService.SetEatingOut:output_type -> plans.v1.SetEatingOutResponse
-	104, // [104:127] is the sub-list for method output_type
-	81,  // [81:104] is the sub-list for method input_type
-	81,  // [81:81] is the sub-list for extension type_name
-	81,  // [81:81] is the sub-list for extension extendee
-	0,   // [0:81] is the sub-list for field type_name
+	76,  // 35: plans.v1.PlanMealRequest.side:type_name -> recipes.v1.RecipeSide
+	3,   // 36: plans.v1.PlanMealResponse.cook:type_name -> plans.v1.Cook
+	8,   // 37: plans.v1.PlanMealResponse.portions:type_name -> plans.v1.Portion
+	10,  // 38: plans.v1.PlanMealResponse.warnings:type_name -> plans.v1.Warning
+	70,  // 39: plans.v1.MealToPlan.meal:type_name -> people.v1.HouseholdMeal
+	25,  // 40: plans.v1.MealToPlan.leftover_of:type_name -> plans.v1.LeftoverOf
+	76,  // 41: plans.v1.MealToPlan.side:type_name -> recipes.v1.RecipeSide
+	70,  // 42: plans.v1.LeftoverOf.meal:type_name -> people.v1.HouseholdMeal
+	24,  // 43: plans.v1.PlanMealsRequest.meals:type_name -> plans.v1.MealToPlan
+	3,   // 44: plans.v1.PlanMealsResponse.cooks:type_name -> plans.v1.Cook
+	3,   // 45: plans.v1.CreateCookRequest.cook:type_name -> plans.v1.Cook
+	3,   // 46: plans.v1.CreateCookResponse.cook:type_name -> plans.v1.Cook
+	30,  // 47: plans.v1.CreateCookResponse.pantry_changes:type_name -> plans.v1.PantryChange
+	3,   // 48: plans.v1.UpdateCookRequest.cook:type_name -> plans.v1.Cook
+	77,  // 49: plans.v1.UpdateCookRequest.update_mask:type_name -> google.protobuf.FieldMask
+	32,  // 50: plans.v1.UpdateCookRequest.food_uses:type_name -> plans.v1.FoodUse
+	72,  // 51: plans.v1.FoodUse.unit:type_name -> foods.v1.AmountUnit
+	3,   // 52: plans.v1.UpdateCookResponse.cook:type_name -> plans.v1.Cook
+	30,  // 53: plans.v1.UpdateCookResponse.pantry_changes:type_name -> plans.v1.PantryChange
+	8,   // 54: plans.v1.CreatePortionRequest.portion:type_name -> plans.v1.Portion
+	37,  // 55: plans.v1.CreatePortionRequest.new_cook:type_name -> plans.v1.NewCook
+	8,   // 56: plans.v1.CreatePortionResponse.portion:type_name -> plans.v1.Portion
+	3,   // 57: plans.v1.CreatePortionResponse.cook:type_name -> plans.v1.Cook
+	8,   // 58: plans.v1.UpdatePortionRequest.portion:type_name -> plans.v1.Portion
+	77,  // 59: plans.v1.UpdatePortionRequest.update_mask:type_name -> google.protobuf.FieldMask
+	8,   // 60: plans.v1.UpdatePortionResponse.portion:type_name -> plans.v1.Portion
+	8,   // 61: plans.v1.SetPortionEatenResponse.portion:type_name -> plans.v1.Portion
+	30,  // 62: plans.v1.SetPortionEatenResponse.pantry_changes:type_name -> plans.v1.PantryChange
+	70,  // 63: plans.v1.MoveCookRequest.meal:type_name -> people.v1.HouseholdMeal
+	3,   // 64: plans.v1.MoveCookResponse.cook:type_name -> plans.v1.Cook
+	8,   // 65: plans.v1.MoveCookResponse.moved_portions:type_name -> plans.v1.Portion
+	8,   // 66: plans.v1.MoveCookResponse.removed_portions:type_name -> plans.v1.Portion
+	9,   // 67: plans.v1.CreateStapleRequest.staple:type_name -> plans.v1.Staple
+	9,   // 68: plans.v1.CreateStapleResponse.staple:type_name -> plans.v1.Staple
+	9,   // 69: plans.v1.ListStaplesResponse.staples:type_name -> plans.v1.Staple
+	9,   // 70: plans.v1.UpdateStapleRequest.staple:type_name -> plans.v1.Staple
+	77,  // 71: plans.v1.UpdateStapleRequest.update_mask:type_name -> google.protobuf.FieldMask
+	9,   // 72: plans.v1.UpdateStapleResponse.staple:type_name -> plans.v1.Staple
+	9,   // 73: plans.v1.SkipStapleResponse.staple:type_name -> plans.v1.Staple
+	9,   // 74: plans.v1.UnskipStapleResponse.staple:type_name -> plans.v1.Staple
+	9,   // 75: plans.v1.SetStapleEatenResponse.staple:type_name -> plans.v1.Staple
+	30,  // 76: plans.v1.SetStapleEatenResponse.pantry_changes:type_name -> plans.v1.PantryChange
+	63,  // 77: plans.v1.ListFrozenLeftoversResponse.leftovers:type_name -> plans.v1.FrozenLeftover
+	3,   // 78: plans.v1.FrozenLeftover.cook:type_name -> plans.v1.Cook
+	63,  // 79: plans.v1.TakeFromFreezerResponse.leftover:type_name -> plans.v1.FrozenLeftover
+	8,   // 80: plans.v1.TakeFromFreezerResponse.portion:type_name -> plans.v1.Portion
+	3,   // 81: plans.v1.SetCookSupplierResponse.cook:type_name -> plans.v1.Cook
+	70,  // 82: plans.v1.SetEatingOutRequest.meal:type_name -> people.v1.HouseholdMeal
+	19,  // 83: plans.v1.PlanService.GetPlanCost:input_type -> plans.v1.GetPlanCostRequest
+	11,  // 84: plans.v1.PlanService.GetWeek:input_type -> plans.v1.GetWeekRequest
+	22,  // 85: plans.v1.PlanService.PlanMeal:input_type -> plans.v1.PlanMealRequest
+	26,  // 86: plans.v1.PlanService.PlanMeals:input_type -> plans.v1.PlanMealsRequest
+	28,  // 87: plans.v1.PlanService.CreateCook:input_type -> plans.v1.CreateCookRequest
+	31,  // 88: plans.v1.PlanService.UpdateCook:input_type -> plans.v1.UpdateCookRequest
+	34,  // 89: plans.v1.PlanService.DeleteCook:input_type -> plans.v1.DeleteCookRequest
+	66,  // 90: plans.v1.PlanService.SetCookSupplier:input_type -> plans.v1.SetCookSupplierRequest
+	36,  // 91: plans.v1.PlanService.CreatePortion:input_type -> plans.v1.CreatePortionRequest
+	39,  // 92: plans.v1.PlanService.UpdatePortion:input_type -> plans.v1.UpdatePortionRequest
+	41,  // 93: plans.v1.PlanService.DeletePortion:input_type -> plans.v1.DeletePortionRequest
+	43,  // 94: plans.v1.PlanService.SetPortionEaten:input_type -> plans.v1.SetPortionEatenRequest
+	45,  // 95: plans.v1.PlanService.MoveCook:input_type -> plans.v1.MoveCookRequest
+	47,  // 96: plans.v1.PlanService.CreateStaple:input_type -> plans.v1.CreateStapleRequest
+	49,  // 97: plans.v1.PlanService.ListStaples:input_type -> plans.v1.ListStaplesRequest
+	51,  // 98: plans.v1.PlanService.UpdateStaple:input_type -> plans.v1.UpdateStapleRequest
+	53,  // 99: plans.v1.PlanService.DeleteStaple:input_type -> plans.v1.DeleteStapleRequest
+	55,  // 100: plans.v1.PlanService.SkipStaple:input_type -> plans.v1.SkipStapleRequest
+	57,  // 101: plans.v1.PlanService.UnskipStaple:input_type -> plans.v1.UnskipStapleRequest
+	59,  // 102: plans.v1.PlanService.SetStapleEaten:input_type -> plans.v1.SetStapleEatenRequest
+	61,  // 103: plans.v1.PlanService.ListFrozenLeftovers:input_type -> plans.v1.ListFrozenLeftoversRequest
+	64,  // 104: plans.v1.PlanService.TakeFromFreezer:input_type -> plans.v1.TakeFromFreezerRequest
+	68,  // 105: plans.v1.PlanService.SetEatingOut:input_type -> plans.v1.SetEatingOutRequest
+	20,  // 106: plans.v1.PlanService.GetPlanCost:output_type -> plans.v1.GetPlanCostResponse
+	12,  // 107: plans.v1.PlanService.GetWeek:output_type -> plans.v1.GetWeekResponse
+	23,  // 108: plans.v1.PlanService.PlanMeal:output_type -> plans.v1.PlanMealResponse
+	27,  // 109: plans.v1.PlanService.PlanMeals:output_type -> plans.v1.PlanMealsResponse
+	29,  // 110: plans.v1.PlanService.CreateCook:output_type -> plans.v1.CreateCookResponse
+	33,  // 111: plans.v1.PlanService.UpdateCook:output_type -> plans.v1.UpdateCookResponse
+	35,  // 112: plans.v1.PlanService.DeleteCook:output_type -> plans.v1.DeleteCookResponse
+	67,  // 113: plans.v1.PlanService.SetCookSupplier:output_type -> plans.v1.SetCookSupplierResponse
+	38,  // 114: plans.v1.PlanService.CreatePortion:output_type -> plans.v1.CreatePortionResponse
+	40,  // 115: plans.v1.PlanService.UpdatePortion:output_type -> plans.v1.UpdatePortionResponse
+	42,  // 116: plans.v1.PlanService.DeletePortion:output_type -> plans.v1.DeletePortionResponse
+	44,  // 117: plans.v1.PlanService.SetPortionEaten:output_type -> plans.v1.SetPortionEatenResponse
+	46,  // 118: plans.v1.PlanService.MoveCook:output_type -> plans.v1.MoveCookResponse
+	48,  // 119: plans.v1.PlanService.CreateStaple:output_type -> plans.v1.CreateStapleResponse
+	50,  // 120: plans.v1.PlanService.ListStaples:output_type -> plans.v1.ListStaplesResponse
+	52,  // 121: plans.v1.PlanService.UpdateStaple:output_type -> plans.v1.UpdateStapleResponse
+	54,  // 122: plans.v1.PlanService.DeleteStaple:output_type -> plans.v1.DeleteStapleResponse
+	56,  // 123: plans.v1.PlanService.SkipStaple:output_type -> plans.v1.SkipStapleResponse
+	58,  // 124: plans.v1.PlanService.UnskipStaple:output_type -> plans.v1.UnskipStapleResponse
+	60,  // 125: plans.v1.PlanService.SetStapleEaten:output_type -> plans.v1.SetStapleEatenResponse
+	62,  // 126: plans.v1.PlanService.ListFrozenLeftovers:output_type -> plans.v1.ListFrozenLeftoversResponse
+	65,  // 127: plans.v1.PlanService.TakeFromFreezer:output_type -> plans.v1.TakeFromFreezerResponse
+	69,  // 128: plans.v1.PlanService.SetEatingOut:output_type -> plans.v1.SetEatingOutResponse
+	106, // [106:129] is the sub-list for method output_type
+	83,  // [83:106] is the sub-list for method input_type
+	83,  // [83:83] is the sub-list for extension type_name
+	83,  // [83:83] is the sub-list for extension extendee
+	0,   // [0:83] is the sub-list for field type_name
 }
 
 func init() { file_plans_v1_plans_proto_init() }

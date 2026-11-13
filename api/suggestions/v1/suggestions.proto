@@ -5,6 +5,7 @@ package suggestions.v1;
 import "foods/v1/foods.proto";
 import "people/v1/people.proto";
 import "plans/v1/plans.proto";
+import "recipes/v1/recipes.proto";
 
 // SuggestionService suggests which of the household's recipes (see
 // RecipeService) to cook for an open slot of the plan (see PlanService):
@@ -322,6 +323,12 @@ message Suggestion {
   // the latest cooking day before it. Empty to cook it on its day. Plan it
   // with MealToPlan.cook_date.
   string cook_date = 12;
+  // The side the recipe is served with: the best of its served_with (see
+  // RecipeService), or the one a PlanChoice keeps. The score, portions,
+  // warnings and items to buy count it with the recipe, as it's eaten with
+  // it. Plan it with the recipe, as MealToPlan.side or PlanMealRequest.side.
+  // Unset for a recipe served with nothing, or a leftover.
+  recipes.v1.RecipeSide side = 13;
 }
 
 // Emphasis is how much a criterion of a plan counts.
@@ -392,6 +399,11 @@ message PlanChoice {
   // rather than a new cook, as a suggestion's leftover_of says. It's kept
   // if the plan has that meal's cook of the recipe.
   plans.v1.LeftoverOf leftover_of = 6;
+  // The side to keep with recipe_id, one of its served_with; unset for the
+  // plan to choose the best of them, as the suggestion's side says.
+  recipes.v1.RecipeSide side = 7;
+  // Whether to keep recipe_id served with no side, though it has some.
+  bool no_side = 8;
 }
 
 message SuggestPlanRequest {

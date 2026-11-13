@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/bs-tools/mealplann.ing/internal/nutrition"
@@ -485,6 +486,9 @@ type CookWithPortions struct {
 	Cook *Cook
 	// Portions are the shares, whose CookID is ignored.
 	Portions []*Portion
+	// FoodPortions are portions of foods planned with the cook, like a
+	// side of bread, created with it and returned after its shares.
+	FoodPortions []*Portion
 	// Supplies are the cooks supplying its components, by their IDs, among
 	// those created or existing, whose ConsumerCookID is ignored.
 	Supplies []*Supply
@@ -544,8 +548,24 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 		if len(cp.Portions) > 0 {
 			_, _ = q.CreateCookPortions(ctx, p)
 		}
-		portionIDs = append(portionIDs, p.Ids)
-		allPortionIDs = append(allPortionIDs, p.Ids...)
+		ids := slices.Clone(p.Ids)
+		for _, fp := range cp.FoodPortions {
+			fid := store.NewUUID()
+			_, _ = q.CreatePortion(ctx, &gen.CreatePortionParams{
+				ID:           fid,
+				HouseholdID:  c.HouseholdID,
+				PersonID:     fp.PersonID,
+				EatingTimeID: fp.EatingTimeID,
+				Date:         store.DateToPG(fp.Date),
+				FoodID:       fp.FoodID,
+				Amount:       positive(fp.Amount, true),
+				Unit:         unitToDB(fp.Unit, true),
+				Notes:        fp.Notes,
+			})
+			ids = append(ids, fid)
+		}
+		portionIDs = append(portionIDs, ids)
+		allPortionIDs = append(allPortionIDs, ids...)
 	}
 	// The supplies are created after all the cooks, which they refer to.
 	sp := &gen.CreateCookSuppliesParams{HouseholdID: householdID}

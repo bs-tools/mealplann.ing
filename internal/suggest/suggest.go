@@ -255,6 +255,11 @@ type Input struct {
 	// LeftoverOf, if not nil, is the only leftover to suggest: the cook of
 	// its recipe at its shared meal, if there's one.
 	LeftoverOf *LeftoverRef
+	// Side is the side to score the candidates with, like one the user
+	// chose, nil for the best of each's served_with; NoSide scores them
+	// with none.
+	Side   *recipes.Side
+	NoSide bool
 }
 
 // LeftoverRef refers to the cook of a recipe at a shared meal on a date,
@@ -332,6 +337,11 @@ type Suggestion struct {
 	// suggestion eats a serving more of, reheated, rather than cooking
 	// Recipe anew: CookServings are the servings it adds to that cook.
 	Leftover *plans.Cook
+	// Side, if not nil, is the side Recipe is served with, one of its
+	// ServedWith: its score, portions, warnings and shopping count it, its
+	// portions' servings are the recipe's, and each portion has the side's
+	// amount for each of them.
+	Side *recipes.Side
 }
 
 // LeftoverRef returns what the suggestion's leftover refers to, nil if
@@ -358,14 +368,15 @@ func Suggest(in *Input) []*Suggestion {
 	s := newScorer(in)
 	candidates := in.Candidates
 	if candidates == nil {
-		candidates = in.Recipes
+		// Sides are served with meals, rather than suggested as one.
+		candidates = slices.DeleteFunc(slices.Clone(in.Recipes), func(r *recipes.Recipe) bool { return isSide(r, s.sides) })
 	}
 	suggestions := make([]*Suggestion, 0, len(candidates))
 	for _, r := range candidates {
 		// Drafts aren't finished, so they aren't suggested, nor are recipes
 		// the household doesn't want suggested now.
 		if r.Suggestable(in.Date) {
-			suggestions = append(suggestions, s.score(r, nil))
+			suggestions = append(suggestions, s.scoreWithSides(r))
 		}
 	}
 	for _, cook := range s.leftovers() {
@@ -381,6 +392,47 @@ func Suggest(in *Input) []*Suggestion {
 		suggestions = suggestions[:in.Max]
 	}
 	return suggestions
+}
+
+// scoreWithSides scores a new cook of a recipe as it's eaten: with each of
+// the sides it's served with, like rice with a curry, whose nutrition,
+// weight and shopping count toward the meal, returning the best. It's the
+// input's side, if it has one, and the recipe alone with NoSide, or if it
+// has no sides.
+func (s *scorer) scoreWithSides(r *recipes.Recipe) *Suggestion {
+	sides := r.ServedWith
+	switch {
+	case s.in.NoSide:
+		sides = nil
+	case s.in.Side != nil:
+		sides = []recipes.Side{*s.in.Side}
+	}
+	var best *Suggestion
+	for i := range sides {
+		side := sides[i]
+		meal, ok := s.withSide(r, &side)
+		if !ok {
+			continue
+		}
+		sg := s.score(meal, nil)
+		sg.Recipe = r
+		sg.Side = &side
+		if best == nil || sg.Score > best.Score {
+			best = sg
+		}
+	}
+	if best == nil {
+		best = s.score(r, nil)
+	}
+	return best
+}
+
+// withSide returns the recipe with a side as one of its ingredients (see
+// recipes.Recipe.WithSide): false if the side's food or recipe isn't the
+// household's, or it's the recipe itself.
+func (s *scorer) withSide(r *recipes.Recipe, side *recipes.Side) (*recipes.Recipe, bool) {
+	meal := r.WithSide(side, s.recipes[side.RecipeID], s.in.Foods[side.FoodID])
+	return meal, meal != r
 }
 
 // bought is what the shopping list buys of a food, and takes from the
@@ -419,6 +471,8 @@ type scorer struct {
 	sources map[pgtype.UUID][]source
 	// plannedGrams are the grams planned at each slot.
 	plannedGrams map[plans.Slot]float64
+	// sides are the recipes other recipes are served with, by ID.
+	sides map[pgtype.UUID]bool
 }
 
 func newScorer(in *Input) *scorer {
@@ -428,8 +482,14 @@ func newScorer(in *Input) *scorer {
 		sources:      map[pgtype.UUID][]source{},
 		plannedGrams: map[plans.Slot]float64{},
 	}
+	s.sides = map[pgtype.UUID]bool{}
 	for _, r := range in.Recipes {
 		s.recipes[r.ID] = r
+		for _, side := range r.ServedWith {
+			if side.RecipeID.Valid {
+				s.sides[side.RecipeID] = true
+			}
+		}
 	}
 	s.weekNeeds = shopping.NeedsOf(in.Week, s.recipes)
 	s.base = s.shop(s.weekNeeds)
@@ -1222,6 +1282,11 @@ func (s *scorer) leftovers() []*plans.Cook {
 		if s.in.LeftoverOf != nil && !s.in.LeftoverOf.Matches(cook) {
 			continue
 		}
+		// The rest of a side, like a pot of rice, isn't a meal by itself:
+		// it's eaten with the meal it's cooked for, or planned with another.
+		if isSide(r, s.sides) {
+			continue
+		}
 		keeps := DefaultLeftoverDays
 		if r.FridgeDays != nil {
 			keeps = int(*r.FridgeDays)
@@ -1249,6 +1314,16 @@ func (s *scorer) leftovers() []*plans.Cook {
 		cooks = append(cooks, latest[id])
 	}
 	return cooks
+}
+
+// isSide reports whether a recipe is a side, served with others rather
+// than eaten as a meal: tagged "side", or a side of another recipe, sides,
+// and tagged for no meal.
+func isSide(r *recipes.Recipe, sides map[pgtype.UUID]bool) bool {
+	if slices.ContainsFunc(r.Tags, func(tag string) bool { return strings.EqualFold(tag, "side") }) {
+		return true
+	}
+	return sides[r.ID] && len(recipeMealTags(r)) == 0
 }
 
 // mainMeal reports whether a recipe makes a lunch or dinner: it's tagged

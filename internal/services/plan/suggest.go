@@ -315,6 +315,7 @@ func suggestionToProto(sg *suggest.Suggestion) *suggestionsv1.Suggestion {
 		NewItemCount: int32(sg.NewItemCount),
 		ItemsToBuy:   items,
 		LeftoverOf:   leftoverToProto(sg.LeftoverRef()),
+		Side:         sideToProto(sg.Side),
 	}.Build()
 }
 
