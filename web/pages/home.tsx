@@ -2,8 +2,9 @@ import AccountMenu from "@components/header/account-menu";
 import Loading from "@components/loading";
 import EatingTimeSuggestionsDialog from "@components/plan/eating-time-suggestions-dialog";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
+import TargetBars, { targetStates } from "@components/plan/target-bars";
 import WarningsLink from "@components/plan/warnings-link";
-import { weekWarnings } from "@components/plan/week-warnings";
+import { isTargetWarning, weekWarnings } from "@components/plan/week-warnings";
 import MealSheet from "@components/today/meal-sheet";
 import { CookDot, EffortDot, effortOf } from "@components/today/today-bits";
 import type { Effort } from "@components/today/today-bits";
@@ -460,11 +461,32 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
         </EmptyState>
       ) : (
         <>
+          {/* The day against the person's targets, then what else is off. */}
+          {targetStates(
+            people.data?.people.find((other) => other.id === day.personId)
+              ?.dailyTargets ?? [],
+            day.nutrients
+          ).length > 0 && (
+            <Link
+              to="/plan/warnings"
+              aria-label={`${day.personName}'s day against their targets`}
+              className="rounded-2xl border border-line bg-white px-4 py-3.5"
+            >
+              <TargetBars
+                targets={
+                  people.data?.people.find((other) => other.id === day.personId)
+                    ?.dailyTargets ?? []
+                }
+                nutrients={day.nutrients}
+              />
+            </Link>
+          )}
           <WarningsLink
             count={
               weekWarnings(week.data, now).filter(
                 (item) =>
                   item.date === now &&
+                  !isTargetWarning(item.warning) &&
                   (item.person === undefined ||
                     item.person.personId === day.personId)
               ).length

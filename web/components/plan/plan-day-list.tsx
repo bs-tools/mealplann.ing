@@ -5,10 +5,12 @@ import {
   rowPlanned,
   rowsOf,
 } from "@components/plan/plan-rows";
+import TargetBars, { targetStates } from "@components/plan/target-bars";
 import type { Effort } from "@components/today/today-bits";
 import { sectionLabelClass } from "@components/ui/styles";
+import type { NutrientTarget, Person } from "gen/people/v1/people_pb";
 import type { PlanDay } from "gen/plans/v1/plans_pb";
-import { parseDate } from "helpers/dates";
+import { parseDate, startOfWeek } from "helpers/dates";
 import { formatList } from "helpers/format";
 import React from "react";
 import { Link } from "react-router";
@@ -34,8 +36,14 @@ const EFFORT_STYLE: Record<Effort, { dot: string; word: string }> = {
 const emptyRowClass =
   "flex w-full items-center rounded-2xl border-2 border-dashed border-line px-4 py-3.5 text-left text-base text-ink-soft hover:border-muted";
 
+// TargetsOf returns a person's daily targets, none if they aren't known.
+const targetsOf = (people: Person[], personId: string): NutrientTarget[] =>
+  people.find((person) => person.id === personId)?.dailyTargets ?? [];
+
 interface PlanDayListProps {
   days: PlanDay[];
+  // The household, for each person's daily targets.
+  people: Person[];
   today: string;
   onOpen: (day: PlanDay, row: MealRow) => void;
   onPlan: (day: PlanDay, row: MealRow) => void;
@@ -48,6 +56,7 @@ interface PlanDayListProps {
  */
 const PlanDayList: React.FC<PlanDayListProps> = ({
   days,
+  people,
   today,
   onOpen,
   onPlan,
@@ -69,6 +78,43 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
           className="flex scroll-mt-4 flex-col gap-2"
         >
           <h2 className={sectionLabelClass}>{label}</h2>
+          {/* Each person's day against their targets, once it has meals. */}
+          {!empty &&
+            day.people.some(
+              (person) =>
+                targetStates(targetsOf(people, person.personId), undefined)
+                  .length > 0
+            ) && (
+              <Link
+                to={`/plan/warnings?${new URLSearchParams(
+                  startOfWeek(day.date) === startOfWeek(today)
+                    ? {}
+                    : { week: startOfWeek(day.date) }
+                ).toString()}`}
+                aria-label={`${label}'s targets`}
+                className="flex flex-col gap-2.5 rounded-2xl border border-line bg-white px-4 py-3 hover:border-muted"
+              >
+                {day.people
+                  .filter(
+                    (person) => targetsOf(people, person.personId).length > 0
+                  )
+                  .map((person) => (
+                    <span
+                      key={person.personId}
+                      className="flex items-start gap-3"
+                    >
+                      <span className="w-20 shrink-0 truncate text-sm font-medium text-ink-soft">
+                        {person.personName}
+                      </span>
+                      <TargetBars
+                        compact
+                        targets={targetsOf(people, person.personId)}
+                        nutrients={person.nutrients}
+                      />
+                    </span>
+                  ))}
+              </Link>
+            )}
           {empty ? (
             <Link
               to={`/plan/auto?start=${day.date}&days=1`}
