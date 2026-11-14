@@ -901,17 +901,18 @@ type Recipe struct {
 }
 
 type RecipeIngredient struct {
-	RecipeID          pgtype.UUID
-	HouseholdID       pgtype.UUID
-	Position          int32
-	FoodID            pgtype.UUID
-	Amount            float64
-	Unit              NullAmountUnit
-	Note              string
-	OriginalText      string
-	Optional          bool
-	ComponentRecipeID pgtype.UUID
-	KitchenUnit       pgtype.Text
+	RecipeID           pgtype.UUID
+	HouseholdID        pgtype.UUID
+	Position           int32
+	FoodID             pgtype.UUID
+	Amount             float64
+	Unit               NullAmountUnit
+	Note               string
+	OriginalText       string
+	Optional           bool
+	ComponentRecipeID  pgtype.UUID
+	KitchenUnit        pgtype.Text
+	AlternativeFoodIds []pgtype.UUID
 }
 
 type ReferenceFood struct {

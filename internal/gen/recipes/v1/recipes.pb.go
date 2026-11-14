@@ -1098,20 +1098,21 @@ func (b0 Step_builder) Build() *Step {
 // original_text, with its amount and unit if known, until its food is
 // chosen.
 type Ingredient struct {
-	state                             protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_FoodId                 string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
-	xxx_hidden_FoodName               string                 `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3"`
-	xxx_hidden_Amount                 float64                `protobuf:"fixed64,3,opt,name=amount,proto3"`
-	xxx_hidden_Unit                   v1.AmountUnit          `protobuf:"varint,4,opt,name=unit,proto3,enum=foods.v1.AmountUnit"`
-	xxx_hidden_Note                   string                 `protobuf:"bytes,5,opt,name=note,proto3"`
-	xxx_hidden_OriginalText           string                 `protobuf:"bytes,6,opt,name=original_text,json=originalText,proto3"`
-	xxx_hidden_Optional               bool                   `protobuf:"varint,7,opt,name=optional,proto3"`
-	xxx_hidden_RecipeId               string                 `protobuf:"bytes,8,opt,name=recipe_id,json=recipeId,proto3"`
-	xxx_hidden_RecipeName             string                 `protobuf:"bytes,9,opt,name=recipe_name,json=recipeName,proto3"`
-	xxx_hidden_FoodMeasure            v1.Measure             `protobuf:"varint,10,opt,name=food_measure,json=foodMeasure,proto3,enum=foods.v1.Measure"`
-	xxx_hidden_FoodGramsPerMilliliter float64                `protobuf:"fixed64,11,opt,name=food_grams_per_milliliter,json=foodGramsPerMilliliter,proto3"`
-	xxx_hidden_FoodGramsPerPiece      float64                `protobuf:"fixed64,12,opt,name=food_grams_per_piece,json=foodGramsPerPiece,proto3"`
-	xxx_hidden_ComponentServings      float64                `protobuf:"fixed64,13,opt,name=component_servings,json=componentServings,proto3"`
+	state                             protoimpl.MessageState    `protogen:"opaque.v1"`
+	xxx_hidden_FoodId                 string                    `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
+	xxx_hidden_FoodName               string                    `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3"`
+	xxx_hidden_Amount                 float64                   `protobuf:"fixed64,3,opt,name=amount,proto3"`
+	xxx_hidden_Unit                   v1.AmountUnit             `protobuf:"varint,4,opt,name=unit,proto3,enum=foods.v1.AmountUnit"`
+	xxx_hidden_Note                   string                    `protobuf:"bytes,5,opt,name=note,proto3"`
+	xxx_hidden_OriginalText           string                    `protobuf:"bytes,6,opt,name=original_text,json=originalText,proto3"`
+	xxx_hidden_Optional               bool                      `protobuf:"varint,7,opt,name=optional,proto3"`
+	xxx_hidden_RecipeId               string                    `protobuf:"bytes,8,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_RecipeName             string                    `protobuf:"bytes,9,opt,name=recipe_name,json=recipeName,proto3"`
+	xxx_hidden_FoodMeasure            v1.Measure                `protobuf:"varint,10,opt,name=food_measure,json=foodMeasure,proto3,enum=foods.v1.Measure"`
+	xxx_hidden_FoodGramsPerMilliliter float64                   `protobuf:"fixed64,11,opt,name=food_grams_per_milliliter,json=foodGramsPerMilliliter,proto3"`
+	xxx_hidden_FoodGramsPerPiece      float64                   `protobuf:"fixed64,12,opt,name=food_grams_per_piece,json=foodGramsPerPiece,proto3"`
+	xxx_hidden_ComponentServings      float64                   `protobuf:"fixed64,13,opt,name=component_servings,json=componentServings,proto3"`
+	xxx_hidden_Alternatives           *[]*IngredientAlternative `protobuf:"bytes,14,rep,name=alternatives,proto3"`
 	unknownFields                     protoimpl.UnknownFields
 	sizeCache                         protoimpl.SizeCache
 }
@@ -1232,6 +1233,15 @@ func (x *Ingredient) GetComponentServings() float64 {
 	return 0
 }
 
+func (x *Ingredient) GetAlternatives() []*IngredientAlternative {
+	if x != nil {
+		if x.xxx_hidden_Alternatives != nil {
+			return *x.xxx_hidden_Alternatives
+		}
+	}
+	return nil
+}
+
 func (x *Ingredient) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -1284,6 +1294,10 @@ func (x *Ingredient) SetComponentServings(v float64) {
 	x.xxx_hidden_ComponentServings = v
 }
 
+func (x *Ingredient) SetAlternatives(v []*IngredientAlternative) {
+	x.xxx_hidden_Alternatives = &v
+}
+
 type Ingredient_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -1328,6 +1342,14 @@ type Ingredient_builder struct {
 	// or for grams without one, the weight of its ingredients. 0 if it can't
 	// be converted, as the recipe has no yield in that unit.
 	ComponentServings float64
+	// The foods the ingredient can be made with instead of food_id, in the
+	// same amount, like extra firm tofu for firm, in order of preference:
+	// "1 block of firm or extra firm tofu". The recipe's nutrition and cost
+	// are food_id's. The shopping list counts whichever of them the pantry
+	// has, and buys food_id if it has none of them; marking the cook done
+	// takes the one in the pantry. Only for a food, not a component. At most
+	// 5, each one of the household's foods, different from food_id.
+	Alternatives []*IngredientAlternative
 }
 
 func (b0 Ingredient_builder) Build() *Ingredient {
@@ -1347,6 +1369,81 @@ func (b0 Ingredient_builder) Build() *Ingredient {
 	x.xxx_hidden_FoodGramsPerMilliliter = b.FoodGramsPerMilliliter
 	x.xxx_hidden_FoodGramsPerPiece = b.FoodGramsPerPiece
 	x.xxx_hidden_ComponentServings = b.ComponentServings
+	x.xxx_hidden_Alternatives = &b.Alternatives
+	return m0
+}
+
+// A food an ingredient can be made with instead of its own.
+type IngredientAlternative struct {
+	state               protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FoodId   string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
+	xxx_hidden_FoodName string                 `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *IngredientAlternative) Reset() {
+	*x = IngredientAlternative{}
+	mi := &file_recipes_v1_recipes_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IngredientAlternative) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IngredientAlternative) ProtoMessage() {}
+
+func (x *IngredientAlternative) ProtoReflect() protoreflect.Message {
+	mi := &file_recipes_v1_recipes_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IngredientAlternative) GetFoodId() string {
+	if x != nil {
+		return x.xxx_hidden_FoodId
+	}
+	return ""
+}
+
+func (x *IngredientAlternative) GetFoodName() string {
+	if x != nil {
+		return x.xxx_hidden_FoodName
+	}
+	return ""
+}
+
+func (x *IngredientAlternative) SetFoodId(v string) {
+	x.xxx_hidden_FoodId = v
+}
+
+func (x *IngredientAlternative) SetFoodName(v string) {
+	x.xxx_hidden_FoodName = v
+}
+
+type IngredientAlternative_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The ID of the household's food. Required.
+	FoodId string
+	// The name of the food.
+	FoodName string
+}
+
+func (b0 IngredientAlternative_builder) Build() *IngredientAlternative {
+	m0 := &IngredientAlternative{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_FoodId = b.FoodId
+	x.xxx_hidden_FoodName = b.FoodName
 	return m0
 }
 
@@ -1366,7 +1463,7 @@ type RecipeNutrition struct {
 
 func (x *RecipeNutrition) Reset() {
 	*x = RecipeNutrition{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[5]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1378,7 +1475,7 @@ func (x *RecipeNutrition) String() string {
 func (*RecipeNutrition) ProtoMessage() {}
 
 func (x *RecipeNutrition) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[5]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1532,7 +1629,7 @@ type IngredientIssue struct {
 
 func (x *IngredientIssue) Reset() {
 	*x = IngredientIssue{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[6]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1544,7 +1641,7 @@ func (x *IngredientIssue) String() string {
 func (*IngredientIssue) ProtoMessage() {}
 
 func (x *IngredientIssue) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[6]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1692,7 +1789,7 @@ type RecipeSummary struct {
 
 func (x *RecipeSummary) Reset() {
 	*x = RecipeSummary{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[7]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1704,7 +1801,7 @@ func (x *RecipeSummary) String() string {
 func (*RecipeSummary) ProtoMessage() {}
 
 func (x *RecipeSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[7]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2175,7 +2272,7 @@ type CreateRecipeRequest struct {
 
 func (x *CreateRecipeRequest) Reset() {
 	*x = CreateRecipeRequest{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[8]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2187,7 +2284,7 @@ func (x *CreateRecipeRequest) String() string {
 func (*CreateRecipeRequest) ProtoMessage() {}
 
 func (x *CreateRecipeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[8]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2261,7 +2358,7 @@ type CreateRecipeResponse struct {
 
 func (x *CreateRecipeResponse) Reset() {
 	*x = CreateRecipeResponse{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[9]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2273,7 +2370,7 @@ func (x *CreateRecipeResponse) String() string {
 func (*CreateRecipeResponse) ProtoMessage() {}
 
 func (x *CreateRecipeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[9]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2332,7 +2429,7 @@ type GetRecipeRequest struct {
 
 func (x *GetRecipeRequest) Reset() {
 	*x = GetRecipeRequest{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[10]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2344,7 +2441,7 @@ func (x *GetRecipeRequest) String() string {
 func (*GetRecipeRequest) ProtoMessage() {}
 
 func (x *GetRecipeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[10]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2423,7 +2520,7 @@ type GetRecipeResponse struct {
 
 func (x *GetRecipeResponse) Reset() {
 	*x = GetRecipeResponse{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[11]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2435,7 +2532,7 @@ func (x *GetRecipeResponse) String() string {
 func (*GetRecipeResponse) ProtoMessage() {}
 
 func (x *GetRecipeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[11]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2496,7 +2593,7 @@ type ListRecipesRequest struct {
 
 func (x *ListRecipesRequest) Reset() {
 	*x = ListRecipesRequest{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[12]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2508,7 +2605,7 @@ func (x *ListRecipesRequest) String() string {
 func (*ListRecipesRequest) ProtoMessage() {}
 
 func (x *ListRecipesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[12]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2618,7 +2715,7 @@ type ListRecipesResponse struct {
 
 func (x *ListRecipesResponse) Reset() {
 	*x = ListRecipesResponse{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[13]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2630,7 +2727,7 @@ func (x *ListRecipesResponse) String() string {
 func (*ListRecipesResponse) ProtoMessage() {}
 
 func (x *ListRecipesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[13]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2694,7 +2791,7 @@ type UpdateRecipeRequest struct {
 
 func (x *UpdateRecipeRequest) Reset() {
 	*x = UpdateRecipeRequest{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[14]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2706,7 +2803,7 @@ func (x *UpdateRecipeRequest) String() string {
 func (*UpdateRecipeRequest) ProtoMessage() {}
 
 func (x *UpdateRecipeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[14]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2791,7 +2888,7 @@ type UpdateRecipeResponse struct {
 
 func (x *UpdateRecipeResponse) Reset() {
 	*x = UpdateRecipeResponse{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[15]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2803,7 +2900,7 @@ func (x *UpdateRecipeResponse) String() string {
 func (*UpdateRecipeResponse) ProtoMessage() {}
 
 func (x *UpdateRecipeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[15]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2860,7 +2957,7 @@ type GetRecipeTimelineRequest struct {
 
 func (x *GetRecipeTimelineRequest) Reset() {
 	*x = GetRecipeTimelineRequest{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[16]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2872,7 +2969,7 @@ func (x *GetRecipeTimelineRequest) String() string {
 func (*GetRecipeTimelineRequest) ProtoMessage() {}
 
 func (x *GetRecipeTimelineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[16]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2920,7 +3017,7 @@ type GetRecipeTimelineResponse struct {
 
 func (x *GetRecipeTimelineResponse) Reset() {
 	*x = GetRecipeTimelineResponse{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[17]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2932,7 +3029,7 @@ func (x *GetRecipeTimelineResponse) String() string {
 func (*GetRecipeTimelineResponse) ProtoMessage() {}
 
 func (x *GetRecipeTimelineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[17]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3015,7 +3112,7 @@ type TimedStep struct {
 
 func (x *TimedStep) Reset() {
 	*x = TimedStep{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[18]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3027,7 +3124,7 @@ func (x *TimedStep) String() string {
 func (*TimedStep) ProtoMessage() {}
 
 func (x *TimedStep) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[18]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3157,7 +3254,7 @@ type UpdateRecipesRequest struct {
 
 func (x *UpdateRecipesRequest) Reset() {
 	*x = UpdateRecipesRequest{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[19]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3169,7 +3266,7 @@ func (x *UpdateRecipesRequest) String() string {
 func (*UpdateRecipesRequest) ProtoMessage() {}
 
 func (x *UpdateRecipesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[19]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3217,7 +3314,7 @@ type UpdateRecipesResponse struct {
 
 func (x *UpdateRecipesResponse) Reset() {
 	*x = UpdateRecipesResponse{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[20]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3229,7 +3326,7 @@ func (x *UpdateRecipesResponse) String() string {
 func (*UpdateRecipesResponse) ProtoMessage() {}
 
 func (x *UpdateRecipesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[20]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3280,7 +3377,7 @@ type UpdateRecipeResult struct {
 
 func (x *UpdateRecipeResult) Reset() {
 	*x = UpdateRecipeResult{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[21]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3292,7 +3389,7 @@ func (x *UpdateRecipeResult) String() string {
 func (*UpdateRecipeResult) ProtoMessage() {}
 
 func (x *UpdateRecipeResult) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[21]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3381,7 +3478,7 @@ type ReplaceFoodRequest struct {
 
 func (x *ReplaceFoodRequest) Reset() {
 	*x = ReplaceFoodRequest{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[22]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3393,7 +3490,7 @@ func (x *ReplaceFoodRequest) String() string {
 func (*ReplaceFoodRequest) ProtoMessage() {}
 
 func (x *ReplaceFoodRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[22]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3484,7 +3581,7 @@ type ReplaceFoodResponse struct {
 
 func (x *ReplaceFoodResponse) Reset() {
 	*x = ReplaceFoodResponse{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[23]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3496,7 +3593,7 @@ func (x *ReplaceFoodResponse) String() string {
 func (*ReplaceFoodResponse) ProtoMessage() {}
 
 func (x *ReplaceFoodResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[23]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3544,7 +3641,7 @@ type DeleteRecipeRequest struct {
 
 func (x *DeleteRecipeRequest) Reset() {
 	*x = DeleteRecipeRequest{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[24]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3556,7 +3653,7 @@ func (x *DeleteRecipeRequest) String() string {
 func (*DeleteRecipeRequest) ProtoMessage() {}
 
 func (x *DeleteRecipeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[24]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3601,7 +3698,7 @@ type DeleteRecipeResponse struct {
 
 func (x *DeleteRecipeResponse) Reset() {
 	*x = DeleteRecipeResponse{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[25]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3613,7 +3710,7 @@ func (x *DeleteRecipeResponse) String() string {
 func (*DeleteRecipeResponse) ProtoMessage() {}
 
 func (x *DeleteRecipeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[25]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3645,7 +3742,7 @@ type ImportRecipeRequest struct {
 
 func (x *ImportRecipeRequest) Reset() {
 	*x = ImportRecipeRequest{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[26]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3657,7 +3754,7 @@ func (x *ImportRecipeRequest) String() string {
 func (*ImportRecipeRequest) ProtoMessage() {}
 
 func (x *ImportRecipeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[26]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3703,7 +3800,7 @@ type PreviewImportRequest struct {
 
 func (x *PreviewImportRequest) Reset() {
 	*x = PreviewImportRequest{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[27]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3715,7 +3812,7 @@ func (x *PreviewImportRequest) String() string {
 func (*PreviewImportRequest) ProtoMessage() {}
 
 func (x *PreviewImportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[27]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3762,7 +3859,7 @@ type PreviewImportResponse struct {
 
 func (x *PreviewImportResponse) Reset() {
 	*x = PreviewImportResponse{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[28]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3774,7 +3871,7 @@ func (x *PreviewImportResponse) String() string {
 func (*PreviewImportResponse) ProtoMessage() {}
 
 func (x *PreviewImportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[28]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3851,7 +3948,7 @@ type ImportedIngredient struct {
 
 func (x *ImportedIngredient) Reset() {
 	*x = ImportedIngredient{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[29]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3863,7 +3960,7 @@ func (x *ImportedIngredient) String() string {
 func (*ImportedIngredient) ProtoMessage() {}
 
 func (x *ImportedIngredient) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[29]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3929,7 +4026,7 @@ type FoodMatch struct {
 
 func (x *FoodMatch) Reset() {
 	*x = FoodMatch{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[30]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3941,7 +4038,7 @@ func (x *FoodMatch) String() string {
 func (*FoodMatch) ProtoMessage() {}
 
 func (x *FoodMatch) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[30]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4016,7 +4113,7 @@ type ImportRecipeResponse struct {
 
 func (x *ImportRecipeResponse) Reset() {
 	*x = ImportRecipeResponse{}
-	mi := &file_recipes_v1_recipes_proto_msgTypes[31]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4028,7 +4125,7 @@ func (x *ImportRecipeResponse) String() string {
 func (*ImportRecipeResponse) ProtoMessage() {}
 
 func (x *ImportRecipeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_recipes_v1_recipes_proto_msgTypes[31]
+	mi := &file_recipes_v1_recipes_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4162,7 +4259,7 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x14start_offset_seconds\x18\b \x01(\x05R\x12startOffsetSeconds\x121\n" +
 	"\x12end_before_seconds\x18\n" +
 	" \x01(\x05H\x00R\x10endBeforeSeconds\x88\x01\x01B\x15\n" +
-	"\x13_end_before_seconds\"\x98\x04\n" +
+	"\x13_end_before_seconds\"\xdf\x04\n" +
 	"\n" +
 	"Ingredient\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12#\n" +
@@ -4179,7 +4276,11 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	" \x01(\x0e2\x11.foods.v1.MeasureB\x06\xaa\x9f\x19\x02\b\x01R\vfoodMeasure\x12A\n" +
 	"\x19food_grams_per_milliliter\x18\v \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x16foodGramsPerMilliliter\x127\n" +
 	"\x14food_grams_per_piece\x18\f \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x11foodGramsPerPiece\x125\n" +
-	"\x12component_servings\x18\r \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x11componentServings\"\xbd\x02\n" +
+	"\x12component_servings\x18\r \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x11componentServings\x12E\n" +
+	"\falternatives\x18\x0e \x03(\v2!.recipes.v1.IngredientAlternativeR\falternatives\"U\n" +
+	"\x15IngredientAlternative\x12\x17\n" +
+	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12#\n" +
+	"\tfood_name\x18\x02 \x01(\tB\x06\xaa\x9f\x19\x02\b\x01R\bfoodName\"\xbd\x02\n" +
 	"\x0fRecipeNutrition\x12\x1f\n" +
 	"\vtotal_grams\x18\x01 \x01(\x01R\n" +
 	"totalGrams\x12*\n" +
@@ -4325,103 +4426,105 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"Recipes.V1\xca\x02\n" +
 	"Recipes\\V1\xe2\x02\x16Recipes\\V1\\GPBMetadata\xea\x02\vRecipes::V1b\x06proto3"
 
-var file_recipes_v1_recipes_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_recipes_v1_recipes_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_recipes_v1_recipes_proto_goTypes = []any{
 	(*Recipe)(nil),                    // 0: recipes.v1.Recipe
 	(*RecipeSide)(nil),                // 1: recipes.v1.RecipeSide
 	(*RecipeCost)(nil),                // 2: recipes.v1.RecipeCost
 	(*Step)(nil),                      // 3: recipes.v1.Step
 	(*Ingredient)(nil),                // 4: recipes.v1.Ingredient
-	(*RecipeNutrition)(nil),           // 5: recipes.v1.RecipeNutrition
-	(*IngredientIssue)(nil),           // 6: recipes.v1.IngredientIssue
-	(*RecipeSummary)(nil),             // 7: recipes.v1.RecipeSummary
-	(*CreateRecipeRequest)(nil),       // 8: recipes.v1.CreateRecipeRequest
-	(*CreateRecipeResponse)(nil),      // 9: recipes.v1.CreateRecipeResponse
-	(*GetRecipeRequest)(nil),          // 10: recipes.v1.GetRecipeRequest
-	(*GetRecipeResponse)(nil),         // 11: recipes.v1.GetRecipeResponse
-	(*ListRecipesRequest)(nil),        // 12: recipes.v1.ListRecipesRequest
-	(*ListRecipesResponse)(nil),       // 13: recipes.v1.ListRecipesResponse
-	(*UpdateRecipeRequest)(nil),       // 14: recipes.v1.UpdateRecipeRequest
-	(*UpdateRecipeResponse)(nil),      // 15: recipes.v1.UpdateRecipeResponse
-	(*GetRecipeTimelineRequest)(nil),  // 16: recipes.v1.GetRecipeTimelineRequest
-	(*GetRecipeTimelineResponse)(nil), // 17: recipes.v1.GetRecipeTimelineResponse
-	(*TimedStep)(nil),                 // 18: recipes.v1.TimedStep
-	(*UpdateRecipesRequest)(nil),      // 19: recipes.v1.UpdateRecipesRequest
-	(*UpdateRecipesResponse)(nil),     // 20: recipes.v1.UpdateRecipesResponse
-	(*UpdateRecipeResult)(nil),        // 21: recipes.v1.UpdateRecipeResult
-	(*ReplaceFoodRequest)(nil),        // 22: recipes.v1.ReplaceFoodRequest
-	(*ReplaceFoodResponse)(nil),       // 23: recipes.v1.ReplaceFoodResponse
-	(*DeleteRecipeRequest)(nil),       // 24: recipes.v1.DeleteRecipeRequest
-	(*DeleteRecipeResponse)(nil),      // 25: recipes.v1.DeleteRecipeResponse
-	(*ImportRecipeRequest)(nil),       // 26: recipes.v1.ImportRecipeRequest
-	(*PreviewImportRequest)(nil),      // 27: recipes.v1.PreviewImportRequest
-	(*PreviewImportResponse)(nil),     // 28: recipes.v1.PreviewImportResponse
-	(*ImportedIngredient)(nil),        // 29: recipes.v1.ImportedIngredient
-	(*FoodMatch)(nil),                 // 30: recipes.v1.FoodMatch
-	(*ImportRecipeResponse)(nil),      // 31: recipes.v1.ImportRecipeResponse
-	(*timestamppb.Timestamp)(nil),     // 32: google.protobuf.Timestamp
-	(v1.AmountUnit)(0),                // 33: foods.v1.AmountUnit
-	(v1.Measure)(0),                   // 34: foods.v1.Measure
-	(*v1.Nutrients)(nil),              // 35: foods.v1.Nutrients
-	(*fieldmaskpb.FieldMask)(nil),     // 36: google.protobuf.FieldMask
+	(*IngredientAlternative)(nil),     // 5: recipes.v1.IngredientAlternative
+	(*RecipeNutrition)(nil),           // 6: recipes.v1.RecipeNutrition
+	(*IngredientIssue)(nil),           // 7: recipes.v1.IngredientIssue
+	(*RecipeSummary)(nil),             // 8: recipes.v1.RecipeSummary
+	(*CreateRecipeRequest)(nil),       // 9: recipes.v1.CreateRecipeRequest
+	(*CreateRecipeResponse)(nil),      // 10: recipes.v1.CreateRecipeResponse
+	(*GetRecipeRequest)(nil),          // 11: recipes.v1.GetRecipeRequest
+	(*GetRecipeResponse)(nil),         // 12: recipes.v1.GetRecipeResponse
+	(*ListRecipesRequest)(nil),        // 13: recipes.v1.ListRecipesRequest
+	(*ListRecipesResponse)(nil),       // 14: recipes.v1.ListRecipesResponse
+	(*UpdateRecipeRequest)(nil),       // 15: recipes.v1.UpdateRecipeRequest
+	(*UpdateRecipeResponse)(nil),      // 16: recipes.v1.UpdateRecipeResponse
+	(*GetRecipeTimelineRequest)(nil),  // 17: recipes.v1.GetRecipeTimelineRequest
+	(*GetRecipeTimelineResponse)(nil), // 18: recipes.v1.GetRecipeTimelineResponse
+	(*TimedStep)(nil),                 // 19: recipes.v1.TimedStep
+	(*UpdateRecipesRequest)(nil),      // 20: recipes.v1.UpdateRecipesRequest
+	(*UpdateRecipesResponse)(nil),     // 21: recipes.v1.UpdateRecipesResponse
+	(*UpdateRecipeResult)(nil),        // 22: recipes.v1.UpdateRecipeResult
+	(*ReplaceFoodRequest)(nil),        // 23: recipes.v1.ReplaceFoodRequest
+	(*ReplaceFoodResponse)(nil),       // 24: recipes.v1.ReplaceFoodResponse
+	(*DeleteRecipeRequest)(nil),       // 25: recipes.v1.DeleteRecipeRequest
+	(*DeleteRecipeResponse)(nil),      // 26: recipes.v1.DeleteRecipeResponse
+	(*ImportRecipeRequest)(nil),       // 27: recipes.v1.ImportRecipeRequest
+	(*PreviewImportRequest)(nil),      // 28: recipes.v1.PreviewImportRequest
+	(*PreviewImportResponse)(nil),     // 29: recipes.v1.PreviewImportResponse
+	(*ImportedIngredient)(nil),        // 30: recipes.v1.ImportedIngredient
+	(*FoodMatch)(nil),                 // 31: recipes.v1.FoodMatch
+	(*ImportRecipeResponse)(nil),      // 32: recipes.v1.ImportRecipeResponse
+	(*timestamppb.Timestamp)(nil),     // 33: google.protobuf.Timestamp
+	(v1.AmountUnit)(0),                // 34: foods.v1.AmountUnit
+	(v1.Measure)(0),                   // 35: foods.v1.Measure
+	(*v1.Nutrients)(nil),              // 36: foods.v1.Nutrients
+	(*fieldmaskpb.FieldMask)(nil),     // 37: google.protobuf.FieldMask
 }
 var file_recipes_v1_recipes_proto_depIdxs = []int32{
 	4,  // 0: recipes.v1.Recipe.ingredients:type_name -> recipes.v1.Ingredient
-	5,  // 1: recipes.v1.Recipe.nutrition:type_name -> recipes.v1.RecipeNutrition
-	32, // 2: recipes.v1.Recipe.create_time:type_name -> google.protobuf.Timestamp
-	32, // 3: recipes.v1.Recipe.update_time:type_name -> google.protobuf.Timestamp
+	6,  // 1: recipes.v1.Recipe.nutrition:type_name -> recipes.v1.RecipeNutrition
+	33, // 2: recipes.v1.Recipe.create_time:type_name -> google.protobuf.Timestamp
+	33, // 3: recipes.v1.Recipe.update_time:type_name -> google.protobuf.Timestamp
 	3,  // 4: recipes.v1.Recipe.instructions:type_name -> recipes.v1.Step
 	2,  // 5: recipes.v1.Recipe.cost:type_name -> recipes.v1.RecipeCost
-	33, // 6: recipes.v1.Recipe.yield_unit:type_name -> foods.v1.AmountUnit
+	34, // 6: recipes.v1.Recipe.yield_unit:type_name -> foods.v1.AmountUnit
 	1,  // 7: recipes.v1.Recipe.served_with:type_name -> recipes.v1.RecipeSide
-	33, // 8: recipes.v1.Ingredient.unit:type_name -> foods.v1.AmountUnit
-	34, // 9: recipes.v1.Ingredient.food_measure:type_name -> foods.v1.Measure
-	35, // 10: recipes.v1.RecipeNutrition.per_serving:type_name -> foods.v1.Nutrients
-	35, // 11: recipes.v1.RecipeNutrition.per_hundred_grams:type_name -> foods.v1.Nutrients
-	6,  // 12: recipes.v1.RecipeNutrition.issues:type_name -> recipes.v1.IngredientIssue
-	32, // 13: recipes.v1.RecipeSummary.update_time:type_name -> google.protobuf.Timestamp
-	1,  // 14: recipes.v1.RecipeSummary.served_with:type_name -> recipes.v1.RecipeSide
-	0,  // 15: recipes.v1.CreateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
-	0,  // 16: recipes.v1.CreateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	0,  // 17: recipes.v1.GetRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	7,  // 18: recipes.v1.ListRecipesResponse.recipes:type_name -> recipes.v1.RecipeSummary
-	0,  // 19: recipes.v1.UpdateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
-	36, // 20: recipes.v1.UpdateRecipeRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 21: recipes.v1.UpdateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	18, // 22: recipes.v1.GetRecipeTimelineResponse.steps:type_name -> recipes.v1.TimedStep
-	14, // 23: recipes.v1.UpdateRecipesRequest.requests:type_name -> recipes.v1.UpdateRecipeRequest
-	21, // 24: recipes.v1.UpdateRecipesResponse.results:type_name -> recipes.v1.UpdateRecipeResult
-	0,  // 25: recipes.v1.UpdateRecipeResult.recipe:type_name -> recipes.v1.Recipe
-	7,  // 26: recipes.v1.ReplaceFoodResponse.recipes:type_name -> recipes.v1.RecipeSummary
-	0,  // 27: recipes.v1.PreviewImportResponse.recipe:type_name -> recipes.v1.Recipe
-	29, // 28: recipes.v1.PreviewImportResponse.ingredients:type_name -> recipes.v1.ImportedIngredient
-	30, // 29: recipes.v1.ImportedIngredient.matches:type_name -> recipes.v1.FoodMatch
-	0,  // 30: recipes.v1.ImportRecipeResponse.recipe:type_name -> recipes.v1.Recipe
-	16, // 31: recipes.v1.RecipeService.GetRecipeTimeline:input_type -> recipes.v1.GetRecipeTimelineRequest
-	8,  // 32: recipes.v1.RecipeService.CreateRecipe:input_type -> recipes.v1.CreateRecipeRequest
-	10, // 33: recipes.v1.RecipeService.GetRecipe:input_type -> recipes.v1.GetRecipeRequest
-	12, // 34: recipes.v1.RecipeService.ListRecipes:input_type -> recipes.v1.ListRecipesRequest
-	14, // 35: recipes.v1.RecipeService.UpdateRecipe:input_type -> recipes.v1.UpdateRecipeRequest
-	19, // 36: recipes.v1.RecipeService.UpdateRecipes:input_type -> recipes.v1.UpdateRecipesRequest
-	22, // 37: recipes.v1.RecipeService.ReplaceFood:input_type -> recipes.v1.ReplaceFoodRequest
-	26, // 38: recipes.v1.RecipeService.ImportRecipe:input_type -> recipes.v1.ImportRecipeRequest
-	27, // 39: recipes.v1.RecipeService.PreviewImport:input_type -> recipes.v1.PreviewImportRequest
-	24, // 40: recipes.v1.RecipeService.DeleteRecipe:input_type -> recipes.v1.DeleteRecipeRequest
-	17, // 41: recipes.v1.RecipeService.GetRecipeTimeline:output_type -> recipes.v1.GetRecipeTimelineResponse
-	9,  // 42: recipes.v1.RecipeService.CreateRecipe:output_type -> recipes.v1.CreateRecipeResponse
-	11, // 43: recipes.v1.RecipeService.GetRecipe:output_type -> recipes.v1.GetRecipeResponse
-	13, // 44: recipes.v1.RecipeService.ListRecipes:output_type -> recipes.v1.ListRecipesResponse
-	15, // 45: recipes.v1.RecipeService.UpdateRecipe:output_type -> recipes.v1.UpdateRecipeResponse
-	20, // 46: recipes.v1.RecipeService.UpdateRecipes:output_type -> recipes.v1.UpdateRecipesResponse
-	23, // 47: recipes.v1.RecipeService.ReplaceFood:output_type -> recipes.v1.ReplaceFoodResponse
-	31, // 48: recipes.v1.RecipeService.ImportRecipe:output_type -> recipes.v1.ImportRecipeResponse
-	28, // 49: recipes.v1.RecipeService.PreviewImport:output_type -> recipes.v1.PreviewImportResponse
-	25, // 50: recipes.v1.RecipeService.DeleteRecipe:output_type -> recipes.v1.DeleteRecipeResponse
-	41, // [41:51] is the sub-list for method output_type
-	31, // [31:41] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	34, // 8: recipes.v1.Ingredient.unit:type_name -> foods.v1.AmountUnit
+	35, // 9: recipes.v1.Ingredient.food_measure:type_name -> foods.v1.Measure
+	5,  // 10: recipes.v1.Ingredient.alternatives:type_name -> recipes.v1.IngredientAlternative
+	36, // 11: recipes.v1.RecipeNutrition.per_serving:type_name -> foods.v1.Nutrients
+	36, // 12: recipes.v1.RecipeNutrition.per_hundred_grams:type_name -> foods.v1.Nutrients
+	7,  // 13: recipes.v1.RecipeNutrition.issues:type_name -> recipes.v1.IngredientIssue
+	33, // 14: recipes.v1.RecipeSummary.update_time:type_name -> google.protobuf.Timestamp
+	1,  // 15: recipes.v1.RecipeSummary.served_with:type_name -> recipes.v1.RecipeSide
+	0,  // 16: recipes.v1.CreateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
+	0,  // 17: recipes.v1.CreateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	0,  // 18: recipes.v1.GetRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	8,  // 19: recipes.v1.ListRecipesResponse.recipes:type_name -> recipes.v1.RecipeSummary
+	0,  // 20: recipes.v1.UpdateRecipeRequest.recipe:type_name -> recipes.v1.Recipe
+	37, // 21: recipes.v1.UpdateRecipeRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 22: recipes.v1.UpdateRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	19, // 23: recipes.v1.GetRecipeTimelineResponse.steps:type_name -> recipes.v1.TimedStep
+	15, // 24: recipes.v1.UpdateRecipesRequest.requests:type_name -> recipes.v1.UpdateRecipeRequest
+	22, // 25: recipes.v1.UpdateRecipesResponse.results:type_name -> recipes.v1.UpdateRecipeResult
+	0,  // 26: recipes.v1.UpdateRecipeResult.recipe:type_name -> recipes.v1.Recipe
+	8,  // 27: recipes.v1.ReplaceFoodResponse.recipes:type_name -> recipes.v1.RecipeSummary
+	0,  // 28: recipes.v1.PreviewImportResponse.recipe:type_name -> recipes.v1.Recipe
+	30, // 29: recipes.v1.PreviewImportResponse.ingredients:type_name -> recipes.v1.ImportedIngredient
+	31, // 30: recipes.v1.ImportedIngredient.matches:type_name -> recipes.v1.FoodMatch
+	0,  // 31: recipes.v1.ImportRecipeResponse.recipe:type_name -> recipes.v1.Recipe
+	17, // 32: recipes.v1.RecipeService.GetRecipeTimeline:input_type -> recipes.v1.GetRecipeTimelineRequest
+	9,  // 33: recipes.v1.RecipeService.CreateRecipe:input_type -> recipes.v1.CreateRecipeRequest
+	11, // 34: recipes.v1.RecipeService.GetRecipe:input_type -> recipes.v1.GetRecipeRequest
+	13, // 35: recipes.v1.RecipeService.ListRecipes:input_type -> recipes.v1.ListRecipesRequest
+	15, // 36: recipes.v1.RecipeService.UpdateRecipe:input_type -> recipes.v1.UpdateRecipeRequest
+	20, // 37: recipes.v1.RecipeService.UpdateRecipes:input_type -> recipes.v1.UpdateRecipesRequest
+	23, // 38: recipes.v1.RecipeService.ReplaceFood:input_type -> recipes.v1.ReplaceFoodRequest
+	27, // 39: recipes.v1.RecipeService.ImportRecipe:input_type -> recipes.v1.ImportRecipeRequest
+	28, // 40: recipes.v1.RecipeService.PreviewImport:input_type -> recipes.v1.PreviewImportRequest
+	25, // 41: recipes.v1.RecipeService.DeleteRecipe:input_type -> recipes.v1.DeleteRecipeRequest
+	18, // 42: recipes.v1.RecipeService.GetRecipeTimeline:output_type -> recipes.v1.GetRecipeTimelineResponse
+	10, // 43: recipes.v1.RecipeService.CreateRecipe:output_type -> recipes.v1.CreateRecipeResponse
+	12, // 44: recipes.v1.RecipeService.GetRecipe:output_type -> recipes.v1.GetRecipeResponse
+	14, // 45: recipes.v1.RecipeService.ListRecipes:output_type -> recipes.v1.ListRecipesResponse
+	16, // 46: recipes.v1.RecipeService.UpdateRecipe:output_type -> recipes.v1.UpdateRecipeResponse
+	21, // 47: recipes.v1.RecipeService.UpdateRecipes:output_type -> recipes.v1.UpdateRecipesResponse
+	24, // 48: recipes.v1.RecipeService.ReplaceFood:output_type -> recipes.v1.ReplaceFoodResponse
+	32, // 49: recipes.v1.RecipeService.ImportRecipe:output_type -> recipes.v1.ImportRecipeResponse
+	29, // 50: recipes.v1.RecipeService.PreviewImport:output_type -> recipes.v1.PreviewImportResponse
+	26, // 51: recipes.v1.RecipeService.DeleteRecipe:output_type -> recipes.v1.DeleteRecipeResponse
+	42, // [42:52] is the sub-list for method output_type
+	32, // [32:42] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_recipes_v1_recipes_proto_init() }
@@ -4431,14 +4534,14 @@ func file_recipes_v1_recipes_proto_init() {
 	}
 	file_recipes_v1_recipes_proto_msgTypes[0].OneofWrappers = []any{}
 	file_recipes_v1_recipes_proto_msgTypes[3].OneofWrappers = []any{}
-	file_recipes_v1_recipes_proto_msgTypes[7].OneofWrappers = []any{}
+	file_recipes_v1_recipes_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_recipes_v1_recipes_proto_rawDesc), len(file_recipes_v1_recipes_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   32,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

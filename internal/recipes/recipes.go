@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -156,6 +157,31 @@ type Ingredient struct {
 	// Component is the component's recipe, read with it, nil for a food or
 	// a component nested deeper than MaxComponentDepth.
 	Component *Recipe
+	// Alternatives are the foods it can be made with instead, in the same
+	// amount, like extra firm tofu for firm, in order of preference. The
+	// nutrition and cost are the ingredient's own food's; the shopping list
+	// and the pantry use whichever is in stock.
+	Alternatives []Alternative
+}
+
+// Alternative is a food an ingredient can be made with instead of its own.
+type Alternative struct {
+	FoodID pgtype.UUID
+	// Name is the food's name, read with it and ignored when writing.
+	Name string
+}
+
+// AlternativeIDs returns the IDs of the ingredient's alternatives, nil if
+// it has none.
+func (in *Ingredient) AlternativeIDs() []pgtype.UUID {
+	if len(in.Alternatives) == 0 {
+		return nil
+	}
+	ids := make([]pgtype.UUID, 0, len(in.Alternatives))
+	for _, a := range in.Alternatives {
+		ids = append(ids, a.FoodID)
+	}
+	return ids
 }
 
 // IsComponent reports whether the ingredient is another recipe.
@@ -987,6 +1013,7 @@ func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredien
 		OriginalTexts:      make([]string, 0, len(ingredients)),
 		Optionals:          make([]bool, 0, len(ingredients)),
 		KitchenUnits:       make([]string, 0, len(ingredients)),
+		AlternativeFoodIds: make([]string, 0, len(ingredients)),
 	}
 	for _, in := range ingredients {
 		p.FoodIds = append(p.FoodIds, in.FoodID)
@@ -1001,6 +1028,11 @@ func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredien
 		p.OriginalTexts = append(p.OriginalTexts, in.OriginalText)
 		p.Optionals = append(p.Optionals, in.Optional)
 		p.KitchenUnits = append(p.KitchenUnits, string(in.KitchenUnit))
+		alternatives := make([]string, 0, len(in.Alternatives))
+		for _, a := range in.Alternatives {
+			alternatives = append(alternatives, store.UUIDToString(a.FoodID))
+		}
+		p.AlternativeFoodIds = append(p.AlternativeFoodIds, strings.Join(alternatives, ","))
 	}
 	return p
 }
@@ -1074,7 +1106,16 @@ func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 	if in.Unit != nil {
 		unit = unitFromDB(*in.Unit)
 	}
+	alternatives := make([]Alternative, 0, len(row.AlternativeIds))
+	for i, id := range row.AlternativeIds {
+		a := Alternative{FoodID: id}
+		if i < len(row.AlternativeNames) {
+			a.Name = row.AlternativeNames[i]
+		}
+		alternatives = append(alternatives, a)
+	}
 	return &Ingredient{
+		Alternatives:          alternatives,
 		FoodID:                in.FoodID,
 		ComponentRecipeID:     in.ComponentRecipeID,
 		Amount:                in.Amount,

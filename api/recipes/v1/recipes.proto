@@ -357,6 +357,22 @@ message Ingredient {
   // or for grams without one, the weight of its ingredients. 0 if it can't
   // be converted, as the recipe has no yield in that unit.
   double component_servings = 13 [(mcp.v1.field).output_only = true];
+  // The foods the ingredient can be made with instead of food_id, in the
+  // same amount, like extra firm tofu for firm, in order of preference:
+  // "1 block of firm or extra firm tofu". The recipe's nutrition and cost
+  // are food_id's. The shopping list counts whichever of them the pantry
+  // has, and buys food_id if it has none of them; marking the cook done
+  // takes the one in the pantry. Only for a food, not a component. At most
+  // 5, each one of the household's foods, different from food_id.
+  repeated IngredientAlternative alternatives = 14;
+}
+
+// A food an ingredient can be made with instead of its own.
+message IngredientAlternative {
+  // The ID of the household's food. Required.
+  string food_id = 1;
+  // The name of the food.
+  string food_name = 2 [(mcp.v1.field).output_only = true];
 }
 
 // The nutrition of a recipe, computed from its ingredients' foods, as

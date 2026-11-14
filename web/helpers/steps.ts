@@ -136,16 +136,21 @@ export const stepStart = (step: Step, index: number): string => {
 };
 
 /**
- * IngredientName names an ingredient's food or component recipe, or an
- * unmatched draft ingredient by its original text.
+ * IngredientName names an ingredient's food, with its alternatives, or its
+ * component recipe, or an unmatched draft ingredient by its original text.
  */
 export const ingredientName = (ingredient: Ingredient): string => {
   if (ingredient.recipeId !== "") {
     return ingredient.recipeName;
   }
-  return ingredient.foodId === ""
-    ? ingredient.originalText
-    : ingredient.foodName;
+  if (ingredient.foodId === "") {
+    return ingredient.originalText;
+  }
+  // The foods it can be made with instead follow, as "firm or extra firm".
+  return [
+    ingredient.foodName,
+    ...ingredient.alternatives.map((alternative) => alternative.foodName),
+  ].join(" or ");
 };
 
 /**
