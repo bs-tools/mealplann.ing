@@ -1347,8 +1347,18 @@ type Ingredient_builder struct {
 	// "1 block of firm or extra firm tofu". The recipe's nutrition and cost
 	// are food_id's. The shopping list counts whichever of them the pantry
 	// has, and buys food_id if it has none of them; marking the cook done
-	// takes the one in the pantry. Only for a food, not a component. At most
-	// 5, each one of the household's foods, different from food_id.
+	// takes the one in the pantry.
+	//
+	// For a component, the recipes it can be made with instead of recipe_id,
+	// like quick-cooked beans for soaked ones: the nutrition and cost are
+	// still recipe_id's, but a cook of either can supply it (see
+	// PlanService.SetCookSupplier), and planning takes frozen leftovers of
+	// either, oldest first, before planning a cook of recipe_id. An amount by
+	// weight, volume or pieces is converted to servings of whichever recipe
+	// supplies it, with that recipe's yield.
+	//
+	// At most 5: foods for a food, recipes for a component, each the
+	// household's and different from the ingredient's own.
 	Alternatives []*IngredientAlternative
 }
 
@@ -1373,13 +1383,16 @@ func (b0 Ingredient_builder) Build() *Ingredient {
 	return m0
 }
 
-// A food an ingredient can be made with instead of its own.
+// A food an ingredient can be made with instead of its own, or a recipe a
+// component can.
 type IngredientAlternative struct {
-	state               protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_FoodId   string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
-	xxx_hidden_FoodName string                 `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_FoodId     string                 `protobuf:"bytes,1,opt,name=food_id,json=foodId,proto3"`
+	xxx_hidden_FoodName   string                 `protobuf:"bytes,2,opt,name=food_name,json=foodName,proto3"`
+	xxx_hidden_RecipeId   string                 `protobuf:"bytes,3,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_RecipeName string                 `protobuf:"bytes,4,opt,name=recipe_name,json=recipeName,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *IngredientAlternative) Reset() {
@@ -1421,6 +1434,20 @@ func (x *IngredientAlternative) GetFoodName() string {
 	return ""
 }
 
+func (x *IngredientAlternative) GetRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeId
+	}
+	return ""
+}
+
+func (x *IngredientAlternative) GetRecipeName() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeName
+	}
+	return ""
+}
+
 func (x *IngredientAlternative) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -1429,13 +1456,25 @@ func (x *IngredientAlternative) SetFoodName(v string) {
 	x.xxx_hidden_FoodName = v
 }
 
+func (x *IngredientAlternative) SetRecipeId(v string) {
+	x.xxx_hidden_RecipeId = v
+}
+
+func (x *IngredientAlternative) SetRecipeName(v string) {
+	x.xxx_hidden_RecipeName = v
+}
+
 type IngredientAlternative_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	// The ID of the household's food. Required.
+	// The ID of the household's food, for an ingredient of a food.
 	FoodId string
 	// The name of the food.
 	FoodName string
+	// The ID of the household's recipe, for a component.
+	RecipeId string
+	// The name of the recipe.
+	RecipeName string
 }
 
 func (b0 IngredientAlternative_builder) Build() *IngredientAlternative {
@@ -1444,6 +1483,8 @@ func (b0 IngredientAlternative_builder) Build() *IngredientAlternative {
 	_, _ = b, x
 	x.xxx_hidden_FoodId = b.FoodId
 	x.xxx_hidden_FoodName = b.FoodName
+	x.xxx_hidden_RecipeId = b.RecipeId
+	x.xxx_hidden_RecipeName = b.RecipeName
 	return m0
 }
 
@@ -4277,10 +4318,13 @@ const file_recipes_v1_recipes_proto_rawDesc = "" +
 	"\x19food_grams_per_milliliter\x18\v \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x16foodGramsPerMilliliter\x127\n" +
 	"\x14food_grams_per_piece\x18\f \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x11foodGramsPerPiece\x125\n" +
 	"\x12component_servings\x18\r \x01(\x01B\x06\xaa\x9f\x19\x02\b\x01R\x11componentServings\x12E\n" +
-	"\falternatives\x18\x0e \x03(\v2!.recipes.v1.IngredientAlternativeR\falternatives\"U\n" +
+	"\falternatives\x18\x0e \x03(\v2!.recipes.v1.IngredientAlternativeR\falternatives\"\x9b\x01\n" +
 	"\x15IngredientAlternative\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12#\n" +
-	"\tfood_name\x18\x02 \x01(\tB\x06\xaa\x9f\x19\x02\b\x01R\bfoodName\"\xbd\x02\n" +
+	"\tfood_name\x18\x02 \x01(\tB\x06\xaa\x9f\x19\x02\b\x01R\bfoodName\x12\x1b\n" +
+	"\trecipe_id\x18\x03 \x01(\tR\brecipeId\x12'\n" +
+	"\vrecipe_name\x18\x04 \x01(\tB\x06\xaa\x9f\x19\x02\b\x01R\n" +
+	"recipeName\"\xbd\x02\n" +
 	"\x0fRecipeNutrition\x12\x1f\n" +
 	"\vtotal_grams\x18\x01 \x01(\x01R\n" +
 	"totalGrams\x12*\n" +

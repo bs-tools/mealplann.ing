@@ -49,7 +49,9 @@ const SupplyPicker: React.FC<SupplyPickerProps> = ({
   const options = weekCooks.filter(
     (other) =>
       other.cook !== undefined &&
-      other.cook.recipeId === supply.componentRecipeId
+      // A cook of the component, or of a recipe listed instead of it.
+      (other.cook.recipeId === supply.componentRecipeId ||
+        supply.alternativeRecipeIds.includes(other.cook.recipeId))
   );
   return (
     <div className="flex flex-col gap-0.5">

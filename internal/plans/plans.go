@@ -111,6 +111,9 @@ type Supply struct {
 	SupplierDate       time.Time
 	SupplierRecipeName string
 	Servings           float64
+	// AlternativeRecipeIDs are the recipes the consumer's ingredient lists
+	// as alternatives to the component, whose cooks can supply it too.
+	AlternativeRecipeIDs []pgtype.UUID
 }
 
 // Portion is what a person eats at one of their eating times on a date:
@@ -452,6 +455,9 @@ func attachSupplies(cooks map[pgtype.UUID]*Cook, rows []*gen.ListCookSuppliesRow
 			SupplierDate:       store.DateFromPG(row.SupplierDate),
 			SupplierRecipeName: row.SupplierRecipeName,
 			Servings:           row.Servings,
+			// The read leaves out none, so it can name a deleted recipe,
+			// which has no cooks to choose.
+			AlternativeRecipeIDs: row.AlternativeRecipeIds,
 		}
 		supplies = append(supplies, s)
 		if c, ok := cooks[s.ConsumerCookID]; ok {

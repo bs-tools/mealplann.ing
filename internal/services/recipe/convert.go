@@ -65,6 +65,21 @@ const (
 // is enough for micrograms.
 const nutritionDigits = 3
 
+// alternativesToProto converts an ingredient's alternatives, nil for none.
+func alternativesToProto(list []recipes.Alternative) []*recipesv1.IngredientAlternative {
+	var out []*recipesv1.IngredientAlternative
+	for _, a := range list {
+		b := recipesv1.IngredientAlternative_builder{}
+		if a.RecipeID.Valid {
+			b.RecipeId, b.RecipeName = store.UUIDToString(a.RecipeID), a.Name
+		} else {
+			b.FoodId, b.FoodName = store.UUIDToString(a.FoodID), a.Name
+		}
+		out = append(out, b.Build())
+	}
+	return out
+}
+
 func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 	ingredients := make([]*recipesv1.Ingredient, 0, len(r.Ingredients))
 	for _, in := range r.Ingredients {
@@ -80,6 +95,7 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 			b.RecipeName = in.Name()
 			b.Amount, b.Unit = amounts.ToProto(in.Amount, in.Unit, in.KitchenUnit)
 			b.ComponentServings = round(in.ComponentServings())
+			b.Alternatives = alternativesToProto(in.Alternatives)
 		case !in.IsMatched():
 			b.Amount, b.Unit = amounts.ToProto(in.Amount, in.Unit, in.KitchenUnit)
 		default:
@@ -89,11 +105,7 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 			b.FoodMeasure = food.MeasuresToProto[in.FoodMeasure]
 			b.FoodGramsPerMilliliter = in.Food.GramsPerMilliliter
 			b.FoodGramsPerPiece = in.Food.GramsPerPiece
-			for _, a := range in.Alternatives {
-				b.Alternatives = append(b.Alternatives, recipesv1.IngredientAlternative_builder{
-					FoodId: store.UUIDToString(a.FoodID), FoodName: a.Name,
-				}.Build())
-			}
+			b.Alternatives = alternativesToProto(in.Alternatives)
 		}
 		ingredients = append(ingredients, b.Build())
 	}
@@ -525,19 +537,33 @@ func ingredientsFromProto(list []*recipesv1.Ingredient, draft bool) ([]*recipes.
 		if utf8.RuneCountInString(original) > maxOriginalLength {
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.original_text must be at most %d characters", field, maxOriginalLength)
 		}
-		if len(p.GetAlternatives()) > 0 && !foodID.Valid {
+		if len(p.GetAlternatives()) > 0 && !foodID.Valid && !componentID.Valid {
 			return nil, connect.Errorf(connect.CodeInvalidArgument,
-				"%s.alternatives are only for an ingredient with a food_id: leave them out for a component or an unmatched ingredient", field)
+				"%s.alternatives are only for an ingredient with a food_id or recipe_id: leave them out for an unmatched ingredient", field)
 		}
 		if len(p.GetAlternatives()) > maxAlternatives {
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s can have at most %d alternatives", field, maxAlternatives)
 		}
 		var alternatives []recipes.Alternative
 		for j, a := range p.GetAlternatives() {
+			if componentID.Valid {
+				// A component's alternatives are recipes.
+				id, err := store.StringToUUID(a.GetRecipeId())
+				if err != nil || a.GetFoodId() != "" {
+					return nil, connect.Errorf(connect.CodeInvalidArgument,
+						"%s.alternatives[%d] needs a recipe_id, as the ingredient is a recipe: find the household's recipes with ListRecipes", field, j)
+				}
+				if id == componentID || slices.ContainsFunc(alternatives, func(other recipes.Alternative) bool { return other.RecipeID == id }) {
+					return nil, connect.Errorf(connect.CodeInvalidArgument,
+						"%s.alternatives[%d] is the ingredient's own recipe, or listed twice: list each other recipe once", field, j)
+				}
+				alternatives = append(alternatives, recipes.Alternative{RecipeID: id})
+				continue
+			}
 			id, err := store.StringToUUID(a.GetFoodId())
-			if err != nil {
+			if err != nil || a.GetRecipeId() != "" {
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
-					"%s.alternatives[%d].food_id is invalid: %v; find the household's foods with ListFoods", field, j, err).WithCause(err)
+					"%s.alternatives[%d] needs a food_id, as the ingredient is a food: find the household's foods with ListFoods", field, j)
 			}
 			if id == foodID || slices.ContainsFunc(alternatives, func(other recipes.Alternative) bool { return other.FoodID == id }) {
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
