@@ -74,16 +74,41 @@ func (s *Service) planSuppliers(ctx context.Context, householdID pgtype.UUID, li
 	return withSuppliers(list, byID, freezer), nil
 }
 
+// batchKey identifies a batch of a component: its recipe, on a date.
+type batchKey struct {
+	recipeID pgtype.UUID
+	date     time.Time
+}
+
+// batch is a cook of a component created for the cooks of a day, with the
+// servings of it they don't use yet.
+type batch struct {
+	cookID pgtype.UUID
+	spare  float64
+}
+
+// batchServings returns how many servings of a component to cook for a
+// need of it: a whole batch, the servings its recipe makes, as nobody
+// pressure cooks 0.44 servings of beans, and what the cook doesn't use is
+// leftovers to plan or freeze. A need for more than a batch is cooked as
+// it is, rounded up to a hundredth so there's at least enough.
+func batchServings(need recipes.ComponentNeed) float64 {
+	exact := max(math.Ceil(need.Servings*100-1e-9)/100, minCookServings)
+	return max(exact, float64(need.Recipe.Servings))
+}
+
 // withSuppliers returns the cooks to create with a supplier of each of
 // their recipes' components: frozen servings of an earlier cook of it, if
 // the freezer has enough that keep until the cook (see frozenStock.take),
-// or else a new cook of it, on the same date, for the servings they need,
-// and so on for components of components. Every cook is given an ID, so
+// or else a new cook of it, on the same date, of a whole batch of it (see
+// batchServings), which cooks of the same day share, and so on for
+// components of components. Every cook is given an ID, so
 // the supplies can refer to cooks created together. recipes are the
 // cooks' recipes by ID, with their components read; freezer is what's in
 // the freezer, nil for nothing, which shrinks as it supplies cooks.
 func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes.Recipe, freezer frozenStock) []*plans.CookWithPortions {
 	var result []*plans.CookWithPortions
+	batches := map[batchKey]*batch{}
 	var add func(cp *plans.CookWithPortions, r *recipes.Recipe, depth int)
 	add = func(cp *plans.CookWithPortions, r *recipes.Recipe, depth int) {
 		if !cp.Cook.ID.Valid {
@@ -101,15 +126,22 @@ func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes
 				})
 				continue
 			}
+			// A batch made for an earlier cook of the day supplies this
+			// one too, from what it has spare.
+			key := batchKey{recipeID: need.Recipe.ID, date: cp.Cook.Date}
+			if batch := batches[key]; batch != nil && batch.spare >= need.Servings-1e-9 {
+				batch.spare -= need.Servings
+				cp.Supplies = append(cp.Supplies, &plans.Supply{ComponentRecipeID: need.Recipe.ID, SupplierCookID: batch.cookID})
+				continue
+			}
 			supplier := &plans.CookWithPortions{Cook: &plans.Cook{
 				ID:          store.NewUUID(),
 				HouseholdID: cp.Cook.HouseholdID,
 				RecipeID:    need.Recipe.ID,
 				Date:        cp.Cook.Date,
-				// The servings are rounded up to a hundredth, so the
-				// supplier makes at least what's needed.
-				Servings: max(math.Ceil(need.Servings*100-1e-9)/100, minCookServings),
+				Servings:    batchServings(need),
 			}}
+			batches[key] = &batch{cookID: supplier.Cook.ID, spare: supplier.Cook.Servings - need.Servings}
 			cp.Supplies = append(cp.Supplies, &plans.Supply{ComponentRecipeID: need.Recipe.ID, SupplierCookID: supplier.Cook.ID})
 			add(supplier, need.Recipe, depth+1)
 		}

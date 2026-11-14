@@ -125,8 +125,8 @@ const EFFORT_TEXT_CLASS: Record<Effort, string> = {
  * CookBlocksOf returns the day's cooks for a person's meals, with when to
  * start them: their total time before the eating time of their meal, or,
  * for a cook of no shared meal, like a side cooked for one, of the first
- * of the person's eating times that day that eats from it; unknown for
- * cooks made ahead.
+ * of the person's eating times that day that eats from it; before the
+ * cook it's made for, for a component; unknown for cooks made ahead.
  */
 const cookBlocksOf = (
   cooks: PlannedCook[],
@@ -156,6 +156,31 @@ const cookBlocksOf = (
       name: recipe?.name ?? "A recipe",
       start: mealAt < 0 ? "" : timeOf(mealAt - Math.max(minutes, 15)),
     });
+  }
+  /*
+   * A cook made for another cook, like beans for a chili, starts before
+   * the cook it's for, rather than at the top of the day. A few rounds
+   * place those made for cooks that are made for others in turn.
+   */
+  for (let round = 0; round < 3; round += 1) {
+    for (const block of blocks) {
+      if (block.start !== "") {
+        continue;
+      }
+      const starts = (block.cook.cook?.supplying ?? [])
+        .map(
+          (supply) =>
+            blocks.find(
+              (other) => other.cook.cook?.id === supply.consumerCookId
+            )?.start ?? ""
+        )
+        .filter((start) => start !== "");
+      if (starts.length > 0) {
+        block.start = timeOf(
+          Math.min(...starts.map(minutesOf)) - Math.max(block.minutes, 15)
+        );
+      }
+    }
   }
   return blocks;
 };
