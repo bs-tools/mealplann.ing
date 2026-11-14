@@ -27,17 +27,26 @@ type frozenServings struct {
 	until time.Time
 }
 
-// take takes servings of a recipe out of the freezer for a cook on a
-// date, from the oldest cook with enough, frozen before the date and
-// keeping until it, returning that cook, or nil if none has enough.
-func (f frozenStock) take(recipeID pgtype.UUID, servings float64, date time.Time) *plans.Cook {
-	for _, fs := range f[recipeID] {
-		if fs.left >= servings-1e-9 && fs.cook.Date.Before(date) && (fs.until.IsZero() || !fs.until.Before(date)) {
-			fs.left -= servings
-			return fs.cook
+// take takes what a component needs out of the freezer for a cook on a
+// date, from the oldest cook of its recipe or of an alternative recipe with
+// enough, in that recipe's servings, frozen before the date and keeping
+// until it, returning that cook, or nil if none has enough.
+func (f frozenStock) take(need recipes.ComponentNeed, date time.Time) *plans.Cook {
+	var best *frozenServings
+	var bestServings float64
+	for _, o := range need.Options() {
+		for _, fs := range f[o.Recipe.ID] {
+			if fs.left >= o.Servings-1e-9 && fs.cook.Date.Before(date) && (fs.until.IsZero() || !fs.until.Before(date)) &&
+				(best == nil || fs.cook.Date.Before(best.cook.Date)) {
+				best, bestServings = fs, o.Servings
+			}
 		}
 	}
-	return nil
+	if best == nil {
+		return nil
+	}
+	best.left -= bestServings
+	return best.cook
 }
 
 // freezerFor reads what's in the freezer, if a cook to create has a recipe
@@ -99,7 +108,8 @@ func batchServings(need recipes.ComponentNeed) float64 {
 
 // withSuppliers returns the cooks to create with a supplier of each of
 // their recipes' components: frozen servings of an earlier cook of it, if
-// the freezer has enough that keep until the cook (see frozenStock.take),
+// the freezer has enough that keep until the cook, or of an alternative
+// recipe, oldest first (see frozenStock.take),
 // or else a new cook of it, on the same date, of a whole batch of it (see
 // batchServings), which cooks of the same day share, and so on for
 // components of components. Every cook is given an ID, so
@@ -120,7 +130,7 @@ func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes
 			return
 		}
 		for _, need := range r.ComponentsFor(cp.Cook.Servings) {
-			if frozen := freezer.take(need.Recipe.ID, need.Servings, cp.Cook.Date); frozen != nil {
+			if frozen := freezer.take(need, cp.Cook.Date); frozen != nil {
 				cp.Supplies = append(cp.Supplies, &plans.Supply{
 					ComponentRecipeID: need.Recipe.ID, SupplierCookID: frozen.ID, FromFreezer: true,
 				})
@@ -184,24 +194,29 @@ func (s *Service) SetCookSupplier(ctx context.Context, req *plansv1.SetCookSuppl
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to read recipe", "")
 	}
-	if len(list) == 0 || !slices.ContainsFunc(list[0].ComponentsFor(cook.Servings), func(n recipes.ComponentNeed) bool { return n.Recipe.ID == componentID }) {
+	var component *recipes.ComponentNeed
+	if len(list) > 0 {
+		for _, n := range list[0].ComponentsFor(cook.Servings) {
+			if n.Recipe.ID == componentID {
+				component = &n
+			}
+		}
+	}
+	if component == nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument,
 			"component_recipe_id isn't a component of the cook's recipe; find its components with GetRecipe")
 	}
-	if supplier.RecipeID != componentID {
+	// The supplier is a cook of the component's recipe, or of one the
+	// ingredient lists as an alternative, which needs its own servings.
+	need, ok := component.ServingsOf(supplier.RecipeID)
+	if !ok {
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
-			"the supplier is a cook of %s, not of the component: choose a cook of the component's recipe", supplier.RecipeName)
+			"the supplier is a cook of %s, which isn't the component nor one of its alternatives: choose a cook of the component's recipe, or of an alternative in the ingredient's alternatives", supplier.RecipeName)
 	}
 	var previous pgtype.UUID
 	for _, supply := range cook.Supplies {
 		if supply.ComponentRecipeID == componentID {
 			previous = supply.SupplierCookID
-		}
-	}
-	var need float64
-	for _, n := range list[0].ComponentsFor(cook.Servings) {
-		if n.Recipe.ID == componentID {
-			need = n.Servings
 		}
 	}
 	// An earlier cook with enough frozen supplies it from the freezer, like
@@ -238,17 +253,27 @@ func (s *Service) SetCookSupplier(ctx context.Context, req *plansv1.SetCookSuppl
 	return plansv1.SetCookSupplierResponse_builder{Cook: cookToProto(updated)}.Build(), nil
 }
 
+// alternativeIDs converts recipe IDs to strings, nil for none.
+func alternativeIDs(ids []pgtype.UUID) []string {
+	var out []string
+	for _, id := range ids {
+		out = append(out, store.UUIDToString(id))
+	}
+	return out
+}
+
 // supplyToProto converts a supply.
 func supplyToProto(s *plans.Supply) *plansv1.CookSupply {
 	return plansv1.CookSupply_builder{
-		ConsumerCookId:     store.UUIDToString(s.ConsumerCookID),
-		ConsumerRecipeName: s.ConsumerRecipeName,
-		ConsumerDate:       store.FormatDate(s.ConsumerDate),
-		ComponentRecipeId:  store.UUIDToString(s.ComponentRecipeID),
-		SupplierCookId:     store.UUIDToString(s.SupplierCookID),
-		SupplierRecipeName: s.SupplierRecipeName,
-		SupplierDate:       store.FormatDate(s.SupplierDate),
-		Servings:           round(s.Servings),
-		FromFreezer:        s.FromFreezer,
+		ConsumerCookId:       store.UUIDToString(s.ConsumerCookID),
+		ConsumerRecipeName:   s.ConsumerRecipeName,
+		ConsumerDate:         store.FormatDate(s.ConsumerDate),
+		ComponentRecipeId:    store.UUIDToString(s.ComponentRecipeID),
+		SupplierCookId:       store.UUIDToString(s.SupplierCookID),
+		SupplierRecipeName:   s.SupplierRecipeName,
+		SupplierDate:         store.FormatDate(s.SupplierDate),
+		Servings:             round(s.Servings),
+		FromFreezer:          s.FromFreezer,
+		AlternativeRecipeIds: alternativeIDs(s.AlternativeRecipeIDs),
 	}.Build()
 }

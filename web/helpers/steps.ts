@@ -141,7 +141,10 @@ export const stepStart = (step: Step, index: number): string => {
  */
 export const ingredientName = (ingredient: Ingredient): string => {
   if (ingredient.recipeId !== "") {
-    return ingredient.recipeName;
+    return [
+      ingredient.recipeName,
+      ...ingredient.alternatives.map((alternative) => alternative.recipeName),
+    ].join(" or ");
   }
   if (ingredient.foodId === "") {
     return ingredient.originalText;

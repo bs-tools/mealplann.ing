@@ -277,6 +277,10 @@ message CookSupply {
   // cooked weeks ago: they count as taken out of the freezer, and GetWeek
   // has a prep task to thaw them the day before.
   bool from_freezer = 9;
+  // The recipes the consumer's ingredient lists as alternatives to the
+  // component, whose cooks can supply it too, like quick-cooked beans for
+  // soaked ones.
+  repeated string alternative_recipe_ids = 10 [(mcp.v1.field).output_only = true];
 }
 
 // A share of a cook, in servings.

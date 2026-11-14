@@ -194,7 +194,8 @@ insert into recipe_ingredients (
   original_text,
   optional,
   kitchen_unit,
-  alternative_food_ids
+  alternative_food_ids,
+  alternative_recipe_ids
 )
 select
   @recipe_id,
@@ -210,7 +211,8 @@ select
   nullif((@kitchen_units::text[])[i], ''),
   -- Each ingredient's alternatives are its food IDs joined by commas, as an
   -- array of arrays can't have rows of different lengths.
-  coalesce(string_to_array(nullif((@alternative_food_ids::text[])[i], ''), ',')::uuid[], '{}')
+  coalesce(string_to_array(nullif((@alternative_food_ids::text[])[i], ''), ',')::uuid[], '{}'),
+  coalesce(string_to_array(nullif((@alternative_recipe_ids::text[])[i], ''), ',')::uuid[], '{}')
 from generate_subscripts(@amounts::double precision[], 1) as i;
 
 -- name: ListRecipeIngredients :many
@@ -237,7 +239,18 @@ select
     select array_agg(af.name order by a.position)
     from unnest(recipe_ingredients.alternative_food_ids) with ordinality as a(id, position)
     join foods af on af.id = a.id and af.household_id = recipe_ingredients.household_id
-  ), '{}')::text[] as alternative_names
+  ), '{}')::text[] as alternative_names,
+  -- The alternatives that are still the household's recipes, likewise.
+  coalesce((
+    select array_agg(ar.id order by a.position)
+    from unnest(recipe_ingredients.alternative_recipe_ids) with ordinality as a(id, position)
+    join recipes ar on ar.id = a.id and ar.household_id = recipe_ingredients.household_id
+  ), '{}')::uuid[] as alternative_recipe_ids_read,
+  coalesce((
+    select array_agg(ar.name order by a.position)
+    from unnest(recipe_ingredients.alternative_recipe_ids) with ordinality as a(id, position)
+    join recipes ar on ar.id = a.id and ar.household_id = recipe_ingredients.household_id
+  ), '{}')::text[] as alternative_recipe_names
 from recipe_ingredients
 left join foods f on f.id = recipe_ingredients.food_id
 where recipe_ingredients.household_id = @household_id

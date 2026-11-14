@@ -576,18 +576,19 @@ func (b0 Cook_builder) Build() *Cook {
 // A cook making a component of another cook: e.g. a pot of chickpeas for
 // a chili.
 type CookSupply struct {
-	state                         protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_ConsumerCookId     string                 `protobuf:"bytes,1,opt,name=consumer_cook_id,json=consumerCookId,proto3"`
-	xxx_hidden_ConsumerRecipeName string                 `protobuf:"bytes,2,opt,name=consumer_recipe_name,json=consumerRecipeName,proto3"`
-	xxx_hidden_ConsumerDate       string                 `protobuf:"bytes,3,opt,name=consumer_date,json=consumerDate,proto3"`
-	xxx_hidden_ComponentRecipeId  string                 `protobuf:"bytes,4,opt,name=component_recipe_id,json=componentRecipeId,proto3"`
-	xxx_hidden_SupplierCookId     string                 `protobuf:"bytes,5,opt,name=supplier_cook_id,json=supplierCookId,proto3"`
-	xxx_hidden_SupplierRecipeName string                 `protobuf:"bytes,6,opt,name=supplier_recipe_name,json=supplierRecipeName,proto3"`
-	xxx_hidden_SupplierDate       string                 `protobuf:"bytes,7,opt,name=supplier_date,json=supplierDate,proto3"`
-	xxx_hidden_Servings           float64                `protobuf:"fixed64,8,opt,name=servings,proto3"`
-	xxx_hidden_FromFreezer        bool                   `protobuf:"varint,9,opt,name=from_freezer,json=fromFreezer,proto3"`
-	unknownFields                 protoimpl.UnknownFields
-	sizeCache                     protoimpl.SizeCache
+	state                           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ConsumerCookId       string                 `protobuf:"bytes,1,opt,name=consumer_cook_id,json=consumerCookId,proto3"`
+	xxx_hidden_ConsumerRecipeName   string                 `protobuf:"bytes,2,opt,name=consumer_recipe_name,json=consumerRecipeName,proto3"`
+	xxx_hidden_ConsumerDate         string                 `protobuf:"bytes,3,opt,name=consumer_date,json=consumerDate,proto3"`
+	xxx_hidden_ComponentRecipeId    string                 `protobuf:"bytes,4,opt,name=component_recipe_id,json=componentRecipeId,proto3"`
+	xxx_hidden_SupplierCookId       string                 `protobuf:"bytes,5,opt,name=supplier_cook_id,json=supplierCookId,proto3"`
+	xxx_hidden_SupplierRecipeName   string                 `protobuf:"bytes,6,opt,name=supplier_recipe_name,json=supplierRecipeName,proto3"`
+	xxx_hidden_SupplierDate         string                 `protobuf:"bytes,7,opt,name=supplier_date,json=supplierDate,proto3"`
+	xxx_hidden_Servings             float64                `protobuf:"fixed64,8,opt,name=servings,proto3"`
+	xxx_hidden_FromFreezer          bool                   `protobuf:"varint,9,opt,name=from_freezer,json=fromFreezer,proto3"`
+	xxx_hidden_AlternativeRecipeIds []string               `protobuf:"bytes,10,rep,name=alternative_recipe_ids,json=alternativeRecipeIds,proto3"`
+	unknownFields                   protoimpl.UnknownFields
+	sizeCache                       protoimpl.SizeCache
 }
 
 func (x *CookSupply) Reset() {
@@ -678,6 +679,13 @@ func (x *CookSupply) GetFromFreezer() bool {
 	return false
 }
 
+func (x *CookSupply) GetAlternativeRecipeIds() []string {
+	if x != nil {
+		return x.xxx_hidden_AlternativeRecipeIds
+	}
+	return nil
+}
+
 func (x *CookSupply) SetConsumerCookId(v string) {
 	x.xxx_hidden_ConsumerCookId = v
 }
@@ -714,6 +722,10 @@ func (x *CookSupply) SetFromFreezer(v bool) {
 	x.xxx_hidden_FromFreezer = v
 }
 
+func (x *CookSupply) SetAlternativeRecipeIds(v []string) {
+	x.xxx_hidden_AlternativeRecipeIds = v
+}
+
 type CookSupply_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -738,6 +750,10 @@ type CookSupply_builder struct {
 	// cooked weeks ago: they count as taken out of the freezer, and GetWeek
 	// has a prep task to thaw them the day before.
 	FromFreezer bool
+	// The recipes the consumer's ingredient lists as alternatives to the
+	// component, whose cooks can supply it too, like quick-cooked beans for
+	// soaked ones.
+	AlternativeRecipeIds []string
 }
 
 func (b0 CookSupply_builder) Build() *CookSupply {
@@ -753,6 +769,7 @@ func (b0 CookSupply_builder) Build() *CookSupply {
 	x.xxx_hidden_SupplierDate = b.SupplierDate
 	x.xxx_hidden_Servings = b.Servings
 	x.xxx_hidden_FromFreezer = b.FromFreezer
+	x.xxx_hidden_AlternativeRecipeIds = b.AlternativeRecipeIds
 	return m0
 }
 
@@ -7748,7 +7765,7 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\bsupplies\x18\f \x03(\v2\x14.plans.v1.CookSupplyB\x06\xaa\x9f\x19\x02\b\x01R\bsupplies\x12:\n" +
 	"\tsupplying\x18\r \x03(\v2\x14.plans.v1.CookSupplyB\x06\xaa\x9f\x19\x02\b\x01R\tsupplying\x12*\n" +
 	"\x11off_plan_servings\x18\x0e \x01(\x01R\x0foffPlanServings\x12)\n" +
-	"\x10removed_servings\x18\x0f \x01(\x01R\x0fremovedServings\"\xfd\x02\n" +
+	"\x10removed_servings\x18\x0f \x01(\x01R\x0fremovedServings\"\xbb\x03\n" +
 	"\n" +
 	"CookSupply\x12(\n" +
 	"\x10consumer_cook_id\x18\x01 \x01(\tR\x0econsumerCookId\x120\n" +
@@ -7759,7 +7776,9 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x14supplier_recipe_name\x18\x06 \x01(\tR\x12supplierRecipeName\x12#\n" +
 	"\rsupplier_date\x18\a \x01(\tR\fsupplierDate\x12\x1a\n" +
 	"\bservings\x18\b \x01(\x01R\bservings\x12!\n" +
-	"\ffrom_freezer\x18\t \x01(\bR\vfromFreezer\"@\n" +
+	"\ffrom_freezer\x18\t \x01(\bR\vfromFreezer\x12<\n" +
+	"\x16alternative_recipe_ids\x18\n" +
+	" \x03(\tB\x06\xaa\x9f\x19\x02\b\x01R\x14alternativeRecipeIds\"@\n" +
 	"\tCookShare\x12\x17\n" +
 	"\acook_id\x18\x01 \x01(\tR\x06cookId\x12\x1a\n" +
 	"\bservings\x18\x02 \x01(\x01R\bservings\"I\n" +

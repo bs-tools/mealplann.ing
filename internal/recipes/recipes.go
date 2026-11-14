@@ -164,24 +164,51 @@ type Ingredient struct {
 	Alternatives []Alternative
 }
 
-// Alternative is a food an ingredient can be made with instead of its own.
+// Alternative is a food an ingredient can be made with instead of its own,
+// or for a component, a recipe.
 type Alternative struct {
+	// FoodID is the food, invalid for a recipe.
 	FoodID pgtype.UUID
+	// RecipeID is the recipe, invalid for a food, and Recipe the recipe,
+	// read with it to MaxComponentDepth like a component, nil if not.
+	RecipeID pgtype.UUID
+	Recipe   *Recipe
 	// Name is the food's name, read with it and ignored when writing.
 	Name string
 }
 
-// AlternativeIDs returns the IDs of the ingredient's alternatives, nil if
-// it has none.
+// AlternativeIDs returns the IDs of the ingredient's alternative foods,
+// nil if it has none.
 func (in *Ingredient) AlternativeIDs() []pgtype.UUID {
-	if len(in.Alternatives) == 0 {
-		return nil
-	}
-	ids := make([]pgtype.UUID, 0, len(in.Alternatives))
+	var ids []pgtype.UUID
 	for _, a := range in.Alternatives {
-		ids = append(ids, a.FoodID)
+		if a.FoodID.Valid {
+			ids = append(ids, a.FoodID)
+		}
 	}
 	return ids
+}
+
+// AlternativeRecipeIDs returns the IDs of a component ingredient's
+// alternative recipes, nil if it has none.
+func (in *Ingredient) AlternativeRecipeIDs() []pgtype.UUID {
+	var ids []pgtype.UUID
+	for _, a := range in.Alternatives {
+		if a.RecipeID.Valid {
+			ids = append(ids, a.RecipeID)
+		}
+	}
+	return ids
+}
+
+// ServingsOf returns how many servings of a recipe make the ingredient: of
+// its component, or of an alternative recipe, converting its amount with
+// that recipe's yield or weight as ComponentServings does. 0 if it can't be
+// converted.
+func (in *Ingredient) ServingsOf(r *Recipe) float64 {
+	c := *in
+	c.Component = r
+	return c.componentServings(0)
 }
 
 // IsComponent reports whether the ingredient is another recipe.
@@ -386,6 +413,34 @@ func (r *Recipe) ingredientsWithout(servings float64, supplied map[pgtype.UUID]b
 type ComponentNeed struct {
 	Recipe   *Recipe
 	Servings float64
+	// Alternatives are the recipes it can be made with instead, with the
+	// servings of each it takes, converted with that recipe's yield, in
+	// the order the ingredient lists them.
+	Alternatives []ComponentOption
+}
+
+// ComponentOption is a recipe a component can be made with, with the
+// servings of it needed.
+type ComponentOption struct {
+	Recipe   *Recipe
+	Servings float64
+}
+
+// Options returns the recipes the need can be met with: its component's,
+// then its alternatives.
+func (n ComponentNeed) Options() []ComponentOption {
+	return append([]ComponentOption{{Recipe: n.Recipe, Servings: n.Servings}}, n.Alternatives...)
+}
+
+// ServingsOf returns the servings of a recipe the need takes, if it's the
+// component's or one of its alternatives, and false if it's neither.
+func (n ComponentNeed) ServingsOf(recipeID pgtype.UUID) (float64, bool) {
+	for _, o := range n.Options() {
+		if o.Recipe.ID == recipeID {
+			return o.Servings, true
+		}
+	}
+	return 0, false
 }
 
 // ComponentsFor returns the components used to make a number of servings
@@ -399,11 +454,26 @@ func (r *Recipe) ComponentsFor(servings float64) []ComponentNeed {
 			continue
 		}
 		servings := in.ComponentServings() * scale
+		var alternatives []ComponentOption
+		for _, a := range in.Alternatives {
+			if a.Recipe != nil {
+				alternatives = append(alternatives, ComponentOption{Recipe: a.Recipe, Servings: in.ServingsOf(a.Recipe) * scale})
+			}
+		}
 		if i := slices.IndexFunc(needs, func(n ComponentNeed) bool { return n.Recipe.ID == in.ComponentRecipeID }); i >= 0 {
 			needs[i].Servings += servings
+			// The alternatives both uses list are what it can be made with.
+			var kept []ComponentOption
+			for _, a := range needs[i].Alternatives {
+				if j := slices.IndexFunc(alternatives, func(o ComponentOption) bool { return o.Recipe.ID == a.Recipe.ID }); j >= 0 {
+					a.Servings += alternatives[j].Servings
+					kept = append(kept, a)
+				}
+			}
+			needs[i].Alternatives = kept
 			continue
 		}
-		needs = append(needs, ComponentNeed{Recipe: in.Component, Servings: servings})
+		needs = append(needs, ComponentNeed{Recipe: in.Component, Servings: servings, Alternatives: alternatives})
 	}
 	return needs
 }
@@ -878,6 +948,7 @@ func checkComponents(ctx context.Context, b *store.Batch, recipe *Recipe) {
 	for _, in := range recipe.Ingredients {
 		if in.IsComponent() {
 			ids = append(ids, in.ComponentRecipeID)
+			ids = append(ids, in.AlternativeRecipeIDs()...)
 		}
 	}
 	// A recipe side must be the household's recipe too.
@@ -923,8 +994,13 @@ func (r *Repository) resolve(ctx context.Context, householdID pgtype.UUID, list 
 		var missing []pgtype.UUID
 		for _, rc := range level {
 			for _, in := range rc.Ingredients {
-				if _, ok := known[in.ComponentRecipeID]; in.IsComponent() && !ok && !slices.Contains(missing, in.ComponentRecipeID) {
-					missing = append(missing, in.ComponentRecipeID)
+				if !in.IsComponent() {
+					continue
+				}
+				for _, id := range append([]pgtype.UUID{in.ComponentRecipeID}, in.AlternativeRecipeIDs()...) {
+					if _, ok := known[id]; !ok && !slices.Contains(missing, id) {
+						missing = append(missing, id)
+					}
 				}
 			}
 		}
@@ -943,6 +1019,12 @@ func (r *Repository) resolve(ctx context.Context, householdID pgtype.UUID, list 
 				if c, ok := known[in.ComponentRecipeID]; in.IsComponent() && ok {
 					in.Component = c
 					next = append(next, c)
+				}
+				for i := range in.Alternatives {
+					if a, ok := known[in.Alternatives[i].RecipeID]; in.IsComponent() && ok {
+						in.Alternatives[i].Recipe = a
+						next = append(next, a)
+					}
 				}
 			}
 		}
@@ -1003,17 +1085,18 @@ func readIngredients(ctx context.Context, b *store.Batch, householdID, recipeID 
 
 func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredient) *gen.CreateRecipeIngredientsParams {
 	p := &gen.CreateRecipeIngredientsParams{
-		RecipeID:           recipeID,
-		HouseholdID:        householdID,
-		FoodIds:            make([]pgtype.UUID, 0, len(ingredients)),
-		ComponentRecipeIds: make([]pgtype.UUID, 0, len(ingredients)),
-		Amounts:            make([]float64, 0, len(ingredients)),
-		Units:              make([]string, 0, len(ingredients)),
-		Notes:              make([]string, 0, len(ingredients)),
-		OriginalTexts:      make([]string, 0, len(ingredients)),
-		Optionals:          make([]bool, 0, len(ingredients)),
-		KitchenUnits:       make([]string, 0, len(ingredients)),
-		AlternativeFoodIds: make([]string, 0, len(ingredients)),
+		RecipeID:             recipeID,
+		HouseholdID:          householdID,
+		FoodIds:              make([]pgtype.UUID, 0, len(ingredients)),
+		ComponentRecipeIds:   make([]pgtype.UUID, 0, len(ingredients)),
+		Amounts:              make([]float64, 0, len(ingredients)),
+		Units:                make([]string, 0, len(ingredients)),
+		Notes:                make([]string, 0, len(ingredients)),
+		OriginalTexts:        make([]string, 0, len(ingredients)),
+		Optionals:            make([]bool, 0, len(ingredients)),
+		KitchenUnits:         make([]string, 0, len(ingredients)),
+		AlternativeFoodIds:   make([]string, 0, len(ingredients)),
+		AlternativeRecipeIds: make([]string, 0, len(ingredients)),
 	}
 	for _, in := range ingredients {
 		p.FoodIds = append(p.FoodIds, in.FoodID)
@@ -1028,11 +1111,16 @@ func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredien
 		p.OriginalTexts = append(p.OriginalTexts, in.OriginalText)
 		p.Optionals = append(p.Optionals, in.Optional)
 		p.KitchenUnits = append(p.KitchenUnits, string(in.KitchenUnit))
-		alternatives := make([]string, 0, len(in.Alternatives))
+		var foodAlternatives, recipeAlternatives []string
 		for _, a := range in.Alternatives {
-			alternatives = append(alternatives, store.UUIDToString(a.FoodID))
+			if a.RecipeID.Valid {
+				recipeAlternatives = append(recipeAlternatives, store.UUIDToString(a.RecipeID))
+			} else {
+				foodAlternatives = append(foodAlternatives, store.UUIDToString(a.FoodID))
+			}
 		}
-		p.AlternativeFoodIds = append(p.AlternativeFoodIds, strings.Join(alternatives, ","))
+		p.AlternativeFoodIds = append(p.AlternativeFoodIds, strings.Join(foodAlternatives, ","))
+		p.AlternativeRecipeIds = append(p.AlternativeRecipeIds, strings.Join(recipeAlternatives, ","))
 	}
 	return p
 }
@@ -1111,6 +1199,13 @@ func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 		a := Alternative{FoodID: id}
 		if i < len(row.AlternativeNames) {
 			a.Name = row.AlternativeNames[i]
+		}
+		alternatives = append(alternatives, a)
+	}
+	for i, id := range row.AlternativeRecipeIdsRead {
+		a := Alternative{RecipeID: id}
+		if i < len(row.AlternativeRecipeNames) {
+			a.Name = row.AlternativeRecipeNames[i]
 		}
 		alternatives = append(alternatives, a)
 	}

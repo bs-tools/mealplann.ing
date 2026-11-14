@@ -364,17 +364,18 @@ const RecipePage: React.FC = () => {
                       </Link>
                     )}
                     {/* The foods it can be made with instead. */}
-                    {ingredient.alternatives.map((alternative) => (
-                      <React.Fragment key={alternative.foodId}>
-                        <span className="text-muted">or</span>
-                        <Link
-                          to={`/foods/${alternative.foodId}`}
-                          className="text-ink-soft hover:underline"
-                        >
-                          {alternative.foodName}
-                        </Link>
-                      </React.Fragment>
-                    ))}
+                    {ingredient.recipeId === "" &&
+                      ingredient.alternatives.map((alternative) => (
+                        <React.Fragment key={alternative.foodId}>
+                          <span className="text-muted">or</span>
+                          <Link
+                            to={`/foods/${alternative.foodId}`}
+                            className="text-ink-soft hover:underline"
+                          >
+                            {alternative.foodName}
+                          </Link>
+                        </React.Fragment>
+                      ))}
                     {ingredient.recipeId !== "" && (
                       <>
                         <span className="text-muted">of</span>
@@ -384,6 +385,18 @@ const RecipePage: React.FC = () => {
                         >
                           {ingredient.recipeName}
                         </Link>
+                        {/* The recipes it can be made with instead. */}
+                        {ingredient.alternatives.map((alternative) => (
+                          <React.Fragment key={alternative.recipeId}>
+                            <span className="text-muted">or</span>
+                            <Link
+                              to={`/recipes/${alternative.recipeId}`}
+                              className="font-medium text-pine hover:underline"
+                            >
+                              {alternative.recipeName}
+                            </Link>
+                          </React.Fragment>
+                        ))}
                         <Badge>Recipe</Badge>
                         {ingredient.unit !== AmountUnit.UNSPECIFIED && (
                           <span className="text-xs text-muted">

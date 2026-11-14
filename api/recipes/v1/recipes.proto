@@ -362,17 +362,32 @@ message Ingredient {
   // "1 block of firm or extra firm tofu". The recipe's nutrition and cost
   // are food_id's. The shopping list counts whichever of them the pantry
   // has, and buys food_id if it has none of them; marking the cook done
-  // takes the one in the pantry. Only for a food, not a component. At most
-  // 5, each one of the household's foods, different from food_id.
+  // takes the one in the pantry.
+  //
+  // For a component, the recipes it can be made with instead of recipe_id,
+  // like quick-cooked beans for soaked ones: the nutrition and cost are
+  // still recipe_id's, but a cook of either can supply it (see
+  // PlanService.SetCookSupplier), and planning takes frozen leftovers of
+  // either, oldest first, before planning a cook of recipe_id. An amount by
+  // weight, volume or pieces is converted to servings of whichever recipe
+  // supplies it, with that recipe's yield.
+  //
+  // At most 5: foods for a food, recipes for a component, each the
+  // household's and different from the ingredient's own.
   repeated IngredientAlternative alternatives = 14;
 }
 
-// A food an ingredient can be made with instead of its own.
+// A food an ingredient can be made with instead of its own, or a recipe a
+// component can.
 message IngredientAlternative {
-  // The ID of the household's food. Required.
+  // The ID of the household's food, for an ingredient of a food.
   string food_id = 1;
   // The name of the food.
   string food_name = 2 [(mcp.v1.field).output_only = true];
+  // The ID of the household's recipe, for a component.
+  string recipe_id = 3;
+  // The name of the recipe.
+  string recipe_name = 4 [(mcp.v1.field).output_only = true];
 }
 
 // The nutrition of a recipe, computed from its ingredients' foods, as

@@ -203,6 +203,8 @@ func (s *Service) checkComponents(ctx context.Context, recipe *recipes.Recipe) e
 	for _, in := range recipe.Ingredients {
 		if in.IsComponent() {
 			ids = append(ids, in.ComponentRecipeID)
+			// An alternative recipe is checked like a component.
+			ids = append(ids, in.AlternativeRecipeIDs()...)
 		}
 	}
 	if len(ids) == 0 {
