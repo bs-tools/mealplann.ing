@@ -106,15 +106,15 @@ func TestRecipeComponents(t *testing.T) {
 	wantCode(t, err, connect.CodeFailedPrecondition)
 
 	// Planning Friday's chili plans the chickpeas for it too, to soak on
-	// Thursday.
+	// Thursday: a whole batch of 4 servings, of which the chili uses 2.
 	if _, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: chili.GetId(), Date: friday, Meal: dinner, Servings: 4}.Build()); err != nil {
 		t.Fatalf("PlanMeal: %v", err)
 	}
 	week, cooks := weekCooks(t, e, monday)
 	pot := cooks["Cooked chickpeas "+friday]
 	fridayChili := cooks["Chili "+friday]
-	if pot == nil || fridayChili == nil || pot.GetCook().GetServings() != 2 || pot.GetAssignedServings() != 2 || len(pot.GetWarnings()) != 0 {
-		t.Fatalf("got cooks %v, want the chili and 2 servings of chickpeas for it", week.GetCooks())
+	if pot == nil || fridayChili == nil || pot.GetCook().GetServings() != 4 || pot.GetAssignedServings() != 2 || pot.GetLeftServings() != 2 {
+		t.Fatalf("got cooks %v, want the chili and a batch of 4 servings of chickpeas, 2 for it", week.GetCooks())
 	}
 	if s := fridayChili.GetCook().GetSupplies(); len(s) != 1 || s[0].GetSupplierCookId() != pot.GetCook().GetId() || s[0].GetServings() != 2 {
 		t.Errorf("got supplies %v, want the pot's 2 servings", s)
@@ -137,11 +137,12 @@ func TestRecipeComponents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateShoppingList: %v", err)
 	}
+	// The whole batch of chickpeas is bought for, not just the chili's half.
 	var items []string
 	for _, it := range list.GetList().GetItems() {
 		items = append(items, it.GetName()+" "+it.GetAmountText())
 	}
-	if want := []string{"Dried chickpeas 125 g", "Tomatoes 400 g"}; !slices.Equal(slices.Sorted(slices.Values(items)), want) {
+	if want := []string{"Dried chickpeas 250 g", "Tomatoes 400 g"}; !slices.Equal(slices.Sorted(slices.Values(items)), want) {
 		t.Errorf("got items %v, want %v", items, want)
 	}
 
