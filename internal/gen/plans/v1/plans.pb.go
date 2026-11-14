@@ -2980,6 +2980,7 @@ type PlannedCook struct {
 	xxx_hidden_AssignedServings float64                `protobuf:"fixed64,2,opt,name=assigned_servings,json=assignedServings,proto3"`
 	xxx_hidden_Warnings         *[]*Warning            `protobuf:"bytes,3,rep,name=warnings,proto3"`
 	xxx_hidden_LeftServings     float64                `protobuf:"fixed64,4,opt,name=left_servings,json=leftServings,proto3"`
+	xxx_hidden_MissingFoodNames []string               `protobuf:"bytes,5,rep,name=missing_food_names,json=missingFoodNames,proto3"`
 	unknownFields               protoimpl.UnknownFields
 	sizeCache                   protoimpl.SizeCache
 }
@@ -3039,6 +3040,13 @@ func (x *PlannedCook) GetLeftServings() float64 {
 	return 0
 }
 
+func (x *PlannedCook) GetMissingFoodNames() []string {
+	if x != nil {
+		return x.xxx_hidden_MissingFoodNames
+	}
+	return nil
+}
+
 func (x *PlannedCook) SetCook(v *Cook) {
 	x.xxx_hidden_Cook = v
 }
@@ -3053,6 +3061,10 @@ func (x *PlannedCook) SetWarnings(v []*Warning) {
 
 func (x *PlannedCook) SetLeftServings(v float64) {
 	x.xxx_hidden_LeftServings = v
+}
+
+func (x *PlannedCook) SetMissingFoodNames(v []string) {
+	x.xxx_hidden_MissingFoodNames = v
 }
 
 func (x *PlannedCook) HasCook() bool {
@@ -3080,6 +3092,12 @@ type PlannedCook_builder struct {
 	// planned in portions within the recipe's fridge days, nor supplying
 	// other cooks. 0 if they're all planned.
 	LeftServings float64
+	// The foods the cook's ingredients need that the pantry doesn't have
+	// enough of, by name, so they're bought before it's cooked: counting the
+	// pantry like the shopping list does, for the cooks not done, portions
+	// and staples from the day before today (UTC) on, in date order. Empty
+	// for a cook done, or one the pantry covers.
+	MissingFoodNames []string
 }
 
 func (b0 PlannedCook_builder) Build() *PlannedCook {
@@ -3090,6 +3108,7 @@ func (b0 PlannedCook_builder) Build() *PlannedCook {
 	x.xxx_hidden_AssignedServings = b.AssignedServings
 	x.xxx_hidden_Warnings = &b.Warnings
 	x.xxx_hidden_LeftServings = b.LeftServings
+	x.xxx_hidden_MissingFoodNames = b.MissingFoodNames
 	return m0
 }
 
@@ -7858,12 +7877,13 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\tcook_date\x18\f \x01(\tR\bcookDate\x12\x1a\n" +
 	"\bleftover\x18\r \x01(\bR\bleftover\x12\x14\n" +
 	"\x05notes\x18\x0e \x01(\tR\x05notes\x12\x14\n" +
-	"\x05eaten\x18\x0f \x01(\bR\x05eaten\"\xb2\x01\n" +
+	"\x05eaten\x18\x0f \x01(\bR\x05eaten\"\xe0\x01\n" +
 	"\vPlannedCook\x12\"\n" +
 	"\x04cook\x18\x01 \x01(\v2\x0e.plans.v1.CookR\x04cook\x12+\n" +
 	"\x11assigned_servings\x18\x02 \x01(\x01R\x10assignedServings\x12-\n" +
 	"\bwarnings\x18\x03 \x03(\v2\x11.plans.v1.WarningR\bwarnings\x12#\n" +
-	"\rleft_servings\x18\x04 \x01(\x01R\fleftServings\"N\n" +
+	"\rleft_servings\x18\x04 \x01(\x01R\fleftServings\x12,\n" +
+	"\x12missing_food_names\x18\x05 \x03(\tR\x10missingFoodNames\"N\n" +
 	"\x12GetPlanCostRequest\x12\x1d\n" +
 	"\n" +
 	"start_date\x18\x01 \x01(\tR\tstartDate\x12\x19\n" +

@@ -6,6 +6,7 @@ import PrepTasks from "@components/plan/prep-tasks";
 import TargetBars, { targetStates } from "@components/plan/target-bars";
 import WarningsLink from "@components/plan/warnings-link";
 import { isTargetWarning, weekWarnings } from "@components/plan/week-warnings";
+import CookDone from "@components/today/cook-done";
 import MealSheet from "@components/today/meal-sheet";
 import { CookDot, EffortDot, effortOf } from "@components/today/today-bits";
 import type { Effort } from "@components/today/today-bits";
@@ -14,6 +15,7 @@ import QueryError from "@components/ui/query-error";
 import Segmented from "@components/ui/segmented";
 import { linkClass, primaryButton } from "@components/ui/styles";
 import { useQuery } from "@connectrpc/connect-query";
+import { ShoppingCartIcon } from "@heroicons/react/24/outline";
 import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import type { EatingTime } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
@@ -22,6 +24,7 @@ import {
   listStaples,
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type {
+  GetWeekResponse,
   PersonDay,
   PlannedCook,
   PlannedEatingTime,
@@ -203,6 +206,8 @@ interface DayLineProps {
   day: PersonDay;
   blocks: CookBlock[];
   date: string;
+  // The week, for everyone's portions of a cook marked cooked and eaten.
+  week: GetWeekResponse | undefined;
   // Opens a meal, to change it.
   onMeal: (planned: PlannedEatingTime) => void;
 }
@@ -211,7 +216,13 @@ interface DayLineProps {
  * DayLine is a person's day as a vertical line of their meals and the
  * cooking before them, in time order, each marked with how much work it is.
  */
-const DayLine: React.FC<DayLineProps> = ({ day, blocks, date, onMeal }) => {
+const DayLine: React.FC<DayLineProps> = ({
+  day,
+  blocks,
+  date,
+  week,
+  onMeal,
+}) => {
   let entries: Entry[] = [
     ...day.eatingTimes.map((planned): Entry => ({
       kind: "meal",
@@ -275,12 +286,30 @@ const DayLine: React.FC<DayLineProps> = ({ day, blocks, date, onMeal }) => {
                     ])}
                   </span>
                 )}
-                <Link
-                  to={`/recipes/${block.cook.cook?.recipeId ?? ""}/cook?cook=${block.cook.cook?.id ?? ""}&servings=${block.cook.cook?.servings ?? ""}`}
-                  className={`${primaryButton} mt-1 self-start`}
-                >
-                  Start cooking
-                </Link>
+                {/* Foods to buy before it can be cooked. */}
+                {block.cook.missingFoodNames.length > 0 && (
+                  <Link
+                    to="/shopping"
+                    className="flex items-start gap-1.5 text-sm font-medium text-warn-dark"
+                  >
+                    <ShoppingCartIcon
+                      className="mt-0.5 size-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    Shop first: {formatList(block.cook.missingFoodNames)}
+                  </Link>
+                )}
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <Link
+                    to={`/recipes/${block.cook.cook?.recipeId ?? ""}/cook?cook=${block.cook.cook?.id ?? ""}&servings=${block.cook.cook?.servings ?? ""}`}
+                    className={primaryButton}
+                  >
+                    Start cooking
+                  </Link>
+                  {week !== undefined && (
+                    <CookDone planned={block.cook} week={week} date={date} />
+                  )}
+                </div>
               </div>
             </li>
           );
@@ -546,6 +575,42 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
             date={now}
             about="today"
           />
+          {/* Tomorrow's cooks that need shopping for first, in one card. */}
+          {(() => {
+            const short = week.data.cooks.filter(
+              (planned) =>
+                planned.cook?.date === addDays(now, 1) &&
+                planned.missingFoodNames.length > 0
+            );
+            if (short.length === 0) {
+              return null;
+            }
+            const names = [
+              ...new Set(short.flatMap((planned) => planned.missingFoodNames)),
+            ];
+            return (
+              <Link
+                to="/shopping"
+                className="flex items-start gap-2.5 rounded-2xl bg-warn-tint px-4 py-3"
+              >
+                <ShoppingCartIcon
+                  className="mt-0.5 size-5 shrink-0 text-warn-dark"
+                  aria-hidden="true"
+                />
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-sm font-medium text-ink-soft">
+                    Shop for tomorrow: {formatList(names)}
+                  </span>
+                  <span className="text-sm text-warn-dark">
+                    For{" "}
+                    {formatList(
+                      short.map((planned) => planned.cook?.recipeName ?? "")
+                    )}
+                  </span>
+                </span>
+              </Link>
+            );
+          })()}
           {/* What to start today for a later day's cooking. */}
           <PrepTasks
             tasks={
@@ -557,6 +622,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
             day={day}
             blocks={blocks}
             date={now}
+            week={week.data}
             onMeal={(planned) => {
               setOpenMeal(planned.eatingTime?.id ?? "");
             }}

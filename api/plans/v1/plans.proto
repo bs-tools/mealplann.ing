@@ -636,6 +636,12 @@ message PlannedCook {
   // planned in portions within the recipe's fridge days, nor supplying
   // other cooks. 0 if they're all planned.
   double left_servings = 4;
+  // The foods the cook's ingredients need that the pantry doesn't have
+  // enough of, by name, so they're bought before it's cooked: counting the
+  // pantry like the shopping list does, for the cooks not done, portions
+  // and staples from the day before today (UTC) on, in date order. Empty
+  // for a cook done, or one the pantry covers.
+  repeated string missing_food_names = 5;
 }
 
 message GetPlanCostRequest {

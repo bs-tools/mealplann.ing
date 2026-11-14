@@ -187,10 +187,20 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 	var earlierErr error
 	var wg sync.WaitGroup
 	wg.Go(func() { earlier, earlierErr = s.plans.ListLeftoverCooks(ctx, user.HouseholdID(), monday) })
+	// The pantry is read for what's missing for the cooks to come, unless
+	// the week is over.
+	var lots []*pantry.Item
+	var lotsErr error
+	if !sunday.Before(time.Now().UTC().AddDate(0, 0, -1)) {
+		wg.Go(func() { lots, lotsErr = s.pantry.ListItems(ctx, user.HouseholdID()) })
+	}
 	d, err := s.loadPlan(ctx, user.HouseholdID(), monday, sunday.AddDate(0, 0, maxPrepAheadDays))
 	wg.Wait()
 	if err == nil {
 		err = earlierErr
+	}
+	if err == nil {
+		err = lotsErr
 	}
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to get week", "")
@@ -205,10 +215,16 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 			}.Build())
 		}
 	}
+	missing, err := s.missingFoods(ctx, user.HouseholdID(), d, lots, sunday)
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to get week", "")
+	}
 	cooks := make([]*plansv1.PlannedCook, 0, len(d.plan.Cooks))
 	for _, c := range d.plan.Cooks {
 		if !c.Date.After(sunday) {
-			cooks = append(cooks, d.plannedCook(c))
+			planned := d.plannedCook(c)
+			planned.SetMissingFoodNames(missing[c.ID])
+			cooks = append(cooks, planned)
 		}
 	}
 	resp := plansv1.GetWeekResponse_builder{
@@ -221,6 +237,67 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 		summary.Summarize(resp)
 	}
 	return resp, nil
+}
+
+// missingFoods returns, for each cook of the week not done yet, from the
+// day before today on (in UTC, as the household's time zone isn't known),
+// the names of the foods its ingredients need that the pantry is short of,
+// as the shopping list counts them: the cooks, portions and staples from
+// then on take the pantry in date order. It's nil for a week that's over,
+// whose pantry isn't read. Two cooks of a recipe in the week share what's
+// missing for it.
+func (s *Service) missingFoods(ctx context.Context, householdID pgtype.UUID, d *planData, lots []*pantry.Item, sunday time.Time) (map[pgtype.UUID][]string, error) {
+	from := time.Now().UTC().Truncate(24*time.Hour).AddDate(0, 0, -1)
+	if sunday.Before(from) {
+		return nil, nil
+	}
+	view := &plans.Plan{From: from, To: sunday, Staples: d.plan.Staples}
+	var upcoming []*plans.Cook
+	for _, c := range d.plan.Cooks {
+		if !c.Date.Before(from) && !c.Date.After(sunday) {
+			view.Cooks = append(view.Cooks, c)
+			if !c.Done {
+				upcoming = append(upcoming, c)
+			}
+		}
+	}
+	if len(upcoming) == 0 {
+		return nil, nil
+	}
+	for _, p := range d.plan.Portions {
+		if !p.Date.Before(from) && !p.Date.After(sunday) {
+			view.Portions = append(view.Portions, p)
+		}
+	}
+	needs := shopping.NeedsOf(view, d.recipes)
+	var ids []pgtype.UUID
+	for _, n := range needs {
+		ids = append(ids, n.FoodID)
+		ids = append(ids, n.Alternatives...)
+	}
+	list, err := s.foods.ListFoodsByID(ctx, householdID, unique(ids))
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[pgtype.UUID]*foods.Food, len(list))
+	for _, f := range list {
+		byID[f.ID] = f
+	}
+	short := map[pgtype.UUID][]string{}
+	for _, it := range shopping.Generate(&shopping.Input{ShopDate: from, Needs: needs, Foods: byID, Lots: lots}) {
+		for _, r := range it.Recipes {
+			if !slices.Contains(short[r.ID], it.Name) {
+				short[r.ID] = append(short[r.ID], it.Name)
+			}
+		}
+	}
+	missing := map[pgtype.UUID][]string{}
+	for _, c := range upcoming {
+		if names := short[c.RecipeID]; len(names) > 0 {
+			missing[c.ID] = names
+		}
+	}
+	return missing, nil
 }
 
 // leftServings returns a cook's servings in the fridge not planned yet:
