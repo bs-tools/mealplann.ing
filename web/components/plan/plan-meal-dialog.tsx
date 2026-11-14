@@ -37,6 +37,9 @@ import { staplesAt } from "helpers/staples";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
+const stepButtonClass =
+  "flex size-11 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-xl font-medium text-ink-soft hover:border-muted disabled:opacity-40";
+
 /*
  * Tab is what the meal is: a recipe from the suggestions or from all of
  * them, the rest of an earlier cook, or a food.
@@ -114,7 +117,16 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   );
   const eatsByDefault = (id: string): boolean =>
     (stapled.get(id) ?? []).length === 0;
-  const [servings, setServings] = useState("");
+  /*
+   * The servings to cook as typed, or null for the recipe's own: a recipe
+   * is cooked as it's written unless that's changed, with what nobody
+   * eats left over.
+   */
+  const [typedServings, setServings] = useState<string | null>(null);
+  const recipeServings =
+    recipes.find((other) => other.id === recipeId)?.servings ?? 0;
+  const servings =
+    typedServings ?? (recipeServings > 0 ? String(recipeServings) : "");
   const [notes, setNotes] = useState("");
   const [invalid, setInvalid] = useState("");
   const transport = useTransport();
@@ -396,17 +408,47 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
                 label="Recipe"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <TextField
-                label="Servings to cook"
-                value={servings}
-                inputMode="decimal"
-                placeholder="One each"
-                hint="More are left over, to plan later."
-                onChange={setServings}
-              />
-              <TextField label="Notes" value={notes} onChange={setNotes} />
+            <div className="flex items-end gap-2">
+              <button
+                type="button"
+                className={stepButtonClass}
+                aria-label="A serving fewer"
+                disabled={(parseOptionalNumber(servings) ?? 0) <= 1}
+                onClick={() => {
+                  setServings(
+                    String(
+                      Math.max(1, (parseOptionalNumber(servings) ?? 0) - 1)
+                    )
+                  );
+                }}
+              >
+                −
+              </button>
+              <div className="w-28">
+                <TextField
+                  label="Servings to cook"
+                  value={servings}
+                  inputMode="decimal"
+                  placeholder="One each"
+                  onChange={setServings}
+                />
+              </div>
+              <button
+                type="button"
+                className={stepButtonClass}
+                aria-label="A serving more"
+                onClick={() => {
+                  setServings(String((parseOptionalNumber(servings) ?? 0) + 1));
+                }}
+              >
+                +
+              </button>
             </div>
+            <p className="-mt-1 text-xs text-muted">
+              {recipeServings > 0 ? `The recipe makes ${recipeServings}. ` : ""}
+              What nobody eats is left over, to plan later.
+            </p>
+            <TextField label="Notes" value={notes} onChange={setNotes} />
             {invalid !== "" && <p className="text-sm text-error">{invalid}</p>}
             <ErrorText error={plan.error} />
             <div className="flex justify-end gap-2">
