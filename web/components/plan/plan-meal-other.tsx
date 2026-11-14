@@ -121,9 +121,13 @@ export const LeftoversChoice: React.FC<LeftoversChoiceProps> = ({
     },
   });
 
-  // Nothing shows without leftovers: the suggestions follow.
   if (fridge.length === 0 && frozen.length === 0) {
-    return null;
+    return (
+      <p className="text-sm text-muted">
+        There are no leftovers to eat yet: cooks with servings nobody eats, or
+        frozen ones, show here.
+      </p>
+    );
   }
   const rows = [
     ...fridge.map((planned) => ({

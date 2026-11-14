@@ -1,6 +1,6 @@
 import AccountMenu from "@components/header/account-menu";
 import Loading from "@components/loading";
-import EatingTimeSuggestionsDialog from "@components/plan/eating-time-suggestions-dialog";
+import EatingTimeDialog from "@components/plan/eating-time-dialog";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import PrepTasks from "@components/plan/prep-tasks";
 import TargetBars, { targetStates } from "@components/plan/target-bars";
@@ -652,13 +652,18 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
           if (planned.portions.length === 0 && !planned.eatingOut) {
             const meal = planned.eatingTime?.meal ?? HouseholdMeal.UNSPECIFIED;
             return meal === HouseholdMeal.UNSPECIFIED ? (
-              <EatingTimeSuggestionsDialog
+              <EatingTimeDialog
                 slot={{
                   date: now,
                   eatingTimeId: openMeal,
                   personId: day.personId,
                 }}
                 people={people.data?.people ?? []}
+                dates={daysOfWeek(startOfWeek(now))}
+                cooks={[
+                  ...(week.data?.earlierLeftovers ?? []),
+                  ...(week.data?.cooks ?? []),
+                ]}
                 onClose={close}
               />
             ) : (

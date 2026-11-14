@@ -1,5 +1,5 @@
 import Loading from "@components/loading";
-import EatingTimeSuggestionsDialog from "@components/plan/eating-time-suggestions-dialog";
+import EatingTimeDialog from "@components/plan/eating-time-dialog";
 import MonthView from "@components/plan/month-view";
 import PlanDayList from "@components/plan/plan-day-list";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
@@ -461,9 +461,15 @@ const PlanPage: React.FC = () => {
           />
         )}
       {suggesting !== null && (
-        <EatingTimeSuggestionsDialog
+        <EatingTimeDialog
           slot={suggesting}
           people={people.data?.people ?? []}
+          dates={dates}
+          cooks={
+            week.data === undefined
+              ? []
+              : [...week.data.earlierLeftovers, ...week.data.cooks]
+          }
           onClose={() => {
             setSuggesting(null);
           }}
