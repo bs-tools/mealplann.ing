@@ -44,7 +44,7 @@ const stepButtonClass =
  * Tab is what the meal is: a recipe from the suggestions or from all of
  * them, the rest of an earlier cook, or a food.
  */
-type Tab = "suggestions" | "recipe" | "food";
+type Tab = "suggestions" | "recipe" | "leftovers" | "food";
 
 interface PlanMealDialogProps {
   // The dates to choose from, those of the week shown.
@@ -93,7 +93,8 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>(
-    initialRecipe === undefined ? "suggestions" : "recipe"
+    // Suggestions are only shown when asked for.
+    "recipe"
   );
   const [recipe, setRecipe] = useState<PickedRecipe | null>(
     initialRecipe ?? null
@@ -346,24 +347,36 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
           label="What the meal is"
           value={tab}
           options={[
-            { label: "Suggested", value: "suggestions" },
             { label: "Recipe", value: "recipe" },
+            { label: "Leftovers", value: "leftovers" },
             { label: "Food", value: "food" },
           ]}
           onChange={setTab}
         />
+        {tab !== "suggestions" && (
+          <button
+            type="button"
+            className="-mt-1 self-start text-sm font-bold text-pine hover:underline"
+            onClick={() => {
+              setTab("suggestions");
+            }}
+          >
+            Suggest for me
+          </button>
+        )}
+        {tab === "leftovers" && (
+          <LeftoversChoice
+            eaters={mealEaters}
+            date={date}
+            cooks={cooks}
+            onPlanned={planned}
+          />
+        )}
         {tab === "food" && (
           <FoodChoice eaters={mealEaters} date={date} onPlanned={planned} />
         )}
         {tab === "suggestions" && (
           <>
-            {/* What's cooked already comes before cooking anew. */}
-            <LeftoversChoice
-              eaters={mealEaters}
-              date={date}
-              cooks={cooks}
-              onPlanned={planned}
-            />
             {eaters.length > 0 && chosen.length > 0 && (
               <SuggestionList
                 request={{

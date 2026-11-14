@@ -38,7 +38,7 @@ import React, { useState } from "react";
  * What is what's eaten: a share of a cook, a food, or a recipe cooked for
  * it.
  */
-type What = "cook" | "food" | "recipe";
+export type What = "cook" | "food" | "recipe";
 
 // FROZEN prefixes the option of a cook's frozen leftovers.
 const FROZEN = "freezer:";
@@ -81,6 +81,12 @@ interface PortionDialogProps {
    * eating time and the day, so they aren't asked.
    */
   mealName?: string;
+  // What a new portion is to start with, a food unless given.
+  initialWhat?: What;
+  // More actions shown above the form, like asking for suggestions.
+  actions?: React.ReactNode;
+  // The dialog's title, in place of one made from mealName.
+  title?: string;
   onClose: () => void;
 }
 
@@ -109,6 +115,9 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
   dates,
   cooks,
   mealName,
+  initialWhat: startWith = "food",
+  actions,
+  title,
   onClose,
 }) => {
   const queryClient = useQueryClient();
@@ -120,11 +129,13 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
   const [personId, setPersonId] = useState(slot.personId);
   const [eatingTimeId, setEatingTimeId] = useState(slot.eatingTimeId);
   const [date, setDate] = useState(slot.date);
-  const initialWhat: What =
-    portion === undefined || portion.foodId !== "" ? "food" : "cook";
-  const [what, setWhat] = useState<What>(
-    offered.length === 0 && portion === undefined ? "food" : initialWhat
-  );
+  let initialWhat: What = startWith;
+  if (portion !== undefined) {
+    initialWhat = portion.foodId === "" ? "cook" : "food";
+  } else if (startWith === "cook" && offered.length === 0) {
+    initialWhat = "food";
+  }
+  const [what, setWhat] = useState<What>(initialWhat);
   const [cookId, setCookId] = useState(
     portion?.cookId ?? offered[0]?.cook?.id ?? ""
   );
@@ -326,7 +337,11 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
   };
 
   return (
-    <Modal open onClose={onClose} title={dialogTitle(portion, mealName)}>
+    <Modal
+      open
+      onClose={onClose}
+      title={title ?? dialogTitle(portion, mealName)}
+    >
       <form
         className="flex flex-col gap-3"
         onSubmit={(event) => {
@@ -334,6 +349,7 @@ const PortionDialog: React.FC<PortionDialogProps> = ({
           save();
         }}
       >
+        {actions}
         {mealName === undefined && (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <SelectField
