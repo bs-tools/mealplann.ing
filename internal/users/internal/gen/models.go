@@ -565,6 +565,7 @@ type Cook struct {
 	UpdateTime      pgtype.Timestamptz
 	FrozenServings  float64
 	OffPlanServings float64
+	RemovedServings float64
 }
 
 type CookPantryDeduction struct {

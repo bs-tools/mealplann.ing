@@ -106,6 +106,7 @@ func cookToProto(c *plans.Cook) *plansv1.Cook {
 		Done:            c.Done,
 		FrozenServings:  c.FrozenServings,
 		OffPlanServings: c.OffPlanServings,
+		RemovedServings: c.RemovedServings,
 		CreateTime:      timestamppb.New(c.CreateTime),
 		Supplies:        suppliesToProto(c.Supplies),
 		Supplying:       suppliesToProto(c.Supplying),
@@ -143,6 +144,10 @@ func cookFromProto(p *plansv1.Cook) (*plans.Cook, error) {
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
 			"off_plan_servings must be from 0 to servings, %v", p.GetServings())
 	}
+	if r := p.GetRemovedServings(); math.IsNaN(r) || r < 0 || r > p.GetServings() {
+		return nil, connect.Errorf(connect.CodeInvalidArgument,
+			"removed_servings must be from 0 to servings, %v: remove at most the servings cooked", p.GetServings())
+	}
 	return &plans.Cook{
 		RecipeID:        recipeID,
 		Date:            date,
@@ -152,6 +157,7 @@ func cookFromProto(p *plansv1.Cook) (*plans.Cook, error) {
 		Done:            p.GetDone(),
 		FrozenServings:  p.GetFrozenServings(),
 		OffPlanServings: p.GetOffPlanServings(),
+		RemovedServings: p.GetRemovedServings(),
 	}, nil
 }
 

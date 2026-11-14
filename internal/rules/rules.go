@@ -297,6 +297,9 @@ type Cook struct {
 	// OffPlanServings is how many servings were taken without a portion,
 	// which count as used, from the freezer first.
 	OffPlanServings float64
+	// RemovedServings is how many servings were taken out of the fridge
+	// without a portion, which count as used.
+	RemovedServings float64
 	// Done is whether it's been cooked: what's left of it is leftovers in
 	// the kitchen, rather than a cook still to make.
 	Done bool
@@ -385,7 +388,7 @@ func CheckSupply(recipeName string, date time.Time, componentName string, suppli
 // and would be cooked and bought for nobody. It returns nil if all's well.
 func CheckServings(c *Cook, assigned float64) *Warning {
 	inFreezer := max(c.FrozenServings-c.LateServings-c.OffPlanServings, 0)
-	assigned += c.OffPlanServings
+	assigned += c.OffPlanServings + c.RemovedServings
 	switch {
 	case c.FrozenServings > 0 && c.LateServings > c.FrozenServings+servingsSlack:
 		return &Warning{
