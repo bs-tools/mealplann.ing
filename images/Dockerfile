@@ -5,7 +5,7 @@
 # and the name at the end.
 
 # Runs the web app's tools: npm, tsc, oxlint, oxfmt and Tailwind.
-FROM node:26.12.1-alpine@sha256:40cd011b55415bc894e45b02fdd5a5dfde056921b7d23a64c74f80497af48797 AS node
+FROM node:26.13.0-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216 AS node
 
 # The base of the server's image, which ko adds the binary to. It has CA
 # certificates and time zone data, and runs as a user without root.
@@ -17,4 +17,4 @@ FROM hashicorp/terraform:1.17.1@sha256:a5d5a5a892c98f60fcbfa81eac2a40fc19e7b3fa7
 
 # The local and test database. Production runs on Neon, whose major version
 # this follows.
-FROM postgres:18.6@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336 AS postgres
+FROM postgres:18.6@sha256:e3d24f6906d0760bf4da0dae872415391ededefad23fd471c47dc53b0ddf3c42 AS postgres
