@@ -385,7 +385,7 @@ func (d *planData) soleCook(portion *plans.Portion) pgtype.UUID {
 		return pgtype.UUID{}
 	}
 	c := d.plan.Cooks[i]
-	if c.Done || c.FrozenServings > 0 || c.OffPlanServings > 0 || c.SuppliedServings > 0 ||
+	if c.Done || c.FrozenServings > 0 || c.OffPlanServings > 0 || c.RemovedServings > 0 || c.SuppliedServings > 0 ||
 		math.Abs(c.AssignedServings-portion.Servings) > 1e-9 {
 		return pgtype.UUID{}
 	}

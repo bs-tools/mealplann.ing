@@ -72,6 +72,9 @@ type Cook struct {
 	// unplanned, given away or thrown out, like a frozen serving grabbed
 	// for a lunch.
 	OffPlanServings float64
+	// RemovedServings are its servings taken out of the fridge without a
+	// portion: eaten unplanned, given away, thrown out, or never there.
+	RemovedServings float64
 	// RecipeName, AssignedServings, the servings of all its portions,
 	// LateServings, those of its portions eaten after the recipe's fridge
 	// days or from the freezer, and of what it supplies from the freezer,
@@ -536,6 +539,7 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 				Done:            c.Done,
 				FrozenServings:  c.FrozenServings,
 				OffPlanServings: c.OffPlanServings,
+				RemovedServings: c.RemovedServings,
 			})
 		}
 		p := &gen.CreateCookPortionsParams{HouseholdID: c.HouseholdID, CookID: id}
@@ -680,6 +684,7 @@ func (r *Repository) UpdateCook(ctx context.Context, c *Cook) (*Cook, error) {
 			Done:            c.Done,
 			FrozenServings:  c.FrozenServings,
 			OffPlanServings: c.OffPlanServings,
+			RemovedServings: c.RemovedServings,
 		})
 		return err
 	})
@@ -852,6 +857,7 @@ func (r *Repository) MoveCook(ctx context.Context, c *Cook, moves []PortionMove,
 				ID: c.ID, HouseholdID: c.HouseholdID, RecipeID: c.RecipeID, Date: store.DateToPG(c.Date),
 				Servings: c.Servings, Meal: mealToDB(c.Meal), Notes: c.Notes, Done: c.Done,
 				FrozenServings: c.FrozenServings, OffPlanServings: c.OffPlanServings,
+				RemovedServings: c.RemovedServings,
 			})
 			return err
 		})
@@ -1113,6 +1119,7 @@ func cookFromDB(row *gen.ListCooksRow) *Cook {
 		Done:             c.Done,
 		FrozenServings:   c.FrozenServings,
 		OffPlanServings:  c.OffPlanServings,
+		RemovedServings:  c.RemovedServings,
 		RecipeName:       row.RecipeName,
 		AssignedServings: row.AssignedServings,
 		LateServings:     row.LateServings,

@@ -274,6 +274,7 @@ type Cook struct {
 	xxx_hidden_Supplies        *[]*CookSupply         `protobuf:"bytes,12,rep,name=supplies,proto3"`
 	xxx_hidden_Supplying       *[]*CookSupply         `protobuf:"bytes,13,rep,name=supplying,proto3"`
 	xxx_hidden_OffPlanServings float64                `protobuf:"fixed64,14,opt,name=off_plan_servings,json=offPlanServings,proto3"`
+	xxx_hidden_RemovedServings float64                `protobuf:"fixed64,15,opt,name=removed_servings,json=removedServings,proto3"`
 	unknownFields              protoimpl.UnknownFields
 	sizeCache                  protoimpl.SizeCache
 }
@@ -405,6 +406,13 @@ func (x *Cook) GetOffPlanServings() float64 {
 	return 0
 }
 
+func (x *Cook) GetRemovedServings() float64 {
+	if x != nil {
+		return x.xxx_hidden_RemovedServings
+	}
+	return 0
+}
+
 func (x *Cook) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -459,6 +467,10 @@ func (x *Cook) SetSupplying(v []*CookSupply) {
 
 func (x *Cook) SetOffPlanServings(v float64) {
 	x.xxx_hidden_OffPlanServings = v
+}
+
+func (x *Cook) SetRemovedServings(v float64) {
+	x.xxx_hidden_RemovedServings = v
 }
 
 func (x *Cook) HasCreateTime() bool {
@@ -530,6 +542,13 @@ type Cook_builder struct {
 	// for a lunch. They count as used, so they're neither unassigned nor in
 	// the freezer. Add to it with TakeFromFreezer. From 0 to servings.
 	OffPlanServings float64
+	// How many of its servings were taken out of the fridge without a
+	// portion: eaten without being planned, given away, thrown out, or never
+	// there, when less was made than planned. They count as used, so they're
+	// no longer leftovers to plan. Set it with UpdateCook, e.g. to the
+	// cook's left_servings added to what it was, to remove its leftovers.
+	// From 0 to servings.
+	RemovedServings float64
 }
 
 func (b0 Cook_builder) Build() *Cook {
@@ -550,6 +569,7 @@ func (b0 Cook_builder) Build() *Cook {
 	x.xxx_hidden_Supplies = &b.Supplies
 	x.xxx_hidden_Supplying = &b.Supplying
 	x.xxx_hidden_OffPlanServings = b.OffPlanServings
+	x.xxx_hidden_RemovedServings = b.RemovedServings
 	return m0
 }
 
@@ -7689,7 +7709,7 @@ var File_plans_v1_plans_proto protoreflect.FileDescriptor
 
 const file_plans_v1_plans_proto_rawDesc = "" +
 	"\n" +
-	"\x14plans/v1/plans.proto\x12\bplans.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\x1a\x16people/v1/people.proto\x1a\x18recipes/v1/recipes.proto\"\xb9\x04\n" +
+	"\x14plans/v1/plans.proto\x12\bplans.v1\x1a\x14foods/v1/foods.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14mcp/v1/options.proto\x1a\x16people/v1/people.proto\x1a\x18recipes/v1/recipes.proto\"\xe4\x04\n" +
 	"\x04Cook\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\trecipe_id\x18\x02 \x01(\tR\brecipeId\x12'\n" +
@@ -7708,7 +7728,8 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x0ffrozen_servings\x18\v \x01(\x01R\x0efrozenServings\x128\n" +
 	"\bsupplies\x18\f \x03(\v2\x14.plans.v1.CookSupplyB\x06\xaa\x9f\x19\x02\b\x01R\bsupplies\x12:\n" +
 	"\tsupplying\x18\r \x03(\v2\x14.plans.v1.CookSupplyB\x06\xaa\x9f\x19\x02\b\x01R\tsupplying\x12*\n" +
-	"\x11off_plan_servings\x18\x0e \x01(\x01R\x0foffPlanServings\"\xfd\x02\n" +
+	"\x11off_plan_servings\x18\x0e \x01(\x01R\x0foffPlanServings\x12)\n" +
+	"\x10removed_servings\x18\x0f \x01(\x01R\x0fremovedServings\"\xfd\x02\n" +
 	"\n" +
 	"CookSupply\x12(\n" +
 	"\x10consumer_cook_id\x18\x01 \x01(\tR\x0econsumerCookId\x120\n" +

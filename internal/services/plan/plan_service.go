@@ -225,11 +225,12 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 
 // leftServings returns a cook's servings in the fridge not planned yet:
 // not frozen, nor in portions eaten from the fridge, within the recipe's
-// fridge days, nor supplying other cooks from the fridge. Portions after
+// fridge days, nor supplying other cooks from the fridge, nor removed from
+// it. Portions after
 // the fridge days, and supplies from the freezer, come from the frozen
 // servings: they're its late servings.
 func leftServings(c *plans.Cook) float64 {
-	return c.Servings - c.FrozenServings - (c.AssignedServings + c.SuppliedServings - c.LateServings)
+	return c.Servings - c.FrozenServings - c.RemovedServings - (c.AssignedServings + c.SuppliedServings - c.LateServings)
 }
 
 func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*plansv1.PlanMealResponse, error) {

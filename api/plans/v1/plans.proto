@@ -244,6 +244,13 @@ message Cook {
   // for a lunch. They count as used, so they're neither unassigned nor in
   // the freezer. Add to it with TakeFromFreezer. From 0 to servings.
   double off_plan_servings = 14;
+  // How many of its servings were taken out of the fridge without a
+  // portion: eaten without being planned, given away, thrown out, or never
+  // there, when less was made than planned. They count as used, so they're
+  // no longer leftovers to plan. Set it with UpdateCook, e.g. to the
+  // cook's left_servings added to what it was, to remove its leftovers.
+  // From 0 to servings.
+  double removed_servings = 15;
 }
 
 // A cook making a component of another cook: e.g. a pot of chickpeas for

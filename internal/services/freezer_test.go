@@ -252,3 +252,56 @@ func TestTakeFromFreezer(t *testing.T) {
 		t.Errorf("got warnings %v, want none unassigned", got)
 	}
 }
+
+// TestRemoveLeftovers checks that a cook's leftovers in the fridge can be
+// removed, like servings that were never there, without leaving servings
+// unassigned.
+func TestRemoveLeftovers(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	lentils := customFood(t, e, "Lentils", 116, 9, 20, 1.8, 0.4, nil)
+	created, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
+		Name: "Lentil soup", Servings: 4, Ingredients: []*recipesv1.Ingredient{ingredient(lentils.GetId(), 600, grams)},
+	}.Build()}.Build())
+	if err != nil {
+		t.Fatalf("CreateRecipe: %v", err)
+	}
+	cook, err := e.plans.CreateCook(ctx, plansv1.CreateCookRequest_builder{
+		Cook:      plansv1.Cook_builder{RecipeId: created.GetRecipe().GetId(), Date: monday, Servings: 4, Done: true}.Build(),
+		FromStock: true,
+	}.Build())
+	if err != nil {
+		t.Fatalf("CreateCook: %v", err)
+	}
+	left := func() float64 {
+		t.Helper()
+		week, err := e.plans.GetWeek(ctx, plansv1.GetWeekRequest_builder{Monday: monday}.Build())
+		if err != nil {
+			t.Fatalf("GetWeek: %v", err)
+		}
+		return week.GetCooks()[0].GetLeftServings()
+	}
+	if got := left(); got != 4 {
+		t.Fatalf("got %v servings left, want 4", got)
+	}
+	update := func(removed float64) error {
+		_, err := e.plans.UpdateCook(ctx, plansv1.UpdateCookRequest_builder{
+			Cook:       plansv1.Cook_builder{Id: cook.GetCook().GetId(), RemovedServings: removed}.Build(),
+			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"removed_servings"}},
+		}.Build())
+		return err
+	}
+	if err := update(4); err != nil {
+		t.Fatalf("UpdateCook: %v", err)
+	}
+	if got := left(); got != 0 {
+		t.Errorf("got %v servings left, want none", got)
+	}
+	if got := weekWarnings(t, e, monday); slices.Contains(got, plansv1.WarningKind_WARNING_KIND_SERVINGS_UNASSIGNED) {
+		t.Errorf("got warnings %v, want none unassigned", got)
+	}
+	if err := update(5); connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("got %v removing more than cooked, want invalid argument", err)
+	}
+}

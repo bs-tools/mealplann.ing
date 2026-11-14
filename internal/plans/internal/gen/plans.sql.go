@@ -53,8 +53,8 @@ func (q *Queries) CountDoneCooks(ctx context.Context, arg *CountDoneCooksParams)
 }
 
 const createCook = `-- name: CreateCook :execrows
-insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done, frozen_servings, off_plan_servings)
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done, frozen_servings, off_plan_servings, removed_servings)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 `
 
 type CreateCookParams struct {
@@ -68,6 +68,7 @@ type CreateCookParams struct {
 	Done            bool
 	FrozenServings  float64
 	OffPlanServings float64
+	RemovedServings float64
 }
 
 func (q *Queries) CreateCook(ctx context.Context, arg *CreateCookParams) (int64, error) {
@@ -82,6 +83,7 @@ func (q *Queries) CreateCook(ctx context.Context, arg *CreateCookParams) (int64,
 		arg.Done,
 		arg.FrozenServings,
 		arg.OffPlanServings,
+		arg.RemovedServings,
 	)
 	if err != nil {
 		return 0, err
@@ -272,7 +274,7 @@ func (q *Queries) DeleteCook(ctx context.Context, arg *DeleteCookParams) (int64,
 const deleteCookIfUnused = `-- name: DeleteCookIfUnused :one
 delete from cooks c
 where c.id = $1 and c.household_id = $2
-  and not c.done and c.frozen_servings = 0 and c.off_plan_servings = 0
+  and not c.done and c.frozen_servings = 0 and c.off_plan_servings = 0 and c.removed_servings = 0
   and not exists (select 1 from portions p where p.household_id = c.household_id and p.cook_id = c.id)
   and not exists (select 1 from cook_supplies s where s.household_id = c.household_id and s.supplier_cook_id = c.id)
 returning coalesce((select r.name from recipes r where r.id = c.recipe_id), '')::text as recipe_name
@@ -558,7 +560,7 @@ func (q *Queries) ListCookSupplies(ctx context.Context, arg *ListCookSuppliesPar
 
 const listCooks = `-- name: ListCooks :many
 select
-  cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings, cooks.off_plan_servings,
+  cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings, cooks.off_plan_servings, cooks.removed_servings,
   r.name as recipe_name,
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
   (coalesce((
@@ -637,6 +639,7 @@ func (q *Queries) ListCooks(ctx context.Context, arg *ListCooksParams) ([]*ListC
 			&i.Cook.UpdateTime,
 			&i.Cook.FrozenServings,
 			&i.Cook.OffPlanServings,
+			&i.Cook.RemovedServings,
 			&i.RecipeName,
 			&i.AssignedServings,
 			&i.LateServings,
@@ -695,7 +698,7 @@ func (q *Queries) ListEatingOut(ctx context.Context, arg *ListEatingOutParams) (
 
 const listFrozenCooks = `-- name: ListFrozenCooks :many
 select
-  cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings, cooks.off_plan_servings,
+  cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings, cooks.off_plan_servings, cooks.removed_servings,
   r.name as recipe_name,
   r.fridge_days,
   r.freezer_days,
@@ -755,6 +758,7 @@ func (q *Queries) ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) 
 			&i.Cook.UpdateTime,
 			&i.Cook.FrozenServings,
 			&i.Cook.OffPlanServings,
+			&i.Cook.RemovedServings,
 			&i.RecipeName,
 			&i.FridgeDays,
 			&i.FreezerDays,
@@ -772,7 +776,7 @@ func (q *Queries) ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) 
 
 const listLeftoverCooks = `-- name: ListLeftoverCooks :many
 select
-  cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings, cooks.off_plan_servings,
+  cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings, cooks.off_plan_servings, cooks.removed_servings,
   r.name as recipe_name,
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
   (coalesce((
@@ -843,6 +847,7 @@ func (q *Queries) ListLeftoverCooks(ctx context.Context, arg *ListLeftoverCooksP
 			&i.Cook.UpdateTime,
 			&i.Cook.FrozenServings,
 			&i.Cook.OffPlanServings,
+			&i.Cook.RemovedServings,
 			&i.RecipeName,
 			&i.AssignedServings,
 			&i.LateServings,
@@ -1250,8 +1255,9 @@ update cooks set
   done = $6,
   frozen_servings = $7,
   off_plan_servings = $8,
+  removed_servings = $9,
   update_time = now()
-where id = $9 and household_id = $10
+where id = $10 and household_id = $11
 `
 
 type UpdateCookParams struct {
@@ -1263,6 +1269,7 @@ type UpdateCookParams struct {
 	Done            bool
 	FrozenServings  float64
 	OffPlanServings float64
+	RemovedServings float64
 	ID              pgtype.UUID
 	HouseholdID     pgtype.UUID
 }
@@ -1277,6 +1284,7 @@ func (q *Queries) UpdateCook(ctx context.Context, arg *UpdateCookParams) (int64,
 		arg.Done,
 		arg.FrozenServings,
 		arg.OffPlanServings,
+		arg.RemovedServings,
 		arg.ID,
 		arg.HouseholdID,
 	)

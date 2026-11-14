@@ -11,13 +11,16 @@ import {
 } from "@components/ui/styles";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
+import { PantryService } from "gen/pantry/v1/pantry_pb";
 import {
   getWeek,
   listFrozenLeftovers,
   takeFromFreezer,
+  updateCook,
 } from "gen/plans/v1/plans-PlanService_connectquery";
 import type { FrozenLeftover, PlannedCook } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
+import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { startOfWeek, today } from "helpers/dates";
 import { formatShortDate } from "helpers/format";
 import { formatServings } from "helpers/labels";
@@ -164,8 +167,8 @@ interface LeftoverSheetProps {
 
 /**
  * LeftoverSheet is what can be done with leftovers: plan them for a meal,
- * freeze those in the fridge, or take frozen ones out, eaten without a
- * plan or thrown out.
+ * freeze those in the fridge, or take them out, eaten without a plan,
+ * thrown out, or not there after all.
  */
 export const LeftoverSheet: React.FC<LeftoverSheetProps> = ({
   leftover,
@@ -178,6 +181,21 @@ export const LeftoverSheet: React.FC<LeftoverSheetProps> = ({
   const take = useMutation(takeFromFreezer, {
     onSuccess: async () => {
       await invalidateServices(queryClient, [PlanService]);
+      onClose();
+    },
+  });
+  /*
+   * Remove takes fridge leftovers out of the pantry: servings that aren't
+   * there, as the plan can get the numbers wrong, or were eaten, given
+   * away or thrown out without a plan.
+   */
+  const remove = useMutation(updateCook, {
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [
+        PlanService,
+        PantryService,
+        SuggestionService,
+      ]);
       onClose();
     },
   });
@@ -249,30 +267,47 @@ export const LeftoverSheet: React.FC<LeftoverSheetProps> = ({
           >
             The recipe
           </Link>
-          {frozen !== undefined && (
-            <button
-              type="button"
-              className={`${ghostDangerButton} self-start`}
-              disabled={take.isPending}
-              onClick={() => {
-                setStep("throw");
-              }}
-            >
-              Throw them out
-            </button>
-          )}
+          <button
+            type="button"
+            className={`${ghostDangerButton} self-start`}
+            disabled={take.isPending || remove.isPending}
+            onClick={() => {
+              setStep("throw");
+            }}
+          >
+            {frozen === undefined ? "Remove from the pantry" : "Throw them out"}
+          </button>
         </div>
-        <ErrorText error={take.error} />
+        <ErrorText error={take.error ?? remove.error} />
       </div>
       <ConfirmDialog
         open={step === "throw"}
-        title={`Throw out ${leftover.recipeName}?`}
-        message="The frozen servings not planned yet are taken out of the freezer. Those already planned stay."
-        confirmLabel="Throw out"
+        title={
+          frozen === undefined
+            ? `Remove ${leftover.recipeName}?`
+            : `Throw out ${leftover.recipeName}?`
+        }
+        message={
+          frozen === undefined
+            ? `The ${formatServings(leftover.servings)} not planned yet are taken out of the pantry, like leftovers that aren't there or were eaten without a plan. Those already planned stay.`
+            : "The frozen servings not planned yet are taken out of the freezer. Those already planned stay."
+        }
+        confirmLabel={frozen === undefined ? "Remove" : "Throw out"}
         onClose={() => {
           setStep("sheet");
         }}
         onConfirm={() => {
+          if (frozen === undefined) {
+            remove.mutate({
+              cook: {
+                id: cookId,
+                removedServings:
+                  (planned?.cook?.removedServings ?? 0) + leftover.servings,
+              },
+              updateMask: { paths: ["removed_servings"] },
+            });
+            return;
+          }
           take.mutate({ cookId, servings: leftover.servings });
         }}
       />
