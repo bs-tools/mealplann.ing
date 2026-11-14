@@ -80,7 +80,22 @@ func (s *Service) planSuppliers(ctx context.Context, householdID pgtype.UUID, li
 	if err != nil {
 		return nil, err
 	}
-	return withSuppliers(list, byID, freezer), nil
+	// The pantry is read only if a component can be replaced with a food.
+	var stock map[pgtype.UUID]float64
+	if slices.ContainsFunc(list, func(cp *plans.CookWithPortions) bool {
+		r := byID[cp.Cook.RecipeID]
+		return !cp.Existing && r != nil && slices.ContainsFunc(r.ComponentsFor(cp.Cook.Servings), func(n recipes.ComponentNeed) bool { return n.Instead != nil })
+	}) {
+		items, err := s.pantry.ListItems(ctx, householdID)
+		if err != nil {
+			return nil, err
+		}
+		stock = map[pgtype.UUID]float64{}
+		for _, it := range items {
+			stock[it.FoodID] += it.Grams
+		}
+	}
+	return withSuppliers(list, byID, freezer, stock), nil
 }
 
 // batchKey identifies a batch of a component: its recipe, on a date.
@@ -109,14 +124,16 @@ func batchServings(need recipes.ComponentNeed) float64 {
 // withSuppliers returns the cooks to create with a supplier of each of
 // their recipes' components: frozen servings of an earlier cook of it, if
 // the freezer has enough that keep until the cook, or of an alternative
-// recipe, oldest first (see frozenStock.take),
+// recipe, oldest first (see frozenStock.take), or none if the pantry has
+// enough of a food it can be replaced with, from stock, by food, which
+// shrinks as it's used (nil for none),
 // or else a new cook of it, on the same date, of a whole batch of it (see
 // batchServings), which cooks of the same day share, and so on for
 // components of components. Every cook is given an ID, so
 // the supplies can refer to cooks created together. recipes are the
 // cooks' recipes by ID, with their components read; freezer is what's in
 // the freezer, nil for nothing, which shrinks as it supplies cooks.
-func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes.Recipe, freezer frozenStock) []*plans.CookWithPortions {
+func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes.Recipe, freezer frozenStock, stock map[pgtype.UUID]float64) []*plans.CookWithPortions {
 	var result []*plans.CookWithPortions
 	batches := map[batchKey]*batch{}
 	var add func(cp *plans.CookWithPortions, r *recipes.Recipe, depth int)
@@ -134,6 +151,18 @@ func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes
 				cp.Supplies = append(cp.Supplies, &plans.Supply{
 					ComponentRecipeID: need.Recipe.ID, SupplierCookID: frozen.ID, FromFreezer: true,
 				})
+				continue
+			}
+			// A food the component can be replaced with that the pantry has
+			// enough of, like canned beans, is used instead of cooking it:
+			// the cook is then made with it (see recipes.ComponentFoods).
+			if inst := need.Instead; inst != nil && inst.Grams > 0 && slices.ContainsFunc(inst.Foods, func(f pgtype.UUID) bool {
+				if stock[f] >= inst.Grams {
+					stock[f] -= inst.Grams
+					return true
+				}
+				return false
+			}) {
 				continue
 			}
 			// A batch made for an earlier cook of the day supplies this

@@ -143,7 +143,11 @@ export const ingredientName = (ingredient: Ingredient): string => {
   if (ingredient.recipeId !== "") {
     return [
       ingredient.recipeName,
-      ...ingredient.alternatives.map((alternative) => alternative.recipeName),
+      ...ingredient.alternatives.map((alternative) =>
+        alternative.recipeId === ""
+          ? alternative.foodName
+          : alternative.recipeName
+      ),
     ].join(" or ");
   }
   if (ingredient.foodId === "") {

@@ -274,6 +274,9 @@ func (s *Service) missingFoods(ctx context.Context, householdID pgtype.UUID, d *
 	for _, n := range needs {
 		ids = append(ids, n.FoodID)
 		ids = append(ids, n.Alternatives...)
+		if n.Instead != nil {
+			ids = append(ids, n.Instead.Foods...)
+		}
 	}
 	list, err := s.foods.ListFoodsByID(ctx, householdID, unique(ids))
 	if err != nil {
@@ -695,6 +698,65 @@ func foodUsesFromProto(list []*plansv1.FoodUse) ([]foodUse, error) {
 	return uses, nil
 }
 
+// withComponentFoods returns a cook's ingredients with those a component
+// is made of replaced by a food it can be replaced with that the pantry has
+// enough of, like canned beans for a pot of beans, in the component's
+// weight. The pantry and the foods are only read if a component can be.
+func (s *Service) withComponentFoods(ctx context.Context, householdID pgtype.UUID, ingredients []*recipes.Ingredient) ([]*recipes.Ingredient, error) {
+	var ids []pgtype.UUID
+	for _, in := range ingredients {
+		if in.Instead != nil {
+			ids = append(ids, in.Instead.Foods...)
+		}
+	}
+	if len(ids) == 0 {
+		return ingredients, nil
+	}
+	items, err := s.pantry.ListItems(ctx, householdID)
+	if err != nil {
+		return nil, err
+	}
+	stock := map[pgtype.UUID]float64{}
+	for _, it := range items {
+		stock[it.FoodID] += it.Grams
+	}
+	found, err := s.foods.ListFoodsByID(ctx, householdID, unique(ids))
+	if err != nil {
+		return nil, err
+	}
+	byID := map[pgtype.UUID]*foods.Food{}
+	for _, f := range found {
+		byID[f.ID] = f
+	}
+	replaced := map[*recipes.ComponentFoods]bool{}
+	out := make([]*recipes.Ingredient, 0, len(ingredients))
+	for _, in := range ingredients {
+		inst := in.Instead
+		if inst == nil {
+			out = append(out, in)
+			continue
+		}
+		done, seen := replaced[inst]
+		if !seen {
+			for _, id := range inst.Foods {
+				if f, ok := byID[id]; ok && inst.Grams > 0 && stock[id] >= inst.Grams {
+					stock[id] -= inst.Grams
+					out = append(out, &recipes.Ingredient{
+						FoodID: id, FoodName: f.Name, Food: *f.Nutrition(), Amount: inst.Grams, Unit: nutrition.Grams,
+					})
+					done = true
+					break
+				}
+			}
+			replaced[inst] = done
+		}
+		if !done {
+			out = append(out, in)
+		}
+	}
+	return out, nil
+}
+
 // useAlternatives swaps the foods a cook uses for the alternatives the
 // pantry has, where it's short of the ingredient's own food and has enough
 // of an alternative, like extra firm tofu for a recipe of firm or extra
@@ -750,8 +812,13 @@ func (s *Service) cookUses(ctx context.Context, c *plans.Cook, actual []foodUse)
 	var order []pgtype.UUID
 	// alternatives are the foods each of them can be made with instead.
 	alternatives := map[pgtype.UUID][]recipes.Alternative{}
-	// Components other cooks supply are taken out by those cooks.
-	for _, in := range list[0].IngredientsWithout(c.Servings, shopping.SuppliedComponents(c)) {
+	// Components other cooks supply are taken out by those cooks; those
+	// made here that the pantry has a replacement food for take that.
+	ingredients, err := s.withComponentFoods(ctx, c.HouseholdID, list[0].IngredientsWithout(c.Servings, shopping.SuppliedComponents(c)))
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, in := range ingredients {
 		g, ok := in.Food.Grams(in.Amount, in.Unit)
 		if !ok {
 			continue

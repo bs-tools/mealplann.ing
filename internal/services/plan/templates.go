@@ -346,7 +346,7 @@ func (s *Service) applyTemplate(ctx context.Context, rawID, rawStart string, raw
 	wg.Go(func() { lots, lotsErr = s.pantry.ListItems(ctx, user.HouseholdID()) })
 	var cooks []*plans.Cook
 	var portions [][]*plans.Portion
-	toCreate := withSuppliers(applied.Cooks, d.recipes, freezer)
+	toCreate := withSuppliers(applied.Cooks, d.recipes, freezer, nil)
 	if dryRun {
 		for _, c := range toCreate {
 			cook := *c.Cook

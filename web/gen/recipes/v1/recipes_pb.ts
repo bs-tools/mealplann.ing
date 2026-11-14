@@ -617,8 +617,13 @@ export type Ingredient = Message<"recipes.v1.Ingredient"> & {
    * weight, volume or pieces is converted to servings of whichever recipe
    * supplies it, with that recipe's yield.
    *
-   * At most 5: foods for a food, recipes for a component, each the
-   * household's and different from the ingredient's own.
+   * A component can list foods too, like canned black beans for a pot of
+   * them: when the pantry has enough of one, by the component's weight,
+   * planning plans no cook of it, the shopping list doesn't buy for it, and
+   * marking the dish cooked takes that food out of the pantry instead.
+   *
+   * At most 5: foods for a food; recipes or foods for a component; each
+   * the household's and different from the ingredient's own.
    *
    * @generated from field: repeated recipes.v1.IngredientAlternative alternatives = 14;
    */
@@ -640,7 +645,8 @@ export const IngredientSchema: GenMessage<Ingredient> = /*@__PURE__*/
  */
 export type IngredientAlternative = Message<"recipes.v1.IngredientAlternative"> & {
   /**
-   * The ID of the household's food, for an ingredient of a food.
+   * The ID of the household's food: for an ingredient of a food, or one a
+   * component can be replaced with.
    *
    * @generated from field: string food_id = 1;
    */

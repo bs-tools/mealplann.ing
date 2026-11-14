@@ -34,6 +34,10 @@ type Need struct {
 	// Alternatives are the foods that can be used instead, in the same
 	// weight, in order of preference: an ingredient's alternatives.
 	Alternatives []pgtype.UUID
+	// Instead is set on the needs of what a component is made of, when it
+	// can be replaced with a food the pantry has, like canned beans for a
+	// pot of beans: needs sharing it are replaced together.
+	Instead *recipes.ComponentFoods
 }
 
 // NeedsOf returns what a plan needs bought, in the order of its dates: the
@@ -58,6 +62,7 @@ func NeedsOf(plan *plans.Plan, byID map[pgtype.UUID]*recipes.Recipe) []Need {
 				FoodID: in.FoodID, Date: date, Amount: in.Amount, Unit: in.Unit,
 				Recipe:       RecipeRef{ID: r.ID, Name: r.Name},
 				Alternatives: in.AlternativeIDs(),
+				Instead:      in.Instead,
 			})
 		}
 	}
@@ -261,6 +266,39 @@ func coverFromPantry(days []*dayNeed, lots []*pantry.Item) {
 	}
 }
 
+// withComponentFoods returns the needs with those of each component the
+// pantry has a replacement food for, like canned beans for a pot of
+// beans, replaced by that food in the component's weight, taken from
+// left, in order. The needs of a component it has none of enough are kept.
+func withComponentFoods(in *Input, left map[pgtype.UUID]float64) []Need {
+	replaced := map[*recipes.ComponentFoods]bool{}
+	needs := make([]Need, 0, len(in.Needs))
+	for _, n := range in.Needs {
+		inst := n.Instead
+		if inst == nil {
+			needs = append(needs, n)
+			continue
+		}
+		done, seen := replaced[inst]
+		if !seen {
+			done = false
+			for _, f := range inst.Foods {
+				if _, known := in.Foods[f]; known && inst.Grams > 0 && left[f] >= inst.Grams-crumbGrams {
+					left[f] -= inst.Grams
+					needs = append(needs, Need{FoodID: f, Date: n.Date, Amount: inst.Grams, Unit: nutrition.Grams, Recipe: n.Recipe})
+					done = true
+					break
+				}
+			}
+			replaced[inst] = done
+		}
+		if !done {
+			needs = append(needs, n)
+		}
+	}
+	return needs
+}
+
 // withAlternatives returns the needs with those the pantry is short of
 // made with an alternative it has enough of instead, like extra firm tofu
 // for a recipe of firm or extra firm, so what's in stock is used before
@@ -269,14 +307,14 @@ func coverFromPantry(days []*dayNeed, lots []*pantry.Item) {
 // without alternatives, or whose own food the pantry has, or that no
 // alternative in Foods covers, is left as it is: its own food is bought.
 func withAlternatives(in *Input) []Need {
-	if !slices.ContainsFunc(in.Needs, func(n Need) bool { return len(n.Alternatives) > 0 }) {
+	if !slices.ContainsFunc(in.Needs, func(n Need) bool { return len(n.Alternatives) > 0 || n.Instead != nil }) {
 		return in.Needs
 	}
 	left := map[pgtype.UUID]float64{}
 	for _, lot := range in.Lots {
 		left[lot.FoodID] += lot.Grams
 	}
-	needs := slices.Clone(in.Needs)
+	needs := withComponentFoods(in, left)
 	for i := range needs {
 		n := &needs[i]
 		f, ok := in.Foods[n.FoodID]
