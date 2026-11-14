@@ -506,7 +506,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
             (planned) => planned.portions.length === 0 && !planned.eatingOut
           ) && (
             <Link
-              to="/plan"
+              to={`/plan/auto?start=${now}&days=1`}
               className="rounded-2xl border-2 border-dashed border-gray-400 px-4 py-3.5 text-center text-base text-ink-soft"
             >
               Plan the rest of today

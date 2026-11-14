@@ -78,7 +78,20 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
           id={`day-${day.date}`}
           className="flex scroll-mt-4 flex-col gap-2"
         >
-          <h2 className={sectionLabelClass}>{label}</h2>
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className={sectionLabelClass}>{label}</h2>
+            {/* A day with meals still open can be planned on its own. */}
+            {!empty &&
+              day.date >= today &&
+              rows.some((row) => !rowPlanned(row)) && (
+                <Link
+                  to={`/plan/auto?start=${day.date}&days=1`}
+                  className="text-sm font-medium text-pine hover:underline"
+                >
+                  Plan this day
+                </Link>
+              )}
+          </div>
           {/* Each person's day against their targets, once it has meals. */}
           {!empty &&
             day.people.some(
