@@ -2,6 +2,7 @@ import AccountMenu from "@components/header/account-menu";
 import Loading from "@components/loading";
 import EatingTimeSuggestionsDialog from "@components/plan/eating-time-suggestions-dialog";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
+import PrepTasks from "@components/plan/prep-tasks";
 import TargetBars, { targetStates } from "@components/plan/target-bars";
 import WarningsLink from "@components/plan/warnings-link";
 import { isTargetWarning, weekWarnings } from "@components/plan/week-warnings";
@@ -544,6 +545,13 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
             }
             date={now}
             about="today"
+          />
+          {/* What to start today for a later day's cooking. */}
+          <PrepTasks
+            tasks={
+              week.data.days.find((other) => other.date === now)?.prepTasks ??
+              []
+            }
           />
           <DayLine
             day={day}
