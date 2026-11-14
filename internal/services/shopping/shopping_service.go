@@ -290,6 +290,8 @@ func (s *Service) generate(ctx context.Context, householdID pgtype.UUID, from, t
 	var foodIDs []pgtype.UUID
 	for _, n := range needs {
 		foodIDs = append(foodIDs, n.FoodID)
+		// The alternatives are read too, to use those the pantry has.
+		foodIDs = append(foodIDs, n.Alternatives...)
 	}
 	foodList, err := s.foods.ListFoodsByID(ctx, householdID, unique(foodIDs))
 	if err != nil {

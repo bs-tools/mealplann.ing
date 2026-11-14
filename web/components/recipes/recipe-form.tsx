@@ -57,6 +57,8 @@ interface IngredientInput {
   // Whether it's a component: another recipe.
   isRecipe: boolean;
   food: PickedFood | null;
+  // The foods it can be made with instead, like extra firm tofu for firm.
+  alternatives: PickedFood[];
   recipe: PickedFood | null;
   amount: string;
   // The unit of the amount, unspecified for servings of a component.
@@ -97,6 +99,9 @@ interface StepInput {
 }
 
 // The keys of ingredients and steps added, unique on the page.
+// MAX_ALTERNATIVES is the most alternative foods an ingredient can have.
+const MAX_ALTERNATIVES = 5;
+
 let nextKey = 0;
 const newKey = (): number => {
   nextKey += 1;
@@ -104,6 +109,7 @@ const newKey = (): number => {
 };
 
 const emptyIngredient = (): IngredientInput => ({
+  alternatives: [],
   amount: "",
   food: null,
   isRecipe: false,
@@ -153,6 +159,10 @@ const ingredientInputs = (recipe: Recipe | undefined): IngredientInput[] => {
   return recipe.ingredients.map((ingredient) => {
     const isRecipe = ingredient.recipeId !== "";
     return {
+      alternatives: ingredient.alternatives.map((alternative) => ({
+        id: alternative.foodId,
+        name: alternative.foodName,
+      })),
       // An unmatched draft ingredient's unknown amount is empty.
       amount: ingredient.amount === 0 ? "" : String(ingredient.amount),
       food: isRecipe
@@ -318,6 +328,7 @@ const ingredientsKey = (ingredients: IngredientInput[]): string =>
     ingredients.map((ingredient) => [
       ingredient.isRecipe,
       ingredient.food?.id ?? "",
+      ingredient.alternatives.map((alternative) => alternative.id),
       ingredient.recipe?.id ?? "",
       ingredient.amount.trim(),
       ingredient.unit,
@@ -628,6 +639,8 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
     };
   });
   const [ingredients, setIngredients] = useState(initial.ingredients);
+  // The ingredient an alternative food is being chosen for, by its key.
+  const [alternativeFor, setAlternativeFor] = useState<number | null>(null);
   const [steps, setSteps] = useState(initial.steps);
   const [tags, setTags] = useState(source?.tags.join(", ") ?? "");
   const [sourceUrl, setSourceUrl] = useState(source?.sourceUrl ?? "");
@@ -841,6 +854,9 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
         return;
       }
       parsedIngredients.push({
+        alternatives: ingredient.alternatives.map((alternative) => ({
+          foodId: alternative.id,
+        })),
         amount,
         foodId: ingredient.food.id,
         note: ingredient.note,
@@ -1221,6 +1237,66 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                       </select>
                     </div>
                   </div>
+                  {/* The foods it can be made with instead, like either tofu. */}
+                  {!ingredient.isRecipe && ingredient.food !== null && (
+                    <div className="flex flex-wrap items-center gap-1.5 text-sm">
+                      {ingredient.alternatives.map((alternative) => (
+                        <button
+                          key={alternative.id}
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-full bg-pine-50 px-2.5 py-1 text-pine-dark"
+                          aria-label={`Remove ${alternative.name} as an alternative`}
+                          onClick={() => {
+                            setIngredient(index, {
+                              alternatives: ingredient.alternatives.filter(
+                                (other) => other.id !== alternative.id
+                              ),
+                            });
+                          }}
+                        >
+                          or {alternative.name}
+                          <XMarkIcon className="size-3.5" aria-hidden="true" />
+                        </button>
+                      ))}
+                      {alternativeFor === ingredient.key ? (
+                        <div className="min-w-48 grow">
+                          <FoodPicker
+                            label={`Alternative food of ingredient ${index + 1}`}
+                            value={null}
+                            onChange={(food) => {
+                              setAlternativeFor(null);
+                              if (
+                                food.id === ingredient.food?.id ||
+                                ingredient.alternatives.some(
+                                  (other) => other.id === food.id
+                                )
+                              ) {
+                                return;
+                              }
+                              setIngredient(index, {
+                                alternatives: [
+                                  ...ingredient.alternatives,
+                                  food,
+                                ],
+                              });
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        ingredient.alternatives.length < MAX_ALTERNATIVES && (
+                          <button
+                            type="button"
+                            className="font-medium text-pine hover:underline"
+                            onClick={() => {
+                              setAlternativeFor(ingredient.key);
+                            }}
+                          >
+                            + or another food
+                          </button>
+                        )
+                      )}
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center gap-2">
                     <input
                       aria-label={`Note of ingredient ${index + 1}`}

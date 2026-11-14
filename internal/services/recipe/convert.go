@@ -29,8 +29,11 @@ const (
 	maxServings          = 100
 	// maxSeconds is a week, longer than any recipe takes, even with
 	// fermenting or sprouting.
-	maxSeconds        = 7 * 24 * 60 * 60
-	maxIngredients    = 100
+	maxSeconds     = 7 * 24 * 60 * 60
+	maxIngredients = 100
+	// maxAlternatives is the most foods an ingredient can be made with
+	// instead of its own.
+	maxAlternatives   = 5
 	maxAmount         = 100_000
 	maxNoteLength     = 200
 	maxOriginalLength = 500
@@ -86,6 +89,11 @@ func recipeToProto(r *recipes.Recipe) *recipesv1.Recipe {
 			b.FoodMeasure = food.MeasuresToProto[in.FoodMeasure]
 			b.FoodGramsPerMilliliter = in.Food.GramsPerMilliliter
 			b.FoodGramsPerPiece = in.Food.GramsPerPiece
+			for _, a := range in.Alternatives {
+				b.Alternatives = append(b.Alternatives, recipesv1.IngredientAlternative_builder{
+					FoodId: store.UUIDToString(a.FoodID), FoodName: a.Name,
+				}.Build())
+			}
 		}
 		ingredients = append(ingredients, b.Build())
 	}
@@ -517,7 +525,28 @@ func ingredientsFromProto(list []*recipesv1.Ingredient, draft bool) ([]*recipes.
 		if utf8.RuneCountInString(original) > maxOriginalLength {
 			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s.original_text must be at most %d characters", field, maxOriginalLength)
 		}
+		if len(p.GetAlternatives()) > 0 && !foodID.Valid {
+			return nil, connect.Errorf(connect.CodeInvalidArgument,
+				"%s.alternatives are only for an ingredient with a food_id: leave them out for a component or an unmatched ingredient", field)
+		}
+		if len(p.GetAlternatives()) > maxAlternatives {
+			return nil, connect.Errorf(connect.CodeInvalidArgument, "%s can have at most %d alternatives", field, maxAlternatives)
+		}
+		var alternatives []recipes.Alternative
+		for j, a := range p.GetAlternatives() {
+			id, err := store.StringToUUID(a.GetFoodId())
+			if err != nil {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.alternatives[%d].food_id is invalid: %v; find the household's foods with ListFoods", field, j, err).WithCause(err)
+			}
+			if id == foodID || slices.ContainsFunc(alternatives, func(other recipes.Alternative) bool { return other.FoodID == id }) {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.alternatives[%d] is the ingredient's own food, or listed twice: list each other food once", field, j)
+			}
+			alternatives = append(alternatives, recipes.Alternative{FoodID: id})
+		}
 		ingredients = append(ingredients, &recipes.Ingredient{
+			Alternatives:      alternatives,
 			FoodID:            foodID,
 			ComponentRecipeID: componentID,
 			Amount:            amount,

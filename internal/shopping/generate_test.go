@@ -1,6 +1,7 @@
 package shopping
 
 import (
+	"reflect"
 	"slices"
 	"testing"
 	"time"
@@ -76,7 +77,8 @@ func TestNeedsOf(t *testing.T) {
 		{FoodID: soyMilk.ID, Date: date("2026-11-02"), Amount: 200, Unit: nutrition.Milliliters, Recipe: oatsRef},
 		{FoodID: spinach.ID, Date: date("2026-11-03"), Amount: 80, Unit: nutrition.Grams},
 	}
-	if !slices.Equal(got, want) {
+	// Needs hold their alternatives, so they aren't comparable.
+	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, want %v", got, want)
 	}
 }

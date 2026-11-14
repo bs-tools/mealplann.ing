@@ -31,6 +31,9 @@ type Need struct {
 	// Recipe is the recipe it's an ingredient of, with an invalid ID for a
 	// food eaten without one.
 	Recipe RecipeRef
+	// Alternatives are the foods that can be used instead, in the same
+	// weight, in order of preference: an ingredient's alternatives.
+	Alternatives []pgtype.UUID
 }
 
 // NeedsOf returns what a plan needs bought, in the order of its dates: the
@@ -53,7 +56,8 @@ func NeedsOf(plan *plans.Plan, byID map[pgtype.UUID]*recipes.Recipe) []Need {
 		for _, in := range r.IngredientsWithout(servings, supplied) {
 			needs = append(needs, Need{
 				FoodID: in.FoodID, Date: date, Amount: in.Amount, Unit: in.Unit,
-				Recipe: RecipeRef{ID: r.ID, Name: r.Name},
+				Recipe:       RecipeRef{ID: r.ID, Name: r.Name},
+				Alternatives: in.AlternativeIDs(),
 			})
 		}
 	}
@@ -183,7 +187,7 @@ func PantryGrams(in *Input) map[pgtype.UUID]float64 {
 func cover(in *Input) ([]pgtype.UUID, map[pgtype.UUID][]*dayNeed) {
 	var order []pgtype.UUID
 	byFood := map[pgtype.UUID][]*dayNeed{}
-	for _, n := range in.Needs {
+	for _, n := range withAlternatives(in) {
 		f, ok := in.Foods[n.FoodID]
 		if !ok || f.AlwaysInStock || n.Amount <= 0 {
 			continue
@@ -255,6 +259,46 @@ func coverFromPantry(days []*dayNeed, lots []*pantry.Item) {
 		}
 		d.shortGrams = max(need, 0)
 	}
+}
+
+// withAlternatives returns the needs with those the pantry is short of
+// made with an alternative it has enough of instead, like extra firm tofu
+// for a recipe of firm or extra firm, so what's in stock is used before
+// more is bought. Needs are taken in order, each from what the ones before
+// left of the pantry, by weight, whatever the lots' use-by dates. A need
+// without alternatives, or whose own food the pantry has, or that no
+// alternative in Foods covers, is left as it is: its own food is bought.
+func withAlternatives(in *Input) []Need {
+	if !slices.ContainsFunc(in.Needs, func(n Need) bool { return len(n.Alternatives) > 0 }) {
+		return in.Needs
+	}
+	left := map[pgtype.UUID]float64{}
+	for _, lot := range in.Lots {
+		left[lot.FoodID] += lot.Grams
+	}
+	needs := slices.Clone(in.Needs)
+	for i := range needs {
+		n := &needs[i]
+		f, ok := in.Foods[n.FoodID]
+		if !ok {
+			continue
+		}
+		grams, ok := f.Nutrition().Grams(n.Amount, n.Unit)
+		if !ok {
+			continue
+		}
+		if left[n.FoodID] < grams-crumbGrams {
+			for _, alternative := range n.Alternatives {
+				if _, known := in.Foods[alternative]; known && left[alternative] >= grams-crumbGrams {
+					// It's used in the weight of the ingredient's own food.
+					n.FoodID, n.Amount, n.Unit = alternative, grams, nutrition.Grams
+					break
+				}
+			}
+		}
+		left[n.FoodID] = max(left[n.FoodID]-grams, 0)
+	}
+	return needs
 }
 
 // itemOf returns the item to buy for some days' needs of a food, or nil if

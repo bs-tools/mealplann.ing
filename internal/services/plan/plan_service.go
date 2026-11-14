@@ -618,6 +618,45 @@ func foodUsesFromProto(list []*plansv1.FoodUse) ([]foodUse, error) {
 	return uses, nil
 }
 
+// useAlternatives swaps the foods a cook uses for the alternatives the
+// pantry has, where it's short of the ingredient's own food and has enough
+// of an alternative, like extra firm tofu for a recipe of firm or extra
+// firm: grams, order and names are changed in place. Foods the request
+// says what was actually used of are left to it. The pantry is only read
+// if an ingredient has alternatives.
+func (s *Service) useAlternatives(ctx context.Context, householdID pgtype.UUID, grams map[pgtype.UUID]float64, order []pgtype.UUID,
+	names map[pgtype.UUID]string, alternatives map[pgtype.UUID][]recipes.Alternative, actual []foodUse,
+) error {
+	if len(alternatives) == 0 {
+		return nil
+	}
+	items, err := s.pantry.ListItems(ctx, householdID)
+	if err != nil {
+		return err
+	}
+	stock := map[pgtype.UUID]float64{}
+	for _, it := range items {
+		stock[it.FoodID] += it.Grams
+	}
+	for i, id := range order {
+		need := grams[id]
+		if stock[id] >= need || slices.ContainsFunc(actual, func(u foodUse) bool { return u.foodID == id }) {
+			continue
+		}
+		for _, a := range alternatives[id] {
+			// An alternative the recipe uses itself keeps what it needs.
+			if _, used := grams[a.FoodID]; used || stock[a.FoodID] < need {
+				continue
+			}
+			order[i] = a.FoodID
+			grams[a.FoodID], names[a.FoodID] = need, a.Name
+			delete(grams, id)
+			break
+		}
+	}
+	return nil
+}
+
 // cookUses returns what a cook marked done takes out of the pantry: its
 // recipe's ingredients scaled to its servings, without the optional ones,
 // as changed by what was actually used, with the foods' names. Ingredients
@@ -632,6 +671,8 @@ func (s *Service) cookUses(ctx context.Context, c *plans.Cook, actual []foodUse)
 	// grams are what the recipe uses of each food, in order.
 	grams := map[pgtype.UUID]float64{}
 	var order []pgtype.UUID
+	// alternatives are the foods each of them can be made with instead.
+	alternatives := map[pgtype.UUID][]recipes.Alternative{}
 	// Components other cooks supply are taken out by those cooks.
 	for _, in := range list[0].IngredientsWithout(c.Servings, shopping.SuppliedComponents(c)) {
 		g, ok := in.Food.Grams(in.Amount, in.Unit)
@@ -643,6 +684,12 @@ func (s *Service) cookUses(ctx context.Context, c *plans.Cook, actual []foodUse)
 		}
 		names[in.FoodID] = in.FoodName
 		grams[in.FoodID] += g
+		if len(in.Alternatives) > 0 && alternatives[in.FoodID] == nil {
+			alternatives[in.FoodID] = in.Alternatives
+		}
+	}
+	if err := s.useAlternatives(ctx, c.HouseholdID, grams, order, names, alternatives, actual); err != nil {
+		return nil, nil, err
 	}
 	// The foods used instead, or as well, are read for their names and to
 	// weigh their amounts.

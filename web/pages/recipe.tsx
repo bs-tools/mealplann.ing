@@ -363,6 +363,18 @@ const RecipePage: React.FC = () => {
                         {ingredient.foodName}
                       </Link>
                     )}
+                    {/* The foods it can be made with instead. */}
+                    {ingredient.alternatives.map((alternative) => (
+                      <React.Fragment key={alternative.foodId}>
+                        <span className="text-muted">or</span>
+                        <Link
+                          to={`/foods/${alternative.foodId}`}
+                          className="text-ink-soft hover:underline"
+                        >
+                          {alternative.foodName}
+                        </Link>
+                      </React.Fragment>
+                    ))}
                     {ingredient.recipeId !== "" && (
                       <>
                         <span className="text-muted">of</span>
