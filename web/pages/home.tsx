@@ -36,7 +36,7 @@ import {
   startOfWeek,
   today,
 } from "helpers/dates";
-import { formatWeekday } from "helpers/format";
+import { formatList, formatWeekday } from "helpers/format";
 import { formatServings } from "helpers/labels";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
@@ -158,8 +158,8 @@ const cookBlocksOf = (
     });
   }
   /*
-   * A cook made for another cook, like beans for a chili, starts before
-   * the cook it's for, rather than at the top of the day. A few rounds
+   * A cook made for another cook, like beans for a chili, starts with or
+   * before the cook it's for, rather than at the top of the day. A few rounds
    * place those made for cooks that are made for others in turn.
    */
   for (let round = 0; round < 3; round += 1) {
@@ -167,17 +167,30 @@ const cookBlocksOf = (
       if (block.start !== "") {
         continue;
       }
-      const starts = (block.cook.cook?.supplying ?? [])
-        .map(
-          (supply) =>
-            blocks.find(
-              (other) => other.cook.cook?.id === supply.consumerCookId
-            )?.start ?? ""
-        )
-        .filter((start) => start !== "");
-      if (starts.length > 0) {
+      const consumers = (block.cook.cook?.supplying ?? []).flatMap((supply) => {
+        const consumer = blocks.find(
+          (other) => other.cook.cook?.id === supply.consumerCookId
+        );
+        return consumer === undefined || consumer.start === ""
+          ? []
+          : [consumer];
+      });
+      if (consumers.length > 0) {
+        /*
+         * One no longer than its dish cooks alongside it, like tofu
+         * crumbles for a chili; a longer one, like a pot of beans, is
+         * started early enough to be done as the dish starts.
+         */
         block.start = timeOf(
-          Math.min(...starts.map(minutesOf)) - Math.max(block.minutes, 15)
+          Math.min(
+            ...consumers.map(
+              (consumer) =>
+                minutesOf(consumer.start) -
+                (block.minutes <= consumer.minutes
+                  ? 0
+                  : Math.max(block.minutes, 15))
+            )
+          )
         );
       }
     }
@@ -248,6 +261,19 @@ const DayLine: React.FC<DayLineProps> = ({ day, blocks, date, onMeal }) => {
                   {block.cook.cook !== undefined &&
                     `, ${formatServings(block.cook.cook.servings)}`}
                 </span>
+                {/* What a cook made for another cook goes into. */}
+                {(block.cook.cook?.supplying.length ?? 0) > 0 && (
+                  <span className="text-sm text-cook-dark">
+                    For{" "}
+                    {formatList([
+                      ...new Set(
+                        (block.cook.cook?.supplying ?? []).map(
+                          (supply) => supply.consumerRecipeName
+                        )
+                      ),
+                    ])}
+                  </span>
+                )}
                 <Link
                   to={`/recipes/${block.cook.cook?.recipeId ?? ""}/cook?cook=${block.cook.cook?.id ?? ""}&servings=${block.cook.cook?.servings ?? ""}`}
                   className={`${primaryButton} mt-1 self-start`}
