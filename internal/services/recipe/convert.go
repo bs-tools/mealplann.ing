@@ -546,12 +546,17 @@ func ingredientsFromProto(list []*recipesv1.Ingredient, draft bool) ([]*recipes.
 		}
 		var alternatives []recipes.Alternative
 		for j, a := range p.GetAlternatives() {
-			if componentID.Valid {
-				// A component's alternatives are recipes.
+			if a.GetRecipeId() != "" && a.GetFoodId() != "" {
+				return nil, connect.Errorf(connect.CodeInvalidArgument,
+					"%s.alternatives[%d] has both food_id and recipe_id: give one", field, j)
+			}
+			// A component's alternatives are recipes, or foods it can be
+			// replaced with, like canned beans for a pot of beans.
+			if componentID.Valid && a.GetFoodId() == "" {
 				id, err := store.StringToUUID(a.GetRecipeId())
-				if err != nil || a.GetFoodId() != "" {
+				if err != nil {
 					return nil, connect.Errorf(connect.CodeInvalidArgument,
-						"%s.alternatives[%d] needs a recipe_id, as the ingredient is a recipe: find the household's recipes with ListRecipes", field, j)
+						"%s.alternatives[%d] needs a recipe_id or a food_id: find the household's recipes with ListRecipes", field, j)
 				}
 				if id == componentID || slices.ContainsFunc(alternatives, func(other recipes.Alternative) bool { return other.RecipeID == id }) {
 					return nil, connect.Errorf(connect.CodeInvalidArgument,
@@ -561,7 +566,7 @@ func ingredientsFromProto(list []*recipesv1.Ingredient, draft bool) ([]*recipes.
 				continue
 			}
 			id, err := store.StringToUUID(a.GetFoodId())
-			if err != nil || a.GetRecipeId() != "" {
+			if err != nil {
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
 					"%s.alternatives[%d] needs a food_id, as the ingredient is a food: find the household's foods with ListFoods", field, j)
 			}

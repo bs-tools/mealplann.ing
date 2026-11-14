@@ -387,13 +387,21 @@ const RecipePage: React.FC = () => {
                         </Link>
                         {/* The recipes it can be made with instead. */}
                         {ingredient.alternatives.map((alternative) => (
-                          <React.Fragment key={alternative.recipeId}>
+                          <React.Fragment
+                            key={`${alternative.recipeId}${alternative.foodId}`}
+                          >
                             <span className="text-muted">or</span>
                             <Link
-                              to={`/recipes/${alternative.recipeId}`}
+                              to={
+                                alternative.recipeId === ""
+                                  ? `/foods/${alternative.foodId}`
+                                  : `/recipes/${alternative.recipeId}`
+                              }
                               className="font-medium text-pine hover:underline"
                             >
-                              {alternative.recipeName}
+                              {alternative.recipeId === ""
+                                ? alternative.foodName
+                                : alternative.recipeName}
                             </Link>
                           </React.Fragment>
                         ))}

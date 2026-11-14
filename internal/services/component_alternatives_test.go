@@ -46,10 +46,10 @@ func TestComponentAlternatives(t *testing.T) {
 	if got := chili.GetIngredients()[0].GetAlternatives(); len(got) != 1 || got[0].GetRecipeName() != "Pinto beans, quick" {
 		t.Fatalf("got alternatives %v, want the quick pinto beans", got)
 	}
-	// A component's alternative must be a recipe.
+	// A component can't list its own recipe as an alternative.
 	bad := recipesv1.Ingredient_builder{
 		RecipeId: soaked.GetId(), Amount: 1,
-		Alternatives: []*recipesv1.IngredientAlternative{recipesv1.IngredientAlternative_builder{FoodId: pinto.GetId()}.Build()},
+		Alternatives: []*recipesv1.IngredientAlternative{recipesv1.IngredientAlternative_builder{RecipeId: soaked.GetId()}.Build()},
 	}.Build()
 	_, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
 		Name: "Bad", Servings: 2, Ingredients: []*recipesv1.Ingredient{bad},

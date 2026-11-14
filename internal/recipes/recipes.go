@@ -162,6 +162,19 @@ type Ingredient struct {
 	// nutrition and cost are the ingredient's own food's; the shopping list
 	// and the pantry use whichever is in stock.
 	Alternatives []Alternative
+	// Instead is set on the ingredients a component is made of, as
+	// IngredientsFor expands them, when the component lists foods it can be
+	// replaced with, like canned beans for a pot of beans: the pantry uses
+	// one of those, if it has enough, instead of all of them. Ingredients
+	// of the same component share it.
+	Instead *ComponentFoods
+}
+
+// ComponentFoods are the foods a component made of its own ingredients can
+// be replaced with, in order of preference, and the weight of it needed.
+type ComponentFoods struct {
+	Foods []pgtype.UUID
+	Grams float64
 }
 
 // Alternative is a food an ingredient can be made with instead of its own,
@@ -199,6 +212,27 @@ func (in *Ingredient) AlternativeRecipeIDs() []pgtype.UUID {
 		}
 	}
 	return ids
+}
+
+// componentGrams returns the weight of a component ingredient: its amount
+// in grams, or its servings by its recipe's yield in grams, or else by the
+// weight of a serving of its ingredients. 0 if it can't be weighed.
+func (in *Ingredient) componentGrams(depth int) float64 {
+	if in.Unit == nutrition.Grams {
+		return in.Amount
+	}
+	c := in.Component
+	if c == nil {
+		return 0
+	}
+	servings := in.componentServings(depth)
+	if c.YieldAmount > 0 && c.YieldUnit == nutrition.Grams {
+		return servings / float64(max(c.Servings, 1)) * c.YieldAmount
+	}
+	if depth >= MaxComponentDepth {
+		return 0
+	}
+	return servings * c.nutrition(depth+1).GramsPerServing
 }
 
 // ServingsOf returns how many servings of a recipe make the ingredient: of
@@ -398,7 +432,17 @@ func (r *Recipe) ingredientsWithout(servings float64, supplied map[pgtype.UUID]b
 		case in.Optional, !in.IsMatched():
 		case in.IsComponent():
 			if !supplied[in.ComponentRecipeID] && in.Component != nil && depth < MaxComponentDepth {
-				scaled = append(scaled, in.Component.ingredientsWithout(in.componentServings(depth)*scale, nil, depth+1)...)
+				made := in.Component.ingredientsWithout(in.componentServings(depth)*scale, nil, depth+1)
+				// The foods it can be replaced with mark what it's made of.
+				if foods := in.AlternativeIDs(); len(foods) > 0 {
+					instead := &ComponentFoods{Foods: foods, Grams: in.componentGrams(depth) * scale}
+					for _, m := range made {
+						if m.Instead == nil {
+							m.Instead = instead
+						}
+					}
+				}
+				scaled = append(scaled, made...)
 			}
 		default:
 			c := *in
@@ -417,6 +461,10 @@ type ComponentNeed struct {
 	// servings of each it takes, converted with that recipe's yield, in
 	// the order the ingredient lists them.
 	Alternatives []ComponentOption
+	// Instead is the foods it can be replaced with, with the weight of it
+	// needed, nil if none: planning uses one the pantry has instead of
+	// planning a cook of it.
+	Instead *ComponentFoods
 }
 
 // ComponentOption is a recipe a component can be made with, with the
@@ -462,6 +510,19 @@ func (r *Recipe) ComponentsFor(servings float64) []ComponentNeed {
 		}
 		if i := slices.IndexFunc(needs, func(n ComponentNeed) bool { return n.Recipe.ID == in.ComponentRecipeID }); i >= 0 {
 			needs[i].Servings += servings
+			// A second use of it is replaced only with foods both list.
+			if inst := needs[i].Instead; inst != nil {
+				var kept []pgtype.UUID
+				for _, f := range inst.Foods {
+					if slices.Contains(in.AlternativeIDs(), f) {
+						kept = append(kept, f)
+					}
+				}
+				needs[i].Instead = nil
+				if len(kept) > 0 {
+					needs[i].Instead = &ComponentFoods{Foods: kept, Grams: inst.Grams + in.componentGrams(0)*scale}
+				}
+			}
 			// The alternatives both uses list are what it can be made with.
 			var kept []ComponentOption
 			for _, a := range needs[i].Alternatives {
@@ -473,7 +534,11 @@ func (r *Recipe) ComponentsFor(servings float64) []ComponentNeed {
 			needs[i].Alternatives = kept
 			continue
 		}
-		needs = append(needs, ComponentNeed{Recipe: in.Component, Servings: servings, Alternatives: alternatives})
+		need := ComponentNeed{Recipe: in.Component, Servings: servings, Alternatives: alternatives}
+		if foods := in.AlternativeIDs(); len(foods) > 0 {
+			need.Instead = &ComponentFoods{Foods: foods, Grams: in.componentGrams(0) * scale}
+		}
+		needs = append(needs, need)
 	}
 	return needs
 }
