@@ -5,6 +5,7 @@ import {
   rowPlanned,
   rowsOf,
 } from "@components/plan/plan-rows";
+import PrepTasks from "@components/plan/prep-tasks";
 import TargetBars, { targetStates } from "@components/plan/target-bars";
 import type { Effort } from "@components/today/today-bits";
 import { sectionLabelClass } from "@components/ui/styles";
@@ -92,6 +93,7 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
                 </Link>
               )}
           </div>
+          <PrepTasks tasks={day.prepTasks} />
           {/* Each person's day against their targets, once it has meals. */}
           {!empty &&
             day.people.some(
