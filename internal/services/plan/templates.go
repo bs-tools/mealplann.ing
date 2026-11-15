@@ -323,7 +323,7 @@ func (s *Service) applyTemplate(ctx context.Context, rawID, rawStart string, raw
 		c.Cook.HouseholdID = user.HouseholdID()
 	}
 	// Components come from the freezer where it has them.
-	freezer, err := s.freezerFor(ctx, user.HouseholdID(), applied.Cooks, d.recipes)
+	freezer, err := s.leftoversFor(ctx, user.HouseholdID(), applied.Cooks, d.recipes)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to read the freezer", "")
 	}

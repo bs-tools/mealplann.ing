@@ -505,7 +505,10 @@ type CookWithPortions struct {
 	// Existing is whether the cook exists already, with its ID: it isn't
 	// created, but grows by Cook.Servings, for Portions, and keeps its
 	// supplies.
-	Existing bool
+	Existing bool // FromLeftovers is whether it's a side whose portions are taken from
+	// leftovers of an earlier cook of its recipe, in the fridge or freezer,
+	// if they have enough, rather than cooking it.
+	FromLeftovers bool
 }
 
 // CreateCooksWithPortions creates cooks in their household, or grows
@@ -1277,6 +1280,38 @@ func orZero(v *float64) float64 {
 		return 0
 	}
 	return *v
+}
+
+// FridgeCook is an earlier cook whose leftovers keep in the fridge, with
+// how many days they keep.
+type FridgeCook struct {
+	*Cook
+	FridgeDays int32
+}
+
+// ListFridgeCooks lists a household's cooks from 14 days before a date to
+// before another, whose leftovers still keep in the fridge on the first,
+// to plan their leftovers on any of the dates.
+func (r *Repository) ListFridgeCooks(ctx context.Context, householdID pgtype.UUID, from, before time.Time) ([]*FridgeCook, error) {
+	rows, err := gen.New(r.db).ListFridgeCooks(ctx, &gen.ListFridgeCooksParams{
+		HouseholdID: householdID, FromDate: store.DateToPG(from), Before: store.DateToPG(before),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list fridge cooks: %w", err)
+	}
+	cooks := make([]*FridgeCook, 0, len(rows))
+	for _, row := range rows {
+		c := cookFromDB(&gen.ListCooksRow{
+			Cook: row.Cook, RecipeName: row.RecipeName, AssignedServings: row.AssignedServings,
+			LateServings: row.LateServings, SuppliedServings: row.SuppliedServings,
+		})
+		var days int32
+		if row.FridgeDays != nil {
+			days = *row.FridgeDays
+		}
+		cooks = append(cooks, &FridgeCook{Cook: c, FridgeDays: days})
+	}
+	return cooks, nil
 }
 
 // ListLeftoverCooks lists a household's cooks before a date, from up to 14

@@ -675,7 +675,12 @@ message SideSuggestion {
   // the freezer, to take this side's from with PlanService.TakeFromFreezer
   // instead of cooking it again.
   bool from_freezer = 17;
-  // With from_freezer, the cook's frozen servings not planned or taken
-  // yet, to share among everyone at a meal.
+  // With from_freezer or from_fridge, the cook's servings there not
+  // planned or taken yet, to share among everyone at a meal.
   double frozen_servings_left = 18;
+  // For a recipe side without a cook of it on the date, whether cook_id is
+  // an earlier cook with enough leftovers in the fridge, still keeping, to
+  // add a share of with PlanService.CreatePortion, like rice cooked two
+  // days ago. Fridge leftovers come before frozen ones.
+  bool from_fridge = 19;
 }

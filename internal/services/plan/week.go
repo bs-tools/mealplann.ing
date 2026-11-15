@@ -32,9 +32,9 @@ const nutritionDigits = 3
 type planData struct {
 	plan   *plans.Plan
 	people []*people.Person
-	// frozen are the household's cooks with frozen servings, when read,
-	// for sides to take from the freezer.
-	frozen []*plans.FrozenCook
+	// leftovers are the household's leftovers in the fridge and freezer,
+	// when read, for sides to eat before cooking them.
+	leftovers leftoverStock
 	// recipes and foods are those the plan uses, by ID, and recipeNutrition
 	// the nutrition of each recipe.
 	recipes         map[pgtype.UUID]*recipes.Recipe

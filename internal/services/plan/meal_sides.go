@@ -121,6 +121,8 @@ func planSide(householdID pgtype.UUID, side *recipes.Side, cook *plans.Cook, por
 			})
 		}
 		return &plans.CookWithPortions{
+			// Leftovers of it are eaten first, if there are enough.
+			FromLeftovers: true,
 			Cook: &plans.Cook{
 				HouseholdID: householdID,
 				RecipeID:    side.RecipeID,
