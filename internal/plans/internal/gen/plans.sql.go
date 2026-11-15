@@ -422,6 +422,38 @@ func (q *Queries) DeleteUnusedCook(ctx context.Context, arg *DeleteUnusedCookPar
 	return result.RowsAffected(), nil
 }
 
+const getPlanVersion = `-- name: GetPlanVersion :one
+select concat_ws(',',
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from portions where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from cooks where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from cook_supplies where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from staples where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from staple_skips where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from staple_pantry_uses where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from eating_out where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from people where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from eating_times where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from person_targets where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from pantry_items where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from recipes where household_id = $1::uuid),
+  (select count(*) || ':' || coalesce(max(xmin::text::bigint), 0) from foods where household_id = $1::uuid)
+)::text as version
+`
+
+// What changes whenever anything the household's plan is made of does, to
+// tell whether a week or a plan's cost read before is still current: for
+// each table GetWeek and GetPlanCost read, the household's row count and its
+// rows' newest transaction ID, xmin. An insert or update gives its row the
+// writing transaction's ID, newer than any before, and a delete lowers the
+// count, so no write path can forget to change it. It's a few hundred
+// bytes, where a week or a plan's cost is tens of kilobytes.
+func (q *Queries) GetPlanVersion(ctx context.Context, householdID pgtype.UUID) (string, error) {
+	row := q.db.QueryRow(ctx, getPlanVersion, householdID)
+	var version string
+	err := row.Scan(&version)
+	return version, err
+}
+
 const growCook = `-- name: GrowCook :execrows
 update cooks set servings = servings + $1, update_time = now()
 where id = $2 and household_id = $3

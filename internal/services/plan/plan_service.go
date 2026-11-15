@@ -34,6 +34,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/services/summary"
 	"github.com/bs-tools/mealplann.ing/internal/shopping"
 	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/users"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -55,6 +56,7 @@ type PlanRepository interface {
 	ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) ([]*plans.FrozenCook, error)
 	ListFridgeCooks(ctx context.Context, householdID pgtype.UUID, from, before time.Time) ([]*plans.FridgeCook, error)
 	ListLeftoverCooks(ctx context.Context, householdID pgtype.UUID, before time.Time) ([]*plans.FridgeCook, error)
+	GetPlanVersion(ctx context.Context, householdID pgtype.UUID) (string, error)
 	SetCookSupply(ctx context.Context, householdID pgtype.UUID, supply *plans.Supply, previous pgtype.UUID) error
 	DeleteCook(ctx context.Context, householdID, id pgtype.UUID) error
 	GetPortion(ctx context.Context, householdID, id pgtype.UUID) (*plans.Portion, error)
@@ -126,6 +128,9 @@ type Service struct {
 	templates TemplateRepository
 	// nowFn returns the current time, which today's date is taken from.
 	nowFn func() time.Time
+	// cache keeps the weeks and plan costs read last, to answer them again
+	// while nothing they're made of changed.
+	cache *readCache
 }
 
 // NewService returns a PlanService and SuggestionService storing plans in
@@ -144,6 +149,7 @@ func NewService(log *slog.Logger, report *errreport.Reporter, plans PlanReposito
 		shopping:  shopping,
 		templates: templates,
 		nowFn:     time.Now,
+		cache:     newReadCache(),
 	}
 }
 
@@ -180,6 +186,32 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
 			"monday must be a Monday: the week of %s starts on %s", store.FormatDate(monday), store.FormatDate(previous))
 	}
+	// A week read before is answered again while nothing it's made of
+	// changed, and it's the same day, as the app reads the same week on
+	// most pages.
+	version, err := s.plans.GetPlanVersion(ctx, user.HouseholdID())
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to get week", "")
+	}
+	key := readKey{
+		householdID: user.HouseholdID(), kind: readWeek, from: monday,
+		today: time.Now().UTC().Truncate(24 * time.Hour),
+	}
+	week, err := cachedOf(s.cache, key, version, func() (*plansv1.GetWeekResponse, error) {
+		return s.getWeek(ctx, user, monday)
+	})
+	if err != nil {
+		return nil, err
+	}
+	// The full week is kept, so a summary is made of a copy.
+	if req.GetSummary() {
+		summary.Summarize(week)
+	}
+	return week, nil
+}
+
+// getWeek reads a week of the plan.
+func (s *Service) getWeek(ctx context.Context, user users.User, monday time.Time) (*plansv1.GetWeekResponse, error) {
 	sunday := monday.AddDate(0, 0, 6)
 	// The week after is read too, as its cooks can start this week, like
 	// beans soaked the night before. Earlier cooks with leftovers are read
@@ -235,9 +267,6 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 		Cooks:            cooks,
 		EarlierLeftovers: leftovers,
 	}.Build()
-	if req.GetSummary() {
-		summary.Summarize(resp)
-	}
 	return resp, nil
 }
 
