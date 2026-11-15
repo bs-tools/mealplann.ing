@@ -1314,6 +1314,17 @@ func (r *Repository) ListFridgeCooks(ctx context.Context, householdID pgtype.UUI
 	return cooks, nil
 }
 
+// GetPlanVersion returns what changes whenever anything the household's
+// plan is made of does, to tell whether a week or a plan's cost read
+// before is still current without reading it again.
+func (r *Repository) GetPlanVersion(ctx context.Context, householdID pgtype.UUID) (string, error) {
+	version, err := gen.New(r.db).GetPlanVersion(ctx, householdID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get plan version: %w", err)
+	}
+	return version, nil
+}
+
 // ListLeftoverCooks lists a household's cooks before a date, from up to 14
 // days before it, whose leftovers still keep in the fridge on it, by their
 // recipe's fridge days, by date, with those fridge days.

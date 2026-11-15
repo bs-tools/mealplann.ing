@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"slices"
+	"time"
 
 	"connectrpc.com/connect/v2"
 	"github.com/bs-tools/mealplann.ing/internal/authn"
@@ -62,7 +63,21 @@ func (s *Service) GetPlanCost(ctx context.Context, req *plansv1.GetPlanCostReque
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
 			"end_date must be from start_date to %d days after it", maxCostDays-1)
 	}
-	d, _, lots, err := s.loadSuggestionData(ctx, user.HouseholdID(), start, end)
+	// A cost read before is answered again while nothing it's made of
+	// changed, as the Plan page reads it on every view.
+	version, err := s.plans.GetPlanVersion(ctx, user.HouseholdID())
+	if err != nil {
+		return nil, s.toConnectError(ctx, err, "failed to read plan", "")
+	}
+	key := readKey{householdID: user.HouseholdID(), kind: readCost, from: start, to: end}
+	return cachedOf(s.cache, key, version, func() (*plansv1.GetPlanCostResponse, error) {
+		return s.planCost(ctx, user.HouseholdID(), start, end)
+	})
+}
+
+// planCost reads what the plan costs from one date to another.
+func (s *Service) planCost(ctx context.Context, householdID pgtype.UUID, start, end time.Time) (*plansv1.GetPlanCostResponse, error) {
+	d, _, lots, err := s.loadSuggestionData(ctx, householdID, start, end)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to read plan", "")
 	}
