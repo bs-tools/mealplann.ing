@@ -53,6 +53,7 @@ type PlanRepository interface {
 	CreateCooksWithPortions(ctx context.Context, list []*plans.CookWithPortions) ([]*plans.Cook, [][]*plans.Portion, error)
 	UpdateCook(ctx context.Context, c *plans.Cook) (*plans.Cook, error)
 	ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) ([]*plans.FrozenCook, error)
+	ListFridgeCooks(ctx context.Context, householdID pgtype.UUID, from, before time.Time) ([]*plans.FridgeCook, error)
 	ListLeftoverCooks(ctx context.Context, householdID pgtype.UUID, before time.Time) ([]*plans.Cook, error)
 	SetCookSupply(ctx context.Context, householdID pgtype.UUID, supply *plans.Supply, previous pgtype.UUID) error
 	DeleteCook(ctx context.Context, householdID, id pgtype.UUID) error
@@ -424,10 +425,6 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 		sideCook, foodPortions := planSide(user.HouseholdID(), side, main.Cook, portions)
 		main.FoodPortions = foodPortions
 		if sideCook != nil {
-			// Frozen leftovers of a recipe side are eaten before cooking it.
-			if sideCook, err = s.sideFromFreezer(ctx, user.HouseholdID(), sideCook); err != nil {
-				return nil, s.toConnectError(ctx, err, "failed to read the freezer", "")
-			}
 			list = append(list, sideCook)
 		}
 	}

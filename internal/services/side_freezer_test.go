@@ -11,8 +11,10 @@ import (
 )
 
 // TestSideFromFreezer checks that a recipe side, like rice, is taken from
-// frozen leftovers of it before cooking it again: suggested from the
-// freezer, and planned from it with a meal.
+// leftovers of it before cooking it again: suggested from the freezer, and
+// planned from it with a meal, without growing the frozen cook; and once
+// there are leftovers in the fridge, planned by Plan for me from those
+// first.
 func TestSideFromFreezer(t *testing.T) {
 	t.Parallel()
 	e := newEnv(t)
@@ -33,7 +35,7 @@ func TestSideFromFreezer(t *testing.T) {
 		return resp.GetRecipe()
 	}
 	pot := create(recipesv1.Recipe_builder{
-		Name: "Pot of rice", Servings: 4, Tags: []string{"side"}, Freezable: true, FreezerDays: new(int32(90)),
+		Name: "Pot of rice", Servings: 4, Tags: []string{"side"}, Freezable: true, FreezerDays: new(int32(90)), FridgeDays: new(int32(4)),
 		Ingredients: []*recipesv1.Ingredient{ingredient(rice.GetId(), 240, grams)},
 	}.Build())
 	bowls := create(recipesv1.Recipe_builder{
@@ -82,5 +84,33 @@ func TestSideFromFreezer(t *testing.T) {
 	}
 	if l := left.GetLeftovers(); len(l) != 1 || l[0].GetRemainingServings() != 3 {
 		t.Errorf("got frozen %v, want 3 servings of rice left", l)
+	}
+	if c := cooks["Pot of rice "+monday]; c == nil || c.GetCook().GetServings() != 4 {
+		t.Errorf("got the frozen rice %v, want it still 4 servings", c)
+	}
+
+	// Rice cooked on Tuesday, left in the fridge: Plan for me's Thursday
+	// bowls with rice eat it, before the frozen rice, and cook none.
+	fridge, err := e.plans.CreateCook(ctx, plansv1.CreateCookRequest_builder{
+		Cook:      plansv1.Cook_builder{RecipeId: pot.GetId(), Date: tuesday, Servings: 4, Done: true}.Build(),
+		FromStock: true,
+	}.Build())
+	if err != nil {
+		t.Fatalf("CreateCook: %v", err)
+	}
+	if _, err := e.plans.PlanMeals(ctx, plansv1.PlanMealsRequest_builder{Meals: []*plansv1.MealToPlan{
+		plansv1.MealToPlan_builder{
+			RecipeId: bowls.GetId(), Date: thursday, Meal: dinner,
+			Side: recipesv1.RecipeSide_builder{RecipeId: pot.GetId()}.Build(),
+		}.Build(),
+	}}.Build()); err != nil {
+		t.Fatalf("PlanMeals: %v", err)
+	}
+	_, cooks = weekCooks(t, e, monday)
+	if cooks["Pot of rice "+thursday] != nil {
+		t.Errorf("got a new pot of rice on Thursday, want Tuesday's leftovers")
+	}
+	if c := cooks["Pot of rice "+tuesday]; c == nil || c.GetCook().GetId() != fridge.GetCook().GetId() || c.GetAssignedServings() != 1 || c.GetCook().GetServings() != 4 {
+		t.Errorf("got Tuesday's rice %v, want a serving of it planned", c)
 	}
 }

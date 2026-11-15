@@ -170,6 +170,45 @@ where cooks.household_id = @household_id
   and cooks.date + r.fridge_days >= sqlc.arg(before)::date
 order by cooks.date, cooks.create_time, cooks.id;
 
+-- name: ListFridgeCooks :many
+-- The household's cooks from 14 days before a date to before another,
+-- whose leftovers keep in the fridge on the first, by the recipe's
+-- fridge_days, with what ListCooks reads of them and the fridge days, to
+-- plan their leftovers on any of the dates.
+select
+  sqlc.embed(cooks),
+  r.name as recipe_name,
+  r.fridge_days,
+  coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
+  (coalesce((
+    select sum(p.servings) from portions p
+    where p.cook_id = cooks.id and (p.from_freezer or p.date > cooks.date + r.fridge_days)
+  ), 0)
+  + coalesce((
+    select sum(component_servings(ri.amount, ri.unit, cooks.recipe_id) * cc.servings / cr.servings)
+    from cook_supplies s
+    join cooks cc on cc.id = s.consumer_cook_id
+    join recipes cr on cr.id = cc.recipe_id
+    join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+    where s.supplier_cook_id = cooks.id and s.from_freezer
+  ), 0))::double precision as late_servings,
+  coalesce((
+    select sum(component_servings(ri.amount, ri.unit, cooks.recipe_id) * cc.servings / cr.servings)
+    from cook_supplies s
+    join cooks cc on cc.id = s.consumer_cook_id
+    join recipes cr on cr.id = cc.recipe_id
+    join recipe_ingredients ri on ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
+    where s.supplier_cook_id = cooks.id
+  ), 0)::double precision as supplied_servings
+from cooks
+join recipes r on r.id = cooks.recipe_id
+where cooks.household_id = @household_id
+  and cooks.date < sqlc.arg(before)::date
+  and cooks.date >= sqlc.arg(from_date)::date - 14
+  and r.fridge_days is not null
+  and cooks.date + r.fridge_days >= sqlc.arg(from_date)::date
+order by cooks.date, cooks.create_time, cooks.id;
+
 -- name: CreatePortion :execrows
 insert into portions (
   id, household_id, person_id, eating_time_id, date, cook_id, servings, food_id, amount, unit, notes, from_freezer

@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"slices"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect/v2"
@@ -15,68 +16,122 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-// frozenStock is what's in the freezer of each recipe, to supply the
-// components of new cooks from rather than cooking them again.
-type frozenStock map[pgtype.UUID][]*frozenServings
+// leftoverStock are the leftovers of earlier cooks to plan before cooking
+// again, by recipe ID: those in the fridge, and those in the freezer.
+type leftoverStock map[pgtype.UUID][]*leftoverServings
 
-// frozenServings are a cook's frozen servings not planned yet.
-type frozenServings struct {
+// leftoverServings are a cook's servings not planned yet: in the fridge,
+// or frozen.
+type leftoverServings struct {
 	cook *plans.Cook
 	left float64
 	// until is the last date they keep, zero if unknown.
-	until time.Time
+	until       time.Time
+	fromFreezer bool
 }
 
-// take takes what a component needs out of the freezer for a cook on a
-// date, from the oldest cook of its recipe or of an alternative recipe with
-// enough, in that recipe's servings, frozen before the date and keeping
-// until it, returning that cook, or nil if none has enough.
-func (f frozenStock) take(need recipes.ComponentNeed, date time.Time) *plans.Cook {
-	var best *frozenServings
+// find returns the leftovers of a recipe with enough servings for a cook
+// or portion on a date: those in the fridge first, as they keep less, and
+// the oldest first; nil if none have enough. Fridge leftovers are of a
+// cook before the date, and frozen ones of a cook frozen before it, both
+// keeping until it.
+func (l leftoverStock) find(recipeID pgtype.UUID, servings float64, date time.Time) *leftoverServings {
+	var best *leftoverServings
+	for _, ls := range l[recipeID] {
+		if ls.left < servings-1e-9 || !ls.cook.Date.Before(date) || (!ls.until.IsZero() && ls.until.Before(date)) {
+			continue
+		}
+		if best == nil || (best.fromFreezer && !ls.fromFreezer) ||
+			(best.fromFreezer == ls.fromFreezer && ls.cook.Date.Before(best.cook.Date)) {
+			best = ls
+		}
+	}
+	return best
+}
+
+// take takes what a component needs from leftovers for a cook on a date:
+// of its recipe, or an alternative recipe, in that recipe's servings (see
+// find), returning them, or nil if none have enough.
+func (l leftoverStock) take(need recipes.ComponentNeed, date time.Time) *leftoverServings {
+	var best *leftoverServings
 	var bestServings float64
 	for _, o := range need.Options() {
-		for _, fs := range f[o.Recipe.ID] {
-			if fs.left >= o.Servings-1e-9 && fs.cook.Date.Before(date) && (fs.until.IsZero() || !fs.until.Before(date)) &&
-				(best == nil || fs.cook.Date.Before(best.cook.Date)) {
-				best, bestServings = fs, o.Servings
-			}
+		ls := l.find(o.Recipe.ID, o.Servings, date)
+		if ls != nil && (best == nil || (best.fromFreezer && !ls.fromFreezer) ||
+			(best.fromFreezer == ls.fromFreezer && ls.cook.Date.Before(best.cook.Date))) {
+			best, bestServings = ls, o.Servings
 		}
 	}
-	if best == nil {
-		return nil
+	if best != nil {
+		best.left -= bestServings
 	}
-	best.left -= bestServings
-	return best.cook
+	return best
 }
 
-// freezerFor reads what's in the freezer, if a cook to create has a recipe
-// with components it could supply; nil if none has, saving the read.
-func (s *Service) freezerFor(ctx context.Context, householdID pgtype.UUID, list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes.Recipe) (frozenStock, error) {
-	if !slices.ContainsFunc(list, func(cp *plans.CookWithPortions) bool {
-		r := byID[cp.Cook.RecipeID]
-		return !cp.Existing && r != nil && len(r.ComponentsFor(cp.Cook.Servings)) > 0
-	}) {
-		return nil, nil
+// readLeftovers reads the leftovers to plan before cooking from one date
+// to another: the frozen servings of cooks, and the fridge leftovers of
+// cooks from 14 days before the first date, which still keep on it.
+func (s *Service) readLeftovers(ctx context.Context, householdID pgtype.UUID, from, to time.Time) (leftoverStock, error) {
+	var frozen []*plans.FrozenCook
+	var fridge []*plans.FridgeCook
+	var frozenErr, fridgeErr error
+	var wg sync.WaitGroup
+	wg.Go(func() { frozen, frozenErr = s.plans.ListFrozenCooks(ctx, householdID) })
+	wg.Go(func() { fridge, fridgeErr = s.plans.ListFridgeCooks(ctx, householdID, from, to.AddDate(0, 0, 1)) })
+	wg.Wait()
+	if frozenErr != nil {
+		return nil, frozenErr
 	}
-	frozen, err := s.plans.ListFrozenCooks(ctx, householdID)
-	if err != nil {
-		return nil, err
+	if fridgeErr != nil {
+		return nil, fridgeErr
 	}
-	stock := frozenStock{}
+	stock := leftoverStock{}
 	for _, f := range frozen {
-		fs := &frozenServings{cook: f.Cook, left: inFreezer(f.Cook)}
+		ls := &leftoverServings{cook: f.Cook, left: inFreezer(f.Cook), fromFreezer: true}
 		if f.FreezerDays != nil {
-			fs.until = f.Date.AddDate(0, 0, int(*f.FreezerDays))
+			ls.until = f.Date.AddDate(0, 0, int(*f.FreezerDays))
 		}
-		stock[f.RecipeID] = append(stock[f.RecipeID], fs)
+		stock[f.RecipeID] = append(stock[f.RecipeID], ls)
+	}
+	for _, f := range fridge {
+		if left := leftServings(f.Cook); left > servingsSlack {
+			stock[f.RecipeID] = append(stock[f.RecipeID], &leftoverServings{
+				cook: f.Cook, left: left, until: f.Date.AddDate(0, 0, int(f.FridgeDays)),
+			})
+		}
 	}
 	return stock, nil
+}
+
+// leftoversFor reads the leftovers to plan before cooking, if a cook to
+// create has a recipe with components or is a side that could come from
+// leftovers; nil if none could, saving the reads.
+func (s *Service) leftoversFor(ctx context.Context, householdID pgtype.UUID, list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes.Recipe) (leftoverStock, error) {
+	var from, to time.Time
+	found := false
+	for _, cp := range list {
+		r := byID[cp.Cook.RecipeID]
+		if cp.Existing || (!cp.FromLeftovers && (r == nil || len(r.ComponentsFor(cp.Cook.Servings)) == 0)) {
+			continue
+		}
+		if !found || cp.Cook.Date.Before(from) {
+			from = cp.Cook.Date
+		}
+		if !found || cp.Cook.Date.After(to) {
+			to = cp.Cook.Date
+		}
+		found = true
+	}
+	if !found {
+		return nil, nil
+	}
+	return s.readLeftovers(ctx, householdID, from, to)
 }
 
 // planSuppliers returns the cooks to create with suppliers of their
 // components (see withSuppliers), from the freezer where it has them.
 func (s *Service) planSuppliers(ctx context.Context, householdID pgtype.UUID, list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes.Recipe) ([]*plans.CookWithPortions, error) {
-	freezer, err := s.freezerFor(ctx, householdID, list, byID)
+	freezer, err := s.leftoversFor(ctx, householdID, list, byID)
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +178,8 @@ func batchServings(need recipes.ComponentNeed) float64 {
 
 // withSuppliers returns the cooks to create with a supplier of each of
 // their recipes' components: frozen servings of an earlier cook of it, if
-// the freezer has enough that keep until the cook, or of an alternative
-// recipe, oldest first (see frozenStock.take), or none if the pantry has
+// leftovers in the fridge or freezer have enough that keep until the cook,
+// or of an alternative recipe (see leftoverStock.take), or none if the pantry has
 // enough of a food it can be replaced with, from stock, by food, which
 // shrinks as it's used (nil for none),
 // or else a new cook of it, on the same date, of a whole batch of it (see
@@ -133,7 +188,7 @@ func batchServings(need recipes.ComponentNeed) float64 {
 // the supplies can refer to cooks created together. recipes are the
 // cooks' recipes by ID, with their components read; freezer is what's in
 // the freezer, nil for nothing, which shrinks as it supplies cooks.
-func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes.Recipe, freezer frozenStock, stock map[pgtype.UUID]float64) []*plans.CookWithPortions {
+func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes.Recipe, freezer leftoverStock, stock map[pgtype.UUID]float64) []*plans.CookWithPortions {
 	var result []*plans.CookWithPortions
 	batches := map[batchKey]*batch{}
 	var add func(cp *plans.CookWithPortions, r *recipes.Recipe, depth int)
@@ -147,9 +202,9 @@ func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes
 			return
 		}
 		for _, need := range r.ComponentsFor(cp.Cook.Servings) {
-			if frozen := freezer.take(need, cp.Cook.Date); frozen != nil {
+			if ls := freezer.take(need, cp.Cook.Date); ls != nil {
 				cp.Supplies = append(cp.Supplies, &plans.Supply{
-					ComponentRecipeID: need.Recipe.ID, SupplierCookID: frozen.ID, FromFreezer: true,
+					ComponentRecipeID: need.Recipe.ID, SupplierCookID: ls.cook.ID, FromFreezer: ls.fromFreezer,
 				})
 				continue
 			}
@@ -186,6 +241,28 @@ func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes
 		}
 	}
 	for _, cp := range list {
+		// A side eats leftovers of it, if there are enough for everyone,
+		// rather than cooking it again.
+		if cp.FromLeftovers && !cp.Existing {
+			total := 0.0
+			for _, p := range cp.Portions {
+				total += p.Servings
+			}
+			if ls := freezer.find(cp.Cook.RecipeID, total, cp.Cook.Date); ls != nil {
+				ls.left -= total
+				portions := make([]*plans.Portion, 0, len(cp.Portions))
+				for _, p := range cp.Portions {
+					eaten := *p
+					eaten.FromFreezer = ls.fromFreezer
+					portions = append(portions, &eaten)
+				}
+				// The cook exists, so it grows by none.
+				existing := *ls.cook
+				existing.Servings = 0
+				result = append(result, &plans.CookWithPortions{Cook: &existing, Existing: true, Portions: portions})
+				continue
+			}
+		}
 		add(cp, byID[cp.Cook.RecipeID], 0)
 	}
 	return result

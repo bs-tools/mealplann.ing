@@ -125,10 +125,10 @@ const SharedSides: React.FC<SharedSidesProps> = ({
         return;
       }
       /*
-       * A recipe side is one pot for everyone: frozen leftovers of it, if
-       * the freezer has enough for everyone, the one already cooked that
-       * day, made bigger if what's left of it is short, or a new cook of
-       * what everyone's shares add up to.
+       * A recipe side is one pot for everyone: leftovers of it in the
+       * fridge or freezer, if there are enough for everyone, the one
+       * already cooked that day, made bigger if what's left of it is short,
+       * or a new cook of what everyone's shares add up to.
        */
       const total = shares.reduce((sum, { side }) => sum + side.servings, 0);
       if (
@@ -148,8 +148,30 @@ const SharedSides: React.FC<SharedSidesProps> = ({
         }
         return;
       }
-      // A frozen cook too small for everyone isn't cooked again.
-      let cookId = first.side.fromFreezer ? "" : first.side.cookId;
+      const leftover = first.side.fromFreezer || first.side.fromFridge;
+      if (
+        first.side.fromFridge &&
+        total <= first.side.frozenServingsLeft + 1e-9
+      ) {
+        await Promise.all(
+          shares.map(async ({ eater, side }) => {
+            await client.createPortion({
+              portion: {
+                date,
+                eatingTimeId: eater.eatingTimeId,
+                personId: eater.personId,
+                what: {
+                  case: "cook",
+                  value: { cookId: first.side.cookId, servings: side.servings },
+                },
+              },
+            });
+          })
+        );
+        return;
+      }
+      // Leftovers too few for everyone aren't cooked again.
+      let cookId = leftover ? "" : first.side.cookId;
       if (cookId === "") {
         const created = await client.createCook({
           cook: {
