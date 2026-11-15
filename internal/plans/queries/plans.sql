@@ -136,10 +136,12 @@ order by cooks.date, cooks.create_time, cooks.id;
 -- name: ListLeftoverCooks :many
 -- The household's cooks before a date, from up to 14 days before it, whose
 -- leftovers still keep in the fridge on it, by the recipe's fridge_days,
--- with what ListCooks reads of them, to plan their leftovers.
+-- with what ListCooks reads of them and the recipe's fridge_days, to plan
+-- their leftovers.
 select
   sqlc.embed(cooks),
   r.name as recipe_name,
+  r.fridge_days,
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
   (coalesce((
     select sum(p.servings) from portions p

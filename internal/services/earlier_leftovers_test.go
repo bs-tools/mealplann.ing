@@ -70,6 +70,10 @@ func TestEarlierLeftovers(t *testing.T) {
 	if len(got) != 1 || got[0].GetCook().GetId() != chili || got[0].GetLeftServings() != 3 {
 		t.Fatalf("got earlier leftovers %v, want Sunday's chili with 3 servings left", got)
 	}
+	// They say when they're to be eaten or frozen by: 3 days after Sunday.
+	if until := got[0].GetKeepsUntil(); until != "2026-11-11" {
+		t.Errorf("got Sunday's chili keeping until %q, want 2026-11-11", until)
+	}
 	// The week's own cooks say what's left too.
 	week, err = e.plans.GetWeek(ctx, plansv1.GetWeekRequest_builder{Monday: monday}.Build())
 	if err != nil {
@@ -79,6 +83,10 @@ func TestEarlierLeftovers(t *testing.T) {
 		want := map[string]float64{"Soup": 4, "Stew": 0, "Chili": 3}[c.GetCook().GetRecipeName()]
 		if c.GetLeftServings() != want {
 			t.Errorf("got %s with %v servings left, want %v", c.GetCook().GetRecipeName(), c.GetLeftServings(), want)
+		}
+		wantUntil := map[string]string{"Soup": "2026-11-03", "Stew": "2026-11-12", "Chili": "2026-11-11"}[c.GetCook().GetRecipeName()]
+		if c.GetKeepsUntil() != wantUntil {
+			t.Errorf("got %s keeping until %q, want %q", c.GetCook().GetRecipeName(), c.GetKeepsUntil(), wantUntil)
 		}
 	}
 }

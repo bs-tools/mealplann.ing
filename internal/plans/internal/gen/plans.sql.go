@@ -884,6 +884,7 @@ const listLeftoverCooks = `-- name: ListLeftoverCooks :many
 select
   cooks.id, cooks.household_id, cooks.recipe_id, cooks.date, cooks.servings, cooks.meal, cooks.notes, cooks.done, cooks.create_time, cooks.update_time, cooks.frozen_servings, cooks.off_plan_servings, cooks.removed_servings,
   r.name as recipe_name,
+  r.fridge_days,
   coalesce((select sum(p.servings) from portions p where p.cook_id = cooks.id), 0)::double precision as assigned_servings,
   (coalesce((
     select sum(p.servings) from portions p
@@ -923,6 +924,7 @@ type ListLeftoverCooksParams struct {
 type ListLeftoverCooksRow struct {
 	Cook             Cook
 	RecipeName       string
+	FridgeDays       *int32
 	AssignedServings float64
 	LateServings     float64
 	SuppliedServings float64
@@ -930,7 +932,8 @@ type ListLeftoverCooksRow struct {
 
 // The household's cooks before a date, from up to 14 days before it, whose
 // leftovers still keep in the fridge on it, by the recipe's fridge_days,
-// with what ListCooks reads of them, to plan their leftovers.
+// with what ListCooks reads of them and the recipe's fridge_days, to plan
+// their leftovers.
 func (q *Queries) ListLeftoverCooks(ctx context.Context, arg *ListLeftoverCooksParams) ([]*ListLeftoverCooksRow, error) {
 	rows, err := q.db.Query(ctx, listLeftoverCooks, arg.HouseholdID, arg.Before)
 	if err != nil {
@@ -955,6 +958,7 @@ func (q *Queries) ListLeftoverCooks(ctx context.Context, arg *ListLeftoverCooksP
 			&i.Cook.OffPlanServings,
 			&i.Cook.RemovedServings,
 			&i.RecipeName,
+			&i.FridgeDays,
 			&i.AssignedServings,
 			&i.LateServings,
 			&i.SuppliedServings,

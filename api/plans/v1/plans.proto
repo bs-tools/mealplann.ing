@@ -646,6 +646,10 @@ message PlannedCook {
   // and staples from the day before today (UTC) on, in date order. Empty
   // for a cook done, or one the pantry covers.
   repeated string missing_food_names = 5;
+  // The last date its leftovers keep in the fridge, by the recipe's
+  // fridge_days, "YYYY-MM-DD": plan or freeze them by then. Empty if the
+  // recipe doesn't say how long they keep.
+  string keeps_until = 6;
 }
 
 message GetPlanCostRequest {

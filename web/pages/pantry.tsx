@@ -1,7 +1,7 @@
 import type { PickedFood } from "@components/foods/food-picker";
 import FoodPicker from "@components/foods/food-picker";
 import Loading from "@components/loading";
-import type { Leftover } from "@components/pantry/leftovers";
+import type { Leftover, LeftoverStep } from "@components/pantry/leftovers";
 import {
   LeftoverRow,
   LeftoverSheet,
@@ -9,6 +9,7 @@ import {
   useLeftovers,
 } from "@components/pantry/leftovers";
 import PantryItemDialog from "@components/pantry/pantry-item-dialog";
+import RecipesWithFood from "@components/pantry/recipes-with-food";
 import { tintOf } from "@components/recipes/tint";
 import Card from "@components/ui/card";
 import { EmptyState, PageHeader } from "@components/ui/misc";
@@ -16,6 +17,8 @@ import QueryError, { ErrorText } from "@components/ui/query-error";
 import Segmented from "@components/ui/segmented";
 import {
   linkClass,
+  pillButton,
+  pillPrimaryButton,
   primaryButton,
   sectionLabelClass,
 } from "@components/ui/styles";
@@ -30,10 +33,14 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { updateFood } from "gen/foods/v1/foods-FoodService_connectquery";
 import { FoodService } from "gen/foods/v1/foods_pb";
-import { listPantry } from "gen/pantry/v1/pantry-PantryService_connectquery";
+import {
+  listPantry,
+  updatePantryItem,
+} from "gen/pantry/v1/pantry-PantryService_connectquery";
 import type { PantryItem } from "gen/pantry/v1/pantry_pb";
 import { PantryService, Storage } from "gen/pantry/v1/pantry_pb";
 import { suggestFromPantry } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
+import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { daysBetween, parseDate, today } from "helpers/dates";
 import { formatGrams, formatNearDate, formatStock } from "helpers/format";
 import { invalidateServices } from "helpers/query";
@@ -105,21 +112,38 @@ interface LotRowProps {
   item: PantryItem;
   now: string;
   onOpen: () => void;
+  /*
+   * Called to plan a recipe using the lot, or to freeze it, offered for a
+   * lot to use soon, so it's used before it goes off, but not once it has.
+   */
+  onPlan?: (() => void) | undefined;
+  onFreeze?: (() => void) | undefined;
+  // Whether it's being frozen.
+  freezing?: boolean | undefined;
 }
 
 /**
  * LotRow shows a lot: its food, when to use it by, and how much, in the
  * units it's bought in. Tapping it opens it, to correct it.
  */
-const LotRow: React.FC<LotRowProps> = ({ item, now, onOpen }) => {
+const LotRow: React.FC<LotRowProps> = ({
+  item,
+  now,
+  onOpen,
+  onPlan,
+  onFreeze,
+  freezing = false,
+}) => {
   const days =
     item.useByDate === "" ? Infinity : daysBetween(now, item.useByDate);
   const when = useByText(item, now);
+  // Food past its date is for throwing out, not planning or freezing.
+  const usable = days >= 0;
   return (
-    <li>
+    <li className="border-b border-line">
       <button
         type="button"
-        className="flex w-full items-center gap-3 border-b border-line py-3.5 text-left"
+        className="flex w-full items-center gap-3 py-3.5 text-left"
         onClick={onOpen}
       >
         <span
@@ -154,6 +178,29 @@ const LotRow: React.FC<LotRowProps> = ({ item, now, onOpen }) => {
           {formatStock(item.grams, item.gramsPerPiece, item.packageGrams)}
         </span>
       </button>
+      {usable && (onPlan !== undefined || onFreeze !== undefined) && (
+        <div className="-mt-1 flex flex-wrap gap-2 pb-3.5 pl-14">
+          {onPlan !== undefined && (
+            <button
+              type="button"
+              className={pillPrimaryButton}
+              onClick={onPlan}
+            >
+              Plan a recipe
+            </button>
+          )}
+          {onFreeze !== undefined && (
+            <button
+              type="button"
+              className={pillButton}
+              disabled={freezing}
+              onClick={onFreeze}
+            >
+              {freezing ? "Freezing…" : "Freeze"}
+            </button>
+          )}
+        </div>
+      )}
     </li>
   );
 };
@@ -187,7 +234,46 @@ const PantryPage: React.FC = () => {
    */
   const [search, setSearch] = useState(params.get("q") ?? "");
   const leftovers = useLeftovers();
-  const [openLeftover, setOpenLeftover] = useState<Leftover | null>(null);
+  const [openLeftover, setOpenLeftover] = useState<{
+    leftover: Leftover;
+    step?: LeftoverStep | undefined;
+  } | null>(null);
+  // The lot to plan a recipe with, to use it up, or null.
+  const [planningLot, setPlanningLot] = useState<PantryItem | null>(null);
+  /*
+   * Freeze moves a lot to the freezer, frozen today, so it keeps for the
+   * food's freezer shelf life instead of going off.
+   */
+  const freeze = useMutation(updatePantryItem, {
+    onSuccess: async () => {
+      await invalidateServices(queryClient, [PantryService, SuggestionService]);
+    },
+  });
+  /*
+   * The lot just frozen whose use-by date didn't change, as its food has no
+   * freezer shelf life to count from, or null: the page says to set one.
+   */
+  const [frozenAsIs, setFrozenAsIs] = useState<PantryItem | null>(null);
+  const freezeLot = (item: PantryItem) => {
+    setFrozenAsIs(null);
+    freeze.mutate(
+      {
+        item: { id: item.id, storage: Storage.FREEZER },
+        updateMask: { paths: ["storage"] },
+      },
+      {
+        onSuccess: (resp) => {
+          if (
+            resp.item !== undefined &&
+            resp.item.useByDate !== "" &&
+            resp.item.useByDate === item.useByDate
+          ) {
+            setFrozenAsIs(resp.item);
+          }
+        },
+      }
+    );
+  };
   const searching = search.trim() !== "";
   const setAlwaysInStock = useMutation(updateFood, {
     onSuccess: async () => {
@@ -237,8 +323,8 @@ const PantryPage: React.FC = () => {
       <LeftoverRow
         key={leftover.key}
         leftover={leftover}
-        onOpen={() => {
-          setOpenLeftover(leftover);
+        onOpen={(step) => {
+          setOpenLeftover({ leftover, step });
         }}
       />
     );
@@ -320,6 +406,19 @@ const PantryPage: React.FC = () => {
                     onOpen={() => {
                       setEditing(item);
                     }}
+                    onPlan={() => {
+                      setPlanningLot(item);
+                    }}
+                    onFreeze={
+                      item.storage === Storage.FREEZER
+                        ? undefined
+                        : () => {
+                            freezeLot(item);
+                          }
+                    }
+                    freezing={
+                      freeze.isPending && freeze.variables.item?.id === item.id
+                    }
                   />
                 ))}
               </ul>
@@ -452,13 +551,33 @@ const PantryPage: React.FC = () => {
           <ChevronRightIcon className="size-5 shrink-0" aria-hidden="true" />
         </Link>
       )}
-      <ErrorText error={setAlwaysInStock.error} />
+      <ErrorText error={setAlwaysInStock.error ?? freeze.error} />
+      {frozenAsIs !== null && (
+        <p className="rounded-xl bg-warn-tint px-4 py-3 text-sm text-ink-soft">
+          {frozenAsIs.foodName} is in the freezer, but it still says to use it
+          by {formatNearDate(frozenAsIs.useByDate)}, as its food doesn&apos;t
+          say how long it keeps frozen.{" "}
+          <Link to={`/foods/${frozenAsIs.foodId}`} className={linkClass}>
+            Set its freezer shelf life
+          </Link>{" "}
+          to count from today.
+        </p>
+      )}
       {content}
       {openLeftover !== null && (
         <LeftoverSheet
-          leftover={openLeftover}
+          leftover={openLeftover.leftover}
+          step={openLeftover.step}
           onClose={() => {
             setOpenLeftover(null);
+          }}
+        />
+      )}
+      {planningLot !== null && (
+        <RecipesWithFood
+          item={planningLot}
+          onClose={() => {
+            setPlanningLot(null);
           }}
         />
       )}

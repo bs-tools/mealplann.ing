@@ -54,7 +54,7 @@ type PlanRepository interface {
 	UpdateCook(ctx context.Context, c *plans.Cook) (*plans.Cook, error)
 	ListFrozenCooks(ctx context.Context, householdID pgtype.UUID) ([]*plans.FrozenCook, error)
 	ListFridgeCooks(ctx context.Context, householdID pgtype.UUID, from, before time.Time) ([]*plans.FridgeCook, error)
-	ListLeftoverCooks(ctx context.Context, householdID pgtype.UUID, before time.Time) ([]*plans.Cook, error)
+	ListLeftoverCooks(ctx context.Context, householdID pgtype.UUID, before time.Time) ([]*plans.FridgeCook, error)
 	SetCookSupply(ctx context.Context, householdID pgtype.UUID, supply *plans.Supply, previous pgtype.UUID) error
 	DeleteCook(ctx context.Context, householdID, id pgtype.UUID) error
 	GetPortion(ctx context.Context, householdID, id pgtype.UUID) (*plans.Portion, error)
@@ -184,7 +184,7 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 	// The week after is read too, as its cooks can start this week, like
 	// beans soaked the night before. Earlier cooks with leftovers are read
 	// alongside.
-	var earlier []*plans.Cook
+	var earlier []*plans.FridgeCook
 	var earlierErr error
 	var wg sync.WaitGroup
 	wg.Go(func() { earlier, earlierErr = s.plans.ListLeftoverCooks(ctx, user.HouseholdID(), monday) })
@@ -208,11 +208,12 @@ func (s *Service) GetWeek(ctx context.Context, req *plansv1.GetWeekRequest) (*pl
 	}
 	leftovers := make([]*plansv1.PlannedCook, 0, len(earlier))
 	for _, c := range earlier {
-		if leftServings(c) > servingsSlack {
+		if leftServings(c.Cook) > servingsSlack {
 			leftovers = append(leftovers, plansv1.PlannedCook_builder{
-				Cook:             cookToProto(c),
+				Cook:             cookToProto(c.Cook),
 				AssignedServings: round(c.AssignedServings + c.SuppliedServings),
-				LeftServings:     round(leftServings(c)),
+				LeftServings:     round(leftServings(c.Cook)),
+				KeepsUntil:       store.FormatDate(c.Date.AddDate(0, 0, int(c.FridgeDays))),
 			}.Build())
 		}
 	}

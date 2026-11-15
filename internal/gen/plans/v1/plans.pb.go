@@ -2998,6 +2998,7 @@ type PlannedCook struct {
 	xxx_hidden_Warnings         *[]*Warning            `protobuf:"bytes,3,rep,name=warnings,proto3"`
 	xxx_hidden_LeftServings     float64                `protobuf:"fixed64,4,opt,name=left_servings,json=leftServings,proto3"`
 	xxx_hidden_MissingFoodNames []string               `protobuf:"bytes,5,rep,name=missing_food_names,json=missingFoodNames,proto3"`
+	xxx_hidden_KeepsUntil       string                 `protobuf:"bytes,6,opt,name=keeps_until,json=keepsUntil,proto3"`
 	unknownFields               protoimpl.UnknownFields
 	sizeCache                   protoimpl.SizeCache
 }
@@ -3064,6 +3065,13 @@ func (x *PlannedCook) GetMissingFoodNames() []string {
 	return nil
 }
 
+func (x *PlannedCook) GetKeepsUntil() string {
+	if x != nil {
+		return x.xxx_hidden_KeepsUntil
+	}
+	return ""
+}
+
 func (x *PlannedCook) SetCook(v *Cook) {
 	x.xxx_hidden_Cook = v
 }
@@ -3082,6 +3090,10 @@ func (x *PlannedCook) SetLeftServings(v float64) {
 
 func (x *PlannedCook) SetMissingFoodNames(v []string) {
 	x.xxx_hidden_MissingFoodNames = v
+}
+
+func (x *PlannedCook) SetKeepsUntil(v string) {
+	x.xxx_hidden_KeepsUntil = v
 }
 
 func (x *PlannedCook) HasCook() bool {
@@ -3115,6 +3127,10 @@ type PlannedCook_builder struct {
 	// and staples from the day before today (UTC) on, in date order. Empty
 	// for a cook done, or one the pantry covers.
 	MissingFoodNames []string
+	// The last date its leftovers keep in the fridge, by the recipe's
+	// fridge_days, "YYYY-MM-DD": plan or freeze them by then. Empty if the
+	// recipe doesn't say how long they keep.
+	KeepsUntil string
 }
 
 func (b0 PlannedCook_builder) Build() *PlannedCook {
@@ -3126,6 +3142,7 @@ func (b0 PlannedCook_builder) Build() *PlannedCook {
 	x.xxx_hidden_Warnings = &b.Warnings
 	x.xxx_hidden_LeftServings = b.LeftServings
 	x.xxx_hidden_MissingFoodNames = b.MissingFoodNames
+	x.xxx_hidden_KeepsUntil = b.KeepsUntil
 	return m0
 }
 
@@ -7896,13 +7913,15 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\tcook_date\x18\f \x01(\tR\bcookDate\x12\x1a\n" +
 	"\bleftover\x18\r \x01(\bR\bleftover\x12\x14\n" +
 	"\x05notes\x18\x0e \x01(\tR\x05notes\x12\x14\n" +
-	"\x05eaten\x18\x0f \x01(\bR\x05eaten\"\xe0\x01\n" +
+	"\x05eaten\x18\x0f \x01(\bR\x05eaten\"\x81\x02\n" +
 	"\vPlannedCook\x12\"\n" +
 	"\x04cook\x18\x01 \x01(\v2\x0e.plans.v1.CookR\x04cook\x12+\n" +
 	"\x11assigned_servings\x18\x02 \x01(\x01R\x10assignedServings\x12-\n" +
 	"\bwarnings\x18\x03 \x03(\v2\x11.plans.v1.WarningR\bwarnings\x12#\n" +
 	"\rleft_servings\x18\x04 \x01(\x01R\fleftServings\x12,\n" +
-	"\x12missing_food_names\x18\x05 \x03(\tR\x10missingFoodNames\"N\n" +
+	"\x12missing_food_names\x18\x05 \x03(\tR\x10missingFoodNames\x12\x1f\n" +
+	"\vkeeps_until\x18\x06 \x01(\tR\n" +
+	"keepsUntil\"N\n" +
 	"\x12GetPlanCostRequest\x12\x1d\n" +
 	"\n" +
 	"start_date\x18\x01 \x01(\tR\tstartDate\x12\x19\n" +

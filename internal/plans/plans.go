@@ -1316,18 +1316,23 @@ func (r *Repository) ListFridgeCooks(ctx context.Context, householdID pgtype.UUI
 
 // ListLeftoverCooks lists a household's cooks before a date, from up to 14
 // days before it, whose leftovers still keep in the fridge on it, by their
-// recipe's fridge days, by date.
-func (r *Repository) ListLeftoverCooks(ctx context.Context, householdID pgtype.UUID, before time.Time) ([]*Cook, error) {
+// recipe's fridge days, by date, with those fridge days.
+func (r *Repository) ListLeftoverCooks(ctx context.Context, householdID pgtype.UUID, before time.Time) ([]*FridgeCook, error) {
 	rows, err := gen.New(r.db).ListLeftoverCooks(ctx, &gen.ListLeftoverCooksParams{HouseholdID: householdID, Before: store.DateToPG(before)})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list leftover cooks: %w", err)
 	}
-	cooks := make([]*Cook, 0, len(rows))
+	cooks := make([]*FridgeCook, 0, len(rows))
 	for _, row := range rows {
-		cooks = append(cooks, cookFromDB(&gen.ListCooksRow{
+		c := cookFromDB(&gen.ListCooksRow{
 			Cook: row.Cook, RecipeName: row.RecipeName, AssignedServings: row.AssignedServings,
 			LateServings: row.LateServings, SuppliedServings: row.SuppliedServings,
-		}))
+		})
+		var days int32
+		if row.FridgeDays != nil {
+			days = *row.FridgeDays
+		}
+		cooks = append(cooks, &FridgeCook{Cook: c, FridgeDays: days})
 	}
 	return cooks, nil
 }
