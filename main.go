@@ -408,12 +408,16 @@ func run(
 	planRepo := plans.NewRepository(log, db)
 	pantryRepo := pantry.NewRepository(log, db)
 	shoppingRepo := shopping.NewRepository(log, db)
+	shoppingService := shoppingsvc.NewService(log, report, shoppingRepo, planRepo, recipeRepo, foodRepo, pantryRepo)
+	// Taking food out of the pantry puts the foods kept in stock that run
+	// low on the open shopping list.
+	restockingPantry := shoppingsvc.NewRestockingPantry(pantryRepo, shoppingService)
+	foodService.SetRestocker(shoppingService.Restock)
 	// The plan service also serves suggestions and plan templates, as they
 	// read the plan and compute its nutrition the same way.
-	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, foodRepo, pantryRepo, shoppingRepo,
+	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, foodRepo, restockingPantry, shoppingRepo,
 		templates.NewRepository(log, db))
-	pantryService := pantrysvc.NewService(log, report, pantryRepo, foodRepo, requests)
-	shoppingService := shoppingsvc.NewService(log, report, shoppingRepo, planRepo, recipeRepo, foodRepo, pantryRepo)
+	pantryService := pantrysvc.NewService(log, report, restockingPantry, foodRepo, requests)
 
 	// Register all services on a single Connect server, served by the API mux
 	server := connect.NewServer()

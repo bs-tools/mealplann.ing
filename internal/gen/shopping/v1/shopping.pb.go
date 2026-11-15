@@ -434,6 +434,7 @@ type ShoppingItem struct {
 	xxx_hidden_StoreSection v1.StoreSection        `protobuf:"varint,11,opt,name=store_section,json=storeSection,proto3,enum=foods.v1.StoreSection"`
 	xxx_hidden_NeededByDate string                 `protobuf:"bytes,12,opt,name=needed_by_date,json=neededByDate,proto3"`
 	xxx_hidden_TopUp        bool                   `protobuf:"varint,13,opt,name=top_up,json=topUp,proto3"`
+	xxx_hidden_Restock      bool                   `protobuf:"varint,20,opt,name=restock,proto3"`
 	xxx_hidden_Warning      string                 `protobuf:"bytes,14,opt,name=warning,proto3"`
 	xxx_hidden_Checked      bool                   `protobuf:"varint,15,opt,name=checked,proto3"`
 	xxx_hidden_CheckedBy    string                 `protobuf:"bytes,16,opt,name=checked_by,json=checkedBy,proto3"`
@@ -560,6 +561,13 @@ func (x *ShoppingItem) GetTopUp() bool {
 	return false
 }
 
+func (x *ShoppingItem) GetRestock() bool {
+	if x != nil {
+		return x.xxx_hidden_Restock
+	}
+	return false
+}
+
 func (x *ShoppingItem) GetWarning() string {
 	if x != nil {
 		return x.xxx_hidden_Warning
@@ -656,6 +664,10 @@ func (x *ShoppingItem) SetTopUp(v bool) {
 	x.xxx_hidden_TopUp = v
 }
 
+func (x *ShoppingItem) SetRestock(v bool) {
+	x.xxx_hidden_Restock = v
+}
+
 func (x *ShoppingItem) SetWarning(v string) {
 	x.xxx_hidden_Warning = v
 }
@@ -714,6 +726,10 @@ type ShoppingItem_builder struct {
 	// food's shelf_life_days, so it should be bought fresh on a later trip,
 	// or the meals using it moved earlier.
 	TopUp bool
+	// Whether some or all of it is bought to keep its food in stock, beyond
+	// what's planned: see foods.v1.Food.keep_in_stock_amount. needed_by_date
+	// is then the shop's date, if nothing planned needs it sooner.
+	Restock bool
 	// Why it should be bought later, or what's missing to weigh it, for
 	// people. Empty if nothing.
 	Warning string
@@ -749,6 +765,7 @@ func (b0 ShoppingItem_builder) Build() *ShoppingItem {
 	x.xxx_hidden_StoreSection = b.StoreSection
 	x.xxx_hidden_NeededByDate = b.NeededByDate
 	x.xxx_hidden_TopUp = b.TopUp
+	x.xxx_hidden_Restock = b.Restock
 	x.xxx_hidden_Warning = b.Warning
 	x.xxx_hidden_Checked = b.Checked
 	x.xxx_hidden_CheckedBy = b.CheckedBy
@@ -2852,7 +2869,7 @@ const file_shopping_v1_shopping_proto_rawDesc = "" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12;\n" +
 	"\vupdate_time\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"updateTime\"\xd2\x04\n" +
+	"updateTime\"\xf4\x04\n" +
 	"\fShoppingItem\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\afood_id\x18\x02 \x01(\tR\x06foodId\x12\x12\n" +
@@ -2869,7 +2886,8 @@ const file_shopping_v1_shopping_proto_rawDesc = "" +
 	" \x01(\tR\tstoreName\x12;\n" +
 	"\rstore_section\x18\v \x01(\x0e2\x16.foods.v1.StoreSectionR\fstoreSection\x12$\n" +
 	"\x0eneeded_by_date\x18\f \x01(\tR\fneededByDate\x12\x15\n" +
-	"\x06top_up\x18\r \x01(\bR\x05topUp\x12\x18\n" +
+	"\x06top_up\x18\r \x01(\bR\x05topUp\x12 \n" +
+	"\arestock\x18\x14 \x01(\bB\x06\xaa\x9f\x19\x02\b\x01R\arestock\x12\x18\n" +
 	"\awarning\x18\x0e \x01(\tR\awarning\x12\x18\n" +
 	"\achecked\x18\x0f \x01(\bR\achecked\x12\x1d\n" +
 	"\n" +

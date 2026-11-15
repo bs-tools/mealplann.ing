@@ -134,6 +134,14 @@ const ItemRow: React.FC<ItemRowProps> = ({
               {item.amountText}
             </span>
           )}
+          {item.restock && !checked && (
+            <span
+              className="rounded-full bg-pine-50 px-2 py-0.5 text-xs font-medium text-pine-dark"
+              title="Running low: it's kept in stock, so it's bought before it runs out"
+            >
+              Keep in stock
+            </span>
+          )}
           {item.topUp && !checked && (
             <span className="rounded-full bg-warn-tint px-2 py-0.5 text-xs font-medium text-warn-dark">
               Top-up {formatWeekday(item.neededByDate)}

@@ -67,6 +67,7 @@ type RecipeRepository interface {
 type FoodRepository interface {
 	GetFood(ctx context.Context, householdID, id pgtype.UUID) (*foods.Food, error)
 	ListFoodsByID(ctx context.Context, householdID pgtype.UUID, ids []pgtype.UUID) ([]*foods.Food, error)
+	ListKeptInStockFoods(ctx context.Context, householdID pgtype.UUID) ([]*foods.Food, error)
 }
 
 // PantryRepository reads what's in stock, and stocks what's bought.
@@ -286,7 +287,13 @@ func (s *Service) generate(ctx context.Context, householdID pgtype.UUID, from, t
 	for _, r := range recipeList {
 		byID[r.ID] = r
 	}
-	needs := shopping.NeedsOf(plan, byID)
+	// The foods kept in stock are bought too when the pantry runs low,
+	// whether or not the plan uses them.
+	kept, err := s.foods.ListKeptInStockFoods(ctx, householdID)
+	if err != nil {
+		return nil, err
+	}
+	needs := append(shopping.NeedsOf(plan, byID), shopping.RestockNeeds(kept, from)...)
 	var foodIDs []pgtype.UUID
 	for _, n := range needs {
 		foodIDs = append(foodIDs, n.FoodID)

@@ -93,7 +93,7 @@ order by shopping_items.create_time, shopping_items.id;
 insert into shopping_items (
   id, household_id, list_id, food_id, name, grams, needed_grams, pantry_grams, packages,
   amount_text, store_id, store_section, needed_by, top_up, warning, checked, checked_by,
-  check_time, note, manual, recipes
+  check_time, note, manual, recipes, restock
 )
 select
   (@ids::uuid[])[i],
@@ -116,7 +116,8 @@ select
   (@check_times::timestamptz[])[i],
   (@notes::text[])[i],
   (@manual::boolean[])[i],
-  ((@recipes::text[])[i])::jsonb
+  ((@recipes::text[])[i])::jsonb,
+  (@restocks::boolean[])[i]
 from generate_subscripts(@ids::uuid[], 1) as i;
 
 -- name: DeleteGeneratedShoppingItems :exec
@@ -141,7 +142,7 @@ select
   updated.grams, updated.needed_grams, updated.pantry_grams, updated.packages,
   updated.amount_text, updated.store_id, updated.store_section, updated.needed_by,
   updated.top_up, updated.warning, updated.checked, updated.checked_by,
-  updated.check_time, updated.note, updated.manual, updated.create_time, updated.update_time,
+  updated.check_time, updated.note, updated.manual, updated.restock, updated.create_time, updated.update_time,
   coalesce(pe.name, pu.name, '')::text as checked_by_name,
   st.id as resolved_store_id,
   coalesce(st.name, '')::text as store_name

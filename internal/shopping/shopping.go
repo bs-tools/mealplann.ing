@@ -123,6 +123,9 @@ type Item struct {
 	Recipes []RecipeRef
 	// TopUp is whether it won't keep from the shop until it's needed.
 	TopUp bool
+	// Restock is whether some or all of it is bought to keep its food in
+	// stock, beyond what's planned: see foods.Food.KeepInStockAmount.
+	Restock bool
 	// Warning is why it should be bought later, or what's missing to weigh
 	// it.
 	Warning string
@@ -496,6 +499,7 @@ func (r *Repository) SetItemChecked(ctx context.Context, householdID, id, userID
 		StoreSection: row.StoreSection,
 		NeededBy:     row.NeededBy,
 		TopUp:        row.TopUp,
+		Restock:      row.Restock,
 		Warning:      row.Warning,
 		Checked:      row.Checked,
 		CheckedBy:    row.CheckedBy,
@@ -693,6 +697,7 @@ func itemFromDB(row *gen.ShoppingItem, checkedByName string) *Item {
 		StoreID:       row.StoreID,
 		NeededBy:      store.DateFromPG(row.NeededBy),
 		TopUp:         row.TopUp,
+		Restock:       row.Restock,
 		Warning:       row.Warning,
 		Checked:       row.Checked,
 		CheckedBy:     row.CheckedBy,
@@ -734,6 +739,7 @@ func itemsToDB(householdID, listID pgtype.UUID, items []*Item) *gen.CreateShoppi
 		p.StoreSections = append(p.StoreSections, string(it.StoreSection))
 		p.NeededBy = append(p.NeededBy, store.DateToPG(it.NeededBy))
 		p.TopUps = append(p.TopUps, it.TopUp)
+		p.Restocks = append(p.Restocks, it.Restock)
 		p.Warnings = append(p.Warnings, it.Warning)
 		p.Checked = append(p.Checked, it.Checked)
 		p.CheckedBy = append(p.CheckedBy, it.CheckedBy)

@@ -83,6 +83,7 @@ func itemToProto(it *shopping.Item) *shoppingv1.ShoppingItem {
 		StoreSection: food.StoreSectionToProto(it.StoreSection),
 		NeededByDate: store.FormatDate(it.NeededBy),
 		TopUp:        it.TopUp,
+		Restock:      it.Restock,
 		Warning:      it.Warning,
 		Checked:      it.Checked,
 		CheckedBy:    checkedBy,

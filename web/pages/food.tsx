@@ -31,7 +31,12 @@ import {
   updateFood,
 } from "gen/foods/v1/foods-FoodService_connectquery";
 import type { Food } from "gen/foods/v1/foods_pb";
-import { FoodService, Measure, StoreSection } from "gen/foods/v1/foods_pb";
+import {
+  AmountUnit,
+  FoodService,
+  Measure,
+  StoreSection,
+} from "gen/foods/v1/foods_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
 import { listStores } from "gen/shopping/v1/shopping-ShoppingService_connectquery";
 import type { Store } from "gen/shopping/v1/shopping_pb";
@@ -135,6 +140,14 @@ const nutrientInputs = (food: Food): NutrientInputs => {
 };
 
 // ZeroAsEmpty shows 0, which the API uses for unknown, as an empty input.
+// KEEP_UNITS are the units to keep a food in stock in.
+const KEEP_UNITS: { value: AmountUnit; label: string }[] = [
+  { label: "packages", value: AmountUnit.PACKAGES },
+  { label: "g", value: AmountUnit.GRAMS },
+  { label: "ml", value: AmountUnit.MILLILITERS },
+  { label: "pieces", value: AmountUnit.PIECES },
+];
+
 const zeroAsEmpty = (value: number): string =>
   value === 0 ? "" : String(value);
 
@@ -175,6 +188,19 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
     food.preferredStoreId
   );
   const [alwaysInStock, setAlwaysInStock] = useState(food.alwaysInStock);
+  /*
+   * The least to keep in stock, as entered, "" for none, and its unit:
+   * packages by default for a food sold in them, like a jar.
+   */
+  let initialKeepUnit = food.keepInStockUnit;
+  if (food.keepInStockAmount <= 0) {
+    initialKeepUnit =
+      food.packageGrams > 0 ? AmountUnit.PACKAGES : AmountUnit.GRAMS;
+  }
+  const [keepAmount, setKeepAmount] = useState(
+    zeroAsEmpty(food.keepInStockAmount)
+  );
+  const [keepUnit, setKeepUnit] = useState(initialKeepUnit);
   // The price in dollars per kilogram, as entered.
   const initialPrice =
     food.priceCentsPerKilogram > 0
@@ -269,6 +295,17 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
   if (alwaysInStock !== food.alwaysInStock) {
     paths.push("always_in_stock");
   }
+  /*
+   * Marking a food always in stock clears the amount to keep, which goes
+   * with it.
+   */
+  if (
+    keepAmount !== zeroAsEmpty(food.keepInStockAmount) ||
+    (keepAmount !== "" && keepUnit !== initialKeepUnit) ||
+    alwaysInStock !== food.alwaysInStock
+  ) {
+    paths.push("keep_in_stock_amount", "keep_in_stock_unit");
+  }
   if (notes !== food.notes) {
     paths.push("notes");
   }
@@ -290,6 +327,13 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
         return;
       }
       parsed[number.path] = value ?? 0;
+    }
+    const keep = parseOptionalNumber(keepAmount);
+    if (keep === null) {
+      setInvalid(
+        "Keep in stock must be a number more than 0, or empty for none."
+      );
+      return;
     }
     const priceDollars = parseOptionalNumber(price);
     if (priceDollars === null) {
@@ -319,6 +363,12 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
         gramsPerMilliliter: parsed.grams_per_milliliter ?? 0,
         gramsPerPiece: parsed.grams_per_piece ?? 0,
         id: food.id,
+        /*
+         * A food always in stock isn't weighed, so it isn't kept above an
+         * amount.
+         */
+        keepInStockAmount: alwaysInStock ? 0 : (keep ?? 0),
+        keepInStockUnit: keepUnit,
         measure,
         name,
         notes,
@@ -502,6 +552,39 @@ const FoodForm: React.FC<FoodFormProps> = ({ food, stores }) => {
                   out.
                 </p>
               </div>
+              {!alwaysInStock && (
+                <div>
+                  <div className="grid grid-cols-[1fr_auto] items-end gap-2">
+                    <TextField
+                      label="Keep in stock, at least"
+                      value={keepAmount}
+                      inputMode="decimal"
+                      placeholder="None"
+                      onChange={setKeepAmount}
+                    />
+                    <SelectField
+                      label="Unit"
+                      value={String(keepUnit)}
+                      options={KEEP_UNITS.map((option) => ({
+                        label: option.label,
+                        value: String(option.value),
+                      }))}
+                      onChange={(value) => {
+                        setKeepUnit(
+                          KEEP_UNITS.find(
+                            (option) => String(option.value) === value
+                          )?.value ?? AmountUnit.GRAMS
+                        );
+                      }}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-muted">
+                    For things you&apos;d rather have too much of than run out,
+                    like peanut butter: when the pantry has less, besides
+                    what&apos;s planned, it goes on the shopping list.
+                  </p>
+                </div>
+              )}
               <div>
                 <CheckboxField
                   label="Fast carb"

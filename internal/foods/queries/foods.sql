@@ -39,7 +39,9 @@ insert into foods (
   price_date,
   notes,
   preferred_store_id,
-  always_in_stock
+  always_in_stock,
+  keep_in_stock_amount,
+  keep_in_stock_unit
 ) values (
   @household_id,
   @name,
@@ -80,7 +82,9 @@ insert into foods (
   @price_date,
   @notes,
   @preferred_store_id,
-  @always_in_stock
+  @always_in_stock,
+  @keep_in_stock_amount,
+  @keep_in_stock_unit
 )
 returning *;
 
@@ -135,6 +139,8 @@ update foods set
   notes = @notes,
   preferred_store_id = @preferred_store_id,
   always_in_stock = @always_in_stock,
+  keep_in_stock_amount = @keep_in_stock_amount,
+  keep_in_stock_unit = @keep_in_stock_unit,
   update_time = now()
 where id = @id and household_id = @household_id
 returning *;
