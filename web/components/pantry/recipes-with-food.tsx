@@ -7,7 +7,6 @@ import { useQuery } from "@connectrpc/connect-query";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import type { PantryItem } from "gen/pantry/v1/pantry_pb";
 import { listRecipes } from "gen/recipes/v1/recipes-RecipeService_connectquery";
-import { startOfWeek, today } from "helpers/dates";
 import React from "react";
 import { Link } from "react-router";
 
@@ -19,15 +18,14 @@ interface RecipesWithFoodProps {
 
 /**
  * RecipesWithFood lists the recipes using a lot's food, to plan one of them
- * and use it up: choosing a recipe plans it from today, on the Plan page,
- * like a recipe's "Plan this".
+ * and use it up: choosing a recipe opens it, to look at its ingredients and
+ * steps before planning it with its "Plan this".
  */
 const RecipesWithFood: React.FC<RecipesWithFoodProps> = ({ item, onClose }) => {
   const recipes = useQuery(listRecipes, {
     foodIds: [item.foodId],
     summary: true,
   });
-  const now = today();
   let content: React.ReactNode = null;
   if (recipes.isPending) {
     content = <Loading />;
@@ -56,7 +54,7 @@ const RecipesWithFood: React.FC<RecipesWithFoodProps> = ({ item, onClose }) => {
         {recipes.data.recipes.map((recipe) => (
           <li key={recipe.id}>
             <Link
-              to={`/plan?week=${startOfWeek(now)}&day=${now}&plan=${recipe.id}`}
+              to={`/recipes/${recipe.id}`}
               className="flex items-center gap-3 border-b border-line py-3 last:border-b-0"
             >
               <span
@@ -80,7 +78,8 @@ const RecipesWithFood: React.FC<RecipesWithFoodProps> = ({ item, onClose }) => {
     <Modal open title={`Recipes with ${item.foodName}`} onClose={onClose}>
       <div className="flex flex-col gap-3">
         <p className="-mt-2 text-sm text-muted">
-          Plan one to use it up before it goes off.
+          Open one to see what it takes, and plan it to use the food up before
+          it goes off.
         </p>
         {content}
       </div>
