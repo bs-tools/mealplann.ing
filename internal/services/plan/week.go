@@ -505,12 +505,16 @@ func (d *planData) plannedCook(c *plans.Cook) *plansv1.PlannedCook {
 			warnings = append(warnings, warningToProto(w, warningContext{cookID: c.ID}))
 		}
 	}
-	return plansv1.PlannedCook_builder{
+	b := plansv1.PlannedCook_builder{
 		Cook:             cookToProto(c),
 		AssignedServings: round(assigned),
 		Warnings:         warnings,
 		LeftServings:     round(max(leftServings(c), 0)),
-	}.Build()
+	}
+	if r, ok := d.recipes[c.RecipeID]; ok && r.FridgeDays != nil {
+		b.KeepsUntil = store.FormatDate(c.Date.AddDate(0, 0, int(*r.FridgeDays)))
+	}
+	return b.Build()
 }
 
 // warningContext is what a warning is about.

@@ -6,6 +6,8 @@ import Modal from "@components/ui/modal";
 import { ErrorText } from "@components/ui/query-error";
 import {
   ghostDangerButton,
+  pillButton,
+  pillPrimaryButton,
   primaryButton,
   secondaryButton,
 } from "@components/ui/styles";
@@ -21,7 +23,7 @@ import {
 import type { FrozenLeftover, PlannedCook } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
-import { startOfWeek, today } from "helpers/dates";
+import { daysBetween, startOfWeek, today } from "helpers/dates";
 import { formatShortDate } from "helpers/format";
 import { formatServings } from "helpers/labels";
 import { invalidateServices } from "helpers/query";
@@ -41,6 +43,11 @@ export interface Leftover {
   detail: string;
   // Whether it should be eaten or thrown out soon.
   warn: boolean;
+  /*
+   * Whether it's to be planned or frozen soon, as it doesn't keep long
+   * after: not yet past keeping, which is for throwing out.
+   */
+  soon: boolean;
   // The cook, for fridge leftovers.
   planned?: PlannedCook | undefined;
   // The frozen servings, for frozen leftovers.
@@ -56,6 +63,39 @@ const frozenDetail = (leftover: FrozenLeftover): string => {
   return leftover.keepsUntil === ""
     ? cooked
     : `${cooked} · keeps until ${formatShortDate(leftover.keepsUntil)}`;
+};
+
+/*
+ * FRIDGE_SOON_DAYS and FREEZER_SOON_DAYS are how many days before leftovers
+ * stop keeping they're to be used soon: fridge leftovers keep only days,
+ * so only their last day or two count.
+ */
+const FRIDGE_SOON_DAYS = 1;
+const FREEZER_SOON_DAYS = 7;
+
+// KeepsSoon reports whether leftovers keeping until a date run out soon.
+const keepsSoon = (keepsUntil: string, now: string, days: number): boolean => {
+  if (keepsUntil === "") {
+    return false;
+  }
+  const left = daysBetween(now, keepsUntil);
+  return left >= 0 && left <= days;
+};
+
+// FridgeDetail says when fridge leftovers were cooked and how long they keep.
+const fridgeDetail = (planned: PlannedCook, now: string): string => {
+  const cooked = `Cooked ${formatShortDate(planned.cook?.date ?? "")}`;
+  if (planned.keepsUntil === "") {
+    return cooked;
+  }
+  const left = daysBetween(now, planned.keepsUntil);
+  if (left === 0) {
+    return `${cooked} · eat or freeze today`;
+  }
+  if (left === 1) {
+    return `${cooked} · eat or freeze by tomorrow`;
+  }
+  return `${cooked} · keeps until ${formatShortDate(planned.keepsUntil)}`;
 };
 
 // FRIDGE_EPSILON ignores rounding left over from splitting servings.
@@ -85,26 +125,36 @@ export const useLeftovers = (): {
         planned.cook.date <= now &&
         planned.leftServings > FRIDGE_EPSILON
     )
-    .map((planned): Leftover => ({
-      detail: `Cooked ${formatShortDate(planned.cook?.date ?? "")}`,
-      key: `fridge-${planned.cook?.id ?? ""}`,
-      planned,
-      recipeId: planned.cook?.recipeId ?? "",
-      recipeName: planned.cook?.recipeName ?? "",
-      servings: planned.leftServings,
-      warn: false,
-    }));
+    .map((planned): Leftover => {
+      const soon = keepsSoon(planned.keepsUntil, now, FRIDGE_SOON_DAYS);
+      return {
+        detail: fridgeDetail(planned, now),
+        key: `fridge-${planned.cook?.id ?? ""}`,
+        planned,
+        recipeId: planned.cook?.recipeId ?? "",
+        recipeName: planned.cook?.recipeName ?? "",
+        servings: planned.leftServings,
+        soon,
+        warn: soon,
+      };
+    });
   const frozen = (freezer.data?.leftovers ?? [])
     .filter((leftover) => leftover.remainingServings > 0)
-    .map((leftover): Leftover => ({
-      detail: frozenDetail(leftover),
-      frozen: leftover,
-      key: `frozen-${leftover.cook?.id ?? ""}`,
-      recipeId: leftover.cook?.recipeId ?? "",
-      recipeName: leftover.cook?.recipeName ?? "",
-      servings: leftover.remainingServings,
-      warn: leftover.expired,
-    }));
+    .map((leftover): Leftover => {
+      const soon =
+        !leftover.expired &&
+        keepsSoon(leftover.keepsUntil, now, FREEZER_SOON_DAYS);
+      return {
+        detail: frozenDetail(leftover),
+        frozen: leftover,
+        key: `frozen-${leftover.cook?.id ?? ""}`,
+        recipeId: leftover.cook?.recipeId ?? "",
+        recipeName: leftover.cook?.recipeName ?? "",
+        servings: leftover.remainingServings,
+        soon,
+        warn: leftover.expired || soon,
+      };
+    });
   return { fridge, frozen, isPending: week.isPending || freezer.isPending };
 };
 
@@ -118,25 +168,42 @@ export const matchesLeftover = (leftover: Leftover, search: string): boolean =>
     .split(/\s+/u)
     .every((word) => leftover.recipeName.toLowerCase().includes(word));
 
+/*
+ * LeftoverStep is what's done with leftovers: chosen in their sheet, or
+ * straight from their row.
+ */
+export type LeftoverStep = "sheet" | "plan" | "freeze" | "throw";
+
+/*
+ * PlanLeftoversLink links to planning a meal of leftovers from the fridge,
+ * today.
+ */
+export const planLeftoversLink = (): string =>
+  `/plan?week=${startOfWeek(today())}&day=${today()}&leftovers=1`;
+
 interface LeftoverRowProps {
   leftover: Leftover;
-  onOpen: () => void;
+  // Called to open their sheet, at a step if one is chosen in the row.
+  onOpen: (step?: LeftoverStep) => void;
 }
 
 /**
  * LeftoverRow shows leftovers like a pantry lot: the recipe, when it was
  * cooked and how long it keeps, and how many servings. Tapping it opens
- * what can be done with them.
+ * what can be done with them; those to use soon offer to plan or freeze
+ * them right in the row, before they go off.
  */
 export const LeftoverRow: React.FC<LeftoverRowProps> = ({
   leftover,
   onOpen,
 }) => (
-  <li>
+  <li className="border-b border-line">
     <button
       type="button"
-      className="flex w-full items-center gap-3 border-b border-line py-3.5 text-left"
-      onClick={onOpen}
+      className="flex w-full items-center gap-3 py-3.5 text-left"
+      onClick={() => {
+        onOpen();
+      }}
     >
       <span
         className={`size-11 shrink-0 rounded-xl ${tintOf(leftover.recipeId)}`}
@@ -157,11 +224,43 @@ export const LeftoverRow: React.FC<LeftoverRowProps> = ({
         {formatServings(leftover.servings)}
       </span>
     </button>
+    {leftover.soon && (
+      <div className="-mt-1 flex flex-wrap gap-2 pb-3.5 pl-14">
+        {leftover.frozen === undefined ? (
+          <Link to={planLeftoversLink()} className={pillPrimaryButton}>
+            Plan them
+          </Link>
+        ) : (
+          <button
+            type="button"
+            className={pillPrimaryButton}
+            onClick={() => {
+              onOpen("plan");
+            }}
+          >
+            Plan them
+          </button>
+        )}
+        {leftover.frozen === undefined && (
+          <button
+            type="button"
+            className={pillButton}
+            onClick={() => {
+              onOpen("freeze");
+            }}
+          >
+            Freeze them
+          </button>
+        )}
+      </div>
+    )}
   </li>
 );
 
 interface LeftoverSheetProps {
   leftover: Leftover;
+  // The step to open at, the sheet if undefined.
+  step?: LeftoverStep | undefined;
   onClose: () => void;
 }
 
@@ -172,12 +271,11 @@ interface LeftoverSheetProps {
  */
 export const LeftoverSheet: React.FC<LeftoverSheetProps> = ({
   leftover,
+  step: initialStep = "sheet",
   onClose,
 }) => {
   const queryClient = useQueryClient();
-  const [step, setStep] = useState<"sheet" | "plan" | "freeze" | "throw">(
-    "sheet"
-  );
+  const [step, setStep] = useState<LeftoverStep>(initialStep);
   const take = useMutation(takeFromFreezer, {
     onSuccess: async () => {
       await invalidateServices(queryClient, [PlanService]);
@@ -201,7 +299,6 @@ export const LeftoverSheet: React.FC<LeftoverSheetProps> = ({
   });
   const { frozen, planned } = leftover;
   const cookId = frozen?.cook?.id ?? planned?.cook?.id ?? "";
-  const cookDate = frozen?.cook?.date ?? planned?.cook?.date ?? today();
   if (step === "plan" && frozen !== undefined) {
     return <PlanFrozenDialog leftover={frozen} onClose={onClose} />;
   }
@@ -218,10 +315,7 @@ export const LeftoverSheet: React.FC<LeftoverSheetProps> = ({
         </p>
         <div className="flex flex-col gap-2">
           {frozen === undefined ? (
-            <Link
-              to={`/plan?week=${startOfWeek(cookDate)}&day=${today()}`}
-              className={`${primaryButton} py-3`}
-            >
+            <Link to={planLeftoversLink()} className={`${primaryButton} py-3`}>
               Plan them
             </Link>
           ) : (

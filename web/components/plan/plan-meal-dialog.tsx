@@ -66,6 +66,8 @@ interface PlanMealDialogProps {
   replacing?: { cookId: string; recipeName: string } | undefined;
   // The cooks whose leftovers can be the meal: the week's, and earlier ones.
   cooks?: PlannedCook[] | undefined;
+  // Whether to open at the leftovers, like from the pantry's leftovers.
+  leftovers?: boolean | undefined;
   onClose: () => void;
 }
 
@@ -89,13 +91,12 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   recipe: initialRecipe,
   replacing,
   cooks = NO_COOKS,
+  leftovers = false,
   onClose,
 }) => {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<Tab>(
-    // Suggestions are only shown when asked for.
-    "recipe"
-  );
+  // Suggestions are only shown when asked for.
+  const [tab, setTab] = useState<Tab>(leftovers ? "leftovers" : "recipe");
   const [recipe, setRecipe] = useState<PickedRecipe | null>(
     initialRecipe ?? null
   );

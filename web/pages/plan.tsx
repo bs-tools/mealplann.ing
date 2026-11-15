@@ -56,6 +56,8 @@ interface MealPlanning {
   meal?: HouseholdMeal | undefined;
   // The recipe, undefined to choose one.
   recipeId?: string | undefined;
+  // Whether to plan leftovers, as the pantry's leftovers ask.
+  leftovers?: boolean | undefined;
 }
 
 // MealOpen is the planned meal shown in its sheet.
@@ -97,10 +99,18 @@ const PlanPage: React.FC = () => {
     { endDate: dates.at(-1) ?? monday, startDate: monday },
     { placeholderData: keepPreviousData }
   );
-  // A recipe's "Plan this" links here with ?plan=, to plan that recipe.
+  /*
+   * A recipe's "Plan this" links here with ?plan=, to plan that recipe,
+   * and the pantry's leftovers with ?leftovers=1, to plan them.
+   */
   const [planning, setPlanning] = useState<MealPlanning | null>(() => {
     const recipeId = params.get("plan") ?? "";
-    return recipeId === "" ? null : { date: day, recipeId };
+    if (recipeId !== "") {
+      return { date: day, recipeId };
+    }
+    return params.get("leftovers") === "1"
+      ? { date: day, leftovers: true }
+      : null;
   });
   // The empty eating time recipes are suggested for, or null.
   const [suggesting, setSuggesting] = useState<Slot | null>(null);
@@ -426,7 +436,8 @@ const PlanPage: React.FC = () => {
           />
         )}
       {planning !== null &&
-        (planning.recipeId === undefined || recipes.data !== undefined) && (
+        ((planning.recipeId === undefined && planning.leftovers !== true) ||
+          recipes.data !== undefined) && (
           <PlanMealDialog
             cooks={
               week.data === undefined
@@ -450,11 +461,13 @@ const PlanPage: React.FC = () => {
                       )?.name ?? "",
                   }
             }
+            leftovers={planning.leftovers}
             onClose={() => {
               setPlanning(null);
-              if (params.has("plan")) {
+              if (params.has("plan") || params.has("leftovers")) {
                 const next = new URLSearchParams(params);
                 next.delete("plan");
+                next.delete("leftovers");
                 setParams(next, { replace: true });
               }
             }}
