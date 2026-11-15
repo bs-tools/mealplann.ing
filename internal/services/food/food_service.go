@@ -46,6 +46,16 @@ type Service struct {
 	report   *errreport.Reporter
 	foods    Repository
 	requests *idempotency.Store
+	// restock puts foods kept in stock that the pantry is low on on the
+	// open shopping list, or is nil.
+	restock func(ctx context.Context, householdID pgtype.UUID, foodIDs []pgtype.UUID) error
+}
+
+// SetRestocker makes the service put a food on the open shopping list with
+// restock, when it's set to be kept in stock and the pantry has less, see
+// shopping.Service.Restock.
+func (s *Service) SetRestocker(restock func(ctx context.Context, householdID pgtype.UUID, foodIDs []pgtype.UUID) error) {
+	s.restock = restock
 }
 
 // NewService returns a FoodService storing foods in the repository, and
@@ -307,6 +317,15 @@ func (s *Service) UpdateFood(ctx context.Context, req *foodsv1.UpdateFoodRequest
 	updated, err := s.foods.UpdateFood(ctx, f)
 	if err != nil {
 		return nil, s.toConnectError(ctx, err, "failed to update food")
+	}
+	// A food set to be kept in stock that the pantry is low on goes on the
+	// open list now, rather than once some is next taken out. Failing to
+	// is reported, but doesn't fail the update, as the next list buys it.
+	keepChanged := updated.KeepInStockAmount != existing.KeepInStockAmount || updated.KeepInStockUnit != existing.KeepInStockUnit
+	if s.restock != nil && updated.KeepInStockAmount > 0 && keepChanged {
+		if err := s.restock(ctx, updated.HouseholdID, []pgtype.UUID{updated.ID}); err != nil {
+			s.report.Report(ctx, "Failed to restock a food kept in stock", err)
+		}
 	}
 	return foodsv1.UpdateFoodResponse_builder{Food: foodToProto(updated)}.Build(), nil
 }

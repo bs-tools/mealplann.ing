@@ -107,8 +107,14 @@ type Food struct {
 	// or spices, so the pantry doesn't track it and the shopping list leaves
 	// it out.
 	AlwaysInStock bool
-	CreateTime    time.Time
-	UpdateTime    time.Time
+	// KeepInStockAmount, in KeepInStockUnit, is the least of the food the
+	// household wants to have, like a jar of peanut butter, whether or not
+	// the plan uses it, 0 if it isn't kept in stock: shopping lists buy
+	// more when the pantry has less, beyond what's planned.
+	KeepInStockAmount float64
+	KeepInStockUnit   nutrition.Unit
+	CreateTime        time.Time
+	UpdateTime        time.Time
 }
 
 // Measure is how a food's amounts are shown to people.
@@ -155,6 +161,52 @@ func (f *Food) Nutrition() *nutrition.Food {
 		GramsPerPiece:      f.GramsPerPiece,
 		GramsPerMilliliter: f.GramsPerMilliliter,
 		PackageGrams:       f.PackageGrams,
+	}
+}
+
+// KeepInStockGrams returns the least of the food to have in stock, in
+// grams, and whether it's kept in stock and can be weighed: pieces need
+// its weight per piece, milliliters its density and packages its package
+// weight.
+func (f *Food) KeepInStockGrams() (float64, bool) {
+	if f.KeepInStockAmount <= 0 {
+		return 0, false
+	}
+	return f.Nutrition().Grams(f.KeepInStockAmount, f.KeepInStockUnit)
+}
+
+// keepInStockUnitToDB returns the unit of the amount to keep in stock as
+// stored, nil if the food isn't kept in stock.
+func keepInStockUnitToDB(f *Food) *gen.AmountUnit {
+	if f.KeepInStockAmount <= 0 {
+		return nil
+	}
+	switch f.KeepInStockUnit {
+	case nutrition.Milliliters:
+		return new(gen.AmountUnitMilliliters)
+	case nutrition.Pieces:
+		return new(gen.AmountUnitPieces)
+	case nutrition.Packages:
+		return new(gen.AmountUnitPackages)
+	default:
+		return new(gen.AmountUnitGrams)
+	}
+}
+
+// unitFromDB returns a stored unit, 0 if there's none.
+func unitFromDB(u *gen.AmountUnit) nutrition.Unit {
+	if u == nil {
+		return 0
+	}
+	switch *u {
+	case gen.AmountUnitMilliliters:
+		return nutrition.Milliliters
+	case gen.AmountUnitPieces:
+		return nutrition.Pieces
+	case gen.AmountUnitPackages:
+		return nutrition.Packages
+	default:
+		return nutrition.Grams
 	}
 }
 
@@ -222,6 +274,8 @@ func (r *Repository) CreateFood(ctx context.Context, f *Food) (*Food, error) {
 		Notes:                           f.Notes,
 		PreferredStoreID:                f.PreferredStoreID,
 		AlwaysInStock:                   f.AlwaysInStock,
+		KeepInStockAmount:               positive(f.KeepInStockAmount),
+		KeepInStockUnit:                 keepInStockUnitToDB(f),
 	})
 	if err != nil {
 		switch {
@@ -312,6 +366,8 @@ func (r *Repository) UpdateFood(ctx context.Context, f *Food) (*Food, error) {
 		Notes:                           f.Notes,
 		PreferredStoreID:                f.PreferredStoreID,
 		AlwaysInStock:                   f.AlwaysInStock,
+		KeepInStockAmount:               positive(f.KeepInStockAmount),
+		KeepInStockUnit:                 keepInStockUnitToDB(f),
 	})
 	if err != nil {
 		switch {
@@ -470,6 +526,27 @@ func (r *Repository) ListFoodsByID(ctx context.Context, householdID pgtype.UUID,
 	return list, nil
 }
 
+// ListKeptInStockFoods lists a household's foods kept in stock above an
+// amount, from the foods kept in memory like ListFoodsByID's, ordered by
+// name.
+func (r *Repository) ListKeptInStockFoods(ctx context.Context, householdID pgtype.UUID) ([]*Food, error) {
+	v, err := r.querier.GetFoodsVersion(ctx, householdID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list foods kept in stock: %w", err)
+	}
+	snap, err := r.snapshot(ctx, householdID, foodsVersion{Count: v.FoodCount, UpdateMicros: v.UpdateTime.Time.UnixMicro()})
+	if err != nil {
+		return nil, err
+	}
+	var list []*Food
+	for _, row := range snap.Rows {
+		if row.KeepInStockAmount != nil {
+			list = append(list, foodFromDB(row))
+		}
+	}
+	return list, nil
+}
+
 // ListAlwaysInStockFoods lists a household's foods marked always in stock,
 // ordered by name.
 func (r *Repository) ListAlwaysInStockFoods(ctx context.Context, householdID pgtype.UUID) ([]*Food, error) {
@@ -553,6 +630,8 @@ func foodFromDB(row *gen.Food) *Food {
 		Notes:                 row.Notes,
 		PreferredStoreID:      row.PreferredStoreID,
 		AlwaysInStock:         row.AlwaysInStock,
+		KeepInStockAmount:     orZero(row.KeepInStockAmount),
+		KeepInStockUnit:       unitFromDB(row.KeepInStockUnit),
 		CreateTime:            row.CreateTime.Time,
 		UpdateTime:            row.UpdateTime.Time,
 	}

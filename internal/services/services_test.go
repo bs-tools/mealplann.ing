@@ -183,9 +183,11 @@ func newEnv(t *testing.T) *env {
 	planRepo := plans.NewRepository(log, db)
 	pantryRepo := pantry.NewRepository(log, db)
 	shoppingRepo := shopping.NewRepository(log, db)
-	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, e.foodRepo, pantryRepo, shoppingRepo, templates.NewRepository(log, db))
-	pantryService := pantrysvc.NewService(log, report, pantryRepo, e.foodRepo, requests)
 	shoppingService := shoppingsvc.NewService(log, report, shoppingRepo, planRepo, recipeRepo, e.foodRepo, pantryRepo)
+	restockingPantry := shoppingsvc.NewRestockingPantry(pantryRepo, shoppingService)
+	foodService.SetRestocker(shoppingService.Restock)
+	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, e.foodRepo, restockingPantry, shoppingRepo, templates.NewRepository(log, db))
+	pantryService := pantrysvc.NewService(log, report, restockingPantry, e.foodRepo, requests)
 
 	// Start listening before creating the handler, as the OAuth server needs
 	// the URL of the server.

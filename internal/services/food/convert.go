@@ -7,6 +7,8 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/bs-tools/mealplann.ing/internal/services/amounts"
+
 	"connectrpc.com/connect/v2"
 	"github.com/bs-tools/mealplann.ing/internal/foodimport"
 	"github.com/bs-tools/mealplann.ing/internal/foods"
@@ -219,6 +221,11 @@ func referenceFromProto(req *foodsv1.CreateFoodRequest) (foods.Source, int32, er
 }
 
 func foodToProto(f *foods.Food) *foodsv1.Food {
+	var keepAmount float64
+	var keepUnit foodsv1.AmountUnit
+	if f.KeepInStockAmount > 0 {
+		keepAmount, keepUnit = amounts.ToProto(f.KeepInStockAmount, f.KeepInStockUnit, nutrition.NoKitchenUnit)
+	}
 	source, ok := sourcesToProto[f.Source]
 	if !ok {
 		source = foodsv1.FoodSource_FOOD_SOURCE_CUSTOM
@@ -244,6 +251,8 @@ func foodToProto(f *foods.Food) *foodsv1.Food {
 		Notes:                 f.Notes,
 		PreferredStoreId:      optionalID(f.PreferredStoreID),
 		AlwaysInStock:         f.AlwaysInStock,
+		KeepInStockAmount:     keepAmount,
+		KeepInStockUnit:       keepUnit,
 		CreateTime:            timestamppb.New(f.CreateTime),
 		UpdateTime:            timestamppb.New(f.UpdateTime),
 	}.Build()
@@ -301,6 +310,10 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 		return nil, connect.Errorf(connect.CodeInvalidArgument,
 			"invalid measure %v: use MEASURE_WEIGHT, MEASURE_VOLUME, MEASURE_MILLILITERS, MEASURE_PIECES, or MEASURE_UNSPECIFIED to choose by the amount", p.GetMeasure())
 	}
+	keepAmount, keepUnit, err := keepInStockFromProto(p)
+	if err != nil {
+		return nil, err
+	}
 	var storeID pgtype.UUID
 	if s := strings.TrimSpace(p.GetPreferredStoreId()); s != "" {
 		var err error
@@ -327,7 +340,49 @@ func foodFromProto(p *foodsv1.Food) (*foods.Food, error) {
 		Notes:                 notes,
 		PreferredStoreID:      storeID,
 		AlwaysInStock:         p.GetAlwaysInStock(),
+		KeepInStockAmount:     keepAmount,
+		KeepInStockUnit:       keepUnit,
 	}, nil
+}
+
+// maxKeepInStockGrams is the most of a food to keep in stock, a sanity
+// bound on a household's pantry.
+const maxKeepInStockGrams = 50_000
+
+// keepInStockFromProto checks the amount of a food to keep in stock,
+// returning it in a base unit, or 0 if it isn't kept in stock. It must be
+// weighable with the food's weights, as the pantry is.
+func keepInStockFromProto(p *foodsv1.Food) (float64, nutrition.Unit, error) {
+	amount := p.GetKeepInStockAmount()
+	if math.IsNaN(amount) || amount < 0 {
+		return 0, 0, connect.NewError(connect.CodeInvalidArgument, "keep_in_stock_amount must be more than 0, or 0 if the food isn't kept in stock")
+	}
+	if amount == 0 {
+		return 0, 0, nil
+	}
+	if p.GetAlwaysInStock() {
+		return 0, 0, connect.NewError(connect.CodeInvalidArgument,
+			"a food always in stock isn't tracked, so it can't be kept above an amount: clear always_in_stock, or set keep_in_stock_amount to 0")
+	}
+	amount, unit, _, ok := amounts.FromProto(amount, p.GetKeepInStockUnit())
+	if !ok {
+		return 0, 0, connect.Errorf(connect.CodeInvalidArgument, "invalid keep_in_stock_unit %v: use %s", p.GetKeepInStockUnit(), amounts.UnitsHelp)
+	}
+	f := &nutrition.Food{GramsPerPiece: p.GetGramsPerPiece(), GramsPerMilliliter: p.GetGramsPerMilliliter(), PackageGrams: p.GetPackageGrams()}
+	grams, ok := f.Grams(amount, unit)
+	if !ok {
+		missing := map[nutrition.Unit]string{
+			nutrition.Pieces:      "grams_per_piece",
+			nutrition.Milliliters: "grams_per_milliliter",
+			nutrition.Packages:    "package_grams",
+		}[unit]
+		return 0, 0, connect.Errorf(connect.CodeInvalidArgument,
+			"keep_in_stock_amount can't be weighed without the food's %s, as the pantry is weighed: set it, or keep it in stock in grams", missing)
+	}
+	if grams > maxKeepInStockGrams {
+		return 0, 0, connect.Errorf(connect.CodeInvalidArgument, "keep_in_stock_amount must be at most %d g", maxKeepInStockGrams)
+	}
+	return amount, unit, nil
 }
 
 // MeasuresToProto converts measures to the API.
@@ -387,6 +442,8 @@ func foodFromReference(ref *foods.ReferenceFood, in *foodsv1.Food) (*foods.Food,
 	base.SetNotes(in.GetNotes())
 	base.SetPreferredStoreId(in.GetPreferredStoreId())
 	base.SetAlwaysInStock(in.GetAlwaysInStock())
+	base.SetKeepInStockAmount(in.GetKeepInStockAmount())
+	base.SetKeepInStockUnit(in.GetKeepInStockUnit())
 	f, err := foodFromProto(base)
 	if err != nil {
 		return nil, err

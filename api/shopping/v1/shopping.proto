@@ -29,6 +29,12 @@ import "pantry/v1/pantry.proto";
 //    keep, then call RegenerateShoppingList.
 // 4. Add anything else the user needs with AddManualItem.
 //
+// Foods kept in stock (see foods.v1.Food.keep_in_stock_amount), like peanut
+// butter, are bought whether or not the plan uses them, once the pantry
+// has less than their amount beyond what's planned: their items have
+// restock set. Once something takes one below its amount, the open list is
+// regenerated to add it.
+//
 // In the store, the user checks items off in the web app. CompleteShopping
 // then puts the checked items into the pantry.
 service ShoppingService {
@@ -166,6 +172,10 @@ message ShoppingItem {
   // food's shelf_life_days, so it should be bought fresh on a later trip,
   // or the meals using it moved earlier.
   bool top_up = 13;
+  // Whether some or all of it is bought to keep its food in stock, beyond
+  // what's planned: see foods.v1.Food.keep_in_stock_amount. needed_by_date
+  // is then the shop's date, if nothing planned needs it sooner.
+  bool restock = 20 [(mcp.v1.field).output_only = true];
   // Why it should be bought later, or what's missing to weigh it, for
   // people. Empty if nothing.
   string warning = 14;

@@ -1165,6 +1165,8 @@ type Food struct {
 	xxx_hidden_AlwaysInStock         bool                   `protobuf:"varint,17,opt,name=always_in_stock,json=alwaysInStock,proto3"`
 	xxx_hidden_SourceId              int32                  `protobuf:"varint,18,opt,name=source_id,json=sourceId,proto3"`
 	xxx_hidden_Measure               Measure                `protobuf:"varint,22,opt,name=measure,proto3,enum=foods.v1.Measure"`
+	xxx_hidden_KeepInStockAmount     float64                `protobuf:"fixed64,23,opt,name=keep_in_stock_amount,json=keepInStockAmount,proto3"`
+	xxx_hidden_KeepInStockUnit       AmountUnit             `protobuf:"varint,24,opt,name=keep_in_stock_unit,json=keepInStockUnit,proto3,enum=foods.v1.AmountUnit"`
 	unknownFields                    protoimpl.UnknownFields
 	sizeCache                        protoimpl.SizeCache
 }
@@ -1348,6 +1350,20 @@ func (x *Food) GetMeasure() Measure {
 	return Measure_MEASURE_UNSPECIFIED
 }
 
+func (x *Food) GetKeepInStockAmount() float64 {
+	if x != nil {
+		return x.xxx_hidden_KeepInStockAmount
+	}
+	return 0
+}
+
+func (x *Food) GetKeepInStockUnit() AmountUnit {
+	if x != nil {
+		return x.xxx_hidden_KeepInStockUnit
+	}
+	return AmountUnit_AMOUNT_UNIT_UNSPECIFIED
+}
+
 func (x *Food) SetId(v string) {
 	x.xxx_hidden_Id = v
 }
@@ -1434,6 +1450,14 @@ func (x *Food) SetSourceId(v int32) {
 
 func (x *Food) SetMeasure(v Measure) {
 	x.xxx_hidden_Measure = v
+}
+
+func (x *Food) SetKeepInStockAmount(v float64) {
+	x.xxx_hidden_KeepInStockAmount = v
+}
+
+func (x *Food) SetKeepInStockUnit(v AmountUnit) {
+	x.xxx_hidden_KeepInStockUnit = v
 }
 
 func (x *Food) HasNutrients() bool {
@@ -1557,6 +1581,21 @@ type Food_builder struct {
 	// MEASURE_WEIGHT for tofu, pasta or flour. Converting between weight and
 	// volume needs grams_per_milliliter, and to pieces grams_per_piece.
 	Measure Measure
+	// The least of the food the household wants to have, in
+	// keep_in_stock_unit, whether or not the plan uses it, like 1 package of
+	// peanut butter: for foods eaten more than planned, which are better
+	// stored too much than run out of. 0 if it isn't kept in stock, the
+	// default. While the pantry has less than this, beyond what's planned,
+	// shopping lists buy more, rounded up to whole packs, and once something
+	// takes it below this, the open shopping list is regenerated to add it.
+	// Pieces need grams_per_piece, milliliters grams_per_milliliter and
+	// packages package_grams. Not with always_in_stock, which doesn't track
+	// the food.
+	KeepInStockAmount float64
+	// The unit of keep_in_stock_amount: AMOUNT_UNIT_GRAMS,
+	// AMOUNT_UNIT_MILLILITERS, AMOUNT_UNIT_PIECES, AMOUNT_UNIT_PACKAGES, or a
+	// kitchen unit, which is returned converted.
+	KeepInStockUnit AmountUnit
 }
 
 func (b0 Food_builder) Build() *Food {
@@ -1585,6 +1624,8 @@ func (b0 Food_builder) Build() *Food {
 	x.xxx_hidden_AlwaysInStock = b.AlwaysInStock
 	x.xxx_hidden_SourceId = b.SourceId
 	x.xxx_hidden_Measure = b.Measure
+	x.xxx_hidden_KeepInStockAmount = b.KeepInStockAmount
+	x.xxx_hidden_KeepInStockUnit = b.KeepInStockUnit
 	return m0
 }
 
@@ -3383,7 +3424,7 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x12_copper_milligramsB\x17\n" +
 	"\x15_magnesium_milligramsB\x14\n" +
 	"\x12_sodium_milligramsB\x17\n" +
-	"\x15_potassium_milligrams\"\xbf\a\n" +
+	"\x15_potassium_milligrams\"\xb3\b\n" +
 	"\x04Food\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x124\n" +
@@ -3410,7 +3451,9 @@ const file_foods_v1_foods_proto_rawDesc = "" +
 	"\x12preferred_store_id\x18\x10 \x01(\tR\x10preferredStoreId\x12&\n" +
 	"\x0falways_in_stock\x18\x11 \x01(\bR\ralwaysInStock\x12#\n" +
 	"\tsource_id\x18\x12 \x01(\x05B\x06\xaa\x9f\x19\x02\b\x01R\bsourceId\x12+\n" +
-	"\ameasure\x18\x16 \x01(\x0e2\x11.foods.v1.MeasureR\ameasure\"\xf9\x02\n" +
+	"\ameasure\x18\x16 \x01(\x0e2\x11.foods.v1.MeasureR\ameasure\x12/\n" +
+	"\x14keep_in_stock_amount\x18\x17 \x01(\x01R\x11keepInStockAmount\x12A\n" +
+	"\x12keep_in_stock_unit\x18\x18 \x01(\x0e2\x14.foods.v1.AmountUnitR\x0fkeepInStockUnit\"\xf9\x02\n" +
 	"\bFoodData\x12\x15\n" +
 	"\x06fdc_id\x18\x01 \x01(\x05R\x05fdcId\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1a\n" +
@@ -3605,43 +3648,44 @@ var file_foods_v1_foods_proto_depIdxs = []int32{
 	27, // 3: foods.v1.Food.create_time:type_name -> google.protobuf.Timestamp
 	27, // 4: foods.v1.Food.update_time:type_name -> google.protobuf.Timestamp
 	4,  // 5: foods.v1.Food.measure:type_name -> foods.v1.Measure
-	5,  // 6: foods.v1.FoodData.nutrients:type_name -> foods.v1.Nutrients
-	8,  // 7: foods.v1.FoodData.portions:type_name -> foods.v1.FoodDataPortion
-	1,  // 8: foods.v1.FoodData.source:type_name -> foods.v1.FoodSource
-	7,  // 9: foods.v1.SearchFoodDataResponse.foods:type_name -> foods.v1.FoodData
-	6,  // 10: foods.v1.CreateFoodRequest.food:type_name -> foods.v1.Food
-	1,  // 11: foods.v1.CreateFoodRequest.source:type_name -> foods.v1.FoodSource
-	6,  // 12: foods.v1.CreateFoodResponse.food:type_name -> foods.v1.Food
-	11, // 13: foods.v1.CreateFoodsRequest.requests:type_name -> foods.v1.CreateFoodRequest
-	15, // 14: foods.v1.CreateFoodsResponse.results:type_name -> foods.v1.CreateFoodResult
-	6,  // 15: foods.v1.CreateFoodResult.food:type_name -> foods.v1.Food
-	6,  // 16: foods.v1.GetFoodResponse.food:type_name -> foods.v1.Food
-	6,  // 17: foods.v1.ListFoodsResponse.foods:type_name -> foods.v1.Food
-	6,  // 18: foods.v1.UpdateFoodRequest.food:type_name -> foods.v1.Food
-	28, // 19: foods.v1.UpdateFoodRequest.update_mask:type_name -> google.protobuf.FieldMask
-	6,  // 20: foods.v1.UpdateFoodResponse.food:type_name -> foods.v1.Food
-	24, // 21: foods.v1.ListFoodUsagesResponse.recipes:type_name -> foods.v1.FoodUsageRecipe
-	9,  // 22: foods.v1.FoodService.SearchFoodData:input_type -> foods.v1.SearchFoodDataRequest
-	11, // 23: foods.v1.FoodService.CreateFood:input_type -> foods.v1.CreateFoodRequest
-	13, // 24: foods.v1.FoodService.CreateFoods:input_type -> foods.v1.CreateFoodsRequest
-	16, // 25: foods.v1.FoodService.GetFood:input_type -> foods.v1.GetFoodRequest
-	18, // 26: foods.v1.FoodService.ListFoods:input_type -> foods.v1.ListFoodsRequest
-	20, // 27: foods.v1.FoodService.UpdateFood:input_type -> foods.v1.UpdateFoodRequest
-	22, // 28: foods.v1.FoodService.ListFoodUsages:input_type -> foods.v1.ListFoodUsagesRequest
-	25, // 29: foods.v1.FoodService.DeleteFood:input_type -> foods.v1.DeleteFoodRequest
-	10, // 30: foods.v1.FoodService.SearchFoodData:output_type -> foods.v1.SearchFoodDataResponse
-	12, // 31: foods.v1.FoodService.CreateFood:output_type -> foods.v1.CreateFoodResponse
-	14, // 32: foods.v1.FoodService.CreateFoods:output_type -> foods.v1.CreateFoodsResponse
-	17, // 33: foods.v1.FoodService.GetFood:output_type -> foods.v1.GetFoodResponse
-	19, // 34: foods.v1.FoodService.ListFoods:output_type -> foods.v1.ListFoodsResponse
-	21, // 35: foods.v1.FoodService.UpdateFood:output_type -> foods.v1.UpdateFoodResponse
-	23, // 36: foods.v1.FoodService.ListFoodUsages:output_type -> foods.v1.ListFoodUsagesResponse
-	26, // 37: foods.v1.FoodService.DeleteFood:output_type -> foods.v1.DeleteFoodResponse
-	30, // [30:38] is the sub-list for method output_type
-	22, // [22:30] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	3,  // 6: foods.v1.Food.keep_in_stock_unit:type_name -> foods.v1.AmountUnit
+	5,  // 7: foods.v1.FoodData.nutrients:type_name -> foods.v1.Nutrients
+	8,  // 8: foods.v1.FoodData.portions:type_name -> foods.v1.FoodDataPortion
+	1,  // 9: foods.v1.FoodData.source:type_name -> foods.v1.FoodSource
+	7,  // 10: foods.v1.SearchFoodDataResponse.foods:type_name -> foods.v1.FoodData
+	6,  // 11: foods.v1.CreateFoodRequest.food:type_name -> foods.v1.Food
+	1,  // 12: foods.v1.CreateFoodRequest.source:type_name -> foods.v1.FoodSource
+	6,  // 13: foods.v1.CreateFoodResponse.food:type_name -> foods.v1.Food
+	11, // 14: foods.v1.CreateFoodsRequest.requests:type_name -> foods.v1.CreateFoodRequest
+	15, // 15: foods.v1.CreateFoodsResponse.results:type_name -> foods.v1.CreateFoodResult
+	6,  // 16: foods.v1.CreateFoodResult.food:type_name -> foods.v1.Food
+	6,  // 17: foods.v1.GetFoodResponse.food:type_name -> foods.v1.Food
+	6,  // 18: foods.v1.ListFoodsResponse.foods:type_name -> foods.v1.Food
+	6,  // 19: foods.v1.UpdateFoodRequest.food:type_name -> foods.v1.Food
+	28, // 20: foods.v1.UpdateFoodRequest.update_mask:type_name -> google.protobuf.FieldMask
+	6,  // 21: foods.v1.UpdateFoodResponse.food:type_name -> foods.v1.Food
+	24, // 22: foods.v1.ListFoodUsagesResponse.recipes:type_name -> foods.v1.FoodUsageRecipe
+	9,  // 23: foods.v1.FoodService.SearchFoodData:input_type -> foods.v1.SearchFoodDataRequest
+	11, // 24: foods.v1.FoodService.CreateFood:input_type -> foods.v1.CreateFoodRequest
+	13, // 25: foods.v1.FoodService.CreateFoods:input_type -> foods.v1.CreateFoodsRequest
+	16, // 26: foods.v1.FoodService.GetFood:input_type -> foods.v1.GetFoodRequest
+	18, // 27: foods.v1.FoodService.ListFoods:input_type -> foods.v1.ListFoodsRequest
+	20, // 28: foods.v1.FoodService.UpdateFood:input_type -> foods.v1.UpdateFoodRequest
+	22, // 29: foods.v1.FoodService.ListFoodUsages:input_type -> foods.v1.ListFoodUsagesRequest
+	25, // 30: foods.v1.FoodService.DeleteFood:input_type -> foods.v1.DeleteFoodRequest
+	10, // 31: foods.v1.FoodService.SearchFoodData:output_type -> foods.v1.SearchFoodDataResponse
+	12, // 32: foods.v1.FoodService.CreateFood:output_type -> foods.v1.CreateFoodResponse
+	14, // 33: foods.v1.FoodService.CreateFoods:output_type -> foods.v1.CreateFoodsResponse
+	17, // 34: foods.v1.FoodService.GetFood:output_type -> foods.v1.GetFoodResponse
+	19, // 35: foods.v1.FoodService.ListFoods:output_type -> foods.v1.ListFoodsResponse
+	21, // 36: foods.v1.FoodService.UpdateFood:output_type -> foods.v1.UpdateFoodResponse
+	23, // 37: foods.v1.FoodService.ListFoodUsages:output_type -> foods.v1.ListFoodUsagesResponse
+	26, // 38: foods.v1.FoodService.DeleteFood:output_type -> foods.v1.DeleteFoodResponse
+	31, // [31:39] is the sub-list for method output_type
+	23, // [23:31] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_foods_v1_foods_proto_init() }

@@ -694,6 +694,8 @@ type Food struct {
 	PriceCentsPerKilogram           *int32
 	PriceDate                       pgtype.Date
 	Measure                         *string
+	KeepInStockAmount               *float64
+	KeepInStockUnit                 *AmountUnit
 }
 
 type Household struct {
@@ -989,6 +991,7 @@ type ShoppingItem struct {
 	CreateTime   pgtype.Timestamptz
 	UpdateTime   pgtype.Timestamptz
 	Recipes      json.RawMessage
+	Restock      bool
 }
 
 type ShoppingList struct {

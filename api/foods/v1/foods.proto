@@ -376,6 +376,21 @@ message Food {
   // MEASURE_WEIGHT for tofu, pasta or flour. Converting between weight and
   // volume needs grams_per_milliliter, and to pieces grams_per_piece.
   Measure measure = 22;
+  // The least of the food the household wants to have, in
+  // keep_in_stock_unit, whether or not the plan uses it, like 1 package of
+  // peanut butter: for foods eaten more than planned, which are better
+  // stored too much than run out of. 0 if it isn't kept in stock, the
+  // default. While the pantry has less than this, beyond what's planned,
+  // shopping lists buy more, rounded up to whole packs, and once something
+  // takes it below this, the open shopping list is regenerated to add it.
+  // Pieces need grams_per_piece, milliliters grams_per_milliliter and
+  // packages package_grams. Not with always_in_stock, which doesn't track
+  // the food.
+  double keep_in_stock_amount = 23;
+  // The unit of keep_in_stock_amount: AMOUNT_UNIT_GRAMS,
+  // AMOUNT_UNIT_MILLILITERS, AMOUNT_UNIT_PIECES, AMOUNT_UNIT_PACKAGES, or a
+  // kitchen unit, which is returned converted.
+  AmountUnit keep_in_stock_unit = 24;
 }
 
 // Measure is how a food's amounts are shown to people.

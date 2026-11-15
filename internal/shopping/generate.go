@@ -38,6 +38,23 @@ type Need struct {
 	// can be replaced with a food the pantry has, like canned beans for a
 	// pot of beans: needs sharing it are replaced together.
 	Instead *recipes.ComponentFoods
+	// Restock is whether it's what the household keeps in stock of the food
+	// beyond what's planned, see foods.Food.KeepInStockAmount, rather than
+	// something the plan eats. The pantry covers it after the plan's needs,
+	// whatever its date, and it's bought whether or not it keeps.
+	Restock bool
+}
+
+// RestockNeeds returns the needs of the foods kept in stock, on the date
+// of the shop: what the household wants to have after what's planned.
+func RestockNeeds(kept []*foods.Food, shopDate time.Time) []Need {
+	var needs []Need
+	for _, f := range kept {
+		if f.KeepInStockAmount > 0 && !f.AlwaysInStock {
+			needs = append(needs, Need{FoodID: f.ID, Date: shopDate, Amount: f.KeepInStockAmount, Unit: f.KeepInStockUnit, Restock: true})
+		}
+	}
+	return needs
 }
 
 // NeedsOf returns what a plan needs bought, in the order of its dates: the
@@ -140,6 +157,9 @@ type dayNeed struct {
 	pantryGrams float64
 	// recipes are the recipes needing it, without repeats.
 	recipes []RecipeRef
+	// restock is whether it's what's kept in stock, covered after the
+	// plan's needs.
+	restock bool
 }
 
 // Generate makes the items of a shopping list: for each food, what the
@@ -156,7 +176,7 @@ func Generate(in *Input) []*Item {
 		f := in.Foods[foodID]
 		var keeps, late []*dayNeed
 		for _, d := range byFood[foodID] {
-			if f.ShelfLifeDays > 0 && pantry.DaysTo(in.ShopDate, d.date) > int(f.ShelfLifeDays) {
+			if !d.restock && f.ShelfLifeDays > 0 && pantry.DaysTo(in.ShopDate, d.date) > int(f.ShelfLifeDays) {
 				late = append(late, d)
 			} else {
 				keeps = append(keeps, d)
@@ -202,10 +222,10 @@ func cover(in *Input) ([]pgtype.UUID, map[pgtype.UUID][]*dayNeed) {
 			order = append(order, n.FoodID)
 		}
 		var d *dayNeed
-		if len(days) > 0 && days[len(days)-1].date.Equal(n.Date) {
+		if len(days) > 0 && days[len(days)-1].date.Equal(n.Date) && days[len(days)-1].restock == n.Restock {
 			d = days[len(days)-1]
 		} else {
-			d = &dayNeed{date: n.Date}
+			d = &dayNeed{date: n.Date, restock: n.Restock}
 			byFood[n.FoodID] = append(days, d)
 		}
 		if n.Recipe.ID.Valid && !slices.Contains(d.recipes, n.Recipe) {
@@ -232,7 +252,17 @@ func cover(in *Input) ([]pgtype.UUID, map[pgtype.UUID][]*dayNeed) {
 	}
 	for _, foodID := range order {
 		days := byFood[foodID]
-		slices.SortStableFunc(days, func(a, b *dayNeed) int { return a.date.Compare(b.date) })
+		// What's kept in stock is covered last: it's what's left after the
+		// plan.
+		slices.SortStableFunc(days, func(a, b *dayNeed) int {
+			if a.restock != b.restock {
+				if a.restock {
+					return 1
+				}
+				return -1
+			}
+			return a.date.Compare(b.date)
+		})
 		coverFromPantry(days, lotsByFood[foodID])
 	}
 	return order, byFood
@@ -343,7 +373,7 @@ func withAlternatives(in *Input) []Need {
 // the pantry covers them. topUp is whether they won't keep from the shop.
 func itemOf(f *foods.Food, days []*dayNeed, topUp bool) *Item {
 	var short, fromPantry, unweighedPieces, unweighedMilliliters, unweighedPackages float64
-	var inPieces, inMilliliters bool
+	var inPieces, inMilliliters, restock bool
 	var neededBy time.Time
 	var recipeRefs []RecipeRef
 	for _, d := range days {
@@ -361,6 +391,7 @@ func itemOf(f *foods.Food, days []*dayNeed, topUp bool) *Item {
 			}
 		}
 		short += d.shortGrams
+		restock = restock || d.restock
 		inPieces = inPieces || d.inPieces
 		inMilliliters = inMilliliters || d.inMilliliters
 		if neededBy.IsZero() {
@@ -380,6 +411,7 @@ func itemOf(f *foods.Food, days []*dayNeed, topUp bool) *Item {
 		NeededBy:     neededBy,
 		TopUp:        topUp,
 		Recipes:      recipeRefs,
+		Restock:      restock,
 	}
 	var parts []string
 	if short > crumbGrams {

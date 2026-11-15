@@ -314,3 +314,62 @@ func TestPantryGrams(t *testing.T) {
 		}
 	}
 }
+
+// TestGenerateRestock checks that a food kept in stock is bought once the
+// pantry, less what's planned, has less than its amount, rounded up to
+// whole packs, and not otherwise; that the pantry covers the plan first;
+// and that it's bought whether or not it keeps.
+func TestGenerateRestock(t *testing.T) {
+	t.Parallel()
+	shop := date("2026-11-07")
+	// Peanut butter in 1 kg jars, keeping 30 days, with a jar kept in stock.
+	peanutButter := &foods.Food{
+		ID: id(20), Name: "Peanut butter", PackageGrams: 1000, ShelfLifeDays: 30,
+		KeepInStockAmount: 1, KeepInStockUnit: nutrition.Packages,
+	}
+	byID := map[pgtype.UUID]*foods.Food{peanutButter.ID: peanutButter}
+	lot := func(grams float64) []*pantry.Item {
+		return []*pantry.Item{{FoodID: peanutButter.ID, Grams: grams}}
+	}
+	planned := Need{FoodID: peanutButter.ID, Date: date("2026-12-20"), Amount: 100, Unit: nutrition.Grams}
+	tests := map[string]struct {
+		needs    []Need
+		lots     []*pantry.Item
+		packages int32
+		restock  bool
+	}{
+		"low: a jar to get back to one": {
+			lots: lot(300), packages: 1, restock: true,
+		},
+		"enough: nothing": {
+			lots: lot(1000),
+		},
+		"enough but for the plan, which comes first": {
+			needs: []Need{planned}, lots: lot(1000), packages: 1, restock: true,
+		},
+		"none: a jar": {
+			packages: 1, restock: true,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			needs := append(slices.Clone(tt.needs), RestockNeeds([]*foods.Food{peanutButter}, shop)...)
+			items := Generate(&Input{ShopDate: shop, Needs: needs, Foods: byID, Lots: tt.lots})
+			if tt.packages == 0 {
+				if len(items) != 0 {
+					t.Errorf("got %+v, want nothing to buy", items)
+				}
+				return
+			}
+			if len(items) != 1 {
+				t.Fatalf("got %+v, want one item", items)
+			}
+			it := items[0]
+			if it.Packages != tt.packages || it.Restock != tt.restock || it.TopUp || !it.NeededBy.Equal(shop) {
+				t.Errorf("got %d packs, restock %v, top up %v, needed by %v; want %d packs, restock %v, not a top up, needed by the shop",
+					it.Packages, it.Restock, it.TopUp, it.NeededBy, tt.packages, tt.restock)
+			}
+		})
+	}
+}
