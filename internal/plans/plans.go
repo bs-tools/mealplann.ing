@@ -555,6 +555,7 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 			p.EatingTimeIds = append(p.EatingTimeIds, portion.EatingTimeID)
 			p.Dates = append(p.Dates, store.DateToPG(portion.Date))
 			p.Servings = append(p.Servings, portion.Servings)
+			p.FromFreezer = append(p.FromFreezer, portion.FromFreezer)
 		}
 		if len(cp.Portions) > 0 {
 			_, _ = q.CreateCookPortions(ctx, p)

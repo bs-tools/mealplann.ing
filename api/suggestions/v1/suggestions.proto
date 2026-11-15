@@ -670,4 +670,12 @@ message SideSuggestion {
   // The servings cook_id must make for this side too, if it makes too few
   // already: set them with PlanService.UpdateCook. 0 if it makes enough.
   double cook_servings_needed = 16;
+  // For a recipe side without a cook of it on the date, whether cook_id is
+  // an earlier cook with enough frozen servings, like a batch of rice in
+  // the freezer, to take this side's from with PlanService.TakeFromFreezer
+  // instead of cooking it again.
+  bool from_freezer = 17;
+  // With from_freezer, the cook's frozen servings not planned or taken
+  // yet, to share among everyone at a meal.
+  double frozen_servings_left = 18;
 }

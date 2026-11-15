@@ -424,6 +424,10 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 		sideCook, foodPortions := planSide(user.HouseholdID(), side, main.Cook, portions)
 		main.FoodPortions = foodPortions
 		if sideCook != nil {
+			// Frozen leftovers of a recipe side are eaten before cooking it.
+			if sideCook, err = s.sideFromFreezer(ctx, user.HouseholdID(), sideCook); err != nil {
+				return nil, s.toConnectError(ctx, err, "failed to read the freezer", "")
+			}
 			list = append(list, sideCook)
 		}
 	}

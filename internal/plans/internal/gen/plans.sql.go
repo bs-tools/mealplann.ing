@@ -92,7 +92,7 @@ func (q *Queries) CreateCook(ctx context.Context, arg *CreateCookParams) (int64,
 }
 
 const createCookPortions = `-- name: CreateCookPortions :execrows
-insert into portions (id, household_id, person_id, eating_time_id, date, cook_id, servings)
+insert into portions (id, household_id, person_id, eating_time_id, date, cook_id, servings, from_freezer)
 select
   ($1::uuid[])[i],
   $2,
@@ -100,7 +100,8 @@ select
   ($4::uuid[])[i],
   ($5::date[])[i],
   $6,
-  ($7::double precision[])[i]
+  ($7::double precision[])[i],
+  ($8::boolean[])[i]
 from generate_subscripts($1::uuid[], 1) as i
 `
 
@@ -112,6 +113,7 @@ type CreateCookPortionsParams struct {
 	Dates         []pgtype.Date
 	CookID        pgtype.UUID
 	Servings      []float64
+	FromFreezer   []bool
 }
 
 // Creates portions of a cook, given as arrays of their fields.
@@ -124,6 +126,7 @@ func (q *Queries) CreateCookPortions(ctx context.Context, arg *CreateCookPortion
 		arg.Dates,
 		arg.CookID,
 		arg.Servings,
+		arg.FromFreezer,
 	)
 	if err != nil {
 		return 0, err

@@ -7,6 +7,7 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect/v2"
 	"github.com/bs-tools/mealplann.ing/internal/authn"
@@ -34,8 +35,12 @@ type sideCandidate struct {
 	// it too, 0 if it makes enough.
 	cook      *plans.Cook
 	cookNeeds float64
-	added     nutrition.Amount
-	warnings  []fixWarning
+	// fromFreezer is whether cook is an earlier one to take the side from
+	// the freezer, with frozenLeft servings there.
+	fromFreezer bool
+	frozenLeft  float64
+	added       nutrition.Amount
+	warnings    []fixWarning
 	// newWarnings are the warnings it adds, which the meal alone doesn't
 	// have.
 	newWarnings []fixWarning
@@ -81,6 +86,12 @@ func (s *Service) SuggestSides(ctx context.Context, req *suggestionsv1.SuggestSi
 	if r == nil {
 		return suggestionsv1.SuggestSidesResponse_builder{}.Build(), nil
 	}
+	// What's in the freezer, for recipe sides to take from it.
+	if slices.ContainsFunc(r.ServedWith, func(side recipes.Side) bool { return side.RecipeID.Valid }) {
+		if d.frozen, err = s.plans.ListFrozenCooks(ctx, user.HouseholdID()); err != nil {
+			return nil, s.toConnectError(ctx, err, "failed to read the freezer", "")
+		}
+	}
 	candidates := d.sideCandidates(p, et, slot, r, main)
 	resp := suggestionsv1.SuggestSidesResponse_builder{
 		RecipeId:   store.UUIDToString(r.ID),
@@ -107,6 +118,10 @@ func (s *Service) SuggestSides(ctx context.Context, req *suggestionsv1.SuggestSi
 		if c.cook != nil {
 			b.CookId = store.UUIDToString(c.cook.ID)
 			b.CookServingsNeeded = c.cookNeeds
+			b.FromFreezer = c.fromFreezer
+			if c.fromFreezer {
+				b.FrozenServingsLeft = round(c.frozenLeft)
+			}
 		}
 		for _, w := range c.newWarnings {
 			b.Warnings = append(b.Warnings, fixWarningToProto(&w, p.ID, date))
@@ -269,7 +284,13 @@ func (d *planData) recipeSidePortion(c *sideCandidate, slot plans.Slot, main *pl
 			break
 		}
 	}
-	if c.cook != nil && c.planned == nil {
+	// Without one that day, frozen leftovers of it are used before cooking.
+	if c.cook == nil && c.planned == nil {
+		if f := frozenFor(d.frozen, r.ID, c.servings, slot.Date); f != nil {
+			c.cook, c.fromFreezer, c.frozenLeft = f.Cook, true, inFreezer(f.Cook)
+		}
+	}
+	if c.cook != nil && c.planned == nil && !c.fromFreezer {
 		assigned := 0.0
 		for _, p := range d.plan.Portions {
 			if p.CookID == c.cook.ID {
@@ -283,6 +304,51 @@ func (d *planData) recipeSidePortion(c *sideCandidate, slot plans.Slot, main *pl
 	return &plans.Portion{
 		CookID: pgtype.UUID{Valid: true}, CookRecipeID: r.ID, Servings: c.servings, Name: r.Name,
 	}
+}
+
+// sideFromFreezer returns a side's cook to create, or in its place, its
+// portions of the oldest frozen cook of its recipe with enough servings
+// for them all, taken from the freezer, like a batch of rice frozen last
+// week.
+func (s *Service) sideFromFreezer(ctx context.Context, householdID pgtype.UUID, sideCook *plans.CookWithPortions) (*plans.CookWithPortions, error) {
+	frozen, err := s.plans.ListFrozenCooks(ctx, householdID)
+	if err != nil {
+		return nil, err
+	}
+	total := 0.0
+	for _, p := range sideCook.Portions {
+		total += p.Servings
+	}
+	f := frozenFor(frozen, sideCook.Cook.RecipeID, total, sideCook.Cook.Date)
+	if f == nil {
+		return sideCook, nil
+	}
+	portions := make([]*plans.Portion, 0, len(sideCook.Portions))
+	for _, p := range sideCook.Portions {
+		taken := *p
+		taken.FromFreezer = true
+		portions = append(portions, &taken)
+	}
+	return &plans.CookWithPortions{Cook: f.Cook, Existing: true, Portions: portions}, nil
+}
+
+// frozenFor returns the oldest cook of a recipe with at least some
+// servings frozen and not planned yet, frozen before a date and keeping
+// until it, nil if none.
+func frozenFor(frozen []*plans.FrozenCook, recipeID pgtype.UUID, servings float64, date time.Time) *plans.FrozenCook {
+	var best *plans.FrozenCook
+	for _, f := range frozen {
+		if f.RecipeID != recipeID || !f.Date.Before(date) || inFreezer(f.Cook) < servings-1e-9 {
+			continue
+		}
+		if f.FreezerDays != nil && f.Date.AddDate(0, 0, int(*f.FreezerDays)).Before(date) {
+			continue
+		}
+		if best == nil || f.Date.Before(best.Date) {
+			best = f
+		}
+	}
+	return best
 }
 
 // optionalString returns the string of an ID, empty if it's invalid.

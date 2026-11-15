@@ -125,12 +125,31 @@ const SharedSides: React.FC<SharedSidesProps> = ({
         return;
       }
       /*
-       * A recipe side is one pot for everyone: the one already cooked that
+       * A recipe side is one pot for everyone: frozen leftovers of it, if
+       * the freezer has enough for everyone, the one already cooked that
        * day, made bigger if what's left of it is short, or a new cook of
        * what everyone's shares add up to.
        */
       const total = shares.reduce((sum, { side }) => sum + side.servings, 0);
-      let { cookId } = first.side;
+      if (
+        first.side.fromFreezer &&
+        total <= first.side.frozenServingsLeft + 1e-9
+      ) {
+        // Each share is taken in turn, as they come out of the same cook.
+        for (const { eater, side } of shares) {
+          // oxlint-disable-next-line no-await-in-loop
+          await client.takeFromFreezer({
+            cookId: first.side.cookId,
+            date,
+            eatingTimeId: eater.eatingTimeId,
+            personId: eater.personId,
+            servings: side.servings,
+          });
+        }
+        return;
+      }
+      // A frozen cook too small for everyone isn't cooked again.
+      let cookId = first.side.fromFreezer ? "" : first.side.cookId;
       if (cookId === "") {
         const created = await client.createCook({
           cook: {

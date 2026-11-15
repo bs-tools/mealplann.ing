@@ -3172,6 +3172,8 @@ type SideSuggestion struct {
 	xxx_hidden_Servings           float64                `protobuf:"fixed64,14,opt,name=servings,proto3"`
 	xxx_hidden_CookId             string                 `protobuf:"bytes,15,opt,name=cook_id,json=cookId,proto3"`
 	xxx_hidden_CookServingsNeeded float64                `protobuf:"fixed64,16,opt,name=cook_servings_needed,json=cookServingsNeeded,proto3"`
+	xxx_hidden_FromFreezer        bool                   `protobuf:"varint,17,opt,name=from_freezer,json=fromFreezer,proto3"`
+	xxx_hidden_FrozenServingsLeft float64                `protobuf:"fixed64,18,opt,name=frozen_servings_left,json=frozenServingsLeft,proto3"`
 	unknownFields                 protoimpl.UnknownFields
 	sizeCache                     protoimpl.SizeCache
 }
@@ -3315,6 +3317,20 @@ func (x *SideSuggestion) GetCookServingsNeeded() float64 {
 	return 0
 }
 
+func (x *SideSuggestion) GetFromFreezer() bool {
+	if x != nil {
+		return x.xxx_hidden_FromFreezer
+	}
+	return false
+}
+
+func (x *SideSuggestion) GetFrozenServingsLeft() float64 {
+	if x != nil {
+		return x.xxx_hidden_FrozenServingsLeft
+	}
+	return 0
+}
+
 func (x *SideSuggestion) SetFoodId(v string) {
 	x.xxx_hidden_FoodId = v
 }
@@ -3379,6 +3395,14 @@ func (x *SideSuggestion) SetCookServingsNeeded(v float64) {
 	x.xxx_hidden_CookServingsNeeded = v
 }
 
+func (x *SideSuggestion) SetFromFreezer(v bool) {
+	x.xxx_hidden_FromFreezer = v
+}
+
+func (x *SideSuggestion) SetFrozenServingsLeft(v float64) {
+	x.xxx_hidden_FrozenServingsLeft = v
+}
+
 type SideSuggestion_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -3423,6 +3447,14 @@ type SideSuggestion_builder struct {
 	// The servings cook_id must make for this side too, if it makes too few
 	// already: set them with PlanService.UpdateCook. 0 if it makes enough.
 	CookServingsNeeded float64
+	// For a recipe side without a cook of it on the date, whether cook_id is
+	// an earlier cook with enough frozen servings, like a batch of rice in
+	// the freezer, to take this side's from with PlanService.TakeFromFreezer
+	// instead of cooking it again.
+	FromFreezer bool
+	// With from_freezer, the cook's frozen servings not planned or taken
+	// yet, to share among everyone at a meal.
+	FrozenServingsLeft float64
 }
 
 func (b0 SideSuggestion_builder) Build() *SideSuggestion {
@@ -3445,6 +3477,8 @@ func (b0 SideSuggestion_builder) Build() *SideSuggestion {
 	x.xxx_hidden_Servings = b.Servings
 	x.xxx_hidden_CookId = b.CookId
 	x.xxx_hidden_CookServingsNeeded = b.CookServingsNeeded
+	x.xxx_hidden_FromFreezer = b.FromFreezer
+	x.xxx_hidden_FrozenServingsLeft = b.FrozenServingsLeft
 	return m0
 }
 
@@ -3614,7 +3648,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x05sides\x18\x01 \x03(\v2\x1e.suggestions.v1.SideSuggestionR\x05sides\x12\x1b\n" +
 	"\trecipe_id\x18\x02 \x01(\tR\brecipeId\x12\x1f\n" +
 	"\vrecipe_name\x18\x03 \x01(\tR\n" +
-	"recipeName\"\x93\x04\n" +
+	"recipeName\"\xe8\x04\n" +
 	"\x0eSideSuggestion\x12\x17\n" +
 	"\afood_id\x18\x01 \x01(\tR\x06foodId\x12\x1b\n" +
 	"\tfood_name\x18\x02 \x01(\tR\bfoodName\x12\x14\n" +
@@ -3635,7 +3669,9 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"recipeName\x12\x1a\n" +
 	"\bservings\x18\x0e \x01(\x01R\bservings\x12\x17\n" +
 	"\acook_id\x18\x0f \x01(\tR\x06cookId\x120\n" +
-	"\x14cook_servings_needed\x18\x10 \x01(\x01R\x12cookServingsNeeded*\x88\x03\n" +
+	"\x14cook_servings_needed\x18\x10 \x01(\x01R\x12cookServingsNeeded\x12!\n" +
+	"\ffrom_freezer\x18\x11 \x01(\bR\vfromFreezer\x120\n" +
+	"\x14frozen_servings_left\x18\x12 \x01(\x01R\x12frozenServingsLeft*\x88\x03\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
