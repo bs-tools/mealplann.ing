@@ -240,18 +240,11 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
   const [editing, setEditing] = useState<PlannedPortion | null | undefined>(
     undefined
   );
-  const eaters = row.slots.filter(
-    (slot) => slot.planned.eatingOut || slot.planned.portions.length > 0
-  );
-  const [personId, setPersonId] = useState(eaters[0]?.person.personId ?? "");
   /*
    * The slot is found again in the refreshed week, as changes to it come
    * back there.
    */
-  const fresh = (slot: RowSlot | undefined): RowSlot | undefined => {
-    if (slot === undefined) {
-      return undefined;
-    }
+  const fresh = (slot: RowSlot): RowSlot => {
     const person = week.days
       .find((other) => other.date === day.date)
       ?.people.find((other) => other.personId === slot.person.personId);
@@ -262,9 +255,18 @@ const PlannedMealSheet: React.FC<PlannedMealSheetProps> = ({
       ? slot
       : { person, planned };
   };
-  const slot = fresh(
-    eaters.find((other) => other.person.personId === personId) ?? eaters[0]
-  );
+  /*
+   * Everyone at the meal, as the refreshed week has them, so a portion's
+   * changed servings show as soon as they're saved.
+   */
+  const eaters = row.slots
+    .map(fresh)
+    .filter(
+      (other) => other.planned.eatingOut || other.planned.portions.length > 0
+    );
+  const [personId, setPersonId] = useState(eaters[0]?.person.personId ?? "");
+  const slot =
+    eaters.find((other) => other.person.personId === personId) ?? eaters[0];
   const onSuccess = async (): Promise<void> => {
     await invalidateServices(queryClient, [
       PlanService,
