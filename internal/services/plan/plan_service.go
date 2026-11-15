@@ -305,13 +305,15 @@ func (s *Service) missingFoods(ctx context.Context, householdID pgtype.UUID, d *
 }
 
 // leftServings returns a cook's servings in the fridge not planned yet:
-// not frozen, nor in portions eaten from the fridge, within the recipe's
-// fridge days, nor supplying other cooks from the fridge, nor removed from
-// it. Portions after
-// the fridge days, and supplies from the freezer, come from the frozen
-// servings: they're its late servings.
+// not frozen, nor eaten or planned in portions or supplies, nor removed.
+// Portions after the recipe's fridge days, and supplies from the freezer,
+// are its late servings, which come from its frozen servings, so they
+// count against those rather than the fridge, but only as far as there
+// are frozen servings: any more were eaten from the cook all the same,
+// like the rest of a salad eaten a day after it keeps, which only warns.
 func leftServings(c *plans.Cook) float64 {
-	return c.Servings - c.FrozenServings - c.RemovedServings - (c.AssignedServings + c.SuppliedServings - c.LateServings)
+	fromFreezer := min(c.LateServings, c.FrozenServings)
+	return c.Servings - c.FrozenServings - c.RemovedServings - (c.AssignedServings + c.SuppliedServings - fromFreezer)
 }
 
 func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*plansv1.PlanMealResponse, error) {
