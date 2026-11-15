@@ -377,8 +377,19 @@ export const SidesCard: React.FC<SidesCardProps> = ({
       }
       /*
        * A recipe side is cooked: a share of the pot already cooked that day
-       * for someone else, made bigger if it must be, or a new cook of it.
+       * for someone else, made bigger if it must be, or a new cook of it,
+       * unless there's some in the freezer, which is eaten first.
        */
+      if (side.fromFreezer) {
+        await client.takeFromFreezer({
+          cookId: side.cookId,
+          date,
+          eatingTimeId,
+          personId,
+          servings: side.servings,
+        });
+        return;
+      }
       if (side.cookId !== "") {
         if (side.cookServingsNeeded > 0) {
           await client.updateCook({

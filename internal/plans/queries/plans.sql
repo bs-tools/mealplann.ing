@@ -179,7 +179,7 @@ insert into portions (
 
 -- name: CreateCookPortions :execrows
 -- Creates portions of a cook, given as arrays of their fields.
-insert into portions (id, household_id, person_id, eating_time_id, date, cook_id, servings)
+insert into portions (id, household_id, person_id, eating_time_id, date, cook_id, servings, from_freezer)
 select
   (@ids::uuid[])[i],
   @household_id,
@@ -187,7 +187,8 @@ select
   (@eating_time_ids::uuid[])[i],
   (@dates::date[])[i],
   @cook_id,
-  (@servings::double precision[])[i]
+  (@servings::double precision[])[i],
+  (@from_freezer::boolean[])[i]
 from generate_subscripts(@ids::uuid[], 1) as i;
 
 -- name: UpdatePortion :execrows
