@@ -251,15 +251,39 @@ func (s *Service) CreateShoppingList(ctx context.Context, req *shoppingv1.Create
 	return shoppingv1.CreateShoppingListResponse_builder{List: listToProto(list)}.Build(), nil
 }
 
+// stapleDaysAhead is how many days from the shop the staples' foods are
+// bought for, at least, however short the list: those eaten every day,
+// like milk or bread, run out between shops otherwise.
+const stapleDaysAhead = 4
+
+// withoutMealsAfter returns the plan without its cooks and portions after
+// a date, but with its staples until its end, when they're read further
+// ahead than the list's dates: see stapleDaysAhead.
+func withoutMealsAfter(plan *plans.Plan, last time.Time) *plans.Plan {
+	if !plan.To.After(last) {
+		return plan
+	}
+	trimmed := *plan
+	trimmed.Cooks = slices.DeleteFunc(slices.Clone(plan.Cooks), func(c *plans.Cook) bool { return c.Date.After(last) })
+	trimmed.Portions = slices.DeleteFunc(slices.Clone(plan.Portions), func(p *plans.Portion) bool { return p.Date.After(last) })
+	return &trimmed
+}
+
 // generate generates the items of a household's list for the meals from
 // one date to another, shopped for on the first. It reads the plan and the
 // pantry together, then the recipes, then the foods: three round trips.
 func (s *Service) generate(ctx context.Context, householdID pgtype.UUID, from, to time.Time) ([]*shopping.Item, error) {
+	// Staples are counted at least stapleDaysAhead days from the shop, so a
+	// short list still buys what they'd run out of before the next shop.
+	staplesTo := to
+	if ahead := from.AddDate(0, 0, stapleDaysAhead-1); ahead.After(to) {
+		staplesTo = ahead
+	}
 	var plan *plans.Plan
 	var lots []*pantry.Item
 	var planErr, pantryErr error
 	var wg sync.WaitGroup
-	wg.Go(func() { plan, planErr = s.plans.GetPlan(ctx, householdID, from, to) })
+	wg.Go(func() { plan, planErr = s.plans.GetPlan(ctx, householdID, from, staplesTo) })
 	wg.Go(func() { lots, pantryErr = s.pantry.ListItems(ctx, householdID) })
 	wg.Wait()
 	if planErr != nil {
@@ -268,6 +292,7 @@ func (s *Service) generate(ctx context.Context, householdID pgtype.UUID, from, t
 	if pantryErr != nil {
 		return nil, pantryErr
 	}
+	plan = withoutMealsAfter(plan, to)
 	var recipeIDs []pgtype.UUID
 	for _, c := range plan.Cooks {
 		if !c.Done {
