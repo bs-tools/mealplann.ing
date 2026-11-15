@@ -1,6 +1,7 @@
 import { TransportProvider } from "@connectrpc/connect-query";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { retryTurnedAway } from "helpers/retry";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter } from "react-router";
@@ -20,6 +21,8 @@ const root = ReactDOM.createRoot(rootDiv);
  */
 const transport = createConnectTransport({
   baseUrl: globalThis.location.origin,
+  // Requests Cloud Run turns away while its instance starts are retried.
+  interceptors: [retryTurnedAway],
 });
 
 /*
