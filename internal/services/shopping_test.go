@@ -516,3 +516,56 @@ func TestShoppingSkipsDoneCooksAndUsesStaples(t *testing.T) {
 		t.Errorf("got %v, want %v", got, want)
 	}
 }
+
+// TestShoppingStaplesFourDaysAhead checks that a list counts the staples
+// for at least 4 days from the shop, beyond a shorter list's dates, less
+// what the pantry has, but not the cooks after the list's dates.
+func TestShoppingStaplesFourDaysAhead(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	ben := createPerson(t, e, ben())
+	juice := shopFood(t, e, "Orange juice", nil)
+	rice := shopFood(t, e, "Rice", nil)
+	// A glass of juice every breakfast.
+	if _, err := e.plans.CreateStaple(ctx, plansv1.CreateStapleRequest_builder{Staple: plansv1.Staple_builder{
+		PersonId: ben.GetId(), EatingTimeId: eatingTimeID(t, ben, "Breakfast"),
+		Food: plansv1.FoodAmount_builder{FoodId: juice.GetId(), Amount: 250, Unit: grams}.Build(),
+	}.Build()}.Build()); err != nil {
+		t.Fatalf("CreateStaple: %v", err)
+	}
+	// A cook on Wednesday, after the list.
+	riceBowl, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
+		Name: "Rice bowl", Servings: 2, Ingredients: []*recipesv1.Ingredient{ingredient(rice.GetId(), 200, grams)},
+	}.Build()}.Build())
+	if err != nil {
+		t.Fatalf("CreateRecipe: %v", err)
+	}
+	if _, err := e.plans.CreateCook(ctx, plansv1.CreateCookRequest_builder{
+		Cook: plansv1.Cook_builder{RecipeId: riceBowl.GetRecipe().GetId(), Date: wednesday, Servings: 2}.Build(),
+	}.Build()); err != nil {
+		t.Fatalf("CreateCook: %v", err)
+	}
+	// 400 g of juice in the pantry.
+	addToPantry(t, e, pantryv1.AddToPantryRequest_builder{FoodId: juice.GetId(), Amount: 400, Unit: grams}.Build())
+
+	// A list for Monday alone buys juice for Monday to Thursday, 1 kg, less
+	// the 400 g: 600 g. The rice is for Wednesday's cook, after the list.
+	created, err := e.shopping.CreateShoppingList(ctx, shoppingv1.CreateShoppingListRequest_builder{StartDate: monday, EndDate: monday}.Build())
+	if err != nil {
+		t.Fatalf("CreateShoppingList: %v", err)
+	}
+	want := []string{" · Orange juice · 600 g"}
+	if got := shoppingLines(created.GetList()); !slices.Equal(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+	// A week's list counts the week's staples, as before.
+	week, err := e.shopping.CreateShoppingList(ctx, shoppingv1.CreateShoppingListRequest_builder{StartDate: monday, EndDate: "2026-11-08"}.Build())
+	if err != nil {
+		t.Fatalf("CreateShoppingList: %v", err)
+	}
+	want = []string{" · Orange juice · 1.35 kg", " · Rice · 200 g"}
+	if got := shoppingLines(week.GetList()); !slices.Equal(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}

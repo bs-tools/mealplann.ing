@@ -184,10 +184,12 @@ type ShoppingServiceClient interface {
 	// ingredients of the cooks not yet done, scaled to their servings, the
 	// portions of foods and the staples of each date, without optional
 	// ingredients and foods always in stock, less what the pantry has that
-	// keeps until it's needed. Amounts are rounded up to whole packs, or
-	// pieces for foods planned in pieces. Each item goes to its food's
-	// preferred store, or the main store, and is flagged top_up if it won't
-	// keep from the shop until it's needed.
+	// keeps until it's needed. Staples are counted for at least 4 days from
+	// start_date, even past end_date, so a short list still buys what
+	// they'd run out of, like a daily glass of juice. Amounts are rounded up
+	// to whole packs, or pieces for foods planned in pieces. Each item goes
+	// to its food's preferred store, or the main store, and is flagged top_up
+	// if it won't keep from the shop until it's needed.
 	CreateShoppingList(context.Context, *v1.CreateShoppingListRequest) (*v1.CreateShoppingListResponse, error)
 	// Get a shopping list with its items, ordered by store, then by store
 	// section in the order of a typical shop, then by name.
@@ -245,10 +247,12 @@ type ShoppingServiceHandler interface {
 	// ingredients of the cooks not yet done, scaled to their servings, the
 	// portions of foods and the staples of each date, without optional
 	// ingredients and foods always in stock, less what the pantry has that
-	// keeps until it's needed. Amounts are rounded up to whole packs, or
-	// pieces for foods planned in pieces. Each item goes to its food's
-	// preferred store, or the main store, and is flagged top_up if it won't
-	// keep from the shop until it's needed.
+	// keeps until it's needed. Staples are counted for at least 4 days from
+	// start_date, even past end_date, so a short list still buys what
+	// they'd run out of, like a daily glass of juice. Amounts are rounded up
+	// to whole packs, or pieces for foods planned in pieces. Each item goes
+	// to its food's preferred store, or the main store, and is flagged top_up
+	// if it won't keep from the shop until it's needed.
 	CreateShoppingList(context.Context, *v1.CreateShoppingListRequest) (*v1.CreateShoppingListResponse, error)
 	// Get a shopping list with its items, ordered by store, then by store
 	// section in the order of a typical shop, then by name.
