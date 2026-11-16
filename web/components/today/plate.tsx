@@ -1,3 +1,4 @@
+import { portionAmount } from "@components/plan/plan-rows";
 import { ErrorText } from "@components/ui/query-error";
 import { sectionLabelClass } from "@components/ui/styles";
 import type { ConnectError } from "@connectrpc/connect";
@@ -19,7 +20,6 @@ import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { suggestSides } from "gen/suggestions/v1/suggestions-SuggestionService_connectquery";
 import type { SideSuggestion } from "gen/suggestions/v1/suggestions_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
-import { formatGrams } from "helpers/format";
 import { formatServings } from "helpers/labels";
 import { formatAmount } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
@@ -186,7 +186,8 @@ interface PortionListProps {
 }
 
 /**
- * PortionList lists what a meal is: each recipe or food, with its weight,
+ * PortionList lists what a meal is: each recipe or food, with its servings
+ * or amount,
  * so the sheet's title can be just the meal, like "Breakfast". Given
  * onSelect and onAdd, each portion opens to change it, and a last row adds
  * more, like a piece of fruit to a light lunch. Given staples, a staple,
@@ -205,9 +206,9 @@ export const PortionList: React.FC<PortionListProps> = ({
       const row = (
         <>
           <span className="min-w-0 grow text-ink-soft">{portion.name}</span>
-          {portion.grams > 0 && (
+          {portionAmount(portion) !== "" && (
             <span className="shrink-0 text-muted tabular-nums">
-              {formatGrams(portion.grams)}
+              {portionAmount(portion)}
             </span>
           )}
         </>

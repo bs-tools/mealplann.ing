@@ -72,20 +72,23 @@ export interface RowItem {
 }
 
 /**
- * PortionAmount says how much a portion is: servings of a recipe, or the
- * weight of a food, e.g. "1.5 servings" or "120 g".
+ * PortionAmount says how much a portion is: servings of a recipe, or a food
+ * in the unit it's planned in, e.g. "1.5 servings", "250 ml" or "2 pieces",
+ * as people measure it, rather than its weight. A food without an amount
+ * says its weight.
  */
 export const portionAmount = (portion: PlannedPortion): string => {
   if (portion.cookId !== "" || portion.recipeId !== "") {
     return formatServings(portion.servings);
   }
-  if (portion.grams > 0) {
-    return formatGrams(portion.grams);
+  if (portion.amount > 0) {
+    return formatIngredientAmount(
+      portion.amount,
+      portion.unit,
+      UnitSystem.METRIC
+    );
   }
-  // A food without a weight, like soy milk lacking a density, says its amount.
-  return portion.amount > 0
-    ? formatIngredientAmount(portion.amount, portion.unit, UnitSystem.METRIC)
-    : "";
+  return portion.grams > 0 ? formatGrams(portion.grams) : "";
 };
 
 /**
