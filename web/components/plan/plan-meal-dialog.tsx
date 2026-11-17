@@ -12,6 +12,7 @@ import {
   sectionLabelClass,
   primaryButton,
   secondaryButton,
+  stepButtonClass,
 } from "@components/ui/styles";
 import { createClient } from "@connectrpc/connect";
 import type { ConnectError } from "@connectrpc/connect";
@@ -36,9 +37,6 @@ import { invalidateServices } from "helpers/query";
 import { staplesAt } from "helpers/staples";
 import React, { useState } from "react";
 import { Link } from "react-router";
-
-const stepButtonClass =
-  "flex size-11 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-xl font-medium text-ink-soft hover:border-muted disabled:opacity-40";
 
 /*
  * Tab is what the meal is: a recipe from the suggestions or from all of

@@ -90,3 +90,7 @@ export const pillPrimaryButton =
 
 export const pillDangerButton =
   "inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-sm font-bold text-error ring-1 ring-error/30 ring-inset hover:bg-error-tint disabled:cursor-not-allowed disabled:opacity-50";
+
+// StepButtonClass styles the − and + buttons beside a number, like servings.
+export const stepButtonClass =
+  "flex size-11 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-xl font-medium text-ink-soft hover:border-muted disabled:opacity-40";
