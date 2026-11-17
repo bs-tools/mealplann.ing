@@ -1,3 +1,4 @@
+import CorrectServingsDialog from "@components/pantry/correct-servings";
 import { PlanFrozenDialog } from "@components/pantry/plan-frozen-dialog";
 import FreezeDialog from "@components/plan/freeze-dialog";
 import { tintOf } from "@components/recipes/tint";
@@ -172,7 +173,7 @@ export const matchesLeftover = (leftover: Leftover, search: string): boolean =>
  * LeftoverStep is what's done with leftovers: chosen in their sheet, or
  * straight from their row.
  */
-export type LeftoverStep = "sheet" | "plan" | "freeze" | "throw";
+export type LeftoverStep = "sheet" | "plan" | "freeze" | "throw" | "correct";
 
 /*
  * PlanLeftoversLink links to planning a meal of leftovers from the fridge,
@@ -266,8 +267,8 @@ interface LeftoverSheetProps {
 
 /**
  * LeftoverSheet is what can be done with leftovers: plan them for a meal,
- * freeze those in the fridge, or take them out, eaten without a plan,
- * thrown out, or not there after all.
+ * freeze those in the fridge, correct how many servings there are, or take
+ * them out, eaten without a plan, thrown out, or not there after all.
  */
 export const LeftoverSheet: React.FC<LeftoverSheetProps> = ({
   leftover,
@@ -304,6 +305,18 @@ export const LeftoverSheet: React.FC<LeftoverSheetProps> = ({
   }
   if (step === "freeze" && planned !== undefined) {
     return <FreezeDialog planned={planned} onClose={onClose} />;
+  }
+  const cook = frozen?.cook ?? planned?.cook;
+  if (step === "correct" && cook !== undefined) {
+    return (
+      <CorrectServingsDialog
+        cook={cook}
+        recipeName={leftover.recipeName}
+        servings={leftover.servings}
+        frozen={frozen !== undefined}
+        onClose={onClose}
+      />
+    );
   }
   return (
     <Modal open title={leftover.recipeName} onClose={onClose}>
@@ -355,6 +368,16 @@ export const LeftoverSheet: React.FC<LeftoverSheetProps> = ({
               Ate a serving
             </button>
           )}
+          <button
+            type="button"
+            className={secondaryButton}
+            title="Set how many servings there really are, when the plan has it wrong"
+            onClick={() => {
+              setStep("correct");
+            }}
+          >
+            Correct the servings
+          </button>
           <Link
             to={`/recipes/${leftover.recipeId}`}
             className={secondaryButton}
