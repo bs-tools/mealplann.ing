@@ -291,3 +291,84 @@ func TestComponentsFromFreezer(t *testing.T) {
 		t.Errorf("got %v, want the frozen beans planned, with no warnings", c)
 	}
 }
+
+// TestUnusedCookTakesItsSuppliers checks that a cook deleted for being
+// unused, when its last portion is removed, takes the cooks planned only
+// to supply it, as deleting it directly does: the pot of chickpeas of a
+// chili nobody eats any more. A pot also supplying another cook stays.
+func TestUnusedCookTakesItsSuppliers(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	createPerson(t, e, ben())
+	dried := customFood(t, e, "Dried chickpeas", 380, 20, 60, 3, 6, nil)
+	tomatoes := customFood(t, e, "Tomatoes", 20, 1, 4, 3, 0.2, nil)
+	create := func(r *recipesv1.Recipe) *recipesv1.Recipe {
+		t.Helper()
+		resp, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: r}.Build())
+		if err != nil {
+			t.Fatalf("CreateRecipe: %v", err)
+		}
+		return resp.GetRecipe()
+	}
+	chickpeas := create(recipesv1.Recipe_builder{
+		Name: "Cooked chickpeas", Servings: 4, Ingredients: []*recipesv1.Ingredient{ingredient(dried.GetId(), 250, grams)},
+	}.Build())
+	chili := create(recipesv1.Recipe_builder{
+		Name: "Chili", Servings: 4,
+		Ingredients: []*recipesv1.Ingredient{ingredient(tomatoes.GetId(), 400, grams), componentIngredient(chickpeas.GetId(), 2)},
+	}.Build())
+	removeAll := func(cook *plansv1.PlannedCook) {
+		t.Helper()
+		week, _ := weekCooks(t, e, monday)
+		for _, d := range week.GetDays() {
+			for _, p := range d.GetPeople() {
+				for _, et := range p.GetEatingTimes() {
+					for _, portion := range et.GetPortions() {
+						if portion.GetCookId() != cook.GetCook().GetId() {
+							continue
+						}
+						if _, err := e.plans.DeletePortion(ctx, plansv1.DeletePortionRequest_builder{Id: portion.GetPortionId(), DeleteUnusedCook: true}.Build()); err != nil {
+							t.Fatalf("DeletePortion: %v", err)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Friday's chili plans its own pot; removing its only portion deletes
+	// both.
+	if _, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: chili.GetId(), Date: friday, Meal: dinner, Servings: 4}.Build()); err != nil {
+		t.Fatalf("PlanMeal: %v", err)
+	}
+	_, cooks := weekCooks(t, e, monday)
+	if cooks["Cooked chickpeas "+friday] == nil {
+		t.Fatalf("got cooks %v, want the chili's pot planned", cooks)
+	}
+	removeAll(cooks["Chili "+friday])
+	if _, cooks = weekCooks(t, e, monday); len(cooks) != 0 {
+		t.Errorf("got cooks %v after removing the chili's portion, want the chili and its pot deleted", cooks)
+	}
+
+	// Two chilis sharing a pot: removing one's portion keeps the pot for
+	// the other.
+	if _, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: chili.GetId(), Date: friday, Meal: dinner, Servings: 4}.Build()); err != nil {
+		t.Fatalf("PlanMeal: %v", err)
+	}
+	if _, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: chili.GetId(), Date: saturday, Meal: dinner, Servings: 4}.Build()); err != nil {
+		t.Fatalf("PlanMeal: %v", err)
+	}
+	_, cooks = weekCooks(t, e, monday)
+	pot := cooks["Cooked chickpeas "+friday]
+	if _, err := e.plans.SetCookSupplier(ctx, plansv1.SetCookSupplierRequest_builder{
+		CookId: cooks["Chili "+saturday].GetCook().GetId(), ComponentRecipeId: chickpeas.GetId(), SupplierCookId: pot.GetCook().GetId(),
+	}.Build()); err != nil {
+		t.Fatalf("SetCookSupplier: %v", err)
+	}
+	removeAll(cooks["Chili "+friday])
+	_, cooks = weekCooks(t, e, monday)
+	if cooks["Chili "+friday] != nil || cooks["Cooked chickpeas "+friday] == nil || cooks["Chili "+saturday] == nil {
+		t.Errorf("got cooks %v, want Friday's chili deleted and its pot kept for Saturday's", cooks)
+	}
+}

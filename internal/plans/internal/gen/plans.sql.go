@@ -275,12 +275,26 @@ func (q *Queries) DeleteCook(ctx context.Context, arg *DeleteCookParams) (int64,
 }
 
 const deleteCookIfUnused = `-- name: DeleteCookIfUnused :one
-delete from cooks c
-where c.id = $1 and c.household_id = $2
-  and not c.done and c.frozen_servings = 0 and c.off_plan_servings = 0 and c.removed_servings = 0
-  and not exists (select 1 from portions p where p.household_id = c.household_id and p.cook_id = c.id)
-  and not exists (select 1 from cook_supplies s where s.household_id = c.household_id and s.supplier_cook_id = c.id)
-returning coalesce((select r.name from recipes r where r.id = c.recipe_id), '')::text as recipe_name
+with deleted as (
+  delete from cooks c
+  where c.id = $1 and c.household_id = $2
+    and not c.done and c.frozen_servings = 0 and c.off_plan_servings = 0 and c.removed_servings = 0
+    and not exists (select 1 from portions p where p.household_id = c.household_id and p.cook_id = c.id)
+    and not exists (select 1 from cook_supplies s where s.household_id = c.household_id and s.supplier_cook_id = c.id)
+  returning c.id, c.recipe_id
+), orphans as (
+  delete from cooks sc
+  where sc.household_id = $2
+    and sc.id in (select cs.supplier_cook_id from cook_supplies cs where cs.consumer_cook_id in (select id from deleted))
+    and not sc.done
+    and not exists (select 1 from portions p where p.cook_id = sc.id)
+    and not exists (
+      select 1 from cook_supplies o
+      where o.supplier_cook_id = sc.id and o.consumer_cook_id not in (select id from deleted)
+    )
+)
+select coalesce((select r.name from recipes r where r.id = deleted.recipe_id), '')::text as recipe_name
+from deleted
 `
 
 type DeleteCookIfUnusedParams struct {
@@ -290,7 +304,11 @@ type DeleteCookIfUnusedParams struct {
 
 // Deletes a household's cook nobody eats any of: with no portions, not
 // cooked, frozen or taken from, and not making a component of another
-// cook. It returns its recipe's name, and no row if it isn't deleted.
+// cook. The cooks only supplying it go with it, as DeleteOrphanSuppliers
+// deletes them with a cook deleted: e.g. the pot of beans of a chili
+// whose last portion was removed. Both deletes see the links as they
+// were, before the cook's go with it. It returns its recipe's name, and
+// no row if it isn't deleted.
 func (q *Queries) DeleteCookIfUnused(ctx context.Context, arg *DeleteCookIfUnusedParams) (string, error) {
 	row := q.db.QueryRow(ctx, deleteCookIfUnused, arg.ID, arg.HouseholdID)
 	var recipe_name string

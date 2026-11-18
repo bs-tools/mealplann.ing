@@ -930,8 +930,9 @@ func (r *Repository) DeletePortionAndUnusedCook(ctx context.Context, householdID
 
 // DeleteUnusedCook deletes a household's cook if nobody eats any of it: it
 // has no portions, isn't cooked, frozen or taken from, and makes no
-// component of another cook. It returns its recipe's name, or "" if it
-// isn't deleted, like an invalid ID's.
+// component of another cook. The cooks planned only to supply it go with
+// it, as with DeleteCook. It returns its recipe's name, or "" if it isn't
+// deleted, like an invalid ID's.
 func (r *Repository) DeleteUnusedCook(ctx context.Context, householdID, id pgtype.UUID) (string, error) {
 	if !id.Valid {
 		return "", nil
