@@ -126,15 +126,19 @@ const SharedSides: React.FC<SharedSidesProps> = ({
       }
       /*
        * A recipe side is one pot for everyone: leftovers of it in the
-       * fridge or freezer, if there are enough for everyone, the one
-       * already cooked that day, made bigger if what's left of it is short,
-       * or a new cook of what everyone's shares add up to.
+       * fridge or freezer, shared out if there are fewer than everyone's
+       * shares, rather than cooking it again; the one already cooked that
+       * day, made bigger if what's left of it is short; or a new cook of
+       * what everyone's shares add up to.
        */
       const total = shares.reduce((sum, { side }) => sum + side.servings, 0);
-      if (
-        first.side.fromFreezer &&
-        total <= first.side.frozenServingsLeft + 1e-9
-      ) {
+      const left = first.side.frozenServingsLeft;
+      // Each eats their share of what's left, in hundredths.
+      const shareOf = (servings: number): number =>
+        total > left
+          ? Math.floor(((servings * left) / total) * 100) / 100
+          : servings;
+      if (first.side.fromFreezer) {
         // Each share is taken in turn, as they come out of the same cook.
         for (const { eater, side } of shares) {
           // oxlint-disable-next-line no-await-in-loop
@@ -143,16 +147,12 @@ const SharedSides: React.FC<SharedSidesProps> = ({
             date,
             eatingTimeId: eater.eatingTimeId,
             personId: eater.personId,
-            servings: side.servings,
+            servings: shareOf(side.servings),
           });
         }
         return;
       }
-      const leftover = first.side.fromFreezer || first.side.fromFridge;
-      if (
-        first.side.fromFridge &&
-        total <= first.side.frozenServingsLeft + 1e-9
-      ) {
+      if (first.side.fromFridge) {
         await Promise.all(
           shares.map(async ({ eater, side }) => {
             await client.createPortion({
@@ -162,7 +162,10 @@ const SharedSides: React.FC<SharedSidesProps> = ({
                 personId: eater.personId,
                 what: {
                   case: "cook",
-                  value: { cookId: first.side.cookId, servings: side.servings },
+                  value: {
+                    cookId: first.side.cookId,
+                    servings: shareOf(side.servings),
+                  },
                 },
               },
             });
@@ -170,8 +173,7 @@ const SharedSides: React.FC<SharedSidesProps> = ({
         );
         return;
       }
-      // Leftovers too few for everyone aren't cooked again.
-      let cookId = leftover ? "" : first.side.cookId;
+      let { cookId } = first.side;
       if (cookId === "") {
         const created = await client.createCook({
           cook: {

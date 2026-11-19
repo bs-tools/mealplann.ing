@@ -287,9 +287,20 @@ func (d *planData) recipeSidePortion(c *sideCandidate, slot plans.Slot, main *pl
 		}
 	}
 	// Without one that day, leftovers of it in the fridge or freezer are
-	// eaten before cooking it.
+	// eaten before cooking it, however few.
+	// Fewer than the side's servings are eaten as a smaller side, rather
+	// than cooking it again.
 	if c.cook == nil && c.planned == nil {
-		if ls := d.leftovers.find(r.ID, c.servings, slot.Date); ls != nil {
+		ls := d.leftovers.find(r.ID, c.servings, slot.Date)
+		if ls == nil {
+			if ls = d.leftovers.find(r.ID, minSideLeftovers, slot.Date); ls != nil {
+				c.servings = math.Floor(ls.left*100) / 100
+				if perServing > 0 {
+					c.grams = math.Round(c.servings * perServing)
+				}
+			}
+		}
+		if ls != nil {
 			c.cook, c.fromFreezer, c.leftover, c.frozenLeft = ls.cook, ls.fromFreezer, true, ls.left
 		}
 	}
