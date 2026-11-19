@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
+
 	peoplev1 "github.com/bs-tools/mealplann.ing/internal/gen/people/v1"
 	plansv1 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
 	recipesv1 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
@@ -112,5 +114,43 @@ func TestSideFromFreezer(t *testing.T) {
 	}
 	if c := cooks["Pot of rice "+tuesday]; c == nil || c.GetCook().GetId() != fridge.GetCook().GetId() || c.GetAssignedServings() != 1 || c.GetCook().GetServings() != 4 {
 		t.Errorf("got Tuesday's rice %v, want a serving of it planned", c)
+	}
+
+	// With half a serving left in the freezer, and none in the fridge,
+	// Saturday's bowls get that half as their side, rather than a new pot.
+	if _, err := e.plans.TakeFromFreezer(ctx, plansv1.TakeFromFreezerRequest_builder{CookId: frozen.GetCook().GetId(), Servings: 2.5}.Build()); err != nil {
+		t.Fatalf("TakeFromFreezer: %v", err)
+	}
+	if _, err := e.plans.UpdateCook(ctx, plansv1.UpdateCookRequest_builder{
+		Cook:       plansv1.Cook_builder{Id: fridge.GetCook().GetId(), RemovedServings: 3}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"removed_servings"}},
+	}.Build()); err != nil {
+		t.Fatalf("UpdateCook: %v", err)
+	}
+	sides, err := e.suggestions.SuggestSides(ctx, suggestionsv1.SuggestSidesRequest_builder{
+		PersonId: erin.GetId(), Date: wednesday, EatingTimeId: dinnerID,
+	}.Build())
+	if err != nil {
+		t.Fatalf("SuggestSides: %v", err)
+	}
+	if s := sides.GetSides(); len(s) != 1 || !s[0].GetFromFreezer() || s[0].GetServings() != 0.5 {
+		t.Errorf("got sides %v, want the half serving of frozen rice", s)
+	}
+	if _, err := e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{
+		RecipeId: bowls.GetId(), Date: saturday, Meal: dinner, Servings: 1,
+		Side: recipesv1.RecipeSide_builder{RecipeId: pot.GetId()}.Build(),
+	}.Build()); err != nil {
+		t.Fatalf("PlanMeal: %v", err)
+	}
+	_, cooks = weekCooks(t, e, monday)
+	if cooks["Pot of rice "+saturday] != nil {
+		t.Errorf("got a new pot of rice on Saturday, want the half serving left in the freezer")
+	}
+	left, err = e.plans.ListFrozenLeftovers(ctx, plansv1.ListFrozenLeftoversRequest_builder{}.Build())
+	if err != nil {
+		t.Fatalf("ListFrozenLeftovers: %v", err)
+	}
+	if l := left.GetLeftovers(); len(l) != 0 {
+		t.Errorf("got frozen %v, want the rice all eaten", l)
 	}
 }

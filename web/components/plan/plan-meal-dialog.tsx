@@ -16,7 +16,7 @@ import {
 } from "@components/ui/styles";
 import { createClient } from "@connectrpc/connect";
 import type { ConnectError } from "@connectrpc/connect";
-import { useMutation, useTransport } from "@connectrpc/connect-query";
+import { useMutation, useQuery, useTransport } from "@connectrpc/connect-query";
 import {
   useMutation as useTanstackMutation,
   useQueryClient,
@@ -24,7 +24,10 @@ import {
 import { PantryService } from "gen/pantry/v1/pantry_pb";
 import type { Person } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
-import { planMeal } from "gen/plans/v1/plans-PlanService_connectquery";
+import {
+  listFrozenLeftovers,
+  planMeal,
+} from "gen/plans/v1/plans-PlanService_connectquery";
 import type { PlannedCook, Staple } from "gen/plans/v1/plans_pb";
 import { PlanService } from "gen/plans/v1/plans_pb";
 import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
@@ -93,8 +96,30 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
   onClose,
 }) => {
   const queryClient = useQueryClient();
-  // Suggestions are only shown when asked for.
-  const [tab, setTab] = useState<Tab>(leftovers ? "leftovers" : "recipe");
+  /*
+   * The tab chosen, or undefined for the first: leftovers when there are
+   * some to eat, as they need no cooking, unless a recipe was chosen first.
+   * Suggestions are only shown when asked for.
+   */
+  const [chosenTab, setTab] = useState<Tab | undefined>(
+    leftovers ? "leftovers" : undefined
+  );
+  const freezer = useQuery(listFrozenLeftovers, {});
+  const hasLeftovers =
+    cooks.some(
+      (planned) =>
+        planned.leftServings > 0 &&
+        planned.cook !== undefined &&
+        planned.cook.done &&
+        planned.cook.date <= initialDate
+    ) ||
+    (freezer.data?.leftovers ?? []).some(
+      (leftover) => leftover.remainingServings > 0 && !leftover.expired
+    );
+  let tab: Tab = chosenTab ?? "recipe";
+  if (chosenTab === undefined && initialRecipe === undefined && hasLeftovers) {
+    tab = "leftovers";
+  }
   const [recipe, setRecipe] = useState<PickedRecipe | null>(
     initialRecipe ?? null
   );

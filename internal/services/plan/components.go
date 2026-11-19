@@ -33,6 +33,10 @@ type leftoverServings struct {
 	fromFreezer bool
 }
 
+// minSideLeftovers is the least of leftovers worth a side: less is a crumb,
+// so the side is cooked.
+const minSideLeftovers = 0.25
+
 // find returns the leftovers of a recipe with enough servings for a cook
 // or portion on a date: those in the fridge first, as they keep less, and
 // the oldest first; nil if none have enough. Fridge leftovers are of a
@@ -272,11 +276,21 @@ func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes
 			for _, p := range cp.Portions {
 				total += p.Servings
 			}
-			if ls := freezer.find(cp.Cook.RecipeID, total, cp.Cook.Date); ls != nil {
-				ls.left -= total
+			// Leftovers too few for everyone are shared out, each eating a
+			// smaller side, rather than cooking it again.
+			share := 1.0
+			ls := freezer.find(cp.Cook.RecipeID, total, cp.Cook.Date)
+			if ls == nil {
+				if ls = freezer.find(cp.Cook.RecipeID, minSideLeftovers, cp.Cook.Date); ls != nil {
+					share = ls.left / total
+				}
+			}
+			if ls != nil {
+				ls.left -= total * share
 				portions := make([]*plans.Portion, 0, len(cp.Portions))
 				for _, p := range cp.Portions {
 					eaten := *p
+					eaten.Servings = math.Floor(p.Servings*share*100) / 100
 					eaten.FromFreezer = ls.fromFreezer
 					portions = append(portions, &eaten)
 				}
