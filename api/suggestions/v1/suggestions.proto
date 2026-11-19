@@ -329,6 +329,14 @@ message Suggestion {
   // it. Plan it with the recipe, as MealToPlan.side or PlanMealRequest.side.
   // Unset for a recipe served with nothing, or a leftover.
   recipes.v1.RecipeSide side = 13;
+  // The ID of the cook of leftovers already cooked it eats, from SuggestPlan:
+  // in the fridge, or the freezer if from_freezer, with no cooking and
+  // nothing to buy, rather than cooking the recipe. cook_servings are the
+  // servings it takes of them. Plan it with MealToPlan.on_hand_cook_id.
+  // Empty to cook it.
+  string on_hand_cook_id = 14;
+  // Whether the leftovers of on_hand_cook_id are frozen.
+  bool from_freezer = 15;
 }
 
 // Emphasis is how much a criterion of a plan counts.
@@ -379,6 +387,11 @@ message PlanCriteria {
   // How much to cook less: about once a day, eating the rest of earlier
   // meals at the others (COOKS and LEFTOVER).
   Emphasis cooking = 10;
+  // Whether to plan only what's on hand, cooking nothing: the leftovers
+  // already cooked, in the fridge and the freezer, which the plan always
+  // eats first, as their suggestions' on_hand_cook_id. Slots they can't
+  // fill are left unfilled, to plan by hand, like with a food.
+  bool on_hand_only = 11;
 }
 
 // The user's choice for a slot of a suggested plan.
@@ -404,6 +417,10 @@ message PlanChoice {
   recipes.v1.RecipeSide side = 7;
   // Whether to keep recipe_id served with no side, though it has some.
   bool no_side = 8;
+  // To keep leftovers already cooked of recipe_id at the slot, as a
+  // suggestion's on_hand_cook_id says: the ID of their cook. They're kept
+  // if they have servings left for it.
+  string on_hand_cook_id = 9;
 }
 
 message SuggestPlanRequest {

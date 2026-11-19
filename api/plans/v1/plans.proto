@@ -757,6 +757,12 @@ message MealToPlan {
   // A side to serve with it, as in PlanMealRequest.side, like the
   // suggestion's side. Not for a leftover.
   recipes.v1.RecipeSide side = 8;
+  // Instead of a new cook of recipe_id, leftovers already cooked: the ID
+  // of a done cook of recipe_id, whose servings in the fridge, or frozen,
+  // are shared out to everyone at the meal, at most what's left of them.
+  // Those eaten after the recipe's fridge days come from the freezer.
+  // SuggestPlan suggests these as its suggestions' on_hand_cook_id.
+  string on_hand_cook_id = 9;
 }
 
 // LeftoverOf is an earlier shared meal whose cook a portion is the rest

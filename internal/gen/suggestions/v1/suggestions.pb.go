@@ -1044,6 +1044,8 @@ type Suggestion struct {
 	xxx_hidden_LeftoverOf   *v11.LeftoverOf        `protobuf:"bytes,11,opt,name=leftover_of,json=leftoverOf,proto3"`
 	xxx_hidden_CookDate     string                 `protobuf:"bytes,12,opt,name=cook_date,json=cookDate,proto3"`
 	xxx_hidden_Side         *v12.RecipeSide        `protobuf:"bytes,13,opt,name=side,proto3"`
+	xxx_hidden_OnHandCookId string                 `protobuf:"bytes,14,opt,name=on_hand_cook_id,json=onHandCookId,proto3"`
+	xxx_hidden_FromFreezer  bool                   `protobuf:"varint,15,opt,name=from_freezer,json=fromFreezer,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1172,6 +1174,20 @@ func (x *Suggestion) GetSide() *v12.RecipeSide {
 	return nil
 }
 
+func (x *Suggestion) GetOnHandCookId() string {
+	if x != nil {
+		return x.xxx_hidden_OnHandCookId
+	}
+	return ""
+}
+
+func (x *Suggestion) GetFromFreezer() bool {
+	if x != nil {
+		return x.xxx_hidden_FromFreezer
+	}
+	return false
+}
+
 func (x *Suggestion) SetRecipeId(v string) {
 	x.xxx_hidden_RecipeId = v
 }
@@ -1222,6 +1238,14 @@ func (x *Suggestion) SetCookDate(v string) {
 
 func (x *Suggestion) SetSide(v *v12.RecipeSide) {
 	x.xxx_hidden_Side = v
+}
+
+func (x *Suggestion) SetOnHandCookId(v string) {
+	x.xxx_hidden_OnHandCookId = v
+}
+
+func (x *Suggestion) SetFromFreezer(v bool) {
+	x.xxx_hidden_FromFreezer = v
 }
 
 func (x *Suggestion) HasLeftoverOf() bool {
@@ -1293,6 +1317,14 @@ type Suggestion_builder struct {
 	// it. Plan it with the recipe, as MealToPlan.side or PlanMealRequest.side.
 	// Unset for a recipe served with nothing, or a leftover.
 	Side *v12.RecipeSide
+	// The ID of the cook of leftovers already cooked it eats, from SuggestPlan:
+	// in the fridge, or the freezer if from_freezer, with no cooking and
+	// nothing to buy, rather than cooking the recipe. cook_servings are the
+	// servings it takes of them. Plan it with MealToPlan.on_hand_cook_id.
+	// Empty to cook it.
+	OnHandCookId string
+	// Whether the leftovers of on_hand_cook_id are frozen.
+	FromFreezer bool
 }
 
 func (b0 Suggestion_builder) Build() *Suggestion {
@@ -1312,6 +1344,8 @@ func (b0 Suggestion_builder) Build() *Suggestion {
 	x.xxx_hidden_LeftoverOf = b.LeftoverOf
 	x.xxx_hidden_CookDate = b.CookDate
 	x.xxx_hidden_Side = b.Side
+	x.xxx_hidden_OnHandCookId = b.OnHandCookId
+	x.xxx_hidden_FromFreezer = b.FromFreezer
 	return m0
 }
 
@@ -1329,6 +1363,7 @@ type PlanCriteria struct {
 	xxx_hidden_ExcludeRecipeIds []string               `protobuf:"bytes,8,rep,name=exclude_recipe_ids,json=excludeRecipeIds,proto3"`
 	xxx_hidden_CookingWeekdays  []int32                `protobuf:"varint,9,rep,packed,name=cooking_weekdays,json=cookingWeekdays,proto3"`
 	xxx_hidden_Cooking          Emphasis               `protobuf:"varint,10,opt,name=cooking,proto3,enum=suggestions.v1.Emphasis"`
+	xxx_hidden_OnHandOnly       bool                   `protobuf:"varint,11,opt,name=on_hand_only,json=onHandOnly,proto3"`
 	unknownFields               protoimpl.UnknownFields
 	sizeCache                   protoimpl.SizeCache
 }
@@ -1428,6 +1463,13 @@ func (x *PlanCriteria) GetCooking() Emphasis {
 	return Emphasis_EMPHASIS_UNSPECIFIED
 }
 
+func (x *PlanCriteria) GetOnHandOnly() bool {
+	if x != nil {
+		return x.xxx_hidden_OnHandOnly
+	}
+	return false
+}
+
 func (x *PlanCriteria) SetVariety(v Emphasis) {
 	x.xxx_hidden_Variety = v
 }
@@ -1468,6 +1510,10 @@ func (x *PlanCriteria) SetCooking(v Emphasis) {
 	x.xxx_hidden_Cooking = v
 }
 
+func (x *PlanCriteria) SetOnHandOnly(v bool) {
+	x.xxx_hidden_OnHandOnly = v
+}
+
 type PlanCriteria_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -1502,6 +1548,11 @@ type PlanCriteria_builder struct {
 	// How much to cook less: about once a day, eating the rest of earlier
 	// meals at the others (COOKS and LEFTOVER).
 	Cooking Emphasis
+	// Whether to plan only what's on hand, cooking nothing: the leftovers
+	// already cooked, in the fridge and the freezer, which the plan always
+	// eats first, as their suggestions' on_hand_cook_id. Slots they can't
+	// fill are left unfilled, to plan by hand, like with a food.
+	OnHandOnly bool
 }
 
 func (b0 PlanCriteria_builder) Build() *PlanCriteria {
@@ -1518,6 +1569,7 @@ func (b0 PlanCriteria_builder) Build() *PlanCriteria {
 	x.xxx_hidden_ExcludeRecipeIds = b.ExcludeRecipeIds
 	x.xxx_hidden_CookingWeekdays = b.CookingWeekdays
 	x.xxx_hidden_Cooking = b.Cooking
+	x.xxx_hidden_OnHandOnly = b.OnHandOnly
 	return m0
 }
 
@@ -1532,6 +1584,7 @@ type PlanChoice struct {
 	xxx_hidden_LeftoverOf   *v11.LeftoverOf        `protobuf:"bytes,6,opt,name=leftover_of,json=leftoverOf,proto3"`
 	xxx_hidden_Side         *v12.RecipeSide        `protobuf:"bytes,7,opt,name=side,proto3"`
 	xxx_hidden_NoSide       bool                   `protobuf:"varint,8,opt,name=no_side,json=noSide,proto3"`
+	xxx_hidden_OnHandCookId string                 `protobuf:"bytes,9,opt,name=on_hand_cook_id,json=onHandCookId,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1617,6 +1670,13 @@ func (x *PlanChoice) GetNoSide() bool {
 	return false
 }
 
+func (x *PlanChoice) GetOnHandCookId() string {
+	if x != nil {
+		return x.xxx_hidden_OnHandCookId
+	}
+	return ""
+}
+
 func (x *PlanChoice) SetDate(v string) {
 	x.xxx_hidden_Date = v
 }
@@ -1647,6 +1707,10 @@ func (x *PlanChoice) SetSide(v *v12.RecipeSide) {
 
 func (x *PlanChoice) SetNoSide(v bool) {
 	x.xxx_hidden_NoSide = v
+}
+
+func (x *PlanChoice) SetOnHandCookId(v string) {
+	x.xxx_hidden_OnHandCookId = v
 }
 
 func (x *PlanChoice) HasLeftoverOf() bool {
@@ -1695,6 +1759,10 @@ type PlanChoice_builder struct {
 	Side *v12.RecipeSide
 	// Whether to keep recipe_id served with no side, though it has some.
 	NoSide bool
+	// To keep leftovers already cooked of recipe_id at the slot, as a
+	// suggestion's on_hand_cook_id says: the ID of their cook. They're kept
+	// if they have servings left for it.
+	OnHandCookId string
 }
 
 func (b0 PlanChoice_builder) Build() *PlanChoice {
@@ -1709,6 +1777,7 @@ func (b0 PlanChoice_builder) Build() *PlanChoice {
 	x.xxx_hidden_LeftoverOf = b.LeftoverOf
 	x.xxx_hidden_Side = b.Side
 	x.xxx_hidden_NoSide = b.NoSide
+	x.xxx_hidden_OnHandCookId = b.OnHandCookId
 	return m0
 }
 
@@ -3539,7 +3608,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\tfood_name\x18\x02 \x01(\tR\bfoodName\x12\x1f\n" +
 	"\vamount_text\x18\x03 \x01(\tR\n" +
 	"amountText\x12%\n" +
-	"\x0ealready_listed\x18\x04 \x01(\bR\ralreadyListed\"\xb4\x04\n" +
+	"\x0ealready_listed\x18\x04 \x01(\bR\ralreadyListed\"\xfe\x04\n" +
 	"\n" +
 	"Suggestion\x12\x1b\n" +
 	"\trecipe_id\x18\x01 \x01(\tR\brecipeId\x12\x1f\n" +
@@ -3561,7 +3630,9 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\vleftover_of\x18\v \x01(\v2\x14.plans.v1.LeftoverOfR\n" +
 	"leftoverOf\x12\x1b\n" +
 	"\tcook_date\x18\f \x01(\tR\bcookDate\x12*\n" +
-	"\x04side\x18\r \x01(\v2\x16.recipes.v1.RecipeSideR\x04side\"\xf6\x03\n" +
+	"\x04side\x18\r \x01(\v2\x16.recipes.v1.RecipeSideR\x04side\x12%\n" +
+	"\x0fon_hand_cook_id\x18\x0e \x01(\tR\fonHandCookId\x12!\n" +
+	"\ffrom_freezer\x18\x0f \x01(\bR\vfromFreezer\"\x98\x04\n" +
 	"\fPlanCriteria\x122\n" +
 	"\avariety\x18\x01 \x01(\x0e2\x18.suggestions.v1.EmphasisR\avariety\x126\n" +
 	"\tfavorites\x18\x02 \x01(\x0e2\x18.suggestions.v1.EmphasisR\tfavorites\x120\n" +
@@ -3573,7 +3644,9 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x12exclude_recipe_ids\x18\b \x03(\tR\x10excludeRecipeIds\x12)\n" +
 	"\x10cooking_weekdays\x18\t \x03(\x05R\x0fcookingWeekdays\x122\n" +
 	"\acooking\x18\n" +
-	" \x01(\x0e2\x18.suggestions.v1.EmphasisR\acooking\"\xaa\x02\n" +
+	" \x01(\x0e2\x18.suggestions.v1.EmphasisR\acooking\x12 \n" +
+	"\fon_hand_only\x18\v \x01(\bR\n" +
+	"onHandOnly\"\xd1\x02\n" +
 	"\n" +
 	"PlanChoice\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +
@@ -3584,7 +3657,8 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\vleftover_of\x18\x06 \x01(\v2\x14.plans.v1.LeftoverOfR\n" +
 	"leftoverOf\x12*\n" +
 	"\x04side\x18\a \x01(\v2\x16.recipes.v1.RecipeSideR\x04side\x12\x17\n" +
-	"\ano_side\x18\b \x01(\bR\x06noSide\"\xb8\x02\n" +
+	"\ano_side\x18\b \x01(\bR\x06noSide\x12%\n" +
+	"\x0fon_hand_cook_id\x18\t \x01(\tR\fonHandCookId\"\xb8\x02\n" +
 	"\x12SuggestPlanRequest\x12\x1d\n" +
 	"\n" +
 	"start_date\x18\x01 \x01(\tR\tstartDate\x12\x12\n" +

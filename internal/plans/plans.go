@@ -505,7 +505,8 @@ type CookWithPortions struct {
 	// Existing is whether the cook exists already, with its ID: it isn't
 	// created, but grows by Cook.Servings, for Portions, and keeps its
 	// supplies.
-	Existing bool // FromLeftovers is whether it's a side whose portions are taken from
+	Existing bool
+	// FromLeftovers is whether it's a side whose portions are taken from
 	// leftovers of an earlier cook of its recipe, in the fridge or freezer,
 	// if they have enough, rather than cooking it.
 	FromLeftovers bool

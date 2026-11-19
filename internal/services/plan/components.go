@@ -1,6 +1,8 @@
 package plan
 
 import (
+	"bytes"
+	"cmp"
 	"context"
 	"math"
 	"slices"
@@ -13,6 +15,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/plans"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
 	"github.com/bs-tools/mealplann.ing/internal/store"
+	"github.com/bs-tools/mealplann.ing/internal/suggest"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -66,6 +69,27 @@ func (l leftoverStock) take(need recipes.ComponentNeed, date time.Time) *leftove
 		best.left -= bestServings
 	}
 	return best
+}
+
+// onHand returns the leftovers in stock for the planner, oldest first, the
+// freezer's after the fridge's.
+func (stock leftoverStock) onHand() []*suggest.OnHand {
+	var list []*suggest.OnHand
+	for _, all := range stock {
+		for _, ls := range all {
+			list = append(list, &suggest.OnHand{Cook: ls.cook, Servings: ls.left, FromFreezer: ls.fromFreezer, Until: ls.until})
+		}
+	}
+	slices.SortStableFunc(list, func(a, b *suggest.OnHand) int {
+		if a.FromFreezer != b.FromFreezer {
+			if a.FromFreezer {
+				return 1
+			}
+			return -1
+		}
+		return cmp.Or(a.Cook.Date.Compare(b.Cook.Date), bytes.Compare(a.Cook.ID.Bytes[:], b.Cook.ID.Bytes[:]))
+	})
+	return list
 }
 
 // readLeftovers reads the leftovers to plan before cooking from one date

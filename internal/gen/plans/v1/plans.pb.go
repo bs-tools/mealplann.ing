@@ -3773,6 +3773,7 @@ type MealToPlan struct {
 	xxx_hidden_LeftoverOf   *LeftoverOf            `protobuf:"bytes,6,opt,name=leftover_of,json=leftoverOf,proto3"`
 	xxx_hidden_CookDate     string                 `protobuf:"bytes,7,opt,name=cook_date,json=cookDate,proto3"`
 	xxx_hidden_Side         *v12.RecipeSide        `protobuf:"bytes,8,opt,name=side,proto3"`
+	xxx_hidden_OnHandCookId string                 `protobuf:"bytes,9,opt,name=on_hand_cook_id,json=onHandCookId,proto3"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -3858,6 +3859,13 @@ func (x *MealToPlan) GetSide() *v12.RecipeSide {
 	return nil
 }
 
+func (x *MealToPlan) GetOnHandCookId() string {
+	if x != nil {
+		return x.xxx_hidden_OnHandCookId
+	}
+	return ""
+}
+
 func (x *MealToPlan) SetRecipeId(v string) {
 	x.xxx_hidden_RecipeId = v
 }
@@ -3888,6 +3896,10 @@ func (x *MealToPlan) SetCookDate(v string) {
 
 func (x *MealToPlan) SetSide(v *v12.RecipeSide) {
 	x.xxx_hidden_Side = v
+}
+
+func (x *MealToPlan) SetOnHandCookId(v string) {
+	x.xxx_hidden_OnHandCookId = v
 }
 
 func (x *MealToPlan) HasLeftoverOf() bool {
@@ -3942,6 +3954,12 @@ type MealToPlan_builder struct {
 	// A side to serve with it, as in PlanMealRequest.side, like the
 	// suggestion's side. Not for a leftover.
 	Side *v12.RecipeSide
+	// Instead of a new cook of recipe_id, leftovers already cooked: the ID
+	// of a done cook of recipe_id, whose servings in the fridge, or frozen,
+	// are shared out to everyone at the meal, at most what's left of them.
+	// Those eaten after the recipe's fridge days come from the freezer.
+	// SuggestPlan suggests these as its suggestions' on_hand_cook_id.
+	OnHandCookId string
 }
 
 func (b0 MealToPlan_builder) Build() *MealToPlan {
@@ -3956,6 +3974,7 @@ func (b0 MealToPlan_builder) Build() *MealToPlan {
 	x.xxx_hidden_LeftoverOf = b.LeftoverOf
 	x.xxx_hidden_CookDate = b.CookDate
 	x.xxx_hidden_Side = b.Side
+	x.xxx_hidden_OnHandCookId = b.OnHandCookId
 	return m0
 }
 
@@ -7957,7 +7976,7 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\x04cook\x18\x01 \x01(\v2\x0e.plans.v1.CookR\x04cook\x12-\n" +
 	"\bportions\x18\x02 \x03(\v2\x11.plans.v1.PortionR\bportions\x12/\n" +
 	"\x13unassigned_servings\x18\x03 \x01(\x01R\x12unassignedServings\x12-\n" +
-	"\bwarnings\x18\x04 \x03(\v2\x11.plans.v1.WarningR\bwarnings\"\xae\x02\n" +
+	"\bwarnings\x18\x04 \x03(\v2\x11.plans.v1.WarningR\bwarnings\"\xd5\x02\n" +
 	"\n" +
 	"MealToPlan\x12\x1b\n" +
 	"\trecipe_id\x18\x01 \x01(\tR\brecipeId\x12\x12\n" +
@@ -7968,7 +7987,8 @@ const file_plans_v1_plans_proto_rawDesc = "" +
 	"\vleftover_of\x18\x06 \x01(\v2\x14.plans.v1.LeftoverOfR\n" +
 	"leftoverOf\x12\x1b\n" +
 	"\tcook_date\x18\a \x01(\tR\bcookDate\x12*\n" +
-	"\x04side\x18\b \x01(\v2\x16.recipes.v1.RecipeSideR\x04side\"N\n" +
+	"\x04side\x18\b \x01(\v2\x16.recipes.v1.RecipeSideR\x04side\x12%\n" +
+	"\x0fon_hand_cook_id\x18\t \x01(\tR\fonHandCookId\"N\n" +
 	"\n" +
 	"LeftoverOf\x12\x12\n" +
 	"\x04date\x18\x01 \x01(\tR\x04date\x12,\n" +

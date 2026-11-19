@@ -455,3 +455,59 @@ func TestPlanSides(t *testing.T) {
 		t.Errorf("got %v servings of the pot's %v planned, want a share for the dinner", shares, sideCook.Servings)
 	}
 }
+
+// TestPlanOnHand checks that leftovers already cooked are planned before
+// cooking anything, until their servings run out, freezer leftovers too;
+// that with OnHandOnly nothing is cooked, leaving slots they can't fill;
+// and that leftovers too few for a meal aren't planned as one.
+func TestPlanOnHand(t *testing.T) {
+	t.Parallel()
+	b := ben()
+	curry := recipe("Curry", 2, ingredient(chickpeas, 400))
+	hummus := recipe("Hummus", 2, ingredient(chickpeas, 400))
+	chili := recipe("Chili", 4, ingredient(tofu, 400))
+	stew := recipe("Stew", 4, ingredient(onions, 300))
+	sameDay(curry, hummus)
+	cooked := func(r *recipes.Recipe, date time.Time) *plans.Cook {
+		return &plans.Cook{ID: store.NewUUID(), RecipeID: r.ID, RecipeName: r.Name, Date: date, Servings: float64(r.Servings), Done: true}
+	}
+	// Last week's chili has 2 servings left in the fridge, and a stew 1 in
+	// the freezer.
+	onHand := []*OnHand{
+		{Cook: cooked(chili, monday.AddDate(0, 0, -1)), Servings: 2, Until: monday.AddDate(0, 0, 3)},
+		{Cook: cooked(stew, monday.AddDate(0, 0, -30)), Servings: 1, FromFreezer: true, Until: monday.AddDate(0, 0, 60)},
+	}
+
+	in := planInput(4, []*people.Person{b}, curry, hummus, chili, stew)
+	in.OnHand = onHand
+	result := Plan(in)
+	var fromHand []string
+	for _, s := range result.Slots {
+		if s.Suggestion != nil && s.Suggestion.OnHand != nil {
+			fromHand = append(fromHand, s.Suggestion.Recipe.Name)
+		}
+	}
+	slices.Sort(fromHand)
+	// A dinner is a serving for Ben, so the chili makes two and the stew
+	// one, and the last dinner is cooked.
+	if want := []string{"Chili", "Chili", "Stew"}; !slices.Equal(fromHand, want) {
+		t.Errorf("got %v from the leftovers on hand, want %v", fromHand, want)
+	}
+
+	// Only what's on hand: the fourth dinner is left unfilled.
+	in = planInput(4, []*people.Person{b}, curry, hummus, chili, stew)
+	in.OnHand = onHand
+	in.OnHandOnly = true
+	names := plannedNames(Plan(in))
+	if got := slices.Index(names, ""); got < 0 || slices.Contains(names, "Curry") || slices.Contains(names, "Hummus") {
+		t.Errorf("got %v with only what's on hand, want no curry or hummus, and a dinner unfilled", names)
+	}
+
+	// A quarter of a serving isn't a dinner.
+	in = planInput(1, []*people.Person{b}, curry)
+	in.OnHand = []*OnHand{{Cook: cooked(chili, monday.AddDate(0, 0, -1)), Servings: 0.25, Until: monday.AddDate(0, 0, 3)}}
+	in.OnHandOnly = true
+	if names := plannedNames(Plan(in)); len(names) != 1 || names[0] != "" {
+		t.Errorf("got %v with a quarter serving on hand, want nothing planned", names)
+	}
+}
