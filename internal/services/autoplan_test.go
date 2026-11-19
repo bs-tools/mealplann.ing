@@ -609,3 +609,112 @@ func TestPlanWithSides(t *testing.T) {
 		t.Errorf("got %v g of naan with %v servings of curry, want 80 g for each serving", naanGrams, curryServings)
 	}
 }
+
+// TestSuggestPlanOnHand checks that a plan eats the leftovers already
+// cooked before cooking anything: with only what's on hand, Sunday's chili
+// in the fridge makes Monday's and Tuesday's dinners and Wednesday's is
+// left unfilled, and planning the suggestion eats the chili from its cook,
+// which doesn't grow, without creating any.
+func TestSuggestPlanOnHand(t *testing.T) {
+	t.Parallel()
+	e := newEnv(t)
+	ctx := context.Background()
+	createPerson(t, e, ben())
+	tofu := customFood(t, e, "Tofu", 144, 15, 3, 0.6, 9, nil)
+	newRecipe := func(name string) *recipesv1.Recipe {
+		t.Helper()
+		resp, err := e.recipes.CreateRecipe(ctx, recipesv1.CreateRecipeRequest_builder{Recipe: recipesv1.Recipe_builder{
+			Name: name, Servings: 2, Tags: []string{"dinner"}, FridgeDays: new(int32(4)),
+			Ingredients: []*recipesv1.Ingredient{ingredient(tofu.GetId(), 400, grams)},
+		}.Build()}.Build())
+		if err != nil {
+			t.Fatalf("CreateRecipe: %v", err)
+		}
+		return resp.GetRecipe()
+	}
+	chili := newRecipe("Chili")
+	newRecipe("Stir-fry")
+	// Sunday's chili, cooked, has 2 servings in the fridge.
+	cooked, err := e.plans.CreateCook(ctx, plansv1.CreateCookRequest_builder{
+		Cook: plansv1.Cook_builder{RecipeId: chili.GetId(), Date: "2026-11-01", Servings: 2, Done: true}.Build(), FromStock: true,
+	}.Build())
+	if err != nil {
+		t.Fatalf("CreateCook: %v", err)
+	}
+	cookID := cooked.GetCook().GetId()
+
+	suggest := func(onHandOnly bool) *suggestionsv1.SuggestPlanResponse {
+		t.Helper()
+		resp, err := e.suggestions.SuggestPlan(ctx, suggestionsv1.SuggestPlanRequest_builder{
+			StartDate: monday, Days: 3, Meals: []peoplev1.HouseholdMeal{dinner}, Seed: 7,
+			Criteria: suggestionsv1.PlanCriteria_builder{OnHandOnly: onHandOnly}.Build(),
+		}.Build())
+		if err != nil {
+			t.Fatalf("SuggestPlan: %v", err)
+		}
+		return resp
+	}
+	// Planning freely, the chili comes first, before cooking the stir-fry.
+	resp := suggest(false)
+	if first := resp.GetSlots()[0].GetSuggestion(); first.GetOnHandCookId() != cookID || first.GetFromFreezer() {
+		t.Errorf("got %v first, want Sunday's chili from the fridge", planSummary(resp))
+	}
+	// Keeping it on Tuesday keeps it from the fridge, rather than cooking
+	// the chili.
+	kept, err := e.suggestions.SuggestPlan(ctx, suggestionsv1.SuggestPlanRequest_builder{
+		StartDate: monday, Days: 3, Meals: []peoplev1.HouseholdMeal{dinner}, Seed: 7,
+		Choices: []*suggestionsv1.PlanChoice{suggestionsv1.PlanChoice_builder{
+			Date: tuesday, Meal: dinner, RecipeId: chili.GetId(), OnHandCookId: cookID,
+		}.Build()},
+	}.Build())
+	if err != nil {
+		t.Fatalf("SuggestPlan: %v", err)
+	}
+	if s := kept.GetSlots()[1]; s.GetState() != suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_KEPT || s.GetSuggestion().GetOnHandCookId() != cookID {
+		t.Errorf("got %v on Tuesday, want the chili kept from the fridge", slotSummary(s))
+	}
+	resp = suggest(true)
+	var meals []*plansv1.MealToPlan
+	for i, s := range resp.GetSlots() {
+		if i == 2 {
+			if s.GetState() != suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_UNFILLED || s.GetUnfilledReason() == "" {
+				t.Errorf("got %v on Wednesday with only what's on hand, want it unfilled, saying why", slotSummary(s))
+			}
+			continue
+		}
+		sg := s.GetSuggestion()
+		if sg.GetOnHandCookId() != cookID || sg.GetCookServings() != 1 {
+			t.Fatalf("got %v, want a serving of Sunday's chili each on Monday and Tuesday", planSummary(resp))
+		}
+		meals = append(meals, plansv1.MealToPlan_builder{
+			RecipeId: sg.GetRecipeId(), Date: s.GetDate(), Meal: s.GetMeal(), OnHandCookId: sg.GetOnHandCookId(),
+		}.Build())
+	}
+	saved, err := e.plans.PlanMeals(ctx, plansv1.PlanMealsRequest_builder{Meals: meals}.Build())
+	if err != nil {
+		t.Fatalf("PlanMeals: %v", err)
+	}
+	if saved.GetPortionCount() != 2 {
+		t.Errorf("got %d portions, want Ben's 2 dinners", saved.GetPortionCount())
+	}
+	week, err := e.plans.GetWeek(ctx, plansv1.GetWeekRequest_builder{Monday: monday}.Build())
+	if err != nil {
+		t.Fatalf("GetWeek: %v", err)
+	}
+	if n := len(week.GetCooks()); n != 0 {
+		t.Errorf("got %d cooks this week, want none: the chili is eaten from Sunday's", n)
+	}
+	// Sunday's chili is all planned, and still makes 2 servings.
+	last, err := e.plans.GetWeek(ctx, plansv1.GetWeekRequest_builder{Monday: "2026-10-26"}.Build())
+	if err != nil {
+		t.Fatalf("GetWeek: %v", err)
+	}
+	if c := last.GetCooks(); len(c) != 1 || c[0].GetCook().GetServings() != 2 || c[0].GetAssignedServings() != 2 || c[0].GetLeftServings() != 0 {
+		t.Errorf("got last week's cooks %v, want the chili's 2 servings all planned", c)
+	}
+	// It's all eaten, so planning it again fails, saying what to do.
+	_, err = e.plans.PlanMeals(ctx, plansv1.PlanMealsRequest_builder{Meals: []*plansv1.MealToPlan{
+		plansv1.MealToPlan_builder{RecipeId: chili.GetId(), Date: wednesday, Meal: dinner, OnHandCookId: cookID}.Build(),
+	}}.Build())
+	wantCode(t, err, connect.CodeFailedPrecondition)
+}

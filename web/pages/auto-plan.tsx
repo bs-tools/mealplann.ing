@@ -66,6 +66,7 @@ const defaultCriteria = (): Criteria => ({
   maxMinutes: 0,
   meals: [],
   nutrition: Emphasis.NORMAL,
+  onHandOnly: false,
   ownEatingTimes: true,
   pantry: Emphasis.NORMAL,
   shopping: Emphasis.NORMAL,
@@ -127,6 +128,8 @@ interface Choice {
    * eating time.
    */
   leftoverOf?: Leftover | undefined;
+  // The cook of leftovers already cooked kept at the slot, "" for none.
+  onHandCookId?: string;
   // The side kept with a new cook, or noSide to keep it with none.
   side?: RecipeSide | undefined;
   noSide?: boolean;
@@ -140,7 +143,7 @@ interface Choice {
 const sideChoice = (
   suggestion: Suggestion
 ): { side?: RecipeSide; noSide?: boolean } => {
-  if (suggestion.leftoverOf !== undefined) {
+  if (suggestion.leftoverOf !== undefined || suggestion.onHandCookId !== "") {
     return {};
   }
   return suggestion.side === undefined
@@ -382,6 +385,7 @@ const AutoPlanPage: React.FC = () => {
         maxTotalSeconds: criteria.maxMinutes * 60,
         // A day replanned for nutrition weighs it over sharing the shop.
         nutrition: focus === undefined ? criteria.nutrition : Emphasis.HIGH,
+        onHandOnly: criteria.onHandOnly,
         pantry: criteria.pantry,
         shopping: focus === undefined ? criteria.shopping : Emphasis.LOW,
         variety: criteria.variety,
@@ -460,6 +464,7 @@ const AutoPlanPage: React.FC = () => {
         eatingTimeId: slot.eatingTimeId,
         leftoverOf: pick === "" ? undefined : pick.leftoverOf,
         meal: slot.meal,
+        onHandCookId: pick === "" ? "" : pick.onHandCookId,
         personId: slot.personId,
         recipeId: pick === "" ? "" : pick.recipeId,
         ...(pick === "" ? {} : sideChoice(pick)),
@@ -504,6 +509,7 @@ const AutoPlanPage: React.FC = () => {
           eatingTimeId: slot.eatingTimeId,
           leftoverOf: slot.suggestion.leftoverOf,
           meal: slot.meal,
+          onHandCookId: slot.suggestion.onHandCookId,
           personId: slot.personId,
           recipeId: slot.suggestion.recipeId,
           ...sideChoice(slot.suggestion),
@@ -655,7 +661,11 @@ const AutoPlanPage: React.FC = () => {
                     const locked =
                       choice !== undefined &&
                       choice.recipeId !== "" &&
-                      planKey(choice.recipeId, choice.leftoverOf) === planned;
+                      planKey(
+                        choice.recipeId,
+                        choice.leftoverOf,
+                        choice.onHandCookId
+                      ) === planned;
                     index++;
                     const card = (
                       <PlanSlotCard
@@ -841,6 +851,7 @@ const AutoPlanPage: React.FC = () => {
                   eatingTimeId: slot.eatingTimeId,
                   leftoverOf: slot.suggestion?.leftoverOf,
                   meal: slot.meal,
+                  onHandCookId: slot.suggestion?.onHandCookId ?? "",
                   personId: slot.personId,
                   recipeId: slot.suggestion?.recipeId ?? "",
                   side: slot.suggestion?.side,

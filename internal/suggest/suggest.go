@@ -167,6 +167,17 @@ const (
 	// planner weighs it against cooking again. It repeats the recipe by
 	// nature, so the variety penalty doesn't apply.
 	MealLeftoverPoints = 8.0
+	// OnHandPoints is for eating leftovers already cooked, in the fridge or
+	// the freezer (see Input.OnHand): no cooking at all and nothing to buy,
+	// so they come before cooking anything, even the rest of a meal the
+	// plan cooks (MealLeftoverPoints). OnHandSoonPoints adds to it for
+	// leftovers that stop keeping within UseSoonDays, to eat them first.
+	OnHandPoints     = 14.0
+	OnHandSoonPoints = 3.0
+	// OnHandShare is the least share of everyone's servings at a meal that
+	// leftovers on hand may make: with less, they're shared out smaller
+	// than a meal.
+	OnHandShare = 0.5
 	// ExtraCookPenalty is for each lunch or dinner cooked on the slot's
 	// day already, as the household cooks about once a day: a second cook
 	// that day costs about what eating the rest of a meal earns
@@ -255,11 +266,32 @@ type Input struct {
 	// LeftoverOf, if not nil, is the only leftover to suggest: the cook of
 	// its recipe at its shared meal, if there's one.
 	LeftoverOf *LeftoverRef
+	// OnHand are the leftovers already cooked, in the fridge or the
+	// freezer, with the servings left of each, to suggest eating at the
+	// slot rather than cooking: they're scored after Candidates,
+	// whichever those are.
+	OnHand []*OnHand
+	// OnHandOnly is whether to suggest only OnHand, cooking nothing.
+	OnHandOnly bool
 	// Side is the side to score the candidates with, like one the user
 	// chose, nil for the best of each's served_with; NoSide scores them
 	// with none.
 	Side   *recipes.Side
 	NoSide bool
+}
+
+// OnHand is leftovers already cooked, in the fridge or the freezer, to eat
+// rather than cooking.
+type OnHand struct {
+	// Cook is the cook they're the rest of, done.
+	Cook *plans.Cook
+	// Servings are the servings left, not planned yet.
+	Servings float64
+	// FromFreezer is whether they're frozen.
+	FromFreezer bool
+	// Until is the last date they keep, at midnight UTC: by the recipe's
+	// fridge days, or its freezer days if frozen; zero if unknown.
+	Until time.Time
 }
 
 // LeftoverRef refers to the cook of a recipe at a shared meal on a date,
@@ -337,6 +369,10 @@ type Suggestion struct {
 	// suggestion eats a serving more of, reheated, rather than cooking
 	// Recipe anew: CookServings are the servings it adds to that cook.
 	Leftover *plans.Cook
+	// OnHand, if not nil, is the leftovers already cooked the suggestion
+	// eats, rather than cooking Recipe: CookServings are the servings it
+	// takes of them.
+	OnHand *OnHand
 	// Side, if not nil, is the side Recipe is served with, one of its
 	// ServedWith: its score, portions, warnings and shopping count it, its
 	// portions' servings are the recipe's, and each portion has the side's
@@ -354,10 +390,14 @@ func (sg *Suggestion) LeftoverRef() *LeftoverRef {
 }
 
 // Same reports whether two suggestions plan the same: the same recipe, as
-// a new cook or as a leftover of the same cook.
+// a new cook, as a leftover of the same cook, or as the same leftovers on
+// hand.
 func (sg *Suggestion) Same(other *Suggestion) bool {
-	if sg.Recipe != other.Recipe || (sg.Leftover == nil) != (other.Leftover == nil) {
+	if sg.Recipe != other.Recipe || (sg.Leftover == nil) != (other.Leftover == nil) || (sg.OnHand == nil) != (other.OnHand == nil) {
 		return false
+	}
+	if sg.OnHand != nil {
+		return sg.OnHand.Cook.ID == other.OnHand.Cook.ID
 	}
 	return sg.Leftover == nil || sg.LeftoverRef().Matches(other.Leftover)
 }
@@ -371,6 +411,9 @@ func Suggest(in *Input) []*Suggestion {
 		// Sides are served with meals, rather than suggested as one.
 		candidates = slices.DeleteFunc(slices.Clone(in.Recipes), func(r *recipes.Recipe) bool { return isSide(r, s.sides) })
 	}
+	if in.OnHandOnly {
+		candidates = nil
+	}
 	suggestions := make([]*Suggestion, 0, len(candidates))
 	for _, r := range candidates {
 		// Drafts aren't finished, so they aren't suggested, nor are recipes
@@ -379,8 +422,15 @@ func Suggest(in *Input) []*Suggestion {
 			suggestions = append(suggestions, s.scoreWithSides(r))
 		}
 	}
-	for _, cook := range s.leftovers() {
-		suggestions = append(suggestions, s.score(s.recipes[cook.RecipeID], cook))
+	if !in.OnHandOnly {
+		for _, cook := range s.leftovers() {
+			suggestions = append(suggestions, s.score(s.recipes[cook.RecipeID], cook))
+		}
+	}
+	for _, oh := range s.onHand() {
+		if sg := s.scoreOnHand(oh); sg != nil {
+			suggestions = append(suggestions, sg)
+		}
 	}
 	slices.SortStableFunc(suggestions, func(a, b *Suggestion) int {
 		if c := cmp.Compare(b.Score, a.Score); c != 0 {
@@ -564,6 +614,8 @@ type candidate struct {
 	// leftover is the earlier cook it's a serving more of, nil for a new
 	// cook at the slot.
 	leftover *plans.Cook
+	// onHand is the leftovers already cooked it eats, nil to cook.
+	onHand *OnHand
 }
 
 // cookDate returns the date it's cooked on: the slot's, or its leftover's
@@ -595,6 +647,60 @@ func (s *scorer) score(r *recipes.Recipe, leftover *plans.Cook) *Suggestion {
 		leftover:   leftover,
 	}
 	s.portion(c)
+	return s.scoreCandidate(c)
+}
+
+// scoreOnHand scores eating leftovers already cooked at the slot: everyone's
+// servings, or a fair share of what's left if that's less, but at least
+// OnHandShare of them; nil if there's less than that.
+func (s *scorer) scoreOnHand(oh *OnHand) *Suggestion {
+	r, ok := s.recipes[oh.Cook.RecipeID]
+	if !ok {
+		return nil
+	}
+	c := &candidate{
+		recipe:     r,
+		nutrition:  r.Nutrition(),
+		suggestion: &Suggestion{Recipe: r, FitsRules: true},
+		grams:      map[pgtype.UUID]float64{},
+		onHand:     oh,
+	}
+	s.portion(c)
+	sg := c.suggestion
+	if sg.CookServings <= 0 {
+		return nil
+	}
+	if sg.CookServings > oh.Servings {
+		share := oh.Servings / sg.CookServings
+		if share < OnHandShare {
+			return nil
+		}
+		for i := range sg.Portions {
+			sg.Portions[i].Servings *= share
+			sg.Portions[i].Grams *= share
+		}
+		sg.CookServings = oh.Servings
+	}
+	return s.scoreCandidate(c)
+}
+
+// scoreCandidate scores a candidate whose portions are split.
+func (s *scorer) scoreCandidate(c *candidate) *Suggestion {
+	r := c.recipe
+	leftover := c.leftover
+	if c.onHand != nil {
+		// Leftovers on hand are cooked already: there's nothing to buy, and
+		// nothing to take from the pantry.
+		c.with, c.withPantry = s.base, s.basePantry
+		s.nutrition(c)
+		s.rules(c)
+		s.tastes(c)
+		c.add(Leftover, OnHandPoints, "cooked %s: no cooking, and nothing to buy", formatDate(c.onHand.Cook.Date))
+		if until := c.onHand.Until; !until.IsZero() && pantry.DaysTo(s.in.Date, until) <= UseSoonDays {
+			c.add(Leftover, OnHandSoonPoints, "keeps only until %s, so it's eaten first", formatDate(until))
+		}
+		return s.finish(c)
+	}
 	for _, ing := range r.IngredientsFor(c.suggestion.CookServings) {
 		f, ok := s.in.Foods[ing.FoodID]
 		if !ok {
@@ -646,8 +752,14 @@ func (s *scorer) score(r *recipes.Recipe, leftover *plans.Cook) *Suggestion {
 		}
 	}
 
+	return s.finish(c)
+}
+
+// finish weighs a candidate's components and adds up its score.
+func (s *scorer) finish(c *candidate) *Suggestion {
 	sg := c.suggestion
 	sg.Leftover = c.leftover
+	sg.OnHand = c.onHand
 	if s.in.Weights != nil {
 		weighted := sg.Components[:0]
 		for _, comp := range sg.Components {
@@ -694,7 +806,7 @@ func (s *scorer) portion(c *candidate) {
 			return
 		}
 		sg.CookServings = split.Servings
-		if c.leftover != nil {
+		if c.leftover != nil || c.onHand != nil {
 			// A leftover's cook grows by the servings eaten, not by a
 			// cook's whole servings.
 			sg.CookServings = 0
@@ -717,7 +829,7 @@ func (s *scorer) portion(c *candidate) {
 	slot := plans.Slot{PersonID: p.ID, EatingTimeID: s.in.EatingTimeID, Date: s.in.Date}
 	servings, cookServings := plans.EatingTimeServings(p, gramsPerServing, s.plannedGrams[slot])
 	sg.CookServings = cookServings
-	if c.leftover != nil {
+	if c.leftover != nil || c.onHand != nil {
 		// A leftover's cook grows by the portion, not by a cook's least
 		// servings.
 		sg.CookServings = servings
@@ -1276,7 +1388,9 @@ func (s *scorer) leftovers() []*plans.Cook {
 	var order []pgtype.UUID
 	for _, cook := range s.in.Cooks {
 		r, ok := s.recipes[cook.RecipeID]
-		if !ok || cook.Meal == people.MealNone || cook.Date.After(s.in.Date) {
+		// A cook done can't make more: what's left of it is on hand (see
+		// Input.OnHand).
+		if !ok || cook.Done || cook.Meal == people.MealNone || cook.Date.After(s.in.Date) {
 			continue
 		}
 		if s.in.LeftoverOf != nil && !s.in.LeftoverOf.Matches(cook) {
@@ -1314,6 +1428,39 @@ func (s *scorer) leftovers() []*plans.Cook {
 		cooks = append(cooks, latest[id])
 	}
 	return cooks
+}
+
+// onHand returns the leftovers already cooked the slot may eat, of
+// Input.OnHand: those cooked by the slot's date and keeping until then,
+// with servings left. A shared lunch or dinner eats those of mains, like
+// a chili; breakfast those of breakfast recipes; a small meal those of
+// snacks or mains. The rest of a side, like rice, is eaten with a meal
+// rather than as one (see the sides' own suggestions).
+func (s *scorer) onHand() []*OnHand {
+	var found []*OnHand
+	for _, oh := range s.in.OnHand {
+		r, ok := s.recipes[oh.Cook.RecipeID]
+		if !ok || oh.Servings <= 0 || oh.Cook.Date.After(s.in.Date) || isSide(r, s.sides) {
+			continue
+		}
+		if !oh.Until.IsZero() && oh.Until.Before(s.in.Date) {
+			continue
+		}
+		switch tag := s.slotTag(); {
+		case tag == "breakfast":
+			if !FitsMeal(r, tag) {
+				continue
+			}
+		case tag == "snack":
+			if !slices.Contains(recipeMealTags(r), "snack") && !mainMeal(r) {
+				continue
+			}
+		case !mainMeal(r):
+			continue
+		}
+		found = append(found, oh)
+	}
+	return found
 }
 
 // isSide reports whether a recipe is a side, served with others rather

@@ -12,6 +12,11 @@ export interface Criteria {
   meals: HouseholdMeal[];
   // Whether to plan each person's own eating times, like snacks.
   ownEatingTimes: boolean;
+  /*
+   * Whether to plan only the leftovers already cooked, in the fridge and
+   * freezer, cooking nothing.
+   */
+  onHandOnly: boolean;
   variety: Emphasis;
   favorites: Emphasis;
   pantry: Emphasis;
@@ -226,6 +231,33 @@ const CriteriaPanel: React.FC<CriteriaPanelProps> = ({
                 Snacks
               </button>
             )}
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className={labelClass}>Eat</span>
+          <div className="flex flex-wrap gap-1">
+            <button
+              type="button"
+              aria-pressed={!criteria.onHandOnly}
+              title="Leftovers in the fridge and freezer first, then new cooks"
+              className={`${chip(!criteria.onHandOnly)} py-1 text-sm`}
+              onClick={() => {
+                set({ onHandOnly: false });
+              }}
+            >
+              Leftovers, then cook
+            </button>
+            <button
+              type="button"
+              aria-pressed={criteria.onHandOnly}
+              title="Only the leftovers in the fridge and freezer, cooking nothing: meals they can't make are left to plan yourself"
+              className={`${chip(criteria.onHandOnly)} py-1 text-sm`}
+              onClick={() => {
+                set({ onHandOnly: true });
+              }}
+            >
+              Only what&apos;s on hand
+            </button>
           </div>
         </div>
         <div className="flex flex-col gap-1">

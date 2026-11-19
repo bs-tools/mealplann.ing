@@ -22,7 +22,7 @@ import type { RecipeSide } from "gen/recipes/v1/recipes_pb";
 import type { PlanSlot, Suggestion } from "gen/suggestions/v1/suggestions_pb";
 import { PlanSlotState } from "gen/suggestions/v1/suggestions_pb";
 import { formatList, formatWeekday } from "helpers/format";
-import { leftoverLabel, suggestionKey } from "helpers/suggestions";
+import { leftoverLabel, onHandLabel, suggestionKey } from "helpers/suggestions";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
@@ -252,6 +252,9 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
   if (suggestion.leftoverOf !== undefined) {
     notes.push(`${leftoverLabel(suggestion.leftoverOf)}, reheated`);
   }
+  if (onHandLabel(suggestion) !== "") {
+    notes.push(onHandLabel(suggestion));
+  }
   if (suggestion.cookDate !== "") {
     notes.push(`Cooked ${formatWeekday(suggestion.cookDate)}, from the fridge`);
   }
@@ -268,7 +271,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
       },
     });
   }
-  if (suggestion.leftoverOf === undefined) {
+  if (suggestion.leftoverOf === undefined && suggestion.onHandCookId === "") {
     for (const snooze of SNOOZES) {
       items.push({
         disabled,
@@ -341,6 +344,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
         </span>
       )}
       {suggestion.leftoverOf === undefined &&
+        suggestion.onHandCookId === "" &&
         sides.length > 0 &&
         onSide !== undefined && (
           <SidePicker
@@ -403,6 +407,12 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
                       <span className="font-normal text-muted">
                         {" "}
                         · {leftoverLabel(alternative.leftoverOf)}
+                      </span>
+                    )}
+                    {onHandLabel(alternative) !== "" && (
+                      <span className="font-normal text-muted">
+                        {" "}
+                        · {onHandLabel(alternative).toLowerCase()}
                       </span>
                     )}
                   </span>

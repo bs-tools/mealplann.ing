@@ -94,6 +94,10 @@ type PlanSlot struct {
 	// FixedLeftover is the leftover the user chose for the slot, nil to
 	// pick one. It's planned if the plan has its cook.
 	FixedLeftover *LeftoverRef
+	// FixedOnHand is the cook of the leftovers on hand the user chose for
+	// the slot, invalid to pick. They're planned if they have servings left
+	// for it.
+	FixedOnHand pgtype.UUID
 	// FixedSide is the side the user chose for Fixed, nil to pick the best
 	// of its served_with; NoSide serves it with none.
 	FixedSide *recipes.Side
@@ -139,6 +143,12 @@ type PlanInput struct {
 	ShopDate func(date time.Time) time.Time
 	// Weights are as in Input.
 	Weights map[Kind]float64
+	// OnHand are the leftovers already cooked, in the fridge or the
+	// freezer, to eat at the slots rather than cooking, each until its
+	// servings are planned. OnHandOnly is whether to plan only them,
+	// cooking nothing: slots they can't fill are left unfilled.
+	OnHand     []*OnHand
+	OnHandOnly bool
 	// Rand draws the rollouts' picks.
 	Rand *rand.Rand
 	// Budget is how long the rollouts run for, and Rollouts the most of
@@ -302,6 +312,9 @@ func (p *planner) stopped() bool {
 	}
 }
 
+// servingsSlack ignores the crumbs of servings left from splitting them.
+const servingsSlack = 0.01
+
 // planner plans the slots, with what's computed once for all rollouts.
 type planner struct {
 	in *PlanInput
@@ -344,7 +357,7 @@ func (p *planner) candidates(slot *PlanSlot) []*recipes.Recipe {
 	switch {
 	case slot.Fixed != nil:
 		return []*recipes.Recipe{slot.Fixed}
-	case slot.FixedLeftover != nil:
+	case slot.FixedLeftover != nil, slot.FixedOnHand.Valid:
 		return []*recipes.Recipe{}
 	}
 	tag := slot.Tag()
@@ -411,7 +424,8 @@ func preferred(slot *PlanSlot, ranked []*Suggestion) []*Suggestion {
 	var snacks []*Suggestion
 	fits := false
 	for _, sg := range ranked {
-		if sg.Leftover == nil && slices.Contains(recipeMealTags(sg.Recipe), "snack") {
+		// Leftovers on hand need no cooking, so they're as good as a snack.
+		if sg.OnHand != nil || (sg.Leftover == nil && slices.Contains(recipeMealTags(sg.Recipe), "snack")) {
 			snacks = append(snacks, sg)
 			fits = fits || sg.FitsRules
 		}
@@ -455,7 +469,7 @@ func (p *planner) polish(picks []*Suggestion) ([]*PlannedSlot, float64) {
 			}
 		}
 		planned := &PlannedSlot{Slot: slot, Eligible: len(p.candidates(slot))}
-		if slot.FixedLeftover != nil {
+		if slot.FixedLeftover != nil || slot.FixedOnHand.Valid {
 			planned.Eligible = 1
 		}
 		slots[i] = planned
@@ -491,9 +505,9 @@ func (p *planner) polish(picks []*Suggestion) ([]*PlannedSlot, float64) {
 		total += current.Score
 		// A kept slot offers alternatives too, ranked as if it were free,
 		// so it can still be swapped.
-		if slot.Fixed != nil || slot.FixedLeftover != nil {
+		if slot.Fixed != nil || slot.FixedLeftover != nil || slot.FixedOnHand.Valid {
 			free := *slot
-			free.Fixed, free.FixedLeftover = nil, nil
+			free.Fixed, free.FixedLeftover, free.FixedOnHand = nil, nil, pgtype.UUID{}
 			ranked = Suggest(st.input(&free, p.candidates(&free)))
 		}
 		for _, sg := range fitting(ranked) {
@@ -519,6 +533,9 @@ type state struct {
 	// shares.
 	planned map[plans.Slot]*rules.EatingTime
 	owned   bool
+	// eaten are the servings of the leftovers on hand the state plans, by
+	// cook ID.
+	eaten map[pgtype.UUID]float64
 }
 
 func (p *planner) newState() *state {
@@ -527,7 +544,23 @@ func (p *planner) newState() *state {
 		cooks:    slices.Clone(p.in.Plan.Cooks),
 		portions: slices.Clone(p.in.Plan.Portions),
 		planned:  p.in.Planned,
+		eaten:    map[pgtype.UUID]float64{},
 	}
+}
+
+// onHand returns the leftovers on hand with the servings the state hasn't
+// planned yet.
+func (st *state) onHand() []*OnHand {
+	var left []*OnHand
+	for _, oh := range st.p.in.OnHand {
+		servings := oh.Servings - st.eaten[oh.Cook.ID]
+		if servings > servingsSlack {
+			rest := *oh
+			rest.Servings = servings
+			left = append(left, &rest)
+		}
+	}
+	return left
 }
 
 // input returns the input of scoring the candidates for a slot, given the
@@ -564,9 +597,26 @@ func (st *state) input(slot *PlanSlot, candidates []*recipes.Recipe) *Input {
 		// A slot of a recipe the user chose takes no leftover.
 		Leftovers:  slot.Fixed == nil,
 		LeftoverOf: slot.FixedLeftover,
+		// A slot of a recipe or leftover the user chose takes none on hand,
+		// and one of leftovers on hand only those.
+		OnHand:     st.onHandFor(slot),
+		OnHandOnly: (st.p.in.OnHandOnly && slot.Fixed == nil && slot.FixedLeftover == nil) || slot.FixedOnHand.Valid,
 		Side:       slot.FixedSide,
 		NoSide:     slot.NoSide,
 	}
+}
+
+// onHandFor returns the leftovers on hand a slot may eat: none if the user
+// chose its recipe or leftover, and only those the user chose, if any.
+func (st *state) onHandFor(slot *PlanSlot) []*OnHand {
+	if slot.Fixed != nil || slot.FixedLeftover != nil {
+		return nil
+	}
+	all := st.onHand()
+	if slot.FixedOnHand.Valid {
+		return slices.DeleteFunc(all, func(oh *OnHand) bool { return oh.Cook.ID != slot.FixedOnHand })
+	}
+	return all
 }
 
 // filled reports whether a person's eating time is filled by a shared meal
@@ -592,7 +642,11 @@ func (st *state) filled(slot *PlanSlot) bool {
 func (st *state) add(slot *PlanSlot, sg *Suggestion) {
 	r := sg.Recipe
 	var cook *plans.Cook
-	if ref := sg.LeftoverRef(); ref != nil {
+	if sg.OnHand != nil {
+		// Leftovers on hand are eaten from their cook, which isn't changed.
+		cook = sg.OnHand.Cook
+		st.eaten[cook.ID] += sg.CookServings
+	} else if ref := sg.LeftoverRef(); ref != nil {
 		i := slices.IndexFunc(st.cooks, ref.Matches)
 		if i < 0 {
 			return
@@ -625,7 +679,7 @@ func (st *state) add(slot *PlanSlot, sg *Suggestion) {
 	}
 	planned := st.planned
 	n := st.p.nutrition[r.ID]
-	if sg.Side != nil && sg.Leftover == nil {
+	if sg.Side != nil && sg.Leftover == nil && sg.OnHand == nil {
 		st.addSide(sg, cook)
 	}
 	for _, portion := range sg.Portions {

@@ -316,7 +316,17 @@ func suggestionToProto(sg *suggest.Suggestion) *suggestionsv1.Suggestion {
 		ItemsToBuy:   items,
 		LeftoverOf:   leftoverToProto(sg.LeftoverRef()),
 		Side:         sideToProto(sg.Side),
+		OnHandCookId: onHandCookID(sg.OnHand),
+		FromFreezer:  sg.OnHand != nil && sg.OnHand.FromFreezer,
 	}.Build()
+}
+
+// onHandCookID returns the ID of the cook of leftovers on hand, "" if none.
+func onHandCookID(oh *suggest.OnHand) string {
+	if oh == nil {
+		return ""
+	}
+	return store.UUIDToString(oh.Cook.ID)
 }
 
 // leftoverToProto converts the earlier meal of a leftover to the API, nil
