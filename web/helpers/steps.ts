@@ -1,5 +1,10 @@
 import { AmountUnit } from "gen/foods/v1/foods_pb";
-import type { Ingredient, Recipe, Step } from "gen/recipes/v1/recipes_pb";
+import type {
+  Ingredient,
+  IngredientAlternative,
+  Recipe,
+  Step,
+} from "gen/recipes/v1/recipes_pb";
 import type { UnitSystem } from "gen/users/v1/users_pb";
 
 import { formatIngredientAmount, formatServings } from "./labels";
@@ -57,6 +62,32 @@ export const ingredientAmount = (
           gramsPerPiece: ingredient.foodGramsPerPiece,
           measure: ingredient.foodMeasure,
         }
+  );
+};
+
+/**
+ * AlternativeAmount formats how much of an alternative an ingredient takes,
+ * scaled, e.g. "1 package" of canned beans for a pot of beans, or "" when
+ * it takes the ingredient's own amount.
+ */
+export const alternativeAmount = (
+  alternative: IngredientAlternative,
+  scale: number,
+  system: UnitSystem
+): string => {
+  if (alternative.amount === 0) {
+    return "";
+  }
+  if (
+    alternative.recipeId !== "" &&
+    alternative.unit === AmountUnit.UNSPECIFIED
+  ) {
+    return formatServings(alternative.amount * scale);
+  }
+  return formatIngredientAmount(
+    alternative.amount * scale,
+    alternative.unit,
+    system
   );
 };
 

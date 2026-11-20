@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -157,10 +158,10 @@ type Ingredient struct {
 	// Component is the component's recipe, read with it, nil for a food or
 	// a component nested deeper than MaxComponentDepth.
 	Component *Recipe
-	// Alternatives are the foods it can be made with instead, in the same
-	// amount, like extra firm tofu for firm, in order of preference. The
-	// nutrition and cost are the ingredient's own food's; the shopping list
-	// and the pantry use whichever is in stock.
+	// Alternatives are the foods it can be made with instead, each in its
+	// own amount or the ingredient's, like extra firm tofu for firm, in
+	// order of preference. The nutrition and cost are the ingredient's own
+	// food's; the shopping list and the pantry use whichever is in stock.
 	Alternatives []Alternative
 	// Instead is set on the ingredients a component is made of, as
 	// IngredientsFor expands them, when the component lists foods it can be
@@ -172,9 +173,41 @@ type Ingredient struct {
 
 // ComponentFoods are the foods a component made of its own ingredients can
 // be replaced with, in order of preference, and the weight of it needed.
+// FoodGrams are the weights of those with amounts of their own, like 1
+// package of canned beans, by food; the others take Grams.
 type ComponentFoods struct {
-	Foods []pgtype.UUID
-	Grams float64
+	Foods     []pgtype.UUID
+	Grams     float64
+	FoodGrams map[pgtype.UUID]float64
+}
+
+// GramsOf returns the weight of a food replacing the component, 0 if it
+// can't be weighed.
+func (c *ComponentFoods) GramsOf(food pgtype.UUID) float64 {
+	if g, ok := c.FoodGrams[food]; ok {
+		return g
+	}
+	return c.Grams
+}
+
+// componentFoods returns the foods a component ingredient can be replaced
+// with, for scale times its amount, of which the component weighs grams:
+// nil if none.
+func (in *Ingredient) componentFoods(grams, scale float64) *ComponentFoods {
+	foods := in.AlternativeIDs()
+	if len(foods) == 0 {
+		return nil
+	}
+	cf := &ComponentFoods{Foods: foods, Grams: grams}
+	for _, a := range in.Alternatives {
+		if a.FoodID.Valid && a.Amount > 0 {
+			if cf.FoodGrams == nil {
+				cf.FoodGrams = map[pgtype.UUID]float64{}
+			}
+			cf.FoodGrams[a.FoodID] = a.Grams * scale
+		}
+	}
+	return cf
 }
 
 // Alternative is a food an ingredient can be made with instead of its own,
@@ -188,6 +221,40 @@ type Alternative struct {
 	Recipe   *Recipe
 	// Name is the food's name, read with it and ignored when writing.
 	Name string
+	// Amount, in Unit, is how much of it is used instead, like 1 package
+	// of canned beans for 250 g of a pot of beans; 0 for the ingredient's
+	// own amount and unit. A recipe's unit is 0 for servings, like a
+	// component's.
+	Amount float64
+	Unit   nutrition.Unit
+	// Grams is the weight of Amount of a food, read with it from the food's
+	// weights and ignored when writing; 0 if it can't be weighed, or for
+	// the ingredient's own amount.
+	Grams float64
+}
+
+// GramsFor returns the weight of an alternative food used instead of an
+// ingredient of grams: its own amount's, or the ingredient's weight if it
+// has none. False if its own amount can't be weighed.
+func (a *Alternative) GramsFor(grams float64) (float64, bool) {
+	if a.Amount <= 0 {
+		return grams, true
+	}
+	return a.Grams, a.Grams > 0
+}
+
+// scaledAlternatives returns alternatives with their own amounts scaled,
+// as the ingredient's is.
+func scaledAlternatives(alternatives []Alternative, scale float64) []Alternative {
+	if scale == 1 || !slices.ContainsFunc(alternatives, func(a Alternative) bool { return a.Amount > 0 }) {
+		return alternatives
+	}
+	scaled := slices.Clone(alternatives)
+	for i := range scaled {
+		scaled[i].Amount *= scale
+		scaled[i].Grams *= scale
+	}
+	return scaled
 }
 
 // AlternativeIDs returns the IDs of the ingredient's alternative foods,
@@ -236,12 +303,17 @@ func (in *Ingredient) componentGrams(depth int) float64 {
 }
 
 // ServingsOf returns how many servings of a recipe make the ingredient: of
-// its component, or of an alternative recipe, converting its amount with
-// that recipe's yield or weight as ComponentServings does. 0 if it can't be
-// converted.
+// its component, or of an alternative recipe, converting its amount, or the
+// alternative's own, with that recipe's yield or weight as
+// ComponentServings does. 0 if it can't be converted.
 func (in *Ingredient) ServingsOf(r *Recipe) float64 {
 	c := *in
 	c.Component = r
+	for _, a := range in.Alternatives {
+		if a.RecipeID == r.ID && a.Amount > 0 {
+			c.Amount, c.Unit = a.Amount, a.Unit
+		}
+	}
 	return c.componentServings(0)
 }
 
@@ -434,8 +506,7 @@ func (r *Recipe) ingredientsWithout(servings float64, supplied map[pgtype.UUID]b
 			if !supplied[in.ComponentRecipeID] && in.Component != nil && depth < MaxComponentDepth {
 				made := in.Component.ingredientsWithout(in.componentServings(depth)*scale, nil, depth+1)
 				// The foods it can be replaced with mark what it's made of.
-				if foods := in.AlternativeIDs(); len(foods) > 0 {
-					instead := &ComponentFoods{Foods: foods, Grams: in.componentGrams(depth) * scale}
+				if instead := in.componentFoods(in.componentGrams(depth)*scale, scale); instead != nil {
 					for _, m := range made {
 						if m.Instead == nil {
 							m.Instead = instead
@@ -447,6 +518,7 @@ func (r *Recipe) ingredientsWithout(servings float64, supplied map[pgtype.UUID]b
 		default:
 			c := *in
 			c.Amount *= scale
+			c.Alternatives = scaledAlternatives(in.Alternatives, scale)
 			scaled = append(scaled, &c)
 		}
 	}
@@ -520,7 +592,20 @@ func (r *Recipe) ComponentsFor(servings float64) []ComponentNeed {
 				}
 				needs[i].Instead = nil
 				if len(kept) > 0 {
-					needs[i].Instead = &ComponentFoods{Foods: kept, Grams: inst.Grams + in.componentGrams(0)*scale}
+					more := in.componentFoods(in.componentGrams(0)*scale, scale)
+					merged := &ComponentFoods{Foods: kept, Grams: inst.Grams + more.Grams}
+					for _, f := range kept {
+						if _, ok := inst.FoodGrams[f]; !ok {
+							if _, ok := more.FoodGrams[f]; !ok {
+								continue
+							}
+						}
+						if merged.FoodGrams == nil {
+							merged.FoodGrams = map[pgtype.UUID]float64{}
+						}
+						merged.FoodGrams[f] = inst.GramsOf(f) + more.GramsOf(f)
+					}
+					needs[i].Instead = merged
 				}
 			}
 			// The alternatives both uses list are what it can be made with.
@@ -535,9 +620,7 @@ func (r *Recipe) ComponentsFor(servings float64) []ComponentNeed {
 			continue
 		}
 		need := ComponentNeed{Recipe: in.Component, Servings: servings, Alternatives: alternatives}
-		if foods := in.AlternativeIDs(); len(foods) > 0 {
-			need.Instead = &ComponentFoods{Foods: foods, Grams: in.componentGrams(0) * scale}
-		}
+		need.Instead = in.componentFoods(in.componentGrams(0)*scale, scale)
 		needs = append(needs, need)
 	}
 	return needs
@@ -1150,18 +1233,22 @@ func readIngredients(ctx context.Context, b *store.Batch, householdID, recipeID 
 
 func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredient) *gen.CreateRecipeIngredientsParams {
 	p := &gen.CreateRecipeIngredientsParams{
-		RecipeID:             recipeID,
-		HouseholdID:          householdID,
-		FoodIds:              make([]pgtype.UUID, 0, len(ingredients)),
-		ComponentRecipeIds:   make([]pgtype.UUID, 0, len(ingredients)),
-		Amounts:              make([]float64, 0, len(ingredients)),
-		Units:                make([]string, 0, len(ingredients)),
-		Notes:                make([]string, 0, len(ingredients)),
-		OriginalTexts:        make([]string, 0, len(ingredients)),
-		Optionals:            make([]bool, 0, len(ingredients)),
-		KitchenUnits:         make([]string, 0, len(ingredients)),
-		AlternativeFoodIds:   make([]string, 0, len(ingredients)),
-		AlternativeRecipeIds: make([]string, 0, len(ingredients)),
+		RecipeID:                 recipeID,
+		HouseholdID:              householdID,
+		FoodIds:                  make([]pgtype.UUID, 0, len(ingredients)),
+		ComponentRecipeIds:       make([]pgtype.UUID, 0, len(ingredients)),
+		Amounts:                  make([]float64, 0, len(ingredients)),
+		Units:                    make([]string, 0, len(ingredients)),
+		Notes:                    make([]string, 0, len(ingredients)),
+		OriginalTexts:            make([]string, 0, len(ingredients)),
+		Optionals:                make([]bool, 0, len(ingredients)),
+		KitchenUnits:             make([]string, 0, len(ingredients)),
+		AlternativeFoodIds:       make([]string, 0, len(ingredients)),
+		AlternativeRecipeIds:     make([]string, 0, len(ingredients)),
+		AlternativeFoodAmounts:   make([]string, 0, len(ingredients)),
+		AlternativeFoodUnits:     make([]string, 0, len(ingredients)),
+		AlternativeRecipeAmounts: make([]string, 0, len(ingredients)),
+		AlternativeRecipeUnits:   make([]string, 0, len(ingredients)),
 	}
 	for _, in := range ingredients {
 		p.FoodIds = append(p.FoodIds, in.FoodID)
@@ -1176,16 +1263,23 @@ func ingredientsToDB(householdID, recipeID pgtype.UUID, ingredients []*Ingredien
 		p.OriginalTexts = append(p.OriginalTexts, in.OriginalText)
 		p.Optionals = append(p.Optionals, in.Optional)
 		p.KitchenUnits = append(p.KitchenUnits, string(in.KitchenUnit))
-		var foodAlternatives, recipeAlternatives []string
+		var foodAlternatives, recipeAlternatives, foodAmounts, foodUnits, recipeAmounts, recipeUnits []string
 		for _, a := range in.Alternatives {
+			amount, unit := alternativeAmountToDB(&a)
 			if a.RecipeID.Valid {
 				recipeAlternatives = append(recipeAlternatives, store.UUIDToString(a.RecipeID))
+				recipeAmounts, recipeUnits = append(recipeAmounts, amount), append(recipeUnits, unit)
 			} else {
 				foodAlternatives = append(foodAlternatives, store.UUIDToString(a.FoodID))
+				foodAmounts, foodUnits = append(foodAmounts, amount), append(foodUnits, unit)
 			}
 		}
 		p.AlternativeFoodIds = append(p.AlternativeFoodIds, strings.Join(foodAlternatives, ","))
 		p.AlternativeRecipeIds = append(p.AlternativeRecipeIds, strings.Join(recipeAlternatives, ","))
+		p.AlternativeFoodAmounts = append(p.AlternativeFoodAmounts, strings.Join(foodAmounts, ","))
+		p.AlternativeFoodUnits = append(p.AlternativeFoodUnits, strings.Join(foodUnits, ","))
+		p.AlternativeRecipeAmounts = append(p.AlternativeRecipeAmounts, strings.Join(recipeAmounts, ","))
+		p.AlternativeRecipeUnits = append(p.AlternativeRecipeUnits, strings.Join(recipeUnits, ","))
 	}
 	return p
 }
@@ -1259,18 +1353,43 @@ func ingredientFromDB(row *gen.ListRecipeIngredientsRow) *Ingredient {
 	if in.Unit != nil {
 		unit = unitFromDB(*in.Unit)
 	}
+	at := func(list []float64, i int) float64 {
+		if i < len(list) {
+			return list[i]
+		}
+		return 0
+	}
+	unitAt := func(list []string, i int) nutrition.Unit {
+		if i < len(list) {
+			return alternativeUnitFromDB(list[i])
+		}
+		return 0
+	}
 	alternatives := make([]Alternative, 0, len(row.AlternativeIds))
 	for i, id := range row.AlternativeIds {
-		a := Alternative{FoodID: id}
+		a := Alternative{FoodID: id, Amount: at(row.AlternativeAmounts, i)}
 		if i < len(row.AlternativeNames) {
 			a.Name = row.AlternativeNames[i]
+		}
+		if a.Amount > 0 {
+			a.Unit = unitAt(row.AlternativeUnits, i)
+			// A food's amount is weighed with its own weights.
+			f := nutrition.Food{
+				GramsPerPiece:      at(row.AlternativeGramsPerPiece, i),
+				GramsPerMilliliter: at(row.AlternativeGramsPerMilliliter, i),
+				PackageGrams:       at(row.AlternativePackageGrams, i),
+			}
+			a.Grams, _ = f.Grams(a.Amount, a.Unit)
 		}
 		alternatives = append(alternatives, a)
 	}
 	for i, id := range row.AlternativeRecipeIdsRead {
-		a := Alternative{RecipeID: id}
+		a := Alternative{RecipeID: id, Amount: at(row.AlternativeRecipeAmountsRead, i)}
 		if i < len(row.AlternativeRecipeNames) {
 			a.Name = row.AlternativeRecipeNames[i]
+		}
+		if a.Amount > 0 {
+			a.Unit = unitAt(row.AlternativeRecipeUnitsRead, i)
 		}
 		alternatives = append(alternatives, a)
 	}
@@ -1333,6 +1452,28 @@ func yieldUnitToDB(r *Recipe) *gen.AmountUnit {
 		return nil
 	}
 	return new(unitToDB(r.YieldUnit))
+}
+
+// alternativeAmountToDB returns an alternative's amount and unit as
+// stored: "0" and "" for the ingredient's own amount, and "" for servings.
+func alternativeAmountToDB(a *Alternative) (string, string) {
+	if a.Amount <= 0 {
+		return "0", ""
+	}
+	unit := ""
+	if a.Unit != 0 {
+		unit = string(unitToDB(a.Unit))
+	}
+	return strconv.FormatFloat(a.Amount, 'g', -1, 64), unit
+}
+
+// alternativeUnitFromDB returns an alternative's stored unit: 0 for ""
+// (servings, or the ingredient's own).
+func alternativeUnitFromDB(u string) nutrition.Unit {
+	if u == "" {
+		return 0
+	}
+	return unitFromDB(gen.AmountUnit(u))
 }
 
 func unitToDB(u nutrition.Unit) gen.AmountUnit {

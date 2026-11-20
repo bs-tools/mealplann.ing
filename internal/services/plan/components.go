@@ -239,9 +239,9 @@ func withSuppliers(list []*plans.CookWithPortions, byID map[pgtype.UUID]*recipes
 			// A food the component can be replaced with that the pantry has
 			// enough of, like canned beans, is used instead of cooking it:
 			// the cook is then made with it (see recipes.ComponentFoods).
-			if inst := need.Instead; inst != nil && inst.Grams > 0 && slices.ContainsFunc(inst.Foods, func(f pgtype.UUID) bool {
-				if stock[f] >= inst.Grams {
-					stock[f] -= inst.Grams
+			if inst := need.Instead; inst != nil && slices.ContainsFunc(inst.Foods, func(f pgtype.UUID) bool {
+				if grams := inst.GramsOf(f); grams > 0 && stock[f] >= grams {
+					stock[f] -= grams
 					return true
 				}
 				return false

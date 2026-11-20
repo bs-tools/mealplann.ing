@@ -304,7 +304,7 @@ func (s *Service) missingFoods(ctx context.Context, householdID pgtype.UUID, d *
 	var ids []pgtype.UUID
 	for _, n := range needs {
 		ids = append(ids, n.FoodID)
-		ids = append(ids, n.Alternatives...)
+		ids = append(ids, n.AlternativeIDs()...)
 		if n.Instead != nil {
 			ids = append(ids, n.Instead.Foods...)
 		}
@@ -772,10 +772,11 @@ func (s *Service) withComponentFoods(ctx context.Context, householdID pgtype.UUI
 		done, seen := replaced[inst]
 		if !seen {
 			for _, id := range inst.Foods {
-				if f, ok := byID[id]; ok && inst.Grams > 0 && stock[id] >= inst.Grams {
-					stock[id] -= inst.Grams
+				grams := inst.GramsOf(id)
+				if f, ok := byID[id]; ok && grams > 0 && stock[id] >= grams {
+					stock[id] -= grams
 					out = append(out, &recipes.Ingredient{
-						FoodID: id, FoodName: f.Name, Food: *f.Nutrition(), Amount: inst.Grams, Unit: nutrition.Grams,
+						FoodID: id, FoodName: f.Name, Food: *f.Nutrition(), Amount: grams, Unit: nutrition.Grams,
 					})
 					done = true
 					break
@@ -816,12 +817,14 @@ func (s *Service) useAlternatives(ctx context.Context, householdID pgtype.UUID, 
 			continue
 		}
 		for _, a := range alternatives[id] {
-			// An alternative the recipe uses itself keeps what it needs.
-			if _, used := grams[a.FoodID]; used || stock[a.FoodID] < need {
+			// An alternative the recipe uses itself keeps what it needs, and
+			// one is used in its own amount, or the ingredient's weight.
+			instead, weighed := a.GramsFor(need)
+			if _, used := grams[a.FoodID]; used || !weighed || stock[a.FoodID] < instead {
 				continue
 			}
 			order[i] = a.FoodID
-			grams[a.FoodID], names[a.FoodID] = need, a.Name
+			grams[a.FoodID], names[a.FoodID] = instead, a.Name
 			delete(grams, id)
 			break
 		}

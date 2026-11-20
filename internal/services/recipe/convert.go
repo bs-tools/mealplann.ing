@@ -66,6 +66,28 @@ const (
 const nutritionDigits = 3
 
 // alternativesToProto converts an ingredient's alternatives, nil for none.
+// alternativeAmountFromProto checks an alternative's own amount, returning
+// it in a base unit: 0 for the ingredient's. A recipe's may be in
+// servings, with no unit; a food's needs one.
+func alternativeAmountFromProto(field string, a *recipesv1.IngredientAlternative, recipe bool) (float64, nutrition.Unit, error) {
+	amount := a.GetAmount()
+	if math.IsNaN(amount) || amount < 0 || amount > maxAmount {
+		return 0, 0, connect.Errorf(connect.CodeInvalidArgument,
+			"%s.amount must be from 0 to %d, with 0 for the ingredient's own amount", field, maxAmount)
+	}
+	if amount == 0 {
+		return 0, 0, nil
+	}
+	if recipe && a.GetUnit() == foodsv1.AmountUnit_AMOUNT_UNIT_UNSPECIFIED {
+		return amount, 0, nil
+	}
+	base, unit, _, ok := amounts.FromProto(amount, a.GetUnit())
+	if !ok {
+		return 0, 0, connect.Errorf(connect.CodeInvalidArgument, "%s.unit must be %s, with an amount", field, amounts.UnitsHelp)
+	}
+	return base, unit, nil
+}
+
 func alternativesToProto(list []recipes.Alternative) []*recipesv1.IngredientAlternative {
 	var out []*recipesv1.IngredientAlternative
 	for _, a := range list {
@@ -74,6 +96,12 @@ func alternativesToProto(list []recipes.Alternative) []*recipesv1.IngredientAlte
 			b.RecipeId, b.RecipeName = store.UUIDToString(a.RecipeID), a.Name
 		} else {
 			b.FoodId, b.FoodName = store.UUIDToString(a.FoodID), a.Name
+		}
+		if a.Amount > 0 {
+			b.Amount, b.Unit = a.Amount, foodsv1.AmountUnit_AMOUNT_UNIT_UNSPECIFIED
+			if a.Unit != 0 {
+				b.Amount, b.Unit = amounts.ToProto(a.Amount, a.Unit, nutrition.NoKitchenUnit)
+			}
 		}
 		out = append(out, b.Build())
 	}
@@ -562,7 +590,11 @@ func ingredientsFromProto(list []*recipesv1.Ingredient, draft bool) ([]*recipes.
 					return nil, connect.Errorf(connect.CodeInvalidArgument,
 						"%s.alternatives[%d] is the ingredient's own recipe, or listed twice: list each other recipe once", field, j)
 				}
-				alternatives = append(alternatives, recipes.Alternative{RecipeID: id})
+				amount, altUnit, err := alternativeAmountFromProto(fmt.Sprintf("%s.alternatives[%d]", field, j), a, true)
+				if err != nil {
+					return nil, err
+				}
+				alternatives = append(alternatives, recipes.Alternative{RecipeID: id, Amount: amount, Unit: altUnit})
 				continue
 			}
 			id, err := store.StringToUUID(a.GetFoodId())
@@ -574,7 +606,11 @@ func ingredientsFromProto(list []*recipesv1.Ingredient, draft bool) ([]*recipes.
 				return nil, connect.Errorf(connect.CodeInvalidArgument,
 					"%s.alternatives[%d] is the ingredient's own food, or listed twice: list each other food once", field, j)
 			}
-			alternatives = append(alternatives, recipes.Alternative{FoodID: id})
+			amount, altUnit, err := alternativeAmountFromProto(fmt.Sprintf("%s.alternatives[%d]", field, j), a, false)
+			if err != nil {
+				return nil, err
+			}
+			alternatives = append(alternatives, recipes.Alternative{FoodID: id, Amount: amount, Unit: altUnit})
 		}
 		ingredients = append(ingredients, &recipes.Ingredient{
 			Alternatives:      alternatives,
