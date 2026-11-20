@@ -207,5 +207,4 @@ func TestAlternativeAmounts(t *testing.T) {
 	if left["Black beans, canned"] > 0.01 || left["Tofu, extra firm"] > 0.01 {
 		t.Errorf("got %v left, want the can and the 400 g of tofu used", left)
 	}
-
 }
