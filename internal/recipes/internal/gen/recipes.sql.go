@@ -162,7 +162,11 @@ insert into recipe_ingredients (
   optional,
   kitchen_unit,
   alternative_food_ids,
-  alternative_recipe_ids
+  alternative_recipe_ids,
+  alternative_food_amounts,
+  alternative_food_units,
+  alternative_recipe_amounts,
+  alternative_recipe_units
 )
 select
   $1,
@@ -179,23 +183,33 @@ select
   -- Each ingredient's alternatives are its food IDs joined by commas, as an
   -- array of arrays can't have rows of different lengths.
   coalesce(string_to_array(nullif(($11::text[])[i], ''), ',')::uuid[], '{}'),
-  coalesce(string_to_array(nullif(($12::text[])[i], ''), ',')::uuid[], '{}')
+  coalesce(string_to_array(nullif(($12::text[])[i], ''), ',')::uuid[], '{}'),
+  -- Their amounts and units likewise, in the same order, with 0 for the
+  -- ingredient's amount and '' for servings.
+  coalesce(string_to_array(nullif(($13::text[])[i], ''), ',')::double precision[], '{}'),
+  coalesce(string_to_array(($14::text[])[i], ','), '{}'),
+  coalesce(string_to_array(nullif(($15::text[])[i], ''), ',')::double precision[], '{}'),
+  coalesce(string_to_array(($16::text[])[i], ','), '{}')
 from generate_subscripts($5::double precision[], 1) as i
 `
 
 type CreateRecipeIngredientsParams struct {
-	RecipeID             pgtype.UUID
-	HouseholdID          pgtype.UUID
-	FoodIds              []pgtype.UUID
-	ComponentRecipeIds   []pgtype.UUID
-	Amounts              []float64
-	Units                []string
-	Notes                []string
-	OriginalTexts        []string
-	Optionals            []bool
-	KitchenUnits         []string
-	AlternativeFoodIds   []string
-	AlternativeRecipeIds []string
+	RecipeID                 pgtype.UUID
+	HouseholdID              pgtype.UUID
+	FoodIds                  []pgtype.UUID
+	ComponentRecipeIds       []pgtype.UUID
+	Amounts                  []float64
+	Units                    []string
+	Notes                    []string
+	OriginalTexts            []string
+	Optionals                []bool
+	KitchenUnits             []string
+	AlternativeFoodIds       []string
+	AlternativeRecipeIds     []string
+	AlternativeFoodAmounts   []string
+	AlternativeFoodUnits     []string
+	AlternativeRecipeAmounts []string
+	AlternativeRecipeUnits   []string
 }
 
 // The ingredients are given as arrays of their fields, to insert them all in
@@ -215,6 +229,10 @@ func (q *Queries) CreateRecipeIngredients(ctx context.Context, arg *CreateRecipe
 		arg.KitchenUnits,
 		arg.AlternativeFoodIds,
 		arg.AlternativeRecipeIds,
+		arg.AlternativeFoodAmounts,
+		arg.AlternativeFoodUnits,
+		arg.AlternativeRecipeAmounts,
+		arg.AlternativeRecipeUnits,
 	)
 	return err
 }
@@ -547,7 +565,7 @@ func (q *Queries) ListRecipeIDs(ctx context.Context, arg *ListRecipeIDsParams) (
 
 const listRecipeIngredients = `-- name: ListRecipeIngredients :many
 select
-  recipe_ingredients.recipe_id, recipe_ingredients.household_id, recipe_ingredients.position, recipe_ingredients.food_id, recipe_ingredients.amount, recipe_ingredients.unit, recipe_ingredients.note, recipe_ingredients.original_text, recipe_ingredients.optional, recipe_ingredients.component_recipe_id, recipe_ingredients.kitchen_unit, recipe_ingredients.alternative_food_ids, recipe_ingredients.alternative_recipe_ids,
+  recipe_ingredients.recipe_id, recipe_ingredients.household_id, recipe_ingredients.position, recipe_ingredients.food_id, recipe_ingredients.amount, recipe_ingredients.unit, recipe_ingredients.note, recipe_ingredients.original_text, recipe_ingredients.optional, recipe_ingredients.component_recipe_id, recipe_ingredients.kitchen_unit, recipe_ingredients.alternative_food_ids, recipe_ingredients.alternative_recipe_ids, recipe_ingredients.alternative_food_amounts, recipe_ingredients.alternative_food_units, recipe_ingredients.alternative_recipe_amounts, recipe_ingredients.alternative_recipe_units,
   coalesce(f.name, '')::text as food_name,
   f.energy_kcal_per_100_grams, f.protein_grams_per_100_grams, f.carbohydrate_grams_per_100_grams, f.sugars_grams_per_100_grams, f.fat_grams_per_100_grams, f.fiber_grams_per_100_grams, f.vitamin_b12_micrograms_per_100_grams, f.iron_milligrams_per_100_grams, f.calcium_milligrams_per_100_grams, f.vitamin_d_micrograms_per_100_grams, f.iodine_micrograms_per_100_grams, f.zinc_milligrams_per_100_grams, f.omega3_ala_grams_per_100_grams, f.folate_micrograms_per_100_grams, f.vitamin_a_micrograms_per_100_grams, f.vitamin_e_milligrams_per_100_grams, f.vitamin_k_micrograms_per_100_grams, f.copper_milligrams_per_100_grams, f.magnesium_milligrams_per_100_grams, f.sodium_milligrams_per_100_grams, f.potassium_milligrams_per_100_grams,
   f.grams_per_piece,
@@ -568,6 +586,33 @@ select
     from unnest(recipe_ingredients.alternative_food_ids) with ordinality as a(id, position)
     join foods af on af.id = a.id and af.household_id = recipe_ingredients.household_id
   ), '{}')::text[] as alternative_names,
+  -- Their amounts and units, 0 and '' for the ingredient's own, and their
+  -- foods' weights, to weigh them.
+  coalesce((
+    select array_agg(coalesce(recipe_ingredients.alternative_food_amounts[a.position], 0) order by a.position)
+    from unnest(recipe_ingredients.alternative_food_ids) with ordinality as a(id, position)
+    join foods af on af.id = a.id and af.household_id = recipe_ingredients.household_id
+  ), '{}')::double precision[] as alternative_amounts,
+  coalesce((
+    select array_agg(coalesce(recipe_ingredients.alternative_food_units[a.position], '') order by a.position)
+    from unnest(recipe_ingredients.alternative_food_ids) with ordinality as a(id, position)
+    join foods af on af.id = a.id and af.household_id = recipe_ingredients.household_id
+  ), '{}')::text[] as alternative_units,
+  coalesce((
+    select array_agg(coalesce(af.grams_per_piece, 0) order by a.position)
+    from unnest(recipe_ingredients.alternative_food_ids) with ordinality as a(id, position)
+    join foods af on af.id = a.id and af.household_id = recipe_ingredients.household_id
+  ), '{}')::double precision[] as alternative_grams_per_piece,
+  coalesce((
+    select array_agg(coalesce(af.grams_per_milliliter, 0) order by a.position)
+    from unnest(recipe_ingredients.alternative_food_ids) with ordinality as a(id, position)
+    join foods af on af.id = a.id and af.household_id = recipe_ingredients.household_id
+  ), '{}')::double precision[] as alternative_grams_per_milliliter,
+  coalesce((
+    select array_agg(coalesce(af.package_grams, 0) order by a.position)
+    from unnest(recipe_ingredients.alternative_food_ids) with ordinality as a(id, position)
+    join foods af on af.id = a.id and af.household_id = recipe_ingredients.household_id
+  ), '{}')::double precision[] as alternative_package_grams,
   -- The alternatives that are still the household's recipes, likewise.
   coalesce((
     select array_agg(ar.id order by a.position)
@@ -578,7 +623,17 @@ select
     select array_agg(ar.name order by a.position)
     from unnest(recipe_ingredients.alternative_recipe_ids) with ordinality as a(id, position)
     join recipes ar on ar.id = a.id and ar.household_id = recipe_ingredients.household_id
-  ), '{}')::text[] as alternative_recipe_names
+  ), '{}')::text[] as alternative_recipe_names,
+  coalesce((
+    select array_agg(coalesce(recipe_ingredients.alternative_recipe_amounts[a.position], 0) order by a.position)
+    from unnest(recipe_ingredients.alternative_recipe_ids) with ordinality as a(id, position)
+    join recipes ar on ar.id = a.id and ar.household_id = recipe_ingredients.household_id
+  ), '{}')::double precision[] as alternative_recipe_amounts_read,
+  coalesce((
+    select array_agg(coalesce(recipe_ingredients.alternative_recipe_units[a.position], '') order by a.position)
+    from unnest(recipe_ingredients.alternative_recipe_ids) with ordinality as a(id, position)
+    join recipes ar on ar.id = a.id and ar.household_id = recipe_ingredients.household_id
+  ), '{}')::text[] as alternative_recipe_units_read
 from recipe_ingredients
 left join foods f on f.id = recipe_ingredients.food_id
 where recipe_ingredients.household_id = $1
@@ -624,8 +679,15 @@ type ListRecipeIngredientsRow struct {
 	PriceCentsPerKilogram           *int32
 	AlternativeIds                  []pgtype.UUID
 	AlternativeNames                []string
+	AlternativeAmounts              []float64
+	AlternativeUnits                []string
+	AlternativeGramsPerPiece        []float64
+	AlternativeGramsPerMilliliter   []float64
+	AlternativePackageGrams         []float64
 	AlternativeRecipeIdsRead        []pgtype.UUID
 	AlternativeRecipeNames          []string
+	AlternativeRecipeAmountsRead    []float64
+	AlternativeRecipeUnitsRead      []string
 }
 
 // The ingredients of the given recipes, or of all the household's recipes,
@@ -653,6 +715,10 @@ func (q *Queries) ListRecipeIngredients(ctx context.Context, arg *ListRecipeIngr
 			&i.RecipeIngredient.KitchenUnit,
 			&i.RecipeIngredient.AlternativeFoodIds,
 			&i.RecipeIngredient.AlternativeRecipeIds,
+			&i.RecipeIngredient.AlternativeFoodAmounts,
+			&i.RecipeIngredient.AlternativeFoodUnits,
+			&i.RecipeIngredient.AlternativeRecipeAmounts,
+			&i.RecipeIngredient.AlternativeRecipeUnits,
 			&i.FoodName,
 			&i.EnergyKcalPer100Grams,
 			&i.ProteinGramsPer100Grams,
@@ -683,8 +749,15 @@ func (q *Queries) ListRecipeIngredients(ctx context.Context, arg *ListRecipeIngr
 			&i.PriceCentsPerKilogram,
 			&i.AlternativeIds,
 			&i.AlternativeNames,
+			&i.AlternativeAmounts,
+			&i.AlternativeUnits,
+			&i.AlternativeGramsPerPiece,
+			&i.AlternativeGramsPerMilliliter,
+			&i.AlternativePackageGrams,
 			&i.AlternativeRecipeIdsRead,
 			&i.AlternativeRecipeNames,
+			&i.AlternativeRecipeAmountsRead,
+			&i.AlternativeRecipeUnitsRead,
 		); err != nil {
 			return nil, err
 		}

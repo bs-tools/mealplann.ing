@@ -39,7 +39,7 @@ import {
 } from "gen/recipes/v1/recipes-RecipeService_connectquery";
 import type { Ingredient, Recipe, Step } from "gen/recipes/v1/recipes_pb";
 import { RecipeService } from "gen/recipes/v1/recipes_pb";
-import { AMOUNT_UNITS } from "helpers/labels";
+import { AMOUNT_UNITS, optionValue } from "helpers/labels";
 import {
   hoursMinutesInput,
   parseDuration,
@@ -55,7 +55,25 @@ import { Link, useNavigate } from "react-router";
 interface Alternative extends PickedFood {
   // Whether it's a recipe, which only a component can have, or a food.
   isRecipe: boolean;
+  // How much of it to use, empty for the ingredient's own amount.
+  amount: string;
+  // The amount's unit: for a recipe, unspecified for its servings.
+  unit: AmountUnit;
 }
+
+/**
+ * NewAlternative returns an alternative using the ingredient's own amount
+ * until one is given: in grams for a food, servings for a recipe.
+ */
+const newAlternative = (
+  picked: PickedFood,
+  isRecipe: boolean
+): Alternative => ({
+  ...picked,
+  amount: "",
+  isRecipe,
+  unit: isRecipe ? AmountUnit.UNSPECIFIED : AmountUnit.GRAMS,
+});
 
 interface IngredientInput {
   // A key for React, as ingredients move.
@@ -168,19 +186,21 @@ const ingredientInputs = (recipe: Recipe | undefined): IngredientInput[] => {
   return recipe.ingredients.map((ingredient) => {
     const isRecipe = ingredient.recipeId !== "";
     return {
-      alternatives: ingredient.alternatives.map((alternative) =>
-        alternative.recipeId === ""
-          ? {
-              id: alternative.foodId,
-              isRecipe: false,
-              name: alternative.foodName,
-            }
-          : {
-              id: alternative.recipeId,
-              isRecipe: true,
-              name: alternative.recipeName,
-            }
-      ),
+      alternatives: ingredient.alternatives.map((alternative) => {
+        const isAlternativeRecipe = alternative.recipeId !== "";
+        return {
+          amount: alternative.amount === 0 ? "" : String(alternative.amount),
+          id: isAlternativeRecipe ? alternative.recipeId : alternative.foodId,
+          isRecipe: isAlternativeRecipe,
+          name: isAlternativeRecipe
+            ? alternative.recipeName
+            : alternative.foodName,
+          unit:
+            isAlternativeRecipe || alternative.unit !== AmountUnit.UNSPECIFIED
+              ? alternative.unit
+              : AmountUnit.GRAMS,
+        };
+      }),
       // An unmatched draft ingredient's unknown amount is empty.
       amount: ingredient.amount === 0 ? "" : String(ingredient.amount),
       food: isRecipe
@@ -346,7 +366,11 @@ const ingredientsKey = (ingredients: IngredientInput[]): string =>
     ingredients.map((ingredient) => [
       ingredient.isRecipe,
       ingredient.food?.id ?? "",
-      ingredient.alternatives.map((alternative) => alternative.id),
+      ingredient.alternatives.map((alternative) => [
+        alternative.id,
+        alternative.amount.trim(),
+        alternative.unit,
+      ]),
       ingredient.recipe?.id ?? "",
       ingredient.amount.trim(),
       ingredient.unit,
@@ -827,6 +851,35 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
     const parsedIngredients = [];
     for (const [index, ingredient] of kept.entries()) {
       const amount = parseQuantity(ingredient.amount);
+      /*
+       * An alternative's amount is optional: without one it takes the
+       * ingredient's own.
+       */
+      const alternatives = [];
+      for (const alternative of ingredient.alternatives) {
+        const alternativeAmount = parseQuantity(alternative.amount);
+        if (
+          alternativeAmount === null ||
+          (alternativeAmount !== undefined && alternativeAmount <= 0)
+        ) {
+          setInvalid(
+            `The amount of ${alternative.name} must be a number, or empty to use the same amount.`
+          );
+          return;
+        }
+        const measured = {
+          amount: alternativeAmount ?? 0,
+          unit:
+            alternativeAmount === undefined
+              ? AmountUnit.UNSPECIFIED
+              : alternative.unit,
+        };
+        alternatives.push(
+          alternative.isRecipe
+            ? { ...measured, recipeId: alternative.id }
+            : { ...measured, foodId: alternative.id }
+        );
+      }
       if (ingredient.isRecipe) {
         if (ingredient.recipe === null) {
           setInvalid(`Choose the recipe of ingredient ${index + 1}.`);
@@ -837,11 +890,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
           return;
         }
         parsedIngredients.push({
-          alternatives: ingredient.alternatives.map((alternative) =>
-            alternative.isRecipe
-              ? { recipeId: alternative.id }
-              : { foodId: alternative.id }
-          ),
+          alternatives,
           amount,
           note: ingredient.note,
           optional: ingredient.optional,
@@ -880,9 +929,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
         return;
       }
       parsedIngredients.push({
-        alternatives: ingredient.alternatives.map((alternative) => ({
-          foodId: alternative.id,
-        })),
+        alternatives,
         amount,
         foodId: ingredient.food.id,
         note: ingredient.note,
@@ -1270,24 +1317,87 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                     ? ingredient.recipe
                     : ingredient.food) !== null && (
                     <div className="flex flex-wrap items-center gap-1.5 text-sm">
-                      {ingredient.alternatives.map((alternative) => (
-                        <button
-                          key={alternative.id}
-                          type="button"
-                          className="inline-flex items-center gap-1 rounded-full bg-pine-50 px-2.5 py-1 text-pine-dark"
-                          aria-label={`Remove ${alternative.name} as an alternative`}
-                          onClick={() => {
-                            setIngredient(index, {
-                              alternatives: ingredient.alternatives.filter(
-                                (other) => other.id !== alternative.id
-                              ),
-                            });
-                          }}
-                        >
-                          or {alternative.name}
-                          <XMarkIcon className="size-3.5" aria-hidden="true" />
-                        </button>
-                      ))}
+                      {ingredient.alternatives.map((alternative, which) => {
+                        const units = alternative.isRecipe
+                          ? COMPONENT_UNITS
+                          : AMOUNT_UNITS;
+                        const setAlternative = (
+                          changes: Partial<Alternative>
+                        ): void => {
+                          setIngredient(index, {
+                            alternatives: ingredient.alternatives.map(
+                              (other, at) =>
+                                at === which ? { ...other, ...changes } : other
+                            ),
+                          });
+                        };
+                        return (
+                          <span
+                            key={alternative.id}
+                            className="inline-flex items-center gap-1 rounded-full bg-pine-50 py-0.5 pr-1 pl-2.5 text-pine-dark"
+                          >
+                            or
+                            {/*
+                             * How much of it, when it isn't the same amount,
+                             * like a package of canned beans for a pot.
+                             */}
+                            <input
+                              aria-label={`Amount of ${alternative.name}`}
+                              className="w-14 rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-sm text-ink-soft tabular-nums placeholder:text-gray-500 focus:border-pine focus:ring-1 focus:ring-pine focus:outline-none"
+                              inputMode="decimal"
+                              placeholder="same"
+                              title="How much of it to use instead; empty for the same amount"
+                              value={alternative.amount}
+                              onChange={(event) => {
+                                setAlternative({ amount: event.target.value });
+                              }}
+                            />
+                            {alternative.amount.trim() !== "" && (
+                              <select
+                                aria-label={`Unit of ${alternative.name}`}
+                                className="rounded-md border border-gray-300 bg-white px-1 py-0.5 text-sm text-ink-soft focus:border-pine focus:ring-1 focus:ring-pine focus:outline-none"
+                                value={alternative.unit}
+                                onChange={(event) => {
+                                  setAlternative({
+                                    unit: optionValue(
+                                      units,
+                                      event.target.value,
+                                      alternative.unit
+                                    ),
+                                  });
+                                }}
+                              >
+                                {units.map((option) => (
+                                  <option
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            <span>{alternative.name}</span>
+                            <button
+                              type="button"
+                              className="rounded-full p-1 hover:bg-pine-100"
+                              aria-label={`Remove ${alternative.name} as an alternative`}
+                              onClick={() => {
+                                setIngredient(index, {
+                                  alternatives: ingredient.alternatives.filter(
+                                    (other) => other.id !== alternative.id
+                                  ),
+                                });
+                              }}
+                            >
+                              <XMarkIcon
+                                className="size-3.5"
+                                aria-hidden="true"
+                              />
+                            </button>
+                          </span>
+                        );
+                      })}
                       {alternativeFor?.key === ingredient.key ? (
                         <div className="min-w-48 grow">
                           {alternativeFor.isRecipe ? (
@@ -1308,7 +1418,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                                 setIngredient(index, {
                                   alternatives: [
                                     ...ingredient.alternatives,
-                                    { ...picked, isRecipe: true },
+                                    newAlternative(picked, true),
                                   ],
                                 });
                               }}
@@ -1330,7 +1440,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
                                 setIngredient(index, {
                                   alternatives: [
                                     ...ingredient.alternatives,
-                                    { ...food, isRecipe: false },
+                                    newAlternative(food, false),
                                   ],
                                 });
                               }}

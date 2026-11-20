@@ -71,7 +71,7 @@ select
   sc.date as supplier_date,
   sr.name as supplier_recipe_name,
   (coalesce((
-    select sum(component_servings(ri.amount, ri.unit, sr.id)) from recipe_ingredients ri
+    select sum(ingredient_servings(ri, sr.id)) from recipe_ingredients ri
     where ri.recipe_id = cr.id and ri.component_recipe_id = s.component_recipe_id and not ri.optional
   ), 0) * cc.servings / cr.servings)::double precision as servings,
   -- The recipes the ingredient lists as alternatives, whose cooks can
@@ -109,7 +109,7 @@ select
     where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
   ), 0)
   + coalesce((
-    select sum(component_servings(ri.amount, ri.unit, cooks.recipe_id) * cc.servings / cr.servings)
+    select sum(ingredient_servings(ri, cooks.recipe_id) * cc.servings / cr.servings)
     from cook_supplies s
     join cooks cc on cc.id = s.consumer_cook_id
     join recipes cr on cr.id = cc.recipe_id
@@ -117,7 +117,7 @@ select
     where s.supplier_cook_id = cooks.id and s.from_freezer
   ), 0))::double precision as late_servings,
   coalesce((
-    select sum(component_servings(ri.amount, ri.unit, cooks.recipe_id) * cc.servings / cr.servings)
+    select sum(ingredient_servings(ri, cooks.recipe_id) * cc.servings / cr.servings)
     from cook_supplies s
     join cooks cc on cc.id = s.consumer_cook_id
     join recipes cr on cr.id = cc.recipe_id
@@ -148,7 +148,7 @@ select
     where p.cook_id = cooks.id and (p.from_freezer or p.date > cooks.date + r.fridge_days)
   ), 0)
   + coalesce((
-    select sum(component_servings(ri.amount, ri.unit, cooks.recipe_id) * cc.servings / cr.servings)
+    select sum(ingredient_servings(ri, cooks.recipe_id) * cc.servings / cr.servings)
     from cook_supplies s
     join cooks cc on cc.id = s.consumer_cook_id
     join recipes cr on cr.id = cc.recipe_id
@@ -156,7 +156,7 @@ select
     where s.supplier_cook_id = cooks.id and s.from_freezer
   ), 0))::double precision as late_servings,
   coalesce((
-    select sum(component_servings(ri.amount, ri.unit, cooks.recipe_id) * cc.servings / cr.servings)
+    select sum(ingredient_servings(ri, cooks.recipe_id) * cc.servings / cr.servings)
     from cook_supplies s
     join cooks cc on cc.id = s.consumer_cook_id
     join recipes cr on cr.id = cc.recipe_id
@@ -187,7 +187,7 @@ select
     where p.cook_id = cooks.id and (p.from_freezer or p.date > cooks.date + r.fridge_days)
   ), 0)
   + coalesce((
-    select sum(component_servings(ri.amount, ri.unit, cooks.recipe_id) * cc.servings / cr.servings)
+    select sum(ingredient_servings(ri, cooks.recipe_id) * cc.servings / cr.servings)
     from cook_supplies s
     join cooks cc on cc.id = s.consumer_cook_id
     join recipes cr on cr.id = cc.recipe_id
@@ -195,7 +195,7 @@ select
     where s.supplier_cook_id = cooks.id and s.from_freezer
   ), 0))::double precision as late_servings,
   coalesce((
-    select sum(component_servings(ri.amount, ri.unit, cooks.recipe_id) * cc.servings / cr.servings)
+    select sum(ingredient_servings(ri, cooks.recipe_id) * cc.servings / cr.servings)
     from cook_supplies s
     join cooks cc on cc.id = s.consumer_cook_id
     join recipes cr on cr.id = cc.recipe_id
@@ -415,7 +415,7 @@ cross join lateral (
     where p.cook_id = cooks.id and (p.from_freezer or (r.fridge_days is not null and p.date > cooks.date + r.fridge_days))
   ), 0)
     + coalesce((
-      select sum(component_servings(ri.amount, ri.unit, cooks.recipe_id) * cc.servings / cr.servings)
+      select sum(ingredient_servings(ri, cooks.recipe_id) * cc.servings / cr.servings)
       from cook_supplies s
       join cooks cc on cc.id = s.consumer_cook_id
       join recipes cr on cr.id = cc.recipe_id

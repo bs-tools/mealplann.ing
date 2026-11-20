@@ -31,9 +31,10 @@ type Need struct {
 	// Recipe is the recipe it's an ingredient of, with an invalid ID for a
 	// food eaten without one.
 	Recipe RecipeRef
-	// Alternatives are the foods that can be used instead, in the same
-	// weight, in order of preference: an ingredient's alternatives.
-	Alternatives []pgtype.UUID
+	// Alternatives are the foods that can be used instead, in order of
+	// preference, each in its own amount or the need's weight: an
+	// ingredient's alternative foods, scaled like it.
+	Alternatives []recipes.Alternative
 	// Instead is set on the needs of what a component is made of, when it
 	// can be replaced with a food the pantry has, like canned beans for a
 	// pot of beans: needs sharing it are replaced together.
@@ -57,6 +58,26 @@ func RestockNeeds(kept []*foods.Food, shopDate time.Time) []Need {
 	return needs
 }
 
+// foodAlternatives returns the alternatives that are foods, nil if none.
+func foodAlternatives(alternatives []recipes.Alternative) []recipes.Alternative {
+	var found []recipes.Alternative
+	for _, a := range alternatives {
+		if a.FoodID.Valid {
+			found = append(found, a)
+		}
+	}
+	return found
+}
+
+// AlternativeIDs returns the IDs of the need's alternative foods.
+func (n *Need) AlternativeIDs() []pgtype.UUID {
+	ids := make([]pgtype.UUID, 0, len(n.Alternatives))
+	for _, a := range n.Alternatives {
+		ids = append(ids, a.FoodID)
+	}
+	return ids
+}
+
 // NeedsOf returns what a plan needs bought, in the order of its dates: the
 // ingredients of the cooks not yet done, scaled to their servings, with
 // their components made of their own ingredients unless another cook
@@ -78,7 +99,7 @@ func NeedsOf(plan *plans.Plan, byID map[pgtype.UUID]*recipes.Recipe) []Need {
 			needs = append(needs, Need{
 				FoodID: in.FoodID, Date: date, Amount: in.Amount, Unit: in.Unit,
 				Recipe:       RecipeRef{ID: r.ID, Name: r.Name},
-				Alternatives: in.AlternativeIDs(),
+				Alternatives: foodAlternatives(in.Alternatives),
 				Instead:      in.Instead,
 			})
 		}
@@ -313,9 +334,10 @@ func withComponentFoods(in *Input, left map[pgtype.UUID]float64) []Need {
 		if !seen {
 			done = false
 			for _, f := range inst.Foods {
-				if _, known := in.Foods[f]; known && inst.Grams > 0 && left[f] >= inst.Grams-crumbGrams {
-					left[f] -= inst.Grams
-					needs = append(needs, Need{FoodID: f, Date: n.Date, Amount: inst.Grams, Unit: nutrition.Grams, Recipe: n.Recipe})
+				grams := inst.GramsOf(f)
+				if _, known := in.Foods[f]; known && grams > 0 && left[f] >= grams-crumbGrams {
+					left[f] -= grams
+					needs = append(needs, Need{FoodID: f, Date: n.Date, Amount: grams, Unit: nutrition.Grams, Recipe: n.Recipe})
 					done = true
 					break
 				}
@@ -357,9 +379,11 @@ func withAlternatives(in *Input) []Need {
 		}
 		if left[n.FoodID] < grams-crumbGrams {
 			for _, alternative := range n.Alternatives {
-				if _, known := in.Foods[alternative]; known && left[alternative] >= grams-crumbGrams {
-					// It's used in the weight of the ingredient's own food.
-					n.FoodID, n.Amount, n.Unit = alternative, grams, nutrition.Grams
+				// It's used in its own amount, or the weight of the
+				// ingredient's own food.
+				instead, weighed := alternative.GramsFor(grams)
+				if _, known := in.Foods[alternative.FoodID]; known && weighed && left[alternative.FoodID] >= instead-crumbGrams {
+					n.FoodID, n.Amount, n.Unit, grams = alternative.FoodID, instead, nutrition.Grams, instead
 					break
 				}
 			}

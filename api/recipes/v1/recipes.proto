@@ -358,7 +358,8 @@ message Ingredient {
   // be converted, as the recipe has no yield in that unit.
   double component_servings = 13 [(mcp.v1.field).output_only = true];
   // The foods the ingredient can be made with instead of food_id, in the
-  // same amount, like extra firm tofu for firm, in order of preference:
+  // same amount or their own, like extra firm tofu for firm, in order of
+  // preference:
   // "1 block of firm or extra firm tofu". The recipe's nutrition and cost
   // are food_id's. The shopping list counts whichever of them the pantry
   // has, and buys food_id if it has none of them; marking the cook done
@@ -373,9 +374,13 @@ message Ingredient {
   // supplies it, with that recipe's yield.
   //
   // A component can list foods too, like canned black beans for a pot of
-  // them: when the pantry has enough of one, by the component's weight,
-  // planning plans no cook of it, the shopping list doesn't buy for it, and
-  // marking the dish cooked takes that food out of the pantry instead.
+  // them: when the pantry has enough of one, by its own amount or else the
+  // component's weight, planning plans no cook of it, the shopping list
+  // doesn't buy for it, and marking the dish cooked takes that food out of
+  // the pantry instead.
+  //
+  // Each alternative can have an amount of its own, like 1 package of
+  // canned beans, for when it isn't used in the ingredient's.
   //
   // At most 5: foods for a food; recipes or foods for a component; each
   // the household's and different from the ingredient's own.
@@ -394,6 +399,17 @@ message IngredientAlternative {
   string recipe_id = 3;
   // The name of the recipe.
   string recipe_name = 4 [(mcp.v1.field).output_only = true];
+  // How much of it is used instead, in unit, like 1 package of canned black
+  // beans for 250 g of a pot of them, or 400 g of extra firm tofu for a
+  // block of firm. 0, the default, for the ingredient's own amount and
+  // unit. Scaled with the recipe, like the ingredient's.
+  double amount = 5;
+  // The unit of amount, as an ingredient's: for a food, required with an
+  // amount, and weighed with its grams_per_piece, grams_per_milliliter or
+  // package_grams, without which the pantry can't count it; for a recipe,
+  // unspecified for servings of it, or a unit of what it makes. Kitchen
+  // units are returned converted.
+  foods.v1.AmountUnit unit = 6;
 }
 
 // The nutrition of a recipe, computed from its ingredients' foods, as

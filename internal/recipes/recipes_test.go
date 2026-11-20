@@ -99,3 +99,49 @@ func TestComponentsCycle(t *testing.T) {
 		t.Error("got A not using itself, want the cycle found")
 	}
 }
+
+// TestAlternativeAmountsScale checks that alternatives' own amounts scale
+// with the recipe, as its ingredients do: a can of beans for the chili's
+// chickpeas, 400 g of extra firm tofu for its firm, and 3 servings of
+// quick chickpeas, for 8 servings rather than 4. One without an amount
+// takes the ingredient's.
+func TestAlternativeAmountsScale(t *testing.T) {
+	t.Parallel()
+	chili, chickpeas := chili()
+	quick := &Recipe{ID: store.NewUUID(), Name: "Quick chickpeas", Servings: 4, Ingredients: []*Ingredient{food("Canned chickpeas", 400, 120, 7)}}
+	can, extraFirm, silken := store.NewUUID(), store.NewUUID(), store.NewUUID()
+	pot := chili.Ingredients[1]
+	pot.Alternatives = []Alternative{
+		{FoodID: can, Amount: 1, Unit: nutrition.Packages, Grams: 400},
+		{RecipeID: quick.ID, Recipe: quick, Amount: 3},
+	}
+	tofu := food("Tofu, firm", 350, 144, 15)
+	tofu.Alternatives = []Alternative{
+		{FoodID: extraFirm, Amount: 400, Unit: nutrition.Grams, Grams: 400},
+		{FoodID: silken},
+	}
+	chili.Ingredients = append(chili.Ingredients, tofu)
+
+	need := chili.ComponentsFor(8)[0]
+	if need.Recipe != chickpeas || need.Instead.GramsOf(can) != 800 {
+		t.Errorf("got %+v, want 2 cans, 800 g, for 8 servings", need.Instead)
+	}
+	if got, ok := need.ServingsOf(quick.ID); !ok || got != 6 {
+		t.Errorf("got %v servings of the quick chickpeas, want 6", got)
+	}
+	for _, in := range chili.IngredientsFor(8) {
+		if in.FoodName != "Tofu, firm" {
+			continue
+		}
+		if g, ok := in.Alternatives[0].GramsFor(700); !ok || g != 800 {
+			t.Errorf("got %v g of extra firm tofu, want 800", g)
+		}
+		if g, ok := in.Alternatives[1].GramsFor(700); !ok || g != 700 {
+			t.Errorf("got %v g of silken tofu, want the firm's 700", g)
+		}
+	}
+	// The recipe's own alternatives aren't changed.
+	if tofu.Alternatives[0].Grams != 400 {
+		t.Errorf("got the recipe's extra firm tofu changed to %v g", tofu.Alternatives[0].Grams)
+	}
+}

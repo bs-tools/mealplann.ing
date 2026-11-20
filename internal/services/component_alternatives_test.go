@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
+
 	"connectrpc.com/connect/v2"
 	foodsv1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
 	plansv1 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
@@ -109,4 +111,21 @@ func TestComponentAlternatives(t *testing.T) {
 	}
 	blackBeans := freeze(other, monday)
 	wantCode(t, set(blackBeans.GetId()), connect.CodeInvalidArgument)
+
+	// With an amount of its own, 2 servings, the quick beans supply that
+	// rather than the 250 g converted.
+	in.GetAlternatives()[0].SetAmount(2)
+	if _, err := e.recipes.UpdateRecipe(ctx, recipesv1.UpdateRecipeRequest_builder{
+		Recipe:     recipesv1.Recipe_builder{Id: chili.GetId(), Ingredients: []*recipesv1.Ingredient{in}}.Build(),
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"ingredients"}},
+	}.Build()); err != nil {
+		t.Fatalf("UpdateRecipe: %v", err)
+	}
+	if err := set(frozenQuick.GetId()); err != nil {
+		t.Fatalf("SetCookSupplier: %v", err)
+	}
+	_, cooks = weekCooks(t, e, monday)
+	if s := supply(); s.GetSupplierCookId() != frozenQuick.GetId() || !near(s.GetServings(), 2) {
+		t.Errorf("got supply %v, want the quick beans' own 2 servings", s)
+	}
 }

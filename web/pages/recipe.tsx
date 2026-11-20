@@ -47,6 +47,7 @@ import { formatIngredientAmount, formatServings } from "helpers/labels";
 import { formatAmount } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
 import {
+  alternativeAmount,
   formatStepDuration,
   groupSteps,
   ingredientAmount,
@@ -368,6 +369,11 @@ const RecipePage: React.FC = () => {
                       ingredient.alternatives.map((alternative) => (
                         <React.Fragment key={alternative.foodId}>
                           <span className="text-muted">or</span>
+                          {alternative.amount > 0 && (
+                            <span className="font-medium text-ink-soft tabular-nums">
+                              {alternativeAmount(alternative, 1, system)}
+                            </span>
+                          )}
                           <Link
                             to={`/foods/${alternative.foodId}`}
                             className="text-ink-soft hover:underline"
@@ -391,6 +397,11 @@ const RecipePage: React.FC = () => {
                             key={`${alternative.recipeId}${alternative.foodId}`}
                           >
                             <span className="text-muted">or</span>
+                            {alternative.amount > 0 && (
+                              <span className="font-medium text-ink-soft tabular-nums">
+                                {alternativeAmount(alternative, 1, system)}
+                              </span>
+                            )}
                             <Link
                               to={
                                 alternative.recipeId === ""
