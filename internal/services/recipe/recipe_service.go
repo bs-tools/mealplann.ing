@@ -29,6 +29,7 @@ import (
 	"github.com/bs-tools/mealplann.ing/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 var _ recipesv1connect.RecipeServiceHandler = (*Service)(nil)
@@ -408,8 +409,12 @@ func (s *Service) UpdateRecipe(ctx context.Context, req *recipesv1.UpdateRecipeR
 		return nil, s.toConnectError(ctx, err, "failed to get recipe")
 	}
 	merged := recipeToProto(existing)
-	if err := protomask.Apply(merged, req.GetRecipe(), req.GetUpdateMask(), keepFields...); err != nil {
+	mask, replaceAlternatives := alternativesMask(req.GetUpdateMask())
+	if err := protomask.Apply(merged, req.GetRecipe(), mask, keepFields...); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err.Error())
+	}
+	if !replaceAlternatives {
+		keepAlternatives(merged.GetIngredients(), recipeToProto(existing).GetIngredients())
 	}
 	recipe, err := recipeFromProto(merged)
 	if err != nil {
@@ -425,6 +430,52 @@ func (s *Service) UpdateRecipe(ctx context.Context, req *recipesv1.UpdateRecipeR
 		return nil, s.toConnectError(ctx, err, "failed to update recipe")
 	}
 	return recipesv1.UpdateRecipeResponse_builder{Recipe: recipeToProto(updated)}.Build(), nil
+}
+
+// alternativesPath is the update mask path that replaces ingredients'
+// alternatives as given, clearing those an ingredient doesn't list.
+const alternativesPath = "ingredients.alternatives"
+
+// alternativesMask returns the update mask to apply, without
+// alternativesPath, which protomask can't apply into a list, and whether
+// it had it. It stands for "ingredients" too, as alternatives are only
+// replaced with the ingredients.
+func alternativesMask(mask *fieldmaskpb.FieldMask) (*fieldmaskpb.FieldMask, bool) {
+	paths := mask.GetPaths()
+	if !slices.Contains(paths, alternativesPath) {
+		return mask, false
+	}
+	kept := []string{"ingredients"}
+	for _, path := range paths {
+		if path != alternativesPath && path != "ingredients" {
+			kept = append(kept, path)
+		}
+	}
+	return &fieldmaskpb.FieldMask{Paths: kept}, true
+}
+
+// keepAlternatives gives each ingredient that lists no alternatives those
+// of the recipe's ingredient of the same food or recipe, in order, unless
+// the update mask has alternativesPath. A client replacing the
+// ingredients, to change an amount or add one, would otherwise drop the
+// alternatives it didn't read or doesn't know about, silently: planning
+// would then stop taking leftovers of quick-cooked beans for a component
+// of soaked ones, and the shopping list would stop counting canned ones.
+func keepAlternatives(ingredients, existing []*recipesv1.Ingredient) {
+	used := make([]bool, len(existing))
+	for _, in := range ingredients {
+		if len(in.GetAlternatives()) > 0 || (in.GetFoodId() == "" && in.GetRecipeId() == "") {
+			continue
+		}
+		for i, old := range existing {
+			if used[i] || old.GetFoodId() != in.GetFoodId() || old.GetRecipeId() != in.GetRecipeId() {
+				continue
+			}
+			used[i] = true
+			in.SetAlternatives(old.GetAlternatives())
+			break
+		}
+	}
 }
 
 // maxAmountRatio is the most ReplaceFood can multiply amounts by, or
