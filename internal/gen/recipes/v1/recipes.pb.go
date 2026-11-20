@@ -1367,6 +1367,13 @@ type Ingredient_builder struct {
 	// Each alternative can have an amount of its own, like 1 package of
 	// canned beans, for when it isn't used in the ingredient's.
 	//
+	// Updating the ingredients keeps the alternatives of an ingredient
+	// given without any, matched by its food or recipe, so a client that
+	// doesn't read or send them doesn't drop them. To change or remove
+	// alternatives, add "ingredients.alternatives" to the update_mask: the
+	// alternatives are then as given, and an ingredient without any has
+	// none.
+	//
 	// At most 5: foods for a food; recipes or foods for a component; each
 	// the household's and different from the ingredient's own.
 	Alternatives []*IngredientAlternative
@@ -2955,7 +2962,9 @@ type UpdateRecipeRequest_builder struct {
 	Recipe *Recipe
 	// The fields to update, e.g. "name,servings". If empty, all fields are
 	// replaced. Lists, like ingredients and instructions, are replaced as a
-	// whole.
+	// whole, except that ingredients given without alternatives keep their
+	// own: to change or remove alternatives, add
+	// "ingredients.alternatives" (see Ingredient.alternatives).
 	UpdateMask *fieldmaskpb.FieldMask
 }
 

@@ -963,9 +963,19 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ recipe, copyOf, allTags }) => {
       create.mutate({ recipe: fields });
     } else {
       // Saving as a recipe or a draft is a change of its own.
-      const savePaths = paths.flatMap((path) =>
-        path === "yield_amount" ? [path, "yield_unit"] : [path]
-      );
+      /*
+       * The ingredients are saved with their alternatives as edited, so
+       * removing one removes it: by default an ingredient without any keeps
+       * those it had.
+       */
+      const savePaths = paths.flatMap((path) => {
+        if (path === "yield_amount") {
+          return [path, "yield_unit"];
+        }
+        return path === "ingredients"
+          ? [path, "ingredients.alternatives"]
+          : [path];
+      });
       if (draft !== recipe.draft) {
         savePaths.push("draft");
       }
