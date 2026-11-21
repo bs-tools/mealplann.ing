@@ -5,7 +5,7 @@
 # and the name at the end.
 
 # Runs the web app's tools: npm, tsc, oxlint, oxfmt and Tailwind.
-FROM node:26.13.0-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216 AS node
+FROM node:26.13.1-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS node
 
 # The base of the server's image, which ko adds the binary to. It has CA
 # certificates and time zone data, and runs as a user without root.
@@ -13,7 +13,7 @@ FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c
 
 # Only its tag is used: the version of Terraform that CI, and the Makefile
 # locally, install to plan and apply infra/.
-FROM hashicorp/terraform:1.17.1@sha256:a5d5a5a892c98f60fcbfa81eac2a40fc19e7b3fa7719bccae10ff6111d22524a AS terraform
+FROM hashicorp/terraform:1.17.2@sha256:6e9c1e647c31a960dc9b59e13272f9111d90010c10b717f77ffb324767660475 AS terraform
 
 # The local and test database. Production runs on Neon, whose major version
 # this follows.
