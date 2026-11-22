@@ -170,9 +170,15 @@ const (
 	// OnHandPoints is for eating leftovers already cooked, in the fridge or
 	// the freezer (see Input.OnHand): no cooking at all and nothing to buy,
 	// so they come before cooking anything, even the rest of a meal the
-	// plan cooks (MealLeftoverPoints). OnHandSoonPoints adds to it for
+	// plan cooks (MealLeftoverPoints). It's more than all a new cook can
+	// earn for what it cooks and buys, which leftovers don't (shared
+	// ingredients and a short shop, the rest of packs, the pantry, keeping
+	// and its meal tag, about 35 at most): with less, a new cook of a
+	// favorite using the pantry won over leftovers that were about to go
+	// off. Nutrition and rules still count for both, so leftovers that
+	// break someone's rule make way. OnHandSoonPoints adds to it for
 	// leftovers that stop keeping within UseSoonDays, to eat them first.
-	OnHandPoints     = 14.0
+	OnHandPoints     = 36.0
 	OnHandSoonPoints = 3.0
 	// OnHandShare is the least share of everyone's servings at a meal that
 	// leftovers on hand may make: with less, they're shared out smaller
@@ -523,6 +529,8 @@ type scorer struct {
 	plannedGrams map[plans.Slot]float64
 	// sides are the recipes other recipes are served with, by ID.
 	sides map[pgtype.UUID]bool
+	// components are the recipes that are components of others.
+	components map[pgtype.UUID]bool
 }
 
 func newScorer(in *Input) *scorer {
@@ -533,8 +541,14 @@ func newScorer(in *Input) *scorer {
 		plannedGrams: map[plans.Slot]float64{},
 	}
 	s.sides = map[pgtype.UUID]bool{}
+	s.components = map[pgtype.UUID]bool{}
 	for _, r := range in.Recipes {
 		s.recipes[r.ID] = r
+		for _, ing := range r.Ingredients {
+			if ing.ComponentRecipeID.Valid {
+				s.components[ing.ComponentRecipeID] = true
+			}
+		}
 		for _, side := range r.ServedWith {
 			if side.RecipeID.Valid {
 				s.sides[side.RecipeID] = true
@@ -695,6 +709,7 @@ func (s *scorer) scoreCandidate(c *candidate) *Suggestion {
 		s.nutrition(c)
 		s.rules(c)
 		s.tastes(c)
+		s.liked(c)
 		c.add(Leftover, OnHandPoints, "cooked %s: no cooking, and nothing to buy", formatDate(c.onHand.Cook.Date))
 		if until := c.onHand.Until; !until.IsZero() && pantry.DaysTo(s.in.Date, until) <= UseSoonDays {
 			c.add(Leftover, OnHandSoonPoints, "keeps only until %s, so it's eaten first", formatDate(until))
@@ -739,20 +754,27 @@ func (s *scorer) scoreCandidate(c *candidate) *Suggestion {
 		s.variety(c)
 		s.cooks(c)
 		s.mealTag(c)
-		if r.Favorite {
-			c.add(Favorite, FavoritePoints, "a household favorite")
-		}
-		if n := s.in.History[r.ID]; n > 0 {
-			times := "times"
-			if n == 1 {
-				times = "time"
-			}
-			c.add(Cooked, math.Min(float64(n)*CookedPoints, MaxCookedPoints),
-				"cooked %d %s in the last %d days", n, times, HistoryDays)
-		}
+		s.liked(c)
 	}
 
 	return s.finish(c)
+}
+
+// liked scores how much the household likes the recipe: marked as a
+// favorite, and cooked lately. Leftovers on hand earn it too, so a
+// favorite isn't cooked again while its leftovers wait.
+func (s *scorer) liked(c *candidate) {
+	if c.recipe.Favorite {
+		c.add(Favorite, FavoritePoints, "a household favorite")
+	}
+	if n := s.in.History[c.recipe.ID]; n > 0 {
+		times := "times"
+		if n == 1 {
+			times = "time"
+		}
+		c.add(Cooked, math.Min(float64(n)*CookedPoints, MaxCookedPoints),
+			"cooked %d %s in the last %d days", n, times, HistoryDays)
+	}
 }
 
 // finish weighs a candidate's components and adds up its score.
@@ -1440,7 +1462,7 @@ func (s *scorer) onHand() []*OnHand {
 	var found []*OnHand
 	for _, oh := range s.in.OnHand {
 		r, ok := s.recipes[oh.Cook.RecipeID]
-		if !ok || oh.Servings <= 0 || oh.Cook.Date.After(s.in.Date) || isSide(r, s.sides) {
+		if !ok || oh.Servings <= 0 || oh.Cook.Date.After(s.in.Date) || isSide(r, s.sides) || s.isComponent(r) {
 			continue
 		}
 		if !oh.Until.IsZero() && oh.Until.Before(s.in.Date) {
@@ -1461,6 +1483,14 @@ func (s *scorer) onHand() []*OnHand {
 		found = append(found, oh)
 	}
 	return found
+}
+
+// isComponent reports whether a recipe is made to go into others, like a
+// pot of beans for a chili, rather than eaten as a meal: a component of
+// another recipe, and tagged for no meal. Its leftovers supply cooks of
+// those recipes, but a bowl of plain beans isn't a lunch.
+func (s *scorer) isComponent(r *recipes.Recipe) bool {
+	return s.components[r.ID] && len(recipeMealTags(r)) == 0
 }
 
 // isSide reports whether a recipe is a side, served with others rather
