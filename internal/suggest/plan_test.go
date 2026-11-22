@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bs-tools/mealplann.ing/internal/nutrition"
+	"github.com/bs-tools/mealplann.ing/internal/pantry"
 	"github.com/bs-tools/mealplann.ing/internal/people"
 	"github.com/bs-tools/mealplann.ing/internal/plans"
 	"github.com/bs-tools/mealplann.ing/internal/recipes"
@@ -501,6 +502,30 @@ func TestPlanOnHand(t *testing.T) {
 	names := plannedNames(Plan(in))
 	if got := slices.Index(names, ""); got < 0 || slices.Contains(names, "Curry") || slices.Contains(names, "Hummus") {
 		t.Errorf("got %v with only what's on hand, want no curry or hummus, and a dinner unfilled", names)
+	}
+
+	// A favorite, cooked lately, that uses up the pantry before it goes
+	// off, still makes way for the leftovers on hand.
+	favorite := recipe("Favorite curry", 1, ingredient(chickpeas, 400))
+	favorite.Favorite = true
+	in = planInput(1, []*people.Person{b}, favorite, chili)
+	in.History = map[pgtype.UUID]int{favorite.ID: 3}
+	in.Lots = []*pantry.Item{{FoodID: chickpeas.ID, Grams: 400, ExpiryDate: monday.AddDate(0, 0, 1)}}
+	in.OnHand = []*OnHand{{Cook: cooked(chili, monday.AddDate(0, 0, -2)), Servings: 2, Until: monday}}
+	if names := plannedNames(Plan(in)); len(names) != 1 || names[0] != "Chili" {
+		t.Errorf("got %v with the chili's last day on hand, want the chili", names)
+	}
+
+	// The rest of a component, like a pot of beans for the chili, isn't a
+	// dinner.
+	beans := recipe("Beans", 4, ingredient(chickpeas, 400))
+	withBeans := recipe("Bean chili", 4, ingredient(tofu, 400))
+	withBeans.Ingredients = append(withBeans.Ingredients, &recipes.Ingredient{ComponentRecipeID: beans.ID, Amount: 1})
+	in = planInput(1, []*people.Person{b}, curry, beans, withBeans)
+	in.OnHand = []*OnHand{{Cook: cooked(beans, monday.AddDate(0, 0, -1)), Servings: 2, Until: monday.AddDate(0, 0, 3)}}
+	in.OnHandOnly = true
+	if names := plannedNames(Plan(in)); len(names) != 1 || names[0] != "" {
+		t.Errorf("got %v with a pot of beans on hand, want nothing planned", names)
 	}
 
 	// A quarter of a serving isn't a dinner.
