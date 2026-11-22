@@ -292,7 +292,7 @@ const PlanSlotCard: React.FC<PlanSlotCardProps> = ({
   items.push(
     {
       disabled,
-      label: "Eating out",
+      label: "Mark eating out",
       onClick: () => {
         onEatingOut(true);
       },

@@ -291,15 +291,20 @@ const SharedShare: React.FC<SharedShareProps> = ({
         </span>
       ))}
       {eatingTime !== undefined && (
+        /*
+         * An action, not a state, so it says what it does: it read as the
+         * person being out when it said "Eating out".
+         */
         <button
           type="button"
           className="text-xs font-bold text-pine hover:underline disabled:opacity-50 print:hidden"
           disabled={disabled}
+          aria-label={`Mark ${person.name} eating out at ${eatingTime.name}`}
           onClick={() => {
             onEatingOut(eatingTime.id);
           }}
         >
-          Eating out
+          Mark eating out
         </button>
       )}
     </div>
