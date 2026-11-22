@@ -44,6 +44,7 @@ import {
 import { NUTRIENTS, nutrientInfoOf } from "helpers/nutrients";
 import { optionalNumberInput, parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
+import { useNutritionGoals } from "helpers/user";
 import React, { useState } from "react";
 
 // EatingTimeInput is an eating time being edited.
@@ -218,6 +219,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
   onClose,
 }) => {
   const queryClient = useQueryClient();
+  const goals = useNutritionGoals();
   const [name, setName] = useState(person?.name ?? "");
   const [userId, setUserId] = useState(person?.userId ?? "");
   const [notes, setNotes] = useState(person?.notes ?? "");
@@ -572,144 +574,156 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
           </div>
         </section>
 
-        <div className="flex gap-2 rounded-xl bg-heat-tint p-3 text-sm text-heat">
-          <InformationCircleIcon
-            className="size-5 shrink-0"
-            aria-hidden="true"
-          />
-          <p>
-            mealplann.ing checks the plan against these rules and targets and
-            warns. Targets recommended from the profile only apply once you use
-            them. Leave a field empty for no rule.
-          </p>
-        </div>
-
-        {/* Few people have rules, so they're folded away until set. */}
-        <details className="group [&>summary]:mb-2" open={rulesOpen}>
-          <summary className="cursor-pointer text-sm font-semibold text-ink-soft">
-            Rules for every eating time
-            <span className="font-normal text-muted group-open:hidden">
-              {" "}
-              · none, tap to add
-            </span>
-          </summary>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {RULES.map((rule) => (
-              <TextField
-                key={rule.key}
-                label={
-                  rule.unit === "" ? rule.label : `${rule.label} (${rule.unit})`
-                }
-                value={rules[rule.key]}
-                inputMode="decimal"
-                hint={rule.hint}
-                onChange={(value) => {
-                  setRules({ ...rules, [rule.key]: value });
-                }}
+        {/*
+         * Without nutrition goals, the plan isn't checked against rules or
+         * targets, so they're hidden, and kept as they are for later.
+         */}
+        {goals && (
+          <>
+            <div className="flex gap-2 rounded-xl bg-heat-tint p-3 text-sm text-heat">
+              <InformationCircleIcon
+                className="size-5 shrink-0"
+                aria-hidden="true"
               />
-            ))}
-            <div className="flex flex-col justify-center gap-1">
-              <CheckboxField
-                label="Warn about fast carbs"
-                checked={warnFastCarbs}
-                onChange={setWarnFastCarbs}
-              />
-              <span className="text-xs text-muted">
-                Foods marked as fast carbs, like white bread or juice.
-              </span>
+              <p>
+                mealplann.ing checks the plan against these rules and targets
+                and warns. Targets recommended from the profile only apply once
+                you use them. Leave a field empty for no rule.
+              </p>
             </div>
-          </div>
-        </details>
 
-        <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-ink-soft">Daily targets</h3>
-          {targets.length === 0 && (
-            <p className="text-xs text-muted">No daily targets.</p>
-          )}
-          <ul className="flex flex-col gap-2">
-            {targets.map((target, index) => (
-              <li
-                key={target.key}
-                className="grid grid-cols-[1fr_1fr_auto] items-end gap-2 sm:grid-cols-[2fr_1fr_1fr_auto]"
-              >
-                <SelectField
-                  className="col-span-3 sm:col-span-1"
-                  label="Nutrient"
-                  value={String(target.nutrient)}
-                  options={NUTRIENT_OPTIONS.filter(
-                    (option) =>
-                      option.value === target.nutrient ||
-                      !usedNutrients.has(option.value)
-                  ).map((option) => ({
-                    label: option.label,
-                    value: String(option.value),
-                  }))}
-                  onChange={(value) => {
-                    setTarget(index, {
-                      nutrient: optionValue(
-                        NUTRIENT_OPTIONS,
-                        value,
-                        target.nutrient
-                      ),
-                    });
-                  }}
-                />
-                <TextField
-                  label="Minimum a day"
-                  value={target.min}
-                  inputMode="decimal"
-                  onChange={(value) => {
-                    setTarget(index, { min: value });
-                  }}
-                />
-                <TextField
-                  label="Maximum a day"
-                  value={target.max}
-                  inputMode="decimal"
-                  onChange={(value) => {
-                    setTarget(index, { max: value });
-                  }}
-                />
+            {/* Few people have rules, so they're folded away until set. */}
+            <details className="group [&>summary]:mb-2" open={rulesOpen}>
+              <summary className="cursor-pointer text-sm font-semibold text-ink-soft">
+                Rules for every eating time
+                <span className="font-normal text-muted group-open:hidden">
+                  {" "}
+                  · none, tap to add
+                </span>
+              </summary>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {RULES.map((rule) => (
+                  <TextField
+                    key={rule.key}
+                    label={
+                      rule.unit === ""
+                        ? rule.label
+                        : `${rule.label} (${rule.unit})`
+                    }
+                    value={rules[rule.key]}
+                    inputMode="decimal"
+                    hint={rule.hint}
+                    onChange={(value) => {
+                      setRules({ ...rules, [rule.key]: value });
+                    }}
+                  />
+                ))}
+                <div className="flex flex-col justify-center gap-1">
+                  <CheckboxField
+                    label="Warn about fast carbs"
+                    checked={warnFastCarbs}
+                    onChange={setWarnFastCarbs}
+                  />
+                  <span className="text-xs text-muted">
+                    Foods marked as fast carbs, like white bread or juice.
+                  </span>
+                </div>
+              </div>
+            </details>
+
+            <section className="flex flex-col gap-2">
+              <h3 className="text-sm font-semibold text-ink-soft">
+                Daily targets
+              </h3>
+              {targets.length === 0 && (
+                <p className="text-xs text-muted">No daily targets.</p>
+              )}
+              <ul className="flex flex-col gap-2">
+                {targets.map((target, index) => (
+                  <li
+                    key={target.key}
+                    className="grid grid-cols-[1fr_1fr_auto] items-end gap-2 sm:grid-cols-[2fr_1fr_1fr_auto]"
+                  >
+                    <SelectField
+                      className="col-span-3 sm:col-span-1"
+                      label="Nutrient"
+                      value={String(target.nutrient)}
+                      options={NUTRIENT_OPTIONS.filter(
+                        (option) =>
+                          option.value === target.nutrient ||
+                          !usedNutrients.has(option.value)
+                      ).map((option) => ({
+                        label: option.label,
+                        value: String(option.value),
+                      }))}
+                      onChange={(value) => {
+                        setTarget(index, {
+                          nutrient: optionValue(
+                            NUTRIENT_OPTIONS,
+                            value,
+                            target.nutrient
+                          ),
+                        });
+                      }}
+                    />
+                    <TextField
+                      label="Minimum a day"
+                      value={target.min}
+                      inputMode="decimal"
+                      onChange={(value) => {
+                        setTarget(index, { min: value });
+                      }}
+                    />
+                    <TextField
+                      label="Maximum a day"
+                      value={target.max}
+                      inputMode="decimal"
+                      onChange={(value) => {
+                        setTarget(index, { max: value });
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className={`${iconButton} mb-1`}
+                      aria-label="Remove target"
+                      title="Remove target"
+                      onClick={() => {
+                        setTargets(
+                          targets.filter((_target, other) => other !== index)
+                        );
+                      }}
+                    >
+                      <XMarkIcon className="size-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div>
                 <button
                   type="button"
-                  className={`${iconButton} mb-1`}
-                  aria-label="Remove target"
-                  title="Remove target"
+                  className={ghostButton}
+                  disabled={freeNutrient === undefined}
                   onClick={() => {
-                    setTargets(
-                      targets.filter((_target, other) => other !== index)
-                    );
+                    if (freeNutrient !== undefined) {
+                      setTargets([
+                        ...targets,
+                        {
+                          key: newKey(),
+                          max: "",
+                          min: "",
+                          nutrient: freeNutrient.nutrient,
+                        },
+                      ]);
+                    }
                   }}
                 >
-                  <XMarkIcon className="size-4" />
+                  <PlusIcon className="size-4" aria-hidden="true" />
+                  Add target
                 </button>
-              </li>
-            ))}
-          </ul>
-          <div>
-            <button
-              type="button"
-              className={ghostButton}
-              disabled={freeNutrient === undefined}
-              onClick={() => {
-                if (freeNutrient !== undefined) {
-                  setTargets([
-                    ...targets,
-                    {
-                      key: newKey(),
-                      max: "",
-                      min: "",
-                      nutrient: freeNutrient.nutrient,
-                    },
-                  ]);
-                }
-              }}
-            >
-              <PlusIcon className="size-4" aria-hidden="true" />
-              Add target
-            </button>
-          </div>
-        </section>
+              </div>
+            </section>
+          </>
+        )}
 
         <TextAreaField
           label="Notes"

@@ -1,6 +1,7 @@
 import { inputClass, labelClass } from "@components/ui/styles";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
 import { Emphasis } from "gen/suggestions/v1/suggestions_pb";
+import { useNutritionGoals } from "helpers/user";
 import React from "react";
 
 // Criteria are what the user wants of a suggested plan.
@@ -152,6 +153,9 @@ const CriteriaPanel: React.FC<CriteriaPanelProps> = ({
   const set = (change: Partial<Criteria>) => {
     onChange({ ...criteria, ...change });
   };
+  // Without nutrition goals, there are no targets to meet.
+  const goals = useNutritionGoals();
+  const rows = EMPHASIS_ROWS.filter((row) => goals || row.key !== "nutrition");
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-4">
@@ -316,7 +320,7 @@ const CriteriaPanel: React.FC<CriteriaPanelProps> = ({
         </label>
       </div>
       <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2 xl:grid-cols-3">
-        {EMPHASIS_ROWS.map((row) => (
+        {rows.map((row) => (
           <div
             key={row.key}
             className="flex items-center justify-between gap-3"

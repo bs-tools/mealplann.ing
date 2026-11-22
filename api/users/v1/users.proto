@@ -146,6 +146,12 @@ message GetCurrentUserRequest {}
 message GetCurrentUserResponse {
   // The signed in user, unset when no one is signed in.
   User user = 1;
+  // Whether the plan is checked against each person's nutrition rules and
+  // daily targets (see PersonService): planned toward them, with portions
+  // sized by them and warnings when the plan is off. While it's false,
+  // they're kept and can be edited, but nothing plans toward them or warns
+  // about them, so don't plan around them either.
+  bool nutrition_goals = 2;
 }
 
 // An API token. The token secret is only returned when it is created.

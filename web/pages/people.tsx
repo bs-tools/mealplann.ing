@@ -10,6 +10,7 @@ import { listPeople } from "gen/people/v1/people-PersonService_connectquery";
 import type { Person } from "gen/people/v1/people_pb";
 import { listStaples } from "gen/plans/v1/plans-PlanService_connectquery";
 import { getHousehold } from "gen/users/v1/users-UserService_connectquery";
+import { useNutritionGoals } from "helpers/user";
 import React, { useState } from "react";
 
 /**
@@ -18,6 +19,7 @@ import React, { useState } from "react";
  */
 const PeoplePage: React.FC = () => {
   const people = useQuery(listPeople, {});
+  const goals = useNutritionGoals();
   const staples = useQuery(listStaples, {});
   const household = useQuery(getHousehold, {});
   // The person being edited, null for a new one, undefined if none.
@@ -68,7 +70,11 @@ const PeoplePage: React.FC = () => {
       <PageHeader
         kicker="Your household"
         title="People"
-        subtitle="Each person's rules and targets are their own: the plan is checked against them, with a warning when it's off."
+        subtitle={
+          goals
+            ? "Each person's rules and targets are their own: the plan is checked against them, with a warning when it's off."
+            : "Who you plan for, with when they eat and their staples."
+        }
         actions={
           <button
             type="button"

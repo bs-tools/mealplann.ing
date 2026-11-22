@@ -25,6 +25,7 @@ import { PlanService } from "gen/plans/v1/plans_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import type { User } from "gen/users/v1/users_pb";
 import { invalidateServices } from "helpers/query";
+import { useNutritionGoals } from "helpers/user";
 import React, { useState } from "react";
 import { Navigate, useParams } from "react-router";
 
@@ -302,6 +303,11 @@ interface ProfileFormProps {
  */
 const ProfileForm: React.FC<ProfileFormProps> = ({ person }) => {
   const queryClient = useQueryClient();
+  /*
+   * The body, activity and goal are only for recommending daily targets,
+   * so without nutrition goals only the tastes are shown.
+   */
+  const goals = useNutritionGoals();
   const { profile, tastes } = person;
   const [form, setForm] = useState<FormState>({
     activity: String(profile?.activity ?? Activity.UNSPECIFIED),
@@ -405,81 +411,91 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ person }) => {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-3">
-        {field("Height", "height", "cm")}
-        {field("Weight", "weight", "kg")}
-        {field("Born in", "birthYear", "")}
-        <div className="flex flex-col gap-1">
-          <span className="text-sm text-muted">Sex</span>
-          <Segmented
-            label="Sex"
-            value={form.sex}
-            options={SEXES}
-            className="py-[5px]"
-            onChange={(value) => {
-              commit({ sex: value });
-            }}
-          />
-        </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-sm text-muted">Activity</span>
-        <Segmented
-          label="Activity"
-          value={form.activity}
-          options={ACTIVITIES}
-          onChange={(value) => {
-            commit({ activity: value });
-          }}
-        />
-        {activity !== Activity.UNSPECIFIED && (
-          <span className="text-xs text-muted">{ACTIVITY_HINTS[activity]}</span>
-        )}
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-sm text-muted">Goal</span>
-        <Segmented
-          label="Goal"
-          value={form.goal}
-          options={GOALS}
-          onChange={(value) => {
-            commit({ goal: value });
-          }}
-        />
-      </div>
-      {rec === undefined ? (
-        <p className="rounded-2xl bg-ground-dark/60 p-4 text-sm text-muted">
-          With height, weight, birth year, sex, activity and goal, you&apos;ll
-          see how much to eat a day for the goal.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-3 rounded-2xl bg-ready-tint p-4 text-base text-pine-dark">
-          <p>
-            About {rec.energyKcal.toLocaleString()} kcal a day, with{" "}
-            {rec.proteinGrams} g protein, {rec.carbohydrateGrams} g carbohydrate
-            and {rec.fatGrams} g fat.{" "}
-            {goal === Goal.UNSPECIFIED ? "" : GOAL_HINTS[goal]}
-          </p>
-          <button
-            type="button"
-            className={`self-start rounded-xl px-4 py-2 text-sm font-bold ${adopted ? "bg-white/70 text-pine-dark" : "bg-pine text-white"}`}
-            disabled={adopt.isPending || adopted}
-            onClick={() => {
-              adopt.mutate({
-                person: {
-                  dailyTargets: withTargets(person.dailyTargets, changes),
-                  id: person.id,
-                },
-                updateMask: { paths: ["daily_targets"] },
-              });
-            }}
-          >
-            {adopted ? "These are the daily targets" : "Use as daily targets"}
-          </button>
-          <ErrorText error={adopt.error} />
-        </div>
+      {goals && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            {field("Height", "height", "cm")}
+            {field("Weight", "weight", "kg")}
+            {field("Born in", "birthYear", "")}
+            <div className="flex flex-col gap-1">
+              <span className="text-sm text-muted">Sex</span>
+              <Segmented
+                label="Sex"
+                value={form.sex}
+                options={SEXES}
+                className="py-[5px]"
+                onChange={(value) => {
+                  commit({ sex: value });
+                }}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-muted">Activity</span>
+            <Segmented
+              label="Activity"
+              value={form.activity}
+              options={ACTIVITIES}
+              onChange={(value) => {
+                commit({ activity: value });
+              }}
+            />
+            {activity !== Activity.UNSPECIFIED && (
+              <span className="text-xs text-muted">
+                {ACTIVITY_HINTS[activity]}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-muted">Goal</span>
+            <Segmented
+              label="Goal"
+              value={form.goal}
+              options={GOALS}
+              onChange={(value) => {
+                commit({ goal: value });
+              }}
+            />
+          </div>
+          {rec === undefined ? (
+            <p className="rounded-2xl bg-ground-dark/60 p-4 text-sm text-muted">
+              With height, weight, birth year, sex, activity and goal,
+              you&apos;ll see how much to eat a day for the goal.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3 rounded-2xl bg-ready-tint p-4 text-base text-pine-dark">
+              <p>
+                About {rec.energyKcal.toLocaleString()} kcal a day, with{" "}
+                {rec.proteinGrams} g protein, {rec.carbohydrateGrams} g
+                carbohydrate and {rec.fatGrams} g fat.{" "}
+                {goal === Goal.UNSPECIFIED ? "" : GOAL_HINTS[goal]}
+              </p>
+              <button
+                type="button"
+                className={`self-start rounded-xl px-4 py-2 text-sm font-bold ${adopted ? "bg-white/70 text-pine-dark" : "bg-pine text-white"}`}
+                disabled={adopt.isPending || adopted}
+                onClick={() => {
+                  adopt.mutate({
+                    person: {
+                      dailyTargets: withTargets(person.dailyTargets, changes),
+                      id: person.id,
+                    },
+                    updateMask: { paths: ["daily_targets"] },
+                  });
+                }}
+              >
+                {adopted
+                  ? "These are the daily targets"
+                  : "Use as daily targets"}
+              </button>
+              <ErrorText error={adopt.error} />
+            </div>
+          )}
+        </>
       )}
-      <h2 className="mt-1 text-lg font-bold text-ink-soft">Tastes</h2>
+      <h2 className={`text-lg font-bold text-ink-soft ${goals ? "mt-1" : ""}`}>
+        Tastes
+      </h2>
       <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-3">
         <span className="text-base text-ink-soft">Small meals</span>
         <Segmented

@@ -47,6 +47,7 @@ import { invalidateServices } from "helpers/query";
 import { readStorage, writeStorage } from "helpers/storage";
 import type { Leftover } from "helpers/suggestions";
 import { planKey, suggestionKey } from "helpers/suggestions";
+import { useNutritionGoals } from "helpers/user";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 
@@ -208,7 +209,7 @@ const THINKING = [
   "Reading your recipes…",
   "Checking the pantry…",
   "Sharing packs between meals…",
-  "Balancing everyone's targets…",
+  "Balancing the week…",
   "Keeping the shop short…",
   "Trying another few hundred plans…",
 ];
@@ -318,6 +319,8 @@ const SharedShare: React.FC<SharedShareProps> = ({
  */
 const AutoPlanPage: React.FC = () => {
   const navigate = useNavigate();
+  // Without nutrition goals, nothing to re-plan for, and no rules to break.
+  const goals = useNutritionGoals();
   const queryClient = useQueryClient();
   const people = useQuery(listPeople, {});
   const recipes = useQuery(listRecipes, {});
@@ -593,7 +596,7 @@ const AutoPlanPage: React.FC = () => {
             {plan.data.recipeCount === 1 ? "recipe" : "recipes"} and kept the
             best.
           </span>
-          {toSave.length > 0 && (
+          {goals && toSave.length > 0 && (
             <span>
               {" "}
               {breaking === 0
@@ -613,11 +616,17 @@ const AutoPlanPage: React.FC = () => {
               <Link to="/recipes/new" className={linkClass}>
                 add recipes
               </Link>{" "}
-              that fit, or check the rules on the{" "}
-              <Link to="/people" className={linkClass}>
-                People
-              </Link>{" "}
-              page.
+              that fit
+              {goals && (
+                <>
+                  , or check the rules on the{" "}
+                  <Link to="/people" className={linkClass}>
+                    People
+                  </Link>{" "}
+                  page
+                </>
+              )}
+              .
             </p>
           </div>
         )}
@@ -634,17 +643,19 @@ const AutoPlanPage: React.FC = () => {
                     {formatShortDate(date)}
                   </span>
                 </h2>
-                <button
-                  type="button"
-                  className={`${ghostButton} -mr-2 print:hidden`}
-                  disabled={busy}
-                  title="Plan this day's meals again, putting everyone's targets first, and keeping the other days as they are, but for leftovers of this day's meals"
-                  onClick={() => {
-                    replanDay(date);
-                  }}
-                >
-                  Re-plan for nutrition
-                </button>
+                {goals && (
+                  <button
+                    type="button"
+                    className={`${ghostButton} -mr-2 print:hidden`}
+                    disabled={busy}
+                    title="Plan this day's meals again, putting everyone's targets first, and keeping the other days as they are, but for leftovers of this day's meals"
+                    onClick={() => {
+                      replanDay(date);
+                    }}
+                  >
+                    Re-plan for nutrition
+                  </button>
+                )}
               </div>
               <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
                 <div className="grid gap-2" style={columnsStyle}>
@@ -796,7 +807,11 @@ const AutoPlanPage: React.FC = () => {
       <PageHeader
         kicker={`${formatShortDate(criteria.start)} to ${formatShortDate(end)}`}
         title="Plan for me"
-        subtitle="A recipe for each meal, chosen together to share ingredients, use the pantry and fit everyone's rules."
+        subtitle={
+          goals
+            ? "A recipe for each meal, chosen together to share ingredients, use the pantry and fit everyone's rules."
+            : "A recipe for each meal, chosen together to eat what's cooked first, share ingredients and use the pantry."
+        }
       />
       <div className="-mt-3 flex flex-wrap gap-2 print:hidden">
         <button

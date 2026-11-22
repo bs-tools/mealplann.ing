@@ -54,6 +54,9 @@ type Service struct {
 	blobs      blob.Store
 	// baseURL is the app's public URL, which calendar feed URLs are on.
 	baseURL string
+	// nutritionGoals is whether the plan is checked against people's
+	// nutrition rules and daily targets.
+	nutritionGoals bool
 }
 
 // NewService creates a new Service from the provided logger, repositories,
@@ -70,4 +73,11 @@ func NewService(log *slog.Logger, report *errreport.Reporter, tokens APITokenRep
 		blobs:      blobs,
 		baseURL:    baseURL,
 	}
+}
+
+// SetNutritionGoals sets whether the plan is checked against people's
+// nutrition rules and daily targets, which GetCurrentUser says, so the web
+// app shows or hides them.
+func (s *Service) SetNutritionGoals(on bool) {
+	s.nutritionGoals = on
 }

@@ -33,6 +33,7 @@ import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { addDays, isDateString, startOfWeek, today } from "helpers/dates";
 import { formatDay } from "helpers/format";
 import { invalidateServices } from "helpers/query";
+import { useNutritionGoals } from "helpers/user";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
@@ -122,6 +123,7 @@ const WarningBody: React.FC<{ item: WeekWarning }> = ({ item }) => (
  */
 const PlanWarningsPage: React.FC = () => {
   const [params, setParams] = useSearchParams();
+  const goals = useNutritionGoals();
   const now = today();
   const weekParam = params.get("week") ?? "";
   const monday = startOfWeek(isDateString(weekParam) ? weekParam : now);
@@ -158,7 +160,9 @@ const PlanWarningsPage: React.FC = () => {
     content =
       warnings.length === 0 ? (
         <EmptyState title="No warnings">
-          The plan meets everyone&apos;s targets and rules
+          {goals
+            ? "The plan meets everyone's targets and rules"
+            : "Nothing in the plan needs looking at"}
           {current ? " from today on" : ""}.
         </EmptyState>
       ) : (
@@ -292,7 +296,11 @@ const PlanWarningsPage: React.FC = () => {
       <PageHeader
         kicker={`Week of ${formatDay(monday)}`}
         title="Warnings"
-        subtitle="Each person's days against their targets, and where the plan breaks a rule."
+        subtitle={
+          goals
+            ? "Each person's days against their targets, and where the plan breaks a rule."
+            : "What in the plan needs looking at, like leftovers to thaw or servings nobody eats."
+        }
         actions={
           <div className="flex">
             <button

@@ -17,6 +17,7 @@ import type {
 } from "gen/suggestions/v1/suggestions_pb";
 import { formatShortDate, formatList } from "helpers/format";
 import { leftoverLabel, suggestionKey } from "helpers/suggestions";
+import { useNutritionGoals } from "helpers/user";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
@@ -204,6 +205,7 @@ const SuggestionList: React.FC<SuggestionListProps> = ({
   onPlan,
 }) => {
   const suggestions = useQuery(suggestRecipes, request);
+  const goals = useNutritionGoals();
   // The recipes, which the plan has loaded already, for each one's facts.
   const recipes = useQuery(listRecipes, {});
   if (suggestions.isPending) {
@@ -238,8 +240,9 @@ const SuggestionList: React.FC<SuggestionListProps> = ({
     <div className="flex flex-col gap-2">
       <h3 className={sectionLabelClass}>Suggested to cook</h3>
       <p className="text-sm text-muted">
-        Best first, for what the week buys, the pantry, everyone&apos;s targets
-        and rules, and the shop on {formatShortDate(suggestions.data.shopDate)}.
+        Best first, for what the week buys, the pantry,{" "}
+        {goals ? "everyone's targets and rules, " : ""}and the shop on{" "}
+        {formatShortDate(suggestions.data.shopDate)}.
       </p>
       <ul className="divide-y divide-line rounded-2xl border border-line bg-white px-4">
         {list.map((suggestion) => (

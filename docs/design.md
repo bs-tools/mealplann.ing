@@ -44,6 +44,10 @@ left for later.
 
 ### Nutrition rules per person
 
+Nutrition goals are off for now, behind the server's `-nutrition-goals`
+flag: see [nutrition-goals.md](nutrition-goals.md) for what that changes
+and what we learned.
+
 The app checks rules and doesn't set them. The values come from the
 person's care team and are entered as-is. Every rule is optional.
 
