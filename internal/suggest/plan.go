@@ -240,8 +240,9 @@ func Plan(in *PlanInput) *PlanResult {
 	if all == nil {
 		all = in.Recipes
 	}
-	// Sides are served with the meals planned, rather than planned as one,
-	// unless the user keeps one at a slot.
+	// Sides are served with the meals planned, and components go into
+	// them, rather than being planned as one, unless the user keeps one at
+	// a slot.
 	sides := map[pgtype.UUID]bool{}
 	for _, r := range in.Recipes {
 		for _, side := range r.ServedWith {
@@ -250,7 +251,8 @@ func Plan(in *PlanInput) *PlanResult {
 			}
 		}
 	}
-	all = slices.DeleteFunc(slices.Clone(all), func(r *recipes.Recipe) bool { return isSide(r, sides) })
+	components := componentIDs(in.Recipes)
+	all = slices.DeleteFunc(slices.Clone(all), func(r *recipes.Recipe) bool { return notMeal(r, sides, components) })
 	for _, slot := range in.Slots {
 		tag := slot.Tag()
 		if _, ok := p.eligible[tag]; ok {
