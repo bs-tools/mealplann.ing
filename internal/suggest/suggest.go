@@ -414,8 +414,9 @@ func Suggest(in *Input) []*Suggestion {
 	s := newScorer(in)
 	candidates := in.Candidates
 	if candidates == nil {
-		// Sides are served with meals, rather than suggested as one.
-		candidates = slices.DeleteFunc(slices.Clone(in.Recipes), func(r *recipes.Recipe) bool { return isSide(r, s.sides) })
+		// Sides are served with meals, and components go into them, rather
+		// than being suggested as one.
+		candidates = slices.DeleteFunc(slices.Clone(in.Recipes), func(r *recipes.Recipe) bool { return notMeal(r, s.sides, s.components) })
 	}
 	if in.OnHandOnly {
 		candidates = nil
@@ -541,14 +542,9 @@ func newScorer(in *Input) *scorer {
 		plannedGrams: map[plans.Slot]float64{},
 	}
 	s.sides = map[pgtype.UUID]bool{}
-	s.components = map[pgtype.UUID]bool{}
+	s.components = componentIDs(in.Recipes)
 	for _, r := range in.Recipes {
 		s.recipes[r.ID] = r
-		for _, ing := range r.Ingredients {
-			if ing.ComponentRecipeID.Valid {
-				s.components[ing.ComponentRecipeID] = true
-			}
-		}
 		for _, side := range r.ServedWith {
 			if side.RecipeID.Valid {
 				s.sides[side.RecipeID] = true
@@ -1418,9 +1414,10 @@ func (s *scorer) leftovers() []*plans.Cook {
 		if s.in.LeftoverOf != nil && !s.in.LeftoverOf.Matches(cook) {
 			continue
 		}
-		// The rest of a side, like a pot of rice, isn't a meal by itself:
-		// it's eaten with the meal it's cooked for, or planned with another.
-		if isSide(r, s.sides) {
+		// The rest of a side, like a pot of rice, or of a component, like a
+		// pot of beans, isn't a meal by itself: it's eaten with the meal
+		// it's cooked for, or planned with another.
+		if notMeal(r, s.sides, s.components) {
 			continue
 		}
 		keeps := DefaultLeftoverDays
@@ -1462,7 +1459,7 @@ func (s *scorer) onHand() []*OnHand {
 	var found []*OnHand
 	for _, oh := range s.in.OnHand {
 		r, ok := s.recipes[oh.Cook.RecipeID]
-		if !ok || oh.Servings <= 0 || oh.Cook.Date.After(s.in.Date) || isSide(r, s.sides) || s.isComponent(r) {
+		if !ok || oh.Servings <= 0 || oh.Cook.Date.After(s.in.Date) || notMeal(r, s.sides, s.components) {
 			continue
 		}
 		if !oh.Until.IsZero() && oh.Until.Before(s.in.Date) {
@@ -1485,12 +1482,40 @@ func (s *scorer) onHand() []*OnHand {
 	return found
 }
 
+// componentIDs returns the recipes that go into others: the components
+// of the recipes, and the recipes their components can be made with
+// instead.
+func componentIDs(rs []*recipes.Recipe) map[pgtype.UUID]bool {
+	ids := map[pgtype.UUID]bool{}
+	for _, r := range rs {
+		for _, ing := range r.Ingredients {
+			if ing.ComponentRecipeID.Valid {
+				ids[ing.ComponentRecipeID] = true
+			}
+			for _, a := range ing.Alternatives {
+				if a.RecipeID.Valid {
+					ids[a.RecipeID] = true
+				}
+			}
+		}
+	}
+	return ids
+}
+
 // isComponent reports whether a recipe is made to go into others, like a
-// pot of beans for a chili, rather than eaten as a meal: a component of
-// another recipe, and tagged for no meal. Its leftovers supply cooks of
-// those recipes, but a bowl of plain beans isn't a lunch.
-func (s *scorer) isComponent(r *recipes.Recipe) bool {
-	return s.components[r.ID] && len(recipeMealTags(r)) == 0
+// pot of beans for a chili, rather than eaten as a meal: tagged for no
+// meal, and a component of another recipe, or one a component can be
+// made with instead, or with a yield, like 510 g of cooked beans, which
+// only components need. Its leftovers supply cooks of those recipes, and
+// it's cooked for them, but a bowl of plain beans isn't a dinner.
+func isComponent(r *recipes.Recipe, components map[pgtype.UUID]bool) bool {
+	return len(recipeMealTags(r)) == 0 && (components[r.ID] || r.YieldAmount > 0)
+}
+
+// notMeal reports whether a recipe isn't a meal by itself: a side (see
+// isSide) or a component (see isComponent).
+func notMeal(r *recipes.Recipe, sides, components map[pgtype.UUID]bool) bool {
+	return isSide(r, sides) || isComponent(r, components)
 }
 
 // isSide reports whether a recipe is a side, served with others rather

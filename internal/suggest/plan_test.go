@@ -528,6 +528,25 @@ func TestPlanOnHand(t *testing.T) {
 		t.Errorf("got %v with a pot of beans on hand, want nothing planned", names)
 	}
 
+	// Nor is a pot of beans that's only an alternative of a component, or
+	// that only has a yield, whether on hand or cooked anew.
+	quickBeans := recipe("Quick beans", 4, ingredient(chickpeas, 400))
+	navy := recipe("Navy beans", 3, ingredient(chickpeas, 200))
+	navy.YieldAmount, navy.YieldUnit = 510, nutrition.Grams
+	withBeans.Ingredients[len(withBeans.Ingredients)-1].Alternatives = []recipes.Alternative{{RecipeID: quickBeans.ID}}
+	for _, r := range []*recipes.Recipe{quickBeans, navy} {
+		in = planInput(1, []*people.Person{b}, curry, beans, quickBeans, navy, withBeans)
+		in.OnHand = []*OnHand{{Cook: cooked(r, monday.AddDate(0, 0, -1)), Servings: 2, Until: monday.AddDate(0, 0, 3)}}
+		in.OnHandOnly = true
+		if names := plannedNames(Plan(in)); len(names) != 1 || names[0] != "" {
+			t.Errorf("got %v with %s on hand, want nothing planned", names, r.Name)
+		}
+		in = planInput(1, []*people.Person{b}, r, withBeans)
+		if names := plannedNames(Plan(in)); len(names) != 1 || names[0] == r.Name {
+			t.Errorf("got %v with only %s to cook, want it not planned as a dinner", names, r.Name)
+		}
+	}
+
 	// A quarter of a serving isn't a dinner.
 	in = planInput(1, []*people.Person{b}, curry)
 	in.OnHand = []*OnHand{{Cook: cooked(chili, monday.AddDate(0, 0, -1)), Servings: 0.25, Until: monday.AddDate(0, 0, 3)}}
