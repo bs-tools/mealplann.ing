@@ -85,7 +85,9 @@ the TypeScript plugins.
   each person's own. The app checks plans against them and warns. From a
   person's profile (body, activity and goal) it recommends daily energy and
   macronutrients with standard formulas, but they only become targets when
-  the user adopts them; it never sets rules or targets itself.
+  the user adopts them; it never sets rules or targets itself. They're off
+  for now, behind the server's `-nutrition-goals` flag: see
+  `docs/nutrition-goals.md`.
 - Keep the free tier in mind: the server runs as at most one small Cloud Run
   instance (512 MiB, 1 CPU) that scales to zero, and every database round trip
   costs about 28 ms in production.

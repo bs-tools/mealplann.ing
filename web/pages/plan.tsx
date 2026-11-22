@@ -42,6 +42,7 @@ import {
   today,
 } from "helpers/dates";
 import { formatDollars, formatMonth, formatShortDate } from "helpers/format";
+import { useNutritionGoals } from "helpers/user";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
@@ -72,6 +73,7 @@ interface MealOpen {
  * each meal, opening it as a plate, or planning it.
  */
 const PlanPage: React.FC = () => {
+  const goals = useNutritionGoals();
   const [params, setParams] = useSearchParams();
   const now = today();
   const weekParam = params.get("week") ?? "";
@@ -266,7 +268,8 @@ const PlanPage: React.FC = () => {
         />
         <PlanDayList
           days={week.data.days.filter((planDay) => planDay.date >= day)}
-          people={people.data?.people ?? []}
+          // Without nutrition goals, there are no targets to show.
+          people={goals ? (people.data?.people ?? []) : []}
           today={now}
           onOpen={(planDay, row) => {
             setOpened({ date: planDay.date, row });

@@ -178,6 +178,13 @@ var (
 			", as the first administrator, which is created if there is none. For testing a local server only:"+
 			" the server refuses to start with it unless its URL is on localhost",
 	)
+	nutritionGoals = flag.Bool(
+		"nutrition-goals",
+		false,
+		"Check the plan against each person's nutrition rules and daily targets: plan toward them, size portions"+
+			" by them and warn when the plan is off. While off, they're kept, but unused, and the web app hides them;"+
+			" see docs/nutrition-goals.md",
+	)
 	avatarBucket = flag.String(
 		"avatar-bucket",
 		"",
@@ -415,7 +422,15 @@ func run(
 	foodService.SetRestocker(shoppingService.Restock)
 	// The plan service also serves suggestions and plan templates, as they
 	// read the plan and compute its nutrition the same way.
-	planService := plan.NewService(log, report, planRepo, peopleRepo, recipeRepo, foodRepo, restockingPantry, shoppingRepo,
+	// Without nutrition goals, the plan service reads people without their
+	// rules and targets, so nothing plans toward them or warns about them,
+	// and they're kept for when they're turned on again.
+	var planPeople plan.PeopleRepository = peopleRepo
+	if !*nutritionGoals {
+		planPeople = people.WithoutGoals(peopleRepo)
+	}
+	userService.SetNutritionGoals(*nutritionGoals)
+	planService := plan.NewService(log, report, planRepo, planPeople, recipeRepo, foodRepo, restockingPantry, shoppingRepo,
 		templates.NewRepository(log, db))
 	pantryService := pantrysvc.NewService(log, report, restockingPantry, foodRepo, requests)
 

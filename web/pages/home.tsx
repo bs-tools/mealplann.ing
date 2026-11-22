@@ -42,6 +42,7 @@ import {
 } from "helpers/dates";
 import { formatList, formatWeekday } from "helpers/format";
 import { formatServings } from "helpers/labels";
+import { useNutritionGoals } from "helpers/user";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
@@ -384,6 +385,7 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
   const [openMeal, setOpenMeal] = useState("");
   const week = useQuery(getWeek, { monday: startOfWeek(now) });
   const people = useQuery(listPeople, {});
+  const goals = useNutritionGoals();
   const recipes = useQuery(listRecipes, {});
   const lists = useQuery(listShoppingLists, { pageSize: 10 });
   const staples = useQuery(listStaples, {});
@@ -543,25 +545,27 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
       ) : (
         <>
           {/* The day against the person's targets, then what else is off. */}
-          {targetStates(
-            people.data?.people.find((other) => other.id === day.personId)
-              ?.dailyTargets ?? [],
-            day.nutrients
-          ).length > 0 && (
-            <Link
-              to="/plan/warnings"
-              aria-label={`${day.personName}'s day against their targets`}
-              className="rounded-2xl border border-line bg-white px-4 py-3.5"
-            >
-              <TargetBars
-                targets={
-                  people.data?.people.find((other) => other.id === day.personId)
-                    ?.dailyTargets ?? []
-                }
-                nutrients={day.nutrients}
-              />
-            </Link>
-          )}
+          {goals &&
+            targetStates(
+              people.data?.people.find((other) => other.id === day.personId)
+                ?.dailyTargets ?? [],
+              day.nutrients
+            ).length > 0 && (
+              <Link
+                to="/plan/warnings"
+                aria-label={`${day.personName}'s day against their targets`}
+                className="rounded-2xl border border-line bg-white px-4 py-3.5"
+              >
+                <TargetBars
+                  targets={
+                    people.data?.people.find(
+                      (other) => other.id === day.personId
+                    )?.dailyTargets ?? []
+                  }
+                  nutrients={day.nutrients}
+                />
+              </Link>
+            )}
           <WarningsLink
             count={
               weekWarnings(week.data, now).filter(

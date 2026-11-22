@@ -837,10 +837,11 @@ func (b0 GetCurrentUserRequest_builder) Build() *GetCurrentUserRequest {
 }
 
 type GetCurrentUserResponse struct {
-	state           protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_User *User                  `protobuf:"bytes,1,opt,name=user,proto3"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_User           *User                  `protobuf:"bytes,1,opt,name=user,proto3"`
+	xxx_hidden_NutritionGoals bool                   `protobuf:"varint,2,opt,name=nutrition_goals,json=nutritionGoals,proto3"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *GetCurrentUserResponse) Reset() {
@@ -875,8 +876,19 @@ func (x *GetCurrentUserResponse) GetUser() *User {
 	return nil
 }
 
+func (x *GetCurrentUserResponse) GetNutritionGoals() bool {
+	if x != nil {
+		return x.xxx_hidden_NutritionGoals
+	}
+	return false
+}
+
 func (x *GetCurrentUserResponse) SetUser(v *User) {
 	x.xxx_hidden_User = v
+}
+
+func (x *GetCurrentUserResponse) SetNutritionGoals(v bool) {
+	x.xxx_hidden_NutritionGoals = v
 }
 
 func (x *GetCurrentUserResponse) HasUser() bool {
@@ -895,6 +907,12 @@ type GetCurrentUserResponse_builder struct {
 
 	// The signed in user, unset when no one is signed in.
 	User *User
+	// Whether the plan is checked against each person's nutrition rules and
+	// daily targets (see PersonService): planned toward them, with portions
+	// sized by them and warnings when the plan is off. While it's false,
+	// they're kept and can be edited, but nothing plans toward them or warns
+	// about them, so don't plan around them either.
+	NutritionGoals bool
 }
 
 func (b0 GetCurrentUserResponse_builder) Build() *GetCurrentUserResponse {
@@ -902,6 +920,7 @@ func (b0 GetCurrentUserResponse_builder) Build() *GetCurrentUserResponse {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_User = b.User
+	x.xxx_hidden_NutritionGoals = b.NutritionGoals
 	return m0
 }
 
@@ -2240,9 +2259,10 @@ const file_users_v1_users_proto_rawDesc = "" +
 	"unitSystem\"<\n" +
 	"\x16UpdateSettingsResponse\x12\"\n" +
 	"\x04user\x18\x01 \x01(\v2\x0e.users.v1.UserR\x04user\"\x17\n" +
-	"\x15GetCurrentUserRequest\"<\n" +
+	"\x15GetCurrentUserRequest\"e\n" +
 	"\x16GetCurrentUserResponse\x12\"\n" +
-	"\x04user\x18\x01 \x01(\v2\x0e.users.v1.UserR\x04user\"\xad\x01\n" +
+	"\x04user\x18\x01 \x01(\v2\x0e.users.v1.UserR\x04user\x12'\n" +
+	"\x0fnutrition_goals\x18\x02 \x01(\bR\x0enutritionGoals\"\xad\x01\n" +
 	"\bAPIToken\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12;\n" +

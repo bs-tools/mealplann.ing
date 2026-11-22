@@ -392,3 +392,34 @@ func nonNil(s []pgtype.UUID) []pgtype.UUID {
 	}
 	return s
 }
+
+// Lister lists the people of a household.
+type Lister interface {
+	ListPeople(ctx context.Context, householdID pgtype.UUID) ([]*Person, error)
+}
+
+// WithoutGoals returns the people of a lister without their nutrition
+// rules and daily targets, for planning while nutrition goals are off:
+// nothing then plans toward them, sizes portions by them or warns about
+// them, and they're kept in the database for when they're on again.
+func WithoutGoals(l Lister) Lister {
+	return withoutGoals{l}
+}
+
+type withoutGoals struct{ Lister }
+
+func (w withoutGoals) ListPeople(ctx context.Context, householdID pgtype.UUID) ([]*Person, error) {
+	list, err := w.Lister.ListPeople(ctx, householdID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*Person, 0, len(list))
+	for _, p := range list {
+		// A copy, as the lister may share its people with other readers.
+		without := *p
+		without.Rules = rules.Rules{}
+		without.Targets = nil
+		out = append(out, &without)
+	}
+	return out, nil
+}

@@ -36,7 +36,7 @@ import {
 } from "helpers/labels";
 import { formatAmount, nutrientInfoOf } from "helpers/nutrients";
 import { invalidateServices } from "helpers/query";
-import { useUnitSystem } from "helpers/user";
+import { useNutritionGoals, useUnitSystem } from "helpers/user";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
@@ -131,8 +131,10 @@ const PersonCard: React.FC<PersonCardProps> = ({
   const removeStaple = useMutation(deleteStaple, { onSuccess: invalidate });
   const unskip = useMutation(unskipStaple, { onSuccess: invalidate });
   const member = members.find((other) => other.userId === person.userId);
-  const rules = ruleFacts(person);
-  const targets = targetFacts(person);
+  // Without nutrition goals, the plan isn't checked against them.
+  const goals = useNutritionGoals();
+  const rules = goals ? ruleFacts(person) : [];
+  const targets = goals ? targetFacts(person) : [];
   const now = today();
   const initials = person.name
     .split(/\s+/u)
@@ -164,8 +166,14 @@ const PersonCard: React.FC<PersonCardProps> = ({
           label={`More for ${person.name}`}
           className="-mr-2 flex size-10 items-center justify-center rounded-full text-muted hover:bg-ground-dark/60"
           items={[
-            { label: "Profile and goals", to: `/people/${person.id}/profile` },
-            { label: "Eating times and rules", onClick: onEdit },
+            {
+              label: goals ? "Profile and goals" : "Tastes",
+              to: `/people/${person.id}/profile`,
+            },
+            {
+              label: goals ? "Eating times and rules" : "Eating times",
+              onClick: onEdit,
+            },
             {
               danger: true,
               disabled: remove.isPending,
@@ -193,14 +201,14 @@ const PersonCard: React.FC<PersonCardProps> = ({
           to={`/people/${person.id}/profile`}
           className="rounded-lg px-2 py-1 text-sm font-bold text-pine hover:bg-pine-50"
         >
-          Profile and goals ›
+          {goals ? "Profile and goals" : "Tastes"} ›
         </Link>
         <button
           type="button"
           className="rounded-lg px-2 py-1 text-sm font-bold text-pine hover:bg-pine-50"
           onClick={onEdit}
         >
-          Eating times and rules ›
+          {goals ? "Eating times and rules" : "Eating times"} ›
         </button>
       </div>
       <div className="flex flex-col gap-2">
@@ -231,10 +239,11 @@ const PersonCard: React.FC<PersonCardProps> = ({
         )}
       </div>
       <div className="flex flex-col gap-2">
-        <h3 className={sectionLabelClass}>Rules and targets</h3>
-        {rules.length === 0 && targets.length === 0 ? (
+        {goals && <h3 className={sectionLabelClass}>Rules and targets</h3>}
+        {goals && rules.length === 0 && targets.length === 0 && (
           <p className="text-sm text-muted">None yet.</p>
-        ) : (
+        )}
+        {(rules.length > 0 || targets.length > 0) && (
           <ul className="flex flex-wrap gap-1.5">
             {targets.map((target) => (
               <li key={target} className={`${chip} bg-pine-50 text-pine-dark`}>

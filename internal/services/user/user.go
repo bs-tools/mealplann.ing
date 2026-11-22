@@ -23,7 +23,7 @@ func (s *Service) GetCurrentUser(ctx context.Context, req *usersv1.GetCurrentUse
 	if err != nil {
 		return nil, err
 	}
-	return usersv1.GetCurrentUserResponse_builder{User: u}.Build(), nil
+	return usersv1.GetCurrentUserResponse_builder{User: u, NutritionGoals: s.nutritionGoals}.Build(), nil
 }
 
 // UpdateSettings changes the signed in user's settings.
