@@ -39,6 +39,15 @@ const (
 	// SuggestionServiceSuggestSidesProcedure is the procedure name of the SuggestionService's
 	// SuggestSides RPC.
 	SuggestionServiceSuggestSidesProcedure = "/suggestions.v1.SuggestionService/SuggestSides"
+	// SuggestionServiceListBowlPartsProcedure is the procedure name of the SuggestionService's
+	// ListBowlParts RPC.
+	SuggestionServiceListBowlPartsProcedure = "/suggestions.v1.SuggestionService/ListBowlParts"
+	// SuggestionServiceSuggestBowlsProcedure is the procedure name of the SuggestionService's
+	// SuggestBowls RPC.
+	SuggestionServiceSuggestBowlsProcedure = "/suggestions.v1.SuggestionService/SuggestBowls"
+	// SuggestionServiceComposeBowlProcedure is the procedure name of the SuggestionService's
+	// ComposeBowl RPC.
+	SuggestionServiceComposeBowlProcedure = "/suggestions.v1.SuggestionService/ComposeBowl"
 )
 
 var (
@@ -75,6 +84,27 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestSides"),
 			Procedure:  SuggestionServiceSuggestSidesProcedure,
+		}
+	})
+	suggestionServiceListBowlPartsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("ListBowlParts"),
+			Procedure:  SuggestionServiceListBowlPartsProcedure,
+		}
+	})
+	suggestionServiceSuggestBowlsSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestBowls"),
+			Procedure:  SuggestionServiceSuggestBowlsProcedure,
+		}
+	})
+	suggestionServiceComposeBowlSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("ComposeBowl"),
+			Procedure:  SuggestionServiceComposeBowlProcedure,
 		}
 	})
 )
@@ -199,6 +229,30 @@ type SuggestionServiceClient interface {
 	// there with DeletePortion. Nothing is changed. Returns no sides if the
 	// eating time has no recipe with sides.
 	SuggestSides(context.Context, *v1.SuggestSidesRequest) (*v1.SuggestSidesResponse, error)
+	// List what bowls can be built of: the household's foods and recipes
+	// that can be a bowl's carbohydrate (rice, quinoa, noodles, or a recipe
+	// like a pot of rice and quinoa), protein (tofu, tempeh, beans, lentils,
+	// or a recipe like smoky tofu crumbles), vegetable, or sauce (the sauces
+	// made in the household's recipes, like a bowl's peanut sauce, recipes
+	// tagged "sauce" or "dressing", and ready-made ones like hummus), each
+	// with its amount for a serving and whether it's on hand. Build a bowl of
+	// them with ComposeBowl. Nothing is changed.
+	ListBowlParts(context.Context, *v1.ListBowlPartsRequest) (*v1.ListBowlPartsResponse, error)
+	// Suggest bowls of what's on hand: for each sauce the household has
+	// everything for, the carbohydrate, protein and vegetables on hand that
+	// fit its cuisine best, preferring leftovers already cooked and food to
+	// use soon, each bowl different from the others. Each has its parts,
+	// its nutrients and the recipe to cook or plan it as (see ComposeBowl).
+	// Nothing is changed.
+	SuggestBowls(context.Context, *v1.SuggestBowlsRequest) (*v1.SuggestBowlsResponse, error)
+	// Build a bowl of parts from ListBowlParts, in their amounts: at least
+	// one carbohydrate, protein and vegetable, and exactly one sauce. It
+	// returns its nutrients for a serving and the recipe making it, with
+	// steps, to create with RecipeService.CreateRecipe, or, if the household
+	// has made the bowl before, to update existing_recipe_id with
+	// RecipeService.UpdateRecipe. Then cook it now (PlanService.PlanMeal for
+	// today) or plan it like any recipe. Nothing is changed.
+	ComposeBowl(context.Context, *v1.ComposeBowlRequest) (*v1.ComposeBowlResponse, error)
 }
 
 // NewSuggestionServiceClient constructs a client for the suggestions.v1.SuggestionService service.
@@ -327,6 +381,30 @@ type SuggestionServiceHandler interface {
 	// there with DeletePortion. Nothing is changed. Returns no sides if the
 	// eating time has no recipe with sides.
 	SuggestSides(context.Context, *v1.SuggestSidesRequest) (*v1.SuggestSidesResponse, error)
+	// List what bowls can be built of: the household's foods and recipes
+	// that can be a bowl's carbohydrate (rice, quinoa, noodles, or a recipe
+	// like a pot of rice and quinoa), protein (tofu, tempeh, beans, lentils,
+	// or a recipe like smoky tofu crumbles), vegetable, or sauce (the sauces
+	// made in the household's recipes, like a bowl's peanut sauce, recipes
+	// tagged "sauce" or "dressing", and ready-made ones like hummus), each
+	// with its amount for a serving and whether it's on hand. Build a bowl of
+	// them with ComposeBowl. Nothing is changed.
+	ListBowlParts(context.Context, *v1.ListBowlPartsRequest) (*v1.ListBowlPartsResponse, error)
+	// Suggest bowls of what's on hand: for each sauce the household has
+	// everything for, the carbohydrate, protein and vegetables on hand that
+	// fit its cuisine best, preferring leftovers already cooked and food to
+	// use soon, each bowl different from the others. Each has its parts,
+	// its nutrients and the recipe to cook or plan it as (see ComposeBowl).
+	// Nothing is changed.
+	SuggestBowls(context.Context, *v1.SuggestBowlsRequest) (*v1.SuggestBowlsResponse, error)
+	// Build a bowl of parts from ListBowlParts, in their amounts: at least
+	// one carbohydrate, protein and vegetable, and exactly one sauce. It
+	// returns its nutrients for a serving and the recipe making it, with
+	// steps, to create with RecipeService.CreateRecipe, or, if the household
+	// has made the bowl before, to update existing_recipe_id with
+	// RecipeService.UpdateRecipe. Then cook it now (PlanService.PlanMeal for
+	// today) or plan it like any recipe. Nothing is changed.
+	ComposeBowl(context.Context, *v1.ComposeBowlRequest) (*v1.ComposeBowlResponse, error)
 }
 
 // RegisterSuggestionServiceHandler registers svc as the suggestions.v1.SuggestionService
@@ -339,6 +417,9 @@ func RegisterSuggestionServiceHandler(server *connect.Server, svc SuggestionServ
 		connect.Method{Spec: suggestionServiceSuggestFixesSpec(), Handler: adapter.suggestFixes},
 		connect.Method{Spec: suggestionServiceSuggestFromPantrySpec(), Handler: adapter.suggestFromPantry},
 		connect.Method{Spec: suggestionServiceSuggestSidesSpec(), Handler: adapter.suggestSides},
+		connect.Method{Spec: suggestionServiceListBowlPartsSpec(), Handler: adapter.listBowlParts},
+		connect.Method{Spec: suggestionServiceSuggestBowlsSpec(), Handler: adapter.suggestBowls},
+		connect.Method{Spec: suggestionServiceComposeBowlSpec(), Handler: adapter.composeBowl},
 	)
 }
 
@@ -363,6 +444,18 @@ func (UnimplementedSuggestionServiceHandler) SuggestFromPantry(context.Context, 
 
 func (UnimplementedSuggestionServiceHandler) SuggestSides(context.Context, *v1.SuggestSidesRequest) (*v1.SuggestSidesResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestSides is not implemented")
+}
+
+func (UnimplementedSuggestionServiceHandler) ListBowlParts(context.Context, *v1.ListBowlPartsRequest) (*v1.ListBowlPartsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.ListBowlParts is not implemented")
+}
+
+func (UnimplementedSuggestionServiceHandler) SuggestBowls(context.Context, *v1.SuggestBowlsRequest) (*v1.SuggestBowlsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestBowls is not implemented")
+}
+
+func (UnimplementedSuggestionServiceHandler) ComposeBowl(context.Context, *v1.ComposeBowlRequest) (*v1.ComposeBowlResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.ComposeBowl is not implemented")
 }
 
 type suggestionServiceClient struct {
@@ -404,6 +497,30 @@ func (c *suggestionServiceClient) SuggestFromPantry(ctx context.Context, req *v1
 func (c *suggestionServiceClient) SuggestSides(ctx context.Context, req *v1.SuggestSidesRequest) (*v1.SuggestSidesResponse, error) {
 	var res v1.SuggestSidesResponse
 	if err := c.client.CallUnary(ctx, suggestionServiceSuggestSidesSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *suggestionServiceClient) ListBowlParts(ctx context.Context, req *v1.ListBowlPartsRequest) (*v1.ListBowlPartsResponse, error) {
+	var res v1.ListBowlPartsResponse
+	if err := c.client.CallUnary(ctx, suggestionServiceListBowlPartsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *suggestionServiceClient) SuggestBowls(ctx context.Context, req *v1.SuggestBowlsRequest) (*v1.SuggestBowlsResponse, error) {
+	var res v1.SuggestBowlsResponse
+	if err := c.client.CallUnary(ctx, suggestionServiceSuggestBowlsSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *suggestionServiceClient) ComposeBowl(ctx context.Context, req *v1.ComposeBowlRequest) (*v1.ComposeBowlResponse, error) {
+	var res v1.ComposeBowlResponse
+	if err := c.client.CallUnary(ctx, suggestionServiceComposeBowlSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -465,6 +582,42 @@ func (h suggestionServiceHandler) suggestSides(ctx context.Context, _ connect.Sp
 		return err
 	}
 	res, err := h.svc.SuggestSides(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h suggestionServiceHandler) listBowlParts(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ListBowlPartsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ListBowlParts(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h suggestionServiceHandler) suggestBowls(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SuggestBowlsRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SuggestBowls(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h suggestionServiceHandler) composeBowl(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ComposeBowlRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ComposeBowl(ctx, &req)
 	if err != nil {
 		return err
 	}

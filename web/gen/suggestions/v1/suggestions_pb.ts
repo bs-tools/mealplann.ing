@@ -4,13 +4,13 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { AmountUnit } from "../../foods/v1/foods_pb";
+import type { AmountUnit, Nutrients } from "../../foods/v1/foods_pb";
 import { file_foods_v1_foods } from "../../foods/v1/foods_pb";
 import type { HouseholdMeal } from "../../people/v1/people_pb";
 import { file_people_v1_people } from "../../people/v1/people_pb";
 import type { LeftoverOf, Warning } from "../../plans/v1/plans_pb";
 import { file_plans_v1_plans } from "../../plans/v1/plans_pb";
-import type { RecipeSide } from "../../recipes/v1/recipes_pb";
+import type { Recipe, RecipeSide } from "../../recipes/v1/recipes_pb";
 import { file_recipes_v1_recipes } from "../../recipes/v1/recipes_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -18,7 +18,375 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file suggestions/v1/suggestions.proto.
  */
 export const file_suggestions_v1_suggestions: GenFile = /*@__PURE__*/
-  fileDesc("CiBzdWdnZXN0aW9ucy92MS9zdWdnZXN0aW9ucy5wcm90bxIOc3VnZ2VzdGlvbnMudjEiOwoORWF0aW5nVGltZVNsb3QSEQoJcGVyc29uX2lkGAEgASgJEhYKDmVhdGluZ190aW1lX2lkGAIgASgJIrsBChVTdWdnZXN0UmVjaXBlc1JlcXVlc3QSDAoEZGF0ZRgBIAEoCRIoCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWxIABI1CgtlYXRpbmdfdGltZRgDIAEoCzIeLnN1Z2dlc3Rpb25zLnYxLkVhdGluZ1RpbWVTbG90SAASEgoKcGVyc29uX2lkcxgEIAMoCRIXCg9tYXhfc3VnZ2VzdGlvbnMYBSABKAVCBgoEc2xvdCJyChZTdWdnZXN0UmVjaXBlc1Jlc3BvbnNlEi8KC3N1Z2dlc3Rpb25zGAEgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIRCglzaG9wX2RhdGUYAiABKAkSFAoMcmVjaXBlX2NvdW50GAMgASgFIlkKDlNjb3JlQ29tcG9uZW50EicKBGtpbmQYASABKA4yGS5zdWdnZXN0aW9ucy52MS5TY29yZUtpbmQSDgoGcG9pbnRzGAIgASgBEg4KBnJlYXNvbhgDIAEoCSKbAQoQU3VnZ2VzdGVkUG9ydGlvbhIRCglwZXJzb25faWQYASABKAkSEwoLcGVyc29uX25hbWUYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkSGAoQZWF0aW5nX3RpbWVfbmFtZRgEIAEoCRIMCgRkYXRlGAUgASgJEhAKCHNlcnZpbmdzGAYgASgBEg0KBWdyYW1zGAcgASgBIlwKCUl0ZW1Ub0J1eRIPCgdmb29kX2lkGAEgASgJEhEKCWZvb2RfbmFtZRgCIAEoCRITCgthbW91bnRfdGV4dBgDIAEoCRIWCg5hbHJlYWR5X2xpc3RlZBgEIAEoCCLXAwoKU3VnZ2VzdGlvbhIRCglyZWNpcGVfaWQYASABKAkSEwoLcmVjaXBlX25hbWUYAiABKAkSDQoFc2NvcmUYAyABKAESMgoKY29tcG9uZW50cxgEIAMoCzIeLnN1Z2dlc3Rpb25zLnYxLlNjb3JlQ29tcG9uZW50EhIKCmZpdHNfcnVsZXMYBSABKAgSIwoId2FybmluZ3MYBiADKAsyES5wbGFucy52MS5XYXJuaW5nEjIKCHBvcnRpb25zGAcgAygLMiAuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGVkUG9ydGlvbhIVCg1jb29rX3NlcnZpbmdzGAggASgBEhYKDm5ld19pdGVtX2NvdW50GAkgASgFEi8KDGl0ZW1zX3RvX2J1eRgKIAMoCzIZLnN1Z2dlc3Rpb25zLnYxLkl0ZW1Ub0J1eRIpCgtsZWZ0b3Zlcl9vZhgLIAEoCzIULnBsYW5zLnYxLkxlZnRvdmVyT2YSEQoJY29va19kYXRlGAwgASgJEiQKBHNpZGUYDSABKAsyFi5yZWNpcGVzLnYxLlJlY2lwZVNpZGUSFwoPb25faGFuZF9jb29rX2lkGA4gASgJEhQKDGZyb21fZnJlZXplchgPIAEoCCKRAwoMUGxhbkNyaXRlcmlhEikKB3ZhcmlldHkYASABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIrCglmYXZvcml0ZXMYAiABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIoCgZwYW50cnkYAyABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIqCghzaG9wcGluZxgEIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEisKCW51dHJpdGlvbhgFIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEhkKEW1heF90b3RhbF9zZWNvbmRzGAYgASgFEhQKDGV4Y2x1ZGVfdGFncxgHIAMoCRIaChJleGNsdWRlX3JlY2lwZV9pZHMYCCADKAkSGAoQY29va2luZ193ZWVrZGF5cxgJIAMoBRIpCgdjb29raW5nGAogASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSFAoMb25faGFuZF9vbmx5GAsgASgIIvsBCgpQbGFuQ2hvaWNlEgwKBGRhdGUYASABKAkSJgoEbWVhbBgCIAEoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsEhEKCXJlY2lwZV9pZBgDIAEoCRIRCglwZXJzb25faWQYBCABKAkSFgoOZWF0aW5nX3RpbWVfaWQYBSABKAkSKQoLbGVmdG92ZXJfb2YYBiABKAsyFC5wbGFucy52MS5MZWZ0b3Zlck9mEiQKBHNpZGUYByABKAsyFi5yZWNpcGVzLnYxLlJlY2lwZVNpZGUSDwoHbm9fc2lkZRgIIAEoCBIXCg9vbl9oYW5kX2Nvb2tfaWQYCSABKAki7gEKElN1Z2dlc3RQbGFuUmVxdWVzdBISCgpzdGFydF9kYXRlGAEgASgJEgwKBGRheXMYAiABKAUSJwoFbWVhbHMYAyADKA4yGC5wZW9wbGUudjEuSG91c2Vob2xkTWVhbBIuCghjcml0ZXJpYRgEIAEoCzIcLnN1Z2dlc3Rpb25zLnYxLlBsYW5Dcml0ZXJpYRIrCgdjaG9pY2VzGAUgAygLMhouc3VnZ2VzdGlvbnMudjEuUGxhbkNob2ljZRIMCgRzZWVkGAYgASgEEiIKGnNraXBfcGVyc29uYWxfZWF0aW5nX3RpbWVzGAcgASgIIv8CCghQbGFuU2xvdBIMCgRkYXRlGAEgASgJEiYKBG1lYWwYAiABKA4yGC5wZW9wbGUudjEuSG91c2Vob2xkTWVhbBIsCgVzdGF0ZRgDIAEoDjIdLnN1Z2dlc3Rpb25zLnYxLlBsYW5TbG90U3RhdGUSLgoKc3VnZ2VzdGlvbhgEIAEoCzIaLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3Rpb24SMAoMYWx0ZXJuYXRpdmVzGAUgAygLMhouc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdGlvbhIcChRwbGFubmVkX3JlY2lwZV9uYW1lcxgGIAMoCRIcChRmaXR0aW5nX3JlY2lwZV9jb3VudBgHIAEoBRIRCglwZXJzb25faWQYCCABKAkSEwoLcGVyc29uX25hbWUYCSABKAkSFgoOZWF0aW5nX3RpbWVfaWQYCiABKAkSGAoQZWF0aW5nX3RpbWVfbmFtZRgLIAEoCRIXCg91bmZpbGxlZF9yZWFzb24YDCABKAkihgEKE1N1Z2dlc3RQbGFuUmVzcG9uc2USJwoFc2xvdHMYASADKAsyGC5zdWdnZXN0aW9ucy52MS5QbGFuU2xvdBINCgVzY29yZRgCIAEoARITCgtwbGFuc190cmllZBgDIAEoBRIMCgRzZWVkGAQgASgEEhQKDHJlY2lwZV9jb3VudBgFIAEoBSJOChNTdWdnZXN0Rml4ZXNSZXF1ZXN0EhEKCXBlcnNvbl9pZBgBIAEoCRIMCgRkYXRlGAIgASgJEhYKDmVhdGluZ190aW1lX2lkGAMgASgJImMKFFN1Z2dlc3RGaXhlc1Jlc3BvbnNlEiYKBWZpeGVzGAEgAygLMhcuc3VnZ2VzdGlvbnMudjEuUGxhbkZpeBIjCgh3YXJuaW5ncxgCIAMoCzIRLnBsYW5zLnYxLldhcm5pbmciaQoNUG9ydGlvblJlc2l6ZRISCgpwb3J0aW9uX2lkGAEgASgJEhAKCHNlcnZpbmdzGAIgASgBEg4KBmFtb3VudBgDIAEoARIiCgR1bml0GAQgASgOMhQuZm9vZHMudjEuQW1vdW50VW5pdCL2AgoHUGxhbkZpeBIpCgRraW5kGAEgASgOMhsuc3VnZ2VzdGlvbnMudjEuUGxhbkZpeEtpbmQSEwoLZGVzY3JpcHRpb24YAiABKAkSEgoKcG9ydGlvbl9pZBgDIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgEIAEoCRIuCgdyZXNpemVzGA8gAygLMh0uc3VnZ2VzdGlvbnMudjEuUG9ydGlvblJlc2l6ZRIWCg5maXhlZF93YXJuaW5ncxgKIAMoCRIjCgh3YXJuaW5ncxgLIAMoCzIRLnBsYW5zLnYxLldhcm5pbmcSEwoLZW5lcmd5X2tjYWwYDCABKAESGwoTcGxhbm5lZF9lbmVyZ3lfa2NhbBgNIAEoARIWCg5kZWxldGVfY29va19pZBgOIAEoCUoECAUQBkoECAYQB0oECAcQCEoECAgQCUoECAkQClIJcmVjaXBlX2lkUgdmb29kX2lkUghzZXJ2aW5nc1IGYW1vdW50UgR1bml0IlEKGFN1Z2dlc3RGcm9tUGFudHJ5UmVxdWVzdBIMCgRkYXRlGAEgASgJEicKBW1lYWxzGAIgAygOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwiSgoZU3VnZ2VzdEZyb21QYW50cnlSZXNwb25zZRItCgdyZWNpcGVzGAEgAygLMhwuc3VnZ2VzdGlvbnMudjEuUGFudHJ5UmVjaXBlInwKDFBhbnRyeVJlY2lwZRIRCglyZWNpcGVfaWQYASABKAkSEwoLcmVjaXBlX25hbWUYAiABKAkSEAoIc2VydmluZ3MYAyABKAUSFQoNdG90YWxfc2Vjb25kcxgEIAEoBRIbChN1c2Vfc29vbl9mb29kX25hbWVzGAUgAygJIk4KE1N1Z2dlc3RTaWRlc1JlcXVlc3QSEQoJcGVyc29uX2lkGAEgASgJEgwKBGRhdGUYAiABKAkSFgoOZWF0aW5nX3RpbWVfaWQYAyABKAkibQoUU3VnZ2VzdFNpZGVzUmVzcG9uc2USLQoFc2lkZXMYASADKAsyHi5zdWdnZXN0aW9ucy52MS5TaWRlU3VnZ2VzdGlvbhIRCglyZWNpcGVfaWQYAiABKAkSEwoLcmVjaXBlX25hbWUYAyABKAkiqgMKDlNpZGVTdWdnZXN0aW9uEg8KB2Zvb2RfaWQYASABKAkSEQoJZm9vZF9uYW1lGAIgASgJEg0KBWdyYW1zGAMgASgBEhMKC2VuZXJneV9rY2FsGAQgASgBEhUKDXByb3RlaW5fZ3JhbXMYBSABKAESGgoSY2FyYm9oeWRyYXRlX2dyYW1zGAYgASgBEhEKCWZhdF9ncmFtcxgHIAEoARIOCgZyZWFzb24YCCABKAkSIwoId2FybmluZ3MYCSADKAsyES5wbGFucy52MS5XYXJuaW5nEg8KB3BsYW5uZWQYCiABKAgSEgoKcG9ydGlvbl9pZBgLIAEoCRIRCglyZWNpcGVfaWQYDCABKAkSEwoLcmVjaXBlX25hbWUYDSABKAkSEAoIc2VydmluZ3MYDiABKAESDwoHY29va19pZBgPIAEoCRIcChRjb29rX3NlcnZpbmdzX25lZWRlZBgQIAEoARIUCgxmcm9tX2ZyZWV6ZXIYESABKAgSHAoUZnJvemVuX3NlcnZpbmdzX2xlZnQYEiABKAESEwoLZnJvbV9mcmlkZ2UYEyABKAgqiAMKCVNjb3JlS2luZBIaChZTQ09SRV9LSU5EX1VOU1BFQ0lGSUVEEAASIQodU0NPUkVfS0lORF9TSEFSRURfSU5HUkVESUVOVFMQARIdChlTQ09SRV9LSU5EX1BBQ0tfTEVGVE9WRVJTEAISFQoRU0NPUkVfS0lORF9QQU5UUlkQAxIYChRTQ09SRV9LSU5EX05VVFJJVElPThAEEhQKEFNDT1JFX0tJTkRfUlVMRVMQBRIWChJTQ09SRV9LSU5EX0tFRVBJTkcQBhIWChJTQ09SRV9LSU5EX1ZBUklFVFkQCBIXChNTQ09SRV9LSU5EX01FQUxfVEFHEAkSFwoTU0NPUkVfS0lORF9GQVZPUklURRAKEhcKE1NDT1JFX0tJTkRfTEVGVE9WRVIQCxIVChFTQ09SRV9LSU5EX0NPT0tFRBAMEhUKEVNDT1JFX0tJTkRfVEFTVEVTEA0SFAoQU0NPUkVfS0lORF9DT09LUxAOIgQIBxAHKhFTQ09SRV9LSU5EX0ZMQVZPUipwCghFbXBoYXNpcxIYChRFTVBIQVNJU19VTlNQRUNJRklFRBAAEhAKDEVNUEhBU0lTX09GRhABEhAKDEVNUEhBU0lTX0xPVxACEhMKD0VNUEhBU0lTX05PUk1BTBADEhEKDUVNUEhBU0lTX0hJR0gQBCqFAgoNUGxhblNsb3RTdGF0ZRIfChtQTEFOX1NMT1RfU1RBVEVfVU5TUEVDSUZJRUQQABIdChlQTEFOX1NMT1RfU1RBVEVfU1VHR0VTVEVEEAESGAoUUExBTl9TTE9UX1NUQVRFX0tFUFQQAhIbChdQTEFOX1NMT1RfU1RBVEVfU0tJUFBFRBADEhsKF1BMQU5fU0xPVF9TVEFURV9QTEFOTkVEEAQSHAoYUExBTl9TTE9UX1NUQVRFX1VORklMTEVEEAUSIgoeUExBTl9TTE9UX1NUQVRFX0ZJTExFRF9CWV9NRUFMEAYSHgoaUExBTl9TTE9UX1NUQVRFX0VBVElOR19PVVQQByqWAQoLUGxhbkZpeEtpbmQSHQoZUExBTl9GSVhfS0lORF9VTlNQRUNJRklFRBAAEhgKFFBMQU5fRklYX0tJTkRfUkVNT1ZFEAESGAoUUExBTl9GSVhfS0lORF9SRVNJWkUQAiIECAMQAyIECAQQBCoVUExBTl9GSVhfS0lORF9SRVBMQUNFKhFQTEFOX0ZJWF9LSU5EX0FERDLsAwoRU3VnZ2VzdGlvblNlcnZpY2USXwoOU3VnZ2VzdFJlY2lwZXMSJS5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1JlcXVlc3QaJi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1Jlc3BvbnNlElYKC1N1Z2dlc3RQbGFuEiIuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXF1ZXN0GiMuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXNwb25zZRJZCgxTdWdnZXN0Rml4ZXMSIy5zdWdnZXN0aW9ucy52MS5TdWdnZXN0Rml4ZXNSZXF1ZXN0GiQuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdEZpeGVzUmVzcG9uc2USaAoRU3VnZ2VzdEZyb21QYW50cnkSKC5zdWdnZXN0aW9ucy52MS5TdWdnZXN0RnJvbVBhbnRyeVJlcXVlc3QaKS5zdWdnZXN0aW9ucy52MS5TdWdnZXN0RnJvbVBhbnRyeVJlc3BvbnNlElkKDFN1Z2dlc3RTaWRlcxIjLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RTaWRlc1JlcXVlc3QaJC5zdWdnZXN0aW9ucy52MS5TdWdnZXN0U2lkZXNSZXNwb25zZULMAQoSY29tLnN1Z2dlc3Rpb25zLnYxQhBTdWdnZXN0aW9uc1Byb3RvUAFaS2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vc3VnZ2VzdGlvbnMvdjE7c3VnZ2VzdGlvbnN2MaICA1NYWKoCDlN1Z2dlc3Rpb25zLlYxygIOU3VnZ2VzdGlvbnNcVjHiAhpTdWdnZXN0aW9uc1xWMVxHUEJNZXRhZGF0YeoCD1N1Z2dlc3Rpb25zOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_people_v1_people, file_plans_v1_plans, file_recipes_v1_recipes]);
+  fileDesc("CiBzdWdnZXN0aW9ucy92MS9zdWdnZXN0aW9ucy5wcm90bxIOc3VnZ2VzdGlvbnMudjEiggIKCEJvd2xQYXJ0EiYKBHJvbGUYASABKA4yGC5zdWdnZXN0aW9ucy52MS5Cb3dsUm9sZRILCgNrZXkYAiABKAkSDAoEbmFtZRgDIAEoCRIOCgZkZXRhaWwYBCABKAkSDwoHZm9vZF9pZBgFIAEoCRIRCglyZWNpcGVfaWQYBiABKAkSDgoGYW1vdW50GAcgASgBEhMKC2Ftb3VudF90ZXh0GAggASgJEg8KB29uX2hhbmQYCSABKAgSFAoMb25faGFuZF9ub3RlGAogASgJEhAKCHVzZV9zb29uGAsgASgIEhEKCWxlZnRvdmVycxgMIAEoCBIOCgZzdHlsZXMYDSADKAki6AEKBEJvd2wSDAoEbmFtZRgBIAEoCRINCgVzdHlsZRgCIAEoCRInCgVwYXJ0cxgDIAMoCzIYLnN1Z2dlc3Rpb25zLnYxLkJvd2xQYXJ0EiYKCW51dHJpZW50cxgEIAEoCzITLmZvb2RzLnYxLk51dHJpZW50cxIQCghzZXJ2aW5ncxgFIAEoBRIPCgdyZWFzb25zGAYgAygJEiIKBnJlY2lwZRgHIAEoCzISLnJlY2lwZXMudjEuUmVjaXBlEhoKEmV4aXN0aW5nX3JlY2lwZV9pZBgIIAEoCRIPCgdvbl9oYW5kGAkgASgIIiQKFExpc3RCb3dsUGFydHNSZXF1ZXN0EgwKBGRhdGUYASABKAkiQAoVTGlzdEJvd2xQYXJ0c1Jlc3BvbnNlEicKBXBhcnRzGAEgAygLMhguc3VnZ2VzdGlvbnMudjEuQm93bFBhcnQiVgoTU3VnZ2VzdEJvd2xzUmVxdWVzdBIMCgRkYXRlGAEgASgJEhAKCHNlcnZpbmdzGAIgASgFEhEKCW1heF9ib3dscxgDIAEoBRIMCgRzZWVkGAQgASgEIkkKFFN1Z2dlc3RCb3dsc1Jlc3BvbnNlEiMKBWJvd2xzGAEgAygLMhQuc3VnZ2VzdGlvbnMudjEuQm93bBIMCgRzZWVkGAIgASgEIi0KDkJvd2xQYXJ0Q2hvaWNlEgsKA2tleRgBIAEoCRIOCgZhbW91bnQYAiABKAEiYwoSQ29tcG9zZUJvd2xSZXF1ZXN0Ei0KBXBhcnRzGAEgAygLMh4uc3VnZ2VzdGlvbnMudjEuQm93bFBhcnRDaG9pY2USEAoIc2VydmluZ3MYAiABKAUSDAoEZGF0ZRgDIAEoCSI5ChNDb21wb3NlQm93bFJlc3BvbnNlEiIKBGJvd2wYASABKAsyFC5zdWdnZXN0aW9ucy52MS5Cb3dsIjsKDkVhdGluZ1RpbWVTbG90EhEKCXBlcnNvbl9pZBgBIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgCIAEoCSK7AQoVU3VnZ2VzdFJlY2lwZXNSZXF1ZXN0EgwKBGRhdGUYASABKAkSKAoEbWVhbBgCIAEoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsSAASNQoLZWF0aW5nX3RpbWUYAyABKAsyHi5zdWdnZXN0aW9ucy52MS5FYXRpbmdUaW1lU2xvdEgAEhIKCnBlcnNvbl9pZHMYBCADKAkSFwoPbWF4X3N1Z2dlc3Rpb25zGAUgASgFQgYKBHNsb3QicgoWU3VnZ2VzdFJlY2lwZXNSZXNwb25zZRIvCgtzdWdnZXN0aW9ucxgBIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3Rpb24SEQoJc2hvcF9kYXRlGAIgASgJEhQKDHJlY2lwZV9jb3VudBgDIAEoBSJZCg5TY29yZUNvbXBvbmVudBInCgRraW5kGAEgASgOMhkuc3VnZ2VzdGlvbnMudjEuU2NvcmVLaW5kEg4KBnBvaW50cxgCIAEoARIOCgZyZWFzb24YAyABKAkimwEKEFN1Z2dlc3RlZFBvcnRpb24SEQoJcGVyc29uX2lkGAEgASgJEhMKC3BlcnNvbl9uYW1lGAIgASgJEhYKDmVhdGluZ190aW1lX2lkGAMgASgJEhgKEGVhdGluZ190aW1lX25hbWUYBCABKAkSDAoEZGF0ZRgFIAEoCRIQCghzZXJ2aW5ncxgGIAEoARINCgVncmFtcxgHIAEoASJcCglJdGVtVG9CdXkSDwoHZm9vZF9pZBgBIAEoCRIRCglmb29kX25hbWUYAiABKAkSEwoLYW1vdW50X3RleHQYAyABKAkSFgoOYWxyZWFkeV9saXN0ZWQYBCABKAgi1wMKClN1Z2dlc3Rpb24SEQoJcmVjaXBlX2lkGAEgASgJEhMKC3JlY2lwZV9uYW1lGAIgASgJEg0KBXNjb3JlGAMgASgBEjIKCmNvbXBvbmVudHMYBCADKAsyHi5zdWdnZXN0aW9ucy52MS5TY29yZUNvbXBvbmVudBISCgpmaXRzX3J1bGVzGAUgASgIEiMKCHdhcm5pbmdzGAYgAygLMhEucGxhbnMudjEuV2FybmluZxIyCghwb3J0aW9ucxgHIAMoCzIgLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RlZFBvcnRpb24SFQoNY29va19zZXJ2aW5ncxgIIAEoARIWCg5uZXdfaXRlbV9jb3VudBgJIAEoBRIvCgxpdGVtc190b19idXkYCiADKAsyGS5zdWdnZXN0aW9ucy52MS5JdGVtVG9CdXkSKQoLbGVmdG92ZXJfb2YYCyABKAsyFC5wbGFucy52MS5MZWZ0b3Zlck9mEhEKCWNvb2tfZGF0ZRgMIAEoCRIkCgRzaWRlGA0gASgLMhYucmVjaXBlcy52MS5SZWNpcGVTaWRlEhcKD29uX2hhbmRfY29va19pZBgOIAEoCRIUCgxmcm9tX2ZyZWV6ZXIYDyABKAgikQMKDFBsYW5Dcml0ZXJpYRIpCgd2YXJpZXR5GAEgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSKwoJZmF2b3JpdGVzGAIgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSKAoGcGFudHJ5GAMgASgOMhguc3VnZ2VzdGlvbnMudjEuRW1waGFzaXMSKgoIc2hvcHBpbmcYBCABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIrCgludXRyaXRpb24YBSABKA4yGC5zdWdnZXN0aW9ucy52MS5FbXBoYXNpcxIZChFtYXhfdG90YWxfc2Vjb25kcxgGIAEoBRIUCgxleGNsdWRlX3RhZ3MYByADKAkSGgoSZXhjbHVkZV9yZWNpcGVfaWRzGAggAygJEhgKEGNvb2tpbmdfd2Vla2RheXMYCSADKAUSKQoHY29va2luZxgKIAEoDjIYLnN1Z2dlc3Rpb25zLnYxLkVtcGhhc2lzEhQKDG9uX2hhbmRfb25seRgLIAEoCCL7AQoKUGxhbkNob2ljZRIMCgRkYXRlGAEgASgJEiYKBG1lYWwYAiABKA4yGC5wZW9wbGUudjEuSG91c2Vob2xkTWVhbBIRCglyZWNpcGVfaWQYAyABKAkSEQoJcGVyc29uX2lkGAQgASgJEhYKDmVhdGluZ190aW1lX2lkGAUgASgJEikKC2xlZnRvdmVyX29mGAYgASgLMhQucGxhbnMudjEuTGVmdG92ZXJPZhIkCgRzaWRlGAcgASgLMhYucmVjaXBlcy52MS5SZWNpcGVTaWRlEg8KB25vX3NpZGUYCCABKAgSFwoPb25faGFuZF9jb29rX2lkGAkgASgJIu4BChJTdWdnZXN0UGxhblJlcXVlc3QSEgoKc3RhcnRfZGF0ZRgBIAEoCRIMCgRkYXlzGAIgASgFEicKBW1lYWxzGAMgAygOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSLgoIY3JpdGVyaWEYBCABKAsyHC5zdWdnZXN0aW9ucy52MS5QbGFuQ3JpdGVyaWESKwoHY2hvaWNlcxgFIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlBsYW5DaG9pY2USDAoEc2VlZBgGIAEoBBIiChpza2lwX3BlcnNvbmFsX2VhdGluZ190aW1lcxgHIAEoCCL/AgoIUGxhblNsb3QSDAoEZGF0ZRgBIAEoCRImCgRtZWFsGAIgASgOMhgucGVvcGxlLnYxLkhvdXNlaG9sZE1lYWwSLAoFc3RhdGUYAyABKA4yHS5zdWdnZXN0aW9ucy52MS5QbGFuU2xvdFN0YXRlEi4KCnN1Z2dlc3Rpb24YBCABKAsyGi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0aW9uEjAKDGFsdGVybmF0aXZlcxgFIAMoCzIaLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3Rpb24SHAoUcGxhbm5lZF9yZWNpcGVfbmFtZXMYBiADKAkSHAoUZml0dGluZ19yZWNpcGVfY291bnQYByABKAUSEQoJcGVyc29uX2lkGAggASgJEhMKC3BlcnNvbl9uYW1lGAkgASgJEhYKDmVhdGluZ190aW1lX2lkGAogASgJEhgKEGVhdGluZ190aW1lX25hbWUYCyABKAkSFwoPdW5maWxsZWRfcmVhc29uGAwgASgJIoYBChNTdWdnZXN0UGxhblJlc3BvbnNlEicKBXNsb3RzGAEgAygLMhguc3VnZ2VzdGlvbnMudjEuUGxhblNsb3QSDQoFc2NvcmUYAiABKAESEwoLcGxhbnNfdHJpZWQYAyABKAUSDAoEc2VlZBgEIAEoBBIUCgxyZWNpcGVfY291bnQYBSABKAUiTgoTU3VnZ2VzdEZpeGVzUmVxdWVzdBIRCglwZXJzb25faWQYASABKAkSDAoEZGF0ZRgCIAEoCRIWCg5lYXRpbmdfdGltZV9pZBgDIAEoCSJjChRTdWdnZXN0Rml4ZXNSZXNwb25zZRImCgVmaXhlcxgBIAMoCzIXLnN1Z2dlc3Rpb25zLnYxLlBsYW5GaXgSIwoId2FybmluZ3MYAiADKAsyES5wbGFucy52MS5XYXJuaW5nImkKDVBvcnRpb25SZXNpemUSEgoKcG9ydGlvbl9pZBgBIAEoCRIQCghzZXJ2aW5ncxgCIAEoARIOCgZhbW91bnQYAyABKAESIgoEdW5pdBgEIAEoDjIULmZvb2RzLnYxLkFtb3VudFVuaXQi9gIKB1BsYW5GaXgSKQoEa2luZBgBIAEoDjIbLnN1Z2dlc3Rpb25zLnYxLlBsYW5GaXhLaW5kEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhIKCnBvcnRpb25faWQYAyABKAkSFgoOZWF0aW5nX3RpbWVfaWQYBCABKAkSLgoHcmVzaXplcxgPIAMoCzIdLnN1Z2dlc3Rpb25zLnYxLlBvcnRpb25SZXNpemUSFgoOZml4ZWRfd2FybmluZ3MYCiADKAkSIwoId2FybmluZ3MYCyADKAsyES5wbGFucy52MS5XYXJuaW5nEhMKC2VuZXJneV9rY2FsGAwgASgBEhsKE3BsYW5uZWRfZW5lcmd5X2tjYWwYDSABKAESFgoOZGVsZXRlX2Nvb2tfaWQYDiABKAlKBAgFEAZKBAgGEAdKBAgHEAhKBAgIEAlKBAgJEApSCXJlY2lwZV9pZFIHZm9vZF9pZFIIc2VydmluZ3NSBmFtb3VudFIEdW5pdCJRChhTdWdnZXN0RnJvbVBhbnRyeVJlcXVlc3QSDAoEZGF0ZRgBIAEoCRInCgVtZWFscxgCIAMoDjIYLnBlb3BsZS52MS5Ib3VzZWhvbGRNZWFsIkoKGVN1Z2dlc3RGcm9tUGFudHJ5UmVzcG9uc2USLQoHcmVjaXBlcxgBIAMoCzIcLnN1Z2dlc3Rpb25zLnYxLlBhbnRyeVJlY2lwZSJ8CgxQYW50cnlSZWNpcGUSEQoJcmVjaXBlX2lkGAEgASgJEhMKC3JlY2lwZV9uYW1lGAIgASgJEhAKCHNlcnZpbmdzGAMgASgFEhUKDXRvdGFsX3NlY29uZHMYBCABKAUSGwoTdXNlX3Nvb25fZm9vZF9uYW1lcxgFIAMoCSJOChNTdWdnZXN0U2lkZXNSZXF1ZXN0EhEKCXBlcnNvbl9pZBgBIAEoCRIMCgRkYXRlGAIgASgJEhYKDmVhdGluZ190aW1lX2lkGAMgASgJIm0KFFN1Z2dlc3RTaWRlc1Jlc3BvbnNlEi0KBXNpZGVzGAEgAygLMh4uc3VnZ2VzdGlvbnMudjEuU2lkZVN1Z2dlc3Rpb24SEQoJcmVjaXBlX2lkGAIgASgJEhMKC3JlY2lwZV9uYW1lGAMgASgJIqoDCg5TaWRlU3VnZ2VzdGlvbhIPCgdmb29kX2lkGAEgASgJEhEKCWZvb2RfbmFtZRgCIAEoCRINCgVncmFtcxgDIAEoARITCgtlbmVyZ3lfa2NhbBgEIAEoARIVCg1wcm90ZWluX2dyYW1zGAUgASgBEhoKEmNhcmJvaHlkcmF0ZV9ncmFtcxgGIAEoARIRCglmYXRfZ3JhbXMYByABKAESDgoGcmVhc29uGAggASgJEiMKCHdhcm5pbmdzGAkgAygLMhEucGxhbnMudjEuV2FybmluZxIPCgdwbGFubmVkGAogASgIEhIKCnBvcnRpb25faWQYCyABKAkSEQoJcmVjaXBlX2lkGAwgASgJEhMKC3JlY2lwZV9uYW1lGA0gASgJEhAKCHNlcnZpbmdzGA4gASgBEg8KB2Nvb2tfaWQYDyABKAkSHAoUY29va19zZXJ2aW5nc19uZWVkZWQYECABKAESFAoMZnJvbV9mcmVlemVyGBEgASgIEhwKFGZyb3plbl9zZXJ2aW5nc19sZWZ0GBIgASgBEhMKC2Zyb21fZnJpZGdlGBMgASgIKn4KCEJvd2xSb2xlEhkKFUJPV0xfUk9MRV9VTlNQRUNJRklFRBAAEhIKDkJPV0xfUk9MRV9DQVJCEAESFQoRQk9XTF9ST0xFX1BST1RFSU4QAhIXChNCT1dMX1JPTEVfVkVHRVRBQkxFEAMSEwoPQk9XTF9ST0xFX1NBVUNFEAQqiAMKCVNjb3JlS2luZBIaChZTQ09SRV9LSU5EX1VOU1BFQ0lGSUVEEAASIQodU0NPUkVfS0lORF9TSEFSRURfSU5HUkVESUVOVFMQARIdChlTQ09SRV9LSU5EX1BBQ0tfTEVGVE9WRVJTEAISFQoRU0NPUkVfS0lORF9QQU5UUlkQAxIYChRTQ09SRV9LSU5EX05VVFJJVElPThAEEhQKEFNDT1JFX0tJTkRfUlVMRVMQBRIWChJTQ09SRV9LSU5EX0tFRVBJTkcQBhIWChJTQ09SRV9LSU5EX1ZBUklFVFkQCBIXChNTQ09SRV9LSU5EX01FQUxfVEFHEAkSFwoTU0NPUkVfS0lORF9GQVZPUklURRAKEhcKE1NDT1JFX0tJTkRfTEVGVE9WRVIQCxIVChFTQ09SRV9LSU5EX0NPT0tFRBAMEhUKEVNDT1JFX0tJTkRfVEFTVEVTEA0SFAoQU0NPUkVfS0lORF9DT09LUxAOIgQIBxAHKhFTQ09SRV9LSU5EX0ZMQVZPUipwCghFbXBoYXNpcxIYChRFTVBIQVNJU19VTlNQRUNJRklFRBAAEhAKDEVNUEhBU0lTX09GRhABEhAKDEVNUEhBU0lTX0xPVxACEhMKD0VNUEhBU0lTX05PUk1BTBADEhEKDUVNUEhBU0lTX0hJR0gQBCqFAgoNUGxhblNsb3RTdGF0ZRIfChtQTEFOX1NMT1RfU1RBVEVfVU5TUEVDSUZJRUQQABIdChlQTEFOX1NMT1RfU1RBVEVfU1VHR0VTVEVEEAESGAoUUExBTl9TTE9UX1NUQVRFX0tFUFQQAhIbChdQTEFOX1NMT1RfU1RBVEVfU0tJUFBFRBADEhsKF1BMQU5fU0xPVF9TVEFURV9QTEFOTkVEEAQSHAoYUExBTl9TTE9UX1NUQVRFX1VORklMTEVEEAUSIgoeUExBTl9TTE9UX1NUQVRFX0ZJTExFRF9CWV9NRUFMEAYSHgoaUExBTl9TTE9UX1NUQVRFX0VBVElOR19PVVQQByqWAQoLUGxhbkZpeEtpbmQSHQoZUExBTl9GSVhfS0lORF9VTlNQRUNJRklFRBAAEhgKFFBMQU5fRklYX0tJTkRfUkVNT1ZFEAESGAoUUExBTl9GSVhfS0lORF9SRVNJWkUQAiIECAMQAyIECAQQBCoVUExBTl9GSVhfS0lORF9SRVBMQUNFKhFQTEFOX0ZJWF9LSU5EX0FERDL9BQoRU3VnZ2VzdGlvblNlcnZpY2USXwoOU3VnZ2VzdFJlY2lwZXMSJS5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1JlcXVlc3QaJi5zdWdnZXN0aW9ucy52MS5TdWdnZXN0UmVjaXBlc1Jlc3BvbnNlElYKC1N1Z2dlc3RQbGFuEiIuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXF1ZXN0GiMuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdFBsYW5SZXNwb25zZRJZCgxTdWdnZXN0Rml4ZXMSIy5zdWdnZXN0aW9ucy52MS5TdWdnZXN0Rml4ZXNSZXF1ZXN0GiQuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdEZpeGVzUmVzcG9uc2USaAoRU3VnZ2VzdEZyb21QYW50cnkSKC5zdWdnZXN0aW9ucy52MS5TdWdnZXN0RnJvbVBhbnRyeVJlcXVlc3QaKS5zdWdnZXN0aW9ucy52MS5TdWdnZXN0RnJvbVBhbnRyeVJlc3BvbnNlElkKDFN1Z2dlc3RTaWRlcxIjLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RTaWRlc1JlcXVlc3QaJC5zdWdnZXN0aW9ucy52MS5TdWdnZXN0U2lkZXNSZXNwb25zZRJcCg1MaXN0Qm93bFBhcnRzEiQuc3VnZ2VzdGlvbnMudjEuTGlzdEJvd2xQYXJ0c1JlcXVlc3QaJS5zdWdnZXN0aW9ucy52MS5MaXN0Qm93bFBhcnRzUmVzcG9uc2USWQoMU3VnZ2VzdEJvd2xzEiMuc3VnZ2VzdGlvbnMudjEuU3VnZ2VzdEJvd2xzUmVxdWVzdBokLnN1Z2dlc3Rpb25zLnYxLlN1Z2dlc3RCb3dsc1Jlc3BvbnNlElYKC0NvbXBvc2VCb3dsEiIuc3VnZ2VzdGlvbnMudjEuQ29tcG9zZUJvd2xSZXF1ZXN0GiMuc3VnZ2VzdGlvbnMudjEuQ29tcG9zZUJvd2xSZXNwb25zZULMAQoSY29tLnN1Z2dlc3Rpb25zLnYxQhBTdWdnZXN0aW9uc1Byb3RvUAFaS2dpdGh1Yi5jb20vYnMtdG9vbHMvbWVhbHBsYW5uLmluZy9pbnRlcm5hbC9nZW4vc3VnZ2VzdGlvbnMvdjE7c3VnZ2VzdGlvbnN2MaICA1NYWKoCDlN1Z2dlc3Rpb25zLlYxygIOU3VnZ2VzdGlvbnNcVjHiAhpTdWdnZXN0aW9uc1xWMVxHUEJNZXRhZGF0YeoCD1N1Z2dlc3Rpb25zOjpWMWIGcHJvdG8z", [file_foods_v1_foods, file_people_v1_people, file_plans_v1_plans, file_recipes_v1_recipes]);
+
+/**
+ * A food or recipe a bowl can have.
+ *
+ * @generated from message suggestions.v1.BowlPart
+ */
+export type BowlPart = Message<"suggestions.v1.BowlPart"> & {
+  /**
+   * @generated from field: suggestions.v1.BowlRole role = 1;
+   */
+  role: BowlRole;
+
+  /**
+   * What identifies the part, to compose a bowl with: "food:<food id>",
+   * "recipe:<recipe id>", or "sauce:<recipe id>:<n>" for a sauce made in
+   * a recipe.
+   *
+   * @generated from field: string key = 2;
+   */
+  key: string;
+
+  /**
+   * @generated from field: string name = 3;
+   */
+  name: string;
+
+  /**
+   * More about it, like "from Peanut Noodle Bowls" for a recipe's sauce.
+   *
+   * @generated from field: string detail = 4;
+   */
+  detail: string;
+
+  /**
+   * The food, for a food.
+   *
+   * @generated from field: string food_id = 5;
+   */
+  foodId: string;
+
+  /**
+   * The recipe, for a recipe, or the recipe a sauce is made in.
+   *
+   * @generated from field: string recipe_id = 6;
+   */
+  recipeId: string;
+
+  /**
+   * How much of it a serving has: grams of a food, servings of a recipe,
+   * or for a recipe's sauce, how many of that recipe's servings' worth of
+   * sauce.
+   *
+   * @generated from field: double amount = 7;
+   */
+  amount: number;
+
+  /**
+   * The amount for a serving as it reads, like "75 g" or "1 serving".
+   *
+   * @generated from field: string amount_text = 8;
+   */
+  amountText: string;
+
+  /**
+   * Whether the household has enough of it for a serving: in the pantry,
+   * or for a recipe, leftovers already cooked, or for a recipe's sauce,
+   * everything it's made of. on_hand_note says where, like "in the
+   * fridge, use by Thu 26 Nov".
+   *
+   * @generated from field: bool on_hand = 9;
+   */
+  onHand: boolean;
+
+  /**
+   * @generated from field: string on_hand_note = 10;
+   */
+  onHandNote: string;
+
+  /**
+   * Whether some of it should be used within a few days.
+   *
+   * @generated from field: bool use_soon = 11;
+   */
+  useSoon: boolean;
+
+  /**
+   * Whether it's leftovers already cooked.
+   *
+   * @generated from field: bool leftovers = 12;
+   */
+  leftovers: boolean;
+
+  /**
+   * The cuisines it goes with, like "Asian" or "Mexican", all if empty.
+   *
+   * @generated from field: repeated string styles = 13;
+   */
+  styles: string[];
+};
+
+/**
+ * Describes the message suggestions.v1.BowlPart.
+ * Use `create(BowlPartSchema)` to create a new message.
+ */
+export const BowlPartSchema: GenMessage<BowlPart> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 0);
+
+/**
+ * A bowl: a carbohydrate, a protein, vegetables and a sauce.
+ *
+ * @generated from message suggestions.v1.Bowl
+ */
+export type Bowl = Message<"suggestions.v1.Bowl"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * The bowl's cuisine, its sauce's, like "Asian", or empty.
+   *
+   * @generated from field: string style = 2;
+   */
+  style: string;
+
+  /**
+   * Its parts, by role, in amounts for a serving.
+   *
+   * @generated from field: repeated suggestions.v1.BowlPart parts = 3;
+   */
+  parts: BowlPart[];
+
+  /**
+   * The nutrients of a serving.
+   *
+   * @generated from field: foods.v1.Nutrients nutrients = 4;
+   */
+  nutrients?: Nutrients | undefined;
+
+  /**
+   * The servings recipe makes.
+   *
+   * @generated from field: int32 servings = 5;
+   */
+  servings: number;
+
+  /**
+   * Why it was suggested, like what's cooked already or to use soon.
+   *
+   * @generated from field: repeated string reasons = 6;
+   */
+  reasons: string[];
+
+  /**
+   * The recipe making it, with its ingredients and steps, to create with
+   * RecipeService.CreateRecipe, or update existing_recipe_id with.
+   *
+   * @generated from field: recipes.v1.Recipe recipe = 7;
+   */
+  recipe?: Recipe | undefined;
+
+  /**
+   * The household's recipe of this bowl, made before, if any.
+   *
+   * @generated from field: string existing_recipe_id = 8;
+   */
+  existingRecipeId: string;
+
+  /**
+   * Whether all its parts are on hand.
+   *
+   * @generated from field: bool on_hand = 9;
+   */
+  onHand: boolean;
+};
+
+/**
+ * Describes the message suggestions.v1.Bowl.
+ * Use `create(BowlSchema)` to create a new message.
+ */
+export const BowlSchema: GenMessage<Bowl> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 1);
+
+/**
+ * @generated from message suggestions.v1.ListBowlPartsRequest
+ */
+export type ListBowlPartsRequest = Message<"suggestions.v1.ListBowlPartsRequest"> & {
+  /**
+   * The date (YYYY-MM-DD) the bowl is for, to tell what's on hand and
+   * keeping then. Empty for today.
+   *
+   * @generated from field: string date = 1;
+   */
+  date: string;
+};
+
+/**
+ * Describes the message suggestions.v1.ListBowlPartsRequest.
+ * Use `create(ListBowlPartsRequestSchema)` to create a new message.
+ */
+export const ListBowlPartsRequestSchema: GenMessage<ListBowlPartsRequest> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 2);
+
+/**
+ * @generated from message suggestions.v1.ListBowlPartsResponse
+ */
+export type ListBowlPartsResponse = Message<"suggestions.v1.ListBowlPartsResponse"> & {
+  /**
+   * The parts, by role and then name.
+   *
+   * @generated from field: repeated suggestions.v1.BowlPart parts = 1;
+   */
+  parts: BowlPart[];
+};
+
+/**
+ * Describes the message suggestions.v1.ListBowlPartsResponse.
+ * Use `create(ListBowlPartsResponseSchema)` to create a new message.
+ */
+export const ListBowlPartsResponseSchema: GenMessage<ListBowlPartsResponse> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 3);
+
+/**
+ * @generated from message suggestions.v1.SuggestBowlsRequest
+ */
+export type SuggestBowlsRequest = Message<"suggestions.v1.SuggestBowlsRequest"> & {
+  /**
+   * The date (YYYY-MM-DD) the bowls are for. Empty for today.
+   *
+   * @generated from field: string date = 1;
+   */
+  date: string;
+
+  /**
+   * How many servings each bowl's recipe makes, from 1 to 12; 0 for 2.
+   *
+   * @generated from field: int32 servings = 2;
+   */
+  servings: number;
+
+  /**
+   * How many bowls to suggest, from 1 to 10; 0 for 3.
+   *
+   * @generated from field: int32 max_bowls = 3;
+   */
+  maxBowls: number;
+
+  /**
+   * The seed of the choice between parts about as good: the same seed
+   * suggests the same bowls if nothing changed, and 0 a new one, which
+   * the response returns.
+   *
+   * @generated from field: uint64 seed = 4;
+   */
+  seed: bigint;
+};
+
+/**
+ * Describes the message suggestions.v1.SuggestBowlsRequest.
+ * Use `create(SuggestBowlsRequestSchema)` to create a new message.
+ */
+export const SuggestBowlsRequestSchema: GenMessage<SuggestBowlsRequest> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 4);
+
+/**
+ * @generated from message suggestions.v1.SuggestBowlsResponse
+ */
+export type SuggestBowlsResponse = Message<"suggestions.v1.SuggestBowlsResponse"> & {
+  /**
+   * The bowls, best first. None if no sauce, carbohydrate, protein and
+   * vegetable are on hand together.
+   *
+   * @generated from field: repeated suggestions.v1.Bowl bowls = 1;
+   */
+  bowls: Bowl[];
+
+  /**
+   * @generated from field: uint64 seed = 2;
+   */
+  seed: bigint;
+};
+
+/**
+ * Describes the message suggestions.v1.SuggestBowlsResponse.
+ * Use `create(SuggestBowlsResponseSchema)` to create a new message.
+ */
+export const SuggestBowlsResponseSchema: GenMessage<SuggestBowlsResponse> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 5);
+
+/**
+ * A part of a bowl to compose, in an amount.
+ *
+ * @generated from message suggestions.v1.BowlPartChoice
+ */
+export type BowlPartChoice = Message<"suggestions.v1.BowlPartChoice"> & {
+  /**
+   * The part's key, from ListBowlParts. Required.
+   *
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * How much of it a serving has, in the units of BowlPart.amount; 0 for
+   * the part's default.
+   *
+   * @generated from field: double amount = 2;
+   */
+  amount: number;
+};
+
+/**
+ * Describes the message suggestions.v1.BowlPartChoice.
+ * Use `create(BowlPartChoiceSchema)` to create a new message.
+ */
+export const BowlPartChoiceSchema: GenMessage<BowlPartChoice> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 6);
+
+/**
+ * @generated from message suggestions.v1.ComposeBowlRequest
+ */
+export type ComposeBowlRequest = Message<"suggestions.v1.ComposeBowlRequest"> & {
+  /**
+   * The parts: at least one carbohydrate, protein and vegetable, and
+   * exactly one sauce.
+   *
+   * @generated from field: repeated suggestions.v1.BowlPartChoice parts = 1;
+   */
+  parts: BowlPartChoice[];
+
+  /**
+   * How many servings the recipe makes, from 1 to 12; 0 for 2.
+   *
+   * @generated from field: int32 servings = 2;
+   */
+  servings: number;
+
+  /**
+   * The date (YYYY-MM-DD) to tell what's on hand on. Empty for today.
+   *
+   * @generated from field: string date = 3;
+   */
+  date: string;
+};
+
+/**
+ * Describes the message suggestions.v1.ComposeBowlRequest.
+ * Use `create(ComposeBowlRequestSchema)` to create a new message.
+ */
+export const ComposeBowlRequestSchema: GenMessage<ComposeBowlRequest> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 7);
+
+/**
+ * @generated from message suggestions.v1.ComposeBowlResponse
+ */
+export type ComposeBowlResponse = Message<"suggestions.v1.ComposeBowlResponse"> & {
+  /**
+   * @generated from field: suggestions.v1.Bowl bowl = 1;
+   */
+  bowl?: Bowl | undefined;
+};
+
+/**
+ * Describes the message suggestions.v1.ComposeBowlResponse.
+ * Use `create(ComposeBowlResponseSchema)` to create a new message.
+ */
+export const ComposeBowlResponseSchema: GenMessage<ComposeBowlResponse> = /*@__PURE__*/
+  messageDesc(file_suggestions_v1_suggestions, 8);
 
 /**
  * An eating time of one person, to suggest a recipe for, like a small
@@ -47,7 +415,7 @@ export type EatingTimeSlot = Message<"suggestions.v1.EatingTimeSlot"> & {
  * Use `create(EatingTimeSlotSchema)` to create a new message.
  */
 export const EatingTimeSlotSchema: GenMessage<EatingTimeSlot> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 0);
+  messageDesc(file_suggestions_v1_suggestions, 9);
 
 /**
  * @generated from message suggestions.v1.SuggestRecipesRequest
@@ -106,7 +474,7 @@ export type SuggestRecipesRequest = Message<"suggestions.v1.SuggestRecipesReques
  * Use `create(SuggestRecipesRequestSchema)` to create a new message.
  */
 export const SuggestRecipesRequestSchema: GenMessage<SuggestRecipesRequest> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 1);
+  messageDesc(file_suggestions_v1_suggestions, 10);
 
 /**
  * @generated from message suggestions.v1.SuggestRecipesResponse
@@ -142,7 +510,7 @@ export type SuggestRecipesResponse = Message<"suggestions.v1.SuggestRecipesRespo
  * Use `create(SuggestRecipesResponseSchema)` to create a new message.
  */
 export const SuggestRecipesResponseSchema: GenMessage<SuggestRecipesResponse> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 2);
+  messageDesc(file_suggestions_v1_suggestions, 11);
 
 /**
  * A part of a suggestion's score.
@@ -178,7 +546,7 @@ export type ScoreComponent = Message<"suggestions.v1.ScoreComponent"> & {
  * Use `create(ScoreComponentSchema)` to create a new message.
  */
 export const ScoreComponentSchema: GenMessage<ScoreComponent> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 3);
+  messageDesc(file_suggestions_v1_suggestions, 12);
 
 /**
  * A portion a suggestion would plan, split like PlanMeal splits a shared
@@ -243,7 +611,7 @@ export type SuggestedPortion = Message<"suggestions.v1.SuggestedPortion"> & {
  * Use `create(SuggestedPortionSchema)` to create a new message.
  */
 export const SuggestedPortionSchema: GenMessage<SuggestedPortion> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 4);
+  messageDesc(file_suggestions_v1_suggestions, 13);
 
 /**
  * A food a suggestion needs bought, beyond the week's shopping.
@@ -286,7 +654,7 @@ export type ItemToBuy = Message<"suggestions.v1.ItemToBuy"> & {
  * Use `create(ItemToBuySchema)` to create a new message.
  */
 export const ItemToBuySchema: GenMessage<ItemToBuy> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 5);
+  messageDesc(file_suggestions_v1_suggestions, 14);
 
 /**
  * A recipe suggested for the slot, with why.
@@ -427,7 +795,7 @@ export type Suggestion = Message<"suggestions.v1.Suggestion"> & {
  * Use `create(SuggestionSchema)` to create a new message.
  */
 export const SuggestionSchema: GenMessage<Suggestion> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 6);
+  messageDesc(file_suggestions_v1_suggestions, 15);
 
 /**
  * What the user wants of a suggested plan. Someone's rules always count
@@ -533,7 +901,7 @@ export type PlanCriteria = Message<"suggestions.v1.PlanCriteria"> & {
  * Use `create(PlanCriteriaSchema)` to create a new message.
  */
 export const PlanCriteriaSchema: GenMessage<PlanCriteria> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 7);
+  messageDesc(file_suggestions_v1_suggestions, 16);
 
 /**
  * The user's choice for a slot of a suggested plan.
@@ -617,7 +985,7 @@ export type PlanChoice = Message<"suggestions.v1.PlanChoice"> & {
  * Use `create(PlanChoiceSchema)` to create a new message.
  */
 export const PlanChoiceSchema: GenMessage<PlanChoice> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 8);
+  messageDesc(file_suggestions_v1_suggestions, 17);
 
 /**
  * @generated from message suggestions.v1.SuggestPlanRequest
@@ -683,7 +1051,7 @@ export type SuggestPlanRequest = Message<"suggestions.v1.SuggestPlanRequest"> & 
  * Use `create(SuggestPlanRequestSchema)` to create a new message.
  */
 export const SuggestPlanRequestSchema: GenMessage<SuggestPlanRequest> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 9);
+  messageDesc(file_suggestions_v1_suggestions, 18);
 
 /**
  * A slot of a suggested plan: a shared meal on a date, or one person's
@@ -791,7 +1159,7 @@ export type PlanSlot = Message<"suggestions.v1.PlanSlot"> & {
  * Use `create(PlanSlotSchema)` to create a new message.
  */
 export const PlanSlotSchema: GenMessage<PlanSlot> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 10);
+  messageDesc(file_suggestions_v1_suggestions, 19);
 
 /**
  * @generated from message suggestions.v1.SuggestPlanResponse
@@ -841,7 +1209,7 @@ export type SuggestPlanResponse = Message<"suggestions.v1.SuggestPlanResponse"> 
  * Use `create(SuggestPlanResponseSchema)` to create a new message.
  */
 export const SuggestPlanResponseSchema: GenMessage<SuggestPlanResponse> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 11);
+  messageDesc(file_suggestions_v1_suggestions, 20);
 
 /**
  * @generated from message suggestions.v1.SuggestFixesRequest
@@ -875,7 +1243,7 @@ export type SuggestFixesRequest = Message<"suggestions.v1.SuggestFixesRequest"> 
  * Use `create(SuggestFixesRequestSchema)` to create a new message.
  */
 export const SuggestFixesRequestSchema: GenMessage<SuggestFixesRequest> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 12);
+  messageDesc(file_suggestions_v1_suggestions, 21);
 
 /**
  * @generated from message suggestions.v1.SuggestFixesResponse
@@ -904,7 +1272,7 @@ export type SuggestFixesResponse = Message<"suggestions.v1.SuggestFixesResponse"
  * Use `create(SuggestFixesResponseSchema)` to create a new message.
  */
 export const SuggestFixesResponseSchema: GenMessage<SuggestFixesResponse> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 13);
+  messageDesc(file_suggestions_v1_suggestions, 22);
 
 /**
  * A new size of a planned portion.
@@ -944,7 +1312,7 @@ export type PortionResize = Message<"suggestions.v1.PortionResize"> & {
  * Use `create(PortionResizeSchema)` to create a new message.
  */
 export const PortionResizeSchema: GenMessage<PortionResize> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 14);
+  messageDesc(file_suggestions_v1_suggestions, 23);
 
 /**
  * A change to a person's planned day.
@@ -1029,7 +1397,7 @@ export type PlanFix = Message<"suggestions.v1.PlanFix"> & {
  * Use `create(PlanFixSchema)` to create a new message.
  */
 export const PlanFixSchema: GenMessage<PlanFix> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 15);
+  messageDesc(file_suggestions_v1_suggestions, 24);
 
 /**
  * @generated from message suggestions.v1.SuggestFromPantryRequest
@@ -1057,7 +1425,7 @@ export type SuggestFromPantryRequest = Message<"suggestions.v1.SuggestFromPantry
  * Use `create(SuggestFromPantryRequestSchema)` to create a new message.
  */
 export const SuggestFromPantryRequestSchema: GenMessage<SuggestFromPantryRequest> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 16);
+  messageDesc(file_suggestions_v1_suggestions, 25);
 
 /**
  * @generated from message suggestions.v1.SuggestFromPantryResponse
@@ -1076,7 +1444,7 @@ export type SuggestFromPantryResponse = Message<"suggestions.v1.SuggestFromPantr
  * Use `create(SuggestFromPantryResponseSchema)` to create a new message.
  */
 export const SuggestFromPantryResponseSchema: GenMessage<SuggestFromPantryResponse> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 17);
+  messageDesc(file_suggestions_v1_suggestions, 26);
 
 /**
  * A recipe the pantry has everything for.
@@ -1125,7 +1493,7 @@ export type PantryRecipe = Message<"suggestions.v1.PantryRecipe"> & {
  * Use `create(PantryRecipeSchema)` to create a new message.
  */
 export const PantryRecipeSchema: GenMessage<PantryRecipe> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 18);
+  messageDesc(file_suggestions_v1_suggestions, 27);
 
 /**
  * @generated from message suggestions.v1.SuggestSidesRequest
@@ -1158,7 +1526,7 @@ export type SuggestSidesRequest = Message<"suggestions.v1.SuggestSidesRequest"> 
  * Use `create(SuggestSidesRequestSchema)` to create a new message.
  */
 export const SuggestSidesRequestSchema: GenMessage<SuggestSidesRequest> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 19);
+  messageDesc(file_suggestions_v1_suggestions, 28);
 
 /**
  * @generated from message suggestions.v1.SuggestSidesResponse
@@ -1192,7 +1560,7 @@ export type SuggestSidesResponse = Message<"suggestions.v1.SuggestSidesResponse"
  * Use `create(SuggestSidesResponseSchema)` to create a new message.
  */
 export const SuggestSidesResponseSchema: GenMessage<SuggestSidesResponse> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 20);
+  messageDesc(file_suggestions_v1_suggestions, 29);
 
 /**
  * A side to serve with a meal.
@@ -1352,7 +1720,53 @@ export type SideSuggestion = Message<"suggestions.v1.SideSuggestion"> & {
  * Use `create(SideSuggestionSchema)` to create a new message.
  */
 export const SideSuggestionSchema: GenMessage<SideSuggestion> = /*@__PURE__*/
-  messageDesc(file_suggestions_v1_suggestions, 21);
+  messageDesc(file_suggestions_v1_suggestions, 30);
+
+/**
+ * What a part does in a bowl.
+ *
+ * @generated from enum suggestions.v1.BowlRole
+ */
+export enum BowlRole {
+  /**
+   * @generated from enum value: BOWL_ROLE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * The base, like rice, quinoa or noodles.
+   *
+   * @generated from enum value: BOWL_ROLE_CARB = 1;
+   */
+  CARB = 1,
+
+  /**
+   * The protein, like tofu, tempeh, beans or lentils.
+   *
+   * @generated from enum value: BOWL_ROLE_PROTEIN = 2;
+   */
+  PROTEIN = 2,
+
+  /**
+   * A vegetable, raw, roasted or sautéed.
+   *
+   * @generated from enum value: BOWL_ROLE_VEGETABLE = 3;
+   */
+  VEGETABLE = 3,
+
+  /**
+   * The sauce or dressing.
+   *
+   * @generated from enum value: BOWL_ROLE_SAUCE = 4;
+   */
+  SAUCE = 4,
+}
+
+/**
+ * Describes the enum suggestions.v1.BowlRole.
+ */
+export const BowlRoleSchema: GenEnum<BowlRole> = /*@__PURE__*/
+  enumDesc(file_suggestions_v1_suggestions, 0);
 
 /**
  * ScoreKind is what a component of a suggestion's score is about.
@@ -1465,7 +1879,7 @@ export enum ScoreKind {
  * Describes the enum suggestions.v1.ScoreKind.
  */
 export const ScoreKindSchema: GenEnum<ScoreKind> = /*@__PURE__*/
-  enumDesc(file_suggestions_v1_suggestions, 0);
+  enumDesc(file_suggestions_v1_suggestions, 1);
 
 /**
  * Emphasis is how much a criterion of a plan counts.
@@ -1513,7 +1927,7 @@ export enum Emphasis {
  * Describes the enum suggestions.v1.Emphasis.
  */
 export const EmphasisSchema: GenEnum<Emphasis> = /*@__PURE__*/
-  enumDesc(file_suggestions_v1_suggestions, 1);
+  enumDesc(file_suggestions_v1_suggestions, 2);
 
 /**
  * PlanSlotState is what a slot of a suggested plan holds.
@@ -1582,7 +1996,7 @@ export enum PlanSlotState {
  * Describes the enum suggestions.v1.PlanSlotState.
  */
 export const PlanSlotStateSchema: GenEnum<PlanSlotState> = /*@__PURE__*/
-  enumDesc(file_suggestions_v1_suggestions, 2);
+  enumDesc(file_suggestions_v1_suggestions, 3);
 
 /**
  * What a fix changes.
@@ -1615,7 +2029,7 @@ export enum PlanFixKind {
  * Describes the enum suggestions.v1.PlanFixKind.
  */
 export const PlanFixKindSchema: GenEnum<PlanFixKind> = /*@__PURE__*/
-  enumDesc(file_suggestions_v1_suggestions, 3);
+  enumDesc(file_suggestions_v1_suggestions, 4);
 
 /**
  * SuggestionService suggests which of the household's recipes (see
@@ -1813,6 +2227,54 @@ export const SuggestionService: GenService<{
     methodKind: "unary";
     input: typeof SuggestSidesRequestSchema;
     output: typeof SuggestSidesResponseSchema;
+  },
+  /**
+   * List what bowls can be built of: the household's foods and recipes
+   * that can be a bowl's carbohydrate (rice, quinoa, noodles, or a recipe
+   * like a pot of rice and quinoa), protein (tofu, tempeh, beans, lentils,
+   * or a recipe like smoky tofu crumbles), vegetable, or sauce (the sauces
+   * made in the household's recipes, like a bowl's peanut sauce, recipes
+   * tagged "sauce" or "dressing", and ready-made ones like hummus), each
+   * with its amount for a serving and whether it's on hand. Build a bowl of
+   * them with ComposeBowl. Nothing is changed.
+   *
+   * @generated from rpc suggestions.v1.SuggestionService.ListBowlParts
+   */
+  listBowlParts: {
+    methodKind: "unary";
+    input: typeof ListBowlPartsRequestSchema;
+    output: typeof ListBowlPartsResponseSchema;
+  },
+  /**
+   * Suggest bowls of what's on hand: for each sauce the household has
+   * everything for, the carbohydrate, protein and vegetables on hand that
+   * fit its cuisine best, preferring leftovers already cooked and food to
+   * use soon, each bowl different from the others. Each has its parts,
+   * its nutrients and the recipe to cook or plan it as (see ComposeBowl).
+   * Nothing is changed.
+   *
+   * @generated from rpc suggestions.v1.SuggestionService.SuggestBowls
+   */
+  suggestBowls: {
+    methodKind: "unary";
+    input: typeof SuggestBowlsRequestSchema;
+    output: typeof SuggestBowlsResponseSchema;
+  },
+  /**
+   * Build a bowl of parts from ListBowlParts, in their amounts: at least
+   * one carbohydrate, protein and vegetable, and exactly one sauce. It
+   * returns its nutrients for a serving and the recipe making it, with
+   * steps, to create with RecipeService.CreateRecipe, or, if the household
+   * has made the bowl before, to update existing_recipe_id with
+   * RecipeService.UpdateRecipe. Then cook it now (PlanService.PlanMeal for
+   * today) or plan it like any recipe. Nothing is changed.
+   *
+   * @generated from rpc suggestions.v1.SuggestionService.ComposeBowl
+   */
+  composeBowl: {
+    methodKind: "unary";
+    input: typeof ComposeBowlRequestSchema;
+    output: typeof ComposeBowlResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_suggestions_v1_suggestions, 0);

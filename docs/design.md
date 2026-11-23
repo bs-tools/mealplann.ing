@@ -433,6 +433,32 @@ scoring as `SuggestRecipes`.
   hundred rollouts; two weeks of three meals gets about a dozen, and relies
   more on the polishing pass.
 
+### Bowls
+
+The bowl builder (`internal/bowls`, `/bowls`) builds a bowl of a carb, a
+protein, vegetables and one sauce, the usual Buddha or grain bowl formula,
+from what the household has:
+
+- **Parts** are sorted from its foods by name, store section and energy,
+  like rice or noodles (carbs), tofu, canned beans or lentils (proteins),
+  and produce that isn't an herb, aromatic or fruit (vegetables); from its
+  recipes that go with or into others, by their main ingredient, like a
+  pot of rice and quinoa or a pot of beans; and sauces from the sauce
+  sections of its recipes (steps in a "Sauce" section, ingredients "for
+  the dressing"), recipes tagged "sauce", and ready-made ones like hummus.
+- **Styles** (Asian, Mexican, Mediterranean, Indian) come from words of
+  the ingredients. The sauce sets a bowl's, and its other parts fit it, so
+  a peanut sauce goes with rice, not tortillas.
+- **Suggestions** are of parts on hand: for each sauce the pantry has
+  everything for, the best carb, protein and up to three vegetables,
+  preferring leftovers already cooked and food to use soon, each bowl
+  sharing as few parts as it can with the others.
+- **Amounts** of a serving aim at about 260 kcal of carb, 20 g of protein,
+  and 80 g of each vegetable, less of greens and avocado.
+- A bowl is saved as an ordinary recipe tagged `bowl-builder`, with steps,
+  updating the one made before if it has the same name, and then cooked
+  now (planned for today and opened in cook mode) or planned.
+
 ## Templates
 
 A plan template is a plan of some days that isn't tied to dates, like a

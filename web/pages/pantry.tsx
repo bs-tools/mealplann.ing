@@ -551,6 +551,16 @@ const PantryPage: React.FC = () => {
           <ChevronRightIcon className="size-5 shrink-0" aria-hidden="true" />
         </Link>
       )}
+      {/* A bowl of what's on hand, when nothing whole is. */}
+      {!searching && (
+        <Link
+          to="/bowls"
+          className="flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3.5 text-base font-bold text-ink-soft"
+        >
+          <span className="grow">Build a bowl of what&apos;s on hand</span>
+          <ChevronRightIcon className="size-5 shrink-0" aria-hidden="true" />
+        </Link>
+      )}
       <ErrorText error={setAlwaysInStock.error ?? freeze.error} />
       {frozenAsIs !== null && (
         <p className="rounded-xl bg-warn-tint px-4 py-3 text-sm text-ink-soft">

@@ -181,6 +181,9 @@ const RecipesPage: React.FC = () => {
           Recipes
         </h1>
         <div className="flex items-center gap-2">
+          <Link to="/bowls" className={secondaryButton}>
+            Build a bowl
+          </Link>
           <button
             type="button"
             className={secondaryButton}
