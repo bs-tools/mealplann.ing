@@ -160,6 +160,153 @@ service SuggestionService {
   // there with DeletePortion. Nothing is changed. Returns no sides if the
   // eating time has no recipe with sides.
   rpc SuggestSides(SuggestSidesRequest) returns (SuggestSidesResponse);
+  // List what bowls can be built of: the household's foods and recipes
+  // that can be a bowl's carbohydrate (rice, quinoa, noodles, or a recipe
+  // like a pot of rice and quinoa), protein (tofu, tempeh, beans, lentils,
+  // or a recipe like smoky tofu crumbles), vegetable, or sauce (the sauces
+  // made in the household's recipes, like a bowl's peanut sauce, recipes
+  // tagged "sauce" or "dressing", and ready-made ones like hummus), each
+  // with its amount for a serving and whether it's on hand. Build a bowl of
+  // them with ComposeBowl. Nothing is changed.
+  rpc ListBowlParts(ListBowlPartsRequest) returns (ListBowlPartsResponse);
+  // Suggest bowls of what's on hand: for each sauce the household has
+  // everything for, the carbohydrate, protein and vegetables on hand that
+  // fit its cuisine best, preferring leftovers already cooked and food to
+  // use soon, each bowl different from the others. Each has its parts,
+  // its nutrients and the recipe to cook or plan it as (see ComposeBowl).
+  // Nothing is changed.
+  rpc SuggestBowls(SuggestBowlsRequest) returns (SuggestBowlsResponse);
+  // Build a bowl of parts from ListBowlParts, in their amounts: at least
+  // one carbohydrate, protein and vegetable, and exactly one sauce. It
+  // returns its nutrients for a serving and the recipe making it, with
+  // steps, to create with RecipeService.CreateRecipe, or, if the household
+  // has made the bowl before, to update existing_recipe_id with
+  // RecipeService.UpdateRecipe. Then cook it now (PlanService.PlanMeal for
+  // today) or plan it like any recipe. Nothing is changed.
+  rpc ComposeBowl(ComposeBowlRequest) returns (ComposeBowlResponse);
+}
+
+// What a part does in a bowl.
+enum BowlRole {
+  BOWL_ROLE_UNSPECIFIED = 0;
+  // The base, like rice, quinoa or noodles.
+  BOWL_ROLE_CARB = 1;
+  // The protein, like tofu, tempeh, beans or lentils.
+  BOWL_ROLE_PROTEIN = 2;
+  // A vegetable, raw, roasted or sautéed.
+  BOWL_ROLE_VEGETABLE = 3;
+  // The sauce or dressing.
+  BOWL_ROLE_SAUCE = 4;
+}
+
+// A food or recipe a bowl can have.
+message BowlPart {
+  BowlRole role = 1;
+  // What identifies the part, to compose a bowl with: "food:<food id>",
+  // "recipe:<recipe id>", or "sauce:<recipe id>:<n>" for a sauce made in
+  // a recipe.
+  string key = 2;
+  string name = 3;
+  // More about it, like "from Peanut Noodle Bowls" for a recipe's sauce.
+  string detail = 4;
+  // The food, for a food.
+  string food_id = 5;
+  // The recipe, for a recipe, or the recipe a sauce is made in.
+  string recipe_id = 6;
+  // How much of it a serving has: grams of a food, servings of a recipe,
+  // or for a recipe's sauce, how many of that recipe's servings' worth of
+  // sauce.
+  double amount = 7;
+  // The amount for a serving as it reads, like "75 g" or "1 serving".
+  string amount_text = 8;
+  // Whether the household has enough of it for a serving: in the pantry,
+  // or for a recipe, leftovers already cooked, or for a recipe's sauce,
+  // everything it's made of. on_hand_note says where, like "in the
+  // fridge, use by Thu 26 Nov".
+  bool on_hand = 9;
+  string on_hand_note = 10;
+  // Whether some of it should be used within a few days.
+  bool use_soon = 11;
+  // Whether it's leftovers already cooked.
+  bool leftovers = 12;
+  // The cuisines it goes with, like "Asian" or "Mexican", all if empty.
+  repeated string styles = 13;
+}
+
+// A bowl: a carbohydrate, a protein, vegetables and a sauce.
+message Bowl {
+  string name = 1;
+  // The bowl's cuisine, its sauce's, like "Asian", or empty.
+  string style = 2;
+  // Its parts, by role, in amounts for a serving.
+  repeated BowlPart parts = 3;
+  // The nutrients of a serving.
+  foods.v1.Nutrients nutrients = 4;
+  // The servings recipe makes.
+  int32 servings = 5;
+  // Why it was suggested, like what's cooked already or to use soon.
+  repeated string reasons = 6;
+  // The recipe making it, with its ingredients and steps, to create with
+  // RecipeService.CreateRecipe, or update existing_recipe_id with.
+  recipes.v1.Recipe recipe = 7;
+  // The household's recipe of this bowl, made before, if any.
+  string existing_recipe_id = 8;
+  // Whether all its parts are on hand.
+  bool on_hand = 9;
+}
+
+message ListBowlPartsRequest {
+  // The date (YYYY-MM-DD) the bowl is for, to tell what's on hand and
+  // keeping then. Empty for today.
+  string date = 1;
+}
+
+message ListBowlPartsResponse {
+  // The parts, by role and then name.
+  repeated BowlPart parts = 1;
+}
+
+message SuggestBowlsRequest {
+  // The date (YYYY-MM-DD) the bowls are for. Empty for today.
+  string date = 1;
+  // How many servings each bowl's recipe makes, from 1 to 12; 0 for 2.
+  int32 servings = 2;
+  // How many bowls to suggest, from 1 to 10; 0 for 3.
+  int32 max_bowls = 3;
+  // The seed of the choice between parts about as good: the same seed
+  // suggests the same bowls if nothing changed, and 0 a new one, which
+  // the response returns.
+  uint64 seed = 4;
+}
+
+message SuggestBowlsResponse {
+  // The bowls, best first. None if no sauce, carbohydrate, protein and
+  // vegetable are on hand together.
+  repeated Bowl bowls = 1;
+  uint64 seed = 2;
+}
+
+// A part of a bowl to compose, in an amount.
+message BowlPartChoice {
+  // The part's key, from ListBowlParts. Required.
+  string key = 1;
+  // How much of it a serving has, in the units of BowlPart.amount; 0 for
+  // the part's default.
+  double amount = 2;
+}
+
+message ComposeBowlRequest {
+  // The parts: at least one carbohydrate, protein and vegetable, and
+  // exactly one sauce.
+  repeated BowlPartChoice parts = 1;
+  // How many servings the recipe makes, from 1 to 12; 0 for 2.
+  int32 servings = 2;
+  // The date (YYYY-MM-DD) to tell what's on hand on. Empty for today.
+  string date = 3;
+}
+
+message ComposeBowlResponse {
+  Bowl bowl = 1;
 }
 
 // An eating time of one person, to suggest a recipe for, like a small

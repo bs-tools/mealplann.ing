@@ -7,6 +7,7 @@ import { getCurrentUser } from "gen/users/v1/users-UserService_connectquery";
 import type { User } from "gen/users/v1/users_pb";
 import { hideSplash } from "helpers/splash";
 import AutoPlanPage from "pages/auto-plan";
+import BowlsPage from "pages/bowls";
 import CookModePage from "pages/cook-mode";
 import CooksPage from "pages/cooks";
 import FoodPage from "pages/food";
@@ -140,6 +141,7 @@ const App: React.FC = () => {
             <Route path="/pantry" element={<PantryPage />} />
             <Route path="/pantry/add" element={<PantryAddPage />} />
             <Route path="/pantry/cook" element={<PantryCookPage />} />
+            <Route path="/bowls" element={<BowlsPage />} />
             <Route path="/recipes" element={<RecipesPage />} />
             <Route path="/recipes/new" element={<RecipeEditPage />} />
             <Route path="/recipes/import" element={<RecipeImportPage />} />

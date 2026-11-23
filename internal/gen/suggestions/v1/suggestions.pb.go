@@ -7,10 +7,10 @@
 package suggestionsv1
 
 import (
-	v13 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
-	v1 "github.com/bs-tools/mealplann.ing/internal/gen/people/v1"
-	v11 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
-	v12 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
+	v1 "github.com/bs-tools/mealplann.ing/internal/gen/foods/v1"
+	v12 "github.com/bs-tools/mealplann.ing/internal/gen/people/v1"
+	v13 "github.com/bs-tools/mealplann.ing/internal/gen/plans/v1"
+	v11 "github.com/bs-tools/mealplann.ing/internal/gen/recipes/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -23,6 +23,61 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// What a part does in a bowl.
+type BowlRole int32
+
+const (
+	BowlRole_BOWL_ROLE_UNSPECIFIED BowlRole = 0
+	// The base, like rice, quinoa or noodles.
+	BowlRole_BOWL_ROLE_CARB BowlRole = 1
+	// The protein, like tofu, tempeh, beans or lentils.
+	BowlRole_BOWL_ROLE_PROTEIN BowlRole = 2
+	// A vegetable, raw, roasted or sautéed.
+	BowlRole_BOWL_ROLE_VEGETABLE BowlRole = 3
+	// The sauce or dressing.
+	BowlRole_BOWL_ROLE_SAUCE BowlRole = 4
+)
+
+// Enum value maps for BowlRole.
+var (
+	BowlRole_name = map[int32]string{
+		0: "BOWL_ROLE_UNSPECIFIED",
+		1: "BOWL_ROLE_CARB",
+		2: "BOWL_ROLE_PROTEIN",
+		3: "BOWL_ROLE_VEGETABLE",
+		4: "BOWL_ROLE_SAUCE",
+	}
+	BowlRole_value = map[string]int32{
+		"BOWL_ROLE_UNSPECIFIED": 0,
+		"BOWL_ROLE_CARB":        1,
+		"BOWL_ROLE_PROTEIN":     2,
+		"BOWL_ROLE_VEGETABLE":   3,
+		"BOWL_ROLE_SAUCE":       4,
+	}
+)
+
+func (x BowlRole) Enum() *BowlRole {
+	p := new(BowlRole)
+	*p = x
+	return p
+}
+
+func (x BowlRole) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BowlRole) Descriptor() protoreflect.EnumDescriptor {
+	return file_suggestions_v1_suggestions_proto_enumTypes[0].Descriptor()
+}
+
+func (BowlRole) Type() protoreflect.EnumType {
+	return &file_suggestions_v1_suggestions_proto_enumTypes[0]
+}
+
+func (x BowlRole) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
 
 // ScoreKind is what a component of a suggestion's score is about.
 type ScoreKind int32
@@ -108,11 +163,11 @@ func (x ScoreKind) String() string {
 }
 
 func (ScoreKind) Descriptor() protoreflect.EnumDescriptor {
-	return file_suggestions_v1_suggestions_proto_enumTypes[0].Descriptor()
+	return file_suggestions_v1_suggestions_proto_enumTypes[1].Descriptor()
 }
 
 func (ScoreKind) Type() protoreflect.EnumType {
-	return &file_suggestions_v1_suggestions_proto_enumTypes[0]
+	return &file_suggestions_v1_suggestions_proto_enumTypes[1]
 }
 
 func (x ScoreKind) Number() protoreflect.EnumNumber {
@@ -164,11 +219,11 @@ func (x Emphasis) String() string {
 }
 
 func (Emphasis) Descriptor() protoreflect.EnumDescriptor {
-	return file_suggestions_v1_suggestions_proto_enumTypes[1].Descriptor()
+	return file_suggestions_v1_suggestions_proto_enumTypes[2].Descriptor()
 }
 
 func (Emphasis) Type() protoreflect.EnumType {
-	return &file_suggestions_v1_suggestions_proto_enumTypes[1]
+	return &file_suggestions_v1_suggestions_proto_enumTypes[2]
 }
 
 func (x Emphasis) Number() protoreflect.EnumNumber {
@@ -233,11 +288,11 @@ func (x PlanSlotState) String() string {
 }
 
 func (PlanSlotState) Descriptor() protoreflect.EnumDescriptor {
-	return file_suggestions_v1_suggestions_proto_enumTypes[2].Descriptor()
+	return file_suggestions_v1_suggestions_proto_enumTypes[3].Descriptor()
 }
 
 func (PlanSlotState) Type() protoreflect.EnumType {
-	return &file_suggestions_v1_suggestions_proto_enumTypes[2]
+	return &file_suggestions_v1_suggestions_proto_enumTypes[3]
 }
 
 func (x PlanSlotState) Number() protoreflect.EnumNumber {
@@ -281,15 +336,994 @@ func (x PlanFixKind) String() string {
 }
 
 func (PlanFixKind) Descriptor() protoreflect.EnumDescriptor {
-	return file_suggestions_v1_suggestions_proto_enumTypes[3].Descriptor()
+	return file_suggestions_v1_suggestions_proto_enumTypes[4].Descriptor()
 }
 
 func (PlanFixKind) Type() protoreflect.EnumType {
-	return &file_suggestions_v1_suggestions_proto_enumTypes[3]
+	return &file_suggestions_v1_suggestions_proto_enumTypes[4]
 }
 
 func (x PlanFixKind) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
+}
+
+// A food or recipe a bowl can have.
+type BowlPart struct {
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Role       BowlRole               `protobuf:"varint,1,opt,name=role,proto3,enum=suggestions.v1.BowlRole"`
+	xxx_hidden_Key        string                 `protobuf:"bytes,2,opt,name=key,proto3"`
+	xxx_hidden_Name       string                 `protobuf:"bytes,3,opt,name=name,proto3"`
+	xxx_hidden_Detail     string                 `protobuf:"bytes,4,opt,name=detail,proto3"`
+	xxx_hidden_FoodId     string                 `protobuf:"bytes,5,opt,name=food_id,json=foodId,proto3"`
+	xxx_hidden_RecipeId   string                 `protobuf:"bytes,6,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_Amount     float64                `protobuf:"fixed64,7,opt,name=amount,proto3"`
+	xxx_hidden_AmountText string                 `protobuf:"bytes,8,opt,name=amount_text,json=amountText,proto3"`
+	xxx_hidden_OnHand     bool                   `protobuf:"varint,9,opt,name=on_hand,json=onHand,proto3"`
+	xxx_hidden_OnHandNote string                 `protobuf:"bytes,10,opt,name=on_hand_note,json=onHandNote,proto3"`
+	xxx_hidden_UseSoon    bool                   `protobuf:"varint,11,opt,name=use_soon,json=useSoon,proto3"`
+	xxx_hidden_Leftovers  bool                   `protobuf:"varint,12,opt,name=leftovers,proto3"`
+	xxx_hidden_Styles     []string               `protobuf:"bytes,13,rep,name=styles,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *BowlPart) Reset() {
+	*x = BowlPart{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BowlPart) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BowlPart) ProtoMessage() {}
+
+func (x *BowlPart) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *BowlPart) GetRole() BowlRole {
+	if x != nil {
+		return x.xxx_hidden_Role
+	}
+	return BowlRole_BOWL_ROLE_UNSPECIFIED
+}
+
+func (x *BowlPart) GetKey() string {
+	if x != nil {
+		return x.xxx_hidden_Key
+	}
+	return ""
+}
+
+func (x *BowlPart) GetName() string {
+	if x != nil {
+		return x.xxx_hidden_Name
+	}
+	return ""
+}
+
+func (x *BowlPart) GetDetail() string {
+	if x != nil {
+		return x.xxx_hidden_Detail
+	}
+	return ""
+}
+
+func (x *BowlPart) GetFoodId() string {
+	if x != nil {
+		return x.xxx_hidden_FoodId
+	}
+	return ""
+}
+
+func (x *BowlPart) GetRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeId
+	}
+	return ""
+}
+
+func (x *BowlPart) GetAmount() float64 {
+	if x != nil {
+		return x.xxx_hidden_Amount
+	}
+	return 0
+}
+
+func (x *BowlPart) GetAmountText() string {
+	if x != nil {
+		return x.xxx_hidden_AmountText
+	}
+	return ""
+}
+
+func (x *BowlPart) GetOnHand() bool {
+	if x != nil {
+		return x.xxx_hidden_OnHand
+	}
+	return false
+}
+
+func (x *BowlPart) GetOnHandNote() string {
+	if x != nil {
+		return x.xxx_hidden_OnHandNote
+	}
+	return ""
+}
+
+func (x *BowlPart) GetUseSoon() bool {
+	if x != nil {
+		return x.xxx_hidden_UseSoon
+	}
+	return false
+}
+
+func (x *BowlPart) GetLeftovers() bool {
+	if x != nil {
+		return x.xxx_hidden_Leftovers
+	}
+	return false
+}
+
+func (x *BowlPart) GetStyles() []string {
+	if x != nil {
+		return x.xxx_hidden_Styles
+	}
+	return nil
+}
+
+func (x *BowlPart) SetRole(v BowlRole) {
+	x.xxx_hidden_Role = v
+}
+
+func (x *BowlPart) SetKey(v string) {
+	x.xxx_hidden_Key = v
+}
+
+func (x *BowlPart) SetName(v string) {
+	x.xxx_hidden_Name = v
+}
+
+func (x *BowlPart) SetDetail(v string) {
+	x.xxx_hidden_Detail = v
+}
+
+func (x *BowlPart) SetFoodId(v string) {
+	x.xxx_hidden_FoodId = v
+}
+
+func (x *BowlPart) SetRecipeId(v string) {
+	x.xxx_hidden_RecipeId = v
+}
+
+func (x *BowlPart) SetAmount(v float64) {
+	x.xxx_hidden_Amount = v
+}
+
+func (x *BowlPart) SetAmountText(v string) {
+	x.xxx_hidden_AmountText = v
+}
+
+func (x *BowlPart) SetOnHand(v bool) {
+	x.xxx_hidden_OnHand = v
+}
+
+func (x *BowlPart) SetOnHandNote(v string) {
+	x.xxx_hidden_OnHandNote = v
+}
+
+func (x *BowlPart) SetUseSoon(v bool) {
+	x.xxx_hidden_UseSoon = v
+}
+
+func (x *BowlPart) SetLeftovers(v bool) {
+	x.xxx_hidden_Leftovers = v
+}
+
+func (x *BowlPart) SetStyles(v []string) {
+	x.xxx_hidden_Styles = v
+}
+
+type BowlPart_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Role BowlRole
+	// What identifies the part, to compose a bowl with: "food:<food id>",
+	// "recipe:<recipe id>", or "sauce:<recipe id>:<n>" for a sauce made in
+	// a recipe.
+	Key  string
+	Name string
+	// More about it, like "from Peanut Noodle Bowls" for a recipe's sauce.
+	Detail string
+	// The food, for a food.
+	FoodId string
+	// The recipe, for a recipe, or the recipe a sauce is made in.
+	RecipeId string
+	// How much of it a serving has: grams of a food, servings of a recipe,
+	// or for a recipe's sauce, how many of that recipe's servings' worth of
+	// sauce.
+	Amount float64
+	// The amount for a serving as it reads, like "75 g" or "1 serving".
+	AmountText string
+	// Whether the household has enough of it for a serving: in the pantry,
+	// or for a recipe, leftovers already cooked, or for a recipe's sauce,
+	// everything it's made of. on_hand_note says where, like "in the
+	// fridge, use by Thu 26 Nov".
+	OnHand     bool
+	OnHandNote string
+	// Whether some of it should be used within a few days.
+	UseSoon bool
+	// Whether it's leftovers already cooked.
+	Leftovers bool
+	// The cuisines it goes with, like "Asian" or "Mexican", all if empty.
+	Styles []string
+}
+
+func (b0 BowlPart_builder) Build() *BowlPart {
+	m0 := &BowlPart{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Role = b.Role
+	x.xxx_hidden_Key = b.Key
+	x.xxx_hidden_Name = b.Name
+	x.xxx_hidden_Detail = b.Detail
+	x.xxx_hidden_FoodId = b.FoodId
+	x.xxx_hidden_RecipeId = b.RecipeId
+	x.xxx_hidden_Amount = b.Amount
+	x.xxx_hidden_AmountText = b.AmountText
+	x.xxx_hidden_OnHand = b.OnHand
+	x.xxx_hidden_OnHandNote = b.OnHandNote
+	x.xxx_hidden_UseSoon = b.UseSoon
+	x.xxx_hidden_Leftovers = b.Leftovers
+	x.xxx_hidden_Styles = b.Styles
+	return m0
+}
+
+// A bowl: a carbohydrate, a protein, vegetables and a sauce.
+type Bowl struct {
+	state                       protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Name             string                 `protobuf:"bytes,1,opt,name=name,proto3"`
+	xxx_hidden_Style            string                 `protobuf:"bytes,2,opt,name=style,proto3"`
+	xxx_hidden_Parts            *[]*BowlPart           `protobuf:"bytes,3,rep,name=parts,proto3"`
+	xxx_hidden_Nutrients        *v1.Nutrients          `protobuf:"bytes,4,opt,name=nutrients,proto3"`
+	xxx_hidden_Servings         int32                  `protobuf:"varint,5,opt,name=servings,proto3"`
+	xxx_hidden_Reasons          []string               `protobuf:"bytes,6,rep,name=reasons,proto3"`
+	xxx_hidden_Recipe           *v11.Recipe            `protobuf:"bytes,7,opt,name=recipe,proto3"`
+	xxx_hidden_ExistingRecipeId string                 `protobuf:"bytes,8,opt,name=existing_recipe_id,json=existingRecipeId,proto3"`
+	xxx_hidden_OnHand           bool                   `protobuf:"varint,9,opt,name=on_hand,json=onHand,proto3"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
+}
+
+func (x *Bowl) Reset() {
+	*x = Bowl{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Bowl) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Bowl) ProtoMessage() {}
+
+func (x *Bowl) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Bowl) GetName() string {
+	if x != nil {
+		return x.xxx_hidden_Name
+	}
+	return ""
+}
+
+func (x *Bowl) GetStyle() string {
+	if x != nil {
+		return x.xxx_hidden_Style
+	}
+	return ""
+}
+
+func (x *Bowl) GetParts() []*BowlPart {
+	if x != nil {
+		if x.xxx_hidden_Parts != nil {
+			return *x.xxx_hidden_Parts
+		}
+	}
+	return nil
+}
+
+func (x *Bowl) GetNutrients() *v1.Nutrients {
+	if x != nil {
+		return x.xxx_hidden_Nutrients
+	}
+	return nil
+}
+
+func (x *Bowl) GetServings() int32 {
+	if x != nil {
+		return x.xxx_hidden_Servings
+	}
+	return 0
+}
+
+func (x *Bowl) GetReasons() []string {
+	if x != nil {
+		return x.xxx_hidden_Reasons
+	}
+	return nil
+}
+
+func (x *Bowl) GetRecipe() *v11.Recipe {
+	if x != nil {
+		return x.xxx_hidden_Recipe
+	}
+	return nil
+}
+
+func (x *Bowl) GetExistingRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_ExistingRecipeId
+	}
+	return ""
+}
+
+func (x *Bowl) GetOnHand() bool {
+	if x != nil {
+		return x.xxx_hidden_OnHand
+	}
+	return false
+}
+
+func (x *Bowl) SetName(v string) {
+	x.xxx_hidden_Name = v
+}
+
+func (x *Bowl) SetStyle(v string) {
+	x.xxx_hidden_Style = v
+}
+
+func (x *Bowl) SetParts(v []*BowlPart) {
+	x.xxx_hidden_Parts = &v
+}
+
+func (x *Bowl) SetNutrients(v *v1.Nutrients) {
+	x.xxx_hidden_Nutrients = v
+}
+
+func (x *Bowl) SetServings(v int32) {
+	x.xxx_hidden_Servings = v
+}
+
+func (x *Bowl) SetReasons(v []string) {
+	x.xxx_hidden_Reasons = v
+}
+
+func (x *Bowl) SetRecipe(v *v11.Recipe) {
+	x.xxx_hidden_Recipe = v
+}
+
+func (x *Bowl) SetExistingRecipeId(v string) {
+	x.xxx_hidden_ExistingRecipeId = v
+}
+
+func (x *Bowl) SetOnHand(v bool) {
+	x.xxx_hidden_OnHand = v
+}
+
+func (x *Bowl) HasNutrients() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Nutrients != nil
+}
+
+func (x *Bowl) HasRecipe() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Recipe != nil
+}
+
+func (x *Bowl) ClearNutrients() {
+	x.xxx_hidden_Nutrients = nil
+}
+
+func (x *Bowl) ClearRecipe() {
+	x.xxx_hidden_Recipe = nil
+}
+
+type Bowl_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Name string
+	// The bowl's cuisine, its sauce's, like "Asian", or empty.
+	Style string
+	// Its parts, by role, in amounts for a serving.
+	Parts []*BowlPart
+	// The nutrients of a serving.
+	Nutrients *v1.Nutrients
+	// The servings recipe makes.
+	Servings int32
+	// Why it was suggested, like what's cooked already or to use soon.
+	Reasons []string
+	// The recipe making it, with its ingredients and steps, to create with
+	// RecipeService.CreateRecipe, or update existing_recipe_id with.
+	Recipe *v11.Recipe
+	// The household's recipe of this bowl, made before, if any.
+	ExistingRecipeId string
+	// Whether all its parts are on hand.
+	OnHand bool
+}
+
+func (b0 Bowl_builder) Build() *Bowl {
+	m0 := &Bowl{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Name = b.Name
+	x.xxx_hidden_Style = b.Style
+	x.xxx_hidden_Parts = &b.Parts
+	x.xxx_hidden_Nutrients = b.Nutrients
+	x.xxx_hidden_Servings = b.Servings
+	x.xxx_hidden_Reasons = b.Reasons
+	x.xxx_hidden_Recipe = b.Recipe
+	x.xxx_hidden_ExistingRecipeId = b.ExistingRecipeId
+	x.xxx_hidden_OnHand = b.OnHand
+	return m0
+}
+
+type ListBowlPartsRequest struct {
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Date string                 `protobuf:"bytes,1,opt,name=date,proto3"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ListBowlPartsRequest) Reset() {
+	*x = ListBowlPartsRequest{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListBowlPartsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListBowlPartsRequest) ProtoMessage() {}
+
+func (x *ListBowlPartsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ListBowlPartsRequest) GetDate() string {
+	if x != nil {
+		return x.xxx_hidden_Date
+	}
+	return ""
+}
+
+func (x *ListBowlPartsRequest) SetDate(v string) {
+	x.xxx_hidden_Date = v
+}
+
+type ListBowlPartsRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The date (YYYY-MM-DD) the bowl is for, to tell what's on hand and
+	// keeping then. Empty for today.
+	Date string
+}
+
+func (b0 ListBowlPartsRequest_builder) Build() *ListBowlPartsRequest {
+	m0 := &ListBowlPartsRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Date = b.Date
+	return m0
+}
+
+type ListBowlPartsResponse struct {
+	state            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Parts *[]*BowlPart           `protobuf:"bytes,1,rep,name=parts,proto3"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *ListBowlPartsResponse) Reset() {
+	*x = ListBowlPartsResponse{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListBowlPartsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListBowlPartsResponse) ProtoMessage() {}
+
+func (x *ListBowlPartsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ListBowlPartsResponse) GetParts() []*BowlPart {
+	if x != nil {
+		if x.xxx_hidden_Parts != nil {
+			return *x.xxx_hidden_Parts
+		}
+	}
+	return nil
+}
+
+func (x *ListBowlPartsResponse) SetParts(v []*BowlPart) {
+	x.xxx_hidden_Parts = &v
+}
+
+type ListBowlPartsResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The parts, by role and then name.
+	Parts []*BowlPart
+}
+
+func (b0 ListBowlPartsResponse_builder) Build() *ListBowlPartsResponse {
+	m0 := &ListBowlPartsResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Parts = &b.Parts
+	return m0
+}
+
+type SuggestBowlsRequest struct {
+	state               protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Date     string                 `protobuf:"bytes,1,opt,name=date,proto3"`
+	xxx_hidden_Servings int32                  `protobuf:"varint,2,opt,name=servings,proto3"`
+	xxx_hidden_MaxBowls int32                  `protobuf:"varint,3,opt,name=max_bowls,json=maxBowls,proto3"`
+	xxx_hidden_Seed     uint64                 `protobuf:"varint,4,opt,name=seed,proto3"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *SuggestBowlsRequest) Reset() {
+	*x = SuggestBowlsRequest{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestBowlsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestBowlsRequest) ProtoMessage() {}
+
+func (x *SuggestBowlsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SuggestBowlsRequest) GetDate() string {
+	if x != nil {
+		return x.xxx_hidden_Date
+	}
+	return ""
+}
+
+func (x *SuggestBowlsRequest) GetServings() int32 {
+	if x != nil {
+		return x.xxx_hidden_Servings
+	}
+	return 0
+}
+
+func (x *SuggestBowlsRequest) GetMaxBowls() int32 {
+	if x != nil {
+		return x.xxx_hidden_MaxBowls
+	}
+	return 0
+}
+
+func (x *SuggestBowlsRequest) GetSeed() uint64 {
+	if x != nil {
+		return x.xxx_hidden_Seed
+	}
+	return 0
+}
+
+func (x *SuggestBowlsRequest) SetDate(v string) {
+	x.xxx_hidden_Date = v
+}
+
+func (x *SuggestBowlsRequest) SetServings(v int32) {
+	x.xxx_hidden_Servings = v
+}
+
+func (x *SuggestBowlsRequest) SetMaxBowls(v int32) {
+	x.xxx_hidden_MaxBowls = v
+}
+
+func (x *SuggestBowlsRequest) SetSeed(v uint64) {
+	x.xxx_hidden_Seed = v
+}
+
+type SuggestBowlsRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The date (YYYY-MM-DD) the bowls are for. Empty for today.
+	Date string
+	// How many servings each bowl's recipe makes, from 1 to 12; 0 for 2.
+	Servings int32
+	// How many bowls to suggest, from 1 to 10; 0 for 3.
+	MaxBowls int32
+	// The seed of the choice between parts about as good: the same seed
+	// suggests the same bowls if nothing changed, and 0 a new one, which
+	// the response returns.
+	Seed uint64
+}
+
+func (b0 SuggestBowlsRequest_builder) Build() *SuggestBowlsRequest {
+	m0 := &SuggestBowlsRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Date = b.Date
+	x.xxx_hidden_Servings = b.Servings
+	x.xxx_hidden_MaxBowls = b.MaxBowls
+	x.xxx_hidden_Seed = b.Seed
+	return m0
+}
+
+type SuggestBowlsResponse struct {
+	state            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Bowls *[]*Bowl               `protobuf:"bytes,1,rep,name=bowls,proto3"`
+	xxx_hidden_Seed  uint64                 `protobuf:"varint,2,opt,name=seed,proto3"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *SuggestBowlsResponse) Reset() {
+	*x = SuggestBowlsResponse{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestBowlsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestBowlsResponse) ProtoMessage() {}
+
+func (x *SuggestBowlsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SuggestBowlsResponse) GetBowls() []*Bowl {
+	if x != nil {
+		if x.xxx_hidden_Bowls != nil {
+			return *x.xxx_hidden_Bowls
+		}
+	}
+	return nil
+}
+
+func (x *SuggestBowlsResponse) GetSeed() uint64 {
+	if x != nil {
+		return x.xxx_hidden_Seed
+	}
+	return 0
+}
+
+func (x *SuggestBowlsResponse) SetBowls(v []*Bowl) {
+	x.xxx_hidden_Bowls = &v
+}
+
+func (x *SuggestBowlsResponse) SetSeed(v uint64) {
+	x.xxx_hidden_Seed = v
+}
+
+type SuggestBowlsResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The bowls, best first. None if no sauce, carbohydrate, protein and
+	// vegetable are on hand together.
+	Bowls []*Bowl
+	Seed  uint64
+}
+
+func (b0 SuggestBowlsResponse_builder) Build() *SuggestBowlsResponse {
+	m0 := &SuggestBowlsResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Bowls = &b.Bowls
+	x.xxx_hidden_Seed = b.Seed
+	return m0
+}
+
+// A part of a bowl to compose, in an amount.
+type BowlPartChoice struct {
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Key    string                 `protobuf:"bytes,1,opt,name=key,proto3"`
+	xxx_hidden_Amount float64                `protobuf:"fixed64,2,opt,name=amount,proto3"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *BowlPartChoice) Reset() {
+	*x = BowlPartChoice{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BowlPartChoice) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BowlPartChoice) ProtoMessage() {}
+
+func (x *BowlPartChoice) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *BowlPartChoice) GetKey() string {
+	if x != nil {
+		return x.xxx_hidden_Key
+	}
+	return ""
+}
+
+func (x *BowlPartChoice) GetAmount() float64 {
+	if x != nil {
+		return x.xxx_hidden_Amount
+	}
+	return 0
+}
+
+func (x *BowlPartChoice) SetKey(v string) {
+	x.xxx_hidden_Key = v
+}
+
+func (x *BowlPartChoice) SetAmount(v float64) {
+	x.xxx_hidden_Amount = v
+}
+
+type BowlPartChoice_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The part's key, from ListBowlParts. Required.
+	Key string
+	// How much of it a serving has, in the units of BowlPart.amount; 0 for
+	// the part's default.
+	Amount float64
+}
+
+func (b0 BowlPartChoice_builder) Build() *BowlPartChoice {
+	m0 := &BowlPartChoice{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Key = b.Key
+	x.xxx_hidden_Amount = b.Amount
+	return m0
+}
+
+type ComposeBowlRequest struct {
+	state               protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Parts    *[]*BowlPartChoice     `protobuf:"bytes,1,rep,name=parts,proto3"`
+	xxx_hidden_Servings int32                  `protobuf:"varint,2,opt,name=servings,proto3"`
+	xxx_hidden_Date     string                 `protobuf:"bytes,3,opt,name=date,proto3"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *ComposeBowlRequest) Reset() {
+	*x = ComposeBowlRequest{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ComposeBowlRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ComposeBowlRequest) ProtoMessage() {}
+
+func (x *ComposeBowlRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ComposeBowlRequest) GetParts() []*BowlPartChoice {
+	if x != nil {
+		if x.xxx_hidden_Parts != nil {
+			return *x.xxx_hidden_Parts
+		}
+	}
+	return nil
+}
+
+func (x *ComposeBowlRequest) GetServings() int32 {
+	if x != nil {
+		return x.xxx_hidden_Servings
+	}
+	return 0
+}
+
+func (x *ComposeBowlRequest) GetDate() string {
+	if x != nil {
+		return x.xxx_hidden_Date
+	}
+	return ""
+}
+
+func (x *ComposeBowlRequest) SetParts(v []*BowlPartChoice) {
+	x.xxx_hidden_Parts = &v
+}
+
+func (x *ComposeBowlRequest) SetServings(v int32) {
+	x.xxx_hidden_Servings = v
+}
+
+func (x *ComposeBowlRequest) SetDate(v string) {
+	x.xxx_hidden_Date = v
+}
+
+type ComposeBowlRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The parts: at least one carbohydrate, protein and vegetable, and
+	// exactly one sauce.
+	Parts []*BowlPartChoice
+	// How many servings the recipe makes, from 1 to 12; 0 for 2.
+	Servings int32
+	// The date (YYYY-MM-DD) to tell what's on hand on. Empty for today.
+	Date string
+}
+
+func (b0 ComposeBowlRequest_builder) Build() *ComposeBowlRequest {
+	m0 := &ComposeBowlRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Parts = &b.Parts
+	x.xxx_hidden_Servings = b.Servings
+	x.xxx_hidden_Date = b.Date
+	return m0
+}
+
+type ComposeBowlResponse struct {
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Bowl *Bowl                  `protobuf:"bytes,1,opt,name=bowl,proto3"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ComposeBowlResponse) Reset() {
+	*x = ComposeBowlResponse{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ComposeBowlResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ComposeBowlResponse) ProtoMessage() {}
+
+func (x *ComposeBowlResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ComposeBowlResponse) GetBowl() *Bowl {
+	if x != nil {
+		return x.xxx_hidden_Bowl
+	}
+	return nil
+}
+
+func (x *ComposeBowlResponse) SetBowl(v *Bowl) {
+	x.xxx_hidden_Bowl = v
+}
+
+func (x *ComposeBowlResponse) HasBowl() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Bowl != nil
+}
+
+func (x *ComposeBowlResponse) ClearBowl() {
+	x.xxx_hidden_Bowl = nil
+}
+
+type ComposeBowlResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Bowl *Bowl
+}
+
+func (b0 ComposeBowlResponse_builder) Build() *ComposeBowlResponse {
+	m0 := &ComposeBowlResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Bowl = b.Bowl
+	return m0
 }
 
 // An eating time of one person, to suggest a recipe for, like a small
@@ -304,7 +1338,7 @@ type EatingTimeSlot struct {
 
 func (x *EatingTimeSlot) Reset() {
 	*x = EatingTimeSlot{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[0]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -316,7 +1350,7 @@ func (x *EatingTimeSlot) String() string {
 func (*EatingTimeSlot) ProtoMessage() {}
 
 func (x *EatingTimeSlot) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[0]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -379,7 +1413,7 @@ type SuggestRecipesRequest struct {
 
 func (x *SuggestRecipesRequest) Reset() {
 	*x = SuggestRecipesRequest{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[1]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -391,7 +1425,7 @@ func (x *SuggestRecipesRequest) String() string {
 func (*SuggestRecipesRequest) ProtoMessage() {}
 
 func (x *SuggestRecipesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[1]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -409,13 +1443,13 @@ func (x *SuggestRecipesRequest) GetDate() string {
 	return ""
 }
 
-func (x *SuggestRecipesRequest) GetMeal() v1.HouseholdMeal {
+func (x *SuggestRecipesRequest) GetMeal() v12.HouseholdMeal {
 	if x != nil {
 		if x, ok := x.xxx_hidden_Slot.(*suggestRecipesRequest_Meal); ok {
 			return x.Meal
 		}
 	}
-	return v1.HouseholdMeal(0)
+	return v12.HouseholdMeal(0)
 }
 
 func (x *SuggestRecipesRequest) GetEatingTime() *EatingTimeSlot {
@@ -445,7 +1479,7 @@ func (x *SuggestRecipesRequest) SetDate(v string) {
 	x.xxx_hidden_Date = v
 }
 
-func (x *SuggestRecipesRequest) SetMeal(v v1.HouseholdMeal) {
+func (x *SuggestRecipesRequest) SetMeal(v v12.HouseholdMeal) {
 	x.xxx_hidden_Slot = &suggestRecipesRequest_Meal{v}
 }
 
@@ -532,7 +1566,7 @@ type SuggestRecipesRequest_builder struct {
 	// Fields of oneof xxx_hidden_Slot:
 	// A shared meal, eaten by everyone whose eating pattern eats from it,
 	// like PlanMeal.
-	Meal *v1.HouseholdMeal
+	Meal *v12.HouseholdMeal
 	// One person's eating time, e.g. a small meal between main meals.
 	EatingTime *EatingTimeSlot
 	// -- end of xxx_hidden_Slot
@@ -563,7 +1597,7 @@ func (b0 SuggestRecipesRequest_builder) Build() *SuggestRecipesRequest {
 type case_SuggestRecipesRequest_Slot protoreflect.FieldNumber
 
 func (x case_SuggestRecipesRequest_Slot) String() string {
-	md := file_suggestions_v1_suggestions_proto_msgTypes[1].Descriptor()
+	md := file_suggestions_v1_suggestions_proto_msgTypes[10].Descriptor()
 	if x == 0 {
 		return "not set"
 	}
@@ -577,7 +1611,7 @@ type isSuggestRecipesRequest_Slot interface {
 type suggestRecipesRequest_Meal struct {
 	// A shared meal, eaten by everyone whose eating pattern eats from it,
 	// like PlanMeal.
-	Meal v1.HouseholdMeal `protobuf:"varint,2,opt,name=meal,proto3,enum=people.v1.HouseholdMeal,oneof"`
+	Meal v12.HouseholdMeal `protobuf:"varint,2,opt,name=meal,proto3,enum=people.v1.HouseholdMeal,oneof"`
 }
 
 type suggestRecipesRequest_EatingTime struct {
@@ -600,7 +1634,7 @@ type SuggestRecipesResponse struct {
 
 func (x *SuggestRecipesResponse) Reset() {
 	*x = SuggestRecipesResponse{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[2]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -612,7 +1646,7 @@ func (x *SuggestRecipesResponse) String() string {
 func (*SuggestRecipesResponse) ProtoMessage() {}
 
 func (x *SuggestRecipesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[2]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -694,7 +1728,7 @@ type ScoreComponent struct {
 
 func (x *ScoreComponent) Reset() {
 	*x = ScoreComponent{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[3]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -706,7 +1740,7 @@ func (x *ScoreComponent) String() string {
 func (*ScoreComponent) ProtoMessage() {}
 
 func (x *ScoreComponent) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[3]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -789,7 +1823,7 @@ type SuggestedPortion struct {
 
 func (x *SuggestedPortion) Reset() {
 	*x = SuggestedPortion{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[4]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -801,7 +1835,7 @@ func (x *SuggestedPortion) String() string {
 func (*SuggestedPortion) ProtoMessage() {}
 
 func (x *SuggestedPortion) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[4]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -936,7 +1970,7 @@ type ItemToBuy struct {
 
 func (x *ItemToBuy) Reset() {
 	*x = ItemToBuy{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[5]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -948,7 +1982,7 @@ func (x *ItemToBuy) String() string {
 func (*ItemToBuy) ProtoMessage() {}
 
 func (x *ItemToBuy) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[5]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1036,14 +2070,14 @@ type Suggestion struct {
 	xxx_hidden_Score        float64                `protobuf:"fixed64,3,opt,name=score,proto3"`
 	xxx_hidden_Components   *[]*ScoreComponent     `protobuf:"bytes,4,rep,name=components,proto3"`
 	xxx_hidden_FitsRules    bool                   `protobuf:"varint,5,opt,name=fits_rules,json=fitsRules,proto3"`
-	xxx_hidden_Warnings     *[]*v11.Warning        `protobuf:"bytes,6,rep,name=warnings,proto3"`
+	xxx_hidden_Warnings     *[]*v13.Warning        `protobuf:"bytes,6,rep,name=warnings,proto3"`
 	xxx_hidden_Portions     *[]*SuggestedPortion   `protobuf:"bytes,7,rep,name=portions,proto3"`
 	xxx_hidden_CookServings float64                `protobuf:"fixed64,8,opt,name=cook_servings,json=cookServings,proto3"`
 	xxx_hidden_NewItemCount int32                  `protobuf:"varint,9,opt,name=new_item_count,json=newItemCount,proto3"`
 	xxx_hidden_ItemsToBuy   *[]*ItemToBuy          `protobuf:"bytes,10,rep,name=items_to_buy,json=itemsToBuy,proto3"`
-	xxx_hidden_LeftoverOf   *v11.LeftoverOf        `protobuf:"bytes,11,opt,name=leftover_of,json=leftoverOf,proto3"`
+	xxx_hidden_LeftoverOf   *v13.LeftoverOf        `protobuf:"bytes,11,opt,name=leftover_of,json=leftoverOf,proto3"`
 	xxx_hidden_CookDate     string                 `protobuf:"bytes,12,opt,name=cook_date,json=cookDate,proto3"`
-	xxx_hidden_Side         *v12.RecipeSide        `protobuf:"bytes,13,opt,name=side,proto3"`
+	xxx_hidden_Side         *v11.RecipeSide        `protobuf:"bytes,13,opt,name=side,proto3"`
 	xxx_hidden_OnHandCookId string                 `protobuf:"bytes,14,opt,name=on_hand_cook_id,json=onHandCookId,proto3"`
 	xxx_hidden_FromFreezer  bool                   `protobuf:"varint,15,opt,name=from_freezer,json=fromFreezer,proto3"`
 	unknownFields           protoimpl.UnknownFields
@@ -1052,7 +2086,7 @@ type Suggestion struct {
 
 func (x *Suggestion) Reset() {
 	*x = Suggestion{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[6]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1064,7 +2098,7 @@ func (x *Suggestion) String() string {
 func (*Suggestion) ProtoMessage() {}
 
 func (x *Suggestion) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[6]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1112,7 +2146,7 @@ func (x *Suggestion) GetFitsRules() bool {
 	return false
 }
 
-func (x *Suggestion) GetWarnings() []*v11.Warning {
+func (x *Suggestion) GetWarnings() []*v13.Warning {
 	if x != nil {
 		if x.xxx_hidden_Warnings != nil {
 			return *x.xxx_hidden_Warnings
@@ -1153,7 +2187,7 @@ func (x *Suggestion) GetItemsToBuy() []*ItemToBuy {
 	return nil
 }
 
-func (x *Suggestion) GetLeftoverOf() *v11.LeftoverOf {
+func (x *Suggestion) GetLeftoverOf() *v13.LeftoverOf {
 	if x != nil {
 		return x.xxx_hidden_LeftoverOf
 	}
@@ -1167,7 +2201,7 @@ func (x *Suggestion) GetCookDate() string {
 	return ""
 }
 
-func (x *Suggestion) GetSide() *v12.RecipeSide {
+func (x *Suggestion) GetSide() *v11.RecipeSide {
 	if x != nil {
 		return x.xxx_hidden_Side
 	}
@@ -1208,7 +2242,7 @@ func (x *Suggestion) SetFitsRules(v bool) {
 	x.xxx_hidden_FitsRules = v
 }
 
-func (x *Suggestion) SetWarnings(v []*v11.Warning) {
+func (x *Suggestion) SetWarnings(v []*v13.Warning) {
 	x.xxx_hidden_Warnings = &v
 }
 
@@ -1228,7 +2262,7 @@ func (x *Suggestion) SetItemsToBuy(v []*ItemToBuy) {
 	x.xxx_hidden_ItemsToBuy = &v
 }
 
-func (x *Suggestion) SetLeftoverOf(v *v11.LeftoverOf) {
+func (x *Suggestion) SetLeftoverOf(v *v13.LeftoverOf) {
 	x.xxx_hidden_LeftoverOf = v
 }
 
@@ -1236,7 +2270,7 @@ func (x *Suggestion) SetCookDate(v string) {
 	x.xxx_hidden_CookDate = v
 }
 
-func (x *Suggestion) SetSide(v *v12.RecipeSide) {
+func (x *Suggestion) SetSide(v *v11.RecipeSide) {
 	x.xxx_hidden_Side = v
 }
 
@@ -1288,7 +2322,7 @@ type Suggestion_builder struct {
 	FitsRules bool
 	// The rules its portions would break, like GetWeek's warnings, with the
 	// person's name in the message.
-	Warnings []*v11.Warning
+	Warnings []*v13.Warning
 	// The portions it would plan, by person and date.
 	Portions []*SuggestedPortion
 	// The servings to cook: those PlanMeal would cook for a shared meal, or
@@ -1305,7 +2339,7 @@ type Suggestion_builder struct {
 	// serving more of a meal; at a shared lunch or dinner, from SuggestPlan,
 	// everyone's servings from an earlier day's lunch or dinner, cooking once
 	// for two meals. Unset for a new cook.
-	LeftoverOf *v11.LeftoverOf
+	LeftoverOf *v13.LeftoverOf
 	// The date it's cooked (YYYY-MM-DD), for a meal of a suggested plan on a
 	// day the household doesn't cook (see PlanCriteria.cooking_weekdays):
 	// the latest cooking day before it. Empty to cook it on its day. Plan it
@@ -1316,7 +2350,7 @@ type Suggestion_builder struct {
 	// warnings and items to buy count it with the recipe, as it's eaten with
 	// it. Plan it with the recipe, as MealToPlan.side or PlanMealRequest.side.
 	// Unset for a recipe served with nothing, or a leftover.
-	Side *v12.RecipeSide
+	Side *v11.RecipeSide
 	// The ID of the cook of leftovers already cooked it eats, from SuggestPlan:
 	// in the fridge, or the freezer if from_freezer, with no cooking and
 	// nothing to buy, rather than cooking the recipe. cook_servings are the
@@ -1370,7 +2404,7 @@ type PlanCriteria struct {
 
 func (x *PlanCriteria) Reset() {
 	*x = PlanCriteria{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[7]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1382,7 +2416,7 @@ func (x *PlanCriteria) String() string {
 func (*PlanCriteria) ProtoMessage() {}
 
 func (x *PlanCriteria) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[7]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1577,12 +2611,12 @@ func (b0 PlanCriteria_builder) Build() *PlanCriteria {
 type PlanChoice struct {
 	state                   protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Date         string                 `protobuf:"bytes,1,opt,name=date,proto3"`
-	xxx_hidden_Meal         v1.HouseholdMeal       `protobuf:"varint,2,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_Meal         v12.HouseholdMeal      `protobuf:"varint,2,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
 	xxx_hidden_RecipeId     string                 `protobuf:"bytes,3,opt,name=recipe_id,json=recipeId,proto3"`
 	xxx_hidden_PersonId     string                 `protobuf:"bytes,4,opt,name=person_id,json=personId,proto3"`
 	xxx_hidden_EatingTimeId string                 `protobuf:"bytes,5,opt,name=eating_time_id,json=eatingTimeId,proto3"`
-	xxx_hidden_LeftoverOf   *v11.LeftoverOf        `protobuf:"bytes,6,opt,name=leftover_of,json=leftoverOf,proto3"`
-	xxx_hidden_Side         *v12.RecipeSide        `protobuf:"bytes,7,opt,name=side,proto3"`
+	xxx_hidden_LeftoverOf   *v13.LeftoverOf        `protobuf:"bytes,6,opt,name=leftover_of,json=leftoverOf,proto3"`
+	xxx_hidden_Side         *v11.RecipeSide        `protobuf:"bytes,7,opt,name=side,proto3"`
 	xxx_hidden_NoSide       bool                   `protobuf:"varint,8,opt,name=no_side,json=noSide,proto3"`
 	xxx_hidden_OnHandCookId string                 `protobuf:"bytes,9,opt,name=on_hand_cook_id,json=onHandCookId,proto3"`
 	unknownFields           protoimpl.UnknownFields
@@ -1591,7 +2625,7 @@ type PlanChoice struct {
 
 func (x *PlanChoice) Reset() {
 	*x = PlanChoice{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[8]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1603,7 +2637,7 @@ func (x *PlanChoice) String() string {
 func (*PlanChoice) ProtoMessage() {}
 
 func (x *PlanChoice) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[8]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1621,11 +2655,11 @@ func (x *PlanChoice) GetDate() string {
 	return ""
 }
 
-func (x *PlanChoice) GetMeal() v1.HouseholdMeal {
+func (x *PlanChoice) GetMeal() v12.HouseholdMeal {
 	if x != nil {
 		return x.xxx_hidden_Meal
 	}
-	return v1.HouseholdMeal(0)
+	return v12.HouseholdMeal(0)
 }
 
 func (x *PlanChoice) GetRecipeId() string {
@@ -1649,14 +2683,14 @@ func (x *PlanChoice) GetEatingTimeId() string {
 	return ""
 }
 
-func (x *PlanChoice) GetLeftoverOf() *v11.LeftoverOf {
+func (x *PlanChoice) GetLeftoverOf() *v13.LeftoverOf {
 	if x != nil {
 		return x.xxx_hidden_LeftoverOf
 	}
 	return nil
 }
 
-func (x *PlanChoice) GetSide() *v12.RecipeSide {
+func (x *PlanChoice) GetSide() *v11.RecipeSide {
 	if x != nil {
 		return x.xxx_hidden_Side
 	}
@@ -1681,7 +2715,7 @@ func (x *PlanChoice) SetDate(v string) {
 	x.xxx_hidden_Date = v
 }
 
-func (x *PlanChoice) SetMeal(v v1.HouseholdMeal) {
+func (x *PlanChoice) SetMeal(v v12.HouseholdMeal) {
 	x.xxx_hidden_Meal = v
 }
 
@@ -1697,11 +2731,11 @@ func (x *PlanChoice) SetEatingTimeId(v string) {
 	x.xxx_hidden_EatingTimeId = v
 }
 
-func (x *PlanChoice) SetLeftoverOf(v *v11.LeftoverOf) {
+func (x *PlanChoice) SetLeftoverOf(v *v13.LeftoverOf) {
 	x.xxx_hidden_LeftoverOf = v
 }
 
-func (x *PlanChoice) SetSide(v *v12.RecipeSide) {
+func (x *PlanChoice) SetSide(v *v11.RecipeSide) {
 	x.xxx_hidden_Side = v
 }
 
@@ -1741,7 +2775,7 @@ type PlanChoice_builder struct {
 	// The date of the slot (YYYY-MM-DD). Required.
 	Date string
 	// The shared meal of the slot. Required, unless eating_time_id is set.
-	Meal v1.HouseholdMeal
+	Meal v12.HouseholdMeal
 	// The ID of the recipe to keep at the slot, whatever the criteria, or
 	// empty to leave the slot empty.
 	RecipeId string
@@ -1753,10 +2787,10 @@ type PlanChoice_builder struct {
 	// To keep the rest of an earlier shared meal of recipe_id at the slot
 	// rather than a new cook, as a suggestion's leftover_of says. It's kept
 	// if the plan has that meal's cook of the recipe.
-	LeftoverOf *v11.LeftoverOf
+	LeftoverOf *v13.LeftoverOf
 	// The side to keep with recipe_id, one of its served_with; unset for the
 	// plan to choose the best of them, as the suggestion's side says.
-	Side *v12.RecipeSide
+	Side *v11.RecipeSide
 	// Whether to keep recipe_id served with no side, though it has some.
 	NoSide bool
 	// To keep leftovers already cooked of recipe_id at the slot, as a
@@ -1785,7 +2819,7 @@ type SuggestPlanRequest struct {
 	state                              protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_StartDate               string                 `protobuf:"bytes,1,opt,name=start_date,json=startDate,proto3"`
 	xxx_hidden_Days                    int32                  `protobuf:"varint,2,opt,name=days,proto3"`
-	xxx_hidden_Meals                   []v1.HouseholdMeal     `protobuf:"varint,3,rep,packed,name=meals,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_Meals                   []v12.HouseholdMeal    `protobuf:"varint,3,rep,packed,name=meals,proto3,enum=people.v1.HouseholdMeal"`
 	xxx_hidden_Criteria                *PlanCriteria          `protobuf:"bytes,4,opt,name=criteria,proto3"`
 	xxx_hidden_Choices                 *[]*PlanChoice         `protobuf:"bytes,5,rep,name=choices,proto3"`
 	xxx_hidden_Seed                    uint64                 `protobuf:"varint,6,opt,name=seed,proto3"`
@@ -1796,7 +2830,7 @@ type SuggestPlanRequest struct {
 
 func (x *SuggestPlanRequest) Reset() {
 	*x = SuggestPlanRequest{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[9]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1808,7 +2842,7 @@ func (x *SuggestPlanRequest) String() string {
 func (*SuggestPlanRequest) ProtoMessage() {}
 
 func (x *SuggestPlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[9]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1833,7 +2867,7 @@ func (x *SuggestPlanRequest) GetDays() int32 {
 	return 0
 }
 
-func (x *SuggestPlanRequest) GetMeals() []v1.HouseholdMeal {
+func (x *SuggestPlanRequest) GetMeals() []v12.HouseholdMeal {
 	if x != nil {
 		return x.xxx_hidden_Meals
 	}
@@ -1878,7 +2912,7 @@ func (x *SuggestPlanRequest) SetDays(v int32) {
 	x.xxx_hidden_Days = v
 }
 
-func (x *SuggestPlanRequest) SetMeals(v []v1.HouseholdMeal) {
+func (x *SuggestPlanRequest) SetMeals(v []v12.HouseholdMeal) {
 	x.xxx_hidden_Meals = v
 }
 
@@ -1918,7 +2952,7 @@ type SuggestPlanRequest_builder struct {
 	Days int32
 	// The shared meals to plan each day. Empty for every meal someone eats
 	// from.
-	Meals []v1.HouseholdMeal
+	Meals []v12.HouseholdMeal
 	// What the user wants of the plan.
 	Criteria *PlanCriteria
 	// The slots the user chose a recipe for, or to leave empty. At most one
@@ -1952,7 +2986,7 @@ func (b0 SuggestPlanRequest_builder) Build() *SuggestPlanRequest {
 type PlanSlot struct {
 	state                         protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Date               string                 `protobuf:"bytes,1,opt,name=date,proto3"`
-	xxx_hidden_Meal               v1.HouseholdMeal       `protobuf:"varint,2,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_Meal               v12.HouseholdMeal      `protobuf:"varint,2,opt,name=meal,proto3,enum=people.v1.HouseholdMeal"`
 	xxx_hidden_State              PlanSlotState          `protobuf:"varint,3,opt,name=state,proto3,enum=suggestions.v1.PlanSlotState"`
 	xxx_hidden_Suggestion         *Suggestion            `protobuf:"bytes,4,opt,name=suggestion,proto3"`
 	xxx_hidden_Alternatives       *[]*Suggestion         `protobuf:"bytes,5,rep,name=alternatives,proto3"`
@@ -1969,7 +3003,7 @@ type PlanSlot struct {
 
 func (x *PlanSlot) Reset() {
 	*x = PlanSlot{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[10]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1981,7 +3015,7 @@ func (x *PlanSlot) String() string {
 func (*PlanSlot) ProtoMessage() {}
 
 func (x *PlanSlot) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[10]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1999,11 +3033,11 @@ func (x *PlanSlot) GetDate() string {
 	return ""
 }
 
-func (x *PlanSlot) GetMeal() v1.HouseholdMeal {
+func (x *PlanSlot) GetMeal() v12.HouseholdMeal {
 	if x != nil {
 		return x.xxx_hidden_Meal
 	}
-	return v1.HouseholdMeal(0)
+	return v12.HouseholdMeal(0)
 }
 
 func (x *PlanSlot) GetState() PlanSlotState {
@@ -2082,7 +3116,7 @@ func (x *PlanSlot) SetDate(v string) {
 	x.xxx_hidden_Date = v
 }
 
-func (x *PlanSlot) SetMeal(v v1.HouseholdMeal) {
+func (x *PlanSlot) SetMeal(v v12.HouseholdMeal) {
 	x.xxx_hidden_Meal = v
 }
 
@@ -2144,7 +3178,7 @@ type PlanSlot_builder struct {
 	Date string
 	// The shared meal, HOUSEHOLD_MEAL_UNSPECIFIED for one person's eating
 	// time.
-	Meal v1.HouseholdMeal
+	Meal v12.HouseholdMeal
 	// What it holds.
 	State PlanSlotState
 	// The recipe suggested or kept, scored against the rest of the plan,
@@ -2207,7 +3241,7 @@ type SuggestPlanResponse struct {
 
 func (x *SuggestPlanResponse) Reset() {
 	*x = SuggestPlanResponse{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[11]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2219,7 +3253,7 @@ func (x *SuggestPlanResponse) String() string {
 func (*SuggestPlanResponse) ProtoMessage() {}
 
 func (x *SuggestPlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[11]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2328,7 +3362,7 @@ type SuggestFixesRequest struct {
 
 func (x *SuggestFixesRequest) Reset() {
 	*x = SuggestFixesRequest{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[12]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2340,7 +3374,7 @@ func (x *SuggestFixesRequest) String() string {
 func (*SuggestFixesRequest) ProtoMessage() {}
 
 func (x *SuggestFixesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[12]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2409,14 +3443,14 @@ func (b0 SuggestFixesRequest_builder) Build() *SuggestFixesRequest {
 type SuggestFixesResponse struct {
 	state               protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Fixes    *[]*PlanFix            `protobuf:"bytes,1,rep,name=fixes,proto3"`
-	xxx_hidden_Warnings *[]*v11.Warning        `protobuf:"bytes,2,rep,name=warnings,proto3"`
+	xxx_hidden_Warnings *[]*v13.Warning        `protobuf:"bytes,2,rep,name=warnings,proto3"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
 
 func (x *SuggestFixesResponse) Reset() {
 	*x = SuggestFixesResponse{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[13]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2428,7 +3462,7 @@ func (x *SuggestFixesResponse) String() string {
 func (*SuggestFixesResponse) ProtoMessage() {}
 
 func (x *SuggestFixesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[13]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2448,7 +3482,7 @@ func (x *SuggestFixesResponse) GetFixes() []*PlanFix {
 	return nil
 }
 
-func (x *SuggestFixesResponse) GetWarnings() []*v11.Warning {
+func (x *SuggestFixesResponse) GetWarnings() []*v13.Warning {
 	if x != nil {
 		if x.xxx_hidden_Warnings != nil {
 			return *x.xxx_hidden_Warnings
@@ -2461,7 +3495,7 @@ func (x *SuggestFixesResponse) SetFixes(v []*PlanFix) {
 	x.xxx_hidden_Fixes = &v
 }
 
-func (x *SuggestFixesResponse) SetWarnings(v []*v11.Warning) {
+func (x *SuggestFixesResponse) SetWarnings(v []*v13.Warning) {
 	x.xxx_hidden_Warnings = &v
 }
 
@@ -2474,7 +3508,7 @@ type SuggestFixesResponse_builder struct {
 	Fixes []*PlanFix
 	// The warnings of the eating time, or of the day's eating times, and the
 	// day's targets, as planned.
-	Warnings []*v11.Warning
+	Warnings []*v13.Warning
 }
 
 func (b0 SuggestFixesResponse_builder) Build() *SuggestFixesResponse {
@@ -2492,14 +3526,14 @@ type PortionResize struct {
 	xxx_hidden_PortionId string                 `protobuf:"bytes,1,opt,name=portion_id,json=portionId,proto3"`
 	xxx_hidden_Servings  float64                `protobuf:"fixed64,2,opt,name=servings,proto3"`
 	xxx_hidden_Amount    float64                `protobuf:"fixed64,3,opt,name=amount,proto3"`
-	xxx_hidden_Unit      v13.AmountUnit         `protobuf:"varint,4,opt,name=unit,proto3,enum=foods.v1.AmountUnit"`
+	xxx_hidden_Unit      v1.AmountUnit          `protobuf:"varint,4,opt,name=unit,proto3,enum=foods.v1.AmountUnit"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
 
 func (x *PortionResize) Reset() {
 	*x = PortionResize{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[14]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2511,7 +3545,7 @@ func (x *PortionResize) String() string {
 func (*PortionResize) ProtoMessage() {}
 
 func (x *PortionResize) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[14]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2543,11 +3577,11 @@ func (x *PortionResize) GetAmount() float64 {
 	return 0
 }
 
-func (x *PortionResize) GetUnit() v13.AmountUnit {
+func (x *PortionResize) GetUnit() v1.AmountUnit {
 	if x != nil {
 		return x.xxx_hidden_Unit
 	}
-	return v13.AmountUnit(0)
+	return v1.AmountUnit(0)
 }
 
 func (x *PortionResize) SetPortionId(v string) {
@@ -2562,7 +3596,7 @@ func (x *PortionResize) SetAmount(v float64) {
 	x.xxx_hidden_Amount = v
 }
 
-func (x *PortionResize) SetUnit(v v13.AmountUnit) {
+func (x *PortionResize) SetUnit(v v1.AmountUnit) {
 	x.xxx_hidden_Unit = v
 }
 
@@ -2575,7 +3609,7 @@ type PortionResize_builder struct {
 	Servings float64
 	// The new amount, of a food portion, in unit.
 	Amount float64
-	Unit   v13.AmountUnit
+	Unit   v1.AmountUnit
 }
 
 func (b0 PortionResize_builder) Build() *PortionResize {
@@ -2598,7 +3632,7 @@ type PlanFix struct {
 	xxx_hidden_EatingTimeId      string                 `protobuf:"bytes,4,opt,name=eating_time_id,json=eatingTimeId,proto3"`
 	xxx_hidden_Resizes           *[]*PortionResize      `protobuf:"bytes,15,rep,name=resizes,proto3"`
 	xxx_hidden_FixedWarnings     []string               `protobuf:"bytes,10,rep,name=fixed_warnings,json=fixedWarnings,proto3"`
-	xxx_hidden_Warnings          *[]*v11.Warning        `protobuf:"bytes,11,rep,name=warnings,proto3"`
+	xxx_hidden_Warnings          *[]*v13.Warning        `protobuf:"bytes,11,rep,name=warnings,proto3"`
 	xxx_hidden_EnergyKcal        float64                `protobuf:"fixed64,12,opt,name=energy_kcal,json=energyKcal,proto3"`
 	xxx_hidden_PlannedEnergyKcal float64                `protobuf:"fixed64,13,opt,name=planned_energy_kcal,json=plannedEnergyKcal,proto3"`
 	xxx_hidden_DeleteCookId      string                 `protobuf:"bytes,14,opt,name=delete_cook_id,json=deleteCookId,proto3"`
@@ -2608,7 +3642,7 @@ type PlanFix struct {
 
 func (x *PlanFix) Reset() {
 	*x = PlanFix{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[15]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2620,7 +3654,7 @@ func (x *PlanFix) String() string {
 func (*PlanFix) ProtoMessage() {}
 
 func (x *PlanFix) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[15]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2675,7 +3709,7 @@ func (x *PlanFix) GetFixedWarnings() []string {
 	return nil
 }
 
-func (x *PlanFix) GetWarnings() []*v11.Warning {
+func (x *PlanFix) GetWarnings() []*v13.Warning {
 	if x != nil {
 		if x.xxx_hidden_Warnings != nil {
 			return *x.xxx_hidden_Warnings
@@ -2729,7 +3763,7 @@ func (x *PlanFix) SetFixedWarnings(v []string) {
 	x.xxx_hidden_FixedWarnings = v
 }
 
-func (x *PlanFix) SetWarnings(v []*v11.Warning) {
+func (x *PlanFix) SetWarnings(v []*v13.Warning) {
 	x.xxx_hidden_Warnings = &v
 }
 
@@ -2762,7 +3796,7 @@ type PlanFix_builder struct {
 	// The warnings it fixes, by message, as planned.
 	FixedWarnings []string
 	// The warnings left after it.
-	Warnings []*v11.Warning
+	Warnings []*v13.Warning
 	// The day's energy after it, in kcal, and as planned.
 	EnergyKcal        float64
 	PlannedEnergyKcal float64
@@ -2792,14 +3826,14 @@ func (b0 PlanFix_builder) Build() *PlanFix {
 type SuggestFromPantryRequest struct {
 	state            protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Date  string                 `protobuf:"bytes,1,opt,name=date,proto3"`
-	xxx_hidden_Meals []v1.HouseholdMeal     `protobuf:"varint,2,rep,packed,name=meals,proto3,enum=people.v1.HouseholdMeal"`
+	xxx_hidden_Meals []v12.HouseholdMeal    `protobuf:"varint,2,rep,packed,name=meals,proto3,enum=people.v1.HouseholdMeal"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
 func (x *SuggestFromPantryRequest) Reset() {
 	*x = SuggestFromPantryRequest{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[16]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2811,7 +3845,7 @@ func (x *SuggestFromPantryRequest) String() string {
 func (*SuggestFromPantryRequest) ProtoMessage() {}
 
 func (x *SuggestFromPantryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[16]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2829,7 +3863,7 @@ func (x *SuggestFromPantryRequest) GetDate() string {
 	return ""
 }
 
-func (x *SuggestFromPantryRequest) GetMeals() []v1.HouseholdMeal {
+func (x *SuggestFromPantryRequest) GetMeals() []v12.HouseholdMeal {
 	if x != nil {
 		return x.xxx_hidden_Meals
 	}
@@ -2840,7 +3874,7 @@ func (x *SuggestFromPantryRequest) SetDate(v string) {
 	x.xxx_hidden_Date = v
 }
 
-func (x *SuggestFromPantryRequest) SetMeals(v []v1.HouseholdMeal) {
+func (x *SuggestFromPantryRequest) SetMeals(v []v12.HouseholdMeal) {
 	x.xxx_hidden_Meals = v
 }
 
@@ -2852,7 +3886,7 @@ type SuggestFromPantryRequest_builder struct {
 	// Only list recipes for these meals: those tagged with one of them, like
 	// "lunch" or "dinner", leaving out sides, snacks and basics like a pot
 	// of beans. Empty to list all.
-	Meals []v1.HouseholdMeal
+	Meals []v12.HouseholdMeal
 }
 
 func (b0 SuggestFromPantryRequest_builder) Build() *SuggestFromPantryRequest {
@@ -2873,7 +3907,7 @@ type SuggestFromPantryResponse struct {
 
 func (x *SuggestFromPantryResponse) Reset() {
 	*x = SuggestFromPantryResponse{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[17]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2885,7 +3919,7 @@ func (x *SuggestFromPantryResponse) String() string {
 func (*SuggestFromPantryResponse) ProtoMessage() {}
 
 func (x *SuggestFromPantryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[17]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2938,7 +3972,7 @@ type PantryRecipe struct {
 
 func (x *PantryRecipe) Reset() {
 	*x = PantryRecipe{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[18]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2950,7 +3984,7 @@ func (x *PantryRecipe) String() string {
 func (*PantryRecipe) ProtoMessage() {}
 
 func (x *PantryRecipe) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[18]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3054,7 +4088,7 @@ type SuggestSidesRequest struct {
 
 func (x *SuggestSidesRequest) Reset() {
 	*x = SuggestSidesRequest{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[19]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3066,7 +4100,7 @@ func (x *SuggestSidesRequest) String() string {
 func (*SuggestSidesRequest) ProtoMessage() {}
 
 func (x *SuggestSidesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[19]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3142,7 +4176,7 @@ type SuggestSidesResponse struct {
 
 func (x *SuggestSidesResponse) Reset() {
 	*x = SuggestSidesResponse{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[20]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3154,7 +4188,7 @@ func (x *SuggestSidesResponse) String() string {
 func (*SuggestSidesResponse) ProtoMessage() {}
 
 func (x *SuggestSidesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[20]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3233,7 +4267,7 @@ type SideSuggestion struct {
 	xxx_hidden_CarbohydrateGrams  float64                `protobuf:"fixed64,6,opt,name=carbohydrate_grams,json=carbohydrateGrams,proto3"`
 	xxx_hidden_FatGrams           float64                `protobuf:"fixed64,7,opt,name=fat_grams,json=fatGrams,proto3"`
 	xxx_hidden_Reason             string                 `protobuf:"bytes,8,opt,name=reason,proto3"`
-	xxx_hidden_Warnings           *[]*v11.Warning        `protobuf:"bytes,9,rep,name=warnings,proto3"`
+	xxx_hidden_Warnings           *[]*v13.Warning        `protobuf:"bytes,9,rep,name=warnings,proto3"`
 	xxx_hidden_Planned            bool                   `protobuf:"varint,10,opt,name=planned,proto3"`
 	xxx_hidden_PortionId          string                 `protobuf:"bytes,11,opt,name=portion_id,json=portionId,proto3"`
 	xxx_hidden_RecipeId           string                 `protobuf:"bytes,12,opt,name=recipe_id,json=recipeId,proto3"`
@@ -3250,7 +4284,7 @@ type SideSuggestion struct {
 
 func (x *SideSuggestion) Reset() {
 	*x = SideSuggestion{}
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[21]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3262,7 +4296,7 @@ func (x *SideSuggestion) String() string {
 func (*SideSuggestion) ProtoMessage() {}
 
 func (x *SideSuggestion) ProtoReflect() protoreflect.Message {
-	mi := &file_suggestions_v1_suggestions_proto_msgTypes[21]
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3329,7 +4363,7 @@ func (x *SideSuggestion) GetReason() string {
 	return ""
 }
 
-func (x *SideSuggestion) GetWarnings() []*v11.Warning {
+func (x *SideSuggestion) GetWarnings() []*v13.Warning {
 	if x != nil {
 		if x.xxx_hidden_Warnings != nil {
 			return *x.xxx_hidden_Warnings
@@ -3440,7 +4474,7 @@ func (x *SideSuggestion) SetReason(v string) {
 	x.xxx_hidden_Reason = v
 }
 
-func (x *SideSuggestion) SetWarnings(v []*v11.Warning) {
+func (x *SideSuggestion) SetWarnings(v []*v13.Warning) {
 	x.xxx_hidden_Warnings = &v
 }
 
@@ -3506,7 +4540,7 @@ type SideSuggestion_builder struct {
 	Reason string
 	// The warnings it adds to the day, which the meal without a side
 	// doesn't have, as SuggestFixes counts them. Empty if it fits.
-	Warnings []*v11.Warning
+	Warnings []*v13.Warning
 	// Whether it's already planned at the eating time, as a portion of its
 	// food.
 	Planned bool
@@ -3573,7 +4607,55 @@ var File_suggestions_v1_suggestions_proto protoreflect.FileDescriptor
 
 const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\n" +
-	" suggestions/v1/suggestions.proto\x12\x0esuggestions.v1\x1a\x14foods/v1/foods.proto\x1a\x16people/v1/people.proto\x1a\x14plans/v1/plans.proto\x1a\x18recipes/v1/recipes.proto\"S\n" +
+	" suggestions/v1/suggestions.proto\x12\x0esuggestions.v1\x1a\x14foods/v1/foods.proto\x1a\x16people/v1/people.proto\x1a\x14plans/v1/plans.proto\x1a\x18recipes/v1/recipes.proto\"\xf1\x02\n" +
+	"\bBowlPart\x12,\n" +
+	"\x04role\x18\x01 \x01(\x0e2\x18.suggestions.v1.BowlRoleR\x04role\x12\x10\n" +
+	"\x03key\x18\x02 \x01(\tR\x03key\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x16\n" +
+	"\x06detail\x18\x04 \x01(\tR\x06detail\x12\x17\n" +
+	"\afood_id\x18\x05 \x01(\tR\x06foodId\x12\x1b\n" +
+	"\trecipe_id\x18\x06 \x01(\tR\brecipeId\x12\x16\n" +
+	"\x06amount\x18\a \x01(\x01R\x06amount\x12\x1f\n" +
+	"\vamount_text\x18\b \x01(\tR\n" +
+	"amountText\x12\x17\n" +
+	"\aon_hand\x18\t \x01(\bR\x06onHand\x12 \n" +
+	"\fon_hand_note\x18\n" +
+	" \x01(\tR\n" +
+	"onHandNote\x12\x19\n" +
+	"\buse_soon\x18\v \x01(\bR\auseSoon\x12\x1c\n" +
+	"\tleftovers\x18\f \x01(\bR\tleftovers\x12\x16\n" +
+	"\x06styles\x18\r \x03(\tR\x06styles\"\xbc\x02\n" +
+	"\x04Bowl\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05style\x18\x02 \x01(\tR\x05style\x12.\n" +
+	"\x05parts\x18\x03 \x03(\v2\x18.suggestions.v1.BowlPartR\x05parts\x121\n" +
+	"\tnutrients\x18\x04 \x01(\v2\x13.foods.v1.NutrientsR\tnutrients\x12\x1a\n" +
+	"\bservings\x18\x05 \x01(\x05R\bservings\x12\x18\n" +
+	"\areasons\x18\x06 \x03(\tR\areasons\x12*\n" +
+	"\x06recipe\x18\a \x01(\v2\x12.recipes.v1.RecipeR\x06recipe\x12,\n" +
+	"\x12existing_recipe_id\x18\b \x01(\tR\x10existingRecipeId\x12\x17\n" +
+	"\aon_hand\x18\t \x01(\bR\x06onHand\"*\n" +
+	"\x14ListBowlPartsRequest\x12\x12\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\"G\n" +
+	"\x15ListBowlPartsResponse\x12.\n" +
+	"\x05parts\x18\x01 \x03(\v2\x18.suggestions.v1.BowlPartR\x05parts\"v\n" +
+	"\x13SuggestBowlsRequest\x12\x12\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\x12\x1a\n" +
+	"\bservings\x18\x02 \x01(\x05R\bservings\x12\x1b\n" +
+	"\tmax_bowls\x18\x03 \x01(\x05R\bmaxBowls\x12\x12\n" +
+	"\x04seed\x18\x04 \x01(\x04R\x04seed\"V\n" +
+	"\x14SuggestBowlsResponse\x12*\n" +
+	"\x05bowls\x18\x01 \x03(\v2\x14.suggestions.v1.BowlR\x05bowls\x12\x12\n" +
+	"\x04seed\x18\x02 \x01(\x04R\x04seed\":\n" +
+	"\x0eBowlPartChoice\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x16\n" +
+	"\x06amount\x18\x02 \x01(\x01R\x06amount\"z\n" +
+	"\x12ComposeBowlRequest\x124\n" +
+	"\x05parts\x18\x01 \x03(\v2\x1e.suggestions.v1.BowlPartChoiceR\x05parts\x12\x1a\n" +
+	"\bservings\x18\x02 \x01(\x05R\bservings\x12\x12\n" +
+	"\x04date\x18\x03 \x01(\tR\x04date\"?\n" +
+	"\x13ComposeBowlResponse\x12(\n" +
+	"\x04bowl\x18\x01 \x01(\v2\x14.suggestions.v1.BowlR\x04bowl\"S\n" +
 	"\x0eEatingTimeSlot\x12\x1b\n" +
 	"\tperson_id\x18\x01 \x01(\tR\bpersonId\x12$\n" +
 	"\x0eeating_time_id\x18\x02 \x01(\tR\featingTimeId\"\xee\x01\n" +
@@ -3765,7 +4847,13 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\ffrom_freezer\x18\x11 \x01(\bR\vfromFreezer\x120\n" +
 	"\x14frozen_servings_left\x18\x12 \x01(\x01R\x12frozenServingsLeft\x12\x1f\n" +
 	"\vfrom_fridge\x18\x13 \x01(\bR\n" +
-	"fromFridge*\x88\x03\n" +
+	"fromFridge*~\n" +
+	"\bBowlRole\x12\x19\n" +
+	"\x15BOWL_ROLE_UNSPECIFIED\x10\x00\x12\x12\n" +
+	"\x0eBOWL_ROLE_CARB\x10\x01\x12\x15\n" +
+	"\x11BOWL_ROLE_PROTEIN\x10\x02\x12\x17\n" +
+	"\x13BOWL_ROLE_VEGETABLE\x10\x03\x12\x13\n" +
+	"\x0fBOWL_ROLE_SAUCE\x10\x04*\x88\x03\n" +
 	"\tScoreKind\x12\x1a\n" +
 	"\x16SCORE_KIND_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dSCORE_KIND_SHARED_INGREDIENTS\x10\x01\x12\x1d\n" +
@@ -3800,103 +4888,132 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\vPlanFixKind\x12\x1d\n" +
 	"\x19PLAN_FIX_KIND_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14PLAN_FIX_KIND_REMOVE\x10\x01\x12\x18\n" +
-	"\x14PLAN_FIX_KIND_RESIZE\x10\x02\"\x04\b\x03\x10\x03\"\x04\b\x04\x10\x04*\x15PLAN_FIX_KIND_REPLACE*\x11PLAN_FIX_KIND_ADD2\xec\x03\n" +
+	"\x14PLAN_FIX_KIND_RESIZE\x10\x02\"\x04\b\x03\x10\x03\"\x04\b\x04\x10\x04*\x15PLAN_FIX_KIND_REPLACE*\x11PLAN_FIX_KIND_ADD2\xfd\x05\n" +
 	"\x11SuggestionService\x12_\n" +
 	"\x0eSuggestRecipes\x12%.suggestions.v1.SuggestRecipesRequest\x1a&.suggestions.v1.SuggestRecipesResponse\x12V\n" +
 	"\vSuggestPlan\x12\".suggestions.v1.SuggestPlanRequest\x1a#.suggestions.v1.SuggestPlanResponse\x12Y\n" +
 	"\fSuggestFixes\x12#.suggestions.v1.SuggestFixesRequest\x1a$.suggestions.v1.SuggestFixesResponse\x12h\n" +
 	"\x11SuggestFromPantry\x12(.suggestions.v1.SuggestFromPantryRequest\x1a).suggestions.v1.SuggestFromPantryResponse\x12Y\n" +
-	"\fSuggestSides\x12#.suggestions.v1.SuggestSidesRequest\x1a$.suggestions.v1.SuggestSidesResponseB\xcc\x01\n" +
+	"\fSuggestSides\x12#.suggestions.v1.SuggestSidesRequest\x1a$.suggestions.v1.SuggestSidesResponse\x12\\\n" +
+	"\rListBowlParts\x12$.suggestions.v1.ListBowlPartsRequest\x1a%.suggestions.v1.ListBowlPartsResponse\x12Y\n" +
+	"\fSuggestBowls\x12#.suggestions.v1.SuggestBowlsRequest\x1a$.suggestions.v1.SuggestBowlsResponse\x12V\n" +
+	"\vComposeBowl\x12\".suggestions.v1.ComposeBowlRequest\x1a#.suggestions.v1.ComposeBowlResponseB\xcc\x01\n" +
 	"\x12com.suggestions.v1B\x10SuggestionsProtoP\x01ZKgithub.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1;suggestionsv1\xa2\x02\x03SXX\xaa\x02\x0eSuggestions.V1\xca\x02\x0eSuggestions\\V1\xe2\x02\x1aSuggestions\\V1\\GPBMetadata\xea\x02\x0fSuggestions::V1b\x06proto3"
 
-var file_suggestions_v1_suggestions_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_suggestions_v1_suggestions_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_suggestions_v1_suggestions_proto_goTypes = []any{
-	(ScoreKind)(0),                    // 0: suggestions.v1.ScoreKind
-	(Emphasis)(0),                     // 1: suggestions.v1.Emphasis
-	(PlanSlotState)(0),                // 2: suggestions.v1.PlanSlotState
-	(PlanFixKind)(0),                  // 3: suggestions.v1.PlanFixKind
-	(*EatingTimeSlot)(nil),            // 4: suggestions.v1.EatingTimeSlot
-	(*SuggestRecipesRequest)(nil),     // 5: suggestions.v1.SuggestRecipesRequest
-	(*SuggestRecipesResponse)(nil),    // 6: suggestions.v1.SuggestRecipesResponse
-	(*ScoreComponent)(nil),            // 7: suggestions.v1.ScoreComponent
-	(*SuggestedPortion)(nil),          // 8: suggestions.v1.SuggestedPortion
-	(*ItemToBuy)(nil),                 // 9: suggestions.v1.ItemToBuy
-	(*Suggestion)(nil),                // 10: suggestions.v1.Suggestion
-	(*PlanCriteria)(nil),              // 11: suggestions.v1.PlanCriteria
-	(*PlanChoice)(nil),                // 12: suggestions.v1.PlanChoice
-	(*SuggestPlanRequest)(nil),        // 13: suggestions.v1.SuggestPlanRequest
-	(*PlanSlot)(nil),                  // 14: suggestions.v1.PlanSlot
-	(*SuggestPlanResponse)(nil),       // 15: suggestions.v1.SuggestPlanResponse
-	(*SuggestFixesRequest)(nil),       // 16: suggestions.v1.SuggestFixesRequest
-	(*SuggestFixesResponse)(nil),      // 17: suggestions.v1.SuggestFixesResponse
-	(*PortionResize)(nil),             // 18: suggestions.v1.PortionResize
-	(*PlanFix)(nil),                   // 19: suggestions.v1.PlanFix
-	(*SuggestFromPantryRequest)(nil),  // 20: suggestions.v1.SuggestFromPantryRequest
-	(*SuggestFromPantryResponse)(nil), // 21: suggestions.v1.SuggestFromPantryResponse
-	(*PantryRecipe)(nil),              // 22: suggestions.v1.PantryRecipe
-	(*SuggestSidesRequest)(nil),       // 23: suggestions.v1.SuggestSidesRequest
-	(*SuggestSidesResponse)(nil),      // 24: suggestions.v1.SuggestSidesResponse
-	(*SideSuggestion)(nil),            // 25: suggestions.v1.SideSuggestion
-	(v1.HouseholdMeal)(0),             // 26: people.v1.HouseholdMeal
-	(*v11.Warning)(nil),               // 27: plans.v1.Warning
-	(*v11.LeftoverOf)(nil),            // 28: plans.v1.LeftoverOf
-	(*v12.RecipeSide)(nil),            // 29: recipes.v1.RecipeSide
-	(v13.AmountUnit)(0),               // 30: foods.v1.AmountUnit
+	(BowlRole)(0),                     // 0: suggestions.v1.BowlRole
+	(ScoreKind)(0),                    // 1: suggestions.v1.ScoreKind
+	(Emphasis)(0),                     // 2: suggestions.v1.Emphasis
+	(PlanSlotState)(0),                // 3: suggestions.v1.PlanSlotState
+	(PlanFixKind)(0),                  // 4: suggestions.v1.PlanFixKind
+	(*BowlPart)(nil),                  // 5: suggestions.v1.BowlPart
+	(*Bowl)(nil),                      // 6: suggestions.v1.Bowl
+	(*ListBowlPartsRequest)(nil),      // 7: suggestions.v1.ListBowlPartsRequest
+	(*ListBowlPartsResponse)(nil),     // 8: suggestions.v1.ListBowlPartsResponse
+	(*SuggestBowlsRequest)(nil),       // 9: suggestions.v1.SuggestBowlsRequest
+	(*SuggestBowlsResponse)(nil),      // 10: suggestions.v1.SuggestBowlsResponse
+	(*BowlPartChoice)(nil),            // 11: suggestions.v1.BowlPartChoice
+	(*ComposeBowlRequest)(nil),        // 12: suggestions.v1.ComposeBowlRequest
+	(*ComposeBowlResponse)(nil),       // 13: suggestions.v1.ComposeBowlResponse
+	(*EatingTimeSlot)(nil),            // 14: suggestions.v1.EatingTimeSlot
+	(*SuggestRecipesRequest)(nil),     // 15: suggestions.v1.SuggestRecipesRequest
+	(*SuggestRecipesResponse)(nil),    // 16: suggestions.v1.SuggestRecipesResponse
+	(*ScoreComponent)(nil),            // 17: suggestions.v1.ScoreComponent
+	(*SuggestedPortion)(nil),          // 18: suggestions.v1.SuggestedPortion
+	(*ItemToBuy)(nil),                 // 19: suggestions.v1.ItemToBuy
+	(*Suggestion)(nil),                // 20: suggestions.v1.Suggestion
+	(*PlanCriteria)(nil),              // 21: suggestions.v1.PlanCriteria
+	(*PlanChoice)(nil),                // 22: suggestions.v1.PlanChoice
+	(*SuggestPlanRequest)(nil),        // 23: suggestions.v1.SuggestPlanRequest
+	(*PlanSlot)(nil),                  // 24: suggestions.v1.PlanSlot
+	(*SuggestPlanResponse)(nil),       // 25: suggestions.v1.SuggestPlanResponse
+	(*SuggestFixesRequest)(nil),       // 26: suggestions.v1.SuggestFixesRequest
+	(*SuggestFixesResponse)(nil),      // 27: suggestions.v1.SuggestFixesResponse
+	(*PortionResize)(nil),             // 28: suggestions.v1.PortionResize
+	(*PlanFix)(nil),                   // 29: suggestions.v1.PlanFix
+	(*SuggestFromPantryRequest)(nil),  // 30: suggestions.v1.SuggestFromPantryRequest
+	(*SuggestFromPantryResponse)(nil), // 31: suggestions.v1.SuggestFromPantryResponse
+	(*PantryRecipe)(nil),              // 32: suggestions.v1.PantryRecipe
+	(*SuggestSidesRequest)(nil),       // 33: suggestions.v1.SuggestSidesRequest
+	(*SuggestSidesResponse)(nil),      // 34: suggestions.v1.SuggestSidesResponse
+	(*SideSuggestion)(nil),            // 35: suggestions.v1.SideSuggestion
+	(*v1.Nutrients)(nil),              // 36: foods.v1.Nutrients
+	(*v11.Recipe)(nil),                // 37: recipes.v1.Recipe
+	(v12.HouseholdMeal)(0),            // 38: people.v1.HouseholdMeal
+	(*v13.Warning)(nil),               // 39: plans.v1.Warning
+	(*v13.LeftoverOf)(nil),            // 40: plans.v1.LeftoverOf
+	(*v11.RecipeSide)(nil),            // 41: recipes.v1.RecipeSide
+	(v1.AmountUnit)(0),                // 42: foods.v1.AmountUnit
 }
 var file_suggestions_v1_suggestions_proto_depIdxs = []int32{
-	26, // 0: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
-	4,  // 1: suggestions.v1.SuggestRecipesRequest.eating_time:type_name -> suggestions.v1.EatingTimeSlot
-	10, // 2: suggestions.v1.SuggestRecipesResponse.suggestions:type_name -> suggestions.v1.Suggestion
-	0,  // 3: suggestions.v1.ScoreComponent.kind:type_name -> suggestions.v1.ScoreKind
-	7,  // 4: suggestions.v1.Suggestion.components:type_name -> suggestions.v1.ScoreComponent
-	27, // 5: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
-	8,  // 6: suggestions.v1.Suggestion.portions:type_name -> suggestions.v1.SuggestedPortion
-	9,  // 7: suggestions.v1.Suggestion.items_to_buy:type_name -> suggestions.v1.ItemToBuy
-	28, // 8: suggestions.v1.Suggestion.leftover_of:type_name -> plans.v1.LeftoverOf
-	29, // 9: suggestions.v1.Suggestion.side:type_name -> recipes.v1.RecipeSide
-	1,  // 10: suggestions.v1.PlanCriteria.variety:type_name -> suggestions.v1.Emphasis
-	1,  // 11: suggestions.v1.PlanCriteria.favorites:type_name -> suggestions.v1.Emphasis
-	1,  // 12: suggestions.v1.PlanCriteria.pantry:type_name -> suggestions.v1.Emphasis
-	1,  // 13: suggestions.v1.PlanCriteria.shopping:type_name -> suggestions.v1.Emphasis
-	1,  // 14: suggestions.v1.PlanCriteria.nutrition:type_name -> suggestions.v1.Emphasis
-	1,  // 15: suggestions.v1.PlanCriteria.cooking:type_name -> suggestions.v1.Emphasis
-	26, // 16: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
-	28, // 17: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
-	29, // 18: suggestions.v1.PlanChoice.side:type_name -> recipes.v1.RecipeSide
-	26, // 19: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
-	11, // 20: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
-	12, // 21: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
-	26, // 22: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
-	2,  // 23: suggestions.v1.PlanSlot.state:type_name -> suggestions.v1.PlanSlotState
-	10, // 24: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
-	10, // 25: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
-	14, // 26: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
-	19, // 27: suggestions.v1.SuggestFixesResponse.fixes:type_name -> suggestions.v1.PlanFix
-	27, // 28: suggestions.v1.SuggestFixesResponse.warnings:type_name -> plans.v1.Warning
-	30, // 29: suggestions.v1.PortionResize.unit:type_name -> foods.v1.AmountUnit
-	3,  // 30: suggestions.v1.PlanFix.kind:type_name -> suggestions.v1.PlanFixKind
-	18, // 31: suggestions.v1.PlanFix.resizes:type_name -> suggestions.v1.PortionResize
-	27, // 32: suggestions.v1.PlanFix.warnings:type_name -> plans.v1.Warning
-	26, // 33: suggestions.v1.SuggestFromPantryRequest.meals:type_name -> people.v1.HouseholdMeal
-	22, // 34: suggestions.v1.SuggestFromPantryResponse.recipes:type_name -> suggestions.v1.PantryRecipe
-	25, // 35: suggestions.v1.SuggestSidesResponse.sides:type_name -> suggestions.v1.SideSuggestion
-	27, // 36: suggestions.v1.SideSuggestion.warnings:type_name -> plans.v1.Warning
-	5,  // 37: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
-	13, // 38: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
-	16, // 39: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
-	20, // 40: suggestions.v1.SuggestionService.SuggestFromPantry:input_type -> suggestions.v1.SuggestFromPantryRequest
-	23, // 41: suggestions.v1.SuggestionService.SuggestSides:input_type -> suggestions.v1.SuggestSidesRequest
-	6,  // 42: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
-	15, // 43: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
-	17, // 44: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
-	21, // 45: suggestions.v1.SuggestionService.SuggestFromPantry:output_type -> suggestions.v1.SuggestFromPantryResponse
-	24, // 46: suggestions.v1.SuggestionService.SuggestSides:output_type -> suggestions.v1.SuggestSidesResponse
-	42, // [42:47] is the sub-list for method output_type
-	37, // [37:42] is the sub-list for method input_type
-	37, // [37:37] is the sub-list for extension type_name
-	37, // [37:37] is the sub-list for extension extendee
-	0,  // [0:37] is the sub-list for field type_name
+	0,  // 0: suggestions.v1.BowlPart.role:type_name -> suggestions.v1.BowlRole
+	5,  // 1: suggestions.v1.Bowl.parts:type_name -> suggestions.v1.BowlPart
+	36, // 2: suggestions.v1.Bowl.nutrients:type_name -> foods.v1.Nutrients
+	37, // 3: suggestions.v1.Bowl.recipe:type_name -> recipes.v1.Recipe
+	5,  // 4: suggestions.v1.ListBowlPartsResponse.parts:type_name -> suggestions.v1.BowlPart
+	6,  // 5: suggestions.v1.SuggestBowlsResponse.bowls:type_name -> suggestions.v1.Bowl
+	11, // 6: suggestions.v1.ComposeBowlRequest.parts:type_name -> suggestions.v1.BowlPartChoice
+	6,  // 7: suggestions.v1.ComposeBowlResponse.bowl:type_name -> suggestions.v1.Bowl
+	38, // 8: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
+	14, // 9: suggestions.v1.SuggestRecipesRequest.eating_time:type_name -> suggestions.v1.EatingTimeSlot
+	20, // 10: suggestions.v1.SuggestRecipesResponse.suggestions:type_name -> suggestions.v1.Suggestion
+	1,  // 11: suggestions.v1.ScoreComponent.kind:type_name -> suggestions.v1.ScoreKind
+	17, // 12: suggestions.v1.Suggestion.components:type_name -> suggestions.v1.ScoreComponent
+	39, // 13: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
+	18, // 14: suggestions.v1.Suggestion.portions:type_name -> suggestions.v1.SuggestedPortion
+	19, // 15: suggestions.v1.Suggestion.items_to_buy:type_name -> suggestions.v1.ItemToBuy
+	40, // 16: suggestions.v1.Suggestion.leftover_of:type_name -> plans.v1.LeftoverOf
+	41, // 17: suggestions.v1.Suggestion.side:type_name -> recipes.v1.RecipeSide
+	2,  // 18: suggestions.v1.PlanCriteria.variety:type_name -> suggestions.v1.Emphasis
+	2,  // 19: suggestions.v1.PlanCriteria.favorites:type_name -> suggestions.v1.Emphasis
+	2,  // 20: suggestions.v1.PlanCriteria.pantry:type_name -> suggestions.v1.Emphasis
+	2,  // 21: suggestions.v1.PlanCriteria.shopping:type_name -> suggestions.v1.Emphasis
+	2,  // 22: suggestions.v1.PlanCriteria.nutrition:type_name -> suggestions.v1.Emphasis
+	2,  // 23: suggestions.v1.PlanCriteria.cooking:type_name -> suggestions.v1.Emphasis
+	38, // 24: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
+	40, // 25: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
+	41, // 26: suggestions.v1.PlanChoice.side:type_name -> recipes.v1.RecipeSide
+	38, // 27: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
+	21, // 28: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
+	22, // 29: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
+	38, // 30: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
+	3,  // 31: suggestions.v1.PlanSlot.state:type_name -> suggestions.v1.PlanSlotState
+	20, // 32: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
+	20, // 33: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
+	24, // 34: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
+	29, // 35: suggestions.v1.SuggestFixesResponse.fixes:type_name -> suggestions.v1.PlanFix
+	39, // 36: suggestions.v1.SuggestFixesResponse.warnings:type_name -> plans.v1.Warning
+	42, // 37: suggestions.v1.PortionResize.unit:type_name -> foods.v1.AmountUnit
+	4,  // 38: suggestions.v1.PlanFix.kind:type_name -> suggestions.v1.PlanFixKind
+	28, // 39: suggestions.v1.PlanFix.resizes:type_name -> suggestions.v1.PortionResize
+	39, // 40: suggestions.v1.PlanFix.warnings:type_name -> plans.v1.Warning
+	38, // 41: suggestions.v1.SuggestFromPantryRequest.meals:type_name -> people.v1.HouseholdMeal
+	32, // 42: suggestions.v1.SuggestFromPantryResponse.recipes:type_name -> suggestions.v1.PantryRecipe
+	35, // 43: suggestions.v1.SuggestSidesResponse.sides:type_name -> suggestions.v1.SideSuggestion
+	39, // 44: suggestions.v1.SideSuggestion.warnings:type_name -> plans.v1.Warning
+	15, // 45: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
+	23, // 46: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
+	26, // 47: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
+	30, // 48: suggestions.v1.SuggestionService.SuggestFromPantry:input_type -> suggestions.v1.SuggestFromPantryRequest
+	33, // 49: suggestions.v1.SuggestionService.SuggestSides:input_type -> suggestions.v1.SuggestSidesRequest
+	7,  // 50: suggestions.v1.SuggestionService.ListBowlParts:input_type -> suggestions.v1.ListBowlPartsRequest
+	9,  // 51: suggestions.v1.SuggestionService.SuggestBowls:input_type -> suggestions.v1.SuggestBowlsRequest
+	12, // 52: suggestions.v1.SuggestionService.ComposeBowl:input_type -> suggestions.v1.ComposeBowlRequest
+	16, // 53: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
+	25, // 54: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
+	27, // 55: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
+	31, // 56: suggestions.v1.SuggestionService.SuggestFromPantry:output_type -> suggestions.v1.SuggestFromPantryResponse
+	34, // 57: suggestions.v1.SuggestionService.SuggestSides:output_type -> suggestions.v1.SuggestSidesResponse
+	8,  // 58: suggestions.v1.SuggestionService.ListBowlParts:output_type -> suggestions.v1.ListBowlPartsResponse
+	10, // 59: suggestions.v1.SuggestionService.SuggestBowls:output_type -> suggestions.v1.SuggestBowlsResponse
+	13, // 60: suggestions.v1.SuggestionService.ComposeBowl:output_type -> suggestions.v1.ComposeBowlResponse
+	53, // [53:61] is the sub-list for method output_type
+	45, // [45:53] is the sub-list for method input_type
+	45, // [45:45] is the sub-list for extension type_name
+	45, // [45:45] is the sub-list for extension extendee
+	0,  // [0:45] is the sub-list for field type_name
 }
 
 func init() { file_suggestions_v1_suggestions_proto_init() }
@@ -3904,7 +5021,7 @@ func file_suggestions_v1_suggestions_proto_init() {
 	if File_suggestions_v1_suggestions_proto != nil {
 		return
 	}
-	file_suggestions_v1_suggestions_proto_msgTypes[1].OneofWrappers = []any{
+	file_suggestions_v1_suggestions_proto_msgTypes[10].OneofWrappers = []any{
 		(*suggestRecipesRequest_Meal)(nil),
 		(*suggestRecipesRequest_EatingTime)(nil),
 	}
@@ -3913,8 +5030,8 @@ func file_suggestions_v1_suggestions_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_suggestions_v1_suggestions_proto_rawDesc), len(file_suggestions_v1_suggestions_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   22,
+			NumEnums:      5,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

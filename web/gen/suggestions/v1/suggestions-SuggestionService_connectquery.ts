@@ -146,3 +146,42 @@ export const suggestFromPantry = SuggestionService.method.suggestFromPantry;
  * @generated from rpc suggestions.v1.SuggestionService.SuggestSides
  */
 export const suggestSides = SuggestionService.method.suggestSides;
+
+/**
+ * List what bowls can be built of: the household's foods and recipes
+ * that can be a bowl's carbohydrate (rice, quinoa, noodles, or a recipe
+ * like a pot of rice and quinoa), protein (tofu, tempeh, beans, lentils,
+ * or a recipe like smoky tofu crumbles), vegetable, or sauce (the sauces
+ * made in the household's recipes, like a bowl's peanut sauce, recipes
+ * tagged "sauce" or "dressing", and ready-made ones like hummus), each
+ * with its amount for a serving and whether it's on hand. Build a bowl of
+ * them with ComposeBowl. Nothing is changed.
+ *
+ * @generated from rpc suggestions.v1.SuggestionService.ListBowlParts
+ */
+export const listBowlParts = SuggestionService.method.listBowlParts;
+
+/**
+ * Suggest bowls of what's on hand: for each sauce the household has
+ * everything for, the carbohydrate, protein and vegetables on hand that
+ * fit its cuisine best, preferring leftovers already cooked and food to
+ * use soon, each bowl different from the others. Each has its parts,
+ * its nutrients and the recipe to cook or plan it as (see ComposeBowl).
+ * Nothing is changed.
+ *
+ * @generated from rpc suggestions.v1.SuggestionService.SuggestBowls
+ */
+export const suggestBowls = SuggestionService.method.suggestBowls;
+
+/**
+ * Build a bowl of parts from ListBowlParts, in their amounts: at least
+ * one carbohydrate, protein and vegetable, and exactly one sauce. It
+ * returns its nutrients for a serving and the recipe making it, with
+ * steps, to create with RecipeService.CreateRecipe, or, if the household
+ * has made the bowl before, to update existing_recipe_id with
+ * RecipeService.UpdateRecipe. Then cook it now (PlanService.PlanMeal for
+ * today) or plan it like any recipe. Nothing is changed.
+ *
+ * @generated from rpc suggestions.v1.SuggestionService.ComposeBowl
+ */
+export const composeBowl = SuggestionService.method.composeBowl;
