@@ -1031,7 +1031,7 @@ func (s *Service) PlanMeals(ctx context.Context, req *plansv1.PlanMealsRequest) 
 				return nil, err
 			}
 		}
-		eating, _, _ := withoutStapled(eaters[m.meal], d.plan, m.meal, m.date)
+		eating := planningEaters(eaters[m.meal], d.plan, m.meal, m.date)
 		if len(eating) == 0 {
 			return nil, allStapled(m.meal, m.date)
 		}

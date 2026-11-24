@@ -260,7 +260,9 @@ type PlanServiceClient interface {
 	// meal, and a portion of it for each person whose eating pattern eats
 	// from that meal, at that eating time, unless they have a staple there
 	// that day that replaces_meal, which they eat instead, nor people
-	// eating out (see SetEatingOut). Each person gets one serving, or
+	// eating out (see SetEatingOut), unless everyone is: then it's planned
+	// for them. A portion planned for someone eating out, like this or one
+	// of person_ids, ends their eating out. Each person gets one serving, or
 	// someone with daily targets (see PersonService) from half a serving to
 	// two, in quarters, whichever brings their day closest to them: a
 	// daily minimum counts for the share of their day planned, this meal's
@@ -398,7 +400,8 @@ type PlanServiceClient interface {
 	// something is planned there already, as a portion or a staple marked
 	// eaten: remove it with DeletePortion, or un-mark it with
 	// SetStapleEaten, first. Marking an eating time already eaten out at
-	// changes its notes.
+	// changes its notes. Planning a portion there, with PlanMeal,
+	// CreatePortion or any other way, stops marking it.
 	SetEatingOut(context.Context, *v1.SetEatingOutRequest) (*v1.SetEatingOutResponse, error)
 }
 
@@ -428,7 +431,9 @@ type PlanServiceHandler interface {
 	// meal, and a portion of it for each person whose eating pattern eats
 	// from that meal, at that eating time, unless they have a staple there
 	// that day that replaces_meal, which they eat instead, nor people
-	// eating out (see SetEatingOut). Each person gets one serving, or
+	// eating out (see SetEatingOut), unless everyone is: then it's planned
+	// for them. A portion planned for someone eating out, like this or one
+	// of person_ids, ends their eating out. Each person gets one serving, or
 	// someone with daily targets (see PersonService) from half a serving to
 	// two, in quarters, whichever brings their day closest to them: a
 	// daily minimum counts for the share of their day planned, this meal's
@@ -566,7 +571,8 @@ type PlanServiceHandler interface {
 	// something is planned there already, as a portion or a staple marked
 	// eaten: remove it with DeletePortion, or un-mark it with
 	// SetStapleEaten, first. Marking an eating time already eaten out at
-	// changes its notes.
+	// changes its notes. Planning a portion there, with PlanMeal,
+	// CreatePortion or any other way, stops marking it.
 	SetEatingOut(context.Context, *v1.SetEatingOutRequest) (*v1.SetEatingOutResponse, error)
 }
 

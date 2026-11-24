@@ -25,6 +25,7 @@ import { PantryService } from "gen/pantry/v1/pantry_pb";
 import type { Person } from "gen/people/v1/people_pb";
 import { HouseholdMeal } from "gen/people/v1/people_pb";
 import {
+  getWeek,
   listFrozenLeftovers,
   planMeal,
 } from "gen/plans/v1/plans-PlanService_connectquery";
@@ -33,6 +34,7 @@ import { PlanService } from "gen/plans/v1/plans_pb";
 import type { RecipeSummary } from "gen/recipes/v1/recipes_pb";
 import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
+import { startOfWeek } from "helpers/dates";
 import { formatDay, formatList } from "helpers/format";
 import { HOUSEHOLD_MEALS, optionValue } from "helpers/labels";
 import { parseOptionalNumber } from "helpers/parse";
@@ -140,8 +142,29 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
       staplesAt(staples, person, meal, date).map((staple) => staple.name),
     ])
   );
+  /*
+   * Who's eating out at the meal, from the week, which the plan has read
+   * already. They're left out of it, unless everyone is: then the meal is
+   * planned for everyone, which ends their eating out.
+   */
+  const week = useQuery(getWeek, { monday: startOfWeek(date) });
+  const eatingOut = new Set(
+    (week.data?.days.find((day) => day.date === date)?.people ?? [])
+      .filter((person) =>
+        person.eatingTimes.some(
+          (planned) => planned.eatingTime?.meal === meal && planned.eatingOut
+        )
+      )
+      .map((person) => person.personId)
+  );
+  const unstapled = eaters.filter(
+    (person) => (stapled.get(person.id) ?? []).length === 0
+  );
+  const everyoneOut =
+    unstapled.length > 0 &&
+    unstapled.every((person) => eatingOut.has(person.id));
   const eatsByDefault = (id: string): boolean =>
-    (stapled.get(id) ?? []).length === 0;
+    (stapled.get(id) ?? []).length === 0 && (everyoneOut || !eatingOut.has(id));
   /*
    * The servings to cook as typed, or null for the recipe's own: a recipe
    * is cooked as it's written unless that's changed, with what nobody
@@ -160,8 +183,12 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
    * planning it: each person's eating time at it, which planning then
    * leaves alone.
    */
-  const eatOut = useTanstackMutation<void, ConnectError, Person[]>({
-    mutationFn: async (who) => {
+  const eatOut = useTanstackMutation<
+    void,
+    ConnectError,
+    { who: Person[]; out: boolean }
+  >({
+    mutationFn: async ({ who, out }) => {
       const client = createClient(PlanService, transport);
       await Promise.all(
         who.flatMap((person) =>
@@ -171,7 +198,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
             .map((et) =>
               client.setEatingOut({
                 date,
-                eatingOut: true,
+                eatingOut: out,
                 eatingTimeId: et.id,
                 personId: person.id,
               })
@@ -179,12 +206,16 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
         )
       );
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, { out }) => {
       await invalidateServices(queryClient, [
         PlanService,
         ShoppingService,
         SuggestionService,
       ]);
+      // Eating in again, the meal is planned next, so the dialog stays.
+      if (!out) {
+        return;
+      }
       onClose();
     },
   });
@@ -330,7 +361,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
                     className={choiceClass(eats)}
                     aria-pressed={eats}
                     title={
-                      eatsByDefault(person.id)
+                      (stapled.get(person.id) ?? []).length === 0
                         ? undefined
                         : `Has ${formatList(stapled.get(person.id) ?? [])}`
                     }
@@ -343,29 +374,56 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
                     }}
                   >
                     {person.name}
-                    {!eatsByDefault(person.id) && " · has a staple"}
+                    {(stapled.get(person.id) ?? []).length > 0 &&
+                      " · has a staple"}
+                    {eatingOut.has(person.id) && " · eating out"}
                   </button>
                 );
               })}
             </div>
           )}
-          {replacing === undefined && chosen.length > 0 && (
-            <div className="mt-1 flex flex-col gap-1">
+          {eatingOut.size > 0 && (
+            <p className="text-sm text-muted">
+              {formatList(
+                eaters
+                  .filter((person) => eatingOut.has(person.id))
+                  .map((person) => person.name)
+              )}{" "}
+              {eatingOut.size === 1 ? "is" : "are"} eating out: planning the
+              meal for them ends it.{" "}
               <button
                 type="button"
-                className="self-start text-sm font-bold text-pine hover:underline disabled:opacity-50"
+                className="font-bold text-pine hover:underline disabled:opacity-50"
                 disabled={eatOut.isPending}
                 onClick={() => {
-                  eatOut.mutate(chosen);
+                  eatOut.mutate({
+                    out: false,
+                    who: eaters.filter((person) => eatingOut.has(person.id)),
+                  });
                 }}
               >
-                {eatOut.isPending
-                  ? "Marking it…"
-                  : `Mark ${chosen.length === 1 ? (chosen[0]?.name ?? "them") : "them"} as eating out`}
+                Eat at home instead
               </button>
-              <ErrorText error={eatOut.error} />
-            </div>
+            </p>
           )}
+          {replacing === undefined &&
+            chosen.some((person) => !eatingOut.has(person.id)) && (
+              <div className="mt-1 flex flex-col gap-1">
+                <button
+                  type="button"
+                  className="self-start text-sm font-bold text-pine hover:underline disabled:opacity-50"
+                  disabled={eatOut.isPending}
+                  onClick={() => {
+                    eatOut.mutate({ out: true, who: chosen });
+                  }}
+                >
+                  {eatOut.isPending
+                    ? "Marking it…"
+                    : `Mark ${chosen.length === 1 ? (chosen[0]?.name ?? "them") : "them"} as eating out`}
+                </button>
+                <ErrorText error={eatOut.error} />
+              </div>
+            )}
         </div>
         <Segmented
           label="What the meal is"

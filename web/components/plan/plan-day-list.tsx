@@ -168,7 +168,20 @@ const PlanDayList: React.FC<PlanDayListProps> = ({
                   type="button"
                   className="flex w-full items-start gap-3 rounded-2xl border border-line bg-white px-4 py-3.5 text-left hover:border-muted"
                   onClick={() => {
-                    onOpen(day, row);
+                    /*
+                     * A meal only eaten out has nothing to open: it's
+                     * planned, which clears eating out for whoever it's
+                     * planned for.
+                     */
+                    if (
+                      row.slots.every(
+                        (slot) => slot.planned.portions.length === 0
+                      )
+                    ) {
+                      onPlan(day, row);
+                    } else {
+                      onOpen(day, row);
+                    }
                   }}
                 >
                   <span
