@@ -212,6 +212,13 @@ where cooks.household_id = @household_id
 order by cooks.date, cooks.create_time, cooks.id;
 
 -- name: CreatePortion :execrows
+-- Creates a portion, and ends eating out at its eating time on its date: a
+-- portion planned there says the person eats in after all.
+with ended as (
+  delete from eating_out
+  where household_id = @household_id and person_id = @person_id
+    and eating_time_id = @eating_time_id and date = @date
+)
 insert into portions (
   id, household_id, person_id, eating_time_id, date, cook_id, servings, food_id, amount, unit, notes, from_freezer
 ) values (
@@ -219,18 +226,26 @@ insert into portions (
 );
 
 -- name: CreateCookPortions :execrows
--- Creates portions of a cook, given as arrays of their fields.
+-- Creates portions of a cook, given as arrays of their fields, and ends
+-- eating out at their eating times on their dates, like CreatePortion.
+with new_portions as (
+  select
+    (@ids::uuid[])[i] as id,
+    (@person_ids::uuid[])[i] as person_id,
+    (@eating_time_ids::uuid[])[i] as eating_time_id,
+    (@dates::date[])[i] as date,
+    (@servings::double precision[])[i] as servings,
+    (@from_freezer::boolean[])[i] as from_freezer
+  from generate_subscripts(@ids::uuid[], 1) as i
+), ended as (
+  delete from eating_out e
+  using new_portions n
+  where e.household_id = @household_id and e.person_id = n.person_id
+    and e.eating_time_id = n.eating_time_id and e.date = n.date
+)
 insert into portions (id, household_id, person_id, eating_time_id, date, cook_id, servings, from_freezer)
-select
-  (@ids::uuid[])[i],
-  @household_id,
-  (@person_ids::uuid[])[i],
-  (@eating_time_ids::uuid[])[i],
-  (@dates::date[])[i],
-  @cook_id,
-  (@servings::double precision[])[i],
-  (@from_freezer::boolean[])[i]
-from generate_subscripts(@ids::uuid[], 1) as i;
+select id, @household_id, person_id, eating_time_id, date, @cook_id, servings, from_freezer
+from new_portions;
 
 -- name: UpdatePortion :execrows
 update portions set

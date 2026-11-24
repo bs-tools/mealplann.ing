@@ -409,9 +409,9 @@ func (s *Service) PlanMeal(ctx context.Context, req *plansv1.PlanMealRequest) (*
 		return nil, err
 	}
 	// People with a staple at the meal eat it instead, unless they're
-	// asked for.
+	// asked for, and those eating out eat elsewhere, unless everyone is.
 	if len(personIDs) == 0 {
-		if eaters, _, _ = withoutStapled(eaters, d.plan, meal, date); len(eaters) == 0 {
+		if eaters = planningEaters(eaters, d.plan, meal, date); len(eaters) == 0 {
 			return nil, allStapled(meal, date)
 		}
 	}
@@ -550,6 +550,21 @@ func withoutStapled(eaters []*people.Person, plan *plans.Plan, meal people.Meal,
 		}
 	}
 	return kept, names, out
+}
+
+// planningEaters returns the people a shared meal is planned for, when
+// nobody was asked for: those who neither have a staple that replaces it
+// nor eat out, or if everyone without a staple eats out, them, as planning
+// the meal says they eat in after all. Their portions end their eating
+// out (see CreatePortion's query).
+func planningEaters(eaters []*people.Person, plan *plans.Plan, meal people.Meal, date time.Time) []*people.Person {
+	kept, _, out := withoutStapled(eaters, plan, meal, date)
+	if len(kept) > 0 || out == 0 {
+		return kept
+	}
+	return slices.DeleteFunc(slices.Clone(eaters), func(p *people.Person) bool {
+		return len(stapledAt(plan.Staples, p, meal, date)) > 0
+	})
 }
 
 // eatsOut reports whether a person eats out at their eating time for a

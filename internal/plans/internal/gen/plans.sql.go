@@ -92,39 +92,47 @@ func (q *Queries) CreateCook(ctx context.Context, arg *CreateCookParams) (int64,
 }
 
 const createCookPortions = `-- name: CreateCookPortions :execrows
+with new_portions as (
+  select
+    ($3::uuid[])[i] as id,
+    ($4::uuid[])[i] as person_id,
+    ($5::uuid[])[i] as eating_time_id,
+    ($6::date[])[i] as date,
+    ($7::double precision[])[i] as servings,
+    ($8::boolean[])[i] as from_freezer
+  from generate_subscripts($3::uuid[], 1) as i
+), ended as (
+  delete from eating_out e
+  using new_portions n
+  where e.household_id = $1 and e.person_id = n.person_id
+    and e.eating_time_id = n.eating_time_id and e.date = n.date
+)
 insert into portions (id, household_id, person_id, eating_time_id, date, cook_id, servings, from_freezer)
-select
-  ($1::uuid[])[i],
-  $2,
-  ($3::uuid[])[i],
-  ($4::uuid[])[i],
-  ($5::date[])[i],
-  $6,
-  ($7::double precision[])[i],
-  ($8::boolean[])[i]
-from generate_subscripts($1::uuid[], 1) as i
+select id, $1, person_id, eating_time_id, date, $2, servings, from_freezer
+from new_portions
 `
 
 type CreateCookPortionsParams struct {
-	Ids           []pgtype.UUID
 	HouseholdID   pgtype.UUID
+	CookID        pgtype.UUID
+	Ids           []pgtype.UUID
 	PersonIds     []pgtype.UUID
 	EatingTimeIds []pgtype.UUID
 	Dates         []pgtype.Date
-	CookID        pgtype.UUID
 	Servings      []float64
 	FromFreezer   []bool
 }
 
-// Creates portions of a cook, given as arrays of their fields.
+// Creates portions of a cook, given as arrays of their fields, and ends
+// eating out at their eating times on their dates, like CreatePortion.
 func (q *Queries) CreateCookPortions(ctx context.Context, arg *CreateCookPortionsParams) (int64, error) {
 	result, err := q.db.Exec(ctx, createCookPortions,
-		arg.Ids,
 		arg.HouseholdID,
+		arg.CookID,
+		arg.Ids,
 		arg.PersonIds,
 		arg.EatingTimeIds,
 		arg.Dates,
-		arg.CookID,
 		arg.Servings,
 		arg.FromFreezer,
 	)
@@ -166,6 +174,11 @@ func (q *Queries) CreateCookSupplies(ctx context.Context, arg *CreateCookSupplie
 }
 
 const createPortion = `-- name: CreatePortion :execrows
+with ended as (
+  delete from eating_out
+  where household_id = $2 and person_id = $3
+    and eating_time_id = $4 and date = $5
+)
 insert into portions (
   id, household_id, person_id, eating_time_id, date, cook_id, servings, food_id, amount, unit, notes, from_freezer
 ) values (
@@ -188,6 +201,8 @@ type CreatePortionParams struct {
 	FromFreezer  bool
 }
 
+// Creates a portion, and ends eating out at its eating time on its date: a
+// portion planned there says the person eats in after all.
 func (q *Queries) CreatePortion(ctx context.Context, arg *CreatePortionParams) (int64, error) {
 	result, err := q.db.Exec(ctx, createPortion,
 		arg.ID,

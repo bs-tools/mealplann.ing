@@ -14,7 +14,8 @@ import (
 
 // TestEatingOut checks that a meal eaten out isn't planned: PlanMeal and
 // SuggestPlan leave its people out, its staples are left out of the week,
-// and it can't be marked over something planned already.
+// and it can't be marked over something planned already; but planning a
+// meal everyone eats out at plans it for them, ending their eating out.
 func TestEatingOut(t *testing.T) {
 	t.Parallel()
 	e := newEnv(t)
@@ -93,14 +94,9 @@ func TestEatingOut(t *testing.T) {
 		t.Errorf("got %v marking a planned lunch eaten out, want FAILED_PRECONDITION", err)
 	}
 
-	// Everyone eats out at Tuesday's dinner: it isn't planned, nor
-	// suggested.
+	// Everyone eats out at Tuesday's dinner: it isn't suggested.
 	if err := setOut(plansv1.SetEatingOutRequest_builder{Date: tuesday, Meal: dinner, EatingOut: true}.Build()); err != nil {
 		t.Fatalf("SetEatingOut: %v", err)
-	}
-	_, err = e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: bowl.GetId(), Date: tuesday, Meal: dinner}.Build())
-	if connect.CodeOf(err) != connect.CodeFailedPrecondition {
-		t.Errorf("got %v planning a dinner everyone eats out at, want FAILED_PRECONDITION", err)
 	}
 	resp, err := e.suggestions.SuggestPlan(ctx, suggestionsv1.SuggestPlanRequest_builder{
 		StartDate: tuesday, Days: 2, Meals: []peoplev1.HouseholdMeal{dinner},
@@ -117,6 +113,25 @@ func TestEatingOut(t *testing.T) {
 		suggestionsv1.PlanSlotState_PLAN_SLOT_STATE_SUGGESTED,
 	}; !slices.Equal(states, want) {
 		t.Errorf("got %v, want Tuesday's dinner eaten out and Wednesday's suggested", states)
+	}
+	// Planned all the same, it's for everyone, who eat in after all.
+	planned, err = e.plans.PlanMeal(ctx, plansv1.PlanMealRequest_builder{RecipeId: bowl.GetId(), Date: tuesday, Meal: dinner}.Build())
+	if err != nil {
+		t.Fatalf("PlanMeal of a dinner everyone eats out at: %v", err)
+	}
+	if len(planned.GetPortions()) != 2 {
+		t.Errorf("got %d portions, want Ben's and Cleo's", len(planned.GetPortions()))
+	}
+	week, err := e.plans.GetWeek(ctx, plansv1.GetWeekRequest_builder{Monday: monday}.Build())
+	if err != nil {
+		t.Fatalf("GetWeek: %v", err)
+	}
+	for _, pd := range week.GetDays()[1].GetPeople() {
+		for _, et := range pd.GetEatingTimes() {
+			if et.GetEatingOut() {
+				t.Errorf("got %s eating out at Tuesday's %s, want it ended by the dinner planned", pd.GetPersonName(), et.GetEatingTime().GetName())
+			}
+		}
 	}
 
 	// Ben eats at home again: his apple is back.

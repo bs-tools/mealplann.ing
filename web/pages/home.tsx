@@ -652,9 +652,15 @@ const HomePage: React.FC<HomePageProps> = ({ user }) => {
           if (planned === undefined) {
             return null;
           }
-          // A meal with nothing planned is planned as on the Plan page.
-          if (planned.portions.length === 0 && !planned.eatingOut) {
-            const meal = planned.eatingTime?.meal ?? HouseholdMeal.UNSPECIFIED;
+          /*
+           * A meal with nothing planned is planned as on the Plan page, and
+           * so is a shared meal eaten out, which planning ends.
+           */
+          const meal = planned.eatingTime?.meal ?? HouseholdMeal.UNSPECIFIED;
+          if (
+            planned.portions.length === 0 &&
+            (!planned.eatingOut || meal !== HouseholdMeal.UNSPECIFIED)
+          ) {
             return meal === HouseholdMeal.UNSPECIFIED ? (
               <EatingTimeDialog
                 slot={{
