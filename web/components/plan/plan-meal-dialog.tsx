@@ -36,7 +36,11 @@ import { ShoppingService } from "gen/shopping/v1/shopping_pb";
 import { SuggestionService } from "gen/suggestions/v1/suggestions_pb";
 import { startOfWeek } from "helpers/dates";
 import { formatDay, formatList } from "helpers/format";
-import { HOUSEHOLD_MEALS, optionValue } from "helpers/labels";
+import {
+  HOUSEHOLD_MEALS,
+  householdMealLabel,
+  optionValue,
+} from "helpers/labels";
 import { parseOptionalNumber } from "helpers/parse";
 import { invalidateServices } from "helpers/query";
 import { staplesAt } from "helpers/staples";
@@ -247,6 +251,22 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
    */
   const personIds =
     flipped.length === 0 ? [] : chosen.map((person) => person.id);
+  /*
+   * The title and the button say who the meal is planned for, so it can't
+   * read as one person's meal.
+   */
+  const chosenNames = chosen.map((person) => person.name);
+  const mealName = householdMealLabel(meal).toLowerCase();
+  const planTitle =
+    chosenNames.length === 0
+      ? `Plan ${mealName}`
+      : `Plan ${mealName} for ${chosenNames.join(" & ")}`;
+  let planLabel = "Plan meal";
+  if (chosenNames.length === 2 && chosen.length === eaters.length) {
+    planLabel = "Plan for both";
+  } else if (chosenNames.length > 0) {
+    planLabel = `Plan for ${formatList(chosenNames)}`;
+  }
   // Each person chosen, at their eating time of the meal.
   const mealEaters = chosen.flatMap((person) =>
     person.eatingTimes
@@ -306,7 +326,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
     <Modal
       open
       onClose={onClose}
-      title={replacing === undefined ? "Plan a meal" : "Swap the meal"}
+      title={replacing === undefined ? planTitle : "Swap the meal"}
       wide
     >
       <div className="flex flex-col gap-4">
@@ -561,7 +581,7 @@ const PlanMealDialog: React.FC<PlanMealDialogProps> = ({
                   plan.isPending || recipeId === "" || eaters.length === 0
                 }
               >
-                {plan.isPending ? "Planning…" : "Plan meal"}
+                {plan.isPending ? "Planning…" : planLabel}
               </button>
             </div>
           </form>
