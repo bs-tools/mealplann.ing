@@ -48,6 +48,7 @@ var (
 // PlanRepository stores plans.
 type PlanRepository interface {
 	GetPlan(ctx context.Context, householdID pgtype.UUID, from, to time.Time) (*plans.Plan, error)
+	ListAnytimeCooks(ctx context.Context, householdID pgtype.UUID) ([]*plans.Cook, error)
 	GetCook(ctx context.Context, householdID, id pgtype.UUID) (*plans.Cook, error)
 	CreateCook(ctx context.Context, c *plans.Cook) (*plans.Cook, error)
 	CreateCookWithPortions(ctx context.Context, c *plans.Cook, portions []*plans.Portion) (*plans.Cook, []*plans.Portion, error)

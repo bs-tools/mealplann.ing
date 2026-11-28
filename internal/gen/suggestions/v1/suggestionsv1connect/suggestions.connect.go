@@ -36,6 +36,9 @@ const (
 	// SuggestionServiceSuggestFromPantryProcedure is the procedure name of the SuggestionService's
 	// SuggestFromPantry RPC.
 	SuggestionServiceSuggestFromPantryProcedure = "/suggestions.v1.SuggestionService/SuggestFromPantry"
+	// SuggestionServiceSuggestPicksProcedure is the procedure name of the SuggestionService's
+	// SuggestPicks RPC.
+	SuggestionServiceSuggestPicksProcedure = "/suggestions.v1.SuggestionService/SuggestPicks"
 	// SuggestionServiceSuggestSidesProcedure is the procedure name of the SuggestionService's
 	// SuggestSides RPC.
 	SuggestionServiceSuggestSidesProcedure = "/suggestions.v1.SuggestionService/SuggestSides"
@@ -77,6 +80,13 @@ var (
 			StreamType: connect.StreamTypeUnary,
 			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestFromPantry"),
 			Procedure:  SuggestionServiceSuggestFromPantryProcedure,
+		}
+	})
+	suggestionServiceSuggestPicksSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_suggestions_v1_suggestions_proto.Services().ByName("SuggestionService").Methods().ByName("SuggestPicks"),
+			Procedure:  SuggestionServiceSuggestPicksProcedure,
 		}
 	})
 	suggestionServiceSuggestSidesSpec = sync.OnceValue(func() connect.Spec {
@@ -217,6 +227,14 @@ type SuggestionServiceClient interface {
 	// with PlanService.PlanMeal or CreatePortion. Drafts and recipes not to
 	// suggest are left out. Nothing is changed.
 	SuggestFromPantry(context.Context, *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error)
+	// Suggest recipes to pick, up to 5, to buy for in one shop and cook any
+	// time after, given those picked already: lunches and dinners using
+	// food in the pantry to use soon most, then sharing ingredients with
+	// those picked and the plan's next week, so the shop is short and
+	// little is left over, best first, each with why. Plan the picks with
+	// PlanService.CreateCook with anytime, dated the day of the shop.
+	// Nothing is changed.
+	SuggestPicks(context.Context, *v1.SuggestPicksRequest) (*v1.SuggestPicksResponse, error)
 	// Score the sides a meal can be served with, for one person's eating
 	// time on a date: the sides of its recipe (see Recipe.served_with), each
 	// in proportion to the servings planned, as much as the eating time's
@@ -369,6 +387,14 @@ type SuggestionServiceHandler interface {
 	// with PlanService.PlanMeal or CreatePortion. Drafts and recipes not to
 	// suggest are left out. Nothing is changed.
 	SuggestFromPantry(context.Context, *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error)
+	// Suggest recipes to pick, up to 5, to buy for in one shop and cook any
+	// time after, given those picked already: lunches and dinners using
+	// food in the pantry to use soon most, then sharing ingredients with
+	// those picked and the plan's next week, so the shop is short and
+	// little is left over, best first, each with why. Plan the picks with
+	// PlanService.CreateCook with anytime, dated the day of the shop.
+	// Nothing is changed.
+	SuggestPicks(context.Context, *v1.SuggestPicksRequest) (*v1.SuggestPicksResponse, error)
 	// Score the sides a meal can be served with, for one person's eating
 	// time on a date: the sides of its recipe (see Recipe.served_with), each
 	// in proportion to the servings planned, as much as the eating time's
@@ -416,6 +442,7 @@ func RegisterSuggestionServiceHandler(server *connect.Server, svc SuggestionServ
 		connect.Method{Spec: suggestionServiceSuggestPlanSpec(), Handler: adapter.suggestPlan},
 		connect.Method{Spec: suggestionServiceSuggestFixesSpec(), Handler: adapter.suggestFixes},
 		connect.Method{Spec: suggestionServiceSuggestFromPantrySpec(), Handler: adapter.suggestFromPantry},
+		connect.Method{Spec: suggestionServiceSuggestPicksSpec(), Handler: adapter.suggestPicks},
 		connect.Method{Spec: suggestionServiceSuggestSidesSpec(), Handler: adapter.suggestSides},
 		connect.Method{Spec: suggestionServiceListBowlPartsSpec(), Handler: adapter.listBowlParts},
 		connect.Method{Spec: suggestionServiceSuggestBowlsSpec(), Handler: adapter.suggestBowls},
@@ -440,6 +467,10 @@ func (UnimplementedSuggestionServiceHandler) SuggestFixes(context.Context, *v1.S
 
 func (UnimplementedSuggestionServiceHandler) SuggestFromPantry(context.Context, *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestFromPantry is not implemented")
+}
+
+func (UnimplementedSuggestionServiceHandler) SuggestPicks(context.Context, *v1.SuggestPicksRequest) (*v1.SuggestPicksResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "suggestions.v1.SuggestionService.SuggestPicks is not implemented")
 }
 
 func (UnimplementedSuggestionServiceHandler) SuggestSides(context.Context, *v1.SuggestSidesRequest) (*v1.SuggestSidesResponse, error) {
@@ -489,6 +520,14 @@ func (c *suggestionServiceClient) SuggestFixes(ctx context.Context, req *v1.Sugg
 func (c *suggestionServiceClient) SuggestFromPantry(ctx context.Context, req *v1.SuggestFromPantryRequest) (*v1.SuggestFromPantryResponse, error) {
 	var res v1.SuggestFromPantryResponse
 	if err := c.client.CallUnary(ctx, suggestionServiceSuggestFromPantrySpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *suggestionServiceClient) SuggestPicks(ctx context.Context, req *v1.SuggestPicksRequest) (*v1.SuggestPicksResponse, error) {
+	var res v1.SuggestPicksResponse
+	if err := c.client.CallUnary(ctx, suggestionServiceSuggestPicksSpec(), req, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -570,6 +609,18 @@ func (h suggestionServiceHandler) suggestFromPantry(ctx context.Context, _ conne
 		return err
 	}
 	res, err := h.svc.SuggestFromPantry(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h suggestionServiceHandler) suggestPicks(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.SuggestPicksRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.SuggestPicks(ctx, &req)
 	if err != nil {
 		return err
 	}

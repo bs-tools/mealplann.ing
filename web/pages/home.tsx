@@ -143,7 +143,8 @@ const cookBlocksOf = (
   const blocks: CookBlock[] = [];
   for (const planned of cooks) {
     const { cook } = planned;
-    if (cook === undefined || cook.date !== date || cook.done) {
+    // A pick to cook any time isn't today's until it's cooked now.
+    if (cook === undefined || cook.date !== date || cook.done || cook.anytime) {
       continue;
     }
     const recipe = minutesOfRecipe.get(cook.recipeId);

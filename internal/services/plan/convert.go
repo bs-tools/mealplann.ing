@@ -107,6 +107,7 @@ func cookToProto(c *plans.Cook) *plansv1.Cook {
 		FrozenServings:  c.FrozenServings,
 		OffPlanServings: c.OffPlanServings,
 		RemovedServings: c.RemovedServings,
+		Anytime:         c.Anytime,
 		CreateTime:      timestamppb.New(c.CreateTime),
 		Supplies:        suppliesToProto(c.Supplies),
 		Supplying:       suppliesToProto(c.Supplying),
@@ -158,6 +159,7 @@ func cookFromProto(p *plansv1.Cook) (*plans.Cook, error) {
 		FrozenServings:  p.GetFrozenServings(),
 		OffPlanServings: p.GetOffPlanServings(),
 		RemovedServings: p.GetRemovedServings(),
+		Anytime:         p.GetAnytime(),
 	}, nil
 }
 

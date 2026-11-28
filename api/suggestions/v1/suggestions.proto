@@ -148,6 +148,14 @@ service SuggestionService {
   // with PlanService.PlanMeal or CreatePortion. Drafts and recipes not to
   // suggest are left out. Nothing is changed.
   rpc SuggestFromPantry(SuggestFromPantryRequest) returns (SuggestFromPantryResponse);
+  // Suggest recipes to pick, up to 5, to buy for in one shop and cook any
+  // time after, given those picked already: lunches and dinners using
+  // food in the pantry to use soon most, then sharing ingredients with
+  // those picked and the plan's next week, so the shop is short and
+  // little is left over, best first, each with why. Plan the picks with
+  // PlanService.CreateCook with anytime, dated the day of the shop.
+  // Nothing is changed.
+  rpc SuggestPicks(SuggestPicksRequest) returns (SuggestPicksResponse);
   // Score the sides a meal can be served with, for one person's eating
   // time on a date: the sides of its recipe (see Recipe.served_with), each
   // in proportion to the servings planned, as much as the eating time's
@@ -847,4 +855,37 @@ message SideSuggestion {
   // add a share of with PlanService.CreatePortion, like rice cooked two
   // days ago. Fridge leftovers come before frozen ones.
   bool from_fridge = 19;
+}
+
+message SuggestPicksRequest {
+  // The date (YYYY-MM-DD) of the shop the picks are bought in. Empty for
+  // today.
+  string date = 1;
+  // The recipes picked already, at most 5.
+  repeated string picked_recipe_ids = 2;
+  // How many suggestions to return, from 1 to 30; 0 for 10.
+  int32 max_suggestions = 3;
+}
+
+// A recipe to pick, with why.
+message PickSuggestion {
+  string recipe_id = 1;
+  string recipe_name = 2;
+  // How many servings it makes, which a pick cooks.
+  int32 servings = 3;
+  double score = 4;
+  // Why, best first, like "uses the broccoli to use by Mon" or "shares
+  // ginger and lime with Peanut Noodles".
+  repeated string reasons = 5;
+  // The names of its foods the pantry doesn't have enough of, with the
+  // picks' and the plan's needs taken first.
+  repeated string to_buy = 6;
+}
+
+message SuggestPicksResponse {
+  // The suggestions, best first, without those picked.
+  repeated PickSuggestion suggestions = 1;
+  // The names of the foods the picks need that the pantry doesn't have
+  // enough of: what buying them adds to the shop.
+  repeated string picked_to_buy = 2;
 }

@@ -75,6 +75,9 @@ type Cook struct {
 	// RemovedServings are its servings taken out of the fridge without a
 	// portion: eaten unplanned, given away, thrown out, or never there.
 	RemovedServings float64
+	// Anytime is whether it's to cook any time soon, rather than on its
+	// date, which is the earliest: a recipe picked to buy for.
+	Anytime bool
 	// RecipeName, AssignedServings, the servings of all its portions,
 	// LateServings, those of its portions eaten after the recipe's fridge
 	// days or from the freezer, and of what it supplies from the freezer,
@@ -393,6 +396,20 @@ func (r *Repository) SetEatingOut(ctx context.Context, householdID pgtype.UUID, 
 
 // GetCook gets a household's cook. It returns store.ErrNotFound if the
 // household has no such cook.
+// ListAnytimeCooks lists the household's cooks to cook any time that
+// aren't cooked yet, oldest first.
+func (r *Repository) ListAnytimeCooks(ctx context.Context, householdID pgtype.UUID) ([]*Cook, error) {
+	rows, err := gen.New(r.db).ListCooks(ctx, &gen.ListCooksParams{HouseholdID: householdID, Ids: []pgtype.UUID{}, Anytime: new(true)})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list cooks to cook any time: %w", err)
+	}
+	cooks := make([]*Cook, 0, len(rows))
+	for _, row := range rows {
+		cooks = append(cooks, cookFromDB(row))
+	}
+	return cooks, nil
+}
+
 func (r *Repository) GetCook(ctx context.Context, householdID, id pgtype.UUID) (*Cook, error) {
 	var rows []*gen.ListCooksRow
 	var supplies []*gen.ListCookSuppliesRow
@@ -550,6 +567,7 @@ func (r *Repository) CreateCooksWithPortions(ctx context.Context, list []*CookWi
 				FrozenServings:  c.FrozenServings,
 				OffPlanServings: c.OffPlanServings,
 				RemovedServings: c.RemovedServings,
+				Anytime:         c.Anytime,
 			})
 		}
 		p := &gen.CreateCookPortionsParams{HouseholdID: c.HouseholdID, CookID: id}
@@ -696,6 +714,7 @@ func (r *Repository) UpdateCook(ctx context.Context, c *Cook) (*Cook, error) {
 			FrozenServings:  c.FrozenServings,
 			OffPlanServings: c.OffPlanServings,
 			RemovedServings: c.RemovedServings,
+			Anytime:         c.Anytime,
 		})
 		return err
 	})
@@ -868,7 +887,7 @@ func (r *Repository) MoveCook(ctx context.Context, c *Cook, moves []PortionMove,
 				ID: c.ID, HouseholdID: c.HouseholdID, RecipeID: c.RecipeID, Date: store.DateToPG(c.Date),
 				Servings: c.Servings, Meal: mealToDB(c.Meal), Notes: c.Notes, Done: c.Done,
 				FrozenServings: c.FrozenServings, OffPlanServings: c.OffPlanServings,
-				RemovedServings: c.RemovedServings,
+				RemovedServings: c.RemovedServings, Anytime: c.Anytime,
 			})
 			return err
 		})
@@ -1132,6 +1151,7 @@ func cookFromDB(row *gen.ListCooksRow) *Cook {
 		FrozenServings:   c.FrozenServings,
 		OffPlanServings:  c.OffPlanServings,
 		RemovedServings:  c.RemovedServings,
+		Anytime:          c.Anytime,
 		RecipeName:       row.RecipeName,
 		AssignedServings: row.AssignedServings,
 		LateServings:     row.LateServings,

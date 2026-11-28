@@ -566,6 +566,7 @@ type Cook struct {
 	FrozenServings  float64
 	OffPlanServings float64
 	RemovedServings float64
+	Anytime         bool
 }
 
 type CookPantryDeduction struct {
