@@ -1,6 +1,6 @@
 -- name: CreateCook :execrows
-insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done, frozen_servings, off_plan_servings, removed_servings)
-values (@id, @household_id, @recipe_id, @date, @servings, @meal, @notes, @done, @frozen_servings, @off_plan_servings, @removed_servings);
+insert into cooks (id, household_id, recipe_id, date, servings, meal, notes, done, frozen_servings, off_plan_servings, removed_servings, anytime)
+values (@id, @household_id, @recipe_id, @date, @servings, @meal, @notes, @done, @frozen_servings, @off_plan_servings, @removed_servings, @anytime);
 
 -- name: GrowCook :execrows
 -- Adds servings to a cook, for portions of it planned later, like the rest
@@ -19,6 +19,7 @@ update cooks set
   frozen_servings = @frozen_servings,
   off_plan_servings = @off_plan_servings,
   removed_servings = @removed_servings,
+  anytime = @anytime,
   update_time = now()
 where id = @id and household_id = @household_id;
 
@@ -96,7 +97,8 @@ where s.household_id = @household_id
 order by cc.date, s.consumer_cook_id, s.component_recipe_id;
 
 -- name: ListCooks :many
--- The household's cooks, given by ID or cooked in a range of dates, with
+-- The household's cooks, given by ID, cooked in a range of dates, or, with
+-- anytime, those to cook any time still to cook, with
 -- their recipe's name, the servings of all their portions, whatever their
 -- date, and of those eaten after the recipe's fridge days, which come from
 -- the freezer.
@@ -130,6 +132,7 @@ where cooks.household_id = @household_id
   and (
     cooks.id = any(@ids::uuid[])
     or cooks.date between sqlc.narg(from_date)::date and sqlc.narg(to_date)::date
+    or (coalesce(sqlc.narg(anytime)::boolean, false) and cooks.anytime and not cooks.done)
   )
 order by cooks.date, cooks.create_time, cooks.id;
 

@@ -497,7 +497,9 @@ func (d *planData) plannedCook(c *plans.Cook) *plansv1.PlannedCook {
 	}
 	// What it makes for other cooks counts as planned, like portions.
 	assigned := c.AssignedServings + c.SuppliedServings
-	if w := rules.CheckServings(check, assigned); w != nil {
+	// A cook to cook any time is eaten as leftovers once it's cooked, so
+	// its servings aren't planned until then.
+	if w := rules.CheckServings(check, assigned); w != nil && !(c.Anytime && !c.Done && w.Kind == rules.ServingsUnassigned) {
 		warnings = append(warnings, warningToProto(w, warningContext{cookID: c.ID}))
 	}
 	for _, supply := range c.Supplies {

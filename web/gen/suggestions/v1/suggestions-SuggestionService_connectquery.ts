@@ -131,6 +131,19 @@ export const suggestFixes = SuggestionService.method.suggestFixes;
 export const suggestFromPantry = SuggestionService.method.suggestFromPantry;
 
 /**
+ * Suggest recipes to pick, up to 5, to buy for in one shop and cook any
+ * time after, given those picked already: lunches and dinners using
+ * food in the pantry to use soon most, then sharing ingredients with
+ * those picked and the plan's next week, so the shop is short and
+ * little is left over, best first, each with why. Plan the picks with
+ * PlanService.CreateCook with anytime, dated the day of the shop.
+ * Nothing is changed.
+ *
+ * @generated from rpc suggestions.v1.SuggestionService.SuggestPicks
+ */
+export const suggestPicks = SuggestionService.method.suggestPicks;
+
+/**
  * Score the sides a meal can be served with, for one person's eating
  * time on a date: the sides of its recipe (see Recipe.served_with), each
  * in proportion to the servings planned, as much as the eating time's

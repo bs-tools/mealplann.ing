@@ -1,6 +1,7 @@
 import Loading from "@components/loading";
 import EatingTimeDialog from "@components/plan/eating-time-dialog";
 import MonthView from "@components/plan/month-view";
+import PickRecipes from "@components/plan/pick-recipes";
 import PlanDayList from "@components/plan/plan-day-list";
 import PlanMealDialog from "@components/plan/plan-meal-dialog";
 import type { MealRow } from "@components/plan/plan-rows";
@@ -87,6 +88,12 @@ const PlanPage: React.FC = () => {
     day = now;
   }
   const month = params.get("view") === "month";
+  // Picking recipes to buy for, rather than planning by date.
+  const pick = params.get("view") === "pick";
+  let viewName = month ? "month" : "week";
+  if (pick) {
+    viewName = "pick";
+  }
   const lists = useQuery(listShoppingLists, { pageSize: 10 });
   const week = useQuery(
     getWeek,
@@ -321,15 +328,19 @@ const PlanPage: React.FC = () => {
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-muted">
-            {month
-              ? formatMonth(day)
-              : `${formatShortDate(monday)} – ${formatShortDate(addDays(monday, 6))}`}
+            {pick && "Recipes to cook any time"}
+            {!pick &&
+              (month
+                ? formatMonth(day)
+                : `${formatShortDate(monday)} – ${formatShortDate(addDays(monday, 6))}`)}
           </p>
           <h1 className="text-[28px] leading-tight font-bold tracking-tight text-ink-soft">
             Plan
           </h1>
         </div>
-        <div className="flex items-center gap-1 print:hidden">
+        <div
+          className={`flex items-center gap-1 print:hidden ${pick ? "hidden" : ""}`}
+        >
           <button
             type="button"
             className={iconButton}
@@ -416,16 +427,21 @@ const PlanPage: React.FC = () => {
       <Segmented
         label="View"
         className="print:hidden"
-        value={month ? "month" : "week"}
+        value={viewName}
         options={[
           { label: "Week", value: "week" },
           { label: "Month", value: "month" },
+          { label: "Pick", value: "pick" },
         ]}
         onChange={(view) => {
+          if (view === "pick") {
+            setParams({ view: "pick" });
+            return;
+          }
           goTo(monday, day, view === "month");
         }}
       />
-      {content}
+      {pick ? <PickRecipes /> : content}
       {opened !== null &&
         openedDay !== undefined &&
         week.data !== undefined && (

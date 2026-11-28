@@ -4603,6 +4603,304 @@ func (b0 SideSuggestion_builder) Build() *SideSuggestion {
 	return m0
 }
 
+type SuggestPicksRequest struct {
+	state                      protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Date            string                 `protobuf:"bytes,1,opt,name=date,proto3"`
+	xxx_hidden_PickedRecipeIds []string               `protobuf:"bytes,2,rep,name=picked_recipe_ids,json=pickedRecipeIds,proto3"`
+	xxx_hidden_MaxSuggestions  int32                  `protobuf:"varint,3,opt,name=max_suggestions,json=maxSuggestions,proto3"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
+}
+
+func (x *SuggestPicksRequest) Reset() {
+	*x = SuggestPicksRequest{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestPicksRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestPicksRequest) ProtoMessage() {}
+
+func (x *SuggestPicksRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SuggestPicksRequest) GetDate() string {
+	if x != nil {
+		return x.xxx_hidden_Date
+	}
+	return ""
+}
+
+func (x *SuggestPicksRequest) GetPickedRecipeIds() []string {
+	if x != nil {
+		return x.xxx_hidden_PickedRecipeIds
+	}
+	return nil
+}
+
+func (x *SuggestPicksRequest) GetMaxSuggestions() int32 {
+	if x != nil {
+		return x.xxx_hidden_MaxSuggestions
+	}
+	return 0
+}
+
+func (x *SuggestPicksRequest) SetDate(v string) {
+	x.xxx_hidden_Date = v
+}
+
+func (x *SuggestPicksRequest) SetPickedRecipeIds(v []string) {
+	x.xxx_hidden_PickedRecipeIds = v
+}
+
+func (x *SuggestPicksRequest) SetMaxSuggestions(v int32) {
+	x.xxx_hidden_MaxSuggestions = v
+}
+
+type SuggestPicksRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The date (YYYY-MM-DD) of the shop the picks are bought in. Empty for
+	// today.
+	Date string
+	// The recipes picked already, at most 5.
+	PickedRecipeIds []string
+	// How many suggestions to return, from 1 to 30; 0 for 10.
+	MaxSuggestions int32
+}
+
+func (b0 SuggestPicksRequest_builder) Build() *SuggestPicksRequest {
+	m0 := &SuggestPicksRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Date = b.Date
+	x.xxx_hidden_PickedRecipeIds = b.PickedRecipeIds
+	x.xxx_hidden_MaxSuggestions = b.MaxSuggestions
+	return m0
+}
+
+// A recipe to pick, with why.
+type PickSuggestion struct {
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_RecipeId   string                 `protobuf:"bytes,1,opt,name=recipe_id,json=recipeId,proto3"`
+	xxx_hidden_RecipeName string                 `protobuf:"bytes,2,opt,name=recipe_name,json=recipeName,proto3"`
+	xxx_hidden_Servings   int32                  `protobuf:"varint,3,opt,name=servings,proto3"`
+	xxx_hidden_Score      float64                `protobuf:"fixed64,4,opt,name=score,proto3"`
+	xxx_hidden_Reasons    []string               `protobuf:"bytes,5,rep,name=reasons,proto3"`
+	xxx_hidden_ToBuy      []string               `protobuf:"bytes,6,rep,name=to_buy,json=toBuy,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *PickSuggestion) Reset() {
+	*x = PickSuggestion{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PickSuggestion) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PickSuggestion) ProtoMessage() {}
+
+func (x *PickSuggestion) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *PickSuggestion) GetRecipeId() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeId
+	}
+	return ""
+}
+
+func (x *PickSuggestion) GetRecipeName() string {
+	if x != nil {
+		return x.xxx_hidden_RecipeName
+	}
+	return ""
+}
+
+func (x *PickSuggestion) GetServings() int32 {
+	if x != nil {
+		return x.xxx_hidden_Servings
+	}
+	return 0
+}
+
+func (x *PickSuggestion) GetScore() float64 {
+	if x != nil {
+		return x.xxx_hidden_Score
+	}
+	return 0
+}
+
+func (x *PickSuggestion) GetReasons() []string {
+	if x != nil {
+		return x.xxx_hidden_Reasons
+	}
+	return nil
+}
+
+func (x *PickSuggestion) GetToBuy() []string {
+	if x != nil {
+		return x.xxx_hidden_ToBuy
+	}
+	return nil
+}
+
+func (x *PickSuggestion) SetRecipeId(v string) {
+	x.xxx_hidden_RecipeId = v
+}
+
+func (x *PickSuggestion) SetRecipeName(v string) {
+	x.xxx_hidden_RecipeName = v
+}
+
+func (x *PickSuggestion) SetServings(v int32) {
+	x.xxx_hidden_Servings = v
+}
+
+func (x *PickSuggestion) SetScore(v float64) {
+	x.xxx_hidden_Score = v
+}
+
+func (x *PickSuggestion) SetReasons(v []string) {
+	x.xxx_hidden_Reasons = v
+}
+
+func (x *PickSuggestion) SetToBuy(v []string) {
+	x.xxx_hidden_ToBuy = v
+}
+
+type PickSuggestion_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	RecipeId   string
+	RecipeName string
+	// How many servings it makes, which a pick cooks.
+	Servings int32
+	Score    float64
+	// Why, best first, like "uses the broccoli to use by Mon" or "shares
+	// ginger and lime with Peanut Noodles".
+	Reasons []string
+	// The names of its foods the pantry doesn't have enough of, with the
+	// picks' and the plan's needs taken first.
+	ToBuy []string
+}
+
+func (b0 PickSuggestion_builder) Build() *PickSuggestion {
+	m0 := &PickSuggestion{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_RecipeId = b.RecipeId
+	x.xxx_hidden_RecipeName = b.RecipeName
+	x.xxx_hidden_Servings = b.Servings
+	x.xxx_hidden_Score = b.Score
+	x.xxx_hidden_Reasons = b.Reasons
+	x.xxx_hidden_ToBuy = b.ToBuy
+	return m0
+}
+
+type SuggestPicksResponse struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Suggestions *[]*PickSuggestion     `protobuf:"bytes,1,rep,name=suggestions,proto3"`
+	xxx_hidden_PickedToBuy []string               `protobuf:"bytes,2,rep,name=picked_to_buy,json=pickedToBuy,proto3"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *SuggestPicksResponse) Reset() {
+	*x = SuggestPicksResponse{}
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestPicksResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestPicksResponse) ProtoMessage() {}
+
+func (x *SuggestPicksResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_suggestions_v1_suggestions_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *SuggestPicksResponse) GetSuggestions() []*PickSuggestion {
+	if x != nil {
+		if x.xxx_hidden_Suggestions != nil {
+			return *x.xxx_hidden_Suggestions
+		}
+	}
+	return nil
+}
+
+func (x *SuggestPicksResponse) GetPickedToBuy() []string {
+	if x != nil {
+		return x.xxx_hidden_PickedToBuy
+	}
+	return nil
+}
+
+func (x *SuggestPicksResponse) SetSuggestions(v []*PickSuggestion) {
+	x.xxx_hidden_Suggestions = &v
+}
+
+func (x *SuggestPicksResponse) SetPickedToBuy(v []string) {
+	x.xxx_hidden_PickedToBuy = v
+}
+
+type SuggestPicksResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The suggestions, best first, without those picked.
+	Suggestions []*PickSuggestion
+	// The names of the foods the picks need that the pantry doesn't have
+	// enough of: what buying them adds to the shop.
+	PickedToBuy []string
+}
+
+func (b0 SuggestPicksResponse_builder) Build() *SuggestPicksResponse {
+	m0 := &SuggestPicksResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Suggestions = &b.Suggestions
+	x.xxx_hidden_PickedToBuy = b.PickedToBuy
+	return m0
+}
+
 var File_suggestions_v1_suggestions_proto protoreflect.FileDescriptor
 
 const file_suggestions_v1_suggestions_proto_rawDesc = "" +
@@ -4847,7 +5145,22 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\ffrom_freezer\x18\x11 \x01(\bR\vfromFreezer\x120\n" +
 	"\x14frozen_servings_left\x18\x12 \x01(\x01R\x12frozenServingsLeft\x12\x1f\n" +
 	"\vfrom_fridge\x18\x13 \x01(\bR\n" +
-	"fromFridge*~\n" +
+	"fromFridge\"~\n" +
+	"\x13SuggestPicksRequest\x12\x12\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\x12*\n" +
+	"\x11picked_recipe_ids\x18\x02 \x03(\tR\x0fpickedRecipeIds\x12'\n" +
+	"\x0fmax_suggestions\x18\x03 \x01(\x05R\x0emaxSuggestions\"\xb1\x01\n" +
+	"\x0ePickSuggestion\x12\x1b\n" +
+	"\trecipe_id\x18\x01 \x01(\tR\brecipeId\x12\x1f\n" +
+	"\vrecipe_name\x18\x02 \x01(\tR\n" +
+	"recipeName\x12\x1a\n" +
+	"\bservings\x18\x03 \x01(\x05R\bservings\x12\x14\n" +
+	"\x05score\x18\x04 \x01(\x01R\x05score\x12\x18\n" +
+	"\areasons\x18\x05 \x03(\tR\areasons\x12\x15\n" +
+	"\x06to_buy\x18\x06 \x03(\tR\x05toBuy\"|\n" +
+	"\x14SuggestPicksResponse\x12@\n" +
+	"\vsuggestions\x18\x01 \x03(\v2\x1e.suggestions.v1.PickSuggestionR\vsuggestions\x12\"\n" +
+	"\rpicked_to_buy\x18\x02 \x03(\tR\vpickedToBuy*~\n" +
 	"\bBowlRole\x12\x19\n" +
 	"\x15BOWL_ROLE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eBOWL_ROLE_CARB\x10\x01\x12\x15\n" +
@@ -4888,12 +5201,13 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\vPlanFixKind\x12\x1d\n" +
 	"\x19PLAN_FIX_KIND_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14PLAN_FIX_KIND_REMOVE\x10\x01\x12\x18\n" +
-	"\x14PLAN_FIX_KIND_RESIZE\x10\x02\"\x04\b\x03\x10\x03\"\x04\b\x04\x10\x04*\x15PLAN_FIX_KIND_REPLACE*\x11PLAN_FIX_KIND_ADD2\xfd\x05\n" +
+	"\x14PLAN_FIX_KIND_RESIZE\x10\x02\"\x04\b\x03\x10\x03\"\x04\b\x04\x10\x04*\x15PLAN_FIX_KIND_REPLACE*\x11PLAN_FIX_KIND_ADD2\xd8\x06\n" +
 	"\x11SuggestionService\x12_\n" +
 	"\x0eSuggestRecipes\x12%.suggestions.v1.SuggestRecipesRequest\x1a&.suggestions.v1.SuggestRecipesResponse\x12V\n" +
 	"\vSuggestPlan\x12\".suggestions.v1.SuggestPlanRequest\x1a#.suggestions.v1.SuggestPlanResponse\x12Y\n" +
 	"\fSuggestFixes\x12#.suggestions.v1.SuggestFixesRequest\x1a$.suggestions.v1.SuggestFixesResponse\x12h\n" +
 	"\x11SuggestFromPantry\x12(.suggestions.v1.SuggestFromPantryRequest\x1a).suggestions.v1.SuggestFromPantryResponse\x12Y\n" +
+	"\fSuggestPicks\x12#.suggestions.v1.SuggestPicksRequest\x1a$.suggestions.v1.SuggestPicksResponse\x12Y\n" +
 	"\fSuggestSides\x12#.suggestions.v1.SuggestSidesRequest\x1a$.suggestions.v1.SuggestSidesResponse\x12\\\n" +
 	"\rListBowlParts\x12$.suggestions.v1.ListBowlPartsRequest\x1a%.suggestions.v1.ListBowlPartsResponse\x12Y\n" +
 	"\fSuggestBowls\x12#.suggestions.v1.SuggestBowlsRequest\x1a$.suggestions.v1.SuggestBowlsResponse\x12V\n" +
@@ -4901,7 +5215,7 @@ const file_suggestions_v1_suggestions_proto_rawDesc = "" +
 	"\x12com.suggestions.v1B\x10SuggestionsProtoP\x01ZKgithub.com/bs-tools/mealplann.ing/internal/gen/suggestions/v1;suggestionsv1\xa2\x02\x03SXX\xaa\x02\x0eSuggestions.V1\xca\x02\x0eSuggestions\\V1\xe2\x02\x1aSuggestions\\V1\\GPBMetadata\xea\x02\x0fSuggestions::V1b\x06proto3"
 
 var file_suggestions_v1_suggestions_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_suggestions_v1_suggestions_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_suggestions_v1_suggestions_proto_goTypes = []any{
 	(BowlRole)(0),                     // 0: suggestions.v1.BowlRole
 	(ScoreKind)(0),                    // 1: suggestions.v1.ScoreKind
@@ -4939,81 +5253,87 @@ var file_suggestions_v1_suggestions_proto_goTypes = []any{
 	(*SuggestSidesRequest)(nil),       // 33: suggestions.v1.SuggestSidesRequest
 	(*SuggestSidesResponse)(nil),      // 34: suggestions.v1.SuggestSidesResponse
 	(*SideSuggestion)(nil),            // 35: suggestions.v1.SideSuggestion
-	(*v1.Nutrients)(nil),              // 36: foods.v1.Nutrients
-	(*v11.Recipe)(nil),                // 37: recipes.v1.Recipe
-	(v12.HouseholdMeal)(0),            // 38: people.v1.HouseholdMeal
-	(*v13.Warning)(nil),               // 39: plans.v1.Warning
-	(*v13.LeftoverOf)(nil),            // 40: plans.v1.LeftoverOf
-	(*v11.RecipeSide)(nil),            // 41: recipes.v1.RecipeSide
-	(v1.AmountUnit)(0),                // 42: foods.v1.AmountUnit
+	(*SuggestPicksRequest)(nil),       // 36: suggestions.v1.SuggestPicksRequest
+	(*PickSuggestion)(nil),            // 37: suggestions.v1.PickSuggestion
+	(*SuggestPicksResponse)(nil),      // 38: suggestions.v1.SuggestPicksResponse
+	(*v1.Nutrients)(nil),              // 39: foods.v1.Nutrients
+	(*v11.Recipe)(nil),                // 40: recipes.v1.Recipe
+	(v12.HouseholdMeal)(0),            // 41: people.v1.HouseholdMeal
+	(*v13.Warning)(nil),               // 42: plans.v1.Warning
+	(*v13.LeftoverOf)(nil),            // 43: plans.v1.LeftoverOf
+	(*v11.RecipeSide)(nil),            // 44: recipes.v1.RecipeSide
+	(v1.AmountUnit)(0),                // 45: foods.v1.AmountUnit
 }
 var file_suggestions_v1_suggestions_proto_depIdxs = []int32{
 	0,  // 0: suggestions.v1.BowlPart.role:type_name -> suggestions.v1.BowlRole
 	5,  // 1: suggestions.v1.Bowl.parts:type_name -> suggestions.v1.BowlPart
-	36, // 2: suggestions.v1.Bowl.nutrients:type_name -> foods.v1.Nutrients
-	37, // 3: suggestions.v1.Bowl.recipe:type_name -> recipes.v1.Recipe
+	39, // 2: suggestions.v1.Bowl.nutrients:type_name -> foods.v1.Nutrients
+	40, // 3: suggestions.v1.Bowl.recipe:type_name -> recipes.v1.Recipe
 	5,  // 4: suggestions.v1.ListBowlPartsResponse.parts:type_name -> suggestions.v1.BowlPart
 	6,  // 5: suggestions.v1.SuggestBowlsResponse.bowls:type_name -> suggestions.v1.Bowl
 	11, // 6: suggestions.v1.ComposeBowlRequest.parts:type_name -> suggestions.v1.BowlPartChoice
 	6,  // 7: suggestions.v1.ComposeBowlResponse.bowl:type_name -> suggestions.v1.Bowl
-	38, // 8: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
+	41, // 8: suggestions.v1.SuggestRecipesRequest.meal:type_name -> people.v1.HouseholdMeal
 	14, // 9: suggestions.v1.SuggestRecipesRequest.eating_time:type_name -> suggestions.v1.EatingTimeSlot
 	20, // 10: suggestions.v1.SuggestRecipesResponse.suggestions:type_name -> suggestions.v1.Suggestion
 	1,  // 11: suggestions.v1.ScoreComponent.kind:type_name -> suggestions.v1.ScoreKind
 	17, // 12: suggestions.v1.Suggestion.components:type_name -> suggestions.v1.ScoreComponent
-	39, // 13: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
+	42, // 13: suggestions.v1.Suggestion.warnings:type_name -> plans.v1.Warning
 	18, // 14: suggestions.v1.Suggestion.portions:type_name -> suggestions.v1.SuggestedPortion
 	19, // 15: suggestions.v1.Suggestion.items_to_buy:type_name -> suggestions.v1.ItemToBuy
-	40, // 16: suggestions.v1.Suggestion.leftover_of:type_name -> plans.v1.LeftoverOf
-	41, // 17: suggestions.v1.Suggestion.side:type_name -> recipes.v1.RecipeSide
+	43, // 16: suggestions.v1.Suggestion.leftover_of:type_name -> plans.v1.LeftoverOf
+	44, // 17: suggestions.v1.Suggestion.side:type_name -> recipes.v1.RecipeSide
 	2,  // 18: suggestions.v1.PlanCriteria.variety:type_name -> suggestions.v1.Emphasis
 	2,  // 19: suggestions.v1.PlanCriteria.favorites:type_name -> suggestions.v1.Emphasis
 	2,  // 20: suggestions.v1.PlanCriteria.pantry:type_name -> suggestions.v1.Emphasis
 	2,  // 21: suggestions.v1.PlanCriteria.shopping:type_name -> suggestions.v1.Emphasis
 	2,  // 22: suggestions.v1.PlanCriteria.nutrition:type_name -> suggestions.v1.Emphasis
 	2,  // 23: suggestions.v1.PlanCriteria.cooking:type_name -> suggestions.v1.Emphasis
-	38, // 24: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
-	40, // 25: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
-	41, // 26: suggestions.v1.PlanChoice.side:type_name -> recipes.v1.RecipeSide
-	38, // 27: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
+	41, // 24: suggestions.v1.PlanChoice.meal:type_name -> people.v1.HouseholdMeal
+	43, // 25: suggestions.v1.PlanChoice.leftover_of:type_name -> plans.v1.LeftoverOf
+	44, // 26: suggestions.v1.PlanChoice.side:type_name -> recipes.v1.RecipeSide
+	41, // 27: suggestions.v1.SuggestPlanRequest.meals:type_name -> people.v1.HouseholdMeal
 	21, // 28: suggestions.v1.SuggestPlanRequest.criteria:type_name -> suggestions.v1.PlanCriteria
 	22, // 29: suggestions.v1.SuggestPlanRequest.choices:type_name -> suggestions.v1.PlanChoice
-	38, // 30: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
+	41, // 30: suggestions.v1.PlanSlot.meal:type_name -> people.v1.HouseholdMeal
 	3,  // 31: suggestions.v1.PlanSlot.state:type_name -> suggestions.v1.PlanSlotState
 	20, // 32: suggestions.v1.PlanSlot.suggestion:type_name -> suggestions.v1.Suggestion
 	20, // 33: suggestions.v1.PlanSlot.alternatives:type_name -> suggestions.v1.Suggestion
 	24, // 34: suggestions.v1.SuggestPlanResponse.slots:type_name -> suggestions.v1.PlanSlot
 	29, // 35: suggestions.v1.SuggestFixesResponse.fixes:type_name -> suggestions.v1.PlanFix
-	39, // 36: suggestions.v1.SuggestFixesResponse.warnings:type_name -> plans.v1.Warning
-	42, // 37: suggestions.v1.PortionResize.unit:type_name -> foods.v1.AmountUnit
+	42, // 36: suggestions.v1.SuggestFixesResponse.warnings:type_name -> plans.v1.Warning
+	45, // 37: suggestions.v1.PortionResize.unit:type_name -> foods.v1.AmountUnit
 	4,  // 38: suggestions.v1.PlanFix.kind:type_name -> suggestions.v1.PlanFixKind
 	28, // 39: suggestions.v1.PlanFix.resizes:type_name -> suggestions.v1.PortionResize
-	39, // 40: suggestions.v1.PlanFix.warnings:type_name -> plans.v1.Warning
-	38, // 41: suggestions.v1.SuggestFromPantryRequest.meals:type_name -> people.v1.HouseholdMeal
+	42, // 40: suggestions.v1.PlanFix.warnings:type_name -> plans.v1.Warning
+	41, // 41: suggestions.v1.SuggestFromPantryRequest.meals:type_name -> people.v1.HouseholdMeal
 	32, // 42: suggestions.v1.SuggestFromPantryResponse.recipes:type_name -> suggestions.v1.PantryRecipe
 	35, // 43: suggestions.v1.SuggestSidesResponse.sides:type_name -> suggestions.v1.SideSuggestion
-	39, // 44: suggestions.v1.SideSuggestion.warnings:type_name -> plans.v1.Warning
-	15, // 45: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
-	23, // 46: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
-	26, // 47: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
-	30, // 48: suggestions.v1.SuggestionService.SuggestFromPantry:input_type -> suggestions.v1.SuggestFromPantryRequest
-	33, // 49: suggestions.v1.SuggestionService.SuggestSides:input_type -> suggestions.v1.SuggestSidesRequest
-	7,  // 50: suggestions.v1.SuggestionService.ListBowlParts:input_type -> suggestions.v1.ListBowlPartsRequest
-	9,  // 51: suggestions.v1.SuggestionService.SuggestBowls:input_type -> suggestions.v1.SuggestBowlsRequest
-	12, // 52: suggestions.v1.SuggestionService.ComposeBowl:input_type -> suggestions.v1.ComposeBowlRequest
-	16, // 53: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
-	25, // 54: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
-	27, // 55: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
-	31, // 56: suggestions.v1.SuggestionService.SuggestFromPantry:output_type -> suggestions.v1.SuggestFromPantryResponse
-	34, // 57: suggestions.v1.SuggestionService.SuggestSides:output_type -> suggestions.v1.SuggestSidesResponse
-	8,  // 58: suggestions.v1.SuggestionService.ListBowlParts:output_type -> suggestions.v1.ListBowlPartsResponse
-	10, // 59: suggestions.v1.SuggestionService.SuggestBowls:output_type -> suggestions.v1.SuggestBowlsResponse
-	13, // 60: suggestions.v1.SuggestionService.ComposeBowl:output_type -> suggestions.v1.ComposeBowlResponse
-	53, // [53:61] is the sub-list for method output_type
-	45, // [45:53] is the sub-list for method input_type
-	45, // [45:45] is the sub-list for extension type_name
-	45, // [45:45] is the sub-list for extension extendee
-	0,  // [0:45] is the sub-list for field type_name
+	42, // 44: suggestions.v1.SideSuggestion.warnings:type_name -> plans.v1.Warning
+	37, // 45: suggestions.v1.SuggestPicksResponse.suggestions:type_name -> suggestions.v1.PickSuggestion
+	15, // 46: suggestions.v1.SuggestionService.SuggestRecipes:input_type -> suggestions.v1.SuggestRecipesRequest
+	23, // 47: suggestions.v1.SuggestionService.SuggestPlan:input_type -> suggestions.v1.SuggestPlanRequest
+	26, // 48: suggestions.v1.SuggestionService.SuggestFixes:input_type -> suggestions.v1.SuggestFixesRequest
+	30, // 49: suggestions.v1.SuggestionService.SuggestFromPantry:input_type -> suggestions.v1.SuggestFromPantryRequest
+	36, // 50: suggestions.v1.SuggestionService.SuggestPicks:input_type -> suggestions.v1.SuggestPicksRequest
+	33, // 51: suggestions.v1.SuggestionService.SuggestSides:input_type -> suggestions.v1.SuggestSidesRequest
+	7,  // 52: suggestions.v1.SuggestionService.ListBowlParts:input_type -> suggestions.v1.ListBowlPartsRequest
+	9,  // 53: suggestions.v1.SuggestionService.SuggestBowls:input_type -> suggestions.v1.SuggestBowlsRequest
+	12, // 54: suggestions.v1.SuggestionService.ComposeBowl:input_type -> suggestions.v1.ComposeBowlRequest
+	16, // 55: suggestions.v1.SuggestionService.SuggestRecipes:output_type -> suggestions.v1.SuggestRecipesResponse
+	25, // 56: suggestions.v1.SuggestionService.SuggestPlan:output_type -> suggestions.v1.SuggestPlanResponse
+	27, // 57: suggestions.v1.SuggestionService.SuggestFixes:output_type -> suggestions.v1.SuggestFixesResponse
+	31, // 58: suggestions.v1.SuggestionService.SuggestFromPantry:output_type -> suggestions.v1.SuggestFromPantryResponse
+	38, // 59: suggestions.v1.SuggestionService.SuggestPicks:output_type -> suggestions.v1.SuggestPicksResponse
+	34, // 60: suggestions.v1.SuggestionService.SuggestSides:output_type -> suggestions.v1.SuggestSidesResponse
+	8,  // 61: suggestions.v1.SuggestionService.ListBowlParts:output_type -> suggestions.v1.ListBowlPartsResponse
+	10, // 62: suggestions.v1.SuggestionService.SuggestBowls:output_type -> suggestions.v1.SuggestBowlsResponse
+	13, // 63: suggestions.v1.SuggestionService.ComposeBowl:output_type -> suggestions.v1.ComposeBowlResponse
+	55, // [55:64] is the sub-list for method output_type
+	46, // [46:55] is the sub-list for method input_type
+	46, // [46:46] is the sub-list for extension type_name
+	46, // [46:46] is the sub-list for extension extendee
+	0,  // [0:46] is the sub-list for field type_name
 }
 
 func init() { file_suggestions_v1_suggestions_proto_init() }
@@ -5031,7 +5351,7 @@ func file_suggestions_v1_suggestions_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_suggestions_v1_suggestions_proto_rawDesc), len(file_suggestions_v1_suggestions_proto_rawDesc)),
 			NumEnums:      5,
-			NumMessages:   31,
+			NumMessages:   34,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

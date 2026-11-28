@@ -262,6 +262,15 @@ export const listFrozenLeftovers = PlanService.method.listFrozenLeftovers;
 export const takeFromFreezer = PlanService.method.takeFromFreezer;
 
 /**
+ * List the cooks to cook any time (see Cook.anytime) that aren't cooked
+ * yet, oldest first: the recipes picked to buy for and cook whenever
+ * suits.
+ *
+ * @generated from rpc plans.v1.PlanService.ListAnytimeCooks
+ */
+export const listAnytimeCooks = PlanService.method.listAnytimeCooks;
+
+/**
  * Mark that people eat out at a meal on a date, like lunch at a
  * restaurant or dinner at a friend's, or stop marking it: either a
  * shared meal, for everyone who eats it or the people given, or one

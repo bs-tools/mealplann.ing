@@ -185,6 +185,10 @@ service PlanService {
   // eaten a few days later, and is marked from_freezer. Fails with
   // FAILED_PRECONDITION if the freezer has fewer of them.
   rpc TakeFromFreezer(TakeFromFreezerRequest) returns (TakeFromFreezerResponse);
+  // List the cooks to cook any time (see Cook.anytime) that aren't cooked
+  // yet, oldest first: the recipes picked to buy for and cook whenever
+  // suits.
+  rpc ListAnytimeCooks(ListAnytimeCooksRequest) returns (ListAnytimeCooksResponse);
   // Mark that people eat out at a meal on a date, like lunch at a
   // restaurant or dinner at a friend's, or stop marking it: either a
   // shared meal, for everyone who eats it or the people given, or one
@@ -254,6 +258,13 @@ message Cook {
   // cook's left_servings added to what it was, to remove its leftovers.
   // From 0 to servings.
   double removed_servings = 15;
+  // Whether it's to cook any time soon rather than on its date, like a
+  // recipe picked to buy for and cook whenever suits (see
+  // SuggestionService.SuggestPicks). Its date is the earliest it's cooked,
+  // so shopping lists from then buy for it; when it's cooked, set its date
+  // to the day and this to false. Its unplanned servings aren't warned
+  // about until then. List them with ListAnytimeCooks.
+  bool anytime = 16;
 }
 
 // A cook making a component of another cook: e.g. a pot of chickpeas for
@@ -1099,6 +1110,12 @@ message FrozenLeftover {
   // day after the recipe's fridge days. Empty if the recipe's fridge days
   // are unknown.
   string frozen_from = 6;
+}
+
+message ListAnytimeCooksRequest {}
+
+message ListAnytimeCooksResponse {
+  repeated Cook cooks = 1;
 }
 
 message TakeFromFreezerRequest {
